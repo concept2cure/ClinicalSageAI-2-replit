@@ -47,6 +47,14 @@ import { assertUploadSafe, UploadSafetyError, type UploadOrigin } from '../../mi
 import { writeChainedAuditRow } from '../auditService.js';
 import { getStorageProvider } from '../storage/index.js';
 import {
+  discardUnrecordedBytes,
+  NOTHING_SAVED,
+  refusalAfterDiscard,
+  type StoredUpload,
+} from './vault-ingest-discard.js';
+import { vaultWriteRefusal } from './vault-write-authority.js';
+import { readRecordedVersion, reuploadChanges, reuploadDiffers, type ReuploadChange, type ReuploadDiffer } from './vault-reupload.js';
+import {
   classifyForFiling,
   resolveVaultView,
   isFolderInView,
@@ -124,14 +132,54 @@ export type VaultIngestResult =
         updatedAt: string;
       };
       filing: VaultIngestFiling;
+      /** Present when these bytes were already recorded here (vault-reupload.ts). */
+      reupload?: { unchanged: boolean; changes: ReuploadChange[]; differs: ReuploadDiffer[] };
     }
   | { ok: false; status: number; code: string; message: string };
 
 /**
  * Admit a document into the governed vault. Must be called inside the acting
  * organization's tenant scope (see the module header).
+ *
+ * ── Why the admission is wrapped ─────────────────────────────────────────────
+ * The bytes are stored BEFORE the record is written — the record carries the
+ * storage version id, so it cannot be written first. Every refusal after that
+ * point (a folder outside the taxonomy, different bytes at an occupied code and
+ * version, the same bytes under a second code, a failed audit write) told the
+ * user "Nothing was changed" or "Nothing was saved" and left the file in the
+ * tenant's storage under no record. No surface lists such a copy and no
+ * deletion reaches it, so it outlives the customer deleting everything they can
+ * see. Here, one exit covers every refusal and every throw: a stored copy that
+ * no committed record holds is removed. The version id is a fresh randomUUID
+ * per put, so removing it cannot touch the bytes of a record that already
+ * exists — including the one a DUPLICATE_CONTENT refusal points at.
  */
 export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultIngestResult> {
+  const stored: StoredUpload = { versionId: null, orgId: null, committed: false };
+  let result: VaultIngestResult;
+  try {
+    result = await admitVaultDocument(args, stored);
+  } catch (err) {
+    await discardUnrecordedBytes(stored);
+    throw err;
+  }
+  if (result.ok) {
+    // A same-bytes retry leaves its own fresh copy unheld (vault-reupload.ts).
+    if (result.reupload) await discardUnrecordedBytes(stored);
+    return result;
+  }
+  return { ...result, message: refusalAfterDiscard(result.message, await discardUnrecordedBytes(stored)) };
+}
+
+async function admitVaultDocument(
+  args: VaultIngestArgs,
+  stored: StoredUpload,
+): Promise<VaultIngestResult> {
+  // Role first, as requireEditorAccess orders it: a caller who may not write
+  // is told so before anything is stored, checked or disclosed.
+  const roleRefusal = vaultWriteRefusal();
+  if (roleRefusal) return roleRefusal;
+
   // Tenant ownership guard. `vault.documents` now carries organization_id
   // (migrations/20260905_vault_documents_organization_id.sql), and the INSERT
   // below writes it — the retrieval path filters on it, so a row left NULL is
@@ -229,7 +277,7 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
   let storageProvider: string;
   let storageFileId: string;
   try {
-    const stored = await getStorageProvider().put({
+    const written = await getStorageProvider().put({
       orgId,
       projectId: args.programId,
       filename: fileName,
@@ -237,9 +285,11 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
       mime: mimeType,
       metadata: { contentHash, documentCode: args.documentCode },
     });
-    storageVersionId = stored.vaultVersionId;
-    storageProvider = stored.provider;
-    storageFileId = stored.vaultFileId;
+    storageVersionId = written.vaultVersionId;
+    storageProvider = written.provider;
+    storageFileId = written.vaultFileId;
+    stored.versionId = storageVersionId;
+    stored.orgId = orgId;
   } catch (err) {
     logger.error('Vault file persistence failed — refusing to record the document', {
       reason: err instanceof Error ? err.message : 'unknown',
@@ -401,6 +451,9 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // What is already recorded at this (program, code, version), locked: a
+    // same-bytes retry is judged against it (vault-reupload.ts).
+    const recorded = await readRecordedVersion(client, args.programId, args.documentCode, args.version ?? '1.0');
     // tenant-isolation-safe: vault.documents is program-scoped (program_id, no
     // org_id column); the caller's ownership of args.programId was already
     // enforced above against regulatory_programs.organization_id (403 on
@@ -409,7 +462,7 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
       `INSERT INTO vault.documents (
         program_id, document_code, document_title, document_type,
         version, s3_bucket, s3_key, file_name, file_size, mime_type,
-        content_hash, classification, retention_policy,
+        content_hash, classification, retention_policy, retention_until,
         parent_document_id, supersedes_id,
         extracted_text, page_count, word_count,
         folder_id, evidence_kind, ctd_section,
@@ -421,6 +474,12 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
         $1, $2, $3, $4,
         $5, $6, $7, $8, $9, $10,
         $11, $12, $13,
+        -- The retention clock starts at admission (P1-22): the named, active
+        -- policy's days from today; NULL (kept indefinitely) when the document
+        -- names no policy or an unknown one. The sweep never destroys a
+        -- document with no date.
+        (SELECT CURRENT_DATE + rp.retention_days FROM vault.retention_policies rp
+          WHERE rp.policy_name = $13 AND rp.active LIMIT 1),
         $14, $15,
         $16, $17, $18,
         $19, $20, $21,
@@ -430,42 +489,29 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
         $28, $29
       )
       ON CONFLICT (program_id, document_code, version) DO UPDATE SET
-        document_title = EXCLUDED.document_title,
-        document_type = EXCLUDED.document_type,
-        s3_bucket = EXCLUDED.s3_bucket,
-        s3_key = EXCLUDED.s3_key,
-        storage_version_id = EXCLUDED.storage_version_id,
-        storage_provider = EXCLUDED.storage_provider,
-        file_name = EXCLUDED.file_name,
-        file_size = EXCLUDED.file_size,
-        mime_type = EXCLUDED.mime_type,
+        -- Title, type, classification and filing are not in this list: a
+        -- re-upload never changes them. They change through Edit details and
+        -- Confirm / Move, each with its own audit row (vault-reupload.ts).
+        -- The same bytes are already stored and recorded: the record keeps the
+        -- copy it names. Only a record with no storage handle (it predates the
+        -- provider) takes the retry's, as one unit. file_size and mime_type
+        -- describe the same bytes and are not rewritten (vault-reupload.ts).
+        s3_bucket = CASE WHEN vault.documents.storage_version_id IS NULL THEN EXCLUDED.s3_bucket ELSE vault.documents.s3_bucket END,
+        s3_key = CASE WHEN vault.documents.storage_version_id IS NULL THEN EXCLUDED.s3_key ELSE vault.documents.s3_key END,
+        storage_provider = CASE WHEN vault.documents.storage_version_id IS NULL
+          THEN EXCLUDED.storage_provider ELSE vault.documents.storage_provider END,
+        storage_version_id = COALESCE(vault.documents.storage_version_id, EXCLUDED.storage_version_id),
+        file_name = COALESCE(vault.documents.file_name, EXCLUDED.file_name),
         content_hash = EXCLUDED.content_hash,
-        classification = EXCLUDED.classification,
-        retention_policy = EXCLUDED.retention_policy,
-        parent_document_id = EXCLUDED.parent_document_id,
-        supersedes_id = EXCLUDED.supersedes_id,
+        -- Write-once: a retry never nulls or replaces a recorded policy or lineage.
+        retention_policy = COALESCE(vault.documents.retention_policy, EXCLUDED.retention_policy),
+        -- A clock that has started is not restarted by a re-upload.
+        retention_until = COALESCE(vault.documents.retention_until, EXCLUDED.retention_until),
+        parent_document_id = COALESCE(vault.documents.parent_document_id, EXCLUDED.parent_document_id),
+        supersedes_id = COALESCE(vault.documents.supersedes_id, EXCLUDED.supersedes_id),
         extracted_text = EXCLUDED.extracted_text,
         page_count = EXCLUDED.page_count,
         word_count = EXCLUDED.word_count,
-        -- A re-upload of the same (program, code, version) re-proposes ONLY
-        -- when nobody has confirmed a placement: a person's filing decision
-        -- is never overwritten by a machine suggestion.
-        folder_id = CASE WHEN vault.documents.placement_status = 'confirmed'
-                         THEN vault.documents.folder_id ELSE EXCLUDED.folder_id END,
-        evidence_kind = CASE WHEN vault.documents.placement_status = 'confirmed'
-                             THEN vault.documents.evidence_kind ELSE EXCLUDED.evidence_kind END,
-        ctd_section = CASE WHEN vault.documents.placement_status = 'confirmed'
-                           THEN vault.documents.ctd_section ELSE EXCLUDED.ctd_section END,
-        placement_status = CASE WHEN vault.documents.placement_status = 'confirmed'
-                                THEN 'confirmed' ELSE EXCLUDED.placement_status END,
-        placement_confidence = CASE WHEN vault.documents.placement_status = 'confirmed'
-                                    THEN vault.documents.placement_confidence ELSE EXCLUDED.placement_confidence END,
-        placement_rationale = CASE WHEN vault.documents.placement_status = 'confirmed'
-                                   THEN vault.documents.placement_rationale ELSE EXCLUDED.placement_rationale END,
-        placed_by = CASE WHEN vault.documents.placement_status = 'confirmed'
-                         THEN vault.documents.placed_by ELSE EXCLUDED.placed_by END,
-        placed_at = CASE WHEN vault.documents.placement_status = 'confirmed'
-                         THEN vault.documents.placed_at ELSE EXCLUDED.placed_at END,
         processing_status = 'PENDING',
         -- Repairs a row that predates the tenant key without ever moving one:
         -- the ownership guard above proved this program belongs to $27.
@@ -487,7 +533,8 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
       WHERE vault.documents.content_hash = EXCLUDED.content_hash
       RETURNING id, processing_status, created_at, updated_at,
                 folder_id, evidence_kind, ctd_section, placement_status,
-                placement_confidence, placement_rationale`,
+                placement_confidence, placement_rationale, document_title, document_type, classification,
+                retention_policy, parent_document_id, supersedes_id, storage_version_id, file_name, s3_key`,
       [
         args.programId,
         args.documentCode,
@@ -567,10 +614,19 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
        `details` carries the content hash, so the audit trail records WHICH
        bytes were admitted, not merely that an upload happened. That is the
        link that makes a later integrity check meaningful. */
-    await writeChainedAuditRow(client, {
+    /* A same-bytes retry (vault-reupload.ts) records what it changed, before
+       and after, as its own event; one that changed nothing records nothing. */
+    const changes = recorded ? reuploadChanges(recorded, doc) : [];
+    const differs = recorded ? reuploadDiffers(recorded, args) : [];
+    const filed = {
+      view: vaultView, folderId: doc.folder_id ?? null, evidenceKind: doc.evidence_kind ?? null,
+      ctdSection: doc.ctd_section ?? null, placementStatus: doc.placement_status,
+      confidence: doc.placement_confidence ?? null, rationale: doc.placement_rationale ?? null,
+    };
+    if (!recorded || changes.length > 0) await writeChainedAuditRow(client, {
       tenantId: orgId,
       userId: userId ?? undefined,
-      action: 'vault.document.ingest',
+      action: recorded ? 'vault.document.reupload' : 'vault.document.ingest',
       resourceType: 'vault_document',
       resourceId: String(doc.id),
       ipAddress: args.ipAddress,
@@ -581,29 +637,25 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
         documentTitle: args.documentTitle,
         documentType: args.documentType,
         version: args.version ?? '1.0',
-        fileName,
+        fileName: doc.file_name ?? fileName,
         fileSize,
         mimeType,
         contentHash,
-        classification: args.classification ?? 'INTERNAL',
-        storageKey: s3Key,
+        classification: doc.classification,
+        storageKey: doc.s3_key,
+        ...(recorded ? { changes } : {}),
         /* WHERE the document was filed and WHO/WHAT decided — the audit
            trail records the placement decision, not merely that an upload
            happened. A 'suggested' placement is attributed to the classifier
            (with its confidence), a 'confirmed' one to the uploader. */
-        filing: {
-          view: vaultView,
-          folderId: doc.folder_id ?? null,
-          evidenceKind: doc.evidence_kind ?? null,
-          ctdSection: doc.ctd_section ?? null,
-          placementStatus: doc.placement_status,
-          confidence: doc.placement_confidence ?? null,
-          rationale: doc.placement_rationale ?? null,
-        },
+        filing: filed,
       },
     });
 
     await client.query('COMMIT');
+    // Committed means a committed record holds THIS copy. A retry's record
+    // keeps the copy it already names, and the wrapper removes this one.
+    stored.committed = doc.storage_version_id === storageVersionId;
 
     /* Passage index, post-commit: chunk + embed the extracted text into
        vault.document_chunks — the store the RAG vault corpus reads — and
@@ -631,10 +683,10 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
         id: doc.id,
         programId: args.programId,
         documentCode: args.documentCode,
-        documentTitle: args.documentTitle,
-        documentType: args.documentType,
+        documentTitle: doc.document_title,
+        documentType: doc.document_type,
         version: args.version ?? '1.0',
-        fileName,
+        fileName: doc.file_name ?? fileName,
         fileSize,
         mimeType,
         contentHash,
@@ -648,16 +700,11 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
          uploader sees WHERE the file landed (or that it needs filing),
          not just that bytes arrived. */
       filing: {
-        view: vaultView,
-        folderId: doc.folder_id ?? null,
+        ...filed,
         folderLabel: folderLabel(vaultView, doc.folder_id ?? null),
-        evidenceKind: doc.evidence_kind ?? null,
-        ctdSection: doc.ctd_section ?? null,
-        placementStatus: doc.placement_status,
-        confidence: doc.placement_confidence ?? null,
-        rationale: doc.placement_rationale ?? null,
         needsReview: doc.placement_status === 'unfiled',
       },
+      ...(recorded ? { reupload: { unchanged: changes.length === 0, changes, differs } } : {}),
     };
   } catch (err: any) {
     /* Roll back BOTH halves. A failure in the audit write now aborts the
@@ -690,7 +737,7 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
 
     logger.error('Vault ingest failed — nothing recorded', { err: err?.message });
     return { ok: false, status: 500, code: 'INGEST_FAILED',
-      message: 'The document could not be recorded in the vault. Nothing was saved.' };
+      message: `The document could not be recorded in the vault. ${NOTHING_SAVED}` };
   } finally {
     client.release();
   }

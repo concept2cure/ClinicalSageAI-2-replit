@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
 import { apiRequest, extractApiError } from '@/lib/queryClient';
@@ -221,13 +221,15 @@ export function Risk({ onAsk }: SurfaceViewProps) {
       const guarded = riskFormGuard();
       if (guarded) return guarded;
       const wanted = (params.hazard ?? '').trim();
-      if (!wanted) return { ok: false, reason: 'No hazard named.' };
       // MANDATORY hold while loading: the seed effect overwrites `sel` when
       // the read lands, so an early select would be silently clobbered.
       if (live.loading)
         return { ok: false, reason: 'The risk file is still loading.', retry: true };
       if (live.error) return { ok: false, reason: 'The risk file could not be read.' };
       if (rows.length === 0) return { ok: false, reason: 'The risk file is empty.' };
+      const hazardName = (r: (typeof rows)[number]) => (r.hazard ? `${r.id} — ${r.hazard}` : r.id);
+      const listed = () => listedChoices(rows.map(hazardName), 'Hazards listed');
+      if (!wanted) return { ok: false, reason: `No hazard named.${listed()}` };
       const lower = wanted.toLowerCase();
       const exact = rows.find((r) => r.id.toLowerCase() === lower);
       const contains = exact
@@ -241,8 +243,11 @@ export function Risk({ onAsk }: SurfaceViewProps) {
           ok: false,
           reason:
             contains.length > 1
-              ? `"${params.hazard}" matches ${contains.length} hazards — name one exactly.`
-              : `No hazard matching "${params.hazard}" in the risk file.`,
+              ? `"${params.hazard}" matches ${contains.length} hazards — name one exactly.${listedChoices(
+                  contains.map(hazardName),
+                  'Matches',
+                )}`
+              : `No hazard matching "${params.hazard}" in the risk file.${listed()}`,
         };
       }
       setSel(match.id);

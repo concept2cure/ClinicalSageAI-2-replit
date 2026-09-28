@@ -19,8 +19,12 @@ describe('sensitive placement dispatch integration', () => {
     });
     const providerDispatch = vi.spyOn(gateway as any, 'dispatchProvider');
 
+    // A production call is always bound to a tenant (request or job scope). The
+    // unbound case refuses earlier, as DENY_TENANT_POLICY, and is pinned in
+    // tenant-placement-boundary.test.ts; this case is about the PII/PHI decider.
     await expect(gateway.route({
       taskType: 'chat',
+      organizationId: 7,
       messages: [{ role: 'user', content: 'Patient email is patient@example.com' }],
     })).rejects.toMatchObject({
       name: GatewayPolicyError.name,

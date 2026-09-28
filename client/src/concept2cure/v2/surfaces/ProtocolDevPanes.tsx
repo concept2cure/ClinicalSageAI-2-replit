@@ -45,12 +45,16 @@ export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
     reqComplete: sections.filter((s) => s.required && s.status === 'complete').length,
   }), [sections]);
   const ready = !findings.some((f) => ['critical', 'blocking'].includes(str(f.sev)));
+  const terminal = terminalState(str(doc.status));
   return (
     <div className="pd-outline">
       <div className="pd-outline-h"><span>Sections</span><span className="pd-outline-c">{counts.complete}/{counts.total}</span></div>
       <div className="pd-tree">
         {sections.map((s) => (
-          <button key={str(s.id)} className={'pd-tree-row' + (activeSec === s.id ? ' on' : '')} onClick={() => onSec(s)}>
+          /* The open section was `.on` alone; `aria-current` exposes it
+             (periodic review 2026-09-28, A-C-2). */
+          <button key={str(s.id)} className={'pd-tree-row' + (activeSec === s.id ? ' on' : '')}
+            aria-current={activeSec === s.id ? 'true' : undefined} onClick={() => onSec(s)}>
             {/* Section completion was this dot's colour alone, in the outline
                 a protocol author navigates by. */}
             <span className="pd-tree-dot" data-status={str(s.status)} aria-hidden="true" />
@@ -61,11 +65,47 @@ export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
           </button>))}
       </div>
       <div className="pd-outline-gate">
-        <PG.CompletenessGate pct={Number(doc.completeness ?? 0)} complete={counts.reqComplete} total={counts.reqTotal}
-          findings={findings as never} ready={ready} readyLabel="Finalization readiness"
-          actionLabel="Finalize protocol" onAction={onFinalize} />
+        {terminal
+          ? <TerminalGate state={terminal} version={str(doc.version)} findings={findings} />
+          : <PG.CompletenessGate pct={Number(doc.completeness ?? 0)} complete={counts.reqComplete} total={counts.reqTotal}
+              findings={findings as never} ready={ready} readyLabel="Finalization readiness"
+              actionLabel="Finalize protocol" onAction={onFinalize} />}
       </div>
     </div>);
+}
+
+interface TerminalState { label: string; why: string }
+
+/**
+ * The two statuses the server refuses to finalize (`finalizeProtocolTx`), and
+ * what the outline says instead of offering the action.
+ *
+ * The gate was gated on completeness alone, and a finalized protocol still
+ * passes the check it passed to be finalized: it read "Ready to finalize" with
+ * a live button, and the signer spent a password, an authenticator code and a
+ * signing attempt before the server refused (periodic review 2026-09-28,
+ * editor family, P11-C-4).
+ */
+function terminalState(status: string): TerminalState | null {
+  if (status === 'finalized') {
+    return { label: 'Finalized', why: 'This version was finalized under an electronic signature, so there is nothing left to finalize.' };
+  }
+  if (status === 'superseded') {
+    return { label: 'Superseded', why: 'A later version replaces this one, so it cannot be finalized.' };
+  }
+  return null;
+}
+
+function TerminalGate({ state, version, findings }: { state: TerminalState; version: string; findings: Row[] }) {
+  return (
+    <div className="pg-gate">
+      <div className="pg-gate-meta">
+        <div className="pg-gate-title">{state.label + (version ? ' — v' + version : '')}</div>
+        <div className="pg-gate-sub">{state.why}</div>
+      </div>
+      <PG.FindingsList findings={findings as never} dense />
+    </div>
+  );
 }
 
 /* ---- Objectives ---- */
@@ -162,7 +202,9 @@ export function AmendmentsTab({ doc, onAdd }: ListPaneProps) {
 }
 
 /* ---- Deviations & CAPA ---- */
-export function DeviationsTab({ doc, onAdd }: ListPaneProps) {
+export function DeviationsTab({ doc, onAdd, onEdit }: ListPaneProps & {
+  onEdit?: (kind: 'deviation-assess', target: { id: number; label: string }) => void;
+}) {
   const deviations = asRows(doc.deviations);
   return (
     <div className="pd-pane">
@@ -171,15 +213,24 @@ export function DeviationsTab({ doc, onAdd }: ListPaneProps) {
       {deviations.map((d) => (
         <div key={str(d.id)} className="pd-card">
           <div className="pd-card-h">
-            {/* `PG.SEV_TONE` is the canonical severity map — a hand-rolled one
-                here once put CRITICAL in the amber bucket and major in red,
-                inverting the 3-day / 10-day reporting distinction. */}
-            <span className="pg-badge" data-tone={PG.SEV_TONE[str(d.sev)] || 'warn'}>{PG.labelize(str(d.sev))}</span>
+            {/* `PG.SEV_TONE` is the canonical severity map. An unassessed deviation
+                shows no severity at all — it used to show a defaulted "Minor". */}
+            {d.assessed
+              ? <span className="pg-badge" data-tone={PG.SEV_TONE[str(d.sev)] || 'warn'}>{PG.labelize(str(d.sev))}</span>
+              : <span className="pg-badge" data-tone="warn">Assessment required</span>}
             <span className="pd-card-t">{str(d.title)}</span>
-            {Boolean(d.reportable) && <span className="pg-badge" data-tone="err">Reportable</span>}
+            {d.reportable === true && <span className="pg-badge" data-tone="err">Prompt IRB report indicated</span>}
             <PG.StatusBadge status={str(d.status)} />
           </div>
-          <div className="pd-card-sum"><span className="pd-chip">{str(d.cat)}</span></div>
+          <div className="pd-card-sum">
+            {str(d.cat) && <span className="pd-chip">{str(d.cat)}</span>}
+            {onEdit && d.status !== 'closed' && (
+              <button type="button" className="pde-rowbtn"
+                onClick={() => onEdit('deviation-assess', { id: Number(d.id), label: str(d.title) })}>
+                {d.assessed ? 'Re-assess' : 'Assess'}
+              </button>
+            )}
+          </div>
           {/* CAPA is a child register of the deviation: a deviation logged
               before any corrective action was agreed has none. */}
           <div className="pd-capa"><div className="pd-capa-h">CAPA actions</div>

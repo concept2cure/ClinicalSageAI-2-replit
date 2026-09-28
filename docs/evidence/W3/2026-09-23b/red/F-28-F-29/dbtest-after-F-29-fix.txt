@@ -1,0 +1,69 @@
+# git: 923d1491b + working tree (the F-29 fix)
+# node run-dbtest.mjs tests/db/account-standing.dbtest.ts   (vitest -c vitest.db.config.ts, validation database, owner connection; runtime role minted by the test)
+
+ RUN  v4.1.7 <repo>
+
+{"level":30,"time":"2026-09-23T15:04:36.947Z","pid":29133,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-23T15:04:36.951Z","pid":29133,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-23T15:04:36.951Z","pid":29133,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-23T15:04:37.314Z', poolSize: 1 }
+
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/account-standing.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 251
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 252
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 253
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 254
+
+{"level":30,"time":"2026-09-23T15:06:05.000Z","pid":29133,"hostname":"vm","context":{"userId":251,"tenantId":92100,"resourceId":"251"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 6ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 31ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 2ms
+{"level":30,"time":"2026-09-23T15:06:05.000Z","pid":29133,"hostname":"vm","context":{"userId":251,"tenantId":"92100","resourceId":"251"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > an active account signs in 494ms
+{"level":30,"time":"2026-09-23T15:06:05.000Z","pid":29133,"hostname":"vm","context":{"userId":252,"tenantId":92100,"resourceId":"252"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-23T15:06:05.000Z","pid":29133,"hostname":"vm","context":{"userId":253,"tenantId":92100,"resourceId":"253"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-23T15:06:35.000Z","pid":29133,"hostname":"vm","context":{"userId":254,"tenantId":92100,"resourceId":"254"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T15:06:35.000Z","pid":29133,"hostname":"vm","context":{"userId":254,"tenantId":"92100","resourceId":"254"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-23T15:07:05.000Z","pid":29133,"hostname":"vm","context":{"userId":254,"tenantId":92100,"resourceId":"254"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T15:07:05.000Z","pid":29133,"hostname":"vm","context":{"userId":254,"tenantId":"92100","resourceId":"254"},"msg":"[audit-service] [AUDIT] user_login user"}
+stdout | tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why
+[database] Database connection successful { timestamp: '2026-09-23T15:07:05.000Z', poolSize: 2 }
+
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 18ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 20ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it 38ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 85ms
+{"level":30,"time":"2026-09-23T15:07:35.000Z","pid":29133,"hostname":"vm","context":{"userId":254,"tenantId":92100,"resourceId":"254"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T15:07:35.000Z","pid":29133,"hostname":"vm","context":{"userId":254,"tenantId":"92100","resourceId":"254"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-23T15:08:05.000Z","pid":29133,"hostname":"vm","context":{"userId":254,"tenantId":92100,"resourceId":"254"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T15:08:05.000Z","pid":29133,"hostname":"vm","context":{"userId":254,"tenantId":"92100","resourceId":"254"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account 51ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated 47ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  15:04:34
+   Duration  7.19s (transform 1.65s, setup 78ms, import 208ms, tests 6.58s, environment 0ms)
+
+stderr | tests/db/account-standing.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stderr | tests/db/account-standing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+

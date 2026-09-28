@@ -1,0 +1,7 @@
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous superiority: Base case N and power equal the design 3ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous non-inferiority: Base case N and power equal the design 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous equivalence: Base case N and power equal the design 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > binary superiority, 2:1: Base case N and power equal the design 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > time to event: Base case N and power equal the design 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > no scenario carries a missing or non-finite N 2ms
+      Tests  6 passed | 112 skipped (118)

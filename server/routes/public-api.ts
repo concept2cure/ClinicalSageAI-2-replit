@@ -43,7 +43,6 @@ import {
   isUuid,
   VaultStoreUnavailableError,
   VAULT_CLASSIFICATIONS,
-  VAULT_PROCESSING_STATUSES,
 } from '../services/vault/vault-document-index.service.js';
 
 const log = createScopedLogger('public-api');
@@ -324,7 +323,6 @@ router.get('/docs', (_req: Request, res: Response) => {
           // From the schema enums, not a restated copy: a value documented here
           // that the column does not accept is a lie in the API's own manual.
           classification: { type: 'string', enum: VAULT_CLASSIFICATIONS, description: 'Filter by confidentiality classification' },
-          processingStatus: { type: 'string', enum: VAULT_PROCESSING_STATUSES, description: 'Filter by ingest processing status' },
           ctdSection: { type: 'string', description: 'Filter by assigned CTD section code (e.g. "3.2.P.5")' },
           limit: { type: 'number', default: 50, description: 'Page size, maximum 200' },
           offset: { type: 'number', default: 0, description: 'Page offset' },
@@ -745,8 +743,8 @@ router.get(
     const rawOffset = parseInt(String(req.query.offset ?? '0'), 10);
     const offset = Number.isFinite(rawOffset) && rawOffset > 0 ? Math.min(rawOffset, 1_000_000) : 0;
 
-    // Validate before binding: program_id is uuid and classification/status are
-    // enums, so an unchecked value reaches Postgres as 22P02 and would surface
+    // Validate before binding: program_id is uuid and classification is an
+    // enum, so an unchecked value reaches Postgres as 22P02 and would surface
     // as a 500 for what is really a client error.
     const programId = sanitizeQueryParam(req.query.programId);
     if (programId !== undefined && !isUuid(programId)) {
@@ -756,9 +754,14 @@ router.get(
     if (classification !== undefined && !VAULT_CLASSIFICATIONS.includes(classification)) {
       return res.status(400).json({ error: 'INVALID_PARAMETER', parameter: 'classification', allowed: VAULT_CLASSIFICATIONS });
     }
-    const procStatus = sanitizeQueryParam(req.query.processingStatus)?.toUpperCase();
-    if (procStatus !== undefined && !VAULT_PROCESSING_STATUSES.includes(procStatus)) {
-      return res.status(400).json({ error: 'INVALID_PARAMETER', parameter: 'processingStatus', allowed: VAULT_PROCESSING_STATUSES });
+    // Once offered, now withdrawn: refused by name, because ignoring it would
+    // answer "INDEXED only" with every document (vault-document-index.service).
+    if (req.query.processingStatus !== undefined) {
+      return res.status(400).json({
+        error: 'UNSUPPORTED_PARAMETER',
+        parameter: 'processingStatus',
+        message: 'processingStatus is not reported: the column it read is never advanced past PENDING, so the filter could not select anything real.',
+      });
     }
 
     try {
@@ -766,7 +769,6 @@ router.get(
         organizationId,
         programId,
         classification,
-        processingStatus: procStatus,
         documentType: sanitizeQueryParam(req.query.documentType),
         ctdSection: sanitizeQueryParam(req.query.ctdSection),
         limit,

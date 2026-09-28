@@ -77,9 +77,31 @@ function programResult() {
     unresolvedLeaves: [],
     unfinalized: 1,
     unfinalizedSections: [{ sectionCode: 'II.6.1.g', status: 'drafted' }],
+    unmappedLeaves: UNMAPPED,
+    matchedByTitleOnly: TITLE_ONLY,
     ready: false,
   };
 }
+
+/*
+ * 2026-09-23 (W5/D7, residual repair): the assembler reports the leaves no
+ * technical-file slot claims (`unmappedLeaves`, each marked
+ * `inTechnicalDocumentation`). Both routes returned them only folded into
+ * `skipped`; they now return them by name, and the export report carries the
+ * count and the Annex II/III ones that made the file not ready.
+ */
+const UNMAPPED = [
+  { source: 'IV.1', inTechnicalDocumentation: false, reason: 'no technical-file section matched this leaf (IV.1: EU declaration of conformity)' },
+  { source: 'II', inTechnicalDocumentation: true, reason: 'no technical-file section matched this leaf (II: Annex II); it is Annex II/III technical documentation the ZIP does not hold' },
+];
+
+/*
+ * 2026-09-23 (W5/D7, final pass): placed sources that a slot matched by title
+ * alone (no outline key, no document type — every Vault-built sequence leaf)
+ * are returned and reported, so a title-only CER is visible in the response
+ * and the audit row instead of being indistinguishable from a keyed one.
+ */
+const TITLE_ONLY = [{ sectionId: 'clinical-evaluation', source: '5.3.5.4' }];
 
 vi.mock('../../server/db', () => ({ db: fakeDb, pool: { query: vi.fn() }, getPool: () => ({ query: vi.fn() }) }));
 vi.mock('../../server/db/requestDb', () => ({ requestDb: () => fakeDb }));
@@ -162,6 +184,10 @@ describe('POST /programs/:programId/technical-file/export', () => {
     expect(body.regulation).toBe('mdr');
     expect(body.fileCount).toBe(4);
     expect(body.unfinalized).toBe(1);
+    expect(body.unmappedLeaves).toEqual(UNMAPPED);
+    expect(input.metadata).toMatchObject({ unmapped: 2, unmappedTechnicalDocumentation: ['II'] });
+    expect(body.matchedByTitleOnly).toEqual(TITLE_ONLY);
+    expect(input.metadata).toMatchObject({ matchedByTitleOnly: TITLE_ONLY });
   });
 
   it('(b) unanchored program: audited-unplaced delivery with the sha256, bytes still returned', async () => {
@@ -254,6 +280,8 @@ describe('POST /sequences/:seqId/technical-file/assemble', () => {
       skipped: [],
       materialized: 2,
       unresolvedLeaves: [],
+      unmappedLeaves: [UNMAPPED[0]],
+      matchedByTitleOnly: TITLE_ONLY,
       ready: true,
     });
 
@@ -269,6 +297,17 @@ describe('POST /sequences/:seqId/technical-file/assemble', () => {
     expect(body.downloadable_output_ref?.data).toBe(ZIP_BYTES.toString('base64'));
     expect(mockLogAction).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'EXPORT_GENERATED', details: expect.objectContaining({ sha256: ZIP_SHA }) }),
+    );
+    expect(body.unmappedLeaves).toEqual([UNMAPPED[0]]);
+    expect(mockLogAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'EXPORT_GENERATED',
+        details: expect.objectContaining({ unmapped: 1, unmappedTechnicalDocumentation: [] }),
+      }),
+    );
+    expect(body.matchedByTitleOnly).toEqual(TITLE_ONLY);
+    expect(mockLogAction).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'EXPORT_GENERATED', details: expect.objectContaining({ matchedByTitleOnly: TITLE_ONLY }) }),
     );
   });
 });

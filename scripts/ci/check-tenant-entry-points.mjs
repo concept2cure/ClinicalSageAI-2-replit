@@ -47,8 +47,13 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripComments } from './lib/strip-comments.mjs';
 
-const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+// TENANT_ENTRY_POINTS_ROOT points the gate at a fixture tree (its node:test suite); CI
+// never sets it.
+const REPO_ROOT = process.env.TENANT_ENTRY_POINTS_ROOT
+  ? path.resolve(process.env.TENANT_ENTRY_POINTS_ROOT)
+  : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const BASELINE = path.join(REPO_ROOT, 'docs', 'reports', 'tenant-entry-points-baseline.json');
 const writeBaseline = process.argv.includes('--write-baseline');
 
@@ -115,8 +120,15 @@ function discover() {
       const src = fs
         .readFileSync(path.join(REPO_ROOT, rel), 'utf8')
         .replace(/\r\n/g, '\n');
-      if (!shape.matches(src)) continue;
-      const considered = LIFECYCLE_VOCABULARY.some(token => src.includes(token));
+      // Shape and vocabulary are read from CODE: a router that names X-API-Key
+      // or SCIM in a comment does not authenticate with it, and a comment that
+      // names getTenantAccessPosture does not call it. On 2026-09-23 F-31/F-32
+      // added such comments to admin-security.ts and misc-inline-routes.ts and
+      // the gate reported both as new API-key entry points. The digest stays
+      // over the full text, so a changed comment still re-flags a baselined file.
+      const code = stripComments(src);
+      if (!shape.matches(code)) continue;
+      const considered = LIFECYCLE_VOCABULARY.some(token => code.includes(token));
       const digest = crypto.createHash('sha256').update(src).digest('hex').slice(0, 16);
       // A file can match more than one shape; first classification wins, but a
       // "considered" result is never downgraded.

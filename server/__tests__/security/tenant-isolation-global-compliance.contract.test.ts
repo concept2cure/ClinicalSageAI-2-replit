@@ -61,6 +61,9 @@ vi.mock('../../db', () => {
       // (401) before the org-path check under test was reached. Not recorded in
       // `calls`: it is auth, not a data query the route ran.
       if (/FROM revoked_tokens/i.test(sql)) return { rows: [], rowCount: 0 };
+      // The account-standing read (F-29) runs in the same chain, for the same
+      // reason: the accounts these tokens name are in use. Auth, not a data query.
+      if (/SELECT status FROM users/i.test(sql)) return { rows: [{ status: 'active' }], rowCount: 1 };
       calls.push({ sql, params });
       return { rows: [{ id: 1, organization_id: ORG_A }], rowCount: 1 };
     }),

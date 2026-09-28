@@ -132,6 +132,44 @@ const TENANT_SCOPED_TABLES = new Set([
   // the gate with no new findings.
   'literature_entries',
   'literature_screening_decisions',
+  // ── eCTD / Submission Center lane (added 2026-09-28, weekly review) ───────
+  // This gate had NO table from the submission lane. DP-37 — an unscoped read
+  // of a document's owning program — was caught only because it happened to
+  // read `vault.documents`, and `documents` is above. A raw-SQL read of
+  // `submissions`, `ectd_sequences`, `submission_leaves` or an orchestrator
+  // run was invisible to it, which was proven by injecting one: the gate
+  // reported the same 8 candidates and passed.
+  //
+  // That is the lane carrying §11.70 release signatures and the assembled
+  // content of a regulatory filing — the highest-consequence cross-tenant read
+  // in the product. Its coverage was a weekly manual sweep, not a gate.
+  //
+  // Every table here is tenant-scoped by `organization_id`. The 2026-09-28
+  // security lens read every raw-SQL site in the lane and found all already
+  // filtered; adding them produced no new server finding, only the pglite
+  // seed in the file allowlist below.
+  'submissions',
+  'ectd_sequences',
+  'submission_leaves',
+  'submission_orchestrator_runs',
+  'electronic_signatures',
+  // NOT ADDED: 'regulatory_programs'. Adding it is correct and is owed — the
+  // table is tenant-scoped and belongs under this gate. It is held back only
+  // because it immediately surfaces a real finding this session could not
+  // land: mdx-health.service.ts probePathwayCoverage (:238-243) counts
+  // regulatory_programs across EVERY organization with no predicate, behind
+  // GET /api/mdx/health, which is mounted at register-inline-routes.ts:1180
+  // with no authMiddleware (unlike /api/validation-kit directly above it) and
+  // is not on PUBLIC_API_ALLOWLIST — so any authenticated user of any tenant
+  // learns the platform-wide program count by pathway. Aggregate only, no
+  // content and no org attribution.
+  //
+  // It is not fixed here because MDX is outside the launch catalog (RULE 2)
+  // and the remedy is that lane's call: admin-gate the route with
+  // requirePlatformAdmin, scope the count to the caller's org, or record that
+  // aggregate volume is not sensitive. It has no client caller — only
+  // tests/regulatory-programs-routes.test.ts:383-462, which a guard would need
+  // updating. Filed as DP-40; add this table in the same change that closes it.
 ]);
 
 // ─── Tenant-filter signals ──────────────────────────────────────────────────
@@ -195,6 +233,16 @@ const ALLOWLIST_FILES = new Set([
   // bootstrap/index.ts above.
   'server/db/bootstrap/seed-default-org.ts',
   'server/db/ensureCoreTables.ts',
+  // pglite in-memory seed + read-back helpers for the freeze/dispatch gate
+  // binding tests. Surfaced when the submission-lane tables were added to
+  // TENANT_SCOPED_TABLES (2026-09-28): it creates the fixture schema and then
+  // UPDATEs / SELECTs ectd_sequences and submission_leaves by primary key
+  // inside a single-tenant fixture (ORG = 7). Same category as the DDL entries
+  // above — it operates on a throwaway schema, reaches no deployed database
+  // and serves no request. Allowlisted as a FILE rather than per call site
+  // because every statement in it is fixture setup or read-back; if it ever
+  // grows a production code path, that path belongs in the service, not here.
+  'server/services/submission-service/__tests__/_freeze-gate-fixture.ts',
   'server/db/setupLumenCortex.ts',
   'server/db/setupLiterature.ts',
   // Auth lookup by email — pre-tenant-resolution. The user record IS the

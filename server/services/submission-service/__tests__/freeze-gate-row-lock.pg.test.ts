@@ -21,7 +21,13 @@
  *
  * Needs TEST_DATABASE_URL (a Postgres the test may create and drop a schema
  * in); skipped otherwise, as the other real-Postgres suites are. Runs the REAL
- * upsertLeaf / freezeSequence / assembleSequence / deriveGovernedTargetBinding.
+ * upsertLeaf / freezeSequence / assembleSequence / deriveGovernedTargetBinding
+ * with the REAL chained audit writer (writeChainedAuditRow) left un-stubbed over
+ * the shared audit_logs DDL — see the note on the auditService mock. Both cases
+ * here end in a REFUSED freeze, which returns before the writer is reached, so
+ * this suite does not exercise the writer: it only guarantees that a freeze
+ * which did get that far would meet the real fail-closed write and not a stub.
+ * The committed-with-its-chain-row assertion lives in freeze-gate-binding.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 
@@ -34,14 +40,16 @@ vi.mock('../../../db', () => ({
   get db() { return holder.db; },
   get pool() { return holder.pool; },
 }));
-vi.mock('../../auditService', () => ({
+/*
+ * 2026-09-23 (ci:audit-logs-fixture). Only the best-effort secondary log
+ * (logAction, behind recordAuditRow on the leaf write) is stubbed. A governed
+ * freeze commits with the REAL writeChainedAuditRow on its transaction's client,
+ * into the shared AUDIT_LOGS_PGLITE_DDL table — not a five-column stand-in over
+ * a six-column local table, which the real writer could not have written into.
+ */
+vi.mock('../../auditService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../auditService')>()),
   default: { logAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })) },
-  writeChainedAuditRow: vi.fn(async (client: any, row: any) => {
-    await client.query(
-      `INSERT INTO audit_logs (tenant_id, table_name, record_id, action, new_values) VALUES ($1,$2,$3,$4,$5)`,
-      [row.organizationId, row.resourceType, String(row.resourceId), row.action, JSON.stringify(row.details)],
-    );
-  }),
 }));
 vi.mock('../../ectd/assess-dispatch-readiness', () => ({
   assessSequenceDispatchReadiness: async () => ({
@@ -52,7 +60,7 @@ vi.mock('../../ectd/assess-dispatch-readiness', () => ({
 
 import { Pool, type PoolClient } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { IND_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL, LEAF_SOURCE_PGLITE_DDL } from '../../../db/pglite-harness';
+import { IND_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL, LEAF_SOURCE_PGLITE_DDL, AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { deriveGovernedTargetBinding } from '../../part11/signature-persistence';
 import { freezeSequence, upsertLeaf } from '../submission-service';
 
@@ -114,10 +122,10 @@ describeIfDb('the sequence row lock serializes leaf writes with a governed freez
     await q(IND_PGLITE_DDL);
     await q(SUBMISSION_CORE_PGLITE_DDL);
     await q(LEAF_SOURCE_PGLITE_DDL);
+    await q(AUDIT_LOGS_PGLITE_DDL);
     await q(`
       CREATE TABLE c2c_ana_actions (id TEXT PRIMARY KEY, org_id INTEGER, command TEXT, target TEXT, state TEXT, proposed_by INTEGER, payload JSONB);
       CREATE TABLE electronic_signatures (id SERIAL PRIMARY KEY, organization_id INTEGER, signed_target TEXT, signature_manifest TEXT, bound_payload_digest TEXT, binding_basis TEXT, superseded_by INTEGER, is_valid BOOLEAN, verification_status TEXT);
-      CREATE TABLE IF NOT EXISTS audit_logs (id SERIAL PRIMARY KEY, tenant_id INTEGER, table_name TEXT, record_id TEXT, action TEXT, new_values TEXT);
       CREATE TABLE IF NOT EXISTS ectd_compilations (id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
       INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
         (1, 'lock A', 'ind', 'biotech', 'fda', ${ORG}, ${USER}), (2, 'lock B', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
@@ -192,5 +200,7 @@ describeIfDb('the sequence row lock serializes leaf writes with a governed freez
     }
     const s = (await q(`SELECT status FROM ectd_sequences WHERE id = 2`)).rows[0] as { status: string };
     expect(s.status).toBe('validated');
+    const chained = (await q(`SELECT count(*)::int AS n FROM audit_logs WHERE table_name = 'ectd_sequence' AND record_id = '2'`)).rows[0] as { n: number };
+    expect(chained.n, 'the refused freeze left a row in the audit chain').toBe(0);
   }, 120_000);
 });

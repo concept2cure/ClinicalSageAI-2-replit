@@ -115,12 +115,50 @@ beforeAll(async () => {
       );
     }
   } catch (error) {
+    await pool.end().catch(() => {/* already broken */});
     throw new Error(
       `[db-suite] cannot reach the test database. This suite fails rather than skips, ` +
         `because a database test that silently does not run is the defect it exists to ` +
         `prevent. Underlying error: ${(error as Error).message}`,
       { cause: error }
     );
+  }
+
+  /* ── The role must be able to MINT the runtime role ────────────────────────
+     Checked AFTER reachability and outside its catch, because the database is
+     reachable in this case — reporting it as "cannot reach the test database"
+     would send the reader after the wrong fault.
+
+     createScratchSchema (tests/db/harness.ts) provisions a throwaway
+     non-superuser login role through the real provision-app-role.mjs, because
+     a harness that re-implements the thing under test agrees with itself and
+     not with production. That needs CREATEROLE.
+
+     Without this check the suite does not fail with one configuration error:
+     22 of its 41 files die at import with a serialized pg object whose only
+     readable part is `code: '42501'`, and the run still reports 149 passing —
+     which reads like a mostly-working suite rather than one that could not
+     start. Measured on a container whose DATABASE_URL role owned the tables
+     but was not a superuser (2026-09-23). It matters because this is the lane
+     that catches what a mocked pool cannot: the regression that motivated the
+     check reached main while this lane looked half-green. */
+  try {
+    const { rows } = await pool.query<{ role: string; canCreateRole: boolean }>(
+      `SELECT current_user AS role,
+              (rolsuper OR rolcreaterole) AS "canCreateRole"
+         FROM pg_roles WHERE rolname = current_user`,
+    );
+    const role = rows[0];
+    if (role && !role.canCreateRole) {
+      throw new Error(
+        `[db-suite] the database role "${role.role}" has neither SUPERUSER nor CREATEROLE, so ` +
+          'the harness cannot mint the throwaway non-superuser runtime role every ' +
+          'tenant-isolation test connects as. Point TEST_DATABASE_URL at a role that can — ' +
+          'the owner/admin credentials the migrations run under — and leave DATABASE_URL as ' +
+          'the application role:\n' +
+          '  TEST_DATABASE_URL=postgresql://<admin>:<pw>@<host>/<db> npm run test:db',
+      );
+    }
   } finally {
     await pool.end();
   }

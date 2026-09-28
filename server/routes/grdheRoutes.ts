@@ -19,7 +19,7 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { grdheService, AuditScopeError } from '../services/grdhe/grdheService';
+import { grdheService, AuditScopeError, ExportJobNotFoundError } from '../services/grdhe/grdheService';
 import {
   DataRegion,
   TerminologySystem,
@@ -722,6 +722,11 @@ router.post('/exports/:jobId/cancel', asyncHandler(async (req: Request, res: Res
       data: job
     });
   } catch (error: any) {
+    // Not this tenant's job: say so, rather than a success with no job in it
+    // (ledger L203).
+    if (error instanceof ExportJobNotFoundError) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Export job not found' } });
+    }
     res.status(400).json({
       success: false,
       error: {

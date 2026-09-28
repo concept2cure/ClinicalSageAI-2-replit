@@ -5,9 +5,10 @@
  * This is the GA read path: no legacy blob, no honest-empty placeholders. Every
  * field the surface renders — sections, content, objectives, eligibility, schedule
  * of assessments (with the SoA engine's validation as `issues`), risks, milestones,
- * amendments, deviations, budget (with the budget engine's summary), reviews,
- * consent (the latest linked consent form's elements), the study team, the
- * cover-page sponsor / principal investigator, completeness — is mapped from the
+ * amendments, deviations, budget (with the budget engine's summary), reviews
+ * (each disposition's signature), the finalization signature (both read from
+ * electronic_signatures), consent (the latest linked consent form's elements),
+ * the study team, the cover-page sponsor / principal investigator, completeness — is mapped from the
  * same tables the CRUD routes and the AnA protocol tools write. Children are fetched in bulk (one query per table via ANY($docIds)),
  * so the whole surface for an org is a bounded, small number of queries regardless
  * of protocol count. Org-scoped throughout; soft-deleted rows excluded.
@@ -19,6 +20,7 @@ import { buildSoaMatrix, validateSoa } from '../protocol-soa/protocol-soa-logic'
 import { computeProtocolBudget } from '../protocol-budget/protocol-budget-logic';
 import { rowsToStudyDesign } from '../study-design/study-design-repository';
 import { validateDesign } from '../study-design/design-validation';
+import { dispositionTarget, finalizationTarget, readSignatureFacets, type PdevSignatureFacet } from './protocol-signature-manifestation';
 
 const MAX_DOCS = 25;
 
@@ -55,6 +57,7 @@ function milestoneUrgency(targetDate: unknown, actualDate: unknown, now: number)
 function mapReviews(
   rows: Record<string, unknown>[],
   comments: Record<string, unknown>[],
+  signatureOf: (target: string) => PdevSignatureFacet,
 ): unknown[] {
   const mapped = comments.map((c) => ({
     id: str(c.id), sec: str(c.section_ref), sev: str(c.severity), text: str(c.comment), resolved: bool(c.resolved),
@@ -65,6 +68,8 @@ function mapReviews(
     // responsibility for recording a reviewer who has no account.
     reviewerUserId: rv.reviewer_user_id == null ? null : Number(rv.reviewer_user_id),
     disposition: str(rv.disposition), dueDate: rv.due_date ? String(rv.due_date).slice(0, 10) : '',
+    // Who signed it, from the signature row, not the assignment's label.
+    signature: signatureOf(dispositionTarget(str(rv.id))),
     comments: mapped,
   }));
 }
@@ -189,7 +194,12 @@ function mapDeviations(
   const at = (id: number) => capaByDev.get(str(id)) ?? [];
   return rows.map((dv) => ({
     id: str(dv.id), title: str(dv.description), sev: str(dv.severity), cat: str(dv.category),
-    reportable: bool(dv.is_reportable), status: str(dv.status),
+    // Assessed = severity AND safety impact recorded. Legacy rows (defaulted
+    // severity, no safety assessment) read as not assessed — which they were.
+    assessed: dv.severity != null && dv.affects_safety != null,
+    // true = prompt IRB report indicated; false = not indicated; null = not determined.
+    reportable: dv.is_reportable === null || dv.is_reportable === undefined ? null : bool(dv.is_reportable),
+    status: str(dv.status),
     capa: at(Number(dv.id)).map((c) => ({ id: str(c.deviation_id), action: str(c.action), status: str(c.status) })),
   }));
 }
@@ -410,7 +420,7 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
        could not tell a CRITICAL deviation from a MINOR one — which is the 3-day
        versus 10-day reporting distinction — and open rendered identically to
        closed. */
-    q(`SELECT id, protocol_document_id, deviation_number, description, is_reportable, severity, category, status FROM protocol_deviations WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
+    q(`SELECT id, protocol_document_id, deviation_number, description, is_reportable, severity, affects_safety, category, status FROM protocol_deviations WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     q(`SELECT id, protocol_document_id, category, description, unit_cost, quantity_per_subject FROM protocol_budget_items WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     q(`SELECT protocol_document_id, target_enrollment, sponsor_payment_per_subject, indirect_rate_pct FROM protocol_budget_params WHERE protocol_document_id = ANY($1) AND organization_id = $2`),
     q(`SELECT id, protocol_document_id, reviewer_name, reviewer_user_id, role, status, disposition, due_date FROM protocol_review_assignments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
@@ -434,7 +444,8 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
   const amendmentIds = amendments.rows.map((a) => Number(a.id));
   const deviationIds = deviations.rows.map((d) => Number(d.id));
   const consentFormIds = consentForms.rows.map((f) => Number(f.id));
-  const [amendChanges, capa, consentElements] = await Promise.all([
+  const signedTargets = [...ids.map(finalizationTarget), ...reviewAssignments.rows.map((r) => dispositionTarget(str(r.id)))];
+  const [amendChanges, capa, consentElements, signatureOf] = await Promise.all([
     amendmentIds.length
       ? pool.query(`SELECT amendment_id, section_ref, change_description, previous_text, proposed_text FROM protocol_amendment_changes WHERE amendment_id = ANY($1)`, [amendmentIds])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
@@ -444,6 +455,7 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
     consentFormIds.length
       ? pool.query(`SELECT id, consent_form_id, element_key, title, required, present, order_index FROM consent_form_elements WHERE consent_form_id = ANY($1) AND organization_id = $2 ORDER BY order_index, id`, [consentFormIds, orgId])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
+    readSignatureFacets(orgId, signedTargets),
   ]);
 
   const byDoc = {
@@ -567,7 +579,10 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
       budget: mapBudget(params, budgetRows, budgetSummary),
       amendments: mapAmendments(g(byDoc.amendments, id), changesByAmend),
       deviations: mapDeviations(g(byDoc.deviations, id), capaByDev),
-      reviews: mapReviews(g(byDoc.reviewAssignments, id), g(commentsByAssignment, id)),
+      reviews: mapReviews(g(byDoc.reviewAssignments, id), g(commentsByAssignment, id), signatureOf),
+      /* Who finalized it, from the signature row; `none` on a finalized
+         protocol is a finalization with no signature on record. */
+      finalization: signatureOf(finalizationTarget(id)),
       consent: consentEls.map((e) => ({ id: str(e.id), el: str(e.title), key: str(e.element_key), required: bool(e.required), present: bool(e.present) })),
       consentForm: latestConsentForm
         ? { id: str(latestConsentForm.id), title: str(latestConsentForm.title), version: str(latestConsentForm.version), status: str(latestConsentForm.status), formsLinked: g(byDoc.consentForms, id).length }

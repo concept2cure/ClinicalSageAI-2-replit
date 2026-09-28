@@ -251,3 +251,46 @@ describe('GET /licensing/trials', () => {
     expect(r.body.trials).toBeUndefined();
   });
 });
+
+/* WO-16C. `record()` awaited auditService.logAction and discarded the outcome,
+   so the platform owner changing a customer's entitlement (set, convert or end
+   a trial) was answered the same whether or not the §11.10(e) row existed. */
+describe('trial writes carry the audit-row outcome', () => {
+  it('a set trial whose row was lost still grants, and says the row is missing', async () => {
+    targetsResolve(null);
+    logAction.mockResolvedValueOnce({ persisted: false, chained: false, tamperProof: false, error: 'audit store unreachable' });
+    const r = res();
+    await handler('post', '/licensing/trials')(
+      req({ organizationId: 1, moduleId: 'pv-cockpit', until: FUTURE, reason: '30-day evaluation' }),
+      r,
+    );
+    expect(r.statusCode).toBe(200);
+    expect(writeModuleGrant).toHaveBeenCalled();
+    expect(r.body.auditTrail).toEqual({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: expect.any(String) });
+  });
+
+  it('a conversion whose row was written says so', async () => {
+    targetsResolve(FUTURE);
+    writeModuleGrant.mockResolvedValue({
+      organization_id: 1, module_id: 'pv-cockpit', enabled: true, expires_at: null, updated_at: NOW.toISOString(),
+    });
+    logAction.mockResolvedValueOnce({ persisted: true, chained: true, tamperProof: true });
+    const r = res();
+    await handler('post', '/licensing/trials/convert')(
+      req({ organizationId: 1, moduleId: 'pv-cockpit', reason: 'purchase order received' }),
+      r,
+    );
+    expect(r.body.auditTrail).toEqual({ persisted: true, chained: true });
+  });
+
+  it('an ended trial whose row was lost says so', async () => {
+    targetsResolve(FUTURE);
+    logAction.mockResolvedValueOnce({ persisted: false, chained: false, tamperProof: false });
+    const r = res();
+    await handler('post', '/licensing/trials/end')(
+      req({ organizationId: 1, moduleId: 'pv-cockpit', reason: 'customer declined' }),
+      r,
+    );
+    expect(r.body.auditTrail).toMatchObject({ persisted: false });
+  });
+});

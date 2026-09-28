@@ -29,7 +29,7 @@
  * approval-gated task) the ceremony lives on the Task board, and the panel
  * says so and offers to go there rather than re-implementing a signing dialog.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 import { apiRequest, redactInternals, serverMessage, type ApiRequestError } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
@@ -164,11 +164,30 @@ function refusalFromResponse(res: Response, json: unknown): string | null {
   return null;
 }
 
-/** A thrown PATCH failure, named: the §11.50 gate, a state-machine conflict, or a plain refusal. */
+/** A thrown PATCH failure, named: the §11.50 gate, a state-machine conflict, a
+ *  plain refusal, or an outcome nobody can confirm. */
 type TransitionFailure =
   | { kind: 'esign' }
   | { kind: 'conflict'; message: string }
-  | { kind: 'refused'; message: string };
+  | { kind: 'refused'; message: string }
+  | { kind: 'unknown'; message: string };
+
+/** Gateway statuses: usually a proxy's page, not the route's answer. */
+const GATEWAY_STATUSES = new Set([502, 503, 504]);
+
+/**
+ * A COMMIT the server could not confirm (OUTCOME_UNKNOWN), or a gateway's
+ * answer: the change may have landed, so it is never reported as unchanged.
+ */
+function unknownOutcome(err: Partial<ApiRequestError> & { message?: string }): TransitionFailure | null {
+  if (err?.code === 'OUTCOME_UNKNOWN') {
+    return { kind: 'unknown', message: (err.message || 'Whether this change was saved is unknown.') + ' Re-reading the task list.' };
+  }
+  if (err?.status !== undefined && GATEWAY_STATUSES.has(err.status)) {
+    return { kind: 'unknown', message: 'Couldn’t confirm the change: whether it was saved is unknown. Re-reading the task list.' };
+  }
+  return null;
+}
 
 /**
  * Which of the three failure shapes a thrown transition is. Exists because the
@@ -178,6 +197,8 @@ type TransitionFailure =
 function classifyTransitionError(e: unknown): TransitionFailure {
   const err = e as Partial<ApiRequestError> & { message?: string };
   if (err?.status === 428 || err?.code === 'ESIGN_REQUIRED') return { kind: 'esign' };
+  const unknown = unknownOutcome(err);
+  if (unknown) return unknown;
   if (err?.status === 409) {
     return {
       kind: 'conflict',
@@ -299,12 +320,35 @@ export interface ReviewTasksPanelProps {
   docTitle: string | null;
   refreshKey: number;
   onAssign: () => void;
+  /* GE-P-3 (2026-09-28): the server's refusal of Assign review for this
+     caller, as the sentence to show; the control is disabled and described by
+     it. Null or absent = allowed or unknown: enabled, the server decides. */
+  assignRefusal?: string | null;
   onNav?: (id: string) => void;
   onClose: () => void;
   fireToast: FireToast;
 }
 
-export function ReviewTasksPanel({ docId, docTitle, refreshKey, onAssign, onNav, onClose, fireToast }: ReviewTasksPanelProps) {
+const TASK_LEDGER_HINT =
+  'Each task is a row on the organization’s task ledger, linked to this document by its id, and every transition is audited.';
+
+/** No task yet. GE-P-3: when the server refuses Assign review, the refused act
+ *  stays visible, disabled, in the bar above with its reason; this empty state
+ *  does not repeat it as a live button. */
+function NoTasksYet({ onAssign, assignRefusal }: { onAssign: () => void; assignRefusal?: string | null }) {
+  return (
+    <EmptyState
+      icon={I.checkSquare}
+      title="No tasks linked to this document"
+      hint={assignRefusal ? TASK_LEDGER_HINT : 'Assign a review to create one. ' + TASK_LEDGER_HINT}
+      action={assignRefusal ? undefined : { label: 'Assign review', onAct: onAssign }}
+      testId="rt-empty"
+    />
+  );
+}
+
+export function ReviewTasksPanel({ docId, docTitle, refreshKey, onAssign, assignRefusal, onNav, onClose, fireToast }: ReviewTasksPanelProps) {
+  const assignNoteId = useId();
   const { state, rows, error, reload } = useDocumentTasks(docId, refreshKey);
   const [busy, setBusy] = useState<string | null>(null);
   /** A completion the server gated on a signature: named on the row, with the way there. */
@@ -334,7 +378,7 @@ export function ReviewTasksPanel({ docId, docTitle, refreshKey, onAssign, onNav,
         return;
       }
       fireToast(failure.message, 'error');
-      if (failure.kind === 'conflict') reload(docId);
+      if (failure.kind === 'conflict' || failure.kind === 'unknown') reload(docId);
     } finally {
       setBusy(null);
     }
@@ -355,13 +399,19 @@ export function ReviewTasksPanel({ docId, docTitle, refreshKey, onAssign, onNav,
           <span className="rt-bar-n">
             {state === 'ready' ? `${openCount} open · ${rows.length} total` : state === 'error' ? 'not read' : 'reading…'}
           </span>
-          <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={onAssign} data-testid="rt-assign">
+          <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={onAssign} data-testid="rt-assign"
+            disabled={!!assignRefusal} aria-describedby={assignRefusal ? assignNoteId : undefined}>
             {I.user} Assign review
           </button>
           <button type="button" className="nda-open" onClick={() => reload(docId)} disabled={state === 'loading'}>
             {state === 'loading' ? 'Loading…' : 'Refresh'}
           </button>
         </div>
+      )}
+      {docId && assignRefusal && (
+        <p id={assignNoteId} className="scaf-note" style={{ padding: '4px 12px', margin: 0, fontSize: 11.5 }} data-testid="rt-assign-refusal">
+          {assignRefusal}
+        </p>
       )}
       {!docId ? (
         <EmptyState icon={I.checkSquare} title="No document selected" hint="Select a document to see the tasks linked to it." />
@@ -377,13 +427,7 @@ export function ReviewTasksPanel({ docId, docTitle, refreshKey, onAssign, onNav,
       ) : state === 'loading' && rows.length === 0 ? (
         <div role="status" className="scaf-note" style={{ padding: 12 }}>Reading the task ledger…</div>
       ) : rows.length === 0 ? (
-        <EmptyState
-          icon={I.checkSquare}
-          title="No tasks linked to this document"
-          hint="Assign a review to create one. Each task is a row on the organization’s task ledger, linked to this document by its id, and every transition is audited."
-          action={{ label: 'Assign review', onAct: onAssign }}
-          testId="rt-empty"
-        />
+        <NoTasksYet onAssign={onAssign} assignRefusal={assignRefusal} />
       ) : (
         <div className="rt-list" role="list" aria-label="Tasks linked to this document">
           {rows.map(t => (

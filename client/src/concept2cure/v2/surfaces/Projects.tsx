@@ -9,7 +9,12 @@ import {
 } from '@shared/constants/domain/product-types';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import {
+  listedChoices,
+  notifySurfaceActionReady,
+  useSurfaceActionHandlers,
+  type DirectiveProgram,
+} from '../surfaceActions';
 import { usePublishSurfaceContext } from '../surfaceContext';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
@@ -890,6 +895,25 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
 
 /* ════ Projects — portfolio of programs ════ */
 
+/** True when the list route said there is more than the page it returned. */
+function readIsPaged(meta: Record<string, unknown> | undefined): boolean {
+  return meta !== undefined && meta.hasMore === true;
+}
+
+/** A count read from one page of a longer list is a floor, and reads as one. */
+function countFloor(n: number, paged: boolean): string {
+  return paged ? `${n}+` : String(n);
+}
+
+function PortfolioPagedNote({ paged, settled, count }: { paged: boolean; settled: boolean; count: number }) {
+  if (!paged || !settled) return null;
+  return (
+    <div role="status" className="scaf-note" style={{ marginBottom: 12 }}>
+      Showing the first {count} programs. The totals, the average readiness and search cover these only.
+    </div>
+  );
+}
+
 /**
  * Portfolio row — the display contract projected by GET /api/c2c/projects
  * (server/routes/c2c/projects.ts), one field per real `regulatory_programs`
@@ -934,6 +958,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [reloadNonce, setReloadNonce] = useState(0);
   const live = useLiveRows<ProjPortfolioEntry>('/api/c2c/projects', [reloadNonce]);
   const projects = live.rows;
+  /* The read is one page (50 by default) and the route says when there is
+     more (`meta.hasMore`). Ignored, an org with 80 programs read "50 active
+     programs", the mean covered 50 and search could not find the 51st. The
+     count is a floor then, and the screen and AnA are told so. */
+  const truncated = readIsPaged(live.meta);
 
   /* Search matches the two things a person actually knows a programme by — its
      title and its code. Deliberately NOT `lead`: the server projects that as
@@ -957,7 +986,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      reading the header learned they run nothing and have nothing blocked. */
   const kv = (v: string) => (live.loading || live.error ? '—' : v);
   const health = [
-    { l: 'Active programs', n: kv(String(projects.length)), m: 'across MDX, Biotech, Pharma', t: '' },
+    { l: 'Active programs', n: kv(countFloor(projects.length, truncated)), m: 'across MDX, Biotech, Pharma', t: '' },
     { l: 'Average readiness', n: kv(Math.round(projects.reduce((s, p) => s + p.readiness, 0) / (projects.length || 1)) + '%'), m: 'portfolio mean', t: '' },
     { l: 'Blocked', n: kv(String(projects.filter(p => p.status === 'blocked').length)), m: 'need attention', t: 'err' },
     { l: 'Filing < 60 days', n: kv(String(projects.filter(p => /days/.test(p.due)).length)), m: 'near-term submissions', t: 'warn' },
@@ -1019,10 +1048,12 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     return {
       summary:
         `Projects portfolio: ${projects.length} regulatory program(s)` +
+        (truncated ? ` — the first ${projects.length} only; more exist, and every figure here covers the first ${projects.length}` : '') +
         (filtered ? `, filtered to ${list.length} by ${by.join(' and ')}` : '') +
         `. ${blocked.length} blocked, average readiness ${health[1].n}. Shown as a ${view}.`,
       facts: {
         totalPrograms: projects.length,
+        portfolioTruncated: truncated,
         shownInList: list.length,
         workstreamFilter: ws,
         statusFilter: status,
@@ -1049,10 +1080,12 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         'Create a new project through the new-project wizard',
       ],
     };
-  }, [wizardOpen, live.loading, live.error, projects, list, ws, status, q, needle, view, health]);
+  }, [wizardOpen, live.loading, live.error, projects, list, ws, status, q, needle, view, health, truncated]);
   usePublishSurfaceContext('projects', anaContext);
 
-  const openProj = (pr: ProjPortfolioEntry) => {
+  const openProj = (
+    pr: Pick<ProjPortfolioEntry, 'id' | 'title' | 'code'> & Partial<Pick<ProjPortfolioEntry, 'ws' | 'status'>>,
+  ) => {
     try {
       publishShellProject({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status });
       if (window.C2C?.setSurface) window.C2C.setSurface('project-home', pr.title);
@@ -1067,21 +1100,48 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   /* One guard for all three: while the wizard owns the canvas, a person may be
      mid-form — AnA operating the portfolio underneath (or navigating away)
      would discard their work. Honest refusal instead. */
+  /* The program the server found. act_on_screen resolves the reference across
+     every program the person has and hands over the one it matched; this page
+     lists only the 50 most recent, so a program past it was refused here as
+     unknown although it exists. It arrives beside the params, never in them —
+     the model writes params. Needs no page, so it does not wait for one. */
+  const openResolvedProgram = (program: DirectiveProgram, named: string | undefined) => {
+    const found = projects.find((p) => p.id === program.id) ?? {
+      id: program.id,
+      title: program.name || named || '',
+      code: program.code || '—',
+    };
+    openProj(found);
+    return { ok: true as const, detail: `Opened ${found.code} — ${found.title}` };
+  };
   const wizardGuard = () =>
     wizardOpen ? { ok: false as const, reason: 'The new-project wizard is open — close it first.' } : null;
   useSurfaceActionHandlers('projects', {
-    'projects.open-program': (params) => {
+    'projects.open-program': (params, { program }) => {
       const guarded = wizardGuard();
       if (guarded) return guarded;
+      if (program) return openResolvedProgram(program, params.program);
       const wanted = (params.program ?? '').trim().toLowerCase();
-      if (!wanted) return { ok: false, reason: 'No program named.' };
       // Not-ready, not failed: the bus holds the directive and re-attempts on
       // this surface's ready signal below — the navigate→act gap.
       if (live.loading)
         return { ok: false, reason: 'The portfolio is still loading.', retry: true };
       if (live.error) return { ok: false, reason: 'The portfolio could not be read.' };
+      const programName = (p: (typeof projects)[number]) => `${p.code} — ${p.title}`;
+      const listed = () => listedChoices(projects.map(programName), 'Programs listed');
+      if (!wanted) return { ok: false, reason: `No program named.${listed()}` };
+      /* Exact first, on the keys the server resolves a reference by
+         (drive-context.ts resolveProgramRef): the id, the trimmed code, the
+         title. The id was not one of them here. AnA is handed each program's
+         id beside its name, act_on_screen resolves the reference before the
+         directive is sent, and it sends on a reference the server matched —
+         so a program open-by-id that the server had found was refused here as
+         "No program named …" while it sat on this very page. */
       const exact = projects.find(
-        (p) => p.code.toLowerCase() === wanted || p.title.toLowerCase() === wanted,
+        (p) =>
+          p.id.toLowerCase() === wanted ||
+          p.code.trim().toLowerCase() === wanted ||
+          p.title.toLowerCase() === wanted,
       );
       const contains = exact
         ? []
@@ -1094,8 +1154,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           ok: false,
           reason:
             contains.length > 1
-              ? `"${params.program}" matches ${contains.length} programs — name one exactly.`
-              : `No program named "${params.program}" in this portfolio.`,
+              ? `"${params.program}" matches ${contains.length} programs — name one exactly.${listedChoices(
+                  contains.map(programName),
+                  'Matches',
+                )}`
+              : `No program named "${params.program}" in this portfolio.${listed()}`,
         };
       }
       openProj(match);
@@ -1168,6 +1231,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           </span>
         ))}
       </div>
+      <PortfolioPagedNote paged={truncated} settled={!live.loading && !live.error} count={projects.length} />
 
       <div className="pj-toolbar">
         <div className="pj-search">

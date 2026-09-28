@@ -1,0 +1,131 @@
+# Reproductions DP-03 and DP-04 on PostgreSQL 16.13 (scratch cluster), audited commit adbf2d186cf8136c786cd76377c1b2c15eb8bc69, 2026-09-24T19:48:18Z
+# Schema: electronic_signatures and audit_logs verbatim from migrations/0000_sweet_joseph.sql; triggers from
+#   db/migrations/20260730_esign_audit_db_level_immutability.sql (C2C set index 54) and db/migrations/20260617_audit_logs_immutability.sql (index 210).
+# Companion migrations 20260725_esig_gate_columns_port / 20260813c2 / 20260813d fail here on tables outside this scratch schema; the three
+#   electronic_signatures columns they add are added below with the same definitions (grep of the migrations follows).
+
+migrations/20260813c2_electronic_signatures_tenant_key.sql:62:  ADD COLUMN IF NOT EXISTS organization_id INTEGER REFERENCES organizations(id);
+db/migrations/20260725_esig_gate_columns_port.sql:112:  ADD COLUMN IF NOT EXISTS organization_id INTEGER REFERENCES organizations(id);
+db/migrations/20260725_esig_gate_columns_port.sql:122:  ADD COLUMN IF NOT EXISTS superseded_by INTEGER REFERENCES electronic_signatures(id);
+
+## 0. Add the three columns
+electronic_signatures.id type: integer
+ALTER TABLE electronic_signatures ADD COLUMN IF NOT EXISTS organization_id integer; ALTER TABLE electronic_signatures ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now(); ALTER TABLE electronic_signatures ADD COLUMN IF NOT EXISTS superseded_by integer REFERENCES electronic_signatures(id);
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+
+## 1. NOT NULL columns without defaults (what a minimal INSERT must supply)
+audit_logs tenant_id integer
+audit_logs action text
+audit_logs table_name text
+audit_logs record_id text
+electronic_signatures document_id integer
+electronic_signatures version_id integer
+electronic_signatures signature_type character varying
+electronic_signatures signature_purpose text
+electronic_signatures signer_id integer
+electronic_signatures signer_name text
+electronic_signatures signer_email text
+electronic_signatures authentication_method character varying
+electronic_signatures authentication_timestamp timestamp without time zone
+electronic_signatures signature_hash character varying
+
+## 2. DP-03 — seed: signature S1 (organization 7)
+INSERT INTO electronic_signatures (document_id, version_id, signature_type, signature_purpose, signer_id, signer_name, signer_email, authentication_method, authentication_timestamp, signature_hash, organization_id) VALUES (1, 1, 'x', 'x', 1, 'x', 'x', 'x', now(), 'x', 7) RETURNING id;
+ id 
+----
+  1
+(1 row)
+
+INSERT 0 1
+
+## 3. DP-03 — seed: revocation record S2 (organization 7)
+INSERT INTO electronic_signatures (document_id, version_id, signature_type, signature_purpose, signer_id, signer_name, signer_email, authentication_method, authentication_timestamp, signature_hash, organization_id) VALUES (1, 1, 'x', 'x', 1, 'x', 'x', 'x', now(), 'x', 7) RETURNING id;
+ id 
+----
+  2
+(1 row)
+
+INSERT 0 1
+
+## 4. DP-03 — THE DEFECT: the exact UPDATE from server/services/part11/signature-persistence.ts:867-875 (revocation marks the superseded row)
+UPDATE electronic_signatures
+        SET superseded_by = 2,
+            is_valid = false,
+            verification_status = 'revoked',
+            verification_date = now(),
+            updated_at = now()
+      WHERE id = 1 AND organization_id = 7 AND superseded_by IS NULL
+      RETURNING id;
+ERROR:  IMMUTABILITY_VIOLATION: electronic_signatures rows are append-only (§11.70); only the write-once superseded_by transition is permitted. Insert a correcting signature instead of modifying row 1.
+CONTEXT:  PL/pgSQL function esign_block_mutation() line 19 at RAISE
+
+## 5. DP-03 — control: the same UPDATE touching only the two columns the trigger permits
+UPDATE electronic_signatures SET superseded_by = 2, updated_at = now() WHERE id = 1 AND organization_id = 7 AND superseded_by IS NULL RETURNING id, superseded_by, is_valid;
+ id | superseded_by | is_valid 
+----+---------------+----------
+  1 |             2 | t
+(1 row)
+
+UPDATE 1
+
+## 6. DP-04 — runtime role: LOGIN NOSUPERUSER NOBYPASSRLS with the recipe's public-table privileges (scripts/db/provision-app-role.mjs:139-144 grants SELECT, INSERT, UPDATE, DELETE on public tables; only the audit schema is SELECT, INSERT)
+DROP ROLE IF EXISTS app_service_repro; CREATE ROLE app_service_repro LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION; GRANT USAGE ON SCHEMA public TO app_service_repro; GRANT SELECT, INSERT, UPDATE, DELETE ON audit_logs TO app_service_repro; GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_service_repro; SELECT rolname, rolsuper, rolbypassrls FROM pg_roles WHERE rolname='app_service_repro';
+DROP ROLE
+CREATE ROLE
+GRANT
+GRANT
+GRANT
+      rolname      | rolsuper | rolbypassrls 
+-------------------+----------+--------------
+ app_service_repro | f        | f
+(1 row)
+
+NOTICE:  role "app_service_repro" does not exist, skipping
+
+## 7. DP-04 — seed: one audit_logs row (as owner)
+INSERT INTO audit_logs (tenant_id, action, table_name, record_id) VALUES (1, 'x', 'x', 'x') RETURNING id;
+                  id                  
+--------------------------------------
+ eca013cb-d131-4dc8-88d6-f31b1abf6747
+(1 row)
+
+INSERT 0 1
+
+## 8. DP-04 — control: a plain DELETE as the runtime role is refused by the trigger
+DELETE FROM audit_logs WHERE id = 'eca013cb-d131-4dc8-88d6-f31b1abf6747';
+ERROR:  IMMUTABILITY_VIOLATION: audit_logs are append-only
+DETAIL:  DELETE is not permitted on audit_logs outside the authorized retention/archival path. Attempted to delete row id=eca013cb-d131-4dc8-88d6-f31b1abf6747. 21 CFR Part 11 §11.10(e) requires immutable audit trails.
+HINT:  Only the archival service may delete, and only after copying rows to cold storage (it sets SET LOCAL app.audit_archive_bypass = 'on'). Insert a superseding event rather than deleting history.
+CONTEXT:  PL/pgSQL function enforce_audit_logs_no_delete() line 10 at RAISE
+
+## 9. DP-04 — THE DEFECT: the runtime role sets the archive GUC itself inside its own transaction and the DELETE succeeds
+BEGIN; SET LOCAL app.audit_archive_bypass = 'on'; DELETE FROM audit_logs WHERE id = 'eca013cb-d131-4dc8-88d6-f31b1abf6747'; COMMIT; SELECT count(*) AS rows_left FROM audit_logs WHERE id = 'eca013cb-d131-4dc8-88d6-f31b1abf6747';
+BEGIN
+SET
+DELETE 1
+COMMIT
+ rows_left 
+-----------
+         0
+(1 row)
+
+
+## 10. DP-04 — the GUC is an unregistered custom setting: no privilege is needed to SET it (outside the transaction it reads empty again)
+SELECT coalesce(current_setting('app.audit_archive_bypass', true), '<unset>') AS outside_tx;
+ outside_tx 
+------------
+ <unset>
+(1 row)
+
+
+## 11. DP-04 — for contrast, the same role against the append-only schema the recipe protects by GRANT: no DELETE privilege at all (audit.tamper_proof_log is the only table the recipe lists as APPEND_ONLY, provision-app-role.mjs:152)
+SELECT has_table_privilege('app_service_repro','audit_logs','DELETE') AS delete_on_audit_logs;
+ delete_on_audit_logs 
+----------------------
+ t
+(1 row)
+
+
+# end 2026-09-24T19:48:52Z

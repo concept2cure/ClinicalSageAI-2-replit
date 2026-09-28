@@ -1,0 +1,1 @@
+[ci:rls-allowlist-sync] OK — 6 entries match across RLS_ALLOWLIST and 4 consumers

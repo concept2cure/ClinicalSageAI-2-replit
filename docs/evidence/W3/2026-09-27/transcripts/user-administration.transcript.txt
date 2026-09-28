@@ -1,0 +1,16 @@
+admin: user:1 (password+totp), roles ["admin","user"]
+add oq-signer@validation.local as admin: 201; user:3 createdNewUser=true; seat ok; invitation delivery=link emailSent=false expiresAt=2026-10-18T23:39:30.170Z link=http://127.0.0.1:5200/concept2cure/password-reset?token=[REDACTED]
+  activation: set own password 200 "Password reset successfully"
+  the same link again: 400 AUTH_006 Invalid or expired reset token
+add oq-platform@validation.local as member: 201; user:4 createdNewUser=true; seat ok; invitation delivery=link emailSent=false expiresAt=2026-10-18T23:39:30.601Z link=http://127.0.0.1:5200/concept2cure/password-reset?token=[REDACTED]
+  activation: set own password 200 "Password reset successfully"
+  the same link again: 400 AUTH_006 Invalid or expired reset token
+add oq-standing@validation.local as member: 201; user:5 createdNewUser=true; seat ok; invitation delivery=link emailSent=false expiresAt=2026-10-18T23:39:30.959Z link=http://127.0.0.1:5200/concept2cure/password-reset?token=[REDACTED]
+  activation: set own password 200 "Password reset successfully"
+  the same link again: 429 RATE_LIMIT Too many password reset requests. Please try again later.
+members of organisation 1: 200
+  user:2 [the demo account the development posture seeds at boot, seed-default-org.ts] role=admin status=active
+  user:1 oq-runner@validation.local role=admin status=active
+  user:4 oq-platform@validation.local role=member status=active
+  user:3 oq-signer@validation.local role=admin status=active
+  user:5 oq-standing@validation.local role=member status=active

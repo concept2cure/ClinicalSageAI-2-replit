@@ -19,13 +19,22 @@ vi.hoisted(() => {
   process.env.SKIP_DB_STARTUP_TEST = 'true';
 });
 
-const gatewayState = vi.hoisted(() => ({ responses: [] as any[] }));
+const gatewayState = vi.hoisted(() => ({ responses: [] as any[], requests: [] as any[] }));
 vi.mock('../../ai-gateway/gateway', () => ({
   getGateway: () => ({
-    route: async () =>
-      gatewayState.responses.shift() ?? { content: 'done', toolUses: [], usage: {}, provider: 'anthropic', model: 'claude-opus-5' },
+    route: async (req: unknown) => {
+      gatewayState.requests.push(req);
+      return gatewayState.responses.shift() ?? { content: 'done', toolUses: [], usage: {}, provider: 'anthropic', model: 'claude-opus-5' };
+    },
   }),
 }));
+
+// 2026-09-28: a confirmed write now also needs an identified member with an editor
+// role (writeRoleRefusal, after the model and confirmation gates). The "person's
+// yes" case below models a member; the role is stubbed so no DB is needed.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({ resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member') }));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -131,19 +140,22 @@ describe('the gate, on the real registered handlers', () => {
 });
 
 describe('the /api/chat door: the agentic loop tells the gate which model produced each call', () => {
+  // A governed write outside CONFIRM_TIER_TOOLS, so this pins the model hand-off
+  // alone. (save_document_to_vault was the example until P0-12 put it behind a
+  // person's confirmation; on this door it is now proposed — pinned below.)
   const inner = vi.fn(async () => JSON.stringify({ status: 'saved' }));
   beforeEach(() => {
     inner.mockClear();
     gatewayState.responses = [];
-    registerToolHandler('save_document_to_vault', inner);
+    registerToolHandler('update_protocol_section', inner);
   });
-  const request = { taskType: 'chat' as const, messages: [{ role: 'user' as const, content: 'save it' }], maxTokens: 512, tools: [{ name: 'save_document_to_vault' }] as any };
+  const request = { taskType: 'chat' as const, messages: [{ role: 'user' as const, content: 'save it' }], maxTokens: 512, tools: [{ name: 'update_protocol_section' }] as any };
   const toolRound = (served: { provider: string; model: string }) => ({
     content: '',
     provider: served.provider,
     model: served.model,
     usage: {},
-    toolUses: [{ id: 'tu1', name: 'save_document_to_vault', input: { title: 't', content: 'model-written', reason: 'reason text' } }],
+    toolUses: [{ id: 'tu1', name: 'update_protocol_section', input: { title: 't', content: 'model-written', reason: 'reason text' } }],
   });
 
   it('a call produced by Sonnet is refused and nothing is stored', async () => {
@@ -152,9 +164,23 @@ describe('the /api/chat door: the agentic loop tells the gate which model produc
     expect(inner).not.toHaveBeenCalled();
   });
 
-  it('a call produced by Opus reaches the handler', async () => {
+  it('a call produced by Opus clears the model gate — and, being a write, is put to a person, not run (P1-34)', async () => {
+    gatewayState.requests = [];
     gatewayState.responses.push(toolRound(OPUS));
     await executeAgenticLoop(request as any, { toolContext: { organizationId: 1 } } as any);
+    expect(inner).not.toHaveBeenCalled();
+    const fedBack = JSON.stringify(gatewayState.requests.at(-1));
+    expect(fedBack).toContain('HUMAN_CONFIRMATION_REQUIRED');
+    expect(fedBack).not.toContain('MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE');
+  });
+
+  it('and on a person\'s yes, the Opus-written content reaches the handler', async () => {
+    await getToolHandler('update_protocol_section')!({ section_id: 1, content: 'x' }, {
+      organizationId: 1,
+      userId: 2,
+      servingModel: OPUS,
+      humanConfirmed: true,
+    } as any);
     expect(inner).toHaveBeenCalledTimes(1);
   });
 
@@ -162,6 +188,20 @@ describe('the /api/chat door: the agentic loop tells the gate which model produc
     gatewayState.responses.push(toolRound(SONNET));
     await executeAgenticLoop(request as any, { toolContext: { organizationId: 1, servingModel: OPUS } } as any);
     expect(inner).not.toHaveBeenCalled();
+  });
+
+  it('a confirm-tier tool is proposed on this door, even from an approved model — nothing is stored', async () => {
+    const vaultSave = vi.fn(async () => JSON.stringify({ status: 'saved' }));
+    registerToolHandler('save_document_to_vault', vaultSave);
+    gatewayState.responses.push({
+      ...toolRound(OPUS),
+      toolUses: [{ id: 'tu2', name: 'save_document_to_vault', input: { title: 't', content: 'x', reason: 'reason text' } }],
+    });
+    await executeAgenticLoop(
+      { ...request, tools: [{ name: 'save_document_to_vault' }] } as any,
+      { toolContext: { organizationId: 1 } } as any,
+    );
+    expect(vaultSave).not.toHaveBeenCalled();
   });
 });
 

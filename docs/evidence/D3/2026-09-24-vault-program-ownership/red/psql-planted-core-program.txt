@@ -1,0 +1,45 @@
+# psql as app_service (SET LOCAL ROLE), RLS enforcing, tenant A's GUCs; rolled back. Script:
+\set ON_ERROR_STOP 1
+BEGIN;
+-- Two throwaway orgs (the sync trigger mirrors them into identity.organizations),
+-- one regulatory program and one vault document for B, as the owner.
+INSERT INTO organizations (id, name, slug) VALUES (90391,'probe-A','probe-a-90391'),(90392,'probe-B','probe-b-90392');
+SELECT uuid::text AS a FROM organizations WHERE id=90391 \gset
+SELECT uuid::text AS b FROM organizations WHERE id=90392 \gset
+INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
+  VALUES ('probe-B-program','PROBE-B',90392,'IND','drug','FDA','probe') RETURNING id::text AS bprog \gset
+INSERT INTO vault.documents (program_id, organization_id, content_hash, document_title, file_name, status, source_type)
+  VALUES (:'bprog', 90392, repeat('b',64), 'B-CONFIDENTIAL-CMC', 'b.txt', 'completed', 'txt');
+
+-- Tenant A, as the runtime role, RLS enforcing.
+SET LOCAL ROLE app_service;
+SELECT set_config('app.rls_enforce','on',true), set_config('app.current_org_id', :'a', true), set_config('app.current_tenant_id','90391',true);
+\echo '-- 1. tenant A reads B''s vault before (expect 0):'
+SELECT count(*) AS a_sees_b FROM vault.documents WHERE document_title='B-CONFIDENTIAL-CMC';
+\echo '-- 2. tenant A plants a core.programs row carrying B''s program id and A''s org:'
+INSERT INTO core.programs (id, name, org_id) VALUES (:'bprog', 'planted', :'a');
+\echo '-- 3. tenant A reads B''s vault after:'
+SELECT document_title AS a_now_reads FROM vault.documents WHERE document_title='B-CONFIDENTIAL-CMC';
+\echo '-- 4. and B, in its own session, reads its own document:'
+SELECT set_config('app.current_org_id', :'b', true), set_config('app.current_tenant_id','90392',true);
+SELECT count(*) AS b_sees_own FROM vault.documents WHERE document_title='B-CONFIDENTIAL-CMC';
+ROLLBACK;
+# Output:
+set_config|set_config|set_config
+(1 row)
+-- 1. tenant A reads B's vault before (expect 0):
+a_sees_b
+0
+(1 row)
+-- 2. tenant A plants a core.programs row carrying B's program id and A's org:
+-- 3. tenant A reads B's vault after:
+a_now_reads
+B-CONFIDENTIAL-CMC
+(1 row)
+-- 4. and B, in its own session, reads its own document:
+set_config|set_config
+c53629d4-f67c-4f27-bc7b-2284ee45ffab|90392
+(1 row)
+b_sees_own
+0
+(1 row)

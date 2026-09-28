@@ -215,7 +215,7 @@
   --text-300: #b0aea5;
 }
 
-/* ── --bg-200 · 29 selector(s) ── */
+/* ── --bg-200 · 30 selector(s) ── */
 .mdx-shell .anl-pace-bar,
 .mdx-shell .corr-kind.k-rta,
 .mdx-shell .dl-def-num,
@@ -244,12 +244,13 @@
 .mdx-shell .status-pill.draft,
 .mdx-shell .status-pill.locked,
 .mdx-shell .status-pill.non-serious,
-.mdx-shell .status-pill.reviewed {
+.mdx-shell .status-pill.reviewed,
+.mdx-shell .status-pill.uploaded {
   --text-400: #686661;
   --text-300: #5f5d58;
 }
-[data-theme="dark"] :is(.mdx-shell .anl-pace-bar, .mdx-shell .corr-kind.k-rta, .mdx-shell .dl-def-num, .mdx-shell .dr-def-num, .mdx-shell .drafter-foot-act.primary.is-disabled, .mdx-shell .drafter-foot-act.primary[disabled], .mdx-shell .drafter-kind-chip, .mdx-shell .drafter-kind-chip.kind-rta, .mdx-shell .ed-comment-avatar, .mdx-shell .ed-tree-foot-bar, .mdx-shell .ed-tree-row:hover, .mdx-shell .ftp-count, .mdx-shell .litbar .bar, .mdx-shell .match-bar, .mdx-shell .path-chip, .mdx-shell .pg-bar, .mdx-shell .pg-owner, .mdx-shell .ph-gov-sig.sig-reserved, .mdx-shell .ph-secbar-track, .mdx-shell .ph-task-who, .mdx-shell .phase-bar, .mdx-shell .pwt-count, .mdx-shell .readiness, .mdx-shell .stage-dot, .mdx-shell .stage-node.idle .stage-dot, .mdx-shell .status-pill.draft, .mdx-shell .status-pill.locked, .mdx-shell .status-pill.non-serious, .mdx-shell .status-pill.reviewed),
-[data-theme="dark"]:is(.mdx-shell .anl-pace-bar, .mdx-shell .corr-kind.k-rta, .mdx-shell .dl-def-num, .mdx-shell .dr-def-num, .mdx-shell .drafter-foot-act.primary.is-disabled, .mdx-shell .drafter-foot-act.primary[disabled], .mdx-shell .drafter-kind-chip, .mdx-shell .drafter-kind-chip.kind-rta, .mdx-shell .ed-comment-avatar, .mdx-shell .ed-tree-foot-bar, .mdx-shell .ed-tree-row:hover, .mdx-shell .ftp-count, .mdx-shell .litbar .bar, .mdx-shell .match-bar, .mdx-shell .path-chip, .mdx-shell .pg-bar, .mdx-shell .pg-owner, .mdx-shell .ph-gov-sig.sig-reserved, .mdx-shell .ph-secbar-track, .mdx-shell .ph-task-who, .mdx-shell .phase-bar, .mdx-shell .pwt-count, .mdx-shell .readiness, .mdx-shell .stage-dot, .mdx-shell .stage-node.idle .stage-dot, .mdx-shell .status-pill.draft, .mdx-shell .status-pill.locked, .mdx-shell .status-pill.non-serious, .mdx-shell .status-pill.reviewed) {
+[data-theme="dark"] :is(.mdx-shell .anl-pace-bar, .mdx-shell .corr-kind.k-rta, .mdx-shell .dl-def-num, .mdx-shell .dr-def-num, .mdx-shell .drafter-foot-act.primary.is-disabled, .mdx-shell .drafter-foot-act.primary[disabled], .mdx-shell .drafter-kind-chip, .mdx-shell .drafter-kind-chip.kind-rta, .mdx-shell .ed-comment-avatar, .mdx-shell .ed-tree-foot-bar, .mdx-shell .ed-tree-row:hover, .mdx-shell .ftp-count, .mdx-shell .litbar .bar, .mdx-shell .match-bar, .mdx-shell .path-chip, .mdx-shell .pg-bar, .mdx-shell .pg-owner, .mdx-shell .ph-gov-sig.sig-reserved, .mdx-shell .ph-secbar-track, .mdx-shell .ph-task-who, .mdx-shell .phase-bar, .mdx-shell .pwt-count, .mdx-shell .readiness, .mdx-shell .stage-dot, .mdx-shell .stage-node.idle .stage-dot, .mdx-shell .status-pill.draft, .mdx-shell .status-pill.locked, .mdx-shell .status-pill.non-serious, .mdx-shell .status-pill.reviewed, .mdx-shell .status-pill.uploaded),
+[data-theme="dark"]:is(.mdx-shell .anl-pace-bar, .mdx-shell .corr-kind.k-rta, .mdx-shell .dl-def-num, .mdx-shell .dr-def-num, .mdx-shell .drafter-foot-act.primary.is-disabled, .mdx-shell .drafter-foot-act.primary[disabled], .mdx-shell .drafter-kind-chip, .mdx-shell .drafter-kind-chip.kind-rta, .mdx-shell .ed-comment-avatar, .mdx-shell .ed-tree-foot-bar, .mdx-shell .ed-tree-row:hover, .mdx-shell .ftp-count, .mdx-shell .litbar .bar, .mdx-shell .match-bar, .mdx-shell .path-chip, .mdx-shell .pg-bar, .mdx-shell .pg-owner, .mdx-shell .ph-gov-sig.sig-reserved, .mdx-shell .ph-secbar-track, .mdx-shell .ph-task-who, .mdx-shell .phase-bar, .mdx-shell .pwt-count, .mdx-shell .readiness, .mdx-shell .stage-dot, .mdx-shell .stage-node.idle .stage-dot, .mdx-shell .status-pill.draft, .mdx-shell .status-pill.locked, .mdx-shell .status-pill.non-serious, .mdx-shell .status-pill.reviewed, .mdx-shell .status-pill.uploaded) {
   --text-400: #a9a8a2;
   --text-300: #b6b4ab;
 }

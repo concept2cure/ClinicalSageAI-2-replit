@@ -45,9 +45,13 @@ import anaIntelligenceRouter from '../../server/routes/ana-intelligence';
 function makeApp() {
   const app = express();
   app.use(express.json());
+  // The request shape authenticateToken leaves: the caller on req.user and the
+  // tenant on tenantContext. The route reads identity through resolveOrgId /
+  // resolveUserId (f5122fe99, D6), never from req.userId, which the /api/claude
+  // mount does not set.
   app.use((req, _res, next) => {
-    (req as any).organizationId = 42;
-    (req as any).userId = 7;
+    (req as any).user = { id: 7, organizationId: 42 };
+    (req as any).tenantContext = { organizationId: 42 };
     next();
   });
   app.use('/api/claude', anaIntelligenceRouter);

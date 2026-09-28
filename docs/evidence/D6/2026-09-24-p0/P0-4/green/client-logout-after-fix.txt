@@ -1,0 +1,15 @@
+$ NODE_OPTIONS='--max-old-space-size=4096' npx vitest run --config vitest.config.ts client/src/services/portal/__tests__/authService-logout.test.ts --reporter=verbose
+HEAD=79a7191b (working tree: P0-4 fix applied, uncommitted)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer 163ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory 1ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  01:24:34
+   Duration  1.77s (transform 280ms, setup 331ms, import 12ms, tests 169ms, environment 921ms)
+
+exit=0

@@ -1,0 +1,48 @@
+-- POST /api/cmc/ich-compliance on the same real project
+-- (0e413661-4271-4113-b4c5-dfd89586035b), after the drug-substance read moved
+-- to the canonical source-object store. Q3A(R2) ran for the first time.
+
+-- Before (recorded in green-ich-q2-runs.txt, one commit earlier):
+--   unevaluated : ['drugSubs']
+-- After:
+unevaluated   : []
+overallStatus : non_compliant
+findings      : 9   (not_evaluated: 0)
+
+-- What the project actually holds, measured:
+--   cmc_source_objects, source_type = 'drug_substance'  : 1   (impurities: null)
+--   cmc_source_objects, source_type = 'impurity_profile': 4
+--
+-- So the drug substance's own impurities field is empty while the impurity
+-- register is complete. Reading drugSubs alone would now fire
+-- Q3A_NO_IMPURITY_PROFILE -- status fail -- against a dossier that carries four
+-- impurity records. It does not:
+
+Q3A(R2) findings: none
+  no Q3A_NO_IMPURITY_PROFILE  (the register corroborates the empty field)
+  no Q3A_NOT_EVALUATED        (the read succeeded)
+
+-- The Q3B sub-check still reports what is genuinely missing, which is the
+-- point: making the read work must not silence real findings.
+Q3B finding: Q3B_NO_DEGRADANTS_SPEC | warning
+  message : No drug product specification controls degradation products / related substances.
+
+-- Full finding set on this project:
+--   warning  Q1A_BATCH_COUNT           Only 2 long-term batch(es) recorded.
+--   warning  Q1A_NO_ACCELERATED        No accelerated study at 40C/75% RH.
+--   warning  Q2_INCOMPLETE_VALIDATION  Method "RP-HPLC Assay" missing specificity,
+--                                      linearity, accuracy, precision.
+--   warning  Q3B_NO_DEGRADANTS_SPEC    (above)
+--   fail     Q3D_NO_ASSESSMENT         No elemental-impurities assessment.
+--   pass     Q6A_OK, Q8_OK, Q9_OK, Q10_OK
+
+-- Red-to-green proof for the corroboration itself: neutering
+-- impurityRegisterEntries in checkQ3AandQ3B fails exactly the two unit tests
+-- that exist to catch it, and leaves the genuine-deficiency case passing.
+--
+--   FAIL  does NOT fail Q3A when the impurity register carries the data
+--   FAIL  reports not-evaluated rather than failing when the source-object read is blocked
+--   pass  still fails Q3A when NEITHER store carries impurity data
+--   Tests  2 failed | 25 passed (27)
+--
+-- Restored: 27 passed (27).

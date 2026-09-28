@@ -1,0 +1,31 @@
+# P1-7b — tests/db/feature-toggle-workspace-header.dbtest.ts: attempted in this container (2026-09-26T12:59Z); no PostgreSQL answers here, so the suite refuses to run rather than skip (tests/setup.db.ts). UNEXECUTED — to be run where a database answers.
+# psql -c 'select 1'
+psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+	Is the server running locally and accepting connections on that socket?
+# NODE_OPTIONS=--max-old-space-size=1536 npx vitest run --config vitest.db.config.ts tests/db/feature-toggle-workspace-header.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/feature-toggle-workspace-header.dbtest.ts [ tests/db/feature-toggle-workspace-header.dbtest.ts ]
+Error: [db-suite] TEST_DATABASE_URL (or DATABASE_URL) must point at a real, disposable PostgreSQL database. This suite runs real SQL; it has no mock to fall back to.
+ ❯ resolveTestDatabaseUrl tests/setup.db.ts:51:11
+     49|   const url = (env.TEST_DATABASE_URL || env.DATABASE_URL || '').trim();
+     50|   if (!url) {
+     51|     throw new Error(
+       |           ^
+     52|       '[db-suite] TEST_DATABASE_URL (or DATABASE_URL) must point at a …
+     53|         'PostgreSQL database. This suite runs real SQL; it has no mock…
+ ❯ tests/setup.db.ts:69:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  12:59:29
+   Duration  463ms (transform 45ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+
+exit=1

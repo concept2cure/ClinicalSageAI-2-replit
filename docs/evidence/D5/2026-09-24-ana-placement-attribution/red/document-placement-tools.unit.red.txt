@@ -1,0 +1,197 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > files a cataloged document and reports where it now lives 5ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > refuses to file a document whose comprehension was never recorded 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > refuses a document that has never been cataloged at all 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > says a failed extraction leaves nothing to base a placement on 1ms
+ × server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > allows unfiling an uncataloged document — it retracts a claim, not makes one 10ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "agent": ObjectContaining {
+-       "actorKind": "agent:ana",
+-       "tool": "place_project_document",
+-     },
++   {
++     "confirm": false,
++     "ctdSection": null,
++     "documentId": "00000000-0000-4000-8000-000000000001",
++     "evidenceKind": null,
+      "folderId": null,
++     "note": "The suggestion was wrong and I cannot tell where it belongs.",
++     "organizationId": 42,
++     "programId": "11111111-1111-4111-8111-111111111111",
++     "userId": 7,
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > hands the service her provenance, so the write cannot pass for a person's decision 3ms
+   → expected undefined to deeply equal { actorKind: 'agent:ana', …(7) }
+ × server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > records a model it was not told about as unknown, never a guessed one 1ms
+   → Cannot read properties of undefined (reading 'actorKind')
+ × server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > refuses confirm_suggested — confirming a filing is a person's act, in the Vault 2ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > is described to the model as a suggestion a person confirms, not a filing 2ms
+   → expected 'File a project-vault document into it…' to match /^Suggest /
+ × server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > tells the model the placement awaits a person, not that the document is filed 3ms
+   → expected 'tox-28day.pdf is filed under Module 4…' to contain 'suggested'
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > answers a chat-upload id with the wrong-store refusal, not absence 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > requires a rationale — the audit trail records why, not just what 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > requires a destination rather than guessing one 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > reports a document this organization does not hold as unknown, with the discovery tool 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > passes the service refusal through instead of claiming a move 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > allows unfiling an uncataloged document — it retracts a claim, not makes one
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "agent": ObjectContaining {
+-       "actorKind": "agent:ana",
+-       "tool": "place_project_document",
+-     },
++   {
++     "confirm": false,
++     "ctdSection": null,
++     "documentId": "00000000-0000-4000-8000-000000000001",
++     "evidenceKind": null,
+      "folderId": null,
++     "note": "The suggestion was wrong and I cannot tell where it belongs.",
++     "organizationId": 42,
++     "programId": "11111111-1111-4111-8111-111111111111",
++     "userId": 7,
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana/__tests__/document-placement-tools.test.ts:178:32
+    176|     // Unfiling stays AnA's to do — the Unfiled queue is where a perso…
+    177|     // — but it is her act, so it carries her attribution like any oth…
+    178|     expect(placeVaultDocument).toHaveBeenCalledWith(
+       |                                ^
+    179|       expect.objectContaining({
+    180|         folderId: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > hands the service her provenance, so the write cannot pass for a person's decision
+AssertionError: expected undefined to deeply equal { actorKind: 'agent:ana', …(7) }
+
+- Expected:
+{
+  "actorKind": "agent:ana",
+  "agentReason": "The report states a 28-day repeat-dose rat study.",
+  "chatMessageId": null,
+  "reasonReferencedArtifact": null,
+  "servingModel": {
+    "model": "claude-test-model",
+    "provider": "anthropic",
+  },
+  "threadId": "thread-placement-1",
+  "tool": "place_project_document",
+  "turnId": "turn-placement-3",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/document-placement-tools.test.ts:199:24
+    197|     // ...and the audit details say who actually decided, in the agent…
+    198|     // shape explain_audit_row reads (mdx-tool-policy agentAuditDetail…
+    199|     expect(args.agent).toEqual({
+       |                        ^
+    200|       actorKind: 'agent:ana',
+    201|       agentReason: RATIONALE,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > records a model it was not told about as unknown, never a guessed one
+TypeError: Cannot read properties of undefined (reading 'actorKind')
+ ❯ server/services/ana/__tests__/document-placement-tools.test.ts:222:18
+    220|     );
+    221|     const { agent } = placeVaultDocument.mock.calls[0][0];
+    222|     expect(agent.actorKind).toBe('agent:ana');
+       |                  ^
+    223|     expect(agent.servingModel).toEqual({ provider: null, model: null }…
+    224|     expect(agent.threadId).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > refuses confirm_suggested — confirming a filing is a person's act, in the Vault
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/document-placement-tools.test.ts:235:20
+    233|       rationale: 'The classifier was right about this one.',
+    234|     });
+    235|     expect(out.ok).toBe(false);
+       |                    ^
+    236|     expect(out.refused).toBe(true);
+    237|     expect(out.reason).toContain('person');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > is described to the model as a suggestion a person confirms, not a filing
+AssertionError: expected 'File a project-vault document into it…' to match /^Suggest /
+
+- Expected:
+/^Suggest /
+
++ Received:
+"File a project-vault document into its dossier folder — the act that turns \"we have this\" into \"it is where it belongs\". At upload a classifier PROPOSES a placement from the file name and a sample of the text; a document it could not place sits in the Unfiled queue and one it guessed wrong sits under \"suggested\", and nothing revisits either. Use this once you have READ the document and recorded what it is: the placement then rests on comprehension instead of a filename. It is a governed, 21 CFR Part 11 audited move (the prior and new locations are both recorded), so say what you moved and where. Refused for a document you have not cataloged — read it with read_project_document and record it with catalog_project_document first. If you genuinely cannot tell where it belongs, pass unfile:true: the visible Unfiled queue is the honest answer, and a guessed folder is worse than an admitted gap."
+
+ ❯ server/services/ana/__tests__/document-placement-tools.test.ts:248:25
+    246|     // said "File a project-vault document", and that a confirm was he…
+    247|     const { description, input_schema } = PLACE_PROJECT_DOCUMENT;
+    248|     expect(description).toMatch(/^Suggest /);
+       |                         ^
+    249|     expect(description).toContain('a person confirms');
+    250|     expect(description).toContain('confirm_suggested is refused');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > tells the model the placement awaits a person, not that the document is filed
+AssertionError: expected 'tox-28day.pdf is filed under Module 4…' to contain 'suggested'
+
+Expected: "suggested"
+Received: "tox-28day.pdf is filed under Module 4 (Nonclinical) (4.2.3.2). The move is in the Part 11 audit trail. Tell the user where it now lives."
+
+ ❯ server/services/ana/__tests__/document-placement-tools.test.ts:259:25
+    257|     const out = await call({ document_id: VAULT_ID, folder_id: 'module…
+    258|     expect(out.ok).toBe(true);
+    259|     expect(out.message).toContain('suggested');
+       |                         ^
+    260|     expect(out.message).toContain('confirm');
+    261|     expect(out.message).not.toContain('is filed under');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 9 passed (15)
+   Start at  16:11:08
+   Duration  490ms (transform 160ms, setup 88ms, import 108ms, tests 35ms, environment 0ms)
+

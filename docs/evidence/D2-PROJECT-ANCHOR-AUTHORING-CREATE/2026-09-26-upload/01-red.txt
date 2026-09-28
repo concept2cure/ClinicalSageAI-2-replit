@@ -1,0 +1,70 @@
+# server/routes/chat/upload.ts at 7676eb90 (before the check), with the new test
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > keeps an unscoped chat attachment tenant-private, not project-wide
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > keeps an unscoped chat attachment tenant-private, not project-wide
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > keeps an unscoped chat attachment tenant-private, not project-wide
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > does not fail the upload when identity resolution errors
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > does not fail the upload when identity resolution errors
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > does not fail the upload when identity resolution errors
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+ × tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written
+   → expected "vi.fn()" to be called with arguments: [ 404 ]
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > keeps an unscoped chat attachment tenant-private, not project-wide
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > does not fail the upload when identity resolution errors
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+ FAIL  tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written
+      Tests  1 failed | 15 passed (16)

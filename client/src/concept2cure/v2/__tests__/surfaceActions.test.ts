@@ -16,6 +16,9 @@ import {
   registerSurfaceActionHandlers,
   registeredSurfaceId,
   validateDriveAction,
+  listedChoices,
+  LISTED_CHOICES_MAX,
+  LISTED_NAME_MAX,
   PENDING_ACTION_TTL_MS,
 } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
@@ -29,6 +32,36 @@ function directive(actionId = 'vault.search', params: Record<string, unknown> = 
 afterEach(() => {
   __resetSurfaceActionBus();
   vi.useRealTimers();
+});
+
+describe('listedChoices', () => {
+  it('names what is listed, deduplicated and trimmed, for a refusal AnA can retry from', () => {
+    expect(listedChoices([' QOS ', 'QOS', 'Stability summary'], 'Documents listed')).toBe(
+      ' Documents listed: "QOS", "Stability summary".',
+    );
+  });
+
+  it('says nothing when nothing is listed — an empty list is never presented as choices', () => {
+    expect(listedChoices([])).toBe('');
+    expect(listedChoices(['', '  '])).toBe('');
+  });
+
+  it('lists a long name by its opening words, the ellipsis outside the quotes so the quoted part still matches', () => {
+    const long = `Clinical Overview (CTD Module 2.5) — ${'integrated efficacy and safety '.repeat(4)}`.trim();
+    const out = listedChoices([long]);
+    const quoted = /"([^"]+)"…/.exec(out)?.[1];
+    expect(quoted).toBeDefined();
+    expect(quoted!.length).toBeLessThanOrEqual(LISTED_NAME_MAX);
+    expect(long.startsWith(quoted!)).toBe(true);
+  });
+
+  it('summarises beyond the cap instead of silently dropping names', () => {
+    const names = Array.from({ length: LISTED_CHOICES_MAX + 3 }, (_, i) => `Doc ${i + 1}`);
+    const out = listedChoices(names);
+    expect(out).toContain(`"Doc ${LISTED_CHOICES_MAX}"`);
+    expect(out).not.toContain(`"Doc ${LISTED_CHOICES_MAX + 1}"`);
+    expect(out).toMatch(/and 3 more\.$/);
+  });
 });
 
 describe('validateDriveAction', () => {
@@ -66,7 +99,7 @@ describe('applySurfaceAction', () => {
     const nav = vi.fn();
     const outcome = applySurfaceAction(directive(), nav);
     expect(outcome).toEqual({ status: 'applied', detail: 'Searched' });
-    expect(handler).toHaveBeenCalledWith({ query: 'x' });
+    expect(handler).toHaveBeenCalledWith({ query: 'x' }, {});
     expect(nav).not.toHaveBeenCalled();
   });
 
@@ -102,7 +135,7 @@ describe('applySurfaceAction', () => {
     // The destination mounts and registers — the stashed directive performs.
     const handler = vi.fn().mockReturnValue({ ok: true });
     registerSurfaceActionHandlers('vault', { 'vault.search': handler });
-    expect(handler).toHaveBeenCalledWith({ query: 'x' });
+    expect(handler).toHaveBeenCalledWith({ query: 'x' }, {});
     expect(deferred).toHaveBeenCalledWith({ status: 'applied' });
     // One shot: a re-registration does not re-perform.
     handler.mockClear();
@@ -195,7 +228,7 @@ describe('applySurfaceAction', () => {
     expect(d.surfaceId).toBe('tasking');
     const outcome = applySurfaceAction(d, vi.fn());
     expect(outcome).toEqual({ status: 'applied', detail: 'Switched' });
-    expect(handler).toHaveBeenCalledWith({ view: 'table' });
+    expect(handler).toHaveBeenCalledWith({ view: 'table' }, {});
   });
 
   it('alias stash: an act for an unmounted aliased surface navigates by nav-target id and performs on the v2 registration', () => {
@@ -208,7 +241,7 @@ describe('applySurfaceAction', () => {
     expect(nav).toHaveBeenCalledWith('tasking');
     const handler = vi.fn().mockReturnValue({ ok: true });
     registerSurfaceActionHandlers('tasks', { 'tasking.set-view': handler });
-    expect(handler).toHaveBeenCalledWith({ view: 'board' });
+    expect(handler).toHaveBeenCalledWith({ view: 'board' }, {});
     expect(deferred).toHaveBeenCalledWith({ status: 'applied' });
   });
 

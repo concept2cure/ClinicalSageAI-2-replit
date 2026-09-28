@@ -1,0 +1,367 @@
+# mutants run 2026-09-28T04:55:20.788621Z at 84ce8fa3 (working tree)
+
+## M1: read: not org-scoped
+file: server/services/protocol-development/protocol-signature-manifestation.ts
+--- replaced:
+WHERE organization_id = $1 AND signed_target
++++ with:
+WHERE (organization_id = $1 OR true) AND signed_target
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  1 failed | 11 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature 28ms
+
+## M2: read: revocation rows not excluded
+file: server/services/protocol-development/protocol-signature-manifestation.ts
+--- replaced:
+AND signature_type <> $3
++++ with:
+AND (signature_type <> $3 OR true)
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  1 failed | 11 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature 73ms
+
+## M3: read: a withdrawn signature reads as signed
+file: server/services/protocol-development/protocol-signature-manifestation.ts
+--- replaced:
+state: isSignatureWithdrawn(row) ? 'revoked' : 'signed',
++++ with:
+state: 'signed',
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  1 failed | 11 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature 48ms
+
+## M4: read: printed name re-resolved from the account today, not signer_name
+file: server/services/protocol-development/protocol-signature-manifestation.ts
+--- replaced:
+SELECT signed_target, signer_name, signed_at,
++++ with:
+SELECT signed_target, (SELECT u.name FROM users u WHERE u.id = signer_id) AS signer_name, signed_at,
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  1 failed | 11 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today 52ms
+
+## M5: read: the on-behalf-of name not read
+file: server/services/protocol-development/protocol-signature-manifestation.ts
+--- replaced:
+recordedOnBehalfOf: row.recorded_on_behalf_of ? str(row.recorded_on_behalf_of) : null,
++++ with:
+recordedOnBehalfOf: null,
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  1 failed | 11 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so 43ms
+
+## M6: read: a missing table escapes and blanks the workspace
+file: server/services/protocol-development/protocol-signature-manifestation.ts
+--- replaced:
+if ((err as { code?: string } | null)?.code === '42P01') return () => ({ state: 'unavailable' });
++++ with:
+
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  3 failed | 9 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads 21ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature 10ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it 28ms
+
+## M7: read: a missing table reported as no signature
+file: server/services/protocol-development/protocol-signature-manifestation.ts
+--- replaced:
+return () => ({ state: 'unavailable' });
++++ with:
+return () => ({ state: 'none' });
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  2 failed | 10 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads 23ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it 21ms
+
+## M8: assembler: finalization not attached
+file: server/services/protocol-development/pdev-view-assembler.ts
+--- replaced:
+      finalization: signatureOf(finalizationTarget(id)),
+
++++ with:
+
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  6 failed | 6 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > carries the printed name recorded at signing, the time, the meaning and the reason 105ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today 86ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature 56ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a finalized protocol with no signature row says none, never a signer 24ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature 16ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads 27ms
+
+## M9: assembler: review signature not attached
+file: server/services/protocol-development/pdev-view-assembler.ts
+--- replaced:
+    signature: signatureOf(dispositionTarget(str(rv.id))),
+
++++ with:
+
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  4 failed | 8 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so 41ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review 29ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > an unsigned review has no signature 19ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads 21ms
+
+## M10: assembler: review assignments not among the targets read
+file: server/services/protocol-development/pdev-view-assembler.ts
+--- replaced:
+const signedTargets = [...ids.map(finalizationTarget), ...reviewAssignments.rows.map((r) => dispositionTarget(str(r.id)))];
++++ with:
+const signedTargets = [...ids.map(finalizationTarget)];
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  2 failed | 10 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so 45ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review 32ms
+
+## M11: export service: status not selected
+file: server/services/protocol-export/protocol-export-service.ts
+--- replaced:
+version, synopsis, status
+
++++ with:
+version, synopsis
+
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  2 failed | 10 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row 33ms
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it 24ms
+
+## M12: export service: finalization not read (facet left absent)
+file: server/services/protocol-export/protocol-export-service.ts
+--- replaced:
+status: r.status, finalization: signatureOf(finalizationTarget(documentId)),
++++ with:
+status: r.status,
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  1 failed | 11 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row 25ms
+
+## M13: export service: a finalized protocol printed without its unreadable signature
+file: server/services/protocol-export/protocol-export-service.ts
+--- replaced:
+if (document.finalization.state === 'unavailable' && isFinalizedStatus(document.status)) {
++++ with:
+if (false) {
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  1 failed | 11 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it 30ms
+
+## M14: export service: every protocol refused when the store is unreadable
+file: server/services/protocol-export/protocol-export-service.ts
+--- replaced:
+if (document.finalization.state === 'unavailable' && isFinalizedStatus(document.status)) {
++++ with:
+if (document.finalization.state === 'unavailable') {
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+result: CAUGHT (Tests  1 failed | 11 passed (12))
+  × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature 13ms
+
+## M15: logic: no signature block rendered
+file: server/services/protocol-export/protocol-export-logic.ts
+--- replaced:
+  lines.push(...signatureBlockLines(p.status, p.finalization));
+
++++ with:
+
+$ npx vitest run --config vitest.config.ts server/services/protocol-export/__tests__/protocol-export-signature.test.ts
+result: CAUGHT (Tests  8 failed (8))
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signed finalization prints the printed name, the meaning in words, the UTC time and the reason 10ms
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > comes before the content, so no page of the protocol reads unsigned above its signature 1ms
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a revoked signature says so first, and still names who signed 1ms
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a finalized protocol with no signature on record says so, never a signer 1ms
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a protocol that is not finalized says no signature applies 2ms
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signature record that could not be read is said, not printed as unsigned 1ms
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a meaning outside the protocol vocabulary is printed as stored, not mapped to a guess 1ms
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a decision recorded on someone’s behalf names them 1ms
+
+## M16: logic: meaning printed as the raw token
+file: server/services/protocol-export/protocol-export-logic.ts
+--- replaced:
+(MEANING_LABEL[s.meaning] ?? s.meaning)
++++ with:
+s.meaning
+$ npx vitest run --config vitest.config.ts server/services/protocol-export/__tests__/protocol-export-signature.test.ts
+result: CAUGHT (Tests  2 failed | 6 passed (8))
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signed finalization prints the printed name, the meaning in words, the UTC time and the reason 8ms
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a decision recorded on someone’s behalf names them 1ms
+
+## M17: logic: time printed in local form, not UTC
+file: server/services/protocol-export/protocol-export-logic.ts
+--- replaced:
+at.toISOString().replace('T', ' ').slice(0, 19) + ' UTC'
++++ with:
+at.toString()
+$ npx vitest run --config vitest.config.ts server/services/protocol-export/__tests__/protocol-export-signature.test.ts
+result: CAUGHT (Tests  1 failed | 7 passed (8))
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signed finalization prints the printed name, the meaning in words, the UTC time and the reason 9ms
+
+## M18: logic: a revoked signature printed like a live one
+file: server/services/protocol-export/protocol-export-logic.ts
+--- replaced:
+  if (f.state === 'revoked') lines.push(
++++ with:
+  if (false) lines.push(
+$ npx vitest run --config vitest.config.ts server/services/protocol-export/__tests__/protocol-export-signature.test.ts
+result: CAUGHT (Tests  1 failed | 7 passed (8))
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a revoked signature says so first, and still names who signed 7ms
+
+## M19: logic: reason omitted
+file: server/services/protocol-export/protocol-export-logic.ts
+--- replaced:
+  if (s.reason) lines.push(`- Reason: ${s.reason}`);
+
++++ with:
+
+$ npx vitest run --config vitest.config.ts server/services/protocol-export/__tests__/protocol-export-signature.test.ts
+result: CAUGHT (Tests  1 failed | 7 passed (8))
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signed finalization prints the printed name, the meaning in words, the UTC time and the reason 9ms
+
+## M20: logic: an unreadable store printed as no signature
+file: server/services/protocol-export/protocol-export-logic.ts
+--- replaced:
+if (f.state === 'unavailable') return
++++ with:
+if (f.state === ('x' as never)) return
+$ npx vitest run --config vitest.config.ts server/services/protocol-export/__tests__/protocol-export-signature.test.ts
+result: CAUGHT (Tests  1 failed | 7 passed (8))
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signature record that could not be read is said, not printed as unsigned 5ms
+
+## M21: logic: every status treated as finalized
+file: server/services/protocol-export/protocol-export-logic.ts
+--- replaced:
+  if (!isFinalizedStatus(status)) {
++++ with:
+  if (false) {
+$ npx vitest run --config vitest.config.ts server/services/protocol-export/__tests__/protocol-export-signature.test.ts
+result: CAUGHT (Tests  1 failed | 7 passed (8))
+  × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a protocol that is not finalized says no signature applies 6ms
+
+## M22: client: an unreadable facet shown as nothing
+file: client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx
+--- replaced:
+return expected ? <span className="pde-review-meta" style={style}>The signature record could not be read.</span> : null;
++++ with:
+return null;
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx
+result: CAUGHT (Tests  2 failed | 8 passed (10))
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a signature record that could not be read is said, not left blank 14ms
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a read model without the facet is treated as unreadable, not as unsigned 3ms
+
+## M23: client: a missing facet treated as none
+file: client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx
+--- replaced:
+  return null;
+}
+
+/**
+ * The §11.50
++++ with:
+  return { state: 'none' };
+}
+
+/**
+ * The §11.50
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx
+result: CAUGHT (Tests  1 failed | 9 passed (10))
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a read model without the facet is treated as unreadable, not as unsigned 10ms
+
+## M24: client: no signature on record left silent
+file: client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx
+--- replaced:
+return expected ? <span className="pde-review-meta" style={style}>No electronic signature is on record.</span> : null;
++++ with:
+return null;
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx
+result: CAUGHT (Tests  2 failed | 8 passed (10))
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a recorded disposition with no signature on record says so 17ms
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a finalized protocol with no live signature says so, never nothing 3ms
+
+## M25: client: revoked shown as signed
+file: client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx
+--- replaced:
+{f.state === 'revoked' ? 'Signature revoked · signed by ' : 'Signed by '}
++++ with:
+{'Signed by '}
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx
+result: CAUGHT (Tests  1 failed | 9 passed (10))
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a revoked signature says it is revoked 18ms
+
+## M26: client: on-behalf-of not shown
+file: client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx
+--- replaced:
+{s.recordedOnBehalfOf ? ' · recorded on behalf of ' + s.recordedOnBehalfOf : ''}
++++ with:
+{''}
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx
+result: CAUGHT (Tests  1 failed | 9 passed (10))
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for 15ms
+
+## M27: client: the row does not render the signature line
+file: client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx
+--- replaced:
+      <SignatureLine facet={r.signature} expected={signed} style={{ flexBasis: '100%' }} />
+
++++ with:
+
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx
+result: CAUGHT (Tests  5 failed | 5 passed (10))
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > who signed, as what, and when, from the signature row 63ms
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for 10ms
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a revoked signature says it is revoked 8ms
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a recorded disposition with no signature on record says so 10ms
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a signature record that could not be read is said, not left blank 8ms
+
+## M28: client: the meaning printed raw
+file: client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx
+--- replaced:
+{' as ' + signatureMeaningLabel(s.meaning) + ' · '}
++++ with:
+{' as ' + s.meaning + ' · '}
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx
+result: CAUGHT (Tests  3 failed | 7 passed (10))
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > who signed, as what, and when, from the signature row 64ms
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for 9ms
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > the meaning is printed in words 3ms
+
+## M29: signatureMeaning: RESPONSIBILITY label removed
+file: client/src/concept2cure/_shared/signatureMeaning.ts
+--- replaced:
+  RESPONSIBILITY: 'Responsibility',
+
++++ with:
+
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx
+result: CAUGHT (Tests  1 failed | 9 passed (10))
+  × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for 12ms
+
+# summary
+M1 CAUGHT: read: not org-scoped
+M2 CAUGHT: read: revocation rows not excluded
+M3 CAUGHT: read: a withdrawn signature reads as signed
+M4 CAUGHT: read: printed name re-resolved from the account today, not signer_name
+M5 CAUGHT: read: the on-behalf-of name not read
+M6 CAUGHT: read: a missing table escapes and blanks the workspace
+M7 CAUGHT: read: a missing table reported as no signature
+M8 CAUGHT: assembler: finalization not attached
+M9 CAUGHT: assembler: review signature not attached
+M10 CAUGHT: assembler: review assignments not among the targets read
+M11 CAUGHT: export service: status not selected
+M12 CAUGHT: export service: finalization not read (facet left absent)
+M13 CAUGHT: export service: a finalized protocol printed without its unreadable signature
+M14 CAUGHT: export service: every protocol refused when the store is unreadable
+M15 CAUGHT: logic: no signature block rendered
+M16 CAUGHT: logic: meaning printed as the raw token
+M17 CAUGHT: logic: time printed in local form, not UTC
+M18 CAUGHT: logic: a revoked signature printed like a live one
+M19 CAUGHT: logic: reason omitted
+M20 CAUGHT: logic: an unreadable store printed as no signature
+M21 CAUGHT: logic: every status treated as finalized
+M22 CAUGHT: client: an unreadable facet shown as nothing
+M23 CAUGHT: client: a missing facet treated as none
+M24 CAUGHT: client: no signature on record left silent
+M25 CAUGHT: client: revoked shown as signed
+M26 CAUGHT: client: on-behalf-of not shown
+M27 CAUGHT: client: the row does not render the signature line
+M28 CAUGHT: client: the meaning printed raw
+M29 CAUGHT: signatureMeaning: RESPONSIBILITY label removed

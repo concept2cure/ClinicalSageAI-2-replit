@@ -1,0 +1,8 @@
+[ci:tenant-entry-points] 14 entry point(s); 5 consider tenant entitlement, 9 do not (baseline 9)
+
+[ci:tenant-entry-points] FAIL — 1 baselined entry point(s) CHANGED since justification:
+    server/jobs/auditChainIntegritySweep.ts  (scheduled-sweep)
+
+  Re-read the justification against the new code. If it still holds, refresh
+  the digest: npm run ci:tenant-entry-points:write-baseline
+

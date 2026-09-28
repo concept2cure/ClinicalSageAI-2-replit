@@ -10,8 +10,6 @@
     "server/services/export-service.ts",
     "server/services/regulatory-intelligence-service.ts",
     "server/services/regulatory/registry/registryValidation.ts",
-    "server/services/storage/index.ts",
-    "server/services/storage/s3-provider.ts",
     "server/services/tools/index.ts",
     "server/utils/pdfParse.ts"
   ]

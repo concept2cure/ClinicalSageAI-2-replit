@@ -1,0 +1,6 @@
+# ci:discarded-audit-write with the unifiedTasks.routes.ts entry removed, against the HEAD router
+❌ A 21 CFR Part 11 audit row is written and its outcome discarded.
+   server/routes/unifiedTasks.routes.ts — 0 → 3
+       server/routes/unifiedTasks.routes.ts:108
+       server/routes/unifiedTasks.routes.ts:269
+       server/routes/unifiedTasks.routes.ts:448

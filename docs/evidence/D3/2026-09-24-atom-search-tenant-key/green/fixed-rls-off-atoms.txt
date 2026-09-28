@@ -1,0 +1,93 @@
+
+ RUN  v4.1.7 /home/user/w2
+
+{"level":30,"time":"2026-09-24T21:18:45.056Z","pid":7685,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T21:18:45.058Z","pid":7685,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T21:18:45.058Z","pid":7685,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T21:18:45.579Z', poolSize: 1 }
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+Loaded 0 academic documents
+
+stderr | tests/db/cortex-query-tenant-header.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/cortex-query-tenant-header.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+{"level":30,"time":"2026-09-24T21:18:51.304Z","pid":7685,"hostname":"vm","context":{},"msg":"[cortex-unified] Mounted: /advisory (AI advisory)"}
+{"level":40,"time":"2026-09-24T21:18:51.304Z","pid":7685,"hostname":"vm","context":{},"msg":"[cortex-unified] Cortex management routes require explicit initialization with database pool"}
+{"level":30,"time":"2026-09-24T21:18:51.304Z","pid":7685,"hostname":"vm","context":{},"msg":"[cortex-unified] Mounted: /query (AI queries)"}
+{"level":30,"time":"2026-09-24T21:18:51.487Z","pid":7685,"hostname":"vm","context":{},"msg":"[cortex-unified] Mounted: /ana (AnA 1.0 RI integration)"}
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+✅ Unified Cortex Query API initialized
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's
+[database] Database connection successful { timestamp: '2026-09-24T21:18:51.527Z', poolSize: 2 }
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's
+✅ Enhanced Embedding Service initialized
+
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's 70ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > tenant A naming tenant B in the header is served nothing of B's 16ms
+{"level":40,"time":"2026-09-24T21:18:51.641Z","pid":7685,"hostname":"vm","context":{"userId":33,"organizationId":0},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":40,"time":"2026-09-24T21:18:51.642Z","pid":7685,"hostname":"vm","context":{"method":"POST","path":"/api/cortex/query/query","statusCode":403},"msg":"[auth-boundary] Unauthenticated request passed through auth boundary (mode=warn). This route would be rejected in enforce mode."}
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > …and is served its OWN atom: the header is ignored, not merely contained by RLS 21ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > with no header, the query is scoped to the session rather than to nothing 12ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > search mode asks for the session's tenant, whatever the header says 14ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > a session with no usable organization is refused, never served 14ms
+{"level":30,"time":"2026-09-24T21:18:53.093Z","pid":7709,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T21:18:53.094Z","pid":7709,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T21:18:53.095Z","pid":7709,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns no more rows than the limit, all the tenant’s own
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > weights semantic and keyword scores as the caller asked
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns a project's own atoms even when other projects' atoms score higher
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > never returns another tenant’s atom, even on a connection RLS does not filter
+✅ Enhanced Embedding Service initialized
+
+ ✓ tests/db/atom-search.dbtest.ts > search_atoms_hybrid on a from-blank database > returns rows 11ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns no more rows than the limit, all the tenant’s own 14ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > weights semantic and keyword scores as the caller asked 8ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns a project's own atoms even when other projects' atoms score higher 9ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > never returns another tenant’s atom, even on a connection RLS does not filter 7ms
+{"level":30,"time":"2026-09-24T21:18:54.854Z","pid":7725,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T21:18:54.855Z","pid":7725,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T21:18:54.855Z","pid":7725,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > serves tenant A its own atoms (positive control)
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > refuses a key naming another tenant, and runs no search
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > refuses to run with no key at all — never the unfiltered search
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > on that degraded path, a key naming another tenant is still refused
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > outside any scope the key is the only boundary, and it holds on a connection RLS does not filter
+✅ Enhanced Embedding Service initialized
+
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > serves tenant A its own atoms (positive control) 22ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > refuses a key naming another tenant, and runs no search 2ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > refuses to run with no key at all — never the unfiltered search 1ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > resolves the session's own key when the scope carries none (the degraded membership path) 2ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > on that degraded path, a key naming another tenant is still refused 3ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > names no key outside a per-user scope 1ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > outside any scope the key is the only boundary, and it holds on a connection RLS does not filter 9ms
+
+ Test Files  3 passed (3)
+      Tests  18 passed (18)
+   Start at  21:18:42
+   Duration  12.93s (transform 5.82s, setup 192ms, import 10.40s, tests 1.57s, environment 0ms)
+

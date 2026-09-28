@@ -21,6 +21,12 @@
  *      characters and told the user it is written to the Part 11 trail. The
  *      server now refuses an absent or blank reason.
  *
+ * C8 — from the review of that change: an archive reason is told which bound
+ *      it broke. The rest of that review (C2–C7) and the review of the cascade
+ *      change (C9–C11) are pinned in
+ *      task-management-governed-writes-review.test.ts, on the same harness
+ *      (_task-management-governed-harness.ts).
+ *
  * Failure is injected at the ledger primitive (recordGovernedAction), so the
  * real task-audit code runs and decides which transaction the row lands on.
  */
@@ -28,121 +34,28 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 
-const h = vi.hoisted(() => ({
-  /** Ordered trace of what reached the database, and on which connection. */
-  log: [] as string[],
-  selects: [] as any[][],
-  inserted: [{ taskId: 'TASK-NEW', title: 'New' }] as any[],
-  updated: [{ taskId: 'TASK-1', title: 'Existing' }] as any[],
-  auditFails: false,
-  audits: [] as any[],
-  /** What each UPDATE was asked to SET, in order. */
-  sets: [] as any[],
-}));
-
-const spies = vi.hoisted(() => ({
-  notifyTaskEvent: vi.fn(),
-  cascadeUnblockOnCompletion: vi.fn(async () => undefined),
-  wouldCreateDependencyCycle: vi.fn(async () => false),
-  createNotification: vi.fn(async () => 1),
-  requireTaskSignoff: vi.fn(),
-  getOptimalAssignee: vi.fn(async () => null as null | { id: number; name: string }),
-}));
-
-vi.mock('../../db', () => {
-  /** A drizzle-shaped builder: every method chains, awaiting it runs. */
-  const chain = (tag: string, kind: string, result: () => unknown) => {
-    const c: any = {};
-    for (const m of ['from', 'where', 'orderBy', 'limit', 'values', 'set', 'returning', 'innerJoin', 'leftJoin', 'groupBy']) {
-      c[m] = () => c;
-    }
-    c.set = (v: unknown) => {
-      h.sets.push(v);
-      return c;
-    };
-    c.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => {
-      h.log.push(`${tag}:${kind}`);
-      return Promise.resolve().then(result).then(res, rej);
-    };
-    return c;
-  };
-  const runner = (tag: string) => ({
-    select: () => chain(tag, 'select', () => h.selects.shift() ?? []),
-    insert: () => chain(tag, 'insert', () => h.inserted),
-    update: () => chain(tag, 'update', () => h.updated),
-    execute: async () => {
-      h.log.push(`${tag}:execute`);
-      return { rows: [] };
-    },
-  });
-  const db: any = {
-    ...runner('db'),
-    transaction: async (cb: (tx: unknown) => Promise<unknown>) => {
-      h.log.push('BEGIN');
-      try {
-        const out = await cb(runner('tx'));
-        h.log.push('COMMIT');
-        return out;
-      } catch (err) {
-        h.log.push('ROLLBACK');
-        throw err;
-      }
-    },
-  };
-  const pool = {
-    query: async () => ({ rows: [] }),
-    connect: async () => ({
-      query: async (sql: string) => {
-        h.log.push(`pool:${sql.split(' ')[0]}`);
-        return { rows: [] };
-      },
-      release: () => undefined,
-    }),
-  };
-  return { db, pool };
-});
-
-vi.mock('../c2c/actions', () => ({
-  recordGovernedAction: async (client: { query: (s: string) => Promise<unknown> }, row: unknown) => {
-    h.audits.push(row);
-    await client.query('INSERT INTO audit_logs');
-    if (h.auditFails) throw new Error('audit_logs: connection reset');
-    return { actionId: 'act_1', auditId: 'aud_1', sha256Chain: 'c' };
-  },
-}));
-vi.mock('../../services/tasking/task-side-effects', () => ({
-  notifyTaskEvent: spies.notifyTaskEvent,
-  cascadeUnblockOnCompletion: spies.cascadeUnblockOnCompletion,
-  wouldCreateDependencyCycle: spies.wouldCreateDependencyCycle,
-}));
-vi.mock('../../services/notifications/notification-service', () => ({
-  createNotification: spies.createNotification,
-}));
-vi.mock('../../services/tasking/task-signoff', () => ({
-  requireTaskSignoff: spies.requireTaskSignoff,
-}));
-vi.mock('../../services/tasking/task-planning', () => ({
-  getOptimalAssignee: spies.getOptimalAssignee,
-  calculateCriticalPath: vi.fn(async () => []),
-}));
+// Each stand-in is built by the shared harness (state, spies, the drizzle-shaped
+// db and the ledger primitive); the mocks stay here, in the file they apply to.
+vi.mock('../../db', async () => (await import('./_task-management-governed-harness')).dbModule());
+vi.mock('../c2c/actions', async () => (await import('./_task-management-governed-harness')).ledgerModule());
+vi.mock('../../services/tasking/task-side-effects', async () =>
+  (await import('./_task-management-governed-harness')).sideEffectsModule(),
+);
+vi.mock('../../services/notifications/notification-service', async () =>
+  (await import('./_task-management-governed-harness')).notificationModule(),
+);
+vi.mock('../../services/tasking/task-signoff', async () =>
+  (await import('./_task-management-governed-harness')).signoffModule(),
+);
+vi.mock('../../services/tasking/task-planning', async () =>
+  (await import('./_task-management-governed-harness')).planningModule(),
+);
 
 import taskManagementRoutes from '../taskManagement.routes';
-import { BUILTIN_WORKFLOW_TEMPLATES } from '../../services/tasking/workflow-templates';
+import { h, spies, appFactory, BASE, TEMPLATE_ID, wrote, resetHarness } from './_task-management-governed-harness';
 
-function makeApp(role: string | null = 'member', userId: number | null = 7) {
-  const app = express();
-  app.use(express.json());
-  app.use((req, _res, next) => {
-    (req as any).user = { organizationId: 2, ...(userId ? { id: userId } : {}), ...(role ? { role } : {}) };
-    if (role) (req as any).userRole = role;
-    next();
-  });
-  app.use('/api/task-management', taskManagementRoutes);
-  return app;
-}
+const makeApp = appFactory(taskManagementRoutes);
 
-const BASE = '/api/task-management';
-const TEMPLATE_ID = BUILTIN_WORKFLOW_TEMPLATES[0].templateId;
 const writes = (): Array<{ name: string; send: (app: express.Express) => request.Test }> => [
   { name: 'POST /tasks', send: (a) => request(a).post(`${BASE}/tasks`).send({ title: 'T', moduleType: 'IND' }) },
   { name: 'PATCH /tasks/:id', send: (a) => request(a).patch(`${BASE}/tasks/TASK-1`).send({ status: 'in-progress' }) },
@@ -176,22 +89,7 @@ const writes = (): Array<{ name: string; send: (app: express.Express) => request
   },
 ];
 
-const wrote = () => h.log.filter((l) => /:(insert|update|execute)$/.test(l) || l.startsWith('pool:'));
-
-beforeEach(() => {
-  h.log = [];
-  h.selects = [];
-  h.inserted = [{ taskId: 'TASK-NEW', title: 'New' }];
-  h.updated = [{ taskId: 'TASK-1', title: 'Existing' }];
-  h.auditFails = false;
-  h.audits = [];
-  h.sets = [];
-  vi.clearAllMocks();
-  spies.wouldCreateDependencyCycle.mockResolvedValue(false);
-  spies.createNotification.mockResolvedValue(1);
-  spies.getOptimalAssignee.mockResolvedValue(null);
-  spies.requireTaskSignoff.mockResolvedValue({ required: false });
-});
+beforeEach(resetHarness);
 
 describe('T1 — a task write and its ledger row commit or roll back together', () => {
   it('writes the create and its lineage on ONE transaction, then commits', async () => {
@@ -234,8 +132,11 @@ describe('T1 — a task write and its ledger row commit or roll back together', 
     expect(res.status).toBe(500);
     expect(res.body.error).toBe('AUDIT_WRITE_FAILED');
     expect(h.log).toEqual(['db:select', 'BEGIN', 'tx:update', 'tx:execute', 'ROLLBACK']);
-    // Nothing downstream may act on a completion that did not commit.
-    expect(spies.cascadeUnblockOnCompletion).not.toHaveBeenCalled();
+    // The cascade ran on the rolled-back transaction, so nothing it did
+    // survives; and nobody is told about a completion that did not commit.
+    expect(spies.cascadeUnblockOnCompletionInTx).toHaveBeenCalledWith(
+      2, 'TASK-1', expect.objectContaining({ actorUserId: 7, tx: expect.anything() }),
+    );
     expect(spies.notifyTaskEvent).not.toHaveBeenCalled();
   });
 
@@ -260,7 +161,10 @@ describe('T1 — a task write and its ledger row commit or roll back together', 
       reason: 'Reviewed',
       payload: expect.objectContaining({ from: 'review', to: 'completed', signature: expect.objectContaining({ meaning: 'APPROVED' }) }),
     });
-    expect(spies.cascadeUnblockOnCompletion).toHaveBeenCalledWith(2, 'TASK-1');
+    // On the completion's own transaction, as the actor who completed it.
+    expect(spies.cascadeUnblockOnCompletionInTx).toHaveBeenCalledWith(
+      2, 'TASK-1', expect.objectContaining({ actorUserId: 7, tx: expect.anything() }),
+    );
   });
 });
 
@@ -294,7 +198,7 @@ describe('T1 — a same-status PATCH is refused as stale or written with its led
     // The signed record's completion time, progress and last editor are untouched.
     expect(h.log).toEqual(['db:select']);
     expect(h.audits).toEqual([]);
-    expect(spies.cascadeUnblockOnCompletion).not.toHaveBeenCalled();
+    expect(spies.cascadeUnblockOnCompletionInTx).not.toHaveBeenCalled();
     expect(spies.notifyTaskEvent).not.toHaveBeenCalled();
   });
 
@@ -321,7 +225,7 @@ describe('T1 — a same-status PATCH is refused as stale or written with its led
     // the manifestation carries its own signedAt.
     expect(h.sets[0].completedAt).toBeUndefined();
     // The status did not change, so nothing downstream fires.
-    expect(spies.cascadeUnblockOnCompletion).not.toHaveBeenCalled();
+    expect(spies.cascadeUnblockOnCompletionInTx).not.toHaveBeenCalled();
     expect(spies.notifyTaskEvent).not.toHaveBeenCalled();
   });
 
@@ -468,5 +372,28 @@ describe('T4 — archiving demands the reason the UI promises to record', () => 
     expect(res.body.archived).toBe(true);
     expect(h.log).toEqual(['BEGIN', 'tx:update', 'tx:execute', 'COMMIT']);
     expect(h.audits[0]).toMatchObject({ command: 'task.delete', reason: 'Superseded by TASK-2' });
+  });
+});
+
+describe('C8 — an archive reason is refused for what is actually wrong with it', () => {
+  it('a reason over 1000 characters is told the maximum, not the minimum', async () => {
+    const res = await request(makeApp()).delete(`${BASE}/tasks/TASK-1`).send({ reason: 'x'.repeat(1001) });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/at most 1000 characters/);
+    expect(res.body.message).not.toMatch(/at least 3/);
+    expect(wrote()).toEqual([]);
+  });
+
+  it('a short reason is told the minimum', async () => {
+    const res = await request(makeApp()).delete(`${BASE}/tasks/TASK-1`).send({ reason: ' ok ' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/at least 3 characters/);
+  });
+
+  it('exactly 1000 characters is accepted', async () => {
+    const res = await request(makeApp()).delete(`${BASE}/tasks/TASK-1`).send({ reason: 'x'.repeat(1000) });
+    expect(res.status).toBe(200);
   });
 });

@@ -1,0 +1,24 @@
+== mutant: the Doc Orchestration router mounted with no gate
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+✅ PDEV → IND workflow routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+✅ PDEV → IND workflow routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+✅ PDEV → IND workflow routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+✅ PDEV → IND workflow routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+✅ PDEV → IND workflow routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+✅ PDEV → IND workflow routes mounted
+ ✓ the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session 4516ms
+ ✓ the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session 9ms
+ ✓ the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session 10ms
+ ✓ the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session 8ms
+ × the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session 13ms
+   → expected undefined to be 'AUTH_001' // Object.is equality
+ ✓ the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend 14ms
+ ✓ the /api/v1 drafting routes require a session of their own > POST /api/v1/drafting/start_task is refused without a session 44ms
+ ✓ the /api/v1 drafting routes require a session of their own > GET /api/v1/drafting/task_status/task_1 is refused without a session 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 7 passed (8)

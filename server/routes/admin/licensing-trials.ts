@@ -50,7 +50,7 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
-import auditService from '../../services/auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../../services/audit/audit-write-outcome.js';
 import { writeModuleGrant } from '../../services/entitlements/module-grants';
 import { isGrantExpired, toIsoOrNull } from '../../services/license-manager';
 import { normalizeReason } from './master-licensing';
@@ -184,8 +184,11 @@ async function record(
   moduleId: string,
   action: string,
   details: Record<string, unknown>,
-) {
-  await auditService.logAction({
+): Promise<AuditRowOutcome> {
+  // WO-16C: was `await auditService.logAction(…)` with the outcome discarded, so
+  // a change to a customer's entitlement answered the same whether or not its
+  // §11.10(e) row existed. Each route now answers it as `auditTrail`.
+  return recordAuditRow({
     tenantId: organizationId,
     userId: req.userId,
     action: 'data_modify',
@@ -329,13 +332,14 @@ router.post('/licensing/trials', async (req: Request, res: Response) => {
       expiresAt: end.at,
     });
 
-    await record(req, target.organizationId, target.moduleId, 'tenant.trial_set', {
+    const auditTrail = await record(req, target.organizationId, target.moduleId, 'tenant.trial_set', {
       expiresAt: end.at.toISOString(),
       previousExpiry,
       reason,
     });
 
     return res.json({
+      auditTrail,
       organizationId: row.organization_id,
       moduleId: row.module_id,
       expiresAt: toIsoOrNull(row.expires_at),
@@ -384,12 +388,13 @@ router.post('/licensing/trials/convert', async (req: Request, res: Response) => 
       expiresAt: null,
     });
 
-    await record(req, target.organizationId, target.moduleId, 'tenant.trial_converted', {
+    const auditTrail = await record(req, target.organizationId, target.moduleId, 'tenant.trial_converted', {
       previousExpiry,
       reason,
     });
 
     return res.json({
+      auditTrail,
       organizationId: row.organization_id,
       moduleId: row.module_id,
       expiresAt: null,
@@ -432,12 +437,13 @@ router.post('/licensing/trials/end', async (req: Request, res: Response) => {
       expiresAt: at,
     });
 
-    await record(req, target.organizationId, target.moduleId, 'tenant.trial_ended', {
+    const auditTrail = await record(req, target.organizationId, target.moduleId, 'tenant.trial_ended', {
       endedAt: at.toISOString(),
       reason,
     });
 
     return res.json({
+      auditTrail,
       organizationId: row.organization_id,
       moduleId: row.module_id,
       expiresAt: toIsoOrNull(row.expires_at),

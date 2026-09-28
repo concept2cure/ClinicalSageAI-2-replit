@@ -1,0 +1,8 @@
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > a non-inferiority design sized for 90% reports 90%, not the superiority power of δ 2ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > holds for a positive true difference and an unequal allocation 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > an equivalence design sized for 80% reports 80% 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > the judgment does not call a correctly sized non-inferiority design underpowered 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > a non-inferiority trial against placebo is still flagged — for its comparator, not its power 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > missing-data power loss is measured against the same test, not collapsed to the superiority power 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > superiority is unchanged: sized for 80%, reports 80% 0ms
+      Tests  7 passed | 102 skipped (109)

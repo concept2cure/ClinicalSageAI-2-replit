@@ -15,7 +15,7 @@ import React, { useEffect, useState } from 'react';
 import { C2CForm, type C2CFormConfig, type C2CFormField } from '../C2CForm';
 import { useAuthUser } from '@/services/portal/authService';
 import {
-  addBudgetItem, addScheduleVisit, addSoaAssessment, listReviewerCandidates, optionalNumber,
+  addBudgetItem, addScheduleVisit, addSoaAssessment, assessProtocolDeviation, listReviewerCandidates, optionalNumber,
   removeScheduleVisit, removeSoaAssessment, renameScheduleVisit, requestProtocolReview,
   setBudgetParams, startProtocolDocument, updateProtocolHeader, updateProtocolRisk,
   type ReviewerCandidate,
@@ -25,6 +25,7 @@ export type PdevFormKind =
   | 'visit-add' | 'visit-rename' | 'visit-remove'
   | 'assessment-add' | 'assessment-remove'
   | 'risk-residual'
+  | 'deviation-assess'
   | 'budget-item' | 'budget-params'
   | 'review-request' | 'review-disposition'
   | 'cover-page'
@@ -113,6 +114,18 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
       REASON,
     ],
   },
+  'deviation-assess': {
+    eyebrow: 'Protocol · deviations', title: 'Assess deviation',
+    sub: 'Your assessment of severity and effect on subject safety, with the rationale. It decides whether a prompt report to the IRB is indicated; until it is recorded the deviation cannot be closed.',
+    governed: true, submitLabel: 'Record assessment',
+    fields: [
+      { key: 'severity', label: 'Severity', type: 'seg', options: ['minor', 'major', 'critical'], required: true, half: true },
+      { key: 'affectsSafety', label: 'Affected subject safety, rights or welfare?', type: 'seg', required: true, half: true,
+        options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }] },
+      { key: 'rationale', label: 'Rationale', type: 'textarea', required: true, placeholder: 'Why this severity — what the deviation did and did not affect' },
+      REASON,
+    ],
+  },
   'budget-item': {
     eyebrow: 'Protocol · budget', title: 'Add budget line',
     sub: 'A per-subject cost line. The roll-up and the feasibility verdict are the budget engine’s, not this form’s.',
@@ -144,7 +157,7 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
     fields: [
       // Options and help text come from the member list (reviewerFieldFor).
       { key: 'reviewerUserId', label: 'Reviewer account', type: 'select', options: [] },
-      { key: 'reviewerName', label: 'Reviewer name', type: 'text', placeholder: 'Defaults to the account’s name; required when there is no account' },
+      { key: 'reviewerName', label: 'Reviewer name', type: 'text', placeholder: 'Only for a reviewer with no account here; leave blank for an account' },
       { key: 'role', label: 'Review role', type: 'select', options: REVIEW_ROLE, default: 'scientific', half: true },
       { key: 'dueDate', label: 'Due date', type: 'date', half: true },
       REASON,
@@ -198,7 +211,8 @@ const candidateLabel = (m: ReviewerCandidate) => `${m.name || m.email} · ${m.ro
 /** The reviewer-account select for the member list's current state. It never
  *  shows a failed read as an organization with no one to assign. */
 function reviewerFieldFor(field: C2CFormField, choice: ReviewerChoice): C2CFormField {
-  const signsOwn = 'The assigned account signs its own review, as review or approval.';
+  // The server stores an account's own name and refuses a different one (SEC-C-7).
+  const signsOwn = 'The assigned account signs its own review, as review or approval, and the review is listed under the account’s own name.';
   switch (choice.state) {
     case 'ready':
       return {
@@ -268,6 +282,11 @@ async function submitRegister(
       await updateProtocolRisk(rowId, {
         residualLikelihood: v.residualLikelihood, residualImpact: v.residualImpact,
         owner: v.owner, mitigation: v.mitigation, status: v.status, reason: v.reason,
+      });
+      return true;
+    case 'deviation-assess':
+      await assessProtocolDeviation(rowId, {
+        severity: v.severity, affectsSafety: v.affectsSafety, rationale: v.rationale, reason: v.reason,
       });
       return true;
     case 'budget-item':

@@ -1,0 +1,143 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > finds the routers production mounts under /api/admin 2ms
+ × server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/scim-tenants reaches its own router, whatever the caller's organisation role 1800ms
+   → a member's request for /api/admin/scim-tenants was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+ × server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/audit reaches its own router, whatever the caller's organisation role 5ms
+   → a member's request for /api/admin/audit was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+ × server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/scim-ip-allowlist reaches its own router, whatever the caller's organisation role 4ms
+   → a member's request for /api/admin/scim-ip-allowlist was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+ × server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/master reaches its own router, whatever the caller's organisation role 3ms
+   → a member's request for /api/admin/master was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+ × server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/business reaches its own router, whatever the caller's organisation role 4ms
+   → a member's request for /api/admin/business was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+ × server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/access reaches its own router, whatever the caller's organisation role 3ms
+   → a member's request for /api/admin/access was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > the security-health endpoint still refuses a caller who is not an organisation admin 3ms
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > the security-health endpoint still refuses a request with no session 5ms
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > the security-health endpoint answers an organisation admin 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/scim-tenants reaches its own router, whatever the caller's organisation role
+AssertionError: a member's request for /api/admin/scim-tenants was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ server/routes/__tests__/admin-prefix-gate.test.ts:106:132
+    104|       for (const role of ['member', 'compliance_officer', 'viewer']) {
+    105|         const res = await request(app).get(`${prefix}/anything`).set('…
+    106|         expect(res.status, `a ${role}'s request for ${prefix} was answ…
+       |                                                                                                                                    ^
+    107|         expect(res.body.reached).toBe(prefix);
+    108|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/audit reaches its own router, whatever the caller's organisation role
+AssertionError: a member's request for /api/admin/audit was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ server/routes/__tests__/admin-prefix-gate.test.ts:106:132
+    104|       for (const role of ['member', 'compliance_officer', 'viewer']) {
+    105|         const res = await request(app).get(`${prefix}/anything`).set('…
+    106|         expect(res.status, `a ${role}'s request for ${prefix} was answ…
+       |                                                                                                                                    ^
+    107|         expect(res.body.reached).toBe(prefix);
+    108|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/scim-ip-allowlist reaches its own router, whatever the caller's organisation role
+AssertionError: a member's request for /api/admin/scim-ip-allowlist was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ server/routes/__tests__/admin-prefix-gate.test.ts:106:132
+    104|       for (const role of ['member', 'compliance_officer', 'viewer']) {
+    105|         const res = await request(app).get(`${prefix}/anything`).set('…
+    106|         expect(res.status, `a ${role}'s request for ${prefix} was answ…
+       |                                                                                                                                    ^
+    107|         expect(res.body.reached).toBe(prefix);
+    108|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/master reaches its own router, whatever the caller's organisation role
+AssertionError: a member's request for /api/admin/master was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ server/routes/__tests__/admin-prefix-gate.test.ts:106:132
+    104|       for (const role of ['member', 'compliance_officer', 'viewer']) {
+    105|         const res = await request(app).get(`${prefix}/anything`).set('…
+    106|         expect(res.status, `a ${role}'s request for ${prefix} was answ…
+       |                                                                                                                                    ^
+    107|         expect(res.body.reached).toBe(prefix);
+    108|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/business reaches its own router, whatever the caller's organisation role
+AssertionError: a member's request for /api/admin/business was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ server/routes/__tests__/admin-prefix-gate.test.ts:106:132
+    104|       for (const role of ['member', 'compliance_officer', 'viewer']) {
+    105|         const res = await request(app).get(`${prefix}/anything`).set('…
+    106|         expect(res.status, `a ${role}'s request for ${prefix} was answ…
+       |                                                                                                                                    ^
+    107|         expect(res.body.reached).toBe(prefix);
+    108|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/access reaches its own router, whatever the caller's organisation role
+AssertionError: a member's request for /api/admin/access was answered by another router's gate: {"error":"Admin permissions required"}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ server/routes/__tests__/admin-prefix-gate.test.ts:106:132
+    104|       for (const role of ['member', 'compliance_officer', 'viewer']) {
+    105|         const res = await request(app).get(`${prefix}/anything`).set('…
+    106|         expect(res.status, `a ${role}'s request for ${prefix} was answ…
+       |                                                                                                                                    ^
+    107|         expect(res.body.reached).toBe(prefix);
+    108|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 4 passed (10)
+   Start at  15:40:36
+   Duration  2.31s (transform 1.10s, setup 109ms, import 174ms, tests 1.84s, environment 0ms)
+

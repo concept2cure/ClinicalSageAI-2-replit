@@ -6,6 +6,8 @@
  * Writes docs/evidence/W3/<date>/OQ-PROJECTS/{result.json, OQ-001-execution-record.md, steps/*}.
  */
 import { createRun, devLogin, helpers, passwordLogin, runCredential } from '../../lib/harness.mjs';
+import { ACCOUNT_STANDING_TEXT, accountStandingStep } from './account-standing.mjs';
+import { INACTIVITY_TEXT, inactivityStep } from './inactivity.mjs';
 import { freshTotp, totp, TOTP_PERIOD_SECONDS } from '../../lib/totp.mjs';
 
 const run = await createRun({
@@ -168,17 +170,33 @@ await step(
   },
 );
 
+/**
+ * The ledger entry for the program's creation, which must name the account that
+ * made it by reference: two accounts may share a display name, and in the
+ * 2026-09-27 execution the run identity and the demo account did (F-42, v0.9).
+ */
+function expectCreationAttributed(expect, entries, programId, userId) {
+  const created = entries.find((r) => r.target === `regulatory_program:${programId}`);
+  expect(created, `no ledger entry for the program's creation (regulatory_program:${programId}) among the newest ${entries.length}`, entries.slice(0, 3));
+  expect(
+    created.actorRef === `user:${userId}`,
+    `the creation entry names its actor "${created.actor}" ${created.actorRef ? `as ${created.actorRef}` : 'by display name alone'}, not as the run identity's account user:${userId}`,
+    created,
+  );
+  return created;
+}
+
 await step(
   {
     id: 'OQ-PROJ-06b',
     urs: ['URS-PROJ-004'],
     title: 'Program creation appears on the organisation audit ledger surface',
     action: 'GET /api/audit-trail/ledger?limit=50 (the read model behind /concept2cure/audit-trail)',
-    expected: 'At least one hash-chained entry exists for the organisation after a program was created, and the server\'s chain verdict says the chain verifies (meta.chain.ok = true)',
+    expected: 'At least one hash-chained entry exists for the organisation after a program was created, and the server\'s chain verdict says the chain verifies (meta.chain.ok = true); the entry for the program\'s creation names the run identity\'s account (actorRef user:<id>), not only a display name that two accounts may share',
     dependsOn: ['OQ-PROJ-04'],
     note: 'The ledger surface reads audit_logs, where program intake writes its chained row (server/routes/c2c/projects.ts), merged with audit_events (server/routes/audit-trail-ledger.routes.ts). v0.1 counted entries only, so an unchained entry or a broken chain passed; the step now checks what its expected result says.',
   },
-  async ({ api, expect }) => {
+  async ({ api, expect, auth }) => {
     const ledger = await api('GET', '/api/audit-trail/ledger?limit=50');
     expect(ledger.status === 200, `ledger expected 200, got ${ledger.status}`, ledger.json);
     const l = ledger.json?.data ?? [];
@@ -187,7 +205,8 @@ await step(
     expect(chained.length >= 1, 'no ledger entry carries record/previous hashes', l.slice(0, 3));
     const chain = ledger.json?.meta?.chain;
     expect(chain && chain.ok === true, `the server's chain verdict says the audit chain does not verify (${chain ? `ok=false over ${chain.rowsChecked} row(s)` : 'no meta.chain'})`, ledger.json?.meta);
-    return `ledger entries: ${l.length} (${chained.length} hash-chained); server chain verdict ok=true over ${chain.rowsChecked} row(s); newest: ${JSON.stringify(l[0]).slice(0, 160)}`;
+    const created = expectCreationAttributed(expect, l, state.programId, auth.user.id);
+    return `ledger entries: ${l.length} (${chained.length} hash-chained); server chain verdict ok=true over ${chain.rowsChecked} row(s); the creation entry names ${created.actor} (${created.actorRef}); newest: ${JSON.stringify(l[0]).slice(0, 160)}`;
   },
 );
 
@@ -484,6 +503,10 @@ await step(
     return `own session (${own.method}): projects ${openBefore}; logout ${logout.status}; afterwards projects ${openAfter}, session check ${signedInAfter ? 'signed in' : 'signed out'}; newest new ledger entry for ${target}: "${added[0].event}", chained`;
   },
 );
+
+await step({ id: 'OQ-PROJ-18', urs: ['URS-PROJ-012'], ...ACCOUNT_STANDING_TEXT }, accountStandingStep);
+
+await step({ id: 'OQ-PROJ-19', urs: ['URS-PROJ-013'], ...INACTIVITY_TEXT }, inactivityStep);
 
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);

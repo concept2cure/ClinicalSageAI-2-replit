@@ -34,6 +34,19 @@ export function attachmentReadLabel(
   return method === 'image-ocr' || method === 'pdf-ocr' ? `read via OCR · ${w}` : `read · ${w}`;
 }
 
+/**
+ * The chip text for a READY attachment — what was read, or that nothing was.
+ *
+ * The upload answers `ready` whether or not extraction produced text (a scan,
+ * an image OCR could not read), and reports that as zero words. Two composers
+ * filled attachmentReadLabel's null with the literal 'read', so a file nothing
+ * had read was shown as read. One helper, used by every composer, so the
+ * unread case cannot be spelled four ways again.
+ */
+export function readyAttachmentLabel(method: string | null | undefined, words: number | undefined): string {
+  return attachmentReadLabel(method, words) ?? 'no text extracted';
+}
+
 export interface UseChatUploadOptions {
   /** Scopes the upload to a project so extracted text lands in that project's memory. */
   projectId?: string | number | null;
@@ -52,6 +65,32 @@ export interface UseChatUpload {
   addFiles: (files: FileList | File[] | null) => void;
   removeAttachment: (id: string) => void;
   clear: () => void;
+}
+
+/** A file a turn carries to the server, by the id the upload returned. */
+export type SentAttachment = Pick<ChatAttachment, 'id' | 'name' | 'fileId' | 'extractionMethod' | 'extractionWords'>;
+
+/**
+ * What a composer sends: the text with the ready files named on a last line,
+ * and those same files by id. The line is what the thread shows; the ids are
+ * what lets the stream open the files (`file_ids`) and report them in
+ * `context_used`. Only files the server confirmed are either named or sent —
+ * a failed or unfinished upload keeps its chip and is never called attached.
+ */
+export function composeTurn(text: string, attachments: ChatAttachment[]): { body: string; files: SentAttachment[] } {
+  const ready = attachments.filter((a) => a.status === 'ready');
+  const line = ready.length ? `Attached: ${ready.map((a) => a.name).join(', ')}` : '';
+  const t = text.trim();
+  return {
+    body: t && line ? `${t}\n\n${line}` : t || line,
+    files: ready.map(({ id, name, fileId, extractionMethod, extractionWords }) => ({
+      id,
+      name,
+      fileId,
+      extractionMethod,
+      extractionWords,
+    })),
+  };
 }
 
 /** File types the chat upload accepts (matches server-side extraction support). */

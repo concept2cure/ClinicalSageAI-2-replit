@@ -68,86 +68,68 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { UI_SURFACES } from '../../shared/constants/ui-surface-registry';
 import { canAccessModule } from '../services/license-manager.js';
 import { recordObservation } from '../services/entitlements/enforcement-observations.js';
 import { currentEnforcementMode } from '../services/entitlements/enforcement-mode.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { NEVER_GATED, buildPrefixMap, modulesForPath } from '../services/entitlements/api-prefix-map.js';
+import { launchScopeApiVerdict } from '../services/entitlements/launch-scope-api.js';
+import {
+  readLaunchScopeMode,
+  readUnattributedApiMode,
+  type LaunchScopeMode,
+  type UnattributedApiMode,
+} from '../services/entitlements/launch-scope.js';
 
 const logger = createScopedLogger('module-entitlement-gate');
 
 // Re-exported, not redefined: one type for one concept. The resolver owns it.
 export type { EnforcementMode } from '../services/entitlements/enforcement-mode.js';
 
-/**
- * Prefixes that must NEVER be gated, whatever the registry says.
- *
- * Each of these is either how a customer discovers they are locked, how they
- * unlock themselves, or a compliance control that may not be switched off.
- * Gating any of them produces a trap: a locked organization that cannot see
- * why it is locked or do anything about it.
- *
- * `/api/module-subscriptions` is the sharpest case — it serves the very
- * endpoint the nav rail reads to learn what is locked. Gate it and the rail
- * gets no verdict, renders no locks (rule 1 in navEntitlements.tsx), and the
- * customer sees a full menu where every entry 403s.
- */
-export const NEVER_GATED: readonly string[] = [
-  '/api/module-subscriptions', // how the client learns what it is entitled to
-  '/api/licensing', // plans, entitlement summary, EULA acceptance
-  '/api/billing', // how they upgrade
-  '/api/auth', // sign-in must never depend on packaging
-  '/api/admin', // admin + master admin, incl. the licensing console itself
-  '/api/audit', // 21 CFR §11.10(e) — not licensable, never switchable
-  '/api/part11', // the compliance record itself
-  '/api/health', // liveness
-  '/api/tenant', // tenant context resolution
-  '/api/users', // identity
-  '/api/notifications',
-];
+// NEVER_GATED, buildPrefixMap and modulesForPath live in the pure module the
+// launch-scope API verdict also reads; re-exported so importers are unchanged.
+export { NEVER_GATED, buildPrefixMap, modulesForPath };
+
+const LAUNCH_SCOPE_REFUSAL = {
+  error: { code: 'LAUNCH_SCOPE', message: 'This part of the product is not in this release.' },
+} as const;
 
 /**
- * PURE: build the prefix → module-set map from the surface registry.
- *
- * Exported for its own test. The multi-module value is the whole point: see
- * the header on why a prefix maps to a SET and not a single module.
+ * Launch scope at the API. Answers 403 LAUNCH_SCOPE, and returns true, when the
+ * path is outside the launch scope: always for `out-of-scope`, and for an
+ * `unmapped` /api path only in `enforce`. An unmapped path is otherwise
+ * recorded as a would-refuse in the enforcement report and served. Only /api
+ * paths are judged: the gate is mounted globally, and the app's own pages and
+ * assets are not API calls.
  */
-export function buildPrefixMap(
-  surfaces: ReadonlyArray<{ id: string; apiPrefixes?: readonly string[] | null }> = UI_SURFACES,
-): Map<string, Set<string>> {
-  const map = new Map<string, Set<string>>();
-  for (const s of surfaces) {
-    for (const prefix of s.apiPrefixes ?? []) {
-      if (typeof prefix !== 'string' || !prefix.startsWith('/api/')) continue;
-      if (NEVER_GATED.some((n) => prefix === n || prefix.startsWith(`${n}/`))) continue;
-      const set = map.get(prefix) ?? new Set<string>();
-      set.add(s.id);
-      map.set(prefix, set);
-    }
-  }
-  return map;
-}
-
-/**
- * PURE: the modules that could authorize this path, or null when the path is
- * not gated at all.
- *
- * Longest-prefix wins, so a more specific registration is not shadowed by a
- * broader one. A path matches a prefix only at a segment boundary — `/api/risk`
- * must not gate `/api/risk-assessment-unrelated`.
- */
-export function modulesForPath(
+function refusedByLaunchScope(
+  req: Request,
   pathname: string,
   prefixMap: Map<string, Set<string>>,
-): Set<string> | null {
-  let best: { len: number; modules: Set<string> } | null = null;
-  for (const [prefix, modules] of prefixMap) {
-    const atBoundary =
-      pathname === prefix || pathname.startsWith(`${prefix}/`) || pathname.startsWith(`${prefix}?`);
-    if (!atBoundary) continue;
-    if (!best || prefix.length > best.len) best = { len: prefix.length, modules };
+  unattributed: UnattributedApiMode,
+  res: Response,
+): boolean {
+  if (!pathname.startsWith('/api/')) return false;
+  const verdict = launchScopeApiVerdict(pathname, prefixMap, NEVER_GATED);
+  if (verdict === 'out-of-scope') {
+    res.status(403).json(LAUNCH_SCOPE_REFUSAL);
+    return true;
   }
-  return best ? best.modules : null;
+  if (verdict !== 'unmapped') return false;
+  const orgId =
+    (req as any).tenantContext?.organizationId ?? (req as any).user?.organizationId ?? null;
+  recordObservation({
+    // Ids collapsed to `:id`, so the bounded report holds one row per route an
+    // operator must decide on, not one per record somebody opened.
+    path: pathname.replace(/\/(\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?=\/|$)/gi, '/:id'),
+    organizationId: orgId == null ? 0 : Number(orgId),
+    modules: ['launch-scope:unattributed'],
+    reasons: ['No surface, platform or infrastructure entry claims this path, so it is outside the launch scope as registered.'],
+    enforced: unattributed === 'enforce',
+  });
+  if (unattributed !== 'enforce') return false;
+  res.status(403).json(LAUNCH_SCOPE_REFUSAL);
+  return true;
 }
 
 /**
@@ -156,15 +138,43 @@ export function modulesForPath(
  * Skips silently when the mode is 'off', when the path is not gated, and when
  * there is no organization context (an unauthenticated request is somebody
  * else's 401 to issue, not this middleware's 403).
+ *
+ * ── Launch scope comes first, and does not depend on the mode ───────────────
+ * Before any of that, a path whose every claiming surface is outside the launch
+ * catalog is refused 403 `LAUNCH_SCOPE` when launch scope is enforced
+ * (services/entitlements/launch-scope-api.ts). That is not packaging: it is
+ * what ships, the same verdict the rail and a deep link already read, so it
+ * holds with `MODULE_ENFORCEMENT=off`, for every organisation and for a request
+ * with none. Until 2026-09-25 scope was enforced in navigation only, and a
+ * signed-in tenant could call every write route of a surface the product hid.
+ *
+ * A path NOTHING claims (no surface, no platform or infrastructure entry) is
+ * refused too in production (`LAUNCH_SCOPE_API_UNATTRIBUTED`, unset = enforce
+ * there since 2026-09-26) and recorded in the enforcement report either way.
+ * `report` serves it instead, as an explicit deployment choice. The default
+ * rests on the inventory of every route production mounts
+ * (docs/evidence/D2-API-SCOPE/2026-09-25/, Stage 3), which found nothing
+ * legitimate unclaimed once the auth boundary's public paths counted as
+ * infrastructure.
+ *
+ * `LAUNCH_SCOPE_ENFORCE` and `LAUNCH_SCOPE_API_UNATTRIBUTED` are read once, here,
+ * when the gate is built at boot: a value production cannot parse refuses to
+ * boot (launch-scope.ts) instead of failing every request. `opts` overrides
+ * both for tests.
  */
 export function moduleEntitlementGate(
   prefixMap: Map<string, Set<string>> = buildPrefixMap(),
+  opts: { launchScope?: LaunchScopeMode; unattributed?: UnattributedApiMode } = {},
 ) {
+  const launchScopeOn = (opts.launchScope ?? readLaunchScopeMode()) === 'on';
+  const unattributed = opts.unattributed ?? readUnattributedApiMode();
   return async function gate(req: Request, res: Response, next: NextFunction) {
+    const pathname = (req.path || req.originalUrl || '').split('?')[0];
+    if (launchScopeOn && refusedByLaunchScope(req, pathname, prefixMap, unattributed, res)) return;
+
     const { mode } = await currentEnforcementMode();
     if (mode === 'off') return next();
 
-    const pathname = (req.path || req.originalUrl || '').split('?')[0];
     const modules = modulesForPath(pathname, prefixMap);
     if (!modules || modules.size === 0) return next();
 

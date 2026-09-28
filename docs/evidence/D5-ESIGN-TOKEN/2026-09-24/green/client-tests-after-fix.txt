@@ -1,0 +1,8 @@
+# GREEN — the fixed files
+
+ ✓ client/src/concept2cure/pdev/__tests__/pdevSendsAuth.test.tsx > PDEV writes send the bearer token /api/pdev requires > evidence attach (one of the nine mutations sharing postJson) authenticates 20ms
+ ✓ client/src/concept2cure/hooks/__tests__/useEsignature.sendsAuth.test.tsx > useEsignature authenticates every call it makes > verifyPassword sends the bearer token 17ms
+ ✓ client/src/concept2cure/hooks/__tests__/useEsignature.sendsAuth.test.tsx > useEsignature authenticates every call it makes > verifyMfa sends the bearer token 4ms
+ ✓ client/src/concept2cure/hooks/__tests__/useEsignature.sendsAuth.test.tsx > useEsignature authenticates every call it makes > keeps the JSON content type and the org header 3ms
+ Test Files  2 passed (2)
+      Tests  4 passed (4)

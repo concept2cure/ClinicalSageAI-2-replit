@@ -34,6 +34,12 @@ import request from 'supertest';
 
 const query = vi.fn();
 vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
+// The QMS write routes are editor-gated (6582e3a3e). The gate has its own tests;
+// this suite is about what an editor's write records, so the harness grants it.
+vi.mock('../../middleware/orgMembership', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../middleware/orgMembership')>()),
+  requireEditorAccess: (_req: Request, _res: Response, next: NextFunction) => next(),
+}));
 
 const AUDIT = vi.hoisted(() => ({
   entries: [] as Array<Record<string, unknown>>,

@@ -238,6 +238,35 @@ export async function updateProtocolRisk(
   }), 'update the risk');
 }
 
+/* ── Deviations ────────────────────────────────────────────────────────── */
+
+/**
+ * Record a person's assessment of a deviation — severity, effect on subject
+ * safety and the rationale. The server stamps who and when, and recomputes
+ * what the assessment indicates about reporting.
+ */
+export async function assessProtocolDeviation(
+  deviationId: number,
+  v: { severity: string; affectsSafety: string; rationale: string; reason: string },
+): Promise<Record<string, unknown>> {
+  const reason = requireReason(v.reason);
+  if (v.severity !== 'minor' && v.severity !== 'major' && v.severity !== 'critical') {
+    throw new Error('Choose the assessed severity. Nothing was written.');
+  }
+  if (v.affectsSafety !== 'yes' && v.affectsSafety !== 'no') {
+    throw new Error('State whether the deviation affected subject safety. Nothing was written.');
+  }
+  if (v.rationale.trim().length < 8) {
+    throw new Error('Give the rationale for this assessment (at least 8 characters). Nothing was written.');
+  }
+  return send('POST', `/api/protocol-deviations/deviations/${deviationId}/assessment`, {
+    severity: v.severity,
+    affectsSafety: v.affectsSafety === 'yes',
+    rationale: v.rationale,
+    reason,
+  }, 'record the assessment');
+}
+
 /* ── Budget ────────────────────────────────────────────────────────────── */
 
 export async function addBudgetItem(

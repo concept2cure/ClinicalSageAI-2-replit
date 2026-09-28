@@ -1,0 +1,37 @@
+Regression sweep — before the merge (a75e3845), 2026-09-28
+ Test Files  539 passed | 1 skipped (540)
+      Tests  6873 passed | 3 skipped (6876)
+
+Regression sweep — the merged tree, 2026-09-28
+npx vitest run --config vitest.config.ts server/services/ana/__tests__ server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__ server/services/ai-gateway server/routes/chat server/routes/__tests__/chat-path-parity.test.ts client/src/concept2cure/v2/__tests__ client/src/concept2cure/components/ana/__tests__
+ Test Files  593 passed | 1 skipped (594)
+      Tests  7454 passed | 3 skipped (7457)
+
+Regression sweep — second pass (history window, program hand-over), 2026-09-28
+npx vitest run --config vitest.config.ts server/services/ana/__tests__ server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__ server/services/ai-gateway server/routes/chat server/routes/__tests__/chat-path-parity.test.ts client/src/concept2cure/v2/__tests__ client/src/concept2cure/components/ana/__tests__ shared/navigation
+ Test Files  1 failed | 598 passed | 1 skipped (600)
+      Tests  1 failed | 7532 passed | 3 skipped (7536)
+ The one failure is not this change's. It fails the same way on the pushed
+ tree with this change stashed (953517e5), alone, three runs out of three:
+   client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx
+   > dispatch workspace — the server gate, verbatim
+   > offers the governed freeze only when the gate is clear and the sequence is validated
+   Unable to find role="button" and name /Freeze sequence \(Part 11 e-signature\)/
+ It arrived with daae5ad4 (D4/D6, the Freeze button), merged after the
+ earlier sweep above; it belongs to that workstream and is left to it.
+
+ New tests in this pass, each seen failing with its fix removed by hand and
+ passing with it restored:
+   server/routes/ana-ri/__tests__/live-drive-turn.test.ts
+     history — the window opens on a question after an unanswered turn (3)
+   server/services/ana/__tests__/drive-program-resolution.test.ts
+     hands the screen the program found, so one past its first page opens
+     a program the model supplies never reaches the screen, as a param or beside one
+   server/services/ana-ri/__tests__/navigation-actions.test.ts
+     carries the program the server resolved, and keeps opens of two programs apart
+   client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx
+     opens the program the server found, even one past this page
+       (failed with each of: the handler's branch, validateDriveAction's carry,
+        the hook proxy's forwarding — removed one at a time)
+     an open offered as a chip (Live Drive off) opens the program the server found
+     the server's program wins over a name the page reads differently

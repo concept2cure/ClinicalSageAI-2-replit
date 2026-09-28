@@ -1,0 +1,6 @@
+$ npm run check:security-patterns
+check-security-patterns: 0 violations across 2843 file(s).
+exit=0
+$ npm run ci:client-ip-single-source
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+exit=0

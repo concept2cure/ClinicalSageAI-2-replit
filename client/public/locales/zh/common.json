@@ -33,5 +33,11 @@
   "language": {
     "label": "语言",
     "select": "选择语言"
+  },
+  "session": {
+    "stillThere": "您还在吗？",
+    "signOutIn": "由于无操作，{{seconds}} 秒后将登出。",
+    "staySignedIn": "保持登录",
+    "signOutNow": "立即登出"
   }
 }

@@ -3,8 +3,10 @@
  *
  * Every log line passes through `redactContext` BEFORE reaching Pino,
  * so deeply-nested sensitive fields are scrubbed regardless of how the
- * context object is shaped. Pino's own `redact.paths` only catches
- * fixed paths; the walker below handles arbitrary nesting.
+ * context object is shaped — objects and arrays alike — and the message
+ * string itself passes through `maskPersonalData`. Pino's own
+ * `redact.paths` only catches fixed paths; the walker below handles
+ * arbitrary nesting.
  *
  * SENSITIVE_KEYS is matched case-insensitively as a substring of the
  * key name, so `userPassword`, `currentPasswordHash`, `password_hash`,
@@ -102,6 +104,29 @@ const SENSITIVE_KEYS = [
   'authorization',
 ];
 
+/**
+ * Personal data that is not secret but is still not for a log line: an e-mail
+ * address or an IP address is masked wherever it appears as a string value
+ * (security audit 2026-09-24, DP-26; GDPR Art. 5(1)(c) and 25). The mask keeps
+ * what an operator needs to correlate — the first character and the domain of
+ * an address, the network part of an IP — and drops the identifying rest. The
+ * audit trail, not the log, is where the full value belongs. Strings longer
+ * than MASK_SCAN_LIMIT are left alone for throughput.
+ */
+const MASK_SCAN_LIMIT = 2048;
+const EMAIL_RE = /([A-Za-z0-9._%+-])([A-Za-z0-9._%+-]*)@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
+const IPV4_RE = /\b(\d{1,3}\.\d{1,3}\.\d{1,3})\.\d{1,3}\b/g;
+const IPV6_RE = /\b((?:[0-9a-f]{1,4}:){3})(?:[0-9a-f]{0,4}:?){1,5}\b/gi;
+
+export const maskPersonalData = (value: string): string => {
+  if (value.length > MASK_SCAN_LIMIT) return value;
+  let out = value;
+  if (out.includes('@')) out = out.replace(EMAIL_RE, (_m, first: string, _rest: string, domain: string) => `${first}***@${domain}`);
+  if (/\d\.\d/.test(out)) out = out.replace(IPV4_RE, '$1.xxx');
+  if (out.includes(':') && /[0-9a-f]{1,4}:[0-9a-f]{1,4}:/i.test(out)) out = out.replace(IPV6_RE, '$1:xxxx');
+  return out;
+};
+
 const redactValue = (value: unknown) => {
   if (value === null || value === undefined) return value;
   if (typeof value === 'string') return '[REDACTED]';
@@ -111,31 +136,43 @@ const redactValue = (value: unknown) => {
 
 /**
  * Walk the context tree replacing values under sensitive keys with
- * '[REDACTED]'. Recurses into objects up to depth 6 (any deeper is
- * almost certainly accidental log spam and not worth scanning).
- * Arrays are passed through — array values usually don't contain
- * named fields, and walking large arrays kills log throughput.
+ * '[REDACTED]' and masking personal data in every other string. Recurses
+ * into objects AND arrays up to depth 6 (any deeper is almost certainly
+ * accidental log spam and not worth scanning). An array element has no key
+ * to match against SENSITIVE_KEYS, so a string element is masked and an
+ * object element is walked; before the security review of 2026-09-26
+ * (DP-39) arrays were passed through unscanned, so a list of addresses
+ * under an ordinary key reached the log store in clear.
  */
 const redactContext = (context: LogContext, depth = 0): LogContext => {
   if (!context || typeof context !== 'object') return context;
   if (depth > 6) return context;
-  if (Array.isArray(context)) return context as unknown as LogContext;
+  if (Array.isArray(context)) return context.map(item => maskValue(item, depth)) as unknown as LogContext;
 
   const output: LogContext = {};
   for (const [key, value] of Object.entries(context)) {
     const lowerKey = key.toLowerCase();
     const shouldRedact = SENSITIVE_KEYS.some(sensitive => lowerKey.includes(sensitive));
-
-    if (shouldRedact) {
-      output[key] = redactValue(value);
-    } else if (value && typeof value === 'object') {
-      output[key] = redactContext(value as LogContext, depth + 1);
-    } else {
-      output[key] = value;
-    }
+    output[key] = shouldRedact ? redactValue(value) : maskValue(value, depth);
   }
   return output;
 };
+
+/** A value under an ordinary key, or an array element: walked, masked, or passed through. */
+function maskValue(value: unknown, depth: number): unknown {
+  if (value && typeof value === 'object') return redactContext(value as LogContext, depth + 1);
+  if (typeof value === 'string') return maskPersonalData(value);
+  return value;
+}
+
+/**
+ * The message is a string the caller composed, often by interpolation, and
+ * it is masked like any other string (DP-39). A non-string message — a legacy
+ * caller passing an object or an Error — is handed on as before; the logger
+ * must not throw inside the request that is logging.
+ */
+const maskMessage = (message: string): string =>
+  typeof message === 'string' ? maskPersonalData(message) : message;
 
 // Create a Pino logger. Redaction is performed by `redactContext` ABOVE
 // the pino layer so the walker can handle arbitrary nesting; pino's own
@@ -162,13 +199,13 @@ const pinoLogger = pino({
 
 const logger: Logger = {
   info: (message: string, context?: unknown) =>
-    pinoLogger.info({ context: redactContext(normalizeContext(context)) }, message),
+    pinoLogger.info({ context: redactContext(normalizeContext(context)) }, maskMessage(message)),
   error: (message: string, context?: unknown) =>
-    pinoLogger.error({ context: redactContext(normalizeContext(context)) }, message),
+    pinoLogger.error({ context: redactContext(normalizeContext(context)) }, maskMessage(message)),
   warn: (message: string, context?: unknown) =>
-    pinoLogger.warn({ context: redactContext(normalizeContext(context)) }, message),
+    pinoLogger.warn({ context: redactContext(normalizeContext(context)) }, maskMessage(message)),
   debug: (message: string, context?: unknown) =>
-    pinoLogger.debug({ context: redactContext(normalizeContext(context)) }, message),
+    pinoLogger.debug({ context: redactContext(normalizeContext(context)) }, maskMessage(message)),
 };
 
 /**
@@ -187,7 +224,7 @@ export function createScopedLogger(scope: string): Logger {
 export const createContextLogger = createScopedLogger;
 
 /** Exported for tests; do not call from application code. */
-export const __testing = { SENSITIVE_KEYS, redactContext };
+export const __testing = { SENSITIVE_KEYS, redactContext, maskPersonalData };
 
 // Named export so files can use: import { logger } from '../utils/logger.js'
 export { logger };

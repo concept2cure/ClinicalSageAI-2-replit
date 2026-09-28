@@ -30,6 +30,7 @@
  * @module server/services/ana/lineage-dossier
  */
 import { getPool } from '../../db/runtime.js';
+import { listTurnRecords } from './turn-record-verify.js';
 import {
   collectArtifactLedger,
   type ArtifactLedger,
@@ -141,6 +142,22 @@ export interface DossierHumanControl {
   at: string | null;
 }
 
+/**
+ * One retained AnA turn record for the document's conversation — the
+ * immutable, chained record of the turn (services/ana/turn-record.ts). The
+ * reasoning and controls above are read from the working transcript, which a
+ * person may delete; these are not, and each can be exported and verified by
+ * id (GET /api/ana-ri/turn-records/:id/export).
+ */
+export interface DossierRetainedTurn {
+  id: string;
+  outcome: 'answered' | 'stopped' | 'failed';
+  actorUserId: number | null;
+  startedAt: string;
+  endedAt: string;
+  recordSha256: string;
+}
+
 export interface DossierDataLineage {
   sourceObjectType: string;
   sourceObjectId: string;
@@ -170,6 +187,12 @@ export interface DocumentLineageDossier {
   /** Human control actions (pause/interject/redirect/cancel) across the turns. */
   humanControls: DossierHumanControl[];
   dataLineage: DossierDataLineage[];
+  /**
+   * The retained turn records of the document's conversation, oldest first.
+   * Null when the store could not be read — never an empty list standing in
+   * for a failed read. Absent from dossiers assembled before this field.
+   */
+  retainedTurnRecords?: DossierRetainedTurn[] | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -510,6 +533,30 @@ async function loadDataLineage(
   }
 }
 
+/** The conversation's retained turn records, or null when they could not be read. */
+async function loadRetainedTurnRecords(
+  threadId: string | null,
+  organizationId: number,
+): Promise<DossierRetainedTurn[] | null> {
+  if (!threadId) return [];
+  try {
+    const records = await listTurnRecords(getPool(), organizationId, { threadId, limit: 500 });
+    return records
+      .map(({ id, outcome, actorUserId, startedAt, endedAt, recordSha256 }) => ({
+        id,
+        outcome,
+        actorUserId,
+        startedAt,
+        endedAt,
+        recordSha256,
+      }))
+      .reverse();
+  } catch (err) {
+    console.warn('[lineage-dossier] load failed', { source: 'retained-turn-records', error: (err as Error)?.message });
+    return null;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Assembler
 // ─────────────────────────────────────────────────────────────────────────────
@@ -531,13 +578,14 @@ export async function buildDocumentLineageDossier(
   const artifactPk = ledger.artifact.artifactPk;
   const threadId = await loadThreadId(artifactId, organizationId);
 
-  const [versionHistory, decisions, provenanceEvents, turnRecords, dataLineage] =
+  const [versionHistory, decisions, provenanceEvents, turnRecords, dataLineage, retainedTurnRecords] =
     await Promise.all([
       loadVersionHistory(artifactPk, organizationId, ledger.artifact.version),
       loadDecisions(artifactPk, organizationId),
       loadProvenanceEvents(artifactPk, organizationId),
       loadTurnRecords(threadId),
       loadDataLineage(artifactId, threadId, organizationId),
+      loadRetainedTurnRecords(threadId, organizationId),
     ]);
 
   return {
@@ -552,5 +600,6 @@ export async function buildDocumentLineageDossier(
     reasoning: turnRecords.reasoning,
     humanControls: turnRecords.humanControls,
     dataLineage,
+    retainedTurnRecords,
   };
 }

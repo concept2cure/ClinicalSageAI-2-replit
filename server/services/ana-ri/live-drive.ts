@@ -220,13 +220,15 @@ export function buildDriveStateEvent(state: DriveState): Record<string, unknown>
  * tool-result time so the shell moves while AnA is still working, not after
  * the turn ends. Carries the validated directive verbatim; the client
  * re-validates it against the shared registry before applying (fail closed on
- * both ends).
+ * both ends). `moveId` (the tool-use id) is what the client names when it
+ * reports the move landed or not — the checkpoint waits on it.
  */
 export function buildDriveNavigationEvent(
   directive: NavigationDirective,
   round: number,
+  moveId?: string,
 ): Record<string, unknown> {
-  return { type: 'drive_navigation', round, directive };
+  return { type: 'drive_navigation', round, directive, ...(moveId ? { moveId } : {}) };
 }
 
 /**
@@ -239,8 +241,9 @@ export function buildDriveNavigationEvent(
 export function buildDriveActionEvent(
   directive: SurfaceActionDirective,
   round: number,
+  moveId?: string,
 ): Record<string, unknown> {
-  return { type: 'drive_action', round, directive };
+  return { type: 'drive_action', round, directive, ...(moveId ? { moveId } : {}) };
 }
 
 /**

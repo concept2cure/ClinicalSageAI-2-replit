@@ -1,0 +1,153 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-09-26T13:10:48.029Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T13:10:48.031Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-09-26T13:10:48.031Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/api/cmc/__tests__/module3BuildStateRoutes.test.ts
+{
+  "timestamp": "2026-09-26T13:10:48.329Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-09-26T13:10:48.364Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet" 1930ms
+   → expected 'authoring_plans table not migrated yet' to be 'This feature is not yet provisioned i…' // Object.is equality
+ × tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "therapeutic_area column not migrated yet" 7ms
+   → expected 'therapeutic_area column not migrated …' to be 'This feature is not yet provisioned i…' // Object.is equality
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > the 400 for INVALID_REQUEST from the generator still carries the domain message (4xx is out of scope) 5ms
+ × tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > 503 keeps the code and does not echo the thrown text 5ms
+   → expected 'AI provider unavailable: upstream gat…' to be 'The AI provider is unavailable.' // Object.is equality
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > the 404 for ARTIFACT_NOT_FOUND still carries the domain message (4xx is out of scope) 5ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > GET /build-state/:projectId — artifact spine resolution > returns 200 with honest unanchored state for a uuid program with no PM anchor 29ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > GET /build-state/:projectId — artifact spine resolution > queries the registry with the anchored integer id for a linked program 6ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > GET /build-state/:projectId — artifact spine resolution > uploaded-sources takes the same translation and degrades honestly 3ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > build-state derives its source rules from the composer (anti-drift) > counts qc_result sources toward 3.2.S.4 and 3.2.P.5 — the drift the copied map had 6ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > build-state reads completeness from the canonical status, not from a stored or fabricated figure > scores an uncompiled section from its live sources — '' is not present, retired does not count 6ms
+ × server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown) > build-state: the relation name stays in the log, the client gets the envelope 9ms
+   → expected 'relation "cmc_source_objects" does no…' to be 'INTERNAL_ERROR' // Object.is equality
+ × server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown) > uploaded-sources: the relation name stays in the log, the client gets the envelope 3ms
+   → expected 'relation "cmc_source_objects" does no…' to be 'INTERNAL_ERROR' // Object.is equality
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown) > the 401 for a missing tenant is untouched by the migration 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+AssertionError: expected 'authoring_plans table not migrated yet' to be 'This feature is not yet provisioned i…' // Object.is equality
+
+Expected: "This feature is not yet provisioned in this deployment."
+Received: "authoring_plans table not migrated yet"
+
+ ❯ tests/routes/ana-features-coded-503-containment.test.ts:111:30
+    109|       expect(res.status).toBe(503);
+    110|       expect(res.body.code).toBe('MIGRATION_PENDING');
+    111|       expect(res.body.error).toBe('This feature is not yet provisioned…
+       |                              ^
+    112|       const body = JSON.stringify(res.body);
+    113|       expect(body).not.toContain(thrown);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "therapeutic_area column not migrated yet"
+AssertionError: expected 'therapeutic_area column not migrated …' to be 'This feature is not yet provisioned i…' // Object.is equality
+
+Expected: "This feature is not yet provisioned in this deployment."
+Received: "therapeutic_area column not migrated yet"
+
+ ❯ tests/routes/ana-features-coded-503-containment.test.ts:111:30
+    109|       expect(res.status).toBe(503);
+    110|       expect(res.body.code).toBe('MIGRATION_PENDING');
+    111|       expect(res.body.error).toBe('This feature is not yet provisioned…
+       |                              ^
+    112|       const body = JSON.stringify(res.body);
+    113|       expect(body).not.toContain(thrown);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > 503 keeps the code and does not echo the thrown text
+AssertionError: expected 'AI provider unavailable: upstream gat…' to be 'The AI provider is unavailable.' // Object.is equality
+
+Expected: "The AI provider is unavailable."
+Received: "AI provider unavailable: upstream gateway 10.0.4.21:8443 refused"
+
+ ❯ tests/routes/ana-features-coded-503-containment.test.ts:143:28
+    141|     expect(res.status).toBe(503);
+    142|     expect(res.body.code).toBe('AI_PROVIDER_UNAVAILABLE');
+    143|     expect(res.body.error).toBe('The AI provider is unavailable.');
+       |                            ^
+    144|     expect(JSON.stringify(res.body)).not.toMatch(/10\.0\.4\.21|upstrea…
+    145|     const entry = h.logged.find((l) => l.scope === 'ana-features' && J…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown) > build-state: the relation name stays in the log, the client gets the envelope
+ FAIL  server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown) > uploaded-sources: the relation name stays in the log, the client gets the envelope
+AssertionError: expected 'relation "cmc_source_objects" does no…' to be 'INTERNAL_ERROR' // Object.is equality
+
+Expected: "INTERNAL_ERROR"
+Received: "relation "cmc_source_objects" does not exist"
+
+ ❯ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts:259:30
+    257|
+    258|       expect(res.status).toBe(500);
+    259|       expect(res.body.error).toBe('INTERNAL_ERROR');
+       |                              ^
+    260|       expect(res.body.correlationId).toBe('req-p1-17');
+    261|       const body = JSON.stringify(res.body);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 8 passed (13)
+   Start at  13:10:45
+   Duration  2.97s (transform 2.55s, setup 180ms, import 2.65s, tests 2.03s, environment 0ms)
+

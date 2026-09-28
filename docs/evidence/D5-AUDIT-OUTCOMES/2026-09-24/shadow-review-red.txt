@@ -1,0 +1,10 @@
+# RED — shadow-review: tests run against the unfixed implementation (server/services/shadow-review/shadow-review-service.ts stashed at 872c47182)
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > fails a reply with no findings array instead of completing a run with 0 criticals 27ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > counts a "Critical" finding as critical 13ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > fails a reply whose severity is not one the gate knows 8ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > completes a run whose model returned an explicit, empty findings list 8ms
+ × server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a lost row: the run completes and the result says the row is missing 15ms
+ × server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a written row says so 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)

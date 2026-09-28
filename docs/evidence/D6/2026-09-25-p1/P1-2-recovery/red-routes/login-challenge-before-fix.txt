@@ -1,0 +1,14 @@
+$ # routes/auth.ts unchanged at 83b6a932; test added
+ × server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > redeems a recovery code through the login verifier (the login screen's "Use a recovery code") 31ms
+ × server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > never completes an authenticator account's sign-in with an emailed code 11ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > still verifies an emailed code for an account without an authenticator 7ms
+ × server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > mints no emailed code for an authenticator account (409, names the authenticator and the recovery codes) 6m
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > still resends for an account without an authenticator 5ms
+ × server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login with an unknown e-mail > pays the bcrypt comparison a wrong password pays, so the answer time does not say the e-m
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: the recovery code was refused as an invalid code: expected 'AUTH_004' not to be 'AUTH_004' // Object.is equality
+AssertionError: the emailed code was consulted for an authenticator account: expected "vi.fn()" to not be called at all, but actually been called 1 times
+AssertionError: an authenticator account was sent an emailed code: expected 200 to be 409 // Object.is equality
+AssertionError: no comparison ran for the unknown e-mail: expected "compare" to be called at least once
+      Tests  4 failed | 2 passed (6)
+exit=1

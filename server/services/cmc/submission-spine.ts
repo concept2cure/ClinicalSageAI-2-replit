@@ -1,11 +1,19 @@
 /**
- * The program ↔ submission identity convention — ONE owner.
+ * A program's submission spine — ONE owner.
  *
- * Moved verbatim from routes/ectd-compile.ts (which now imports it) so the
- * Module 3 OS compose path can dispatch REGIONAL composition (3.2.R) on the
- * same spine the eCTD compile runs against. Two copies of an identity-matching
- * convention is how a compose and a compile end up talking about different
- * submissions — the drift this module exists to prevent.
+ * Moved from routes/ectd-compile.ts (which now imports it) so the Module 3 OS
+ * compose path dispatches REGIONAL composition (3.2.R) on the same spine the
+ * eCTD compile runs against: two copies of this rule is how a compose and a
+ * compile end up talking about different submissions.
+ *
+ * The rule (LX-22 part 2b, PF-06). A submission anchored to the program
+ * (submissions.program_id) is the program's; one anchored to ANOTHER program
+ * never is. It used to be matched by product name / title, newest first — so
+ * two projects for one product resolved to the same filing, and whichever
+ * submission was touched last won. A submission with no recorded project
+ * (created before submissions recorded one) is still matched by name, but only
+ * when that is unambiguous in both directions, and the result says so
+ * (`match: 'legacy-name'`); this branch goes when no such row remains.
  *
  * @module server/services/cmc/submission-spine
  */
@@ -31,6 +39,9 @@ export interface SpineAnchor {
 
 export interface SubmissionSpine {
   submissionId: number;
+  /** How the submission was found: anchored to this program by column, or —
+   *  for a submission with no recorded project — by an unambiguous name match. */
+  match: 'program' | 'legacy-name';
   applicationType: string;
   /** The submission's recorded market (fda/eu/jp/… — submissions.primary_region). */
   primaryRegion: string | null;
@@ -38,14 +49,72 @@ export interface SubmissionSpine {
   sequence: { id: number; sequenceNumber: string; region: string; leafCount: number } | null;
 }
 
+const normKey = (v: unknown): string => String(v ?? '').trim().toLowerCase();
+
+interface SpineRow {
+  id: number | string;
+  application_type: string;
+  primary_region: string | null;
+  product_name?: string | null;
+  title?: string | null;
+  anchored?: boolean;
+}
+
 /**
- * Resolve the program anchor's canonical submission spine, org-scoped, by the
- * SAME identity convention the ind-checklist-view-assembler and the C2C intake
- * use to link program ↔ submission: matching application type, and the
- * program's product_name / name / code matching the submission's product_name
- * or title (case-insensitive). Numeric legacy anchors have no program identity
- * and therefore no spine. Fail-closed: any lookup failure is "no spine", never
- * a guessed one.
+ * Another live program of the organization, of the same type, that an
+ * unanchored submission's product name or title names equally well. Its own
+ * statement, not folded into the submissions query: the eCTD compile harness
+ * routes statements by table (tests/routes/ectd-compile-spine.harness.ts).
+ */
+async function anotherProgramClaims(row: SpineRow, anchor: SpineAnchor, appType: string, orgId: number): Promise<boolean> {
+  const subKeys = [row.product_name, row.title].map(normKey).filter(Boolean);
+  if (subKeys.length === 0) return true;
+  const { rows } = await pool.query(
+    `SELECT id FROM regulatory_programs
+      WHERE organization_id = $1 AND deleted_at IS NULL AND lower(program_type) = $2
+        AND (lower(coalesce(product_name, '')) = ANY($3) OR lower(coalesce(name, '')) = ANY($3)
+             OR lower(coalesce(code, '')) = ANY($3))`,
+    [orgId, appType, subKeys],
+  );
+  return rows.some((r: { id: unknown }) => String(r.id) !== anchor.programId);
+}
+
+/**
+ * The program's submission row: anchored to it by column; else, for a
+ * submission with no recorded project, the one that its name makes
+ * unambiguously this program's; else none.
+ */
+async function findProgramSubmission(
+  anchor: SpineAnchor & { programId: string },
+  appType: string,
+  orgId: number,
+): Promise<{ row: SpineRow; match: SubmissionSpine['match'] } | null> {
+  const identityKeys = [...new Set([anchor.productName, anchor.title, anchor.programCode].map(normKey).filter(Boolean))];
+  const { rows } = await pool.query(
+    `SELECT id, application_type, primary_region, product_name, title, (program_id IS NOT NULL) AS anchored
+       FROM submissions
+      WHERE organization_id = $1 AND deleted_at IS NULL AND lower(application_type) = $2
+        AND (program_id = $3::uuid
+             OR (program_id IS NULL
+                 AND (lower(coalesce(product_name, '')) = ANY($4) OR lower(title) = ANY($4))))
+      ORDER BY (program_id IS NOT NULL) DESC, updated_at DESC NULLS LAST, id DESC
+      LIMIT 2`,
+    [orgId, appType, anchor.programId, identityKeys],
+  );
+  const first = rows[0] as SpineRow | undefined;
+  if (!first) return null;
+  if (first.anchored === true) return { row: first, match: 'program' };
+  // Legacy: exactly one unanchored candidate, and no other program claims it.
+  if (rows.length !== 1) return null;
+  if (await anotherProgramClaims(first, anchor, appType, orgId)) return null;
+  return { row: first, match: 'legacy-name' };
+}
+
+/**
+ * Resolve the program anchor's canonical submission spine, org-scoped (see the
+ * module header for the rule). Numeric legacy anchors have no program identity
+ * and therefore no spine. Fail-closed: any lookup failure, and any ambiguity, is
+ * "no spine", never a guessed one.
  */
 export async function resolveSubmissionSpine(
   anchor: SpineAnchor,
@@ -54,26 +123,10 @@ export async function resolveSubmissionSpine(
   if (anchor.programId === null) return null;
   const appType = (anchor.programType ?? '').trim().toLowerCase();
   if (!DRUG_APPLICATION_TYPES.has(appType)) return null;
-  const identityKeys = [
-    ...new Set(
-      [anchor.productName, anchor.title, anchor.programCode]
-        .map((v) => (v ?? '').trim().toLowerCase())
-        .filter(Boolean),
-    ),
-  ];
-  if (identityKeys.length === 0) return null;
   try {
-    const subRes = await pool.query(
-      `SELECT id, application_type, primary_region FROM submissions
-        WHERE organization_id = $1 AND deleted_at IS NULL
-          AND lower(application_type) = $2
-          AND (lower(coalesce(product_name, '')) = ANY($3) OR lower(title) = ANY($3))
-        ORDER BY updated_at DESC NULLS LAST, id DESC
-        LIMIT 1`,
-      [orgId, appType, identityKeys],
-    );
-    const sub = subRes.rows[0];
-    if (!sub) return null;
+    const found = await findProgramSubmission({ ...anchor, programId: anchor.programId }, appType, orgId);
+    if (!found) return null;
+    const { row: sub, match } = found;
     const submissionId = Number(sub.id);
     const primaryRegion = sub.primary_region == null ? null : String(sub.primary_region);
 
@@ -86,7 +139,7 @@ export async function resolveSubmissionSpine(
     );
     const seq = seqRes.rows[0];
     if (!seq) {
-      return { submissionId, applicationType: String(sub.application_type), primaryRegion, sequence: null };
+      return { submissionId, match, applicationType: String(sub.application_type), primaryRegion, sequence: null };
     }
 
     const leafRes = await pool.query(
@@ -96,6 +149,7 @@ export async function resolveSubmissionSpine(
     );
     return {
       submissionId,
+      match,
       applicationType: String(sub.application_type),
       primaryRegion,
       sequence: {

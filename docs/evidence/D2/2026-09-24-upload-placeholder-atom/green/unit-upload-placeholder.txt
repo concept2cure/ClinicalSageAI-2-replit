@@ -1,0 +1,1065 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/routes/chat-upload-wiring.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts
+Loaded 0 academic documents
+
+stdout | tests/routes/chat-upload-source-identity.test.ts
+Loaded 0 academic documents
+
+stdout | tests/routes/chat-upload-wiring.test.ts
+Loaded 0 academic documents
+
+stderr | tests/routes/chat-upload-source-identity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/chat-upload-wiring.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/chat-upload-wiring.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/chat-upload-source-identity.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "enrollment.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+(node:3667) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:3668) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:3674) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276691_9sira1",
+    "method": "utf8",
+    "chars": 69
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276707_lj5kxd",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276735_76defd",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276707_lj5kxd",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom
+{
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790285276691_9sira1",
+    "orgId": 5
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276735_76defd",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276864_srigub",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276864_srigub",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "note.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276869_0icuqy",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276869_0icuqy",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276869_2ud4bx",
+    "method": "utf8",
+    "chars": 44
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > keeps an unscoped chat attachment tenant-private, not project-wide
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > keeps an unscoped chat attachment tenant-private, not project-wide
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276872_ez2fh3",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > keeps an unscoped chat attachment tenant-private, not project-wide
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276872_ez2fh3",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+{
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790285276869_2ud4bx",
+    "orgId": 5
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom 180ms
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276888_emhyh5",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "blank.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276888_emhyh5",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276892_onkd9f",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document
+{
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790285276890_2971m3",
+    "orgId": 5
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact)
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "org.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276892_onkd9f",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact)
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276894_f6k381",
+    "method": "utf8",
+    "chars": 40
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact)
+{
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790285276894_f6k381",
+    "orgId": 5
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276892_1kzg19",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276892_1kzg19",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276898_za53d1",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276898_za53d1",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "scan.png",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276900_i6endu",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276900_i6endu",
+    "sourceId": 1,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276913_2yqk7d",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+{
+  "level": "info",
+  "message": "[chat-upload] Upload resolved to an existing source identity",
+  "context": {
+    "fileId": "file_1790285276913_2yqk7d",
+    "sourceId": 777,
+    "checksum": "24c4b0744d5513ad21eab9705faa50770abaee8da0dfcd2968dad1880e8f6150"
+  }
+}
+
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id 161ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace 4ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it 4ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > keeps an unscoped chat attachment tenant-private, not project-wide 15ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending 4ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row 6ms
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > does not fail the upload when identity resolution errors
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > does not fail the upload when identity resolution errors
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276917_2l6p0x",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > does not fail the upload when identity resolution errors
+{
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "cre tables missing",
+    "fileId": "file_1790285276917_2l6p0x",
+    "orgId": 5
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276920_4f9vfn",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > refuses a request carrying no file rather than recording a phantom document
+{
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — no file bytes received",
+  "context": {
+    "hasFile": false,
+    "contentType": "application/json"
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276922_4rk32p",
+    "method": "utf8",
+    "chars": 68
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276922_4rk32p",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "SAP_v2.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276926_x3qozw",
+    "method": "utf8",
+    "chars": 24
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276926_x3qozw",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > writes nothing at all when it refuses
+{
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — no file bytes received",
+  "context": {
+    "hasFile": false,
+    "contentType": "application/json"
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "brochure.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276928_1njf8a",
+    "method": "utf8",
+    "chars": 54
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276928_1njf8a",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol_v9.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276932_r5bp85",
+    "method": "utf8",
+    "chars": 46
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276932_r5bp85",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > does not accept a filename and size in place of a file
+{
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — no file bytes received",
+  "context": {
+    "hasFile": false,
+    "contentType": "application/json"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276934_dytvps",
+    "method": "utf8",
+    "chars": 20
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+{
+  "level": "info",
+  "message": "[chat-upload] Upload superseded an existing source identity",
+  "context": {
+    "fileId": "file_1790285276934_dytvps",
+    "sourceId": 4242,
+    "supersededId": 300
+  }
+}
+
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload 16ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > does not fail the upload when identity resolution errors 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id 2ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none 2ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date 4ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too 3ms
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276943_o6vz81",
+    "method": "utf8",
+    "chars": 20
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276943_o6vz81",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "csr.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276949_ovmtf1",
+    "method": "utf8",
+    "chars": 44
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276949_ovmtf1",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "first-name.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276959_8dyh5h",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276959_8dyh5h",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "renamed-copy.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276965_padogv",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276965_padogv",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+ ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends 170ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero 27ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > refuses a request carrying no file rather than recording a phantom document 25ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > writes nothing at all when it refuses 7ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > does not accept a filename and size in place of a file 5ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums 18ms
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276978_o4ru4d",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790285276978_o4ru4d",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename 20ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible 7ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > the parser enforces its limits > rejects a file type outside the allowlist with 415, not 500 5ms
+(node:3674) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "level": "info",
+  "message": "[tesseract-ocr] OCR completed",
+  "context": {
+    "languages": "eng",
+    "chars": 24,
+    "confidence": 95,
+    "durationMs": 118
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285276906_if6tga",
+    "method": "image-ocr",
+    "chars": 23
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790285276906_if6tga",
+    "orgId": 5
+  }
+}
+
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text 21ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document 5ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact) 3ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory 451ms
+
+ Test Files  3 passed (3)
+      Tests  29 passed (29)
+   Start at  21:27:46
+   Duration  10.89s (transform 21.33s, setup 250ms, import 29.64s, tests 1.20s, environment 0ms)
+

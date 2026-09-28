@@ -346,6 +346,8 @@ export async function applyAuthoringSubsystem(pool, repoRoot, { log = () => {} }
     await pool.query('ROLLBACK').catch(() => {});
     throw new Error(
       `authoring subsystem provisioning failed — rolled back, subsystem left absent (safe to re-run): ${err.message}`,
+      // Kept so a caller can tell a lock timeout (55P03, retried by deploy-migrate) from a real fault.
+      { cause: err },
     );
   }
 }

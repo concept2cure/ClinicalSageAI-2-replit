@@ -525,12 +525,6 @@ export const C2C_MIGRATION_FILES = [
      idempotent. */
   'db/migrations/20260224_ai_claims_verifier_flags.sql',
 
-  /* source_type / source_atom_id / source_retrieval_chunk_id on
-     ivdr_binder_evidence — the IVDR pack manifest SELECTs all three and
-     ai-claims-routes INSERTs source_type, so attaching evidence to a claim and
-     building the manifest both raised 42703. Same pair of 2026-02-24/25 files
-     that fell off the applier together; same measurement. */
-  'db/migrations/20260224_binder_evidence_source_types.sql',
   'db/migrations/20260730_cmc_projects_reconstruction.sql',
   'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
   'db/migrations/20260730_fk_delete_policies_port.sql',
@@ -658,6 +652,18 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260206_phase5_evidence_fabric.sql',
   'db/migrations/20260207_phase6_6_predicate_intelligence.sql',
   'db/migrations/20260223_ivdr_binder_packs.sql',
+
+  /* source_type / source_atom_id / source_retrieval_chunk_id on
+     ivdr_binder_evidence — the IVDR pack manifest SELECTs all three and
+     ai-claims-routes INSERTs source_type, so attaching evidence to a claim and
+     building the manifest both raised 42703. Same pair of 2026-02-24/25 files
+     that fell off the applier together; same measurement.
+     Moved here, directly after its creator, 2026-09-26 (W2 / D1): it stood 25
+     entries earlier, so on a database the set was building for the first time
+     its to_regclass guard found no table and skipped, and the columns, CHECK and
+     indexes arrived only on the SECOND deploy. ci:replay-rebuilds-nothing
+     measured it (5 objects created by a replay). */
+  'db/migrations/20260224_binder_evidence_source_types.sql',
 
   /* The artifact hashes, sizes and warnings ivdr-pack-worker writes in its
      final promotion step (`UPDATE ivdr_packs SET … manifest_sha256 … zip_sha256,
@@ -2291,6 +2297,9 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260705_research_agreements.sql', // research_agreements
   'migrations/20260728_chat_thread_store.sql', // chat_threads, chat_messages
   'migrations/20260731c_canonical_documents.sql', // canonical_documents
+  // VR-03 (D5): the lifecycle trail only grows, signatures are written once,
+  // nothing is deleted. Triggers only, created when absent; no table, no DROP.
+  'migrations/20260925_canonical_documents_append_only.sql',
 
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
@@ -2540,6 +2549,29 @@ export const C2C_MIGRATION_FILES = [
   // select().from(users) expands to every declared column — the C-20 mode).
   'migrations/20260923_users_mfa_totp_last_step.sql',
 
+  // ── An approval does not outlive the status that carries it (W5/D7) ──────
+  // Registered 2026-09-23 (final pass). A BEFORE INSERT OR UPDATE trigger on
+  // concept2cure_artifacts clears approved_version_id and published_version_id
+  // whenever the status is not approved/locked, so a revoked approval
+  // (approved → review, locked → draft, → archived) cannot be resurrected by a
+  // later arrival at 'approved' that is not the governed approval act, plus a
+  // backfill of rows that already break that rule. No DROP: the trigger is
+  // created only when absent (the 20260921_audit_logs_chain_seq idiom). No new
+  // table, nothing for the sweep. concept2cure_artifacts is a push-provisioned
+  // base table; the file NOTICE-skips where it is absent.
+  'migrations/20260923b_artifact_approval_follows_status.sql',
+
+  // ── Protocol deviations: unassessed is NOT ASSESSED, not "minor" ─────────
+  // Registered 2026-09-22. severity / category / is_reportable were NOT NULL
+  // with defaults that stored an unassessed deviation as minor and not
+  // reportable. DROP NOT NULL + DROP DEFAULT, plus ADD COLUMN IF NOT EXISTS for
+  // affects_safety and the assessment record. No DROP of any object, no
+  // backfill: legacy rows keep their values and read as "assessment required"
+  // because affects_safety is NULL. The creator, 20260629_protocol_deviations,
+  // is install-fresh-only and was amended in place to match. Guarded on
+  // to_regclass; above the final pair, which ci:migration-set-order pins last.
+  'migrations/20260922f_protocol_deviation_assessment.sql',
+
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the
   // canonical per-tenant uuid) + a forward-sync trigger, so a single
@@ -2551,6 +2583,87 @@ export const C2C_MIGRATION_FILES = [
   // (identity.organizations from 051, organizations.uuid from 20260129) are far
   // earlier in the set.
   C48_STAGE1_IDENTITY_ORG_BRIDGE,
+  // ── license_requests: the enterprise onboarding intake (D2, 2026-09-24) ──
+  // POST /api/auth/license-request — Onboarding's "Request Enterprise
+  // onboarding", a launch shell surface — INSERTed here while nothing created
+  // the table; its runtime CREATE TABLE fallback is refused to the production
+  // runtime role ("permission denied for schema public"), so every request was
+  // lost in production and only on production. This file is now the only
+  // creator. It has NO tenant column by design — the row is written before any
+  // organisation exists — so the sweeps below never touch it; it carries its
+  // own insert-only-for-the-public, read-only-for-the-platform policy.
+  'migrations/20260924_license_requests.sql',
+
+  // ── identity.org_relationships: a grant is the sponsor's to make (D3) ────
+  // Every vault.documents / vault.document_chunks policy honours a live
+  // sponsor → delegate row here, and the table had no RLS: as app_service with
+  // RLS enforcing, a tenant wrote itself a grant from another tenant and read
+  // and rewrote that tenant's vault. Sponsor writes, both parties read. Two-key,
+  // so the one-column uuid sweep below cannot express it. Its creator, 051, is
+  // applied by deploy-migrate ahead of this set; guarded on to_regclass.
+  // Evidence docs/evidence/D3/2026-09-24-vault-program-ownership/.
+  'migrations/20260924_org_relationships_sponsor_rls.sql',
+
+  // ── public.organizations: the tenant key is immutable (D3) ───────────────
+  // organizations.uuid is the tenant key of every uuid-keyed schema, and what
+  // core.get_program_org_id maps a program's org to. The table has no RLS and
+  // the runtime role may write it: as app_service with RLS enforcing, a tenant
+  // gave another org its own uuid and read that org's vault. id and uuid are
+  // now immutable once set (a trigger). Narrowing writes to the other columns
+  // is recorded and handed on, not done here; see the file.
+  // Evidence docs/evidence/D3/2026-09-25-organizations-tenant-key/.
+  'migrations/20260925_organizations_tenant_key_immutable.sql',
+
+  // ── public.organizations: own-org-or-platform writes (D3) ─────────────────
+  // UPDATE/DELETE by the row's own tenant or the platform scope (the canonical
+  // expression keyed on id); SELECT/INSERT open (pre-auth lookups, signup). Lands
+  // with its precondition: platform staff editing ANOTHER org now run in the
+  // system scope (server/middleware/staffCrossOrgScope.ts), without which this
+  // policy made one route answer success while writing nothing.
+  // Evidence docs/evidence/D3/2026-09-26-organizations-writes/.
+  'migrations/20260926_organizations_own_writes.sql',
+
+  // ── public.organization_users: own-org-or-platform writes (D3) ────────────
+  // Memberships decide tenancy (authMiddleware admits a token on one row) and
+  // "platform staff" is a role on that row. No RLS, runtime role may write it:
+  // a member's scope placed its user in another tenant and minted super_admin
+  // in its own. Stays on RLS_ALLOWLIST (reads stay unscoped: the pre-auth
+  // membership check, a user's organization list); writes are own-org or
+  // platform, and a staff role is minted by the platform scope only (trigger).
+  // Signup, persona and tenant-users' cross-org admin writes moved into the
+  // membership's own organization in the same change.
+  // Evidence docs/evidence/D3/2026-09-26-memberships/.
+  'migrations/20260926_organization_users_own_writes.sql',
+
+  // ── submissions.program_id: a submission carries its project (LX-22) ─────
+  // The project → submission link was guessed from product names; two projects
+  // for one product shared a filing spine. Additive column, a composite
+  // (program, org) FK added NOT VALID, and a one-to-one backfill from the
+  // creation audit rows. No DROP; replay decides nothing twice.
+  'migrations/20260925b_submissions_program_anchor.sql',
+
+  // ── ai_placement_policies: the tenant's AI placement floor (D6, 2026-09-25) ─
+  // Vendor / substrate allow-lists, residency, zero retention and the
+  // public-source switches the AI gateway enforces on every dispatch
+  // (server/services/ai-gateway/providers/org-placement-db.ts). Until this entry
+  // only install-fresh applied the file, so a database upgraded by
+  // deploy-migrate alone had no table, and the gateway read every tenant as
+  // "no policy". Additive and IF NOT EXISTS-guarded: CREATE TABLE, then ADD
+  // COLUMN for the three 2026-09-25 columns, ENABLE/FORCE RLS and its own
+  // tenant policy (DROP POLICY IF EXISTS + CREATE of the same policy, replayed
+  // every deploy by design). organizations, its FK target, comes from the
+  // schema push that runs before this set. Public schema, integer
+  // organization_id, so the sweep below covers it too.
+  'migrations/20260608_ai_placement_policies.sql',
+
+  // ── AnA turn records: one immutable record per turn (D5) ─────────────────
+  // What the person asked, what the model was given, what AnA did and what
+  // she answered, stored as the exact canonical JSON that was hashed, with the
+  // hash carried by a chained audit_logs row in the same transaction. The
+  // engine refuses UPDATE, DELETE and TRUNCATE for every role; the record does
+  // not go with its thread. public + organization_id INTEGER, so the sweep
+  // below polices it. Evidence docs/evidence/D5-ANA-RECORD/2026-09-26/.
+  'migrations/20260926_ana_turn_records.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
@@ -2569,6 +2682,90 @@ export const C2C_MIGRATION_FILES = [
 /** Files that open their own transaction must not be wrapped in a second one. */
 const selfTransacting = sql => /^\s*BEGIN\s*;/im.test(sql);
 
+/* ── Lock waits on a live database (2026-09-25, W2 / D1) ──────────────────────
+   deploy-aws.yml runs this set while the previous API tasks are still serving,
+   and every file re-runs on every deploy (Rule 1). A replay that changes nothing
+   still takes ACCESS EXCLUSIVE on 151 tables in 114 of the 309 files, measured
+   on a provisioned PostgreSQL 16 database — projects, organizations, users,
+   audit_logs, vault.documents among them: `ALTER TABLE … ADD COLUMN IF NOT
+   EXISTS` takes the lock before it checks. Uncontended that is milliseconds.
+   Contended, PostgreSQL queues the ALTER behind any open transaction that has
+   read the table, and queues every later query on the table behind the ALTER.
+   With no lock_timeout the wait was the blocker's to end — up to the runtime
+   pool's 30 s statement timeout, 60 s for an idle transaction — and for that
+   long every request that touched the table hung. tests/db/migration-lock-
+   timeout.dbtest.ts measured 3998 ms against a 4000 ms reader.
+
+   So each lock wait is capped, and a file that hits the cap is rolled back and
+   retried with backoff: the application waits at most one lock_timeout, the
+   migration waits as long as the blocker needs within a bounded budget, and a
+   lock that never frees fails the deploy naming the file. Retrying a file is
+   safe for the reason Rule 1 exists: every file here already re-runs on every
+   deploy. Defaults: 2 s per wait, 12 attempts, backoff from 1 s doubling to a
+   10 s cap — about 110 s in all, past the runtime's 60 s idle-transaction
+   limit and far inside the migrate task's 30-minute deadline. */
+const LOCK_NOT_AVAILABLE = '55P03';
+
+/** The lock-wait policy, from the environment, with the defaults above. */
+export function migrationLockPolicy(env = process.env) {
+  const positive = (value, fallback) => {
+    const n = Number.parseInt(value ?? '', 10);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+  };
+  return {
+    lockTimeoutMs: positive(env.C2C_MIGRATION_LOCK_TIMEOUT_MS, 2000),
+    lockAttempts: positive(env.C2C_MIGRATION_LOCK_ATTEMPTS, 12),
+    lockBackoffMs: positive(env.C2C_MIGRATION_LOCK_BACKOFF_MS, 1000),
+  };
+}
+
+/** True for a statement that gave up waiting for a lock (also when wrapped as `cause`). */
+export const isLockTimeout = err =>
+  err?.code === LOCK_NOT_AVAILABLE || err?.cause?.code === LOCK_NOT_AVAILABLE;
+
+/**
+ * Run `attempt` (which must roll itself back on failure) until it succeeds, or
+ * fails with anything but a lock timeout, or has timed out `attempts` times.
+ */
+export async function retryOnLockTimeout(attempt, { label, attempts, backoffMs, log = () => {} }) {
+  for (let n = 1; ; n++) {
+    try {
+      return await attempt();
+    } catch (err) {
+      if (!isLockTimeout(err)) throw err;
+      if (n >= attempts) {
+        throw new Error(
+          `${label}: could not take its table locks in ${attempts} attempts (each bounded by ` +
+            `lock_timeout). A transaction on the live database is holding a table it alters; ` +
+            `it was rolled back each time. ${err.message}`,
+          { cause: err },
+        );
+      }
+      const wait = Math.min(backoffMs * 2 ** (n - 1), 10_000);
+      log(`… ${label}: lock not available (attempt ${n}/${attempts}); rolled back, retrying in ${wait} ms`);
+      await new Promise(resolve => setTimeout(resolve, wait));
+    }
+  }
+}
+
+/** Who has held a transaction open longer than the lock wait: the likely blockers. */
+async function describeLongTransactions(pool, olderThanMs) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT pid, usename, state, round(extract(epoch FROM now() - xact_start))::int AS seconds,
+              left(regexp_replace(query, '\\s+', ' ', 'g'), 120) AS query
+         FROM pg_stat_activity
+        WHERE datname = current_database() AND pid <> pg_backend_pid()
+          AND xact_start < now() - make_interval(secs => $1 / 1000.0)
+        ORDER BY xact_start LIMIT 5`,
+      [olderThanMs],
+    );
+    return rows.map(r => `pid ${r.pid} (${r.usename}, ${r.state}, ${r.seconds}s): ${r.query}`);
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Apply `files` (repo-relative) against `pool`, one transaction per file.
  *
@@ -2585,10 +2782,14 @@ export async function applyMigrationFiles(
   pool,
   repoRoot,
   files,
-  { log = () => {}, error = () => {}, stopOnFirstFailure = false } = {}
+  { log = () => {}, error = () => {}, stopOnFirstFailure = false, ...lockOptions } = {}
 ) {
   const applied = [];
   const failures = [];
+  const defaults = migrationLockPolicy();
+  const lockTimeoutMs = lockOptions.lockTimeoutMs ?? defaults.lockTimeoutMs;
+  const lockAttempts = lockOptions.lockAttempts ?? defaults.lockAttempts;
+  const lockBackoffMs = lockOptions.lockBackoffMs ?? defaults.lockBackoffMs;
   /* Every NOTICE and WARNING the migrations raise, SURFACED.
      node-postgres delivers server notices only to a 'notice' listener, and no
      applier registered one — so a migration whose DO block skipped a table
@@ -2628,6 +2829,13 @@ export async function applyMigrationFiles(
     error(`  (migration journal unavailable: ${journalErr.message})`);
   }
 
+  /* Session-level, so it also bounds the files that open their own
+     transaction; restored in `finally`. deploy-migrate passes one client. The
+     manual applier passes a Pool it uses serially, which therefore runs every
+     statement on the one connection it opened. */
+  const priorLockTimeout = (await pool.query('SHOW lock_timeout')).rows[0].lock_timeout;
+  await pool.query(`SELECT set_config('lock_timeout', $1, false)`, [`${Number(lockTimeoutMs)}ms`]);
+
   try {
     for (const file of files) {
       const full = path.join(repoRoot, file);
@@ -2640,9 +2848,19 @@ export async function applyMigrationFiles(
       const sql = fs.readFileSync(full, 'utf8');
       const wrap = !selfTransacting(sql);
       try {
-        if (wrap) await pool.query('BEGIN');
-        await pool.query(sql);
-        if (wrap) await pool.query('COMMIT');
+        await retryOnLockTimeout(
+          async () => {
+            try {
+              if (wrap) await pool.query('BEGIN');
+              await pool.query(sql);
+              if (wrap) await pool.query('COMMIT');
+            } catch (err) {
+              await pool.query('ROLLBACK').catch(() => {});
+              throw err;
+            }
+          },
+          { label: file, attempts: lockAttempts, backoffMs: lockBackoffMs, log: error },
+        );
         applied.push(file);
         // Applied-file ledger + content-hash drift signal. The deploy mechanism
         // records THAT migrations ran; this records WHICH file ran and the sha256 of
@@ -2664,16 +2882,22 @@ export async function applyMigrationFiles(
         }
         log(`✓ applied: ${file}`);
       } catch (err) {
-        await pool.query('ROLLBACK').catch(() => {});
+        // The attempt above has already rolled its transaction back.
         const detail = `${err.message}${err.detail ? ` (${err.detail})` : ''}`;
         failures.push({ file, error: detail });
         error(`✗ failed:  ${file} — ${detail}`);
+        if (isLockTimeout(err)) {
+          for (const line of await describeLongTransactions(pool, lockTimeoutMs)) error(`    open transaction: ${line}`);
+        }
         if (stopOnFirstFailure) return { applied, failures };
       }
     }
 
     return { applied, failures };
   } finally {
+    await pool
+      .query(`SELECT set_config('lock_timeout', $1, false)`, [priorLockTimeout])
+      .catch(() => {});
     /* Removed on every path, including the early returns above: the pool
        outlives this call, and a listener left behind would double-print the
        next caller's notices. */

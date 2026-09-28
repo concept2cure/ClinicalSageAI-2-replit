@@ -1,0 +1,116 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/ana-realtime-auth.test.ts
+{
+  "timestamp": "2026-09-24T21:18:09.827Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T21:18:09.829Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+{
+  "timestamp": "2026-09-24T21:18:09.830Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > admits an access token of an active member and scopes the socket to the token tenant 7ms
+ × server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_challenge token (not an access token) 6ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_partial token (not an access token) 1ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a refresh token (not an access token) 1ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token offered only in the query string 1ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers revoked 1ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers indeterminate 1ms
+   → expected undefined to be an instance of Error
+ × server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the tenant is not active 1ms
+   → expected undefined to be an instance of Error
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_challenge token (not an access token)
+ FAIL  server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_partial token (not an access token)
+ FAIL  server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a refresh token (not an access token)
+AssertionError: expected undefined to be an instance of Error
+ ❯ server/services/ana/__tests__/ana-realtime-auth.test.ts:82:17
+     80|   it.each(['mfa_challenge', 'mfa_partial', 'refresh'])('refuses a %s t…
+     81|     const { err, socket } = await handshake({ auth: { token: sign(type…
+     82|     expect(err).toBeInstanceOf(Error);
+       |                 ^
+     83|     expect(socket.orgId).toBeUndefined();
+     84|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token offered only in the query string
+AssertionError: expected undefined to be an instance of Error
+ ❯ server/services/ana/__tests__/ana-realtime-auth.test.ts:88:17
+     86|   it('refuses a token offered only in the query string', async () => {
+     87|     const { err } = await handshake({ auth: {}, query: { token: sign('…
+     88|     expect(err).toBeInstanceOf(Error);
+       |                 ^
+     89|   });
+     90|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers revoked
+ FAIL  server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers indeterminate
+AssertionError: expected undefined to be an instance of Error
+ ❯ server/services/ana/__tests__/ana-realtime-auth.test.ts:94:17
+     92|     membership.result = result;
+     93|     const { err } = await handshake({ auth: { token: sign('access') },…
+     94|     expect(err).toBeInstanceOf(Error);
+       |                 ^
+     95|   });
+     96|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the tenant is not active
+AssertionError: expected undefined to be an instance of Error
+ ❯ server/services/ana/__tests__/ana-realtime-auth.test.ts:100:17
+     98|     tenant.active = false;
+     99|     const { err } = await handshake({ auth: { token: sign('access') },…
+    100|     expect(err).toBeInstanceOf(Error);
+       |                 ^
+    101|   });
+    102| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  21:18:03
+   Duration  7.46s (transform 4.30s, setup 118ms, import 6.21s, tests 23ms, environment 0ms)
+
+exit=1

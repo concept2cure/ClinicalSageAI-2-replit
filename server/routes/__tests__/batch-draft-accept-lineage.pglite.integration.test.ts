@@ -149,3 +149,56 @@ describe('POST /api/batch-draft/documents/:id/accept refuses a verdict row', () 
     expect(res.status, JSON.stringify(res.body)).toBe(200);
   });
 });
+
+describe('POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one', () => {
+  it('refuses a draft the model cut off at its output limit, and writes nothing', async () => {
+    /* A draft that hit maxTokens stops mid-sentence. This route writes into
+       `coauthor_documents` — the table leaf-source-resolver materializes eCTD
+       leaves from — so an accepted truncated narrative is versioned, audited
+       and filed exactly like a finished one. MAX_CONTENT_CHARS cannot catch it:
+       8192 tokens is nowhere near 400,000 characters, which is why it was
+       invisible. 21 CFR 11.10(a) requires a system able to discern an invalid
+       record. */
+    const id = await seedDoc();
+    const res = await request(app)
+      .post(`/api/batch-draft/documents/${id}/accept`)
+      .send({
+        content: 'The primary endpoint was met at week twelve in the intent-to-treat popul',
+        finish_reason: 'max_tokens',
+        model: 'test-model',
+      });
+    expect(res.status, JSON.stringify(res.body)).toBe(422);
+    expect(res.body.code).toBe('DRAFT_TRUNCATED');
+
+    // Nothing landed: not the content, not a version, not a lineage span.
+    const doc = await pg.query<{ content: string }>(`SELECT content FROM coauthor_documents WHERE id = $1`, [id]);
+    expect(doc.rows[0].content).toBe('The prior text of the section.');
+    expect(await spans(id)).toHaveLength(0);
+    const versions = await pg.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM coauthor_document_versions WHERE document_id = $1`, [id]);
+    expect(Number(versions.rows[0].n)).toBe(0);
+  });
+
+  it('refuses on the explicit truncated flag as well as the raw reason', async () => {
+    const id = await seedDoc();
+    const res = await request(app)
+      .post(`/api/batch-draft/documents/${id}/accept`)
+      .send({ content: 'Cut off here', truncated: true });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('DRAFT_TRUNCATED');
+  });
+
+  it('accepts a completed draft that reports its finish reason', async () => {
+    /* The other half of the rule: reporting the reason must not itself block a
+       complete draft, or callers will stop sending it. */
+    const id = await seedDoc();
+    const content =
+      'The primary endpoint was met at week twelve. No new safety signal was identified.';
+    const res = await request(app)
+      .post(`/api/batch-draft/documents/${id}/accept`)
+      .send({ content, finish_reason: 'end_turn', truncated: false, model: 'test-model' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const doc = await pg.query<{ content: string }>(`SELECT content FROM coauthor_documents WHERE id = $1`, [id]);
+    expect(doc.rows[0].content).toBe(content);
+  });
+});

@@ -1,0 +1,27 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > a refused foreign document leaves the other tenant's ledger row alone
+{
+  "timestamp": "2026-09-25T01:22:30.599Z",
+  "level": "warn",
+  "message": "[document-chunking] Vault chunking failed — recorded on the catalog ledger",
+  "context": {
+    "documentId": "5b1f0d1e-0000-4000-8000-00000000abcd",
+    "error": "Document is not in the caller's organization; refusing to index it."
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > refuses a document that is not in the caller's organization, writing nothing 53ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > refuses a foreign document before any embedding call 2ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > embeds an owned document under that organization's tenant scope 2ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > every statement that touches vault.document_chunks is bound to the organization 1ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > a refused foreign document leaves the other tenant's ledger row alone 3ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > the ledger write for an owned document is bound to the organization too 1ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  01:22:30
+   Duration  539ms (transform 155ms, setup 109ms, import 32ms, tests 64ms, environment 0ms)
+

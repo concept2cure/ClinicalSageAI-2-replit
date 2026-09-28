@@ -1,0 +1,19 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > reports the partition over the length the SERVER read 22ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > IGNORES a caller-supplied length — the denominator is not theirs to set 4ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > scopes the length read to the caller's organization 4ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > 404s for a document that is not this organization's, rather than reporting 0% 3ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > reports the partition for an Authoring section, the table the editor asks about 4ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > scopes an Authoring section's length read by its own tenant column 9ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > refuses a table it cannot locate text in, by name 4ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > requires an organization context 2ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > requires both identifiers 4ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  16:12:01
+   Duration  1.94s (transform 817ms, setup 85ms, import 1.63s, tests 61ms, environment 0ms)
+

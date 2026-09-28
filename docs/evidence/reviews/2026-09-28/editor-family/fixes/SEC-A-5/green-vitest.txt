@@ -1,0 +1,992 @@
+$ npx vitest run <every test importing RichSectionEditor or deviceDraftCache, and every authService test that does not mock it>   (after)
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > INCIDENT 1: a heading flattened by the pre-fix schema 33ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > INCIDENT 2: a caption reparented into a data cell by the pre-fix schema 15ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #1: an <h6> — above the schema ceiling — silently becomes a paragraph 5ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #2: a definition list — no schema node — is flagged 9ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #3: a header row written with <td> in <thead> is demoted to data 14ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > INCIDENT 1 fixed: an <h4> round-trips under the shipped schema 7ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > INCIDENT 2 fixed: a captioned table stays in rich mode 17ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > div→p and b→strong do not trip the gate 5ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > the execCommand provenance strip (1 div, 3 spans → paragraphs) is not refused 9ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > a colspan cell counts as ONE declared cell on both sides — merged tables are not 
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a ragged table (a short row) is refused — the editor would pad it 26ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a rowspan that overflows the table is refused — the editor would clamp it 15ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a well-formed rectangular table is NOT refused — fixTables leaves it alone 8ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a merged (colspan) table is NOT refused — declared cells agree, no fabrication 16ms
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — a dropped image is caught > a srcless <img> (its alt caption lost) is flagged: any <img> is counted 5ms
+× client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — a dropped image is caught > a normal img[src] still round-trips — not a false positive 15ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > the registry is non-trivial (guards the enumeration itself) 2ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > reading the document’s captioned objects > reads a stored section’s tables and figures, in order 28ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > reading the document’s captioned objects > does not count an uncaptioned table, or a figure inside a cell 4ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > reading the document’s captioned objects > numbers tables and figures as two separate sequences 1ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > reading the document’s captioned objects > offers as reference targets only the objects that carry an identity 0ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > a stored caption survives the editor > round-trips as a <caption>, and is NOT turned into a table row 245ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > a stored caption survives the editor > keeps the section RICH-EDITABLE — the fidelity gate is not tripped by it 93ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > numbering in the canvas > draws the number beside the caption, and stores no ordinal 66ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > numbering in the canvas > continues the count from the sections above this one 64ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > the audit measures what it claims > detects every seeded failure and flags none of the correct forms 38ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > the registry is non-trivial (guards the enumeration itself) 1ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > numbering in the canvas > A TABLE ADDED EARLIER RENUMBERS THIS SECTION, with its stored content untouched 153ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > stores the words and mints an identity, and never a number 334ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > offers no way to type a number 102ms
+× client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > captions a SELECTED FIGURE, keeping its identity across a rewording 14ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > changes nothing when the caret is on neither a table nor a figure 8ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > referencing a table from the canvas > prints the table’s CURRENT number, not the cached one 42ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > access-requests 332ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > referencing a table from the canvas > follows the table when one is added above it, with no stored change 85ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > referencing a table from the canvas > SAYS SO when the table it points at is gone 38ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > referencing a table from the canvas > offers this document’s tables and figures in the reference picker 87ms
+✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > the order key > changes when a caption changes, so references repaint then and not per keystroke 16ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > admin-console 311ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > agency-meetings 313ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ana-command 309ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ana-memory 306ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > apps 334ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > artifacts-center 307ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > audit-trail 305ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > authoring-engine 310ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > cancels beforeunload while the canvas is dirty 347ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > batch-draft 307ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > does not interfere once the work is saved 221ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > does not interfere on a clean canvas 112ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > billing 307ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > holds the switch and names what is at stake 429ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > biostat-workbench 311ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Cancel" leaves the author exactly where they were 344ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > biostatistics 335ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Save and continue" records the revision first, then moves 443ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > change-assessment 306ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > access-requests 2877ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > client-portal 305ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > a refused save keeps the author on the section rather than losing the edit 399ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > clinical-ops 308ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > cmc 483ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > communication-center 305ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Leave without saving" writes nothing, and the work comes back on return 745ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > a clean section switches straight through — no guard on work that is safe 388ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the record is only ever written by a deliberate act > typing and waiting never mints a revision on its own 158ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > conversation-thread 464ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the record is only ever written by a deliberate act > says the work is on this device only, not merely "unsaved" 155ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > coverage 433ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > crl-library 314ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > cro-portfolio 308ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > accepting, then leaving without saving, names the recorded decision 880ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > admin-console 2805ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > csr-workflow 307ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > decision-lineage 308ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > an ordinary text edit with no decision does not claim one was recorded 853ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > deep-research 310ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > design-controls 312ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-510k 7ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-analytics 6ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-cer 5ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-clinical-studies 7ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-diagnostics 4ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-engineering 5ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-pma 9ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-postmarket 4ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-presub 5ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-software 6ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-submission 4ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-tasks 4ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-udi 5ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-validation 4ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-vault 3ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-workstream 4ms
+✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > saving closes out the count — a LATER unrelated edit does not resurrect the old decision count 93
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > dispatch-readiness 304ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > doc-journey 310ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > document-authoring 310ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > dossier 307ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > dossier-map 316ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > agency-meetings 2890ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ectd-coauthor 322ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ana-command 2840ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ectd-compile 322ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ectd-publishing 314ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > etmf 311ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > evidence-search 309ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > filing-strategy 307ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > filings-catalog 328ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > gateway-transmittals 314ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > global-ri 14ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > switches a live drive to a demonstration, keeping the turn and its queued moves 903ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > haq-manager 314ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > does not re-arm a drive the person took over 232ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > does not re-arm a drive the person switched off 162ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > a turn that begins driving after the switch went off does not engage 161ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > human-factors 305ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > C / D — a move that did not land is reported to the run that made it, as an observation > reports through reportScreen, never as a human steer 131ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > C / D — a move that did not land is reported to the run that made it, as an observation > a move that settles after a newer turn began is reported to ITS turn, not the new
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > identity-console 326ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > inconsistency 323ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move that lands is settled as landed, by its id — navigation or operation 445ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move the screen refuses is settled as not made, with the screen’s reason and its id 128ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move refused on arrival is still settled, with why — never silently dropped 91ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move cleared before its turn came is settled as not made 188ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ind-checklist 310ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ind-lifecycle 17ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move is settled once, even when reporting its landing fails 116ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > insights 317ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > a new turn that begins driving drops the moves still queued from the last one 155ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > intelligence-catalog 318ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > starting a tour over a running answer drops that answer’s queued moves 352ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > investigator-brochure 304ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > starting a tour over a running answer also refuses the moves still on their way from it 368ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ivd-completeness 305ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > the strip’s Stop refuses the moves still on their way from the run it stopped 147ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > the driving chat’s own Stop halts the drive, queued moves and ones still arriving 143ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > stopping an older turn’s chat does not end the drive a newer turn began 82ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > labeling 307ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > labeling-pi 306ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a navigation queued behind another move is not shown as made until it lands 426
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > labeling-smpc 307ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > licensing 312ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > lifecycle-mgmt 318ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a move from the previous turn that lands after a new turn began is not claimed 
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a navigation that cannot be made is worded as a screen that did not open 72ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > maa-cockpit 304ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > market-access 304ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > master-licensing 309ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > mission-control 306ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > nda-cockpit 316ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > nonclinical 317ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > consumes the target, clears the channel, and opens the named document + section 571ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > onboarding 312ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > a docId target opens the EXACT document — no search, not the default 255ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > a docId not in scope lands on the default view with an honest miss — never a near-miss open 151ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > shows the honest miss notice and falls back to the default view when nothing matches 130ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > onboarding-ingest 304ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > refuses a target scoped to a different program — fail closed, with the reason 162ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > orchestration 308ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > a mount with no pending target behaves exactly as before — default view, no notice 126ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — navigation-directive hand-off (window.C2C_NAV_PARAMS) > a sectionCode from navigate_to opens the named section via the same bounded search 1
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > orphan 315ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — navigation-directive hand-off (window.C2C_NAV_PARAMS) > an authoringDocType from navigate_to opens the matching document by title 181ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — navigation-directive hand-off (window.C2C_NAV_PARAMS) > an unmatchable authoringDocType lands on the default view with an honest notice 130m
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > part11-console 322ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev 10ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-clinical 7ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-cmc 8ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-contradictions 5ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-fda-interactions 4ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-ind-assembly 4ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-nonclinical 3ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-regulatory 5ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pediatric 312ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pharmacovigilance 309ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ana-memory 8029ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > apps 2922ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > precedent-intelligence 307ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > program-journey 305ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > project-home 358ms
+✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > "Draft with AnA" opens the pane and shows the request in it 768ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > projects 308ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > protocol-dev 336ms
+✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > an empty section shows BOTH draft controls, and the toolbar one still asks for the section 389ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pv-cockpit 306ms
+✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > the pane composer sends into the same conversation 325ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pyramid 309ms
+✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows real work, evidence, and follow-up actions from AnA 484ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > qmp 304ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > quality 310ms
+✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows an honest empty pane rather than pretending a conversation exists 616ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > artifacts-center 2795ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > rbm 312ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > reg-change 305ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > registrations 309ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > regulatory-workspace 305ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > report-engine 307ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > does not save prose typed during the wait under the system reason, and anchors the qu
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > report-governance 306ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > follows the range through the tracking plugin's own transactions 143ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > saves only the anchor under the system reason once the author saved their own edits d
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > refuses the anchor when the quoted words themselves changed during the wait 106ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > CONTROL: an untouched buffer is anchored and saved under the system reason, as before
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: text typed while the save is in flight stays unsaved, guarded and cached 45ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: a keystroke during the save does not claim the save has settled 51ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > research-admin 307ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode autosave: the debounced save sends the latest keystroke, not the one before it 12
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: a restored device draft is what the next save sends 52ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > CONTROL: source mode with nothing typed mid-save is saved and leaves no device draft 38ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — the rich canvas keeps its device draft the same way > rich mode: an edit made while the save is in flight keeps its device draft 106ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > review 304ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > risk 305ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > safety-narrative 303ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > setup 308ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > shadow-review 305ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > source-tracer 308ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > submission-center 306ms
+✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > the shell rail is drawn only where it can be seen > renders the rail on a surface that keeps it 115ms
+✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > the shell rail is drawn only where it can be seen > does not render the rail on a surface that owns its conversation 53ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > submission-twin 306ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > task-board 306ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > tasks 6ms
+✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > seeds the conversation surface and goes there, instead of arming a hidden rail 498ms
+✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > re-seeds when the user is already on the conversation surface 120ms
+✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > a seeded conversation carries its files > sends the seeding composer's uploads by id, so the stream can open them 59ms
+✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that keeps the rail > opens the rail and streams there 131ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > template-library 304ms
+✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘\ toggles only a rail that exists > persists anaOpen on a surface that draws the rail 71ms
+✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘\ toggles only a rail that exists > is inert on a surface that owns its conversation 88ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > training 306ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > usage 19ms
+✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > vault 304ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > audit-trail 2770ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > authoring-engine 2892ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > loads the document, opens its section, and shows the real server content in the editor 363ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > mounts the canonical rich section editor on the stored content 345ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > refuses to save until a governed reason is given, and writes nothing 210ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > saves edited content via PATCH and reports that a revision was recorded 592ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > saves through the section PATCH with the reason and the concurrency token 145ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > reports a concurrent change as a refusal, and does not report a save 183ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > surfaces a failed save honestly and keeps the user’s text (no fabrication) 421ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > moves the open section — server-validated reorder, tree redrawn from the canonical order 599ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — document-level section structure > names a section code that is used twice 116ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — document-level section structure > says when the stored order differs from the section codes 124ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — document-level section structure > says nothing when the document is structurally clean 154ms
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — document-level section structure > claims nothing when the server sent no structure at all 195ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > stores the source’s identity and the pinpoint, not the number on screen 435ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > records the section→source link the platform already keeps 178ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > offers the document’s sources to pick from, and no field to type a number in 80ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > says so plainly when the document has no sources yet 82ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > hides the capability entirely when the host supplies no library 80ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > numbers by position, in reading order 93ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > A CITATION APPEARING EARLIER RENUMBERS THIS ONE, with the stored content untouched 60ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > never shows the cached source name in place of the number 33ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > says an unknown source is unknown, in place, and gives it no number 47ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the “Cite” label that cited nothing > the assistant control no longer claims to cite 78ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the “Cite” label that cited nothing > asks for a source instead of claiming to have cited one 82ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the fidelity gate > still allows rich editing of a section that holds a citation 39ms
+✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the fidelity gate > round-trips through parse, serialization and the governed save path 142ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > LiveDriveSwitch > is a switch whose checked state is the shell’s, and pressing it asks for the opposite 175ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > LiveDriveSwitch > Demos opens a menu with the tour and every demonstration, and each item starts it 98ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > LiveDriveSwitch > does not offer a demonstration that walks onto a screen closed to this person 27ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > LiveDriveSwitch > under an entitlement lock shows the honest reason and no switch 4ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > LiveDriveSwitch > outside the shell (no controls provided) renders nothing 2ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > batch-draft 2791ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > billing 2881ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored Live Drive preference > a first visit starts with AnA’s hands on 505ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept, then Undo: the suggestion stays accepted 114ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Reject, then Undo: the rejected text does not come back 18ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept all, then Undo: nothing returns to pending 16ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > an AnA draft inserted and accepted in this session is not removed by Undo 51ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored Live Drive preference > a pref serialised under the old OFF default loads ON 99ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored Live Drive preference > a switch-off made under the current default is kept 103ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > stored Live Drive preference > the composer switch writes the choice so it survives a reload 133ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > readDirectiveProgram > accepts a program with a string id, trimming its fields 1ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > readDirectiveProgram > accepts a numeric id as its string form 0ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > readDirectiveProgram > drops blank names/codes rather than publishing them 0ms
+✓ client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx > readDirectiveProgram > rejects a missing, blank or non-scalar id, and non-object inputs 0ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > CONTROL: ordinary typing is still undoable 19ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an accepted text present, unmarked, in the document — across a formatting split 11ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is back under a pending insertion mark, and its author with it 9ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is struck by a pending deletion 9ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text the document no longer holds 13ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an author while any one of their accepted texts survives 12ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > does not match a text across a paragraph boundary 15ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > the ribbon Undo after Accept leaves the decision, the canvas and the save in agreement 321ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > attributes nothing to AnA once the accepted text is gone from the section 73ms
+✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > answers the same whichever list the host reads first 68ms
+✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders the REAL eCTD tree + selected document content 304ms
+✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > derives tree-footer KPIs from the real rows (not hardcoded) 95ms
+✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders REAL server validation findings when Validation is opened 189ms
+✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the ribbon is operable without a mouse > activates on click, which is what Enter and Space dispatch 386ms
+✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the ribbon is operable without a mouse > reports its pressed state as false rather than omitting it 123ms
+✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the ribbon is operable without a mouse > names its shortcut so it is discoverable 90ms
+✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the toolbar is not rebuilt on every render > defines its button at module scope, not inside the render body 2ms
+✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders the REAL ICH M4 compliance score when Compliance is opened 149ms
+✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the footer counts what is actually there > counts the source text when the fidelity gate drops to raw source 20ms
+✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > an AI draft is never reported as inserted when it is discarded > refuses in source mode, where the editor is not the document 16ms
+✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > an AI draft is never reported as inserted when it is discarded > refuses on a frozen section, whose save the server would refuse anyway 19ms
+✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > an AI draft is never reported as inserted when it is discarded > still inserts, and reports so, on an editable rich section 61ms
+✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > answers in its own pane and never writes to the rail this screen hides 188ms
+✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — honest empty state > shows an EmptyState — never a fixture — when the org has no documents 36ms
+✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — honest error state > shows an error EmptyState — never a fixture — when the read fails 30ms
+✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — tree search really filters (no dead input) > filters by title and section number, says so on no match, and clears 192ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > biostat-workbench 2939ms
+✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — no fabricated validation or compliance results > reports validation as unavailable rather than inventing findings 105ms
+✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — no fabricated validation or compliance results > reports compliance as unavailable rather than inventing a score 144ms
+✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — the Co-Author can AUTHOR > mounts the ONE canonical editor over the document and saves through the store’s own PUT 162ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — the failure this exists to end > the drafted table does NOT arrive as pipe characters in a paragraph 145ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — real structure > produces heading / paragraph / table / list nodes in document order 23ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — real structure > a markdown table becomes a real table node with a header row 25ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — real structure > ATX headings become headings, clamped to the schema levels (1–3) 19ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — real structure > bullet and ordered lists become list nodes with one item per line 22ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — real structure > inline **bold** and *italic* become marks, not literal asterisks 24ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — real structure > plain prose keeps today’s behaviour: blank lines split, single newlines collapse 21ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — still a reviewable suggestion > every inserted text node is a pending insertion attributed to AnA 24ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — still a reviewable suggestion > Accept all settles the text and keeps the structure 26ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — still a reviewable suggestion > Reject all removes the draft including its structural husks 29ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — still a reviewable suggestion > one suggestion can be rejected on its own without disturbing the rest 24ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — still a reviewable suggestion > the drafted structure and its attribution survive save + reload as HTML 86ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — conservative fallbacks (never lose text) > a pipe table with no separator row stays prose, pipes intact 9ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — conservative fallbacks (never lose text) > an unsupported construct is kept verbatim rather than dropped 8ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — conservative fallbacks (never lose text) > a ragged table is squared up rather than truncated 14ms
+✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — conservative fallbacks (never lose text) > empty or whitespace-only drafts are refused, as before 11ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx > RichSectionEditor — authoring affordances (BP-W1-1) > the ribbon offers table insertion for rich content 422ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx > RichSectionEditor — authoring affordances (BP-W1-1) > stored superscript/subscript open in rich mode with the marks intact 58ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx > RichSectionEditor — authoring affordances (BP-W1-1) > content carrying an image opens RICH with the figure held, not refused to source mode 82ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx > RichSectionEditor — authoring affordances (BP-W1-1) > markup the schema still cannot hold (a <figure>) keeps failing closed into source mode 23ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx > RichSectionEditor — authoring affordances (BP-W1-1) > plain-text content the parse would rewrite (a space-aligned column) opens in source mode 44ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx > RichSectionEditor — authoring affordances (BP-W1-1) > ordinary plain text still opens rich 68ms
+✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > inserting a cross-reference > stores the target’s identity, not the number on screen 489ms
+✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > inserting a cross-reference > offers the document’s sections to pick from, by their current codes 132ms
+✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > inserting a cross-reference > hides the capability entirely when the host supplies no directory 77ms
+✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > resolution in the canvas > shows what the target is called NOW, never the cached number 45ms
+✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > resolution in the canvas > RENUMBERING THE TARGET REPAINTS THE REFERENCE, with the stored content untouched 62ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > biostatistics 3482ms
+✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > resolution in the canvas > says a dangling reference is dangling, in place 59ms
+✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > the fidelity gate > still allows rich editing of a section that holds a reference 38ms
+✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > the fidelity gate > round-trips through parse, serialization and the governed save path 189ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > refuses a silent tab close while dirty, and stops once saved 241ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > does not hold a read-only canvas hostage 32ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > releases the guard when the canvas goes away 92ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > flushes work still inside the debounce window 64ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when the autosave already landed 63ms
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when no autosave was ever armed 47ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > every registry surface resolves to a real component (no scaffold fallback) 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "authoring" is fully installed 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "biopharma" is fully installed 0ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "cmc" is fully installed 0ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "core" is fully installed 0ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "ectd_coauthor" is fully installed 0ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "home" is fully installed 0ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "intelligence" is fully installed 0ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "labeling" is fully installed 0ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "mdx" is fully installed 0ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "pdev" is fully installed 0ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "risk" is fully installed 0ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "submission" is fully installed 0ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "tasking" is fully installed 0ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders access-requests 31ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders admin-console 5ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders agency-meetings 4ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ana-command 3ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ana-memory 4ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders apps 3ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders artifacts-center 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders audit-trail 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders authoring-engine 3ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders batch-draft 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders billing 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders biostat-workbench 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders biostatistics 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders change-assessment 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders client-portal 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders clinical-ops 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders cmc 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders communication-center 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders conversation-thread 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders coverage 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders crl-library 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders cro-portfolio 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders csr-workflow 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders decision-lineage 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders deep-research 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders design-controls 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-510k 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-analytics 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-cer 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-clinical-studies 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-diagnostics 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-engineering 5ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-pma 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-postmarket 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-presub 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-software 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-submission 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-tasks 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-udi 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-validation 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-vault 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-workstream 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders dispatch-readiness 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders doc-journey 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders document-authoring 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders dossier 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders dossier-map 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ectd-coauthor 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ectd-compile 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ectd-publishing 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders etmf 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders evidence-search 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders filing-strategy 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders filings-catalog 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders gateway-transmittals 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders global-ri 10ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders haq-manager 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders human-factors 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders identity-console 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders inconsistency 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ind-checklist 4ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ind-lifecycle 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders insights 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders intelligence-catalog 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders investigator-brochure 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ivd-completeness 11ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders labeling 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders labeling-pi 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders labeling-smpc 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders licensing 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders lifecycle-mgmt 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders maa-cockpit 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders market-access 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders master-licensing 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders mission-control 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders nda-cockpit 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders nonclinical 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders onboarding 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders onboarding-ingest 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders orchestration 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders orphan 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders part11-console 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-clinical 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-cmc 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-contradictions 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-fda-interactions 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-ind-assembly 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-nonclinical 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-regulatory 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pediatric 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pharmacovigilance 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders precedent-intelligence 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders program-journey 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders project-home 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders projects 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders protocol-dev 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pv-cockpit 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pyramid 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders qmp 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders quality 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders rbm 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders reg-change 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders registrations 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders regulatory-workspace 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders report-engine 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders report-governance 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders research-admin 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders review 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders risk 5ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders safety-narrative 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders setup 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders shadow-review 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders source-tracer 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders submission-center 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders submission-twin 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders task-board 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders tasks 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders template-library 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders training 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders usage 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders vault 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders the home hub 21ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > access-requests renders without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > admin-console renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > agency-meetings renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ana-command renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ana-memory renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > apps renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > artifacts-center renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > audit-trail renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > authoring-engine renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > batch-draft renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > billing renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > biostat-workbench renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > biostatistics renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > change-assessment renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > client-portal renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > clinical-ops renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > cmc renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > communication-center renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > conversation-thread renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > coverage renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > crl-library renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > cro-portfolio renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > csr-workflow renders without a crash-class error 6ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > decision-lineage renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > deep-research renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > design-controls renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-510k renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-analytics renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-cer renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-clinical-studies renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-diagnostics renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-engineering renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-pma renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-postmarket renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-presub renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-software renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-submission renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-tasks renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-udi renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-validation renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-vault renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-workstream renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > dispatch-readiness renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > doc-journey renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > document-authoring renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > dossier renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > dossier-map renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ectd-coauthor renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ectd-compile renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ectd-publishing renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > etmf renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > evidence-search renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > filing-strategy renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > filings-catalog renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > gateway-transmittals renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > global-ri renders without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > haq-manager renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > human-factors renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > identity-console renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > inconsistency renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ind-checklist renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ind-lifecycle renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > insights renders without a crash-class error 8ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > intelligence-catalog renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > investigator-brochure renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ivd-completeness renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > labeling renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > labeling-pi renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > labeling-smpc renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > licensing renders without a crash-class error 5ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > lifecycle-mgmt renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > maa-cockpit renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > market-access renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > master-licensing renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > mission-control renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > nda-cockpit renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > nonclinical renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > onboarding renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > onboarding-ingest renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > orchestration renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > orphan renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > part11-console renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-clinical renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-cmc renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-contradictions renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-fda-interactions renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-ind-assembly renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-nonclinical renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-regulatory renders without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pediatric renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pharmacovigilance renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > precedent-intelligence renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit access-requests 45ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit admin-console 9ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit agency-meetings 8ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit ana-command 7ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit ana-memory 7ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit apps 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit artifacts-center 8ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit audit-trail 6ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > program-journey renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > project-home renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > projects renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > protocol-dev renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pv-cockpit renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pyramid renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > qmp renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > quality renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > rbm renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > reg-change renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > registrations renders without a crash-class error 7ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > regulatory-workspace renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > report-engine renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > report-governance renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > research-admin renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > review renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > risk renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > safety-narrative renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > setup renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > shadow-review renders without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > source-tracer renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > submission-center renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > submission-twin renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > task-board renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > tasks renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > template-library renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > training renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > usage renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > vault renders without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit authoring-engine 7ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit batch-draft 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit billing 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit biostat-workbench 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit biostatistics 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit change-assessment 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit client-portal 9ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit clinical-ops 15ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit cmc 7ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit communication-center 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit conversation-thread 8ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit coverage 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit crl-library 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit cro-portfolio 7ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit csr-workflow 7ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit decision-lineage 7ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit deep-research 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit design-controls 7ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-510k 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-analytics 14ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-cer 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-clinical-studies 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-diagnostics 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-engineering 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-pma 7ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-postmarket 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-presub 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-software 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-submission 12ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-tasks 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-udi 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-validation 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-vault 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit device-workstream 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit dispatch-readiness 11ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit doc-journey 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit document-authoring 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit dossier 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit dossier-map 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit ectd-coauthor 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit ectd-compile 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit ectd-publishing 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit etmf 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit evidence-search 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit filing-strategy 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit filings-catalog 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit gateway-transmittals 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit global-ri 15ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit haq-manager 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit human-factors 10ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit identity-console 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit inconsistency 8ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit ind-checklist 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit ind-lifecycle 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit insights 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit intelligence-catalog 10ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit investigator-brochure 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit ivd-completeness 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit labeling 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit labeling-pi 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit labeling-smpc 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit licensing 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit lifecycle-mgmt 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit maa-cockpit 11ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit market-access 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit master-licensing 7ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit mission-control 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit nda-cockpit 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit nonclinical 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit onboarding 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit onboarding-ingest 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit orchestration 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit orphan 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit part11-console 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit pdev 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit pdev-clinical 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit pdev-cmc 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit pdev-contradictions 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit pdev-fda-interactions 8ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit pdev-ind-assembly 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit pdev-nonclinical 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit pdev-regulatory 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit pediatric 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit pharmacovigilance 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit precedent-intelligence 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit program-journey 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit project-home 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit projects 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit protocol-dev 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit pv-cockpit 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit pyramid 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit qmp 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit quality 10ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit rbm 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit reg-change 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit registrations 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit regulatory-workspace 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit report-engine 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit report-governance 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit research-admin 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit review 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit risk 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit safety-narrative 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit setup 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit shadow-review 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit source-tracer 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit submission-center 15ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit submission-twin 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit task-board 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit tasks 5ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit template-library 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit training 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit usage 6ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > audit vault 4ms
+✓ client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx > workflow click-through audit > writes the audit report 2ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > change-assessment 2826ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx > a refused content save carries the server’s reason > reports a concurrent change in the words the route used 238ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx > a refused content save carries the server’s reason > reports any other refusal in the route’s own words too 43ms
+✓ client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx > a refused content save carries the server’s reason > reports a save the canvas refused with no server reason as exactly that 30ms
+✓ client/src/concept2cure/v2/__tests__/croPortfolioGuards.test.tsx > cro-portfolio guards did not gag the good-data render > renders every guarded field for a well-formed payload 120ms
+✓ client/src/concept2cure/v2/__tests__/croPortfolioGuards.test.tsx > cro-portfolio guards did not gag the good-data render > a row missing ONLY its child lists keeps its name, chip and siblings 25ms
+✓ client/src/concept2cure/v2/__tests__/croPortfolioGuards.test.tsx > cro-portfolio guards did not gag the good-data render > a row missing ONLY its sow omits the chip rather than inventing one 27ms
+✓ client/src/concept2cure/v2/__tests__/insertReferenceText.test.tsx > insertReference > inserts a crafted vault title as the characters it contains 211ms
+✓ client/src/concept2cure/v2/__tests__/findReplace.test.ts > computeMatches > matches a phrase that crosses a mark boundary 84ms
+✓ client/src/concept2cure/v2/__tests__/findReplace.test.ts > computeMatches > never matches across a paragraph boundary 15ms
+✓ client/src/concept2cure/v2/__tests__/findReplace.test.ts > computeMatches > searches table cells 27ms
+✓ client/src/concept2cure/v2/__tests__/findReplace.test.ts > computeMatches > is case-insensitive by default and case-sensitive on request 9ms
+✓ client/src/concept2cure/v2/__tests__/findReplace.test.ts > computeMatches > reports non-overlapping matches 9ms
+✓ client/src/concept2cure/v2/__tests__/findReplace.test.ts > computeMatches > reports the document positions of the matched text 8ms
+✓ client/src/concept2cure/v2/__tests__/findReplace.test.ts > find commands > setFindQuery populates plugin state; findNext wraps around 15ms
+✓ client/src/concept2cure/v2/__tests__/findReplace.test.ts > find commands > recomputes matches as the document changes while a search is open 20ms
+✓ client/src/concept2cure/v2/__tests__/findReplace.test.ts > replace > replaceActiveMatch replaces one occurrence and advances to the next 14ms
+✓ client/src/concept2cure/v2/__tests__/findReplace.test.ts > replace > replaceAllMatches replaces every occurrence — and ONE undo restores all of them 11ms
+✓ client/src/concept2cure/v2/__tests__/findReplace.test.ts > replace > an empty replacement deletes the matched text 9ms
+✓ client/src/concept2cure/v2/__tests__/findReplace.test.ts > replace > with track changes ON, a replacement becomes an attributed strike + insertion, not a silent edit 11ms
+✓ client/src/concept2cure/v2/__tests__/guardsPreserveContent.test.tsx > a guarded surface still renders real values > communication-center shows closureStatus, linked sections and extracted issues 351ms
+✓ client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > the same person is offered it back 304ms
+✓ client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > another person on the same browser is not 152ms
+✓ client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > a read-only section offers no draft, even its author’s 113ms
+✓ client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > the offer goes when the section becomes read-only while open 130ms
+✓ client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > signing out removes every device draft (SEC-A-5) > drafts under any key shape are purged; other storage is kept 84ms
+✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a refusal nested under error, as /mfa/resend writes it 2ms
+✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > still reads a top-level { code, message } 1ms
+✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a bare error string, and falls back to the status when the body says nothing 0ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > access-requests renders its no-data-yet state without a crash-class error 30ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > admin-console renders its no-data-yet state without a crash-class error 5ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > agency-meetings renders its no-data-yet state without a crash-class error 4ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ana-command renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ana-memory renders its no-data-yet state without a crash-class error 4ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > apps renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > artifacts-center renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > audit-trail renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > authoring-engine renders its no-data-yet state without a crash-class error 4ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > batch-draft renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > billing renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > biostat-workbench renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > biostatistics renders its no-data-yet state without a crash-class error 4ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > change-assessment renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > client-portal renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > clinical-ops renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > cmc renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > communication-center renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > conversation-thread renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > coverage renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > crl-library renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > cro-portfolio renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > csr-workflow renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > decision-lineage renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > deep-research renders its no-data-yet state without a crash-class error 4ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > design-controls renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-510k renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-analytics renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-cer renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-clinical-studies renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-diagnostics renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-engineering renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-pma renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-postmarket renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-presub renders its no-data-yet state without a crash-class error 19ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-software renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-submission renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-tasks renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-udi renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-validation renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-vault renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > device-workstream renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > dispatch-readiness renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > doc-journey renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > document-authoring renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > dossier renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > dossier-map renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ectd-coauthor renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ectd-compile renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ectd-publishing renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > etmf renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > evidence-search renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > filing-strategy renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > filings-catalog renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > gateway-transmittals renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > global-ri renders its no-data-yet state without a crash-class error 11ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > haq-manager renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > human-factors renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > identity-console renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > inconsistency renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ind-checklist renders its no-data-yet state without a crash-class error 4ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ind-lifecycle renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > insights renders its no-data-yet state without a crash-class error 4ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > intelligence-catalog renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > investigator-brochure renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > ivd-completeness renders its no-data-yet state without a crash-class error 4ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > labeling renders its no-data-yet state without a crash-class error 8ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > labeling-pi renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > labeling-smpc renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > licensing renders its no-data-yet state without a crash-class error 4ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > lifecycle-mgmt renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > maa-cockpit renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > market-access renders its no-data-yet state without a crash-class error 4ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > master-licensing renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > mission-control renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > nda-cockpit renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > nonclinical renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > onboarding renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > onboarding-ingest renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > orchestration renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > orphan renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > part11-console renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-clinical renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-cmc renders its no-data-yet state without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-contradictions renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-fda-interactions renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-ind-assembly renders its no-data-yet state without a crash-class error 1ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-nonclinical renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pdev-regulatory renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pediatric renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pharmacovigilance renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > precedent-intelligence renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > program-journey renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > project-home renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > projects renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > protocol-dev renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pv-cockpit renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > pyramid renders its no-data-yet state without a crash-class error 6ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > qmp renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > quality renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > rbm renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > reg-change renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > registrations renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > regulatory-workspace renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > report-engine renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > report-governance renders its no-data-yet state without a crash-class error 7ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > research-admin renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > review renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > risk renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > safety-narrative renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > setup renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > shadow-review renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > source-tracer renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > submission-center renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > submission-twin renders its no-data-yet state without a crash-class error 3ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > task-board renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > tasks renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > template-library renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > training renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > usage renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx > every surface renders with no data yet, without crashing > vault renders its no-data-yet state without a crash-class error 2ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > client-portal 2779ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > clinical-ops 2975ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > cmc 2913ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > communication-center 2769ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > conversation-thread 2841ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > coverage 4815ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > crl-library 2772ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > cro-portfolio 2783ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > csr-workflow 2767ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > decision-lineage 2743ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > deep-research 2811ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > design-controls 2801ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-510k 3029ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-analytics 2747ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-cer 2774ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-clinical-studies 2799ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-diagnostics 3017ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-engineering 2749ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-pma 2935ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-postmarket 2754ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-presub 2702ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-software 2701ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-submission 2730ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-tasks 2752ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-udi 2741ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-validation 2730ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-vault 2865ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-workstream 2796ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > dispatch-readiness 2734ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > doc-journey 2753ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > document-authoring 3016ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > dossier 2754ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > dossier-map 2741ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ectd-coauthor 2849ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ectd-compile 2837ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ectd-publishing 2803ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > etmf 2762ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > evidence-search 2756ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > filing-strategy 2846ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > filings-catalog 3099ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > gateway-transmittals 2829ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > global-ri 2673ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > haq-manager 2726ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > human-factors 7835ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > identity-console 2807ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > inconsistency 2754ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ind-checklist 2779ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ind-lifecycle 2733ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > insights 16384ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > intelligence-catalog 3131ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > investigator-brochure 2803ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ivd-completeness 2725ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > labeling 2738ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > labeling-pi 2767ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > labeling-smpc 2737ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > licensing 2855ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > lifecycle-mgmt 2836ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > maa-cockpit 2759ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > market-access 2748ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > master-licensing 2781ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > mission-control 2802ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > nda-cockpit 2839ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > nonclinical 2853ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > onboarding 2755ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > onboarding-ingest 2729ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > orchestration 2773ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > orphan 2836ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > part11-console 2761ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev 2739ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-clinical 2673ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-cmc 2664ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-contradictions 2661ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-fda-interactions 2677ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-ind-assembly 2667ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-nonclinical 2667ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-regulatory 2680ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pediatric 2827ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pharmacovigilance 2802ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > precedent-intelligence 2771ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > program-journey 14817ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > project-home 4012ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > projects 2824ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > protocol-dev 2762ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pv-cockpit 2812ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pyramid 2713ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > qmp 2738ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > quality 2892ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > rbm 2873ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > reg-change 2741ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > registrations 2790ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > regulatory-workspace 16390ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > report-engine 2835ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > report-governance 2761ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > research-admin 2813ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > review 2742ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > risk 2741ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > safety-narrative 2721ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > setup 2794ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > shadow-review 2748ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > source-tracer 4447ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > submission-center 2771ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > submission-twin 2734ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > task-board 2760ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > tasks 2696ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > template-library 2745ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > training 2736ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > usage 2779ms
+✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > vault 2789ms
+Test Files  2 failed | 29 passed (31)
+Tests  2 failed | 985 passed (987)
+
+# The two failures are captionsInCanvas and structuralFidelity: fixtures using /api/authoring/images/77, which the SEC-B-1/2 change (lane FC, in the tree at the time) no longer treats as a figure; its commit updates them. Neither imports anything this change touched beyond RichSectionEditor.

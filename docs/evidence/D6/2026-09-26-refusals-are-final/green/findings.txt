@@ -1,0 +1,119 @@
+# the fixes, on 259e22e5 + working tree
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > delegates to the gateway and maps the response to CouncilLLMResult 4ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > routes prose agents as document_drafting (jsonMode off) 3ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > threads correlationId + operation into the gateway audit metadata 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > throws SERVICE_DEGRADED (without calling the gateway) when the feature is gated off 2ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > converts a gateway failure into a recoverable CouncilError and audits it 2ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > prepends the intelligence prefix to the system turn when org/project context is present 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > does not fetch an intelligence prefix when no org/project context is given 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > routes the reviewing agents as regulatory_review, with jsonMode on (not structured_output) 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > DRAFTER is routed as document_drafting whatever its output format 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > STATISTICIAN is routed as regulatory_review whatever its output format 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > CRITIC is routed as regulatory_review whatever its output format 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > SYNTHESIZER is routed as document_drafting whatever its output format 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > a governance refusal is final and not audited as an outage 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > a tenant placement refusal is final, named for what it is, and not audited as an outage (D6) 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > withRetry does not retry an error marked unrecoverable, and does retry a recoverable one 7ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a claim that matches the data is VERIFIED; one that differs is a DISCREPANCY corrected to the data 2ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > the model's own VERIFIED is not a verdict: no matching binding means UNVERIFIABLE 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > the model's own correction is not a figure: it is dropped when no data answered 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a binding that returns nothing is UNVERIFIABLE, not a DISCREPANCY corrected to an empty string 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a count of 0 read from the data is a value, and verifies a claim of 0 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (prose) fails, and is not recorded as zero claims 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (JSON without a verifications list) fails, and is not recorded as zero claims 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (an empty reply) fails, and is not recorded as zero claims 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an empty verifications list is a real answer — a draft with no numerical claims 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Critic — an unreadable review is not "no issues" > unreadable → fails and records nothing 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Critic — an unreadable review is not "no issues" > a readable review keeps its issues and its assessment; an unknown assessment is the cautious REVISE 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks shared frontier providers as multi-tenant without ZDR by default 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks private-cloud Claude (bedrock) as frontier_private with ZDR by default 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks local as the only self-hosted, on-prem, air-gappable substrate 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > allows any provider when no requirements are set 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > excludes shared frontier when zero data retention is required 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > requires a self-hosted substrate for on-prem residency 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > enforces regional residency against the provider region list 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > combines residency and ZDR (both must hold) 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > default Vertex (us-east5) claims us only — never eu 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Vertex pointed at an EU region claims eu 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Bedrock residency comes from the client region, not a declaration 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > a region with no residency code guarantees none 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Azure claims no residency unless one is declared 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > Bedrock is zero-retention unless the operator says otherwise 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > Vertex and Azure claim zero retention only when the operator records it 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > refuses a declared Bedrock residency the client region does not serve 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > refuses a declared Vertex residency list wider than the client region 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > boots when the declaration matches the client region 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > judges only enabled lanes, and only in production 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > what the region and the SDK say about residency (D6 review) > London and Zurich are not EU residency; the EU regions are 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > what the region and the SDK say about residency (D6 review) > an SDK base-URL override means the region no longer says where requests go 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > what the region and the SDK say about residency (D6 review) > Bedrock zero retention is claimed only for unset or true 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > accepts a complete, reasoned, satisfiable policy 3ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses a partial policy — an omitted field must never reset a constraint 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses an unknown key, including a client-supplied organizationId 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > requires a reason for change 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses an empty allow-list — null says "no constraint", [] would refuse everything 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses values this build does not know, rather than dropping them 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses a policy no AI service could satisfy 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses a residency or retention no allowed lane could ever provide (D6 review) 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > writes the policy and its audit row (before, after, reason) in one transaction, then invalidates 4ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > commits nothing and invalidates nothing when the audit row cannot be written 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > the next dispatch sees a tightened policy at once, not after the cache expires 2ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > verifies a citation by PMID (exact identifier) 3ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > verifies a citation by DOI (exact identifier) 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > extracts a PMID from a raw reference string 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > verifies by title when no identifier is present 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > reports not_found when a supplied identifier does not resolve 0ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > reports not_found when a title has no confident match 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > reports unverifiable when there is nothing resolvable to check 0ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > fails loud (error, exists=null) when the upstream API throws — never fabricates 2ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > verifies a batch and preserves input order 2ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > flags a retracted publication while still confirming it exists 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > flags a year discrepancy on an otherwise-verified citation 0ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > flags when an identifier resolves to a different article than the cited title 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > a tenant that turned public-source egress off (D6 review) > checks nothing outbound and reports unverifiable, never verified 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > a tenant that turned public-source egress off (D6 review) > a policy that cannot be read makes no outbound check and says so 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > a tenant that turned public-source egress off (D6 review) > egress on (or no policy row) checks as before 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a lookup failure throws — it never reads as "this org has no policy" 4ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a failure is not cached: the next call looks the policy up again 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a missing row is "no policy" and is cached 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > reads the vendor allow-list and the public-source switches 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > an allow-list that names nothing valid allows nothing (fail closed), rather than everything 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > looks the policy up in the scope of the org it resolves, not the caller's ambient scope 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a lookup in flight when the policy changes does not put the superseded policy back (D6 review) 1ms
+ ✓ server/services/__tests__/rag-cache-tenant-key.test.ts > RAG auxiliary cache — tenant key > the same request from a second tenant is routed for that tenant, not served from the first tenant’s entry 9ms
+ ✓ server/services/__tests__/rag-cache-tenant-key.test.ts > RAG auxiliary cache — tenant key > a repeat from the same tenant is still served from the cache 1ms
+ ✓ server/services/__tests__/rag-cache-tenant-key.test.ts > RAG auxiliary cache — tenant key > a change to the tenant’s placement policy is a new key 1ms
+ ✓ server/services/__tests__/rag-cache-tenant-key.test.ts > RAG auxiliary cache — tenant key > a policy that cannot be read bypasses the cache 1ms
+ ✓ server/services/__tests__/aiProviderRouter-refusal-final.test.ts > AIProviderRouter — a gateway refusal is final > is not re-sent to another vendor 7ms
+ ✓ server/services/__tests__/aiProviderRouter-refusal-final.test.ts > AIProviderRouter — a gateway refusal is final > does not count against the refused provider’s health, so other tenants are not steered 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > a tenant restricted to self_hosted is served only on the se
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > with no permitted lane the request is refused as a tenant-p
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > the vendor allow-list is honoured on every rung: Kimi is ne
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > the fallback ladder never crosses into a substrate the tena
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant floor cannot be lowered by the request > a request zeroDataRetention:false does not defeat the org zero-re
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant floor cannot be lowered by the request > a request residency that contradicts the tenant residency is refu
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > binds the tenant from the ambient request scope when 
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > under enforcement, a call with no tenant binding at a
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > platform work in the explicit system scope is not ref
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > under enforcement, a policy lookup failure refuses the tenan
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > outside enforcement, a lookup failure is recorded and the re
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > an on-prem tenant with no self-hosted lane gets a placement 
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the last mile re-checks the floor before any SDK call > refuses a disallowed substrate even when selection is bypasse
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the last mile re-checks the floor before any SDK call > performance qualification resolves the tenant floor before it
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — embeddings are held to the same floor > refuses to embed a self_hosted-only tenant on a shared embedding service 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > without the opt-in, a public payload stays on
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > with the opt-in, a public payload may reach a
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > the opt-in never opens the shared API to a te
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a refusal writes one content-free row naming the tenant-placement detector, reason and stag
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a served call records how the tenant was bound and under which floor 3ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the floor holds with the PHI/PII screen off > route() refuses a disallowed lane when piiDetection is off 4ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the floor holds with the PHI/PII screen off > the last mile refuses a disallowed lane when piiDetection is off, even 
+ ✓ server/routes/__tests__/ai-assistance-refusal.test.ts > a placement refusal is final on /api/ai-assistance > /assist answers 403 with the reason, sends nothing to the legacy router, and invents no recommendation 1903ms
+ ✓ server/routes/__tests__/ai-assistance-refusal.test.ts > a placement refusal is final on /api/ai-assistance > /verify answers 403 and reports no verification 189ms
+ ✓ server/services/ai-actions/__tests__/action-queue-tenant-scope.test.ts > inRequesterScope > runs the job in the tenant scope of the requesting organization 3ms
+ ✓ server/services/ai-actions/__tests__/action-queue-tenant-scope.test.ts > inRequesterScope > a job with no organization is not given one 1ms
+ ✓ server/services/ai-actions/__tests__/action-queue-tenant-scope.test.ts > inRequesterScope > a non-positive or non-integer organization id is not trusted as a tenant 0ms
+ ✓ server/services/ai-actions/__tests__/action-queue-tenant-scope.test.ts > the Bull worker runs each job in its requester’s tenant scope (D6 review) > a queued job for organization 42 dispatches in tenant scope 42 3ms
+ Test Files  10 passed (10)
+      Tests  115 passed (115)
+exit=0

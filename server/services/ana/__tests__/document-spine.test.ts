@@ -1,4 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
+// 2026-09-28: a confirm-class call now also needs an editor role, read from
+// organization_users (AnaToolExecutor writeRoleRefusal). The database is mocked
+// here, so the confirming person is modelled as a 'member'. The role gate itself
+// is tested in confirmed-write-role-gate.test.ts.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+beforeEach(() => resolveSignerOrgRole.mockClear());
+
 import { getToolHandler } from '../AnaToolExecutor';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 import {
@@ -154,16 +165,20 @@ describe('commit_document_revision — tool registration + guards', () => {
 
   it('refuses without tenant + user context', async () => {
     const out = JSON.parse(
-      await approvedToolHandler('commit_document_revision')!({ title: 'X', content: 'Y' }, {} as any),
+      await approvedToolHandler('commit_document_revision')!({ title: 'X', content: 'Y' }, { humanConfirmed: true } as any),
     );
-    expect(out.error).toMatch(/tenant \+ user context/);
+    // 2026-09-28: the registry now refuses a confirm-class call with no identified
+    // member before the handler (and its own tenant + user guard) runs.
+    expect(out.error).toMatch(/needs an identified member of the organization/);
+    expect(out.error).toMatch(/Nothing was changed/);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('requires title and content', async () => {
     const out = JSON.parse(
       await approvedToolHandler('commit_document_revision')!(
         { title: '' },
-        { organizationId: 1, userId: 1 } as any,
+        { organizationId: 1, userId: 1, humanConfirmed: true } as any,
       ),
     );
     expect(out.error).toMatch(/title and non-empty content/);

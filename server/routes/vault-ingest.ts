@@ -46,7 +46,7 @@ import { requireEditorAccess } from '../middleware/orgMembership.js';
 import multer from 'multer';
 import path from 'node:path';
 import { z } from 'zod';
-import { VAULT_INGEST_DOCUMENT_TYPES } from '../../shared/constants/domain/vault-taxonomy';
+import { VAULT_CLASSIFICATIONS, VAULT_INGEST_DOCUMENT_TYPES } from '../../shared/constants/domain/vault-taxonomy';
 import { runWithTenantScope } from '../db/tenantStore';
 import { ingestVaultDocument } from '../services/vault/vault-ingest.service';
 
@@ -117,10 +117,8 @@ const IngestBodySchema = z.object({
   documentTitle: z.string().min(1, 'documentTitle is required'),
   documentType: z.enum(VAULT_INGEST_DOCUMENT_TYPES),
   version: z.string().optional(),
-  classification: z.enum(['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC']).optional(),
+  classification: z.enum(VAULT_CLASSIFICATIONS).optional(),
   retentionPolicy: z.string().optional(),
-  parentDocumentId: z.string().uuid().optional(),
-  supersedesId: z.string().uuid().optional(),
   /* Explicit dossier target, when the uploader already knows where the file
      goes. Validated against the program's vault-view taxonomy — an invalid
      folder is a 400, never a silent unfile. Omitted → the filing classifier
@@ -154,6 +152,20 @@ export default function createVaultIngestRoutes(): Router {
         error: {
           code: 'NO_FILE_RECEIVED',
           message: 'Send the file as multipart/form-data under the field name "file".',
+        },
+      });
+    }
+
+    /* Lineage is not set by an upload (VR-05). The body took any UUID here and
+       wrote it as the new version's parent or predecessor, unchecked against
+       program or organization; no client sends either. Refused, not dropped:
+       a caller that sent lineage is told it was not recorded. */
+    const lineage = ['parentDocumentId', 'supersedesId'].filter((k) => req.body?.[k] !== undefined);
+    if (lineage.length > 0) {
+      return res.status(400).json({
+        error: {
+          code: 'LINEAGE_NOT_ACCEPTED',
+          message: `${lineage.join(' and ')} cannot be set by an upload. Nothing was saved.`,
         },
       });
     }
@@ -228,8 +240,6 @@ export default function createVaultIngestRoutes(): Router {
         version: data.version,
         classification: data.classification,
         retentionPolicy: data.retentionPolicy,
-        parentDocumentId: data.parentDocumentId,
-        supersedesId: data.supersedesId,
         folderId: data.folderId,
         evidenceKind: data.evidenceKind,
         ctdSection: data.ctdSection,
@@ -246,10 +256,12 @@ export default function createVaultIngestRoutes(): Router {
         .status(outcome.status)
         .json({ error: { code: outcome.code, message: outcome.message } });
     }
-    return res.status(201).json({
+    // 200, not 201, when the bytes were already recorded: nothing was created.
+    return res.status(outcome.reupload ? 200 : 201).json({
       success: true,
       document: outcome.document,
       filing: outcome.filing,
+      ...(outcome.reupload ? { reupload: outcome.reupload } : {}),
     });
   });
 

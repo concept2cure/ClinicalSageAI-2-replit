@@ -7,8 +7,9 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
-import { useChatUpload, attachmentReadLabel as readLabel } from '../../hooks/useChatUpload';
+import { useChatUpload, readyAttachmentLabel } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
+import { ProjectRecords } from './ProjectRecords';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import '../styles/project-home-v2.css';
@@ -74,7 +75,11 @@ interface ProgramRow {
   intended_use: string | null;
   primary_agency: string | null;
   target_submission_date: string | null;
-  progress_percent: number | null;
+  /** The share of this program's governed sections that are approved or
+   *  locked — the figure its card in the Projects list reports. Null when the
+   *  server could not measure it. (This read `progress_percent` until
+   *  2026-09-24: a column written once as 0 and never updated.) */
+  readiness?: number | null;
   /** The device taxonomy intake stores for a device / IVD program
    *  (regulatory_programs columns + the metadata-held fields the read lifts).
    *  Every one is null for a drug program, and absent on a server that predates
@@ -111,6 +116,8 @@ interface ActivityRow {
   action: string | null;
   resource_type: string | null;
   actor_id: number | null;
+  /** COALESCE(users.name, users.email) for actor_id; null for system rows. */
+  actor_name: string | null;
   occurred_at: string | null;
 }
 
@@ -230,6 +237,8 @@ interface SourceRow {
   artifactId: string | null;
   origin: string | null;
   extractionMethod: string | null;
+  /** False once a re-upload superseded it. Absent on a server that predates it. */
+  isCurrent?: boolean;
   /** Recorded citations of this source. Absent on a server that predates it. */
   usage?: { sections: number; documents: number; changedSections: number } | null;
 }
@@ -328,10 +337,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const state = useLiveData<{ sources: SourceRow[] }>(
+  const state = useLiveData<{ sources: SourceRow[]; window?: { shown: number; truncated: boolean } }>(
     pid ? `/api/c2c/projects/${pid}/sources` : null,
     [pid, reloadKey],
-    hasKeys<{ sources: SourceRow[] }>('sources'),
+    hasKeys<{ sources: SourceRow[]; window?: { shown: number; truncated: boolean } }>('sources'),
   );
 
   // Sections in this project drafted from a source that has since changed. Read
@@ -358,8 +367,12 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const rows = sources.filter(s =>
     q.trim() ? (s.title || '').toLowerCase().includes(q.trim().toLowerCase()) : true,
   );
-  const total = sources.length;
-  const readable = sources.filter(s => s.extractionStatus === 'extracted').length;
+  /* One file re-uploaded is one source: its retired revision is listed but not
+     counted. A full window's count is a floor. */
+  const current = sources.filter(s => s.isCurrent !== false);
+  const total = current.length;
+  const readable = current.filter(s => s.extractionStatus === 'extracted').length;
+  const truncated = state.data?.window?.truncated === true;
 
   return (
     <section className="pj-sec">
@@ -371,7 +384,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           {state.error
             ? "couldn't load this project's sources — the list below is incomplete"
             : total > 0
-              ? `${total} source${total === 1 ? '' : 's'} · ${readable} readable — what this project's documents are written from`
+              ? `${total}${truncated ? '+' : ''} source${total === 1 && !truncated ? '' : 's'} · ${readable} readable${truncated ? ` (newest ${sources.length} shown)` : ''} — what this project's documents are written from`
               : "the sources this project's documents are written from"}
         </span>
       </div>
@@ -419,7 +432,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           className="sp-tone-warn"
           role="status"
           style={{
-            border: '1px solid var(--border,#d0d5dd)', borderRadius: 10,
+            border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
             padding: '10px 12px', marginBottom: 12, fontSize: 12.5,
           }}
         >
@@ -454,12 +467,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             <span
               key={a.id}
               className={a.status === 'error' ? 'sp-tone-warn' : undefined}
-              style={{ fontSize: 12, border: '1px solid var(--border,#d0d5dd)', borderRadius: 999, padding: '2px 10px' }}
+              style={{ fontSize: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', padding: '2px 10px' }}
             >
               {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
-              {a.status === 'ready' && readLabel(a.extractionMethod, a.extractionWords)
-                ? ` · ${readLabel(a.extractionMethod, a.extractionWords)}`
-                : ''}
+              {a.status === 'ready' ? ` · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords)}` : ''}
               {a.status === 'error' && a.error ? ` · ${a.error}` : ''}
             </span>
           ))}
@@ -768,7 +779,7 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
                         key={m.key || m.id}
                         style={{
                           display: 'flex', alignItems: 'baseline', gap: 10, padding: '7px 2px',
-                          borderBottom: '1px solid var(--border-subtle,#eaecf0)',
+                          borderBottom: '1px solid var(--border-subtle)',
                         }}
                       >
                         <span className={`rd-chip ${SCHED_STATUS_TONE[m.status] ?? 'tone-idle'}`} style={{ whiteSpace: 'nowrap' }}>
@@ -1025,6 +1036,15 @@ function AuthorWorkspace({
           </div>
         </section>
 
+        {/* Records in this project — REAL: GET /:id/records, every store read
+            by its project key (PF-17). A store it cannot read says so. */}
+        {pid && (
+          <section className="pj-sec" aria-label="Records in this project">
+            <div className="pj-sec-h"><h2>Records in this project</h2></div>
+            <ProjectRecords pid={pid} />
+          </section>
+        )}
+
         {/* Team & activity — REAL: project_members + audit_logs */}
         <section className="pj-sec">
           <div className="pj-sec-h"><h2>Team &amp; activity</h2></div>
@@ -1060,7 +1080,7 @@ function AuthorWorkspace({
                 <div className="pj-acts">
                   {(d.activity ?? []).map((a, i) => (
                     <div key={i} className="pj-act">
-                      <span className="pj-act-w">{a.actor_id != null ? 'User ' + a.actor_id : 'System'}</span>
+                      <span className="pj-act-w">{a.actor_name ?? (a.actor_id != null ? 'User ' + a.actor_id : 'System')}</span>
                       <span className="pj-act-t">{String(a.action ?? '').replace(/_/g, ' ')}{a.resource_type ? ' · ' + a.resource_type : ''}</span>
                       <span className="pj-act-n">{fmtWhen(a.occurred_at) ?? ''}</span>
                     </div>
@@ -1209,7 +1229,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   const status = sel?.status || prog?.status || null;
   const priority = prog?.priority ?? null;
   const phase = prog?.phase ?? null;
-  const completion = prog?.progress_percent ?? null;
+  const completion = typeof prog?.readiness === 'number' ? prog.readiness : null;
   /* The device taxonomy, read from the row only. A device / IVD program shows
      its class, path, product code, regulation, panel, predicate and flags —
      each field stated as absent when the row lacks it; a drug program shows

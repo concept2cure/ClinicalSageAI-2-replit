@@ -136,7 +136,7 @@ export function MaaCockpit({ onAsk }: SurfaceViewProps) {
           {ordered.length > 0 && (
             <>
               {' · '}
-              <strong style={{ color: ready ? 'var(--ok-600,#1a7f4b)' : 'var(--text-300)' }}>
+              <strong style={{ color: ready ? 'var(--success)' : 'var(--text-300)' }}>
                 {assembledCount}/{ordered.length} assembled
               </strong>
               {' · '}

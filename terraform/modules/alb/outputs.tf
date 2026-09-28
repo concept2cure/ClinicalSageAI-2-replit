@@ -21,3 +21,8 @@ output "https_listener_arn" {
 output "alb_security_group_id" {
   value = aws_security_group.alb.id
 }
+
+output "origin_secret_header_name" {
+  description = "Header CloudFront must send with origin_secret for the listener to forward the request."
+  value       = local.origin_secret_header_name
+}

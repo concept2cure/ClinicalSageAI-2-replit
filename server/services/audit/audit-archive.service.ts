@@ -11,11 +11,25 @@
  *   3. Hand the batch + checksum to the archive sink (S3 in prod; filesystem
  *      in dev; in-memory in tests).
  *   4. Verify the sink wrote successfully (sink returns the stored checksum).
- *   5. Only then delete the batch from `audit_logs`.
+ *   5. Only then remove the batch from `audit_logs` — through the database's
+ *      one DELETE door, `public.audit_logs_archive_delete(ids, locator,
+ *      sha256, cutoff)` (db/migrations/20260617_audit_logs_immutability.sql).
+ *      The door is a SECURITY DEFINER function owned by a NOLOGIN role; the
+ *      BEFORE DELETE trigger admits nothing else. It records the batch in
+ *      `public.audit_log_archives` (the deletion's own audit record) and
+ *      refuses — the whole batch, atomically — a row newer than the cutoff,
+ *      a cutoff inside the 24-month hot window, an empty or malformed
+ *      locator/checksum, or a row that is no longer present.
  *
- * Failures abort the batch — the rows stay in the hot table. The job is
- * idempotent: re-running picks up where it left off because the cutoff is
- * a date, not a watermark.
+ * Failures abort the batch — the rows stay in the hot table. A refusal by the
+ * door is counted in `deleteRefusals` and reported in `errors`; it is never
+ * swallowed. The job is idempotent: re-running picks up where it left off
+ * because the cutoff is a date, not a watermark.
+ *
+ * History: until 2026-09-25 this file opened the trigger with
+ * `SET LOCAL app.audit_archive_bypass = 'on'`. Any session can set a custom
+ * GUC, so the runtime role could delete audit rows at will (security audit
+ * 2026-09-24, DP-04; plan P0-8a). The GUC is no longer read by anything.
  *
  * Tenant safety: the archive preserves `tenant_id` on every row so
  * downstream queries against the cold archive can still filter by org.
@@ -60,6 +74,12 @@ export interface ArchiveOptions {
 export interface ArchiveRunResult {
   rowsArchived: number;
   batches: number;
+  /**
+   * Batches the database's archive door refused after the sink had already
+   * stored them. Their rows remain in the hot table; the cold copy is inert.
+   * Each refusal also appears in `errors`.
+   */
+  deleteRefusals: number;
   startedAt: string;
   finishedAt: string;
   cutoff: string;
@@ -67,7 +87,21 @@ export interface ArchiveRunResult {
 }
 
 const DEFAULT_BATCH_SIZE = 1_000;
-const DEFAULT_HOT_WINDOW_MS = 24 * 30 * 24 * 60 * 60 * 1000; // 24 months ≈ 720 days
+/**
+ * Default cutoff: the hot window of docs/operations/audit-log-retention-policy.md
+ * is 24 months, and the archive door refuses any cutoff later than
+ * `now() - interval '24 months'`. 24 calendar months is at most 731 days, so a
+ * 731-day default can never fall inside the floor; the previous 720-day
+ * approximation could, and the door would have refused every default run.
+ */
+const DEFAULT_HOT_WINDOW_MS = 731 * 24 * 60 * 60 * 1000;
+
+/**
+ * The one statement that removes rows from audit_logs. Kept as a single
+ * literal because the PGlite contract test reads it from this source
+ * (server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts).
+ */
+const ARCHIVE_DELETE_SQL = `SELECT public.audit_logs_archive_delete($1::uuid[], $2, $3, $4::timestamptz) AS deleted`;
 
 export async function runAuditArchive(
   client: Pool | PoolClient,
@@ -80,6 +114,7 @@ export async function runAuditArchive(
   const result: ArchiveRunResult = {
     rowsArchived: 0,
     batches: 0,
+    deleteRefusals: 0,
     startedAt: new Date().toISOString(),
     finishedAt: '',
     cutoff: cutoff.toISOString(),
@@ -89,7 +124,7 @@ export async function runAuditArchive(
   while (result.batches < maxBatches) {
     const { rows } = await client.query<Record<string, unknown>>(
       `SELECT * FROM audit_logs
-       WHERE created_at < $1
+       WHERE created_at < $1::timestamptz
        ORDER BY created_at ASC
        LIMIT $2`,
       [cutoff, batchSize],
@@ -119,57 +154,58 @@ export async function runAuditArchive(
       break;
     }
 
-    // Only after the sink confirms the bytes landed do we delete from hot.
+    // Only after the sink confirms the bytes landed do we remove the batch from
+    // hot — and only through the database's archive door.
     //
     // audit_logs has a BEFORE DELETE immutability trigger
     // (db/migrations/20260617_audit_logs_immutability.sql) that aborts every
-    // DELETE UNLESS this session GUC is set. We opt in with `SET LOCAL
-    // app.audit_archive_bypass = 'on'` so the bypass is scoped to THIS
-    // transaction only and reverts automatically at COMMIT/ROLLBACK — it cannot
-    // leak to any other statement or connection.
+    // DELETE except one issued from inside public.audit_logs_archive_delete(),
+    // a SECURITY DEFINER function owned by the NOLOGIN role audit_archiver. We
+    // hand it the ids, the sink's locator, the checksum the sink stored (equal
+    // to ours — checked above) and the cutoff. It re-checks every row against
+    // the cutoff and the retention floor, writes the archive record, deletes
+    // exactly those rows and returns the count, all in one statement and so in
+    // one transaction: there is nothing to BEGIN, SET or COMMIT on our side.
     //
-    // SET LOCAL only affects the connection it runs on, so BEGIN / SET LOCAL /
-    // DELETE / COMMIT MUST all run on the SAME connection. When the caller hands
-    // us a Pool, each `pool.query` may use a different pooled connection, which
-    // would silently break both the transaction and the GUC scope. So we check
-    // out a single dedicated client for the transactional delete and release it
-    // afterwards. When the caller already passed a PoolClient (single
-    // connection), we use it directly.
-    const ids = rows.map(r => (r as any).id);
-    const poolConnect = (client as Pool).connect;
-    const txClient: PoolClient = typeof poolConnect === 'function'
-      ? await (client as Pool).connect()
-      : (client as PoolClient);
+    // Because it is a single statement, it needs no dedicated connection: on a
+    // Pool it runs on whichever connection the pool hands out, on a caller-owned
+    // PoolClient it runs on that connection, and nothing is checked out or
+    // released here. (The former SET LOCAL bypass needed one connection for
+    // BEGIN / SET LOCAL / DELETE / COMMIT; that requirement went with it.)
+    //
+    // `audit_logs.id` is uuid (migrations/0000_sweet_joseph.sql, shared/schema.ts),
+    // hence the ::uuid[] cast — an earlier ::int[] made every batch fail with a
+    // type error and archival silently became "archive and retain forever".
+    const ids = rows.map(r => String((r as { id: unknown }).id));
+    let deleted: number;
     try {
-      await txClient.query('BEGIN');
-      await txClient.query(`SET LOCAL app.audit_archive_bypass = 'on'`);
-      // `audit_logs.id` is uuid (migrations/0000_sweet_joseph.sql, shared/schema.ts),
-      // never integer. The previous `::int[]` cast made this DELETE fail on every
-      // batch with a type error — archival copied rows to cold storage and then
-      // never freed them from the hot table. Caught while wiring the §11.10(e)
-      // immutability triggers: this is the ONE path the DELETE trigger exempts,
-      // so it has to actually work, or "archive then delete" silently becomes
-      // "archive and retain forever".
-      await txClient.query(`DELETE FROM audit_logs WHERE id = ANY($1::uuid[])`, [ids]);
-      await txClient.query('COMMIT');
+      const res = await client.query<{ deleted: number | string }>(ARCHIVE_DELETE_SQL, [
+        ids,
+        stored.locator,
+        stored.storedSha256,
+        cutoff,
+      ]);
+      deleted = Number(res.rows[0]?.deleted);
     } catch (err) {
-      try {
-        await txClient.query('ROLLBACK');
-      } catch {
-        /* ignore rollback failure */
-      }
+      // The door refused (AUDIT_ARCHIVE_REFUSED / IMMUTABILITY_VIOLATION) or the
+      // statement failed. Either way nothing was deleted: the door is atomic.
+      result.deleteRefusals += 1;
       result.errors.push(
-        `Delete-from-hot failed (batch ${batchId}): ${
+        `Archive delete refused (batch ${batchId}, ${ids.length} rows, locator ${stored.locator}): ${
           err instanceof Error ? err.message : 'unknown'
         }. Rows remain in hot table (already safely archived to cold).`,
       );
       break;
-    } finally {
-      // Release only a client we checked out ourselves; never release a
-      // caller-owned PoolClient.
-      if (txClient !== (client as unknown as PoolClient)) {
-        (txClient as PoolClient).release();
-      }
+    }
+
+    if (deleted !== ids.length) {
+      // The door raises on a count mismatch, so this is reachable only through a
+      // stand-in client; report it the same way rather than trust the count.
+      result.deleteRefusals += 1;
+      result.errors.push(
+        `Archive delete returned ${deleted} for a batch of ${ids.length} (batch ${batchId}, locator ${stored.locator}). Aborting; treat the batch as not archived.`,
+      );
+      break;
     }
 
     result.rowsArchived += rows.length;

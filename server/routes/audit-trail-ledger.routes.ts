@@ -72,11 +72,11 @@ import type { Pool, PoolClient } from 'pg';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { requireAuditReader } from '../services/audit/audit-api-authority.js';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context.js';
 import {
   AUDIT_CHAIN_HEAD_ORDER_SQL,
   AUDIT_CHAIN_ORDER_ASC_SQL,
-  verifyAuditChain,
   type ChainVerificationResult,
 } from '../services/audit/chain.js';
 
@@ -91,6 +91,12 @@ export interface AuditLedgerEntry {
   /** ISO-8601 instant the event was recorded; the merge order key. */
   at: string;
   actor: string;
+  /**
+   * The account that acted, as `user:<id>` (the form entry targets use), or
+   * null for the system. A display name is not an identity: two accounts may
+   * share one, and the ledger could not say which acted (VSR-001 F-42).
+   */
+  actorRef: string | null;
   event: string;
   target: string;
   kind: string;
@@ -198,6 +204,11 @@ function seqOf(value: unknown): number | null {
 
 // ─── Row → entry ──────────────────────────────────────────────────────────────
 
+/** `user:<id>` for an account id, null for none: the reference entry targets already use. */
+function userRef(id: number | null): string | null {
+  return id != null && Number.isInteger(id) && id > 0 ? `user:${id}` : null;
+}
+
 function auditLogEntry(row: Record<string, unknown>): AuditLedgerEntry {
   const payload = row.new_values;
   const actorId = row.actor_id == null ? null : Number(row.actor_id);
@@ -209,6 +220,7 @@ function auditLogEntry(row: Record<string, unknown>): AuditLedgerEntry {
       nonEmpty(row.user_name) ??
       nonEmpty(row.user_email) ??
       (actorId != null && Number.isFinite(actorId) ? `user ${actorId}` : 'System'),
+    actorRef: userRef(actorId),
     event: metaString(payload, ['description', 'summary', 'title', 'message']) ?? humanizeEventType(row.action),
     target:
       nonEmpty(row.target) ??
@@ -232,6 +244,7 @@ function auditEventEntry(row: Record<string, unknown>): AuditLedgerEntry {
     when: typeof row.when_display === 'string' ? row.when_display : '',
     at: isoOf(row.at),
     actor: nonEmpty(row.user_name) ?? 'System',
+    actorRef: userRef(row.user_id == null ? null : Number(row.user_id)),
     event:
       metaString(row.metadata, ['description', 'summary', 'title', 'message']) ??
       humanizeEventType(row.event_type),
@@ -283,6 +296,7 @@ const AUDIT_EVENTS_SQL = `
          event_type,
          entity_type,
          entity_id,
+         user_id,
          user_name,
          ip_address,
          "timestamp" AS at,
@@ -332,15 +346,11 @@ export interface AuditLedgerResponse {
  * verify-chain uses — never on the request's tenant-scoped client, which
  * would report every cross-linked legacy row as a break.
  */
-export type TenantChainVerifier = (orgId: number) => Promise<ChainVerificationResult>;
-
-async function verifyOnSuperAdminScope(orgId: number): Promise<ChainVerificationResult> {
-  const { withTenantConnection } = await import('../db/withTenantConnection.js');
-  return withTenantConnection(
-    { tenantId: '0', role: 'app_super_admin', source: 'request', caller: 'audit-trail-ledger/verdict' },
-    (c) => verifyAuditChain(c, { tenantId: orgId }),
-  );
-}
+export type { TenantChainVerifier } from '../services/audit/tenant-chain-verdict.js';
+import {
+  verifyTenantChainOnAdminScope as verifyOnSuperAdminScope,
+  type TenantChainVerifier,
+} from '../services/audit/tenant-chain-verdict.js';
 
 export async function readAuditLedger(
   client: Pick<PoolClient, 'query'>,
@@ -373,6 +383,76 @@ export async function readAuditLedger(
   return { success: true, data: merged, sources, meta: { chain } };
 }
 
+/**
+ * One record's rows from the chained ledger, newest first: a document's own
+ * audit trail (21 CFR 11.10(e), "available for review") without a second audit
+ * SQL. Same table, same row mapping and the same whole-chain verdict as
+ * readAuditLedger.
+ *
+ * The predecessor of each row is its predecessor in the TENANT chain, found by
+ * chain_seq. A LAG over the filtered rows would name the record's previous row
+ * instead, which is not what the chain links to whenever another record's event
+ * came between. A legacy row (chain_seq NULL) has no single predecessor the
+ * sequence can name; its prevHash is empty, and the verdict covers it.
+ */
+const RECORD_HISTORY_SQL = `
+  SELECT a.id, a.action, a.actor_id, a.target, a.table_name, a.record_id, a.reason,
+         a.ip_address, a.new_values, a.occurred_at, a.sha256_chain, a.chain_seq,
+         prev.sha256_chain AS prev_hash,
+         to_char(a.occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI') AS when_display,
+         u.name  AS user_name,
+         u.email AS user_email
+    FROM audit_logs a
+    LEFT JOIN LATERAL (
+      SELECT p.sha256_chain
+        FROM audit_logs p
+       WHERE a.chain_seq IS NOT NULL
+         AND p.tenant_id = a.tenant_id
+         AND p.chain_seq < a.chain_seq
+       ORDER BY p.chain_seq DESC
+       LIMIT 1
+    ) prev ON TRUE
+    LEFT JOIN users u ON u.id = a.actor_id
+   WHERE a.tenant_id = $1
+     AND a.table_name = $2
+     AND a.record_id = $3
+     AND a.sha256_chain IS NOT NULL
+   ORDER BY a.chain_seq DESC NULLS LAST, a.occurred_at DESC, a.id DESC
+   LIMIT $4`;
+
+export interface RecordAuditHistory {
+  data: AuditLedgerEntry[];
+  meta: { chain: AuditLedgerChainVerdict };
+}
+
+export async function readRecordAuditHistory(
+  client: Pick<PoolClient, 'query'>,
+  orgId: number,
+  record: { tableName: string; recordId: string; limit?: number },
+  verifyTenantChain: TenantChainVerifier = verifyOnSuperAdminScope,
+): Promise<RecordAuditHistory> {
+  const limit = Math.min(Math.max(record.limit ?? 200, 1), 1000);
+  const rows = await client.query(RECORD_HISTORY_SQL, [orgId, record.tableName, record.recordId, limit]);
+  const data = rows.rows.map((r: Record<string, unknown>) => ({
+    ...auditLogEntry(r),
+    prevHash: r.prev_hash == null ? '' : String(r.prev_hash),
+  }));
+  const v = await verifyTenantChain(orgId);
+  return {
+    data,
+    meta: {
+      chain: {
+        store: 'audit_logs',
+        ok: v.ok,
+        rowsChecked: v.rowsChecked,
+        legacyRows: v.legacyRows,
+        sequencedRows: v.sequencedRows,
+        ...(v.brokenAt ? { brokenAt: v.brokenAt } : {}),
+      },
+    },
+  };
+}
+
 // ─── Router Factory ───────────────────────────────────────────────────────────
 
 /**
@@ -398,6 +478,9 @@ export default function createAuditTrailLedgerRoutes(
   router.get('/ledger', async (req: Request, res: Response) => {
     const guard = requireAuthedOrgId(req, res);
     if (!guard.ok) return; // 403 already sent — tenant context is mandatory
+    // The ledger names every user in the organisation; it is read by owners,
+    // admins and managers, or a platform administrator (audit DP-18, P1-20).
+    if (!requireAuditReader(req, res)) return;
 
     const limit = Math.min(
       1000,

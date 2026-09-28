@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db, getPool } from '../db';
-import { authedOrgId } from '../utils/authedOrgId';
+import { authedOrgId, usableOrgId } from '../utils/authedOrgId';
 import {
   reportProgramGroups,
   reportProgramGroupProjects,
@@ -56,36 +56,38 @@ const canSeedTaxonomy = () =>
     !!process.env.REPORT_OS_SEED_KEY &&
     process.env.REPORT_OS_SEED_KEY.length > 8);
 
+/*
+ * Request schemas carry no organization and no actor. Both come from the
+ * verified session (requireSessionOrg, getUserId): seven of these schemas used
+ * to accept an `organizationId`, and every handler behind them used it, which
+ * let any signed-in user list, compute and write another tenant's reports; the
+ * `createdBy` / `requestedBy` beside them let the same user sign as anyone
+ * (ledger L184). Zod strips unknown keys, so a client that still sends either
+ * field is ignored rather than refused.
+ */
 const createProgramGroupSchema = z.object({
-  organizationId: z.number().int().positive(),
   clientWorkspaceId: z.number().int().positive().optional(),
   name: z.string().min(1),
   description: z.string().optional(),
   projectIds: z.array(z.number().int().positive()).min(1),
-  createdBy: z.number().int().positive().optional(),
   metadata: z.record(z.unknown()).optional(),
 });
 
 const createProgramSnapshotSchema = z.object({
-  organizationId: z.number().int().positive(),
   snapshotLabel: z.string().optional(),
   snapshotReason: z.string().optional(),
-  createdBy: z.number().int().positive().optional(),
 });
 
 const createRunSchema = z.object({
-  organizationId: z.number().int().positive(),
   clientWorkspaceId: z.number().int().positive().optional(),
   scopeType: z.enum(reportScopeEnum),
   scopeId: z.string().min(1),
   reportTypeId: z.string().min(1),
   registryId: z.string().max(80).optional(),
   submissionType: z.string().max(80).optional(),
-  requestedBy: z.number().int().positive().optional(),
 });
 
 const listRunsSchema = z.object({
-  organizationId: z.coerce.number().int().positive(),
   scopeType: z.string().optional(),
   scopeId: z.string().optional(),
   status: z.string().optional(),
@@ -99,16 +101,13 @@ const listRunsSchema = z.object({
 });
 
 const createBundleSchema = z.object({
-  organizationId: z.number().int().positive(),
   name: z.string().min(2).max(180),
   description: z.string().max(1000).optional(),
   runIds: z.array(z.number().int().positive()).min(1),
-  createdBy: z.number().int().positive().optional(),
 });
 
 const createDeliverySchema = z
   .object({
-    organizationId: z.number().int().positive(),
     projectId: z.number().int().positive().optional(),
     runId: z.number().int().positive().optional(),
     bundleId: z.string().uuid().optional(),
@@ -119,7 +118,6 @@ const createDeliverySchema = z
     subject: z.string().min(2).max(240),
     message: z.string().max(20000).optional(),
     urgency: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-    requestedBy: z.number().int().positive().optional(),
     captureForLearning: z.boolean().default(true),
   })
   .superRefine((value, ctx) => {
@@ -140,7 +138,6 @@ const createDeliverySchema = z
   });
 
 const captureCorrespondenceSchema = z.object({
-  organizationId: z.number().int().positive(),
   projectId: z.number().int().positive(),
   submissionId: z.string().optional(),
   direction: z.enum(['inbound', 'outbound', 'internal']).default('inbound'),
@@ -296,6 +293,52 @@ function toBlockerArray(value: unknown): string[] {
 function getUserId(req: Request): number | undefined {
   const candidate = Number((req as any)?.userId ?? (req as any)?.user?.id);
   return Number.isFinite(candidate) && candidate > 0 ? candidate : undefined;
+}
+
+/**
+ * The caller's organization, from the verified session — never from the
+ * request. Sends the 403 and returns null when the session carries none.
+ * `usableOrgId` rather than a bare finite check: an org of 0 is a resolution
+ * failure, not a tenant (see server/utils/authedOrgId.ts).
+ */
+function requireSessionOrg(req: Request, res: Response): number | null {
+  const orgId = usableOrgId(authedOrgId(req));
+  if (orgId == null) {
+    res.status(403).json({ error: 'Tenant context required' });
+    return null;
+  }
+  return orgId;
+}
+
+/**
+ * Which of `projectIds` belong to `organizationId`. A program group, delivery
+ * or captured letter names projects by id; an id from another tenant must read
+ * as not found rather than become a membership or a record pointing across the
+ * boundary. report_program_group_projects has no organization column and no
+ * RLS policy, so nothing below the app would stop it.
+ */
+async function projectsInOrg(organizationId: number, projectIds: number[]): Promise<Set<number>> {
+  if (projectIds.length === 0) return new Set();
+  const rows = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(and(eq(projects.organizationId, organizationId), inArray(projects.id, projectIds)));
+  return new Set(rows.map(row => row.id));
+}
+
+/** Whether `submissionId` is a submission of `projectId` in `organizationId`. */
+async function submissionInProject(
+  organizationId: number,
+  projectId: number,
+  submissionId: string
+): Promise<boolean> {
+  const { rows } = await getPool().query(
+    `SELECT 1 FROM c2c_submissions
+      WHERE id::text = $1 AND organization_id = $2 AND project_id = $3
+      LIMIT 1`,
+    [submissionId, organizationId, projectId]
+  );
+  return rows.length > 0;
 }
 
 function resolveProjectIdForRun(run: {
@@ -910,7 +953,16 @@ router.get('/program-groups', async (req: Request, res: Response) => {
               projectType: projects.type,
             })
             .from(reportProgramGroupProjects)
-            .innerJoin(projects, eq(projects.id, reportProgramGroupProjects.projectId))
+            // The org on the JOIN, not only on the groups: a membership naming
+            // another tenant's project (written before memberships were checked)
+            // must not bring that project's name and type back with it.
+            .innerJoin(
+              projects,
+              and(
+                eq(projects.id, reportProgramGroupProjects.projectId),
+                eq(projects.organizationId, organizationId)
+              )
+            )
             .where(inArray(reportProgramGroupProjects.programGroupId, groupIds))
         : [];
 
@@ -932,20 +984,20 @@ router.get('/program-groups', async (req: Request, res: Response) => {
 
 router.post('/program-groups', async (req: Request, res: Response) => {
   try {
+    const orgId = requireSessionOrg(req, res);
+    if (orgId == null) return;
     const parsed = createProgramGroupSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const {
-      organizationId,
-      clientWorkspaceId,
-      name,
-      description,
-      projectIds,
-      createdBy,
-      metadata,
-    } = parsed.data;
-    const orgId = organizationId;
+    const { clientWorkspaceId, name, description, projectIds, metadata } = parsed.data;
+    const createdBy = getUserId(req);
+
+    const uniqueProjectIds = [...new Set(projectIds)];
+    const owned = await projectsInOrg(orgId, uniqueProjectIds);
+    if (owned.size !== uniqueProjectIds.length) {
+      return res.status(400).json({ error: 'One or more projectIds were not found for this organization' });
+    }
 
     const [group] = await db
       .insert(reportProgramGroups)
@@ -960,9 +1012,6 @@ router.post('/program-groups', async (req: Request, res: Response) => {
       })
       .returning();
 
-    const uniqueProjectIds = [
-      ...new Set(projectIds.map((id: any) => Number(id)).filter(Number.isFinite)),
-    ];
     if (uniqueProjectIds.length > 0) {
       await db.insert(reportProgramGroupProjects).values(
         uniqueProjectIds.map(projectId => ({
@@ -981,9 +1030,27 @@ router.post('/program-groups', async (req: Request, res: Response) => {
 
 router.patch('/program-groups/:id', async (req: Request, res: Response) => {
   try {
+    const orgId = requireSessionOrg(req, res);
+    if (orgId == null) return;
     const id = Number(req.params.id);
-    const { name, description, status, projectIds, updatedBy, metadata } = req.body;
+    const { name, description, status, projectIds, metadata } = req.body;
+    const updatedBy = getUserId(req);
 
+    let uniqueProjectIds: number[] | undefined;
+    if (Array.isArray(projectIds)) {
+      uniqueProjectIds = [
+        ...new Set(projectIds.map((v: any) => Number(v)).filter(Number.isFinite)),
+      ];
+      const owned = await projectsInOrg(orgId, uniqueProjectIds);
+      if (owned.size !== uniqueProjectIds.length) {
+        return res
+          .status(400)
+          .json({ error: 'One or more projectIds were not found for this organization' });
+      }
+    }
+
+    // Scoped to the caller's org: another tenant's group id matches nothing and
+    // answers 404 below, before its membership is touched.
     const [updated] = await db
       .update(reportProgramGroups)
       .set({
@@ -995,18 +1062,15 @@ router.patch('/program-groups/:id', async (req: Request, res: Response) => {
         updatedBy,
         updatedAt: new Date(),
       })
-      .where(eq(reportProgramGroups.id, id))
+      .where(and(eq(reportProgramGroups.id, id), eq(reportProgramGroups.organizationId, orgId)))
       .returning();
 
     if (!updated) return res.status(404).json({ error: 'Program group not found' });
 
-    if (Array.isArray(projectIds)) {
+    if (uniqueProjectIds) {
       await db
         .delete(reportProgramGroupProjects)
         .where(eq(reportProgramGroupProjects.programGroupId, id));
-      const uniqueProjectIds = [
-        ...new Set(projectIds.map((v: any) => Number(v)).filter(Number.isFinite)),
-      ];
       if (uniqueProjectIds.length > 0) {
         await db.insert(reportProgramGroupProjects).values(
           uniqueProjectIds.map(projectId => ({
@@ -1055,12 +1119,23 @@ router.get('/program-groups/:id/snapshots', async (req: Request, res: Response) 
 
 router.post('/program-groups/:id/snapshots', async (req: Request, res: Response) => {
   try {
+    const orgId = requireSessionOrg(req, res);
+    if (orgId == null) return;
     const id = Number(req.params.id);
     const parsed = createProgramSnapshotSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const { organizationId: orgId, snapshotLabel, snapshotReason, createdBy } = parsed.data;
+    const { snapshotLabel, snapshotReason } = parsed.data;
+    const createdBy = getUserId(req);
+
+    // A snapshot of a group this org does not own is not an empty snapshot.
+    const [group] = await db
+      .select({ id: reportProgramGroups.id })
+      .from(reportProgramGroups)
+      .where(and(eq(reportProgramGroups.id, id), eq(reportProgramGroups.organizationId, orgId)))
+      .limit(1);
+    if (!group) return res.status(404).json({ error: 'Program group not found' });
 
     const memberships = await db
       .select({ projectId: reportProgramGroupProjects.projectId })
@@ -1100,20 +1175,15 @@ router.post('/program-groups/:id/snapshots', async (req: Request, res: Response)
 
 router.post('/runs', async (req: Request, res: Response) => {
   try {
+    const orgId = requireSessionOrg(req, res);
+    if (orgId == null) return;
     const parsed = createRunSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const {
-      organizationId: orgId,
-      clientWorkspaceId,
-      scopeType,
-      scopeId,
-      reportTypeId,
-      registryId,
-      submissionType,
-      requestedBy,
-    } = parsed.data;
+    const { clientWorkspaceId, scopeType, scopeId, reportTypeId, registryId, submissionType } =
+      parsed.data;
+    const requestedBy = getUserId(req);
 
     const type = await db
       .select()
@@ -1131,11 +1201,22 @@ router.post('/runs', async (req: Request, res: Response) => {
       });
     }
 
-    // Entitlement gate: refuse to generate a report above the org's tier.
-    // Gated on the authed org (never the body) so a downgraded tier cannot
-    // be bypassed by a crafted organizationId.
-    const gateOrgId = authedOrgId(req) ?? orgId;
-    const gate = await requireReportEntitlement(gateOrgId, type[0].typeId, type[0].family);
+    // A project this org does not own is not found — not an empty report about
+    // it, and not a run whose scope points across the boundary for a later
+    // bundle or delivery to follow. (Program scope is left as it was: its
+    // membership query already requires the group to be this org's, and the
+    // live caller sends a project id under that scope — ledger L189.)
+    if (scopeType === 'project') {
+      const projectId = Number(scopeId);
+      const owned = Number.isSafeInteger(projectId)
+        ? await projectsInOrg(orgId, [projectId])
+        : new Set<number>();
+      if (owned.size === 0) return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Entitlement gate: refuse to generate a report above the org's tier —
+    // the same org the report is computed for.
+    const gate = await requireReportEntitlement(orgId, type[0].typeId, type[0].family);
     if (!gate.entitled) {
       return res.status(403).json({
         error: `This report requires the ${gate.requiredTier} plan.`,
@@ -1571,10 +1652,11 @@ router.post('/runs/:id/finalize', async (req: Request, res: Response) => {
 
 router.get('/runs', async (req: Request, res: Response) => {
   try {
+    const organizationId = requireSessionOrg(req, res);
+    if (organizationId == null) return;
     const parsed = listRunsSchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const {
-      organizationId,
       scopeType,
       scopeId,
       status,
@@ -1662,15 +1744,16 @@ router.get('/runs', async (req: Request, res: Response) => {
 
 router.post('/bundles', async (req: Request, res: Response) => {
   try {
+    const organizationId = requireSessionOrg(req, res);
+    if (organizationId == null) return;
     const parsed = createBundleSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
-    const { organizationId, name, description, runIds, createdBy } = parsed.data;
+    const { name, description, runIds } = parsed.data;
+    const createdBy = getUserId(req);
 
     // Bundling is a paid packaging action — gate on the base report_families
     // capability (standard+). The member runs were already gated at generation.
-    const bundleGate = await requireReportEntitlement(
-      authedOrgId(req) ?? organizationId, 'readiness.executive_digest',
-    );
+    const bundleGate = await requireReportEntitlement(organizationId, 'readiness.executive_digest');
     if (!bundleGate.entitled) {
       return res.status(403).json({
         error: `Bundling reports requires the ${bundleGate.requiredTier} plan.`,
@@ -1703,6 +1786,18 @@ router.post('/bundles', async (req: Request, res: Response) => {
       blockers: toBlockerArray(run.blockers),
       createdAt: safeIso(run.createdAt),
     }));
+    // A bundle is stored as a memory entry on each project its runs cover.
+    // This list was never filled in, so persistBundleRecord wrote nothing and
+    // every bundle answered 201 and was never seen again. With no project to
+    // store it under, say so instead of reporting a bundle that does not exist.
+    const projectIds = [
+      ...(await projectsInOrg(organizationId, resolveProjectsForBundleRuns(runs))),
+    ];
+    if (projectIds.length === 0) {
+      return res.status(422).json({
+        error: 'None of these runs belongs to a project, so the bundle has nowhere to be stored.',
+      });
+    }
     const bundle: ReportBundleRecord = {
       bundleId: randomUUID(),
       organizationId,
@@ -1710,6 +1805,7 @@ router.post('/bundles', async (req: Request, res: Response) => {
       description,
       createdAt: new Date().toISOString(),
       createdBy,
+      projectIds,
       runIds: uniqueRunIds,
       items,
     };
@@ -1787,10 +1883,12 @@ router.get('/deliveries', async (req: Request, res: Response) => {
 
 router.post('/deliveries', async (req: Request, res: Response) => {
   try {
+    const organizationId = requireSessionOrg(req, res);
+    if (organizationId == null) return;
     const parsed = createDeliverySchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const payload = parsed.data;
-    const userId = payload.requestedBy || getUserId(req);
+    const userId = getUserId(req);
     let projectId = payload.projectId;
     let runRecord: any | undefined;
     let bundleRecord: ReportBundleRecord | undefined;
@@ -1799,14 +1897,14 @@ router.post('/deliveries', async (req: Request, res: Response) => {
       [runRecord] = await db
         .select()
         .from(reportRuns)
-        .where(and(eq(reportRuns.id, payload.runId), eq(reportRuns.organizationId, payload.organizationId)))
+        .where(and(eq(reportRuns.id, payload.runId), eq(reportRuns.organizationId, organizationId)))
         .limit(1);
       if (!runRecord) return res.status(404).json({ error: 'Run not found' });
       if (!projectId) projectId = resolveProjectIdForRun(runRecord);
     }
     if (payload.bundleId) {
-      bundleRecord = await loadBundleById(payload.organizationId, payload.bundleId);
-      if (!bundleRecord || bundleRecord.organizationId !== payload.organizationId) {
+      bundleRecord = await loadBundleById(organizationId, payload.bundleId);
+      if (!bundleRecord || bundleRecord.organizationId !== organizationId) {
         return res.status(404).json({ error: 'Bundle not found' });
       }
       if (!projectId && bundleRecord.items.length > 0) {
@@ -1816,18 +1914,31 @@ router.post('/deliveries', async (req: Request, res: Response) => {
           .where(
             and(
               eq(reportRuns.id, bundleRecord.items[0].runId),
-              eq(reportRuns.organizationId, payload.organizationId)
+              eq(reportRuns.organizationId, organizationId)
             )
           )
           .limit(1);
         if (firstRun[0]) projectId = resolveProjectIdForRun(firstRun[0]);
       }
     }
+    // Whether it came from the body or from a run's scope, the project the
+    // delivery is recorded under must be this org's.
+    if (projectId && !(await projectsInOrg(organizationId, [projectId])).has(projectId)) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    if (
+      payload.channel === 'platform_send' &&
+      projectId &&
+      payload.submissionId &&
+      !(await submissionInProject(organizationId, projectId, payload.submissionId))
+    ) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
 
     let correspondenceId: string | undefined;
     if (payload.channel === 'platform_send' && projectId) {
       const persisted = await persistCorrespondenceToPlatform({
-        organizationId: payload.organizationId,
+        organizationId,
         projectId,
         submissionId: payload.submissionId,
         direction: 'outbound',
@@ -1845,7 +1956,7 @@ router.post('/deliveries', async (req: Request, res: Response) => {
 
     const delivery: DeliveryRecord = {
       deliveryId: randomUUID(),
-      organizationId: payload.organizationId,
+      organizationId,
       projectId,
       runId: payload.runId,
       bundleId: payload.bundleId,
@@ -1869,7 +1980,7 @@ router.post('/deliveries', async (req: Request, res: Response) => {
           ? `bundle:${payload.bundleId}`
           : 'unspecified';
       await captureLearningMemory({
-        organizationId: payload.organizationId,
+        organizationId,
         projectId,
         userId,
         title: `Outbound correspondence — ${payload.subject}`,
@@ -1893,12 +2004,25 @@ router.post('/deliveries', async (req: Request, res: Response) => {
 
 router.post('/correspondence/capture', async (req: Request, res: Response) => {
   try {
+    const organizationId = requireSessionOrg(req, res);
+    if (organizationId == null) return;
     const parsed = captureCorrespondenceSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const payload = parsed.data;
     const userId = getUserId(req);
+    // An agency letter filed against another tenant's project or submission is
+    // not found, the same answer the canonical intake route gives.
+    if (!(await projectsInOrg(organizationId, [payload.projectId])).has(payload.projectId)) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    if (
+      payload.submissionId &&
+      !(await submissionInProject(organizationId, payload.projectId, payload.submissionId))
+    ) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
     const persisted = await persistCorrespondenceToPlatform({
-      organizationId: payload.organizationId,
+      organizationId,
       projectId: payload.projectId,
       submissionId: payload.submissionId,
       direction: payload.direction,
@@ -1915,7 +2039,7 @@ router.post('/correspondence/capture', async (req: Request, res: Response) => {
 
     if (payload.captureForLearning) {
       await captureLearningMemory({
-        organizationId: payload.organizationId,
+        organizationId,
         projectId: payload.projectId,
         userId,
         title: `Regulatory correspondence — ${payload.subject}`,

@@ -1,0 +1,34 @@
+F-37 — RED: the test run against the code with this fix reverted
+Editor-JSON to HTML (every PDF) dropped marks, images, table structure and tracked changes
+
+Fix commit: d52b24909. Tree: 893a4750f with ONLY the lines below reverted to the pre-fix logic,
+then restored byte-for-byte after the run:
+  - server/export/renderers.ts: replace "    return applyMarks(escapeHtml(node.text || ''), node.marks || []);"...
+  - server/export/renderers.ts: replace "  if (node.type === 'image') {"...
+  - server/export/renderers.ts: replace "  if (node.type === 'table') {"...
+  - server/export/renderers.ts: replace "  if (node.type === 'tableRow') {"...
+
+vitest exit code: 1 (non-zero = the test caught the defect)
+
+ × server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a superscript stays a magnitude in the PDF, as it already does in the DOCX 161ms
+   → expected 'Plain-text rendering. The document st…' to contain '10^6 CFU/mL'
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a subscript reads as the conventional formula 12ms
+ × server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > an unresolved tracked change stays unresolved 10ms
+   → expected 'Plain-text rendering. The document st…' to contain '[-100 mg-]'
+ × server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > table cells keep a delimiter instead of running together 15ms
+   → expected 'Plain-text rendering. The document st…' to contain 'Arm | ORR'
+ × server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a figure leaves a trace instead of disappearing 12ms
+   → expected 'Plain-text rendering. The document st…' to contain '[Figure: Kaplan-Meier curve]'
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > the DOCX branch still produces a document for the same input 30ms
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+stderr | server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a superscript stays a magnitude in the PDF, as it already does in the DOCX
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a superscript stays a magnitude in the PDF, as it already does in the DOCX
+AssertionError: expected 'Plain-text rendering. The document st…' to contain '10^6 CFU/mL'
+ FAIL  server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > an unresolved tracked change stays unresolved
+AssertionError: expected 'Plain-text rendering. The document st…' to contain '[-100 mg-]'
+ FAIL  server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > table cells keep a delimiter instead of running together
+AssertionError: expected 'Plain-text rendering. The document st…' to contain 'Arm | ORR'
+ FAIL  server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a figure leaves a trace instead of disappearing
+AssertionError: expected 'Plain-text rendering. The document st…' to contain '[Figure: Kaplan-Meier curve]'

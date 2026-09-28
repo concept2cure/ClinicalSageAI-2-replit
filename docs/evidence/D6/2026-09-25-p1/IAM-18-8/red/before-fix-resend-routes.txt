@@ -1,0 +1,63 @@
+# HEAD 7fbe51c5, routes/auth.ts unchanged (tests only), 2026-09-26T13:16Z
+$ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/routes/__tests__/auth-mfa-challenge-factors.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > redeems a recovery code through the login verifier (the login screen's "Use a recovery code") 74ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > never completes an authenticator account's sign-in with an emailed code 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > still verifies an emailed code for an account without an authenticator 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > mints no emailed code for an authenticator account (409, names the authenticator and the recovery codes) 4ms
+ × server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > re-issues a code for an account without an authenticator through the capped re-issue, never a fresh challenge 6ms
+   → the resend did not go through the capped re-issue: expected "vi.fn()" to be called with arguments: [ 7 ]
+
+Number of calls: 0
+
+ × server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > refuses a challenge that has had its limit of codes: 429 MFA_RESEND_LIMIT, no mail, one audit row 7ms
+   → a capped challenge was still answered as if a code had been sent: expected 200 to be 429 // Object.is equality
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login for a known account > control: issues a fresh challenge through createEmailOtp, never the capped re-issue, so the count of codes starts again with the password 21ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login with an unknown e-mail > pays the bcrypt comparison a wrong password pays, so the answer time does not say the e-mail is unknown 728ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > re-issues a code for an account without an authenticator through the capped re-issue, never a fresh challenge
+AssertionError: the resend did not go through the capped re-issue: expected "vi.fn()" to be called with arguments: [ 7 ]
+
+Number of calls: 0
+
+ ❯ server/routes/__tests__/auth-mfa-challenge-factors.test.ts:172:86
+    170|     const r = await request(app()).post('/api/auth/mfa/resend').send({…
+    171|     expect(r.status).toBe(200);
+    172|     expect(otp.reissueEmailOtp, 'the resend did not go through the cap…
+       |                                                                                      ^
+    173|     expect(otp.createEmailOtp, 'the resend minted a fresh challenge, w…
+    174|     expect(mail.sendLoginOtpEmail).toHaveBeenCalledWith('a@acme.test',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > refuses a challenge that has had its limit of codes: 429 MFA_RESEND_LIMIT, no mail, one audit row
+AssertionError: a capped challenge was still answered as if a code had been sent: expected 200 to be 429 // Object.is equality
+
+- Expected
++ Received
+
+- 429
++ 200
+
+ ❯ server/routes/__tests__/auth-mfa-challenge-factors.test.ts:181:90
+    179|     otp.reissueEmailOtp.mockResolvedValueOnce(null);
+    180|     const r = await request(app()).post('/api/auth/mfa/resend').send({…
+    181|     expect(r.status, 'a capped challenge was still answered as if a co…
+       |                                                                                          ^
+    182|     expect(r.body).toMatchObject({ success: false, error: { code: 'MFA…
+    183|     expect(r.body.error.message).toMatch(/limit of emailed codes/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  13:16:01
+   Duration  2.94s (transform 979ms, setup 110ms, import 1.68s, tests 857ms, environment 0ms)
+
+exit=1

@@ -346,11 +346,41 @@ function hasSegment(path: string, ...segments: string[]): boolean {
   return segments.some(seg => padded.includes(`/${seg}/`));
 }
 
-export function getCategory(path: string): string {
+/**
+ * AnA requests that reach no model: every read under /api/ana-ri (none of its
+ * GET routes generates — the rail's activity poll, the Live Drive state, turn
+ * records, plans, health) and a run's control endpoint (pause, resume, a steer
+ * queued into a run already metered when it started, a stop, and the screen
+ * settling each move AnA made — one per move).
+ *
+ * Metered in the 30-a-minute AI bucket they spent the person's AI allowance on
+ * bookkeeping: the rail's polls and a demonstration's move confirmations used
+ * it up, the screen's confirmations were refused so each round of hers waited
+ * out its ceiling, and the person's next question was refused as "too many AI
+ * requests" (seen 2026-09-28 in the Live Drive browser run). Scoped to
+ * /api/ana-ri, where every route was checked; the other AI prefixes are
+ * unchanged.
+ */
+function isAnaRiNonModelRequest(path: string, method?: string): boolean {
+  if (!hasSegment(path, 'ana-ri')) return false;
+  const m = (method ?? '').toUpperCase();
+  if (m === 'GET' || m === 'HEAD') return true;
+  return m === 'POST' && /(^|\/)ana-ri\/stream\/[^/]+\/control\/?$/.test(path);
+}
+
+export function getCategory(path: string, method?: string): string {
   if (hasSegment(path, 'login', 'register', 'auth')) {
     return 'auth';
   }
-  if (hasSegment(path, 'ai', 'generate', 'openai', 'anthropic')) {
+  // The AI surfaces this platform mounts (bootstrap/register-ai-routes.ts,
+  // register-core-routes.ts): /api/ai, /api/ai-assistance, /api/ai-gateway,
+  // /api/ana, /api/ana-ri, /api/claude, /api/cortex. Until 2026-09-25 only a
+  // bare `ai` segment counted, so the model calls that cost the most were
+  // metered as ordinary API traffic (security audit 2026-09-24, IAM-18).
+  if (
+    !isAnaRiNonModelRequest(path, method) &&
+    hasSegment(path, 'ai', 'ai-assistance', 'ai-gateway', 'ana', 'ana-ri', 'claude', 'cortex', 'generate', 'openai', 'anthropic')
+  ) {
     return 'ai';
   }
   if (hasSegment(path, 'concept2cure')) {
@@ -468,12 +498,26 @@ export function createRedisRateLimiter(config: Partial<RateLimitConfig> = {}) {
   const rules = { ...DEFAULT_RULES, ...config.rules };
   const keyPrefix = config.keyPrefix || '';
   const perOrganization = config.perOrganization ?? true;
+  /*
+   * One request is one request to this limiter (VSR-001 F-33). A limiter a
+   * router applies with router.use runs for every request that enters that
+   * router, and register-concept2cure-routes.ts stacks fifteen routers that
+   * share one limiter at /api/concept2cure: a request answered by the
+   * fifteenth was counted fifteen times against the same key, so the
+   * 600-a-minute bucket allowed forty. The mark is this instance's own, so
+   * two limiters remain two policies.
+   */
+  const counted = Symbol('rate-limit-counted');
 
   return async function redisRateLimiterMiddleware(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
+    const marks = req as unknown as Record<symbol, true | undefined>;
+    if (marks[counted]) return next();
+    marks[counted] = true;
+
     // In development, never throttle interactive auth entry points.
     // This prevents local/demo lockouts while keeping production controls intact.
     if (
@@ -491,7 +535,7 @@ export function createRedisRateLimiter(config: Partial<RateLimitConfig> = {}) {
       return next();
     }
 
-    const category = getCategory(req.path);
+    const category = getCategory(req.path, req.method);
     const rule = rules[category] || rules.api;
 
     // Skip for privileged roles if configured

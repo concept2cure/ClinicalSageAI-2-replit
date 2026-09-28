@@ -12,11 +12,11 @@
  * Nothing on this screen is appended locally, so no pane can show a row the
  * record does not hold.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as PG from './ProtocolGov';
 import { apiRequest } from '@/lib/queryClient';
 import { C2CForm } from '../C2CForm';
-import { C2CToast, useToast } from '../toast';
+import { C2CToast, useToast, type FireToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
 import { useSurfaceActionHandlers } from '../surfaceActions';
 import { ProtocolRegisterForm, type RegisterKind } from './ProtocolRegisterForms';
@@ -26,7 +26,7 @@ import { ProtocolSectionPane } from './ProtocolDevSection';
 import { AmendmentsTab, DeviationsTab, EligibilityTab, MilestonesTab, ObjectivesTab, Outline } from './ProtocolDevPanes';
 import { SoaTab } from './ProtocolDevSoa';
 import { BudgetTab, RiskTab } from './ProtocolDevRegisters';
-import { ConsentTab, ReviewsTab } from './ProtocolDevReviews';
+import { ConsentTab, ReviewsTab, SignatureLine } from './ProtocolDevReviews';
 import { StudyDesignStatisticsTab } from './biostatBridge';
 import { StudyDesignTab } from './ProtocolDevDesign';
 import { DerivationTab } from './ProtocolDevDerivation';
@@ -83,6 +83,10 @@ export interface WorkspaceDocProps {
    *  saying nothing would present stale rows as current. */
   reloadError?: string;
   onChanged?: () => void;
+  /** The section open on screen, reported up so the surface context can name
+   *  it: "Draft with AnA" asks about "the section open on screen" and sends no
+   *  stored title (periodic review 2026-09-28, SEC-C-4). */
+  onOpenSection?: (sectionId: string | null) => void;
 }
 
 /* ── Cover page ────────────────────────────────────────────────────────── */
@@ -128,6 +132,10 @@ function ProtocolHeader({ doc, canWrite, exporting, refreshing, onAsk, onExport,
           <span>{pi ? 'PI ' + pi : 'Principal investigator not recorded'}</span>
           <span className="pd-dot" />
           <PG.StatusBadge status={str(doc.status)} />
+          {/* 21 CFR 11.50: who finalized it, as the signature row records it,
+              or that no signature is on record (periodic review 2026-09-28,
+              editor family, P11-C-2). */}
+          <SignatureLine facet={doc.finalization} expected={str(doc.status) === 'finalized' || str(doc.status) === 'superseded'} />
           {canWrite && (
             <button type="button" className="pde-rowbtn" onClick={onEditCover}>
               Edit sponsor and principal investigator
@@ -138,8 +146,13 @@ function ProtocolHeader({ doc, canWrite, exporting, refreshing, onAsk, onExport,
       <div className="pd-head-r">
         <span className="pd-autosave">{'v' + (str(doc.version) || '—') + updatedSuffix(doc.updated)}</span>
         {refreshing && <span className="pd-autosave" role="status">Re-reading the record…</span>}
+        {/* The protocol number is stored text any member can set, and this turn
+            is sent as the person's own words; spliced in, an instruction planted
+            there went around the server's fence on screen context. AnA reads
+            which protocol from that fenced context (periodic review 2026-09-28,
+            editor family, SEC-C-4). */}
         <PG.Btn icon="sparkles" variant="outline"
-          onClick={() => onAsk('Review ' + str(doc.shortTitle) + ' for completeness and list what blocks finalization.')}>
+          onClick={() => onAsk('Review the protocol open on screen for completeness and list what blocks finalization.')}>
           Ask AnA
         </PG.Btn>
         <PG.Btn icon="fileText" variant="outline" onClick={onExport}>{exporting ? 'Exporting…' : 'Export'}</PG.Btn>
@@ -231,7 +244,7 @@ function RegisterTabBody({ tab, doc, canWrite, onReg, onEdit }: BodyProps): Reac
     case 'milestones': return <MilestonesTab doc={doc} onAdd={() => onReg('milestone')} />;
     case 'budget': return <BudgetTab doc={doc} onEdit={canWrite ? onEdit : undefined} />;
     case 'amendments': return <AmendmentsTab doc={doc} onAdd={() => onReg('amendment')} />;
-    case 'deviations': return <DeviationsTab doc={doc} onAdd={() => onReg('deviation')} />;
+    case 'deviations': return <DeviationsTab doc={doc} onAdd={() => onReg('deviation')} onEdit={canWrite ? onEdit : undefined} />;
     case 'reviews': return <ReviewsTab doc={doc} onEdit={canWrite ? onEdit : undefined} />;
     case 'consent': return <ConsentTab doc={doc} />;
     default: return null;
@@ -292,21 +305,49 @@ function StaleNotice() {
   );
 }
 
+/* 2026-09-28 · GA-2 (coverage-gap sweep): these sixteen tabs were plain
+   buttons and the open one was a CSS class only, so assistive technology heard
+   sixteen identical buttons and never which was selected (WCAG 4.1.2, 1.4.1).
+   Now the WAI-ARIA tabs pattern, as in quality/App.tsx: a named tablist, one
+   tab stop (roving tabindex) on the selected tab, Left/Right/Home/End move and
+   select, and each tab controls the one panel, which is labelled by it. */
+const PD_TABPANEL_ID = 'pd-tabpanel';
+const pdTabId = (id: string) => 'pd-tab-' + id;
+
 function TabStrip({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
+  const onKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    const idx = TABS.findIndex((t) => t.id === tab);
+    let next = -1;
+    if (e.key === 'ArrowRight') next = (idx + 1) % TABS.length;
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + TABS.length) % TABS.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = TABS.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    onTab(TABS[next].id);
+    (e.currentTarget.parentElement?.children[next] as HTMLElement | undefined)?.focus();
+  };
   return (
-    <div className="pd-tabs">{TABS.map((t) => (
-      <button key={t.id} className={'pd-tab' + (tab === t.id ? ' on' : '')} onClick={() => onTab(t.id)}>
+    <div className="pd-tabs" role="tablist" aria-label="Protocol sections">{TABS.map((t) => (
+      <button
+        key={t.id} type="button" role="tab" id={pdTabId(t.id)}
+        aria-selected={tab === t.id} aria-controls={PD_TABPANEL_ID} tabIndex={tab === t.id ? 0 : -1}
+        className={'pd-tab' + (tab === t.id ? ' on' : '')} onClick={() => onTab(t.id)} onKeyDown={onKey}
+      >
         <Ic n={t.icon} s={14} />{t.label}</button>))}</div>
   );
 }
 
-export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadError, onChanged }: WorkspaceDocProps) {
+/** The open edit/parameter drawer and the row it addresses. */
+type FormState = { kind: PdevFormKind; target?: PdevFormTarget };
+
+export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadError, onChanged, onOpenSection }: WorkspaceDocProps) {
   const [tab, setTab] = useState('document');
   const [activeSec, setActiveSec] = useState(str(doc.openSection));
   const [exporting, setExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [reg, setReg] = useState<RegisterKind | null>(null);
-  const [form, setForm] = useState<{ kind: PdevFormKind; target?: PdevFormTarget } | null>(null);
+  const [form, setForm] = useState<FormState | null>(null);
   const [signing, setSigning] = useState<ProtocolSigning | null>(null);
   const [toast, fireToast] = useToast();
 
@@ -316,6 +357,8 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
   const sections = asRows(doc.sections);
   const sec = sections.find((s) => s.id === activeSec) ?? sections[0];
   const onSec = (s: Row) => { setActiveSec(str(s.id)); setTab(str(s.tab) || 'document'); };
+  const openSectionId = sec ? str(sec.id) : null;
+  useEffect(() => { onOpenSection?.(openSectionId); }, [openSectionId, onOpenSection]);
 
   const openReg = (kind: RegisterKind) => {
     if (!canWrite) { fireToast('This protocol row has no numeric document id — governed writes need the governed store.', 'error'); return; }
@@ -363,7 +406,7 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
       <TabStrip tab={tab} onTab={setTab} />
       <div className="pd-grid">
         <Outline doc={doc} activeSec={activeSec} onSec={onSec} onFinalize={openFinalize} />
-        <div className="pd-work">
+        <div className="pd-work" role="tabpanel" id={PD_TABPANEL_ID} aria-labelledby={pdTabId(tab)}>
           <TabBody
             tab={tab} doc={doc} sec={sec} canWrite={canWrite} onAsk={onAsk} onNav={onNav}
             onReg={openReg} onEdit={openForm}
@@ -387,10 +430,46 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
           onSubmit={runExport}
         />
       )}
-      {reg && canWrite && (
+      {canWrite && (
+        <GovernedDrawers
+          documentId={numericDocId} documentTitle={str(doc.title)}
+          reg={reg} form={form} signing={signing}
+          setReg={setReg} setForm={setForm} setSigning={setSigning}
+          fireToast={fireToast} onChanged={onChanged}
+        />
+      )}
+      <C2CToast msg={toast} />
+    </div>);
+}
+
+interface DrawersProps {
+  documentId: number;
+  documentTitle: string;
+  reg: RegisterKind | null;
+  form: FormState | null;
+  signing: ProtocolSigning | null;
+  setReg: (kind: RegisterKind | null) => void;
+  setForm: (form: FormState | null) => void;
+  setSigning: (signing: ProtocolSigning | null) => void;
+  fireToast: FireToast;
+  onChanged?: () => void;
+}
+
+/**
+ * The three governed writes: a register create, an edit/parameter form, and the
+ * signing modal. Rendered only for a numeric document id, which the write
+ * routers key on. A disposition drawer hands off to the signing modal rather
+ * than writing, so the decision is only ever recorded under a signature.
+ */
+function GovernedDrawers({
+  documentId, documentTitle, reg, form, signing, setReg, setForm, setSigning, fireToast, onChanged,
+}: DrawersProps) {
+  return (
+    <>
+      {reg && (
         <ProtocolRegisterForm
           kind={reg}
-          protocolDocumentId={numericDocId}
+          protocolDocumentId={documentId}
           onCancel={() => setReg(null)}
           onDone={(kind, result) => {
             setReg(null);
@@ -400,10 +479,10 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
           onError={(m) => fireToast(m, 'error')}
         />
       )}
-      {form && canWrite && (
+      {form && (
         <ProtocolDevForm
           kind={form.kind}
-          documentId={numericDocId}
+          documentId={documentId}
           target={form.target}
           onCancel={() => setForm(null)}
           onDone={(kind) => { setForm(null); fireToast(FORM_DONE[kind]); onChanged?.(); }}
@@ -420,17 +499,17 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
           }}
         />
       )}
-      {signing && canWrite && (
+      {signing && (
         <ProtocolSignModal
           signing={signing}
-          documentId={numericDocId}
-          documentTitle={str(doc.title)}
+          documentId={documentId}
+          documentTitle={documentTitle}
           onClose={() => setSigning(null)}
           onSigned={(s, result) => { fireToast(signedMessage(s, result)); onChanged?.(); }}
         />
       )}
-      <C2CToast msg={toast} />
-    </div>);
+    </>
+  );
 }
 
 /** What was written, said once, in the register's own words. */
@@ -441,6 +520,7 @@ const FORM_DONE: Record<PdevFormKind, string> = {
   'assessment-add': 'Assessment added — the schedule of assessments is re-read from the record.',
   'assessment-remove': 'Assessment removed — the schedule of assessments is re-read from the record.',
   'risk-residual': 'Residual rating recorded — the risk register is re-read from the record.',
+  'deviation-assess': 'Assessment recorded — what it indicates about reporting is the deviation engine’s.',
   'budget-item': 'Budget line added — the roll-up is the budget engine’s.',
   'budget-params': 'Feasibility parameters saved — the verdict is the budget engine’s.',
   'review-request': 'Review requested — the reviewer is on the record.',

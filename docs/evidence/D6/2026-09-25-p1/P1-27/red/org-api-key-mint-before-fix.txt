@@ -1,0 +1,43 @@
+# 2026-09-26T02:55:30Z — HEAD 1f6c8d4f, before the fix
+$ npx vitest run server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts
+{
+  "timestamp": "2026-09-26T02:55:33.033Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/tenants"
+  }
+}
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users) 1547ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a platform admin gets the full list (no membership join) 5ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > an ORG admin does NOT get the cross-tenant list — only their own orgs 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant users — scoping > a non-admin cannot read another tenant directory (no query runs) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant users — scoping > a non-admin can read their own tenant directory 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant users — scoping > a platform admin can read any tenant directory 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > a non-admin cannot create a tenant 10ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > a non-admin cannot delete a tenant 6ms
+ × server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > the legacy organisation API-key mint is gone (its keys were Math.random and nothing read them) 9ms
+   → expected [ { …(2) } ] to have a length of +0 but got 1
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant creation — the launch catalog comes with it (D2) > a platform admin creating a tenant provisions the launch catalog for THAT tenant 6ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant creation — the launch catalog comes with it (D2) > a refused creation provisions nothing 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenants — auth > 401s without a token 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > the legacy organisation API-key mint is gone (its keys were Math.random and nothing read them)
+AssertionError: expected [ { …(2) } ] to have a length of +0 but got 1
+- Expected
++ Received
+- 0
++ 1
+ ❯ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts:155:27
+    153|     authState.user = { id: 1, organizationId: ORG_A, role: 'super_admi…
+    154|     await request(app).post('/api/tenants/5/api-key').expect(404);
+    155|     expect(dataQueries()).toHaveLength(0);
+       |                           ^
+    156|   });
+    157| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  02:55:30
+   Duration  2.11s (transform 926ms, setup 78ms, import 160ms, tests 1.61s, environment 0ms)
+exit=1

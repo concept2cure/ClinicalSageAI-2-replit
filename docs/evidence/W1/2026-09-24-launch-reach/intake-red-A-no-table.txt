@@ -1,0 +1,213 @@
+# RED A — old handler, schema as provisioned (no license_requests). Real routes, NOBYPASSRLS runtime role, RLS_ENFORCE=on.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T00:41:24.959Z","pid":7052,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T00:41:24.960Z","pid":7052,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T00:41:24.960Z","pid":7052,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/enterprise-onboarding-intake.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T00:41:25.275Z', poolSize: 1 }
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/enterprise-onboarding-intake.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stderr | tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake
+{
+  "timestamp": "2026-09-24T00:41:26.026Z",
+  "level": "error",
+  "message": "[auth] License request error",
+  "context": {
+    "err": "Failed query: CREATE TABLE IF NOT EXISTS license_requests (\n            id SERIAL PRIMARY KEY,\n            name VARCHAR(200) NOT NULL,\n            email VARCHAR(254) NOT NULL,\n            organization VARCHAR(300) NOT NULL,\n            message TEXT DEFAULT '',\n            status VARCHAR(20) DEFAULT 'pending',\n            created_at TIMESTAMPTZ DEFAULT NOW(),\n            reviewed_at TIMESTAMPTZ,\n            reviewed_by INTEGER\n          )\nparams: "
+  }
+}
+
+{"level":50,"time":"2026-09-24T00:41:26.040Z","pid":7052,"hostname":"vm","context":{"error":"relation \"license_requests\" does not exist","query":"SELECT email FROM license_requests WHERE email = $1","params":["dbtlr-ok-7052_muet3kpf@example.invalid"]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-24T00:41:26.043Z","pid":7052,"hostname":"vm","context":{"error":"relation \"license_requests\" does not exist","query":"SELECT email FROM license_requests WHERE email = $1","params":["dbtlr-ok-7052_muet3kpf@example.invalid"]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-24T00:41:26.053Z","pid":7052,"hostname":"vm","context":{"error":"relation \"license_requests\" does not exist","query":"SELECT email FROM license_requests WHERE email = $1","params":["dbtlr-ok-7052_muet3kpf@example.invalid"]},"msg":"[database] Database query error"}
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > posture — the connection is production's > server/db talks to Postgres as the non-superuser runtime role, RLS enforcing 5ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > posture — the connection is production's > the runtime role cannot CREATE in public — so no handler can provision a table at runtime 1ms
+ × tests/db/enterprise-onboarding-intake.dbtest.ts > the schema — created by an applier, not by a request > license_requests exists on the provisioned database 4ms
+   → expected false to be true // Object.is equality
+ × tests/db/enterprise-onboarding-intake.dbtest.ts > the schema — created by an applier, not by a request > it is under RLS with exactly the intake and platform policies 1ms
+   → relation "public.license_requests" does not exist
+ × tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake > answers 200 and says the request was submitted 1ms
+   → expected 500 to be 200 // Object.is equality
+ × tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake > records exactly one row carrying what the prospect typed 7ms
+   → expected [] to deeply equal [ { name: 'Lane Intake', …(4) } ]
+ × tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the pre-auth scope that wrote it cannot read it back 2ms
+   → relation "license_requests" does not exist
+ × tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > a signed-in tenant member cannot read it — another company's contact details 2ms
+   → relation "license_requests" does not exist
+ × tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the platform scope can — that is who works the request 11ms
+   → relation "license_requests" does not exist
+ ↓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > answers 500, not success
+ ↓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > stores nothing
+ ↓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > does not put the database error text in the response
+ ↓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > logs the prospect's contact so the lead can be recovered, with the real cause
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded
+error: relation "license_requests" does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/enterprise-onboarding-intake.dbtest.ts:285:5
+    283|         RETURN NEW;
+    284|       END $$`);
+    285|     await owner.query(
+       |     ^
+    286|       `CREATE TRIGGER ${FAIL_TRIGGER} BEFORE INSERT ON license_requests
+    287|          FOR EACH ROW EXECUTE FUNCTION ${FAIL_TRIGGER}_fn()`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 114, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'namespace.c', routine: 'RangeVarGetRelidExtended' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/enterprise-onboarding-intake.dbtest.ts > the schema — created by an applier, not by a request > license_requests exists on the provisioned database
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/enterprise-onboarding-intake.dbtest.ts:199:33
+    197| describe('the schema — created by an applier, not by a request', () =>…
+    198|   it('license_requests exists on the provisioned database', async () =…
+    199|     expect(await tableExists()).toBe(true);
+       |                                 ^
+    200|   });
+    201|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  tests/db/enterprise-onboarding-intake.dbtest.ts > the schema — created by an applier, not by a request > it is under RLS with exactly the intake and platform policies
+error: relation "public.license_requests" does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/enterprise-onboarding-intake.dbtest.ts:203:17
+    201|
+    202|   it('it is under RLS with exactly the intake and platform policies', …
+    203|     const cls = await owner.query(
+       |                 ^
+    204|       `SELECT relrowsecurity, relforcerowsecurity FROM pg_class WHERE …
+    205|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 109, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '70', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'regproc.c', routine: 'regclassin' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake > answers 200 and says the request was submitted
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/enterprise-onboarding-intake.dbtest.ts:227:24
+    225|
+    226|   it('answers 200 and says the request was submitted', () => {
+    227|     expect(res.status).toBe(200);
+       |                        ^
+    228|     expect(res.body).toMatchObject({ success: true });
+    229|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake > records exactly one row carrying what the prospect typed
+AssertionError: expected [] to deeply equal [ { name: 'Lane Intake', …(4) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "email": "dbtlr-ok-7052_muet3kpf@example.invalid",
+-     "message": "Enterprise onboarding request — plan Enterprise (annual), 25 seats.",
+-     "name": "Lane Intake",
+-     "organization": "dbtlr Biologics 7052_muet3kpf",
+-     "status": "pending",
+-   },
+- ]
++ []
+
+ ❯ tests/db/enterprise-onboarding-intake.dbtest.ts:233:42
+    231|   it('records exactly one row carrying what the prospect typed', async…
+    232|     // Defect 1: before the fix this was 500 and zero rows.
+    233|     expect(await rowsFor(REQUEST.email)).toEqual([
+       |                                          ^
+    234|       {
+    235|         name: REQUEST.name,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the pre-auth scope that wrote it cannot read it back
+error: relation "license_requests" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ runQueryScoped server/db/poolInstrumentation.ts:198:21
+    196|     await client.query('BEGIN');
+    197|     await client.query(TENANT_SET_CONFIG_SQL, scopeParams(scope));
+    198|     const result = (await (client.query as any)(...args)) as QueryResu…
+       |                     ^
+    199|     await client.query('COMMIT');
+    200|     return result;
+ ❯ Module.query server/db/runtime.ts:158:20
+ ❯ tests/db/enterprise-onboarding-intake.dbtest.ts:251:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 115, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '19', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > a signed-in tenant member cannot read it — another company's contact details
+error: relation "license_requests" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ runQueryScoped server/db/poolInstrumentation.ts:198:21
+    196|     await client.query('BEGIN');
+    197|     await client.query(TENANT_SET_CONFIG_SQL, scopeParams(scope));
+    198|     const result = (await (client.query as any)(...args)) as QueryResu…
+       |                     ^
+    199|     await client.query('COMMIT');
+    200|     return result;
+ ❯ Module.query server/db/runtime.ts:158:20
+ ❯ tests/db/enterprise-onboarding-intake.dbtest.ts:256:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 115, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '19', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the platform scope can — that is who works the request
+error: relation "license_requests" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ runQueryScoped server/db/poolInstrumentation.ts:198:21
+    196|     await client.query('BEGIN');
+    197|     await client.query(TENANT_SET_CONFIG_SQL, scopeParams(scope));
+    198|     const result = (await (client.query as any)(...args)) as QueryResu…
+       |                     ^
+    199|     await client.query('COMMIT');
+    200|     return result;
+ ❯ Module.query server/db/runtime.ts:158:20
+ ❯ tests/db/enterprise-onboarding-intake.dbtest.ts:264:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 115, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '19', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed | 4 skipped (13)
+   Start at  00:41:20
+   Duration  5.86s (transform 1.93s, setup 73ms, import 206ms, tests 3.94s, environment 0ms)
+

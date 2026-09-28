@@ -1,0 +1,2630 @@
+{
+ "routes": 3779,
+ "counts": {
+  "infrastructure": 47,
+  "never-gated": 184,
+  "launch": 1226,
+  "unmapped": 1381,
+  "out-of-scope": 941
+ },
+ "unmappedNamespaces": 220,
+ "unmappedCalledByLaunch": [
+  {
+   "namespace": "/api/c2c/actions",
+   "routes": 12,
+   "writes": 11,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx"
+   ],
+   "launchCallers": [
+    {
+     "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+     "surfaces": [
+      "submission-center"
+     ]
+    }
+   ],
+   "sample": [
+    "GET /api/c2c/actions/verify-chain",
+    "POST /api/c2c/actions/claim",
+    "POST /api/c2c/actions/transition"
+   ]
+  },
+  {
+   "namespace": "/api/510k",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [
+    "client/src/concept2cure/mdx/hooks/useDeviceProfile.ts",
+    "client/src/concept2cure/mdx/hooks/useEstarExport.ts",
+    "client/src/concept2cure/mdx/hooks/useEstarFiling.ts",
+    "client/src/concept2cure/mdx/hooks/useEstarOfficialFields.ts",
+    "client/src/concept2cure/mdx/hooks/useK510.ts",
+    "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx"
+   ],
+   "launchCallers": [
+    {
+     "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+     "surfaces": [
+      "submission-center"
+     ]
+    }
+   ],
+   "sample": [
+    "POST /api/510k/:projectId/generate-documents",
+    "GET /api/510k/:projectId/documents"
+   ]
+  }
+ ],
+ "unmapped": [
+  {
+   "namespace": "/api/stability",
+   "routes": 74,
+   "writes": 49,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/stability/studies",
+    "POST /api/stability/studies",
+    "PUT /api/stability/studies/:id"
+   ]
+  },
+  {
+   "namespace": "/api/ivd-lifecycle",
+   "routes": 49,
+   "writes": 47,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/ivd-lifecycle/classify/ivdr",
+    "POST /api/ivd-lifecycle/cdx/pair",
+    "POST /api/ivd-lifecycle/study-design"
+   ]
+  },
+  {
+   "namespace": "/api/qc",
+   "routes": 45,
+   "writes": 27,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/qc/specifications",
+    "GET /api/qc/specifications/:id",
+    "POST /api/qc/specifications"
+   ]
+  },
+  {
+   "namespace": "/api/resolution",
+   "routes": 33,
+   "writes": 25,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/resolution/plans",
+    "GET /api/resolution/plans/:projectId",
+    "GET /api/resolution/plans/:projectId/:id"
+   ]
+  },
+  {
+   "namespace": "/api/client-intelligence",
+   "routes": 33,
+   "writes": 11,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/client-intelligence/profile",
+    "POST /api/client-intelligence/profile",
+    "POST /api/client-intelligence/documents/upload"
+   ]
+  },
+  {
+   "namespace": "/api/grants",
+   "routes": 30,
+   "writes": 20,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/grants/opportunities",
+    "POST /api/grants/proposals",
+    "GET /api/grants/proposals"
+   ]
+  },
+  {
+   "namespace": "/api/operating-system",
+   "routes": 27,
+   "writes": 19,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/operating-system/assumptions",
+    "GET /api/operating-system/assumptions",
+    "GET /api/operating-system/assumptions/:id"
+   ]
+  },
+  {
+   "namespace": "/api/grdhe",
+   "routes": 26,
+   "writes": 10,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/grdhe/data-residency/:tenantId",
+    "POST /api/grdhe/data-residency",
+    "POST /api/grdhe/data-residency/validate"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory-graph",
+   "routes": 26,
+   "writes": 12,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/regulatory-graph/programs/:programId/claims-report",
+    "GET /api/regulatory-graph/programs/:programId/orphan-claims",
+    "GET /api/regulatory-graph/programs/:programId/contradicted-claims"
+   ]
+  },
+  {
+   "namespace": "/api/cortex/management",
+   "routes": 26,
+   "writes": 11,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/cortex/management/graph/stats",
+    "GET /api/cortex/management/graph/neighbors/:atomId",
+    "GET /api/cortex/management/graph/subgraph/:atomId"
+   ]
+  },
+  {
+   "namespace": "/api/predicate-intelligence",
+   "routes": 23,
+   "writes": 16,
+   "clientCallers": [
+    "client/src/concept2cure/mdx/hooks/useK510.ts"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/predicate-intelligence/suggest",
+    "POST /api/predicate-intelligence/candidates",
+    "GET /api/predicate-intelligence/candidates"
+   ]
+  },
+  {
+   "namespace": "/api/ana-cortex-ft",
+   "routes": 21,
+   "writes": 9,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/ana-cortex-ft/inference",
+    "POST /api/ana-cortex-ft/generate-section",
+    "GET /api/ana-cortex-ft/models"
+   ]
+  },
+  {
+   "namespace": "/api/clinical-operations",
+   "routes": 20,
+   "writes": 11,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/ClinicalOps.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/clinical-operations/overview",
+    "GET /api/clinical-operations/studies",
+    "POST /api/clinical-operations/studies"
+   ]
+  },
+  {
+   "namespace": "/api/snowglobe",
+   "routes": 20,
+   "writes": 8,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/snowglobe/scenarios",
+    "POST /api/snowglobe/scenarios",
+    "GET /api/snowglobe/scenarios/:id"
+   ]
+  },
+  {
+   "namespace": "/api/compliance",
+   "routes": 19,
+   "writes": 11,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/compliance/regions",
+    "GET /api/compliance/regions/:orgId/config",
+    "POST /api/compliance/regions/:orgId/enable"
+   ]
+  },
+  {
+   "namespace": "/api/module-integration",
+   "routes": 18,
+   "writes": 7,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/module-integration/register-document",
+    "GET /api/module-integration/document-exists",
+    "GET /api/module-integration/documents/:moduleType"
+   ]
+  },
+  {
+   "namespace": "/api/ai",
+   "routes": 17,
+   "writes": 13,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/ai/analyze-compliance",
+    "POST /api/ai/generate-boilerplate",
+    "GET /api/ai/regulatory-guidance/:section"
+   ]
+  },
+  {
+   "namespace": "/api/control-plane",
+   "routes": 17,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/control-plane/kernel/policy",
+    "GET /api/control-plane/kernel/summary",
+    "GET /api/control-plane/kernel/rules"
+   ]
+  },
+  {
+   "namespace": "/api/qms",
+   "routes": 17,
+   "writes": 9,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/qms/documents",
+    "POST /api/qms/documents",
+    "GET /api/qms/documents/:id"
+   ]
+  },
+  {
+   "namespace": "/api/account-intelligence",
+   "routes": 16,
+   "writes": 10,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/account-intelligence/canon",
+    "GET /api/account-intelligence/canon",
+    "POST /api/account-intelligence/canon/:id/validate"
+   ]
+  },
+  {
+   "namespace": "/api/docx-factory",
+   "routes": 15,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/docx-factory/templates",
+    "GET /api/docx-factory/templates",
+    "POST /api/docx-factory/templates/:templateId/versions"
+   ]
+  },
+  {
+   "namespace": "/api/audit-services",
+   "routes": 15,
+   "writes": 13,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/audit-services/figures/generate",
+    "POST /api/audit-services/figures/auto-insert",
+    "POST /api/audit-services/export/pdf"
+   ]
+  },
+  {
+   "namespace": "/api/knowledge-base",
+   "routes": 14,
+   "writes": 11,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/knowledge-base/search-connectors",
+    "POST /api/knowledge-base/upload",
+    "GET /api/knowledge-base/context/:projectId"
+   ]
+  },
+  {
+   "namespace": "/api/evidence-management",
+   "routes": 12,
+   "writes": 7,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/evidence-management/requirements/:projectId",
+    "POST /api/evidence-management/upload",
+    "GET /api/evidence-management/gap-analysis/:projectId"
+   ]
+  },
+  {
+   "namespace": "/api/post-market",
+   "routes": 12,
+   "writes": 8,
+   "clientCallers": [
+    "client/src/concept2cure/mdx/hooks/useCerPmsFeeds.ts",
+    "client/src/concept2cure/mdx/hooks/useCerPostMarket.ts"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/post-market/programs/:programId/documents",
+    "POST /api/post-market/programs/:programId/documents",
+    "POST /api/post-market/programs/:programId/documents/pmcf-plan/generate"
+   ]
+  },
+  {
+   "namespace": "/api/c2c/actions",
+   "routes": 12,
+   "writes": 11,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx"
+   ],
+   "launchCallers": [
+    {
+     "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+     "surfaces": [
+      "submission-center"
+     ]
+    }
+   ],
+   "sample": [
+    "GET /api/c2c/actions/verify-chain",
+    "POST /api/c2c/actions/claim",
+    "POST /api/c2c/actions/transition"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory-digital-twin",
+   "routes": 12,
+   "writes": 7,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/regulatory-digital-twin/simulations",
+    "GET /api/regulatory-digital-twin/simulations/:id",
+    "GET /api/regulatory-digital-twin/simulations"
+   ]
+  },
+  {
+   "namespace": "/api/gcc",
+   "routes": 11,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/gcc/ectd/modules",
+    "GET /api/gcc/ectd/status",
+    "GET /api/gcc/signing/status"
+   ]
+  },
+  {
+   "namespace": "/api/device-data-center",
+   "routes": 11,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/device-data-center/upload",
+    "GET /api/device-data-center/files",
+    "POST /api/device-data-center/search/deep"
+   ]
+  },
+  {
+   "namespace": "/api/ind",
+   "routes": 11,
+   "writes": 7,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ind/openapi.json",
+    "GET /api/ind/applications",
+    "GET /api/ind/applications/:id"
+   ]
+  },
+  {
+   "namespace": "/api/diagnostics-performance",
+   "routes": 11,
+   "writes": 11,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/diagnostics-performance/analytical/imprecision",
+    "POST /api/diagnostics-performance/analytical/detection-capability",
+    "POST /api/diagnostics-performance/analytical/linearity"
+   ]
+  },
+  {
+   "namespace": "/api/client-branding",
+   "routes": 11,
+   "writes": 7,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/client-branding/settings",
+    "PATCH /api/client-branding/settings",
+    "POST /api/client-branding/upload-logo"
+   ]
+  },
+  {
+   "namespace": "/api/pccp",
+   "routes": 10,
+   "writes": 7,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/pccp/programs/:programId/plans",
+    "POST /api/pccp/programs/:programId/plans",
+    "GET /api/pccp/plans/:planId"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/ai",
+   "routes": 10,
+   "writes": 9,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/concept2cure/ai/edit-section",
+    "GET /api/concept2cure/ai/templates",
+    "POST /api/concept2cure/ai/templates/:templateId/generate"
+   ]
+  },
+  {
+   "namespace": "/api/financial-disclosures",
+   "routes": 10,
+   "writes": 7,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/financial-disclosures/investigators",
+    "GET /api/financial-disclosures/investigators",
+    "POST /api/financial-disclosures/disclosures"
+   ]
+  },
+  {
+   "namespace": "/api/project-rules",
+   "routes": 10,
+   "writes": 4,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/project-rules/",
+    "POST /api/project-rules/",
+    "GET /api/project-rules/:ruleId"
+   ]
+  },
+  {
+   "namespace": "/api/ana-cortex",
+   "routes": 9,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ana-cortex/health",
+    "POST /api/ana-cortex/regulatory-analysis",
+    "POST /api/ana-cortex/ich-e6r3-guidance"
+   ]
+  },
+  {
+   "namespace": "/api/ana-1-0-ri-cortex",
+   "routes": 9,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ana-1-0-ri-cortex/health",
+    "POST /api/ana-1-0-ri-cortex/regulatory-analysis",
+    "POST /api/ana-1-0-ri-cortex/ich-e6r3-guidance"
+   ]
+  },
+  {
+   "namespace": "/api/pdf-tasks",
+   "routes": 9,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/pdf-tasks/render-markdown-pdf",
+    "POST /api/pdf-tasks/cer/:ndcCode/enhanced-pdf-task",
+    "GET /api/pdf-tasks/tasks/:taskId/status"
+   ]
+  },
+  {
+   "namespace": "/api/cortex/advisory",
+   "routes": 9,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/cortex/advisory/advisory/:projectId",
+    "GET /api/cortex/advisory/pyramid/:submissionType",
+    "GET /api/cortex/advisory/patterns"
+   ]
+  },
+  {
+   "namespace": "/api/cortex/ana",
+   "routes": 9,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/cortex/ana/health",
+    "POST /api/cortex/ana/regulatory-analysis",
+    "POST /api/cortex/ana/ich-e6r3-guidance"
+   ]
+  },
+  {
+   "namespace": "/api/ind-generation",
+   "routes": 9,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ind-generation/structure",
+    "GET /api/ind-generation/lifecycle-types",
+    "GET /api/ind-generation/lifecycle-types/by-registry/:registryId"
+   ]
+  },
+  {
+   "namespace": "/api/translation",
+   "routes": 9,
+   "writes": 6,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/translation/projects",
+    "GET /api/translation/projects",
+    "GET /api/translation/projects/:id"
+   ]
+  },
+  {
+   "namespace": "/api/cdisc-validation",
+   "routes": 9,
+   "writes": 8,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/cdisc-validation/sdtm-domain/conformance",
+    "POST /api/cdisc-validation/define-xml",
+    "POST /api/cdisc-validation/adam-adsl/conformance"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory-submissions",
+   "routes": 9,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/regulatory-submissions/projects",
+    "POST /api/regulatory-submissions/projects",
+    "GET /api/regulatory-submissions/projects/:id"
+   ]
+  },
+  {
+   "namespace": "/api/project-modules",
+   "routes": 9,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/project-modules/:projectId/modules",
+    "GET /api/project-modules/:projectId/modules/summary",
+    "POST /api/project-modules/:projectId/modules"
+   ]
+  },
+  {
+   "namespace": "/api/ectd-documents",
+   "routes": 8,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ectd-documents/",
+    "GET /api/ectd-documents/:id",
+    "POST /api/ectd-documents/"
+   ]
+  },
+  {
+   "namespace": "/api/ectd-submissions",
+   "routes": 8,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/ectd-submissions/prepare",
+    "POST /api/ectd-submissions/:id/documents",
+    "POST /api/ectd-submissions/:id/validate"
+   ]
+  },
+  {
+   "namespace": "/api/inspections",
+   "routes": 8,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/inspections/",
+    "GET /api/inspections/",
+    "PATCH /api/inspections/:id/status"
+   ]
+  },
+  {
+   "namespace": "/api/project-hierarchy",
+   "routes": 8,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/project-hierarchy/programs",
+    "GET /api/project-hierarchy/:projectId/tree",
+    "GET /api/project-hierarchy/:projectId/ancestors"
+   ]
+  },
+  {
+   "namespace": "/api/protocol",
+   "routes": 8,
+   "writes": 8,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/protocol/analyze-file",
+    "POST /api/protocol/parse-file",
+    "POST /api/protocol/parse-text"
+   ]
+  },
+  {
+   "namespace": "/api/agent-swarm",
+   "routes": 8,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/agent-swarm/swarms",
+    "POST /api/agent-swarm/swarms/:swarmId/start",
+    "GET /api/agent-swarm/swarms/:swarmId"
+   ]
+  },
+  {
+   "namespace": "/api/real-world-evidence",
+   "routes": 8,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/real-world-evidence/sources",
+    "GET /api/real-world-evidence/sources/:sourceId/status",
+    "POST /api/real-world-evidence/query"
+   ]
+  },
+  {
+   "namespace": "/api/unified-tasks",
+   "routes": 8,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/unified-tasks/unified",
+    "GET /api/unified-tasks/all",
+    "GET /api/unified-tasks/by-module/:module"
+   ]
+  },
+  {
+   "namespace": "/api/data-lineage",
+   "routes": 8,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/data-lineage/trace/upstream/:objectType/:objectId",
+    "GET /api/data-lineage/trace/downstream/:objectType/:objectId",
+    "GET /api/data-lineage/coverage/:objectType/:objectId"
+   ]
+  },
+  {
+   "namespace": "/api/knowledge",
+   "routes": 7,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/knowledge/summary",
+    "GET /api/knowledge/pharmacopoeia",
+    "GET /api/knowledge/ich-guidelines"
+   ]
+  },
+  {
+   "namespace": "/api/ivd-knowledge",
+   "routes": 7,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ivd-knowledge/",
+    "GET /api/ivd-knowledge/search",
+    "GET /api/ivd-knowledge/entries"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/regulatory-catalog",
+   "routes": 7,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/regulatory-catalog/regions",
+    "GET /api/concept2cure/regulatory-catalog/agencies",
+    "GET /api/concept2cure/regulatory-catalog/application-types"
+   ]
+  },
+  {
+   "namespace": "/api/iacuc",
+   "routes": 7,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/iacuc/protocols",
+    "GET /api/iacuc/protocols",
+    "PATCH /api/iacuc/protocols/:id/status"
+   ]
+  },
+  {
+   "namespace": "/api/other-support",
+   "routes": 7,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/other-support/documents",
+    "GET /api/other-support/documents",
+    "GET /api/other-support/documents/:id"
+   ]
+  },
+  {
+   "namespace": "/api/research-agreements",
+   "routes": 7,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/research-agreements/agreements",
+    "PATCH /api/research-agreements/agreements/:id",
+    "GET /api/research-agreements/agreements"
+   ]
+  },
+  {
+   "namespace": "/api/controlled-substances",
+   "routes": 7,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/controlled-substances/registrations",
+    "GET /api/controlled-substances/registrations",
+    "POST /api/controlled-substances/substances"
+   ]
+  },
+  {
+   "namespace": "/api/lifecycle",
+   "routes": 7,
+   "writes": 3,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/BiopharmaSpecialty.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/lifecycle/obligations",
+    "GET /api/lifecycle/obligations",
+    "GET /api/lifecycle/obligations/:id/events"
+   ]
+  },
+  {
+   "namespace": "/api/tenant-traceability",
+   "routes": 7,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/tenant-traceability/:qmpId",
+    "GET /api/tenant-traceability/item/:id",
+    "POST /api/tenant-traceability/"
+   ]
+  },
+  {
+   "namespace": "/api/sentinel",
+   "routes": 7,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/sentinel/status",
+    "GET /api/sentinel/findings",
+    "PATCH /api/sentinel/findings/:findingId"
+   ]
+  },
+  {
+   "namespace": "/api/enterprise",
+   "routes": 6,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/enterprise/regulatory/analyze",
+    "POST /api/enterprise/regulatory/generate",
+    "POST /api/enterprise/regulatory/enhance"
+   ]
+  },
+  {
+   "namespace": "/api/510k/documents",
+   "routes": 6,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/510k/documents/:documentId/lock",
+    "POST /api/510k/documents/:documentId/version",
+    "GET /api/510k/documents/:documentId"
+   ]
+  },
+  {
+   "namespace": "/api/workspace",
+   "routes": 6,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/workspace/selection-catalog",
+    "GET /api/workspace/config",
+    "GET /api/workspace/project-map"
+   ]
+  },
+  {
+   "namespace": "/api/standards",
+   "routes": 6,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/standards/",
+    "GET /api/standards/:standardId",
+    "GET /api/standards/programs/:programId/applicability"
+   ]
+  },
+  {
+   "namespace": "/api/ivd-assessments",
+   "routes": 6,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ivd-assessments/",
+    "POST /api/ivd-assessments/",
+    "GET /api/ivd-assessments/documents"
+   ]
+  },
+  {
+   "namespace": "/api/ctd",
+   "routes": 6,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/ctd/projects",
+    "GET /api/ctd/projects",
+    "GET /api/ctd/projects/:id"
+   ]
+  },
+  {
+   "namespace": "/api/biologics",
+   "routes": 6,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/biologics/pathway",
+    "GET /api/biologics/biosimilar-requirements",
+    "GET /api/biologics/expedited-pathways"
+   ]
+  },
+  {
+   "namespace": "/api/retention",
+   "routes": 6,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/retention/policies",
+    "GET /api/retention/document-types",
+    "POST /api/retention/policies"
+   ]
+  },
+  {
+   "namespace": "/api/c2c/commitments",
+   "routes": 6,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/c2c/commitments/",
+    "POST /api/c2c/commitments/",
+    "POST /api/c2c/commitments/extract"
+   ]
+  },
+  {
+   "namespace": "/api/ibc",
+   "routes": 6,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/ibc/registrations",
+    "GET /api/ibc/registrations",
+    "PATCH /api/ibc/registrations/:id/status"
+   ]
+  },
+  {
+   "namespace": "/api/dmsp",
+   "routes": 6,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/dmsp/plans",
+    "GET /api/dmsp/plans",
+    "GET /api/dmsp/plans/:id"
+   ]
+  },
+  {
+   "namespace": "/api/biosketch",
+   "routes": 6,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/biosketch/biosketches",
+    "GET /api/biosketch/biosketches",
+    "GET /api/biosketch/biosketches/:id"
+   ]
+  },
+  {
+   "namespace": "/api/invention-disclosures",
+   "routes": 6,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/invention-disclosures/disclosures",
+    "PATCH /api/invention-disclosures/disclosures/:id",
+    "GET /api/invention-disclosures/disclosures"
+   ]
+  },
+  {
+   "namespace": "/api/export-control",
+   "routes": 6,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/export-control/reviews",
+    "PATCH /api/export-control/reviews/:id",
+    "GET /api/export-control/reviews"
+   ]
+  },
+  {
+   "namespace": "/api/protocol-templates",
+   "routes": 6,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/protocol-templates/templates",
+    "POST /api/protocol-templates/templates/:id/sections",
+    "POST /api/protocol-templates/templates/:id/clone"
+   ]
+  },
+  {
+   "namespace": "/api/tenant-ctq-factors",
+   "routes": 6,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/tenant-ctq-factors/:tenantId/ctq-factors",
+    "GET /api/tenant-ctq-factors/:tenantId/ctq-factors/:factorId",
+    "POST /api/tenant-ctq-factors/:tenantId/ctq-factors"
+   ]
+  },
+  {
+   "namespace": "/api/planner",
+   "routes": 6,
+   "writes": 6,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/planner/generate-ind",
+    "POST /api/planner/generate-sap",
+    "POST /api/planner/generate-summary"
+   ]
+  },
+  {
+   "namespace": "/api/document-understanding",
+   "routes": 6,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/document-understanding/analyze",
+    "POST /api/document-understanding/extract-tables",
+    "POST /api/document-understanding/extract-form-fields"
+   ]
+  },
+  {
+   "namespace": "/api/graphrag",
+   "routes": 6,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/graphrag/query",
+    "POST /api/graphrag/ingest",
+    "GET /api/graphrag/entities/:entityId/neighborhood"
+   ]
+  },
+  {
+   "namespace": "/api/nano-banana",
+   "routes": 5,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/nano-banana/health",
+    "POST /api/nano-banana/generate",
+    "POST /api/nano-banana/edit"
+   ]
+  },
+  {
+   "namespace": "/api/predictive-sections",
+   "routes": 5,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/predictive-sections/suggestions",
+    "POST /api/predictive-sections/analyze-document",
+    "GET /api/predictive-sections/templates/:sectionCode"
+   ]
+  },
+  {
+   "namespace": "/api/learning",
+   "routes": 5,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/learning/horizon/summary",
+    "GET /api/learning/horizon/sources",
+    "GET /api/learning/horizon/cards"
+   ]
+  },
+  {
+   "namespace": "/api/evidence-fabric",
+   "routes": 5,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/evidence-fabric/health-summary",
+    "POST /api/evidence-fabric/contradiction-scans",
+    "GET /api/evidence-fabric/contradiction-scans"
+   ]
+  },
+  {
+   "namespace": "/api/cortex/threads",
+   "routes": 5,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/cortex/threads",
+    "GET /api/cortex/threads/:threadId",
+    "POST /api/cortex/threads"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/notifications",
+   "routes": 5,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/notifications/my",
+    "POST /api/concept2cure/notifications/:id/read",
+    "POST /api/concept2cure/notifications/:id/dismiss"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/conversations",
+   "routes": 5,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/conversations/:conversationId/health",
+    "GET /api/concept2cure/conversations/:conversationId/working-memory",
+    "POST /api/concept2cure/conversations/:conversationId/summarize"
+   ]
+  },
+  {
+   "namespace": "/api/research-compliance",
+   "routes": 5,
+   "writes": 4,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/research-compliance/personnel",
+    "GET /api/research-compliance/personnel",
+    "POST /api/research-compliance/personnel/:id/training"
+   ]
+  },
+  {
+   "namespace": "/api/effort-certification",
+   "routes": 5,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/effort-certification/",
+    "GET /api/effort-certification/",
+    "POST /api/effort-certification/:id/lines"
+   ]
+  },
+  {
+   "namespace": "/api/nda-cockpit",
+   "routes": 5,
+   "writes": 2,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/NdaCockpit.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/nda-cockpit/modules",
+    "GET /api/nda-cockpit/m1",
+    "POST /api/nda-cockpit/m1"
+   ]
+  },
+  {
+   "namespace": "/api/authoring-pdf",
+   "routes": 5,
+   "writes": 5,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/authoring-pdf/m2-summary/pdf",
+    "POST /api/authoring-pdf/m2-summary/qc",
+    "POST /api/authoring-pdf/m4-nonclinical/qc"
+   ]
+  },
+  {
+   "namespace": "/api/analytics",
+   "routes": 5,
+   "writes": 3,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/ReportEngine.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/analytics/upload-protocol",
+    "POST /api/analytics/analyze-protocol-text",
+    "POST /api/analytics/demo-analysis"
+   ]
+  },
+  {
+   "namespace": "/api/device-projects",
+   "routes": 4,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/device-projects/",
+    "POST /api/device-projects/",
+    "PUT /api/device-projects/:id"
+   ]
+  },
+  {
+   "namespace": "/api/pm-settings",
+   "routes": 4,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/pm-settings/:organizationId",
+    "PUT /api/pm-settings/:organizationId",
+    "POST /api/pm-settings/:organizationId/reset"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory/documents",
+   "routes": 4,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/regulatory/documents/",
+    "POST /api/regulatory/documents/:id/sign",
+    "POST /api/regulatory/documents/:id/advance"
+   ]
+  },
+  {
+   "namespace": "/api/charters",
+   "routes": 4,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/charters/",
+    "GET /api/charters/:charterId",
+    "POST /api/charters/:charterId/commitments"
+   ]
+  },
+  {
+   "namespace": "/api/gspr",
+   "routes": 4,
+   "writes": 1,
+   "clientCallers": [
+    "client/src/concept2cure/mdx/hooks/useCerGspr.ts"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/gspr/catalog",
+    "GET /api/gspr/programs/:programId/mappings",
+    "POST /api/gspr/programs/:programId/mappings"
+   ]
+  },
+  {
+   "namespace": "/api/cortex/query",
+   "routes": 4,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/cortex/query/query",
+    "GET /api/cortex/query/stats",
+    "GET /api/cortex/query/providers"
+   ]
+  },
+  {
+   "namespace": "/api/folders",
+   "routes": 4,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/folders",
+    "POST /api/folders",
+    "PATCH /api/folders/:id"
+   ]
+  },
+  {
+   "namespace": "/api/csr-intelligence",
+   "routes": 4,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/csr-intelligence",
+    "GET /api/csr-intelligence/analytics",
+    "GET /api/csr-intelligence/stats"
+   ]
+  },
+  {
+   "namespace": "/api/external-evidence",
+   "routes": 4,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/external-evidence/uat-scenarios",
+    "POST /api/external-evidence/route",
+    "POST /api/external-evidence/validate"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/documents",
+   "routes": 4,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/documents/download/:filename",
+    "POST /api/concept2cure/documents/upload",
+    "DELETE /api/concept2cure/documents/:documentId"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/compute",
+   "routes": 4,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/compute/projects/:projectId/jobs",
+    "GET /api/concept2cure/compute/projects/:projectId/jobs/:jobId",
+    "POST /api/concept2cure/compute/projects/:projectId/jobs"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory-assessments",
+   "routes": 4,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/regulatory-assessments/",
+    "GET /api/regulatory-assessments/",
+    "GET /api/regulatory-assessments/latest"
+   ]
+  },
+  {
+   "namespace": "/api/labeling-pi",
+   "routes": 4,
+   "writes": 3,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/LabelingPi.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/labeling-pi/",
+    "POST /api/labeling-pi/",
+    "POST /api/labeling-pi/:sectionNo/accept-agency-text"
+   ]
+  },
+  {
+   "namespace": "/api/packager",
+   "routes": 4,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/packager/generate",
+    "POST /api/packager/download/:format",
+    "POST /api/packager/multi-download"
+   ]
+  },
+  {
+   "namespace": "/api/field-sync",
+   "routes": 4,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/field-sync/update-field",
+    "GET /api/field-sync/field-links/:section",
+    "GET /api/field-sync/completeness/:projectId"
+   ]
+  },
+  {
+   "namespace": "/api/tenant-config",
+   "routes": 4,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/tenant-config/:tenantId/settings",
+    "PATCH /api/tenant-config/:tenantId/settings",
+    "POST /api/tenant-config/:tenantId/settings/reset"
+   ]
+  },
+  {
+   "namespace": "/api/postmarket-surveillance",
+   "routes": 4,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/postmarket-surveillance/maude/aggregate",
+    "POST /api/postmarket-surveillance/recalls/summarize",
+    "GET /api/postmarket-surveillance/maude"
+   ]
+  },
+  {
+   "namespace": "/api/inline-annotations",
+   "routes": 4,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/inline-annotations/:documentId",
+    "POST /api/inline-annotations/:documentId",
+    "POST /api/inline-annotations/:documentId/:id/reply"
+   ]
+  },
+  {
+   "namespace": "/api/ai-assistance",
+   "routes": 3,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/ai-assistance/assist",
+    "POST /api/ai-assistance/verify",
+    "GET /api/ai-assistance/health"
+   ]
+  },
+  {
+   "namespace": "/api/evidence-sufficiency",
+   "routes": 3,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/evidence-sufficiency/programs/:programId/assess",
+    "GET /api/evidence-sufficiency/programs/:programId/assessments",
+    "GET /api/evidence-sufficiency/assessments/:id"
+   ]
+  },
+  {
+   "namespace": "/api/tenant-export",
+   "routes": 3,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/tenant-export/",
+    "GET /api/tenant-export/full",
+    "GET /api/tenant-export/attestation"
+   ]
+  },
+  {
+   "namespace": "/api/ana-tool-policy",
+   "routes": 3,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ana-tool-policy/",
+    "PUT /api/ana-tool-policy/",
+    "GET /api/ana-tool-policy/catalog"
+   ]
+  },
+  {
+   "namespace": "/api/cerv2-versions",
+   "routes": 3,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/cerv2-versions/",
+    "GET /api/cerv2-versions/:versionId",
+    "GET /api/cerv2-versions/section/:sectionId/history"
+   ]
+  },
+  {
+   "namespace": "/api/platform",
+   "routes": 3,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/platform/capabilities",
+    "GET /api/platform/ai-providers",
+    "PUT /api/platform/ai-providers/preference"
+   ]
+  },
+  {
+   "namespace": "/api/research-security",
+   "routes": 3,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/research-security/disclosures",
+    "GET /api/research-security/disclosures",
+    "PATCH /api/research-security/disclosures/:id/review"
+   ]
+  },
+  {
+   "namespace": "/api/c2c/study-twin",
+   "routes": 3,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/c2c/study-twin/",
+    "GET /api/c2c/study-twin/",
+    "POST /api/c2c/study-twin/:id/simulate"
+   ]
+  },
+  {
+   "namespace": "/api/telemetry",
+   "routes": 3,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/telemetry/beta-workspace/event",
+    "POST /api/telemetry/beta-workspace/issue",
+    "GET /api/telemetry/beta-workspace/events"
+   ]
+  },
+  {
+   "namespace": "/api/tenant-section-gating",
+   "routes": 3,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/tenant-section-gating/api/tenant-section-gating/:qmpId",
+    "POST /api/tenant-section-gating/api/tenant-section-gating/:qmpId/update",
+    "GET /api/tenant-section-gating/api/tenant-ctq-factors/:section"
+   ]
+  },
+  {
+   "namespace": "/api/tenant-quality-validation",
+   "routes": 3,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/tenant-quality-validation/validate-section",
+    "POST /api/tenant-quality-validation/request-waiver",
+    "GET /api/tenant-quality-validation/stats/:qmpId"
+   ]
+  },
+  {
+   "namespace": "/api/udi-ivdr",
+   "routes": 3,
+   "writes": 3,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/udi-ivdr/udi/validate-di",
+    "POST /api/udi-ivdr/udi/gudid-completeness",
+    "POST /api/udi-ivdr/ivdr/performance-evaluation"
+   ]
+  },
+  {
+   "namespace": "/api/cro/milestones",
+   "routes": 3,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/cro/milestones",
+    "POST /api/cro/milestones",
+    "PUT /api/cro/milestones/:id"
+   ]
+  },
+  {
+   "namespace": "/api/510k",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [
+    "client/src/concept2cure/mdx/hooks/useDeviceProfile.ts",
+    "client/src/concept2cure/mdx/hooks/useEstarExport.ts",
+    "client/src/concept2cure/mdx/hooks/useEstarFiling.ts",
+    "client/src/concept2cure/mdx/hooks/useEstarOfficialFields.ts",
+    "client/src/concept2cure/mdx/hooks/useK510.ts",
+    "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx"
+   ],
+   "launchCallers": [
+    {
+     "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+     "surfaces": [
+      "submission-center"
+     ]
+    }
+   ],
+   "sample": [
+    "POST /api/510k/:projectId/generate-documents",
+    "GET /api/510k/:projectId/documents"
+   ]
+  },
+  {
+   "namespace": "/api/batch-draft",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/batch-draft/spine",
+    "POST /api/batch-draft/documents/:id/accept"
+   ]
+  },
+  {
+   "namespace": "/api/evidence-search",
+   "routes": 2,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/evidence-search/search",
+    "GET /api/evidence-search/gather/:productId"
+   ]
+  },
+  {
+   "namespace": "/api/csr-real-data",
+   "routes": 2,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/csr-real-data/all",
+    "GET /api/csr-real-data/stats"
+   ]
+  },
+  {
+   "namespace": "/api/firecrawl",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/firecrawl/quota-status",
+    "POST /api/firecrawl/scrape"
+   ]
+  },
+  {
+   "namespace": "/api/claude/draft",
+   "routes": 2,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/claude/draft",
+    "POST /api/claude/draft/stream"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/review-comments",
+   "routes": 2,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "PATCH /api/concept2cure/review-comments/:commentId",
+    "DELETE /api/concept2cure/review-comments/:commentId"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/submission-milestones",
+   "routes": 2,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/submission-milestones/:type",
+    "GET /api/concept2cure/submission-milestones"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/intelligence",
+   "routes": 2,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/concept2cure/intelligence/analyze",
+    "POST /api/concept2cure/intelligence/evaluate"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/templates",
+   "routes": 2,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/templates",
+    "GET /api/concept2cure/templates/:id"
+   ]
+  },
+  {
+   "namespace": "/api/c2c/governance",
+   "routes": 2,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/c2c/governance/eligible",
+    "GET /api/c2c/governance/can"
+   ]
+  },
+  {
+   "namespace": "/api/agency-meetings",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/AgencyMeetings.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/agency-meetings/",
+    "POST /api/agency-meetings/"
+   ]
+  },
+  {
+   "namespace": "/api/reg-change",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/RegChange.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/reg-change/",
+    "POST /api/reg-change/"
+   ]
+  },
+  {
+   "namespace": "/api/nonclinical-summary",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/Nonclinical.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/nonclinical-summary/",
+    "POST /api/nonclinical-summary/document"
+   ]
+  },
+  {
+   "namespace": "/api/maa-module1",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/MaaCockpit.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/maa-module1/:market",
+    "POST /api/maa-module1/:market"
+   ]
+  },
+  {
+   "namespace": "/api/cmc-changes",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/BiopharmaSpecialty.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/cmc-changes/",
+    "POST /api/cmc-changes/"
+   ]
+  },
+  {
+   "namespace": "/api/ai-actions/jobs",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ai-actions/jobs/:jobId",
+    "DELETE /api/ai-actions/jobs/:jobId"
+   ]
+  },
+  {
+   "namespace": "/api/harmonize",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/harmonize/health",
+    "POST /api/harmonize/check"
+   ]
+  },
+  {
+   "namespace": "/api/escalate",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/escalate/health",
+    "POST /api/escalate/evaluate"
+   ]
+  },
+  {
+   "namespace": "/api/pma-workflow",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/pma-workflow/:projectId",
+    "GET /api/pma-workflow/:projectId"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory/calendar",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/regulatory/calendar",
+    "POST /api/regulatory/calendar"
+   ]
+  },
+  {
+   "namespace": "/api/docs",
+   "routes": 2,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/docs/",
+    "GET /api/docs/:id"
+   ]
+  },
+  {
+   "namespace": "/api/mdx-rbm",
+   "routes": 2,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/Rbm.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/mdx-rbm/rbm-board/:programId",
+    "GET /api/mdx-rbm/rbm-programs"
+   ]
+  },
+  {
+   "namespace": "/api/notify",
+   "routes": 2,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/notify/send-weekly-digest",
+    "POST /api/notify/send-comparison-notification"
+   ]
+  },
+  {
+   "namespace": "/api/device-classification",
+   "routes": 2,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/device-classification/samd-risk",
+    "POST /api/device-classification/iec62304-class"
+   ]
+  },
+  {
+   "namespace": "/api/substantial-equivalence",
+   "routes": 2,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/substantial-equivalence/evaluate",
+    "POST /api/substantial-equivalence/compare-characteristics"
+   ]
+  },
+  {
+   "namespace": "/api/cybersecurity-524b",
+   "routes": 2,
+   "writes": 2,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/cybersecurity-524b/sbom-completeness",
+    "POST /api/cybersecurity-524b/readiness"
+   ]
+  },
+  {
+   "namespace": "/api/project-home",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/project-home/:projectId"
+   ]
+  },
+  {
+   "namespace": "/api/ivd-completeness",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/IvdCompleteness.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ivd-completeness/completeness"
+   ]
+  },
+  {
+   "namespace": "/api/conversation-health",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/conversation-health/:conversationId"
+   ]
+  },
+  {
+   "namespace": "/api/device-cockpit",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/device-cockpit/assess"
+   ]
+  },
+  {
+   "namespace": "/api/510k/projects",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/mdx/hooks/useK510.ts"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/510k/projects/:projectIdent/document-preview"
+   ]
+  },
+  {
+   "namespace": "/api/cortex/docs",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/cortex/docs"
+   ]
+  },
+  {
+   "namespace": "/api/cortex/chat",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/cortex/chat"
+   ]
+  },
+  {
+   "namespace": "/api/cortex/save-draft",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/cortex/save-draft"
+   ]
+  },
+  {
+   "namespace": "/api/audit-logs",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/audit-logs"
+   ]
+  },
+  {
+   "namespace": "/api/dossier-readiness",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/Dossier.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/dossier-readiness/:projectId"
+   ]
+  },
+  {
+   "namespace": "/api/search",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/search/vector"
+   ]
+  },
+  {
+   "namespace": "/api/endpoint",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/endpoint/recommend"
+   ]
+  },
+  {
+   "namespace": "/api/ask-ana-ri",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/ask-ana-ri"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory/taxonomy",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/regulatory/taxonomy"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory/segments",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/regulatory/segments"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory/regions",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/regulatory/regions"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory/search",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/regulatory/search"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory/resolve",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/regulatory/resolve"
+   ]
+  },
+  {
+   "namespace": "/api/claude/review",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/claude/review"
+   ]
+  },
+  {
+   "namespace": "/api/claude/gap-analysis",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/claude/gap-analysis"
+   ]
+  },
+  {
+   "namespace": "/api/claude/vision",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/claude/vision"
+   ]
+  },
+  {
+   "namespace": "/api/claude/batch",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/claude/batch"
+   ]
+  },
+  {
+   "namespace": "/api/claude/quick",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/claude/quick"
+   ]
+  },
+  {
+   "namespace": "/api/claude/agent",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/claude/agent"
+   ]
+  },
+  {
+   "namespace": "/api/claude/tools",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/claude/tools"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/escalation",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/concept2cure/escalation/process"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/vault",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/concept2cure/vault/register-artifact"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/user",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/user/permissions"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/precedents",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/precedents"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/patents",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/patents"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/compliance",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/compliance"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/team",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/team/workload"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/feedback",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/concept2cure/feedback"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/governance",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/governance/health"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/maintenance",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/concept2cure/maintenance/run"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/startup",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/startup/invariants"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/errors",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/concept2cure/errors"
+   ]
+  },
+  {
+   "namespace": "/api/concept2cure/audit-logs",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/concept2cure/audit-logs"
+   ]
+  },
+  {
+   "namespace": "/api/c2c/rule-packs",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/c2c/rule-packs"
+   ]
+  },
+  {
+   "namespace": "/api/evidence-objects",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/pdev/surfaces/EvidencePicker.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/evidence-objects/"
+   ]
+  },
+  {
+   "namespace": "/api/evidence-asks",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/Evidence.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/evidence-asks/"
+   ]
+  },
+  {
+   "namespace": "/api/doc-journey",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/DocJourney.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/doc-journey/"
+   ]
+  },
+  {
+   "namespace": "/api/cro-portfolio",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/CroPortfolio.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/cro-portfolio/"
+   ]
+  },
+  {
+   "namespace": "/api/ind-checklist",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ind-checklist/"
+   ]
+  },
+  {
+   "namespace": "/api/shadow-review",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/ShadowReview.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/shadow-review/"
+   ]
+  },
+  {
+   "namespace": "/api/research-admin",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/ResearchAdmin.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/research-admin/"
+   ]
+  },
+  {
+   "namespace": "/api/ai-actions/types",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ai-actions/types"
+   ]
+  },
+  {
+   "namespace": "/api/ai-actions/history",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ai-actions/history"
+   ]
+  },
+  {
+   "namespace": "/api/ai-actions/stream",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ai-actions/stream"
+   ]
+  },
+  {
+   "namespace": "/api/ai-actions/health",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/ai-actions/health"
+   ]
+  },
+  {
+   "namespace": "/api/registrations",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/Registrations.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/registrations/data-standards"
+   ]
+  },
+  {
+   "namespace": "/api/vault/statistics",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/vault/statistics"
+   ]
+  },
+  {
+   "namespace": "/api/vault/list",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/vault/list"
+   ]
+  },
+  {
+   "namespace": "/api/advisor",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/advisor/check-readiness"
+   ]
+  },
+  {
+   "namespace": "/api/tenant-stats",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/tenant-stats/:id"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory/submissions",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/regulatory/submissions"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory/intelligence-search",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/regulatory/intelligence-search"
+   ]
+  },
+  {
+   "namespace": "/api/regulatory/regulatory",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/regulatory/regulatory/search"
+   ]
+  },
+  {
+   "namespace": "/api/source-tracer",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/SourceTracer.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/source-tracer/sections"
+   ]
+  },
+  {
+   "namespace": "/api/insights-canvas",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/Insights.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/insights-canvas/overview"
+   ]
+  },
+  {
+   "namespace": "/api/governed-intelligence-inconsistency",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/Inconsistency.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/governed-intelligence-inconsistency/projects/:projectId/inconsistency"
+   ]
+  },
+  {
+   "namespace": "/api/precedent-engine-board",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/PrecedentEngine.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/precedent-engine-board/"
+   ]
+  },
+  {
+   "namespace": "/api/conversation-thread",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/conversation-thread/:threadId"
+   ]
+  },
+  {
+   "namespace": "/api/digest",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/digest/get-data"
+   ]
+  },
+  {
+   "namespace": "/api/companion-diagnostics",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/companion-diagnostics/readiness"
+   ]
+  },
+  {
+   "namespace": "/api/cro/dashboard",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/cro/dashboard"
+   ]
+  }
+ ]
+}

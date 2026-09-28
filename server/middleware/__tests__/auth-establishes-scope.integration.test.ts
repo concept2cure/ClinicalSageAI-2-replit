@@ -64,8 +64,20 @@ function chain(rows: () => Array<Record<string, unknown>>): any {
 // two reads answer different questions about the same table and a single fixture
 // would let one silently stand in for the other.
 let maxStorageGb: number | null = 5;
+// A THIRD decision, read through the raw `pool`: the account's standing
+// (services/account-standing.ts, VSR-001 F-29). Both gates refuse an account
+// that is not 'active' before any scope opens. Modelled on its own for the same
+// reason as the two above; `Error` stands for a read that fails.
+let accountStatus: string | Error = 'active';
 
 vi.mock('../../db', () => ({
+  pool: {
+    query: async (sql: string) => {
+      if (!/SELECT status FROM users/.test(sql)) throw new Error(`unmodelled pool query: ${sql}`);
+      if (accountStatus instanceof Error) throw accountStatus;
+      return { rows: [{ status: accountStatus }] };
+    },
+  },
   db: {
     select: (projection?: Record<string, unknown>) =>
       projection && 'status' in projection
@@ -195,6 +207,7 @@ function drive(
 }
 
 beforeEach(() => {
+  accountStatus = 'active';
   membershipRows = [{ role: 'editor', orgUuid: null }];
   organizationRows = [{ status: 'active', paymentStatus: 'active' }];
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -253,6 +266,45 @@ describe('authenticateToken opens a tenant scope on the member path', () => {
     expect(r.status).toBe(403);
     expect(r.reachedHandler).toBe(false);
     expect(r.scoped).toBe(false);
+  });
+});
+
+// VSR-001 F-29. An account suspended by an administrator or deprovisioned by the
+// identity provider kept every session it held: neither gate read its standing.
+// Pinned on real PostgreSQL by tests/db/account-standing.dbtest.ts; here, that
+// both gates refuse before a scope opens, and fail closed on an unreadable one.
+describe('an account taken out of use opens nothing on either gate', () => {
+  for (const status of ['suspended', 'inactive']) {
+    it(`authenticateToken refuses a ${status} account, before a scope opens`, async () => {
+      accountStatus = status;
+      const { authenticateToken } = await importRealMiddlewareAuth();
+      const r = await drive(authenticateToken, 'Bearer x');
+      expect(r.status).toBe(401);
+      expect(r.body?.error?.code).toBe('ACCOUNT_INACTIVE');
+      expect(r.reachedHandler).toBe(false);
+      expect(r.scoped).toBe(false);
+    });
+
+    it(`authMiddleware (global /api gate) refuses a ${status} account, before a scope opens`, async () => {
+      accountStatus = status;
+      const { authMiddleware } = await import('../../auth');
+      const r = await drive(authMiddleware as Middleware, 'Bearer x');
+      expect(r.status).toBe(401);
+      expect(r.body?.code).toBe('ACCOUNT_INACTIVE');
+      expect(r.reachedHandler).toBe(false);
+      expect(r.scoped).toBe(false);
+    });
+  }
+
+  it('both answer 503, never a pass, when the standing cannot be read', async () => {
+    accountStatus = new Error('users unreadable');
+    const { authenticateToken } = await importRealMiddlewareAuth();
+    const { authMiddleware } = await import('../../auth');
+    for (const mw of [authenticateToken, authMiddleware as Middleware]) {
+      const r = await drive(mw, 'Bearer x');
+      expect(r.status).toBe(503);
+      expect(r.reachedHandler).toBe(false);
+    }
   });
 });
 

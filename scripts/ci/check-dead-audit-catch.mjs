@@ -196,9 +196,17 @@ function sourceFiles() {
 function scanSource(src, file) {
   const hits = [];
   if (!src.includes('auditService.logAction')) return hits;
+  // Matched against CODE, not text. The fix for a dead catch leaves a comment
+  // saying what the code used to be — templateStore.ts records the WO-16C
+  // change as "This was `try { await auditService.logAction(…) } catch { warn }`"
+  // — and matching the raw source flagged that sentence as the thing it
+  // describes, turning the guard red on the change that removed the defect.
+  // codeOnly preserves offsets, so the line reported and the catch position
+  // handed to recordsFailureForLaterUse are the same in either string.
+  const code = codeOnly(src);
   DEAD_CATCH.lastIndex = 0;
   let m;
-  while ((m = DEAD_CATCH.exec(src)) !== null) {
+  while ((m = DEAD_CATCH.exec(code)) !== null) {
     const body = m[1];
     // Another awaited call in the same try means the catch IS reachable.
     const awaits = (body.match(/\bawait\b/g) || []).length;
@@ -224,8 +232,9 @@ function findings() {
 // The baseline is empty, so this guard now fails on any reintroduction — which
 // makes the exemption added for auditLogger.ts the only way through it. An
 // exemption that is too generous turns this whole guard into the thing it was
-// written to catch: a check that reports success while doing nothing. These
-// four cases are the mutations that must each stay killed.
+// written to catch: a check that reports success while doing nothing. The
+// flagged cases are the mutations that must each stay killed; the exempt ones
+// are what the guard must not report.
 if (process.argv.includes('--self-test')) {
   const DEAD = `
     async function f(entry) {
@@ -265,11 +274,20 @@ if (process.argv.includes('--self-test')) {
       }
       // canonical is named here, and only here — a comment is not a read.
     }`;
+  // The same USE-not-MENTION rule, applied to the pattern itself: a comment
+  // recording the dead catch that used to be here is not a dead catch.
+  const DESCRIBED = `
+    async function f(entry) {
+      // This was \`try { await auditService.logAction(…) } catch { warn }\`
+      // with the outcome discarded. The writer below reports it instead.
+      return recordAuditRow({ action: entry.action });
+    }`;
   const cases = [
     ['plain dead catch is flagged', DEAD, true],
     ['recorded-and-read catch is exempt', RECORDED, false],
     ['recorded but read only OUTSIDE the block is flagged', UNREAD, true],
     ['recorded but only MENTIONED in a comment is flagged', MENTIONED, true],
+    ['a dead catch only DESCRIBED in a comment is not flagged', DESCRIBED, false],
   ];
   let ok = true;
   for (const [name, src, shouldFlag] of cases) {

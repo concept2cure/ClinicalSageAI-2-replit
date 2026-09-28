@@ -1,0 +1,44 @@
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx   (after the fix)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, honest states > an unbound protocol says so and draws NO diff groups 581ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, unbound > says no design is bound and offers the bind action, claiming nothing 780ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, honest states > a failed read is reported as a failure, not as an empty derivation 300ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, unbound > lists this tenant's persisted designs in the bind drawer 353ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > renders all five, each explaining what the bucket means 271ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > a conflict shows both values, the reason, and what accepting means 269ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, bound > shows the design identity and the design gates' findings 336ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > a proposed row names the protocol rows it came from 237ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, bound > reports an unresolved link as unresolved, not as a clean design 180ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > an incomplete row offers NO accept control and names the fields a human must supply 212ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > an unevidenced row offers NO accept control and is not described as a defect 175ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > offers all five, each labelled with what it is a projection OF 430ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > views the ICH M11 protocol projection with each section's status 279ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, apply > posts acceptedPaths and a reason, and never a derived value 339ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > renders a projection the design cannot fill as its gap, not as an empty success 301ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, apply > shows applied and rejected paths distinctly after the write 376ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > renders a failed projection read as a failure, not as an empty projection 299ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, apply > refuses a reason shorter than the governed minimum without posting 326ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an empty object is a failed read, not an organisation with no design 241ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > an empty object is reported as a failure, not as an empty derivation 159ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > an error carried on a 200 is reported as a failure, not as an empty derivation 158ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an error carried on a 200 is a failed read, not an organisation with no design 244ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > the read model inside an envelope is reported as a failure, not as an empty derivation 176ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > the list inside an envelope is a failed read, not an organisation with no design 267ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a design id and no derivation is reported as a failure, not as an empty derivation 184ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a derivation missing its buckets is reported as a failure, not as an empty derivation 168ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > designs present but null is a failed read, not an organisation with no design 288ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a derivation with one bucket null is reported as a failure, not as an empty derivation 207ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > a design with no id is a failed read, not an organisation with no design 310ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a derivation whose five buckets are genuinely empty is still drawn as empty 174ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > an apply whose answer carries no derivation says the diff could not be re-read 362ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an HTML page on a 200 is a failed read, not an organisation with no design 236ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an organisation with genuinely no design is still told so 239ms
+
+ Test Files  2 passed (2)
+      Tests  33 passed (33)
+   Start at  05:05:45
+   Duration  7.41s (transform 2.24s, setup 355ms, import 3.21s, tests 9.47s, environment 1.29s)
+

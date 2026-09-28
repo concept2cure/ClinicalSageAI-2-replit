@@ -224,6 +224,28 @@ describe('AuthoringAiDraft', () => {
     expect(screen.getByText(/not saved/i)).toBeTruthy();
   });
 
+  it('shows the wait as AnA\'s live record — what is running and a clock — then removes it', async () => {
+    let answer!: (r: Response) => void;
+    apiRequest.mockImplementation(() => new Promise<Response>((r) => { answer = r; }));
+    const { container } = mount();
+    fireEvent.click(screen.getByTestId('ai-draft-generate'));
+
+    // The same record every host renders while AnA works: one live phase,
+    // announced through its one polite region, and no percentage anywhere.
+    const phase = await waitFor(() => {
+      const el = container.querySelector('.ana-activity-phase');
+      expect(el).not.toBeNull();
+      return el as HTMLElement;
+    });
+    expect(phase.textContent).toContain('Retrieving Data Room evidence and drafting 3.2.S.1…');
+    expect(container.querySelector('[aria-live="polite"]')?.textContent).toContain('drafting 3.2.S.1');
+    expect(container.textContent).not.toMatch(/\d+\s*%/);
+
+    answer(res(200, MODEL_DRAFT()));
+    await screen.findByTestId('ai-draft-body');
+    expect(container.querySelector('.ana-activity-phase')).toBeNull();
+  });
+
   it('a deployment with no AI provider is refused on the panel: no draft body, no accept, a refusal that stays', async () => {
     apiRequest.mockImplementation(rejects(503, 'GATEWAY_UNAVAILABLE', NO_PROVIDER_MESSAGE));
     mount();

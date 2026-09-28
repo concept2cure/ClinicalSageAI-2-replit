@@ -33,5 +33,11 @@
   "language": {
     "label": "Sprog",
     "select": "Vælg sprog"
+  },
+  "session": {
+    "stillThere": "Er du der stadig?",
+    "signOutIn": "Du bliver logget ud om {{seconds}} sekunder på grund af inaktivitet.",
+    "staySignedIn": "Forbliv logget ind",
+    "signOutNow": "Log ud nu"
   }
 }

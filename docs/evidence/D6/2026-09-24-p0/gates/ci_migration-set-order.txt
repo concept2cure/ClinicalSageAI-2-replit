@@ -1,0 +1,1 @@
+[ci:migration-set-order] OK — 309 migrations, sweep last, uuid step in the final pair, all present, no duplicates.

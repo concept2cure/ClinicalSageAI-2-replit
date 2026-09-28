@@ -92,3 +92,29 @@ See VSR-001 §14.3.
 5. **The F-15 decision** (VSR-001 §12.2).
 6. **The Submission Readiness anchor decision** (VSR-001 §14.3), for
    OQ-SRDY-05b / URS-SRDY-005.
+
+## After this set: defects found and fixed later on 2026-09-23
+
+The folders below were added to this set's `red/` after it was executed.
+Each holds the evidence that a defect was reproduced before its fix and
+gone after it. The fixes are executed together in
+`docs/evidence/W3/2026-09-23c/`; VSR-001 §16 dispositions them.
+
+| Folder | Shows |
+|---|---|
+| `red/F-15/` | The F-15 decision, option (a): `npm run up` writes `RLS_ENFORCE=on`. `tests/dev-up-env-local.test.ts` 4 fail / 1 pass before, 5 / 5 after (`7f41a3eb`) |
+| `red/F-24/` | One trusted proxy hop in production. Unit 1 fail / 13 pass before, 14 / 14 after; live before and after, including the audit rows' addresses (`eefac757b`) |
+| `red/F-25/` | A contradiction scan refuses a program id and an unheld project. Unit 2 fail / 1 pass before, 3 / 3 after; the first run's OQ-SRDY-06 scan of project 1 (`1b6dc0fab`) |
+| `OQ-005-v0.5/` | OQ-005 v0.5 on the server before F-25 and the launch-scope change: 7 pass, 2 fail (OQ-SRDY-06, OQ-SRDY-08), 2 deviation; after: 9 pass, 0 fail, 2 deviation (`f4b88dd26`) |
+| `red/F-26/` | A session alone can no longer replace an enrolled authenticator. `second-factor-binding.dbtest.ts` 7 fail / 2 pass before, 9 / 9 after (`0c912e67e`) |
+| `red/F-27/` | A wrong factor at signing counts against the account, and a locked account cannot sign. `signing-lockout.dbtest.ts`: signing 4 fail / 4 pass and the dialog's checks 3 fail before, 11 / 11 after (`c3e891bba`) |
+| `red/signing-ceremony/` | Every signing path on the one ceremony: routes 13 fail before, task sign-off 7 fail / 7 pass, client 5 fail / 8 pass, the QMS approval against the twin verifier 9 fail / 3 pass, the release 6 fail / 12 pass, the AnA rewrite and the document lock; each after-file green, and the IND authoring journey signing end to end (`6f79a000f`, `204c11347`, `759489424`, `ccccd4645`) |
+| `red/F-28-F-29/` | An account taken out of use signs nothing and opens nothing. Unit 3 fail / 23 pass before, 26 / 26 after; `account-standing.dbtest.ts` 8 fail / 5 pass before, 13 / 13 after; `mutations.txt`, each check shown to catch its own removal (`759489424`, `171e02dfc`) |
+| `OQ-001-v0.7/` | OQ-PROJ-18 on the server without F-29: 18 pass, 1 fail ("a suspended account's session read projects: 200"), with the server's own log of the suspended session's answers; on the fix: 19 / 19 (`63f579e6d`) |
+| `red/F-30/` | An unreadable lockout refuses. Unit 2 fail / 1 pass before, 3 / 3 after (`bb5588d10`) |
+| `red/F-31/` | The `/api/admin` org-admin gate guards its own route. OQ-PROJ-18's first execution, refused 403 before Master Administration's gate, with the server log; unit 6 fail / 4 pass before, 18 / 18 after with the security-health suite; three mutants (`916027a98`) |
+| `red/F-32/` | The Doc Orchestration gate covers `/api/510k` only. Live before: Stripe's webhook, the pricing figures, `/api/v1` and `/api/cortex/health` 401; after: each reaches its handler. Unit 6 fail / 2 pass before, 8 / 8 after; one mutant (`2dd78265d`, `e482106bc`) |
+| `red/F-33/` | A limiter counts a request once. Live: 15 counts per request before, 1 after; unit 2 fail / 1 pass before, 3 / 3 after; two mutants (`c16c3cb6d`) |
+| `red/attribution-coverage/` | Authoring sections have attribution coverage. Unit 2 fail / 7 pass before, 9 / 9 after; live 400 before, 200 with 24 of 24 characters attributed after; one mutant (`591b48ac3`) |
+
+Items 5 and 6 of the list above are decided: VSR-001 §16.5.

@@ -1,0 +1,8 @@
+# P4 client half — RED, tests added, EctdCompile.tsx unchanged; 2026-09-24T19:16:26Z
+ × client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > names who signed, when, and with what meaning (§11.50) 5027ms
+   → Unable to find an element with the text: A. Reviewer. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > says a printed name the record does not hold is not recorded 5023ms
+   → Unable to find an element with the text: /Printed name not recorded/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)

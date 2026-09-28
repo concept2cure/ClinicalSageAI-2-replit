@@ -1,0 +1,10 @@
+$ # authEnterprise.ts unchanged at 2ec744b7
+ × server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > a suspended account is refused (403 AUTH_ACCOUNT_INACTIVE) before its password is compared, and the refusal is audited 47ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > control: an active account with the wrong password is 401 8ms
+ × server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > a challenge for an account suspended since it was issued does not become a session; no code is spent 8ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: a suspended account got past the password step: expected 200 to be 403 // Object.is equality
+AssertionError: a suspended account completed the MFA step: expected 200 to be 403 // Object.is equality
+      Tests  2 failed | 2 passed (4)
+exit=1

@@ -38,6 +38,8 @@ import {
 import {
   resolveReleaseSignatureStatus,
   isReleaseSignatureRequired,
+  signingNowResolvesRelease,
+  type ReleaseSignatureStatus,
 } from './release-signature-status';
 import {
   resolveExternalValidator,
@@ -139,6 +141,15 @@ export interface DispatchReadinessAssessment {
    *  is not transmit and carries its own Part 11 signature; see
    *  composeDispatchGatesForStep. */
   freezeGate: DispatchGateResult;
+  /** The DISPATCH verdict as it will stand once the operator's dispatch
+   *  signature is recorded — what the Dispatch button asks. It differs from
+   *  `gate` only where the sequence's own new signature would decide the
+   *  release (signingNowResolvesRelease): an `unsigned` or `revoked` sequence
+   *  spine. Every other blocker, including an `invalid` or `undetermined`
+   *  signature and an orchestrator run awaiting its signer, blocks it exactly
+   *  as it blocks `gate`. Informational for the client; the server enforces
+   *  `gate` at transition, with the new signature on record. */
+  dispatchGateOnSigning: DispatchGateResult;
   /** The DISPATCH verdict gate by gate, each as the corpus rule it enforces;
    *  their blockers, in order, are exactly `gate.blockers`. */
   gates: DispatchGateView[];
@@ -254,6 +265,51 @@ export function composeDispatchGatesForStep(
       required: step === 'dispatch' && parts.releaseSignature.required,
     }),
   });
+}
+
+/**
+ * The three verdicts an assessment reports, each for the question a control
+ * asks, from ONE set of parts:
+ *
+ *   • `gate`                  — dispatch now (and transmit): every gate.
+ *   • `freezeGate`            — freeze: every gate, the release signature not
+ *                               REQUIRED (a tampered one still blocks).
+ *   • `dispatchGateOnSigning` — dispatch once the operator's dispatch signature
+ *                               is recorded: every gate, with the release
+ *                               verdict replaced by `signed` only where
+ *                               signingNowResolvesRelease says the new sequence
+ *                               signature would decide it.
+ *
+ * Pure, and the only place the three are composed, so which gates each one
+ * carries is pinned by test. That matters because the failure here is not a
+ * wrong gate but a MISSING one: a verdict composed without a gate blocks
+ * nothing on it, and every test of the gate in isolation still passes. It is
+ * also why the client reads these rather than rebuilding any of them — the
+ * Freeze and Dispatch buttons each read the wrong one of these for as long as
+ * the client carried its own idea of which gate applied.
+ */
+export function composeStepVerdicts(
+  parts: {
+    structural: DispatchGateResult;
+    external: DispatchGateResult;
+    shadowPresence: DispatchGateResult;
+    releaseSignature: ReleaseSignatureGateInput;
+  },
+  releaseStatus: Pick<ReleaseSignatureStatus, 'verdict' | 'decidedBy'>,
+): { gate: DispatchGateResult; freezeGate: DispatchGateResult; dispatchGateOnSigning: DispatchGateResult } {
+  return {
+    gate: composeDispatchGatesForStep(parts, 'dispatch'),
+    freezeGate: composeDispatchGatesForStep(parts, 'freeze'),
+    dispatchGateOnSigning: composeDispatchGatesForStep(
+      {
+        ...parts,
+        releaseSignature: signingNowResolvesRelease(releaseStatus)
+          ? { ...parts.releaseSignature, verdict: 'signed' }
+          : parts.releaseSignature,
+      },
+      'dispatch',
+    ),
+  };
 }
 
 /**
@@ -491,8 +547,11 @@ export async function assessSequenceDispatchReadiness(
     shadowPresence: shadowPresenceGate,
     releaseSignature: signatureInput,
   };
-  const gate = composeDispatchGatesForStep(gateParts, 'dispatch');
-  const freezeGate = composeDispatchGatesForStep(gateParts, 'freeze');
+  // `dispatchGateOnSigning` is the dispatch verdict as it will stand once the
+  // operator's dispatch signature is recorded — what the Dispatch button asks.
+  // It never relaxes what the server enforces: the transition re-evaluates
+  // `gate` with the new signature on record. See composeStepVerdicts.
+  const { gate, freezeGate, dispatchGateOnSigning } = composeStepVerdicts(gateParts, releaseSignature);
   // The same four results `gate` merged: the dispatch-step release-signature
   // evaluation is releaseSignatureGate (required as the type requires).
   const gates = dispatchGateViews({
@@ -534,6 +593,7 @@ export async function assessSequenceDispatchReadiness(
     },
     gate,
     freezeGate,
+    dispatchGateOnSigning,
     gates,
     readiness,
     leafCount: leaves.length,

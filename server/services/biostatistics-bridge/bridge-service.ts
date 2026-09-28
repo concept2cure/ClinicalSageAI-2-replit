@@ -272,7 +272,10 @@ export async function assessDesign(organizationId: number, studyId: string): Pro
 export interface ApplySampleSizeResult {
   studyId: string;
   plannedSampleSize: number;
+  /** The target power written to the plan — the one the N was sized for. */
   power: number;
+  /** The power the engine computed for this N (at or just above the target). */
+  achievedPower: number;
   actionId: string;
   auditId: string;
   sha256Chain: string;
@@ -325,7 +328,10 @@ export async function applySampleSizeToDesign(args: {
         studyId,
         method: computation.method,
         plannedSampleSize: patch.plannedSampleSize,
+        // The target written to the plan, and the power the engine computed
+        // for this N at that target — two figures, each under its own name.
         power: patch.power,
+        achievedPower: computation.power,
         alpha: patch.alpha,
         dropoutRate: patch.dropoutRate,
         engine: STATS_ENGINE,
@@ -342,6 +348,7 @@ export async function applySampleSizeToDesign(args: {
       studyId,
       plannedSampleSize: patch.plannedSampleSize as number,
       power: patch.power as number,
+      achievedPower: computation.power,
       ...gov,
       design: next,
     };

@@ -1,0 +1,12 @@
+# ci:regulated-delete-audit (extended) against the HEAD route files, before the QMS fix
+[regulated-delete-audit] FAIL — 2 unaudited regulated delete(s):
+
+  server/routes/tenant-ctq-factors.ts:356
+    await tenantDb.delete(ctqFactors, eq(ctqFactors.id, factorId));
+  server/routes/tenant-section-gating.ts:286
+    DELETE FROM ctq_factors
+
+21 CFR Part 11 §11.10(e): a delete of a regulated record must write an audit-trail entry.
+Add an audit call (writeMutation / logAuditEntry / recordGovernedAction) before the delete,
+or, if intentional, allow-list it with a justification in this script.
+exit=1

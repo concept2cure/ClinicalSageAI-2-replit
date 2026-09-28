@@ -95,7 +95,7 @@ router.post('/documents/:id/transition', async (req, res) => {
     return res.status(422).json({ error: `to must be one of: ${qms.DOC_STATES.join(', ')}` });
   }
   try {
-    const row = await qms.transitionDocument(orgId, intParam(req, 'id'), b.to, getUserId(req));
+    const row = await qms.transitionDocument(orgId, intParam(req, 'id'), b.to);
     if (!row) return res.status(404).json({ error: 'Document not found' });
     await auditService.logAction({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'qms.document.transition', resourceType: 'qms_document', resourceId: row.id, details: { to: b.to } });
     res.json(row);

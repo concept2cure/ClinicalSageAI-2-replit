@@ -1,0 +1,168 @@
+
+> concept2cure-riai@1.0.0 up
+> node scripts/dev/up.mjs
+
+Concept2Cure — local bring-up
+
+[1] Checking Postgres
+    ✓ connected to 127.0.0.1:5432
+
+[2] Ensuring database "c2c_oq_w3_20260923c"
+    ✓ created
+
+[3] Provisioning schema (install-fresh) — this takes a few minutes
+◇ injected env (6) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+▶ 1/8 Prerequisites — schemas + extensions
+  ✓ schemas (vault, precedent, audit, extensions) + extensions (pgcrypto, uuid-ossp, pg_trgm)
+  ⚠ pgvector NOT available: extension "vector" is not available
+    To get the skipped objects, install it and provision again into an
+    EMPTY database — re-running over a partly-installed one cannot repair
+    step 2 (see the header note on what a re-run does):
+      apt-get install -y postgresql-16-pgvector    # Debian/Ubuntu
+    Continuing WITHOUT it. Every object whose definition needs the `vector`
+    type is SKIPPED and named below — nothing is faked, and no stub type is
+    created. Embedding storage and similarity search backed by those objects
+    are UNAVAILABLE in this database.
+
+▶ 2/8 Tables — drizzle-kit push
+  • schema source: drizzle-kit push from ./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts (drizzle.config.ts)
+  • pgvector absent — applying push statements individually so the
+    non-vector schema still lands (push itself stops at the first error).
+  ✓ push applied statement-by-statement: 2823 applied, 0 already present, 134 skipped for pgvector, 0 failed
+
+▶ 3/8 Complete schema — raw migration overlay
+  ✓ pre-overlay creator: db/migrations/20260401_cmc_convergence_os.sql
+  ✓ pre-overlay creator: db/migrations/20260224_ai_trace_chain.sql
+  ✓ pre-overlay creator: db/migrations/20260730_cmc_projects_reconstruction.sql
+  ✓ pre-overlay creator: db/migrations/20260730_manufacturing_processes_reconstruction.sql
+  ✓ pre-overlay creator: db/migrations/20260730_fk_delete_policies_port.sql
+  pass 1: applied=244 already-present=2 deferred=12 hard=0 needs-pgvector=2
+  pass 2: applied=11 already-present=0 deferred=1 hard=0
+  pass 3: applied=0 already-present=0 deferred=1 hard=0
+  ◦ 1 file(s) skipped-classified (expected on a fresh install; each names its tracked resolution — NOT counted as incomplete):
+      0008_critical_fk_delete_policies.sql — superseded by db/migrations/20260730_fk_delete_policies_port.sql (guarded port applied pre-overlay); the original aborts on retired user_sessions
+        last error: relation "user_sessions" does not exist
+  ✓ overlay: 255 applied, 2 already-present from push
+
+▶ 4/8 Authoring subsystem (Part-11 unit)
+  ✓ authoring subsystem provisioned as a unit (9 files, 23 tables, tenant-isolated)
+
+▶ 5/8 Row-Level Security policies (raw migrations)
+  ✓ coerced residual text tenant columns to integer (fresh-DB safe)
+  ⚠ 0005_csr_knowledge_database.sql — skipped, needs pgvector
+  ✓ applied 0019_tenant_column_audit.sql
+  ✓ applied 0020_coerce_text_tenant_columns.sql
+  ✓ applied 0021_enable_rls_everywhere.sql
+  ✓ applied 20260608_ai_placement_policies.sql
+  ✓ applied 20260612_rls_research_admin.sql
+
+▶ 6/8 Governed content — Part 11 audit tree (*_gcc_*.sql)
+  ⚠ 001_gcc_core.sql: skipped, needs pgvector
+  ⚠ 002_gcc_audit_immutability.sql: psql:<repo>/db/migrations/002_gcc_audit_immutability.sql:43: ERROR:  relation "audit.concomitant_audit_logs" does not exist
+  ⚠ 003_gcc_prose_versioning.sql: psql:<repo>/db/migrations/003_gcc_prose_versioning.sql:87: ERROR:  relation "prose.smart_fragments" does not exist
+  ⚠ 004_gcc_enhanced_citations.sql: PL/pgSQL function inline_code_block line 9 at SQL statement
+  ⚠ 005_gcc_database_roles.sql: psql:<repo>/db/migrations/005_gcc_database_roles.sql:60: ERROR:  schema "truth" does not exist
+  ⚠ 006_gcc_dashboard_views.sql:               ^
+  ⚠ 017_gcc_shadow_agent_rbac.sql: PL/pgSQL function inline_code_block line 8 at SQL statement
+  ⚠ 059_gcc_vector_embeddings.sql: skipped, needs pgvector
+  ⚠ 067_gcc_federated_learning_intelligence.sql:                                    ^
+  ⚠ 072_gcc_innovation_platform_core.sql: skipped, needs pgvector
+  ⚠ 074_gcc_regulatory_intuition_engine.sql: skipped, needs pgvector
+  ⚠ 075_gcc_epistemic_intelligence.sql:                                    ^
+  ⚠ 076_gcc_causal_inference_engine.sql:                                    ^
+  ⚠ 077_gcc_self_evolving_intelligence.sql:                                    ^
+  ⚠ 078_gcc_cross_domain_transfer.sql:                                    ^
+  ⚠ governed content: 27/42 applied, 4 blocked by missing pgvector
+  ✓ re-applied 12/12 root file(s) guarded on a named schema (their dependency exists only after this tree)
+  ✓ tenant-isolation sweep re-run over the tables this tree created
+
+▶ 7/8 Runtime role — non-superuser grants
+  ✓ role app_service aligned (LOGIN · NOSUPERUSER · NOBYPASSRLS · password set)
+  ✓ grants applied on: agent_runtime(SELECT, INSERT, UPDATE, DELETE); audit(SELECT, INSERT); cognitive_audit(SELECT, INSERT, UPDATE, DELETE); common_standards(SELECT, INSERT, UPDATE, DELETE); compliance(SELECT, INSERT, UPDATE, DELETE); core(SELECT, INSERT, UPDATE, DELETE); discovery(SELECT, INSERT, UPDATE, DELETE); ectd(SELECT, INSERT, UPDATE, DELETE); ectd_v4(SELECT, INSERT, UPDATE, DELETE); extensions(SELECT); fhir(SELECT, INSERT, UPDATE, DELETE); global_dossier(SELECT, INSERT, UPDATE, DELETE); identity(SELECT, INSERT, UPDATE, DELETE); labeling(SELECT, INSERT, UPDATE, DELETE); lumen(SELECT, INSERT, UPDATE, DELETE); manufacturing(SELECT, INSERT, UPDATE, DELETE); precedent(SELECT, INSERT, UPDATE, DELETE); product_master(SELECT, INSERT, UPDATE, DELETE); public(SELECT, INSERT, UPDATE, DELETE); registry(SELECT, INSERT, UPDATE, DELETE); regulatory(SELECT, INSERT, UPDATE, DELETE); signing(SELECT, INSERT, UPDATE, DELETE); site_intel(SELECT, INSERT, UPDATE, DELETE); vault(SELECT, INSERT, UPDATE, DELETE)
+  ✓ default privileges set — future owner-created tables auto-grant to app_service
+
+▶ 8/8 Verify
+  tables (public): 777
+  RLS policies:    735
+  named-schema tables: 6/6 present
+  core route tables: 5/5 present
+  authoring subsystem: 19/19 tables present
+  required objects: 8/8 capabilities complete
+    ✓ stability_studies — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ project_intelligence_profiles — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ immutable_report_records — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ evidence_claims — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ conversation_working_memory — from raw migrations/ overlay · RLS on organization_id
+    ✓ ana_capability_registry — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · global (no tenant scope, no policy expected)
+    ✓ report_type_registry — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · global (no tenant scope, no policy expected)
+    ✓ doc_permissions — from authoring subsystem (db/migrations/20260725_authoring_*) · RLS on tenant_id
+  tenant isolation: every integer tenant-keyed table is policied ✓
+  runtime role app_service: LOGIN · non-superuser · NOBYPASSRLS · USAGE on all application schemas · can read tenant tables ✓
+
+⚠️  pgvector (extension "vector") is NOT installed on this server.
+   141 object(s) were skipped because of it:
+     • table account_canon_items (needs the vector type)
+     • table biostat_knowledge_nodes (needs the vector type)
+     • table client_memory_entries (needs the vector type)
+     • table coauthor_documents (needs the vector type)
+     • table conversation_working_memory (needs the vector type)
+     • table document_vectors (needs the vector type)
+     • table knowledge_entries (needs the vector type)
+     • table project_memory_entries (needs the vector type)
+     • table rag_chunks (needs the vector type)
+     • table csr_eligibility_criteria (needs the vector type)
+     • table csr_endpoints (needs the vector type)
+     • table csr_knowledge_nodes (needs the vector type)
+     • table csr_regulatory_intelligence (needs the vector type)
+     • table csr_sections (needs the vector type)
+     • table csr_studies (needs the vector type)
+     • alter on account_canon_items (depends on skipped table account_canon_items)
+     • alter on account_canon_items (depends on skipped table account_canon_items)
+     • alter on account_canon_items (depends on skipped table account_canon_items)
+     • alter on account_canon_items (depends on skipped table account_canon_items)
+     • alter on account_canon_items (depends on skipped table account_canon_items)
+     • alter on account_events (relation "public.account_canon_items" does not exist)
+     • alter on biostat_knowledge_edges (relation "public.biostat_knowledge_nodes" does not exist)
+     • alter on biostat_knowledge_edges (relation "public.biostat_knowledge_nodes" does not exist)
+     • alter on biostat_knowledge_nodes (depends on skipped table biostat_knowledge_nodes)
+     • alter on client_memory_entries (depends on skipped table client_memory_entries)
+     • alter on client_memory_entries (depends on skipped table client_memory_entries)
+     • alter on client_memory_entries (depends on skipped table client_memory_entries)
+     • alter on coauthor_document_versions (relation "public.coauthor_documents" does not exist)
+     • alter on coauthor_documents (depends on skipped table coauthor_documents)
+     • alter on coauthor_documents (depends on skipped table coauthor_documents)
+     • alter on coauthor_validation_history (relation "public.coauthor_documents" does not exist)
+     • alter on component_sequence_references (relation "public.coauthor_documents" does not exist)
+     • alter on conversation_working_memory (depends on skipped table conversation_working_memory)
+     • alter on conversation_working_memory (depends on skipped table conversation_working_memory)
+     • alter on conversation_working_memory (depends on skipped table conversation_working_memory)
+     • alter on document_components (relation "public.coauthor_documents" does not exist)
+     • alter on document_vectors (depends on skipped table document_vectors)
+     • alter on document_vectors (depends on skipped table document_vectors)
+     • alter on document_vectors (depends on skipped table document_vectors)
+     • alter on document_vectors (depends on skipped table document_vectors)
+     …and 101 more
+   Vector-dependent features — embedding storage, semantic/similarity
+   search, and anything reading the skipped tables — are UNAVAILABLE in
+   this database. The rest of the schema was installed and the app can
+   boot and serve from it.
+   To get them: install the pgvector package for your PostgreSQL major
+   version (e.g. `apt-get install -y postgresql-16-pgvector`), then
+   provision again INTO AN EMPTY DATABASE.
+   Re-running over this one will not fill them in: drizzle-kit push has to
+   read the schema before it writes, and it cannot read the expression
+   indexes the overlay has now created — so it emits nothing and exits 0.
+
+⚠️  Install finished with 3 incomplete area(s):
+   • pgvector extension: extension "vector" is not available on this server; vector-dependent objects were skipped (embedding / similarity-search features unavailable)
+   • governed content (Part 11 audit): 4 of 42 file(s) could not be applied because pgvector is absent
+   • governed content (Part 11 audit): 11 of 42 file(s) failed: 002_gcc_audit_immutability.sql — psql:<repo>/db/migrations/002_gcc_audit_immutability.sql:43: ERROR:  relation "audit.concomitant_audit_logs" does not exist | 003_gcc_prose_versioning.sql — psql:<repo>/db/migrations/003_gcc_prose_versioning.sql:87: ERROR:  relation "prose.smart_fragments" does not exist | 004_gcc_enhanced_citations.sql — PL/pgSQL function inline_code_block line 9 at SQL statement | 005_gcc_database_roles.sql — psql:<repo>/db/migrations/005_gcc_database_roles.sql:60: ERROR:  schema "truth" does not exist | 006_gcc_dashboard_views.sql —               ^ | 017_gcc_shadow_agent_rbac.sql — PL/pgSQL function inline_code_block line 8 at SQL statement | 067_gcc_federated_learning_intelligence.sql —                                    ^ | 075_gcc_epistemic_intelligence.sql —                                    ^ | 076_gcc_causal_inference_engine.sql —                                    ^ | 077_gcc_self_evolving_intelligence.sql —                                    ^ | 078_gcc_cross_domain_transfer.sql —                                    ^
+
+❌ Install INCOMPLETE — not reporting success.
+   Resolve the areas above and provision again, or pass --allow-incomplete
+   to accept a partial install deliberately. If any area above is a table
+   step 2 did not create, provisioning again means an EMPTY database — see
+   the header note on what a re-run does.
+
+✗ install-fresh failed (exit 1).

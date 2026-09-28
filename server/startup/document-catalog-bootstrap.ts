@@ -34,12 +34,30 @@
  */
 
 import { FeatureToggleService } from '../services/featureToggleService.js';
+import { createScopedLogger } from '../utils/logger.js';
 /* The keys come FROM the services that read them. Re-declaring the two string
    literals here would let a rename create rows for keys nothing consults —
    toggles an operator can flip that change nothing, which is worse than the
    missing rows this module exists to add. */
 import { DOCUMENT_CATALOG_FEATURE_KEY } from '../services/vault/document-catalog.service.js';
 import { VAULT_CHUNKING_FEATURE_KEY } from '../services/vault/document-chunking.service.js';
+
+const logger = createScopedLogger('ana-document-catalog');
+
+/**
+ * A toggle row that could not be created, said. This was `.catch(() =>
+ * undefined)`: with the insert refused but the store still readable, both flags
+ * read "off" and the startup line told the operator to enable "the feature
+ * toggle rows above" — rows that did not exist — with nothing saying why.
+ */
+function rowNotCreated(featureKey: string) {
+  return (err: unknown): void => {
+    logger.warn(
+      `could not create the ${featureKey} toggle row, so there is no row to ` +
+        `enable and the flag reads off until one exists: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  };
+}
 
 /**
  * How a flag came to be on, that it is not — or that the answer is not known.
@@ -115,14 +133,14 @@ export async function bootstrapDocumentCatalogToggles(): Promise<CatalogToggleSt
     "AnA's project-file surface: list, read (with a full-coverage gate), catalog, file and semantically " +
       "search the client's vault documents, and recall them at session start.",
     false,
-  ).catch(() => undefined);
+  ).catch(rowNotCreated(DOCUMENT_CATALOG_FEATURE_KEY));
   await FeatureToggleService.initializeFeatureToggle(
     VAULT_CHUNKING_FEATURE_KEY,
     'Passage index for vault documents: chunk and embed every upload so AnA can search inside the ' +
       'client’s files. Embeds at ingest, so it carries a per-upload cost. Requires ' +
       DOCUMENT_CATALOG_FEATURE_KEY + '.',
     false,
-  ).catch(() => undefined);
+  ).catch(rowNotCreated(VAULT_CHUNKING_FEATURE_KEY));
 
   /* Reads the STATE, not the boolean. `isDocumentCatalogEnabled` fails closed
      to false whether the feature is off or the store could not be read, and

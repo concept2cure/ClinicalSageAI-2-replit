@@ -25,30 +25,44 @@ function resolveBuildCommit() {
   }
 }
 
-try {
-  await build({
-    entryPoints: [path.join(root, 'server/index.ts')],
-    platform: 'node',
-    packages: 'external',
-    bundle: true,
-    format: 'esm',
-    outfile: path.join(root, 'dist/index.js'),
-    logLevel: 'warning',
-    sourcemap: false,
-    minifySyntax: true, // Shorten syntax (ternaries, dead-code) — safe, no mangling
-    minifyWhitespace: true, // Remove whitespace — cuts ~40% off 12MB bundle
-    treeShaking: true,
-    target: 'node20',
-    define: {
-      'process.env.NODE_ENV': '"production"',
-      // Bake the served commit into the bundle: production containers often
-      // have no .git to ask, and "what is deployed here?" must stay a
-      // checkable fact (server/buildStamp.ts falls back to this).
-      'process.env.BUILD_COMMIT': JSON.stringify(resolveBuildCommit()),
-    },
-  });
-  console.log('✅ Server build complete → dist/index.js');
-} catch (err) {
-  console.error('❌ Server build failed:', err.message);
-  process.exit(1);
+/**
+ * The production bundle's esbuild options, exported so a test can build a
+ * module the way production does and run it in plain Node, the runtime that
+ * ships. Vitest cannot stand in for it: it hands every module a working
+ * `require`, which the ESM bundle does not have (scripts/ci/check-commonjs-require.mjs).
+ */
+export const SERVER_BUILD_OPTIONS = {
+  platform: 'node',
+  packages: 'external',
+  bundle: true,
+  format: 'esm',
+  logLevel: 'warning',
+  sourcemap: false,
+  minifySyntax: true, // Shorten syntax (ternaries, dead-code) — safe, no mangling
+  minifyWhitespace: true, // Remove whitespace — cuts ~40% off 12MB bundle
+  treeShaking: true,
+  target: 'node20',
+};
+
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
+
+if (isMain) {
+  try {
+    await build({
+      ...SERVER_BUILD_OPTIONS,
+      entryPoints: [path.join(root, 'server/index.ts')],
+      outfile: path.join(root, 'dist/index.js'),
+      define: {
+        'process.env.NODE_ENV': '"production"',
+        // Bake the served commit into the bundle: production containers often
+        // have no .git to ask, and "what is deployed here?" must stay a
+        // checkable fact (server/buildStamp.ts falls back to this).
+        'process.env.BUILD_COMMIT': JSON.stringify(resolveBuildCommit()),
+      },
+    });
+    console.log('✅ Server build complete → dist/index.js');
+  } catch (err) {
+    console.error('❌ Server build failed:', err.message);
+    process.exit(1);
+  }
 }

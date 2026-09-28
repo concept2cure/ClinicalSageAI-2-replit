@@ -1,0 +1,9 @@
+# financial-disclosure-certify-meaning.test.ts against HEAD's financial-disclosures.ts (the signature writer mocked to accept, so the route's own behaviour shows)
+   → expected 200 to be 400 // Object.is equality
+   → expected 200 to be 400 // Object.is equality
+   → expected 200 to be 400 // Object.is equality
+ FAIL  certify: the meaning is required, and one of the governed meanings > no meaning is refused 400 before the signer is asked for a password, and nothing is opened
+ FAIL  certify: the meaning is required, and one of the governed meanings > an empty meaning is refused 400 before the signer is asked for a password, and nothing is opened
+ FAIL  certify: the meaning is required, and one of the governed meanings > the old default, outside the vocabulary is refused 400 before the signer is asked for a password, and nothing is opened
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)

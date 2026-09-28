@@ -17,6 +17,7 @@
 import type { AnaTool } from '../ai-gateway/types';
 import { capToolResultForModel } from './agentic-loop.js';
 import type { ToolContext } from './AnaToolExecutor.js';
+import { handleUpdatePlan, UPDATE_PLAN_TOOL_NAME } from './turn-plan.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool definitions
@@ -336,4 +337,8 @@ export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
     });
   }
 });
+
+// AnA's declared plan for the turn (turn-plan.ts). Pure validation, no side
+// effect: the stream route turns the normalised result into a `plan` event.
+  register(UPDATE_PLAN_TOOL_NAME, async (input) => handleUpdatePlan(input));
 }

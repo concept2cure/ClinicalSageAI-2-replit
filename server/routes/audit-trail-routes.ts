@@ -14,7 +14,35 @@ const log = createScopedLogger('audit-trail-routes');
 import type { Pool } from 'pg';
 import type { Request, Response } from 'express';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { requireAuditReader, requireAuditRecorder, clientEventRefusal } from '../services/audit/audit-api-authority.js';
+import { isPlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import { clientIpOf } from '../utils/client-ip';
+import { setTenantContextTx } from '../services/tenant/governed-tenant-context.js';
+import { verifyTenantChainOnAdminScope } from '../services/audit/tenant-chain-verdict.js';
+import type { AuditExportRequest, SignedAuditExport } from '../services/audit/signedAuditExport.js';
+
+const RESOURCE_TYPE_RE = /^[a-z][a-z0-9_]{0,63}$/;
+const RECORD_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_:.-]{0,127}$/;
+
+/**
+ * The record filters an export accepts: one resource type and up to 200 record
+ * ids. A malformed value is refused (null) rather than dropped: dropping it
+ * would export everything to a caller who asked for one document.
+ */
+function exportRecordFilters(q: Request['query']): { resourceType?: string; recordIds?: string[] } | null {
+  const out: { resourceType?: string; recordIds?: string[] } = {};
+  if (q.resource_type !== undefined) {
+    const t = String(q.resource_type);
+    if (!RESOURCE_TYPE_RE.test(t)) return null;
+    out.resourceType = t;
+  }
+  if (q.record_ids !== undefined) {
+    const ids = String(q.record_ids).split(',').map((x) => x.trim()).filter(Boolean);
+    if (ids.length === 0 || ids.length > 200 || !ids.every((x) => RECORD_ID_RE.test(x))) return null;
+    out.recordIds = ids;
+  }
+  return out;
+}
 
 // ---------------------------------------------------------------------------
 // Helper: derive the acting principal from the AUTHENTICATED request only.
@@ -164,6 +192,30 @@ function formatAuditRow(row: any) {
 // Factory
 // ---------------------------------------------------------------------------
 export function createAuditTrailRoutes(pool: Pool): Router {
+  /* The export reads inside a transaction stamped with the caller's org, the
+     way the audit-trail ledger reads (audit-trail-ledger.routes.ts): under
+     RLS_ENFORCE=on a pooled connection carries no tenant, and the audit_logs
+     rows the export carries would come back empty. The audit_logs chain verdict
+     comes from the one tenant verifier (services/audit/tenant-chain-verdict.ts). */
+  async function exportForTenant(orgId: number, request: AuditExportRequest): Promise<SignedAuditExport> {
+    const { generateSignedAuditExport } = await import('../services/audit/signedAuditExport.js');
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await setTenantContextTx(client, orgId);
+      const out = await generateSignedAuditExport(client, request, {
+        verifyAuditLogsChain: verifyTenantChainOnAdminScope,
+      });
+      await client.query('COMMIT');
+      return out;
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
   const router = Router();
 
   // GET /api/audit/logs — paginated audit logs
@@ -171,6 +223,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
       const offset = Math.max(0, parseInt(String(req.query.offset || '0'), 10));
       const { rows, total } = await queryAuditEvents(pool, guard.orgId, req.query, limit, offset);
@@ -192,6 +245,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
       const pageSize = Math.max(1, parseInt(String(req.query.pageSize || '10'), 10));
       const offset = (page - 1) * pageSize;
@@ -215,6 +269,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       const { rows, total } = await queryAuditEvents(pool, guard.orgId, req.query, 50, 0);
       return res.json({
         success: true,
@@ -246,6 +301,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditRecorder(req, res)) return;
       const body = req.body || {};
       // F3: identity is sourced from the authenticated principal, never the body.
       const principal = getActingPrincipal(req);
@@ -259,13 +315,18 @@ export function createAuditTrailRoutes(pool: Pool): Router {
           error: 'reason is required for regulatory_significant or gxp_relevant audit events',
         });
       }
+      // A client-recorded event names a type from the server's vocabulary and
+      // carries an object for metadata; anything else is refused before the
+      // write (audit DP-18, P1-20).
+      const refusal = clientEventRefusal(body);
+      if (refusal) return res.status(400).json({ error: refusal });
 
       const result = await pool.query(
         `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
         [
           guard.orgId,
-          body.eventType || body.event_type || 'general',
+          body.eventType || body.event_type,
           body.entityType || body.entity_type || 'system',
           body.entityId || body.entity_id || 0,
           principal.userId,
@@ -303,6 +364,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
 
       // Limit batch size to prevent abuse
       const batch = events.slice(0, 50);
+      if (!requireAuditRecorder(req, res)) return;
       // F3: every event in the batch is attributed to the authenticated
       // principal — per-event userId/userName/userRole from the body are ignored.
       const principal = getActingPrincipal(req);
@@ -325,13 +387,18 @@ export function createAuditTrailRoutes(pool: Pool): Router {
           skipped.push({ index: i, reason: 'reason required for regulatory/GxP-significant event' });
           continue;
         }
+        const refusal = clientEventRefusal(evt);
+        if (refusal) {
+          skipped.push({ index: i, reason: refusal });
+          continue;
+        }
         try {
           const result = await pool.query(
             `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
             [
               guard.orgId,
-              evt.eventType || evt.action || 'general',
+              evt.eventType || evt.action,
               evt.entityType || 'document',
               evt.entityId || 0,
               principal.userId,
@@ -399,11 +466,19 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   //   * sources signed_by/user_id from the authenticated principal, never the
   //     body (F3);
   //   * writes the event with signature_status 'unverified' so it is clearly a
-  //     non-binding marker, not a legal signature.
+  //     non-binding marker, not a legal signature;
+  //   * is recorded by the same set that records any audit event by hand
+  //     (requireAuditRecorder: owner, admin, manager or a platform
+  //     administrator), after the tenant guard and before the body is read,
+  //     as /audit/events and /audit/events/batch are (audit DP-38, P1-36).
+  //     The row it writes is regulatory_significant and gxp_relevant with a
+  //     body-supplied entity, meaning, reason and metadata; a viewer could
+  //     write one on the tenant guard alone.
   router.post('/audit/signatures', async (req: Request, res: Response) => {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditRecorder(req, res)) return;
       const body = req.body || {};
       const principal = getActingPrincipal(req);
 
@@ -474,6 +549,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       const sigId = String(req.params.signatureId).replace('SIG_', '');
       const result = await pool.query(
         `SELECT id, entity_type, entity_id, signed_by, signed_date, signature_meaning, reason, signature_status
@@ -513,6 +589,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
       const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
       const offset = (page - 1) * limit;
@@ -538,14 +615,17 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const orgGuard = requireAuthedOrgId(req, res);
       if (!orgGuard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       // Use signed export service for tamper-evident audit packages
-      const { generateSignedAuditExport } = await import('../services/audit/signedAuditExport.js');
+      const filters = exportRecordFilters(req.query);
+      if (!filters) return res.status(400).json({ error: 'Invalid resource_type or record_ids filter' });
       const format = (req.query.format === 'json' ? 'json' : 'csv') as 'csv' | 'json';
       const userId = (req as any).userId || (req as any).user?.id || 'unknown';
       const userName = (req as any).user?.name || (req as any).user?.email || String(userId);
 
-      const signedExport = await generateSignedAuditExport(pool, {
+      const signedExport = await exportForTenant(orgGuard.orgId, {
         organizationId: orgGuard.orgId,
+        ...filters,
         startDate: req.query.start_date ? String(req.query.start_date) : undefined,
         endDate: req.query.end_date ? String(req.query.end_date) : undefined,
         eventType: req.query.event_type ? String(req.query.event_type) : undefined,
@@ -589,13 +669,16 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const orgGuard = requireAuthedOrgId(req, res);
       if (!orgGuard.ok) return;
-      const { generateSignedAuditExport } = await import('../services/audit/signedAuditExport.js');
+      if (!requireAuditReader(req, res)) return;
+      const filters = exportRecordFilters(req.query);
+      if (!filters) return res.status(400).json({ error: 'Invalid resource_type or record_ids filter' });
       const format = (req.query.format === 'csv' ? 'csv' : 'json') as 'csv' | 'json';
       const userId = (req as any).userId || (req as any).user?.id || 'unknown';
       const userName = (req as any).user?.name || (req as any).user?.email || String(userId);
 
-      const signedExport = await generateSignedAuditExport(pool, {
+      const signedExport = await exportForTenant(orgGuard.orgId, {
         organizationId: orgGuard.orgId,
+        ...filters,
         startDate: req.query.start_date ? String(req.query.start_date) : undefined,
         endDate: req.query.end_date ? String(req.query.end_date) : undefined,
         eventType: req.query.event_type ? String(req.query.event_type) : undefined,
@@ -671,7 +754,12 @@ export function createAuditTrailRoutes(pool: Pool): Router {
    * GET /api/audit/chain-monitor/status
    * Returns the current status of the background chain integrity monitor.
    */
-  router.get('/audit/chain-monitor/status', async (_req: Request, res: Response) => {
+  router.get('/audit/chain-monitor/status', async (req: Request, res: Response) => {
+    // The monitor is estate-wide, not one organisation's: reading or running it
+    // is a platform administrator's act (2026-09-26 lens, P1-36 follow-up).
+    if (!isPlatformAdmin(req)) {
+      return res.status(403).json({ error: 'PLATFORM_ADMIN_REQUIRED', message: 'The chain-integrity monitor is a platform administrator surface.' });
+    }
     try {
       const { getChainMonitorStatus } = await import('../services/audit/chainIntegrityMonitor.js');
       const status = getChainMonitorStatus();
@@ -698,13 +786,18 @@ export function createAuditTrailRoutes(pool: Pool): Router {
    * POST /api/audit/chain-monitor/check
    * Trigger an on-demand chain integrity check.
    */
-  router.post('/audit/chain-monitor/check', async (_req: Request, res: Response) => {
+  router.post('/audit/chain-monitor/check', async (req: Request, res: Response) => {
+    if (!isPlatformAdmin(req)) {
+      return res.status(403).json({ error: 'PLATFORM_ADMIN_REQUIRED', message: 'The chain-integrity monitor is a platform administrator surface.' });
+    }
     try {
       const { runOnDemandCheck } = await import('../services/audit/chainIntegrityMonitor.js');
       const status = await runOnDemandCheck();
       res.json({ success: true, data: status });
-    } catch (err: any) {
-      res.status(500).json({ error: 'Chain integrity check failed', details: err.message });
+    } catch (err) {
+      // The detail goes to the log, never to the client (IAM-18 (1)).
+      console.error('Chain integrity check failed:', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ error: 'Chain integrity check failed' });
     }
   });
 

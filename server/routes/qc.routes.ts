@@ -14,7 +14,7 @@ import {
   insertQcReferenceStandardSchema,
 } from '../../shared/schema/qc-schemas';
 import { storage } from '../storage';
-import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { requireAuthedOrgId, withoutOrgId, withoutTenantKey } from '../utils/authedOrgId';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -57,6 +57,14 @@ function sendQcError(res: Response, error: unknown, failMessage: string): void {
 // batch releases, deviations, micro tests, reference standards). The
 // hardened storage interface forces the orgId at the compile boundary;
 // these route updates source it from the verified JWT.
+//
+// The same holds for WRITES. The create bodies are drizzle-zod insert schemas,
+// which accept `organizationId`, and the update bodies were passed through raw;
+// the database storage spreads both into .values() / .set(). So a caller chose
+// the organization a new record was filed under, and could move an existing one
+// out of its own org. Creates now take the org from the session and updates drop
+// the tenant key (ledger L191). The qc_* tables are created by no migration yet,
+// so no deployed database was reachable this way; the first one would have been.
 
 // ============================================================================
 // SPECIFICATION MANAGEMENT APIS
@@ -185,8 +193,9 @@ router.get('/oos-investigations/:id', async (req: Request, res: Response) => {
 // Create OOS investigation
 router.post('/oos-investigations', async (req: Request, res: Response) => {
   try {
-    const validatedData = insertQcOosInvestigationSchema.parse(req.body);
-    const investigation = await storage.createOosInvestigation(validatedData);
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const validatedData = withoutTenantKey(insertQcOosInvestigationSchema).parse(req.body);
+    const investigation = await storage.createOosInvestigation({ ...validatedData, organizationId: guard.orgId });
     res.status(201).json(investigation);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -201,7 +210,7 @@ router.post('/oos-investigations', async (req: Request, res: Response) => {
 router.put('/oos-investigations/:id', async (req: Request, res: Response) => {
   try {
     const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
-    const investigation = await storage.updateOosInvestigation(Number(req.params.id), guard.orgId, req.body);
+    const investigation = await storage.updateOosInvestigation(Number(req.params.id), guard.orgId, withoutOrgId(req.body ?? {}));
     res.json(investigation);
   } catch (error) {
     sendQcError(res, error, 'Failed to update OOS investigation');
@@ -296,8 +305,9 @@ router.get('/batch-releases/:id', async (req: Request, res: Response) => {
 // Create batch release
 router.post('/batch-releases', async (req: Request, res: Response) => {
   try {
-    const validatedData = insertQcBatchReleaseSchema.parse(req.body);
-    const release = await storage.createBatchRelease(validatedData);
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const validatedData = withoutTenantKey(insertQcBatchReleaseSchema).parse(req.body);
+    const release = await storage.createBatchRelease({ ...validatedData, organizationId: guard.orgId });
     res.status(201).json(release);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -312,7 +322,7 @@ router.post('/batch-releases', async (req: Request, res: Response) => {
 router.put('/batch-releases/:id', async (req: Request, res: Response) => {
   try {
     const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
-    const release = await storage.updateBatchRelease(Number(req.params.id), guard.orgId, req.body);
+    const release = await storage.updateBatchRelease(Number(req.params.id), guard.orgId, withoutOrgId(req.body ?? {}));
     res.json(release);
   } catch (error) {
     sendQcError(res, error, 'Failed to update batch release');
@@ -417,8 +427,9 @@ router.get('/deviations/:id', async (req: Request, res: Response) => {
 // Create deviation
 router.post('/deviations', async (req: Request, res: Response) => {
   try {
-    const validatedData = insertQcDeviationSchema.parse(req.body);
-    const deviation = await storage.createQcDeviation(validatedData);
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const validatedData = withoutTenantKey(insertQcDeviationSchema).parse(req.body);
+    const deviation = await storage.createQcDeviation({ ...validatedData, organizationId: guard.orgId });
     res.status(201).json(deviation);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -433,7 +444,7 @@ router.post('/deviations', async (req: Request, res: Response) => {
 router.put('/deviations/:id', async (req: Request, res: Response) => {
   try {
     const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
-    const deviation = await storage.updateQcDeviation(Number(req.params.id), guard.orgId, req.body);
+    const deviation = await storage.updateQcDeviation(Number(req.params.id), guard.orgId, withoutOrgId(req.body ?? {}));
     res.json(deviation);
   } catch (error) {
     sendQcError(res, error, 'Failed to update deviation');
@@ -523,8 +534,9 @@ router.get('/microbiological-tests/:id', async (req: Request, res: Response) => 
 // Create microbiological test
 router.post('/microbiological-tests', async (req: Request, res: Response) => {
   try {
-    const validatedData = insertQcMicrobiologicalTestSchema.parse(req.body);
-    const test = await storage.createMicrobiologicalTest(validatedData);
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const validatedData = withoutTenantKey(insertQcMicrobiologicalTestSchema).parse(req.body);
+    const test = await storage.createMicrobiologicalTest({ ...validatedData, organizationId: guard.orgId });
     res.status(201).json(test);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -539,7 +551,7 @@ router.post('/microbiological-tests', async (req: Request, res: Response) => {
 router.put('/microbiological-tests/:id', async (req: Request, res: Response) => {
   try {
     const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
-    const test = await storage.updateMicrobiologicalTest(Number(req.params.id), guard.orgId, req.body);
+    const test = await storage.updateMicrobiologicalTest(Number(req.params.id), guard.orgId, withoutOrgId(req.body ?? {}));
     res.json(test);
   } catch (error) {
     sendQcError(res, error, 'Failed to update microbiological test');
@@ -632,8 +644,9 @@ router.get('/reference-standards/:id', async (req: Request, res: Response) => {
 // Create reference standard
 router.post('/reference-standards', async (req: Request, res: Response) => {
   try {
-    const validatedData = insertQcReferenceStandardSchema.parse(req.body);
-    const standard = await storage.createReferenceStandard(validatedData);
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const validatedData = withoutTenantKey(insertQcReferenceStandardSchema).parse(req.body);
+    const standard = await storage.createReferenceStandard({ ...validatedData, organizationId: guard.orgId });
     res.status(201).json(standard);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -648,7 +661,7 @@ router.post('/reference-standards', async (req: Request, res: Response) => {
 router.put('/reference-standards/:id', async (req: Request, res: Response) => {
   try {
     const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
-    const standard = await storage.updateReferenceStandard(Number(req.params.id), guard.orgId, req.body);
+    const standard = await storage.updateReferenceStandard(Number(req.params.id), guard.orgId, withoutOrgId(req.body ?? {}));
     res.json(standard);
   } catch (error) {
     sendQcError(res, error, 'Failed to update reference standard');
@@ -691,8 +704,9 @@ router.get('/reference-standards/expiring', async (req: Request, res: Response) 
 // Qualify reference standard
 router.post('/reference-standards/:id/qualify', async (req: Request, res: Response) => {
   try {
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
     const { qualificationData, qualifiedBy } = req.body;
-    const standard = await storage.qualifyReferenceStandard(Number(req.params.id), {
+    const standard = await storage.qualifyReferenceStandard(Number(req.params.id), guard.orgId, {
       qualificationData,
       qualifiedBy,
       qualificationDate: new Date(),
@@ -706,8 +720,9 @@ router.post('/reference-standards/:id/qualify', async (req: Request, res: Respon
 // Dispose reference standard
 router.post('/reference-standards/:id/dispose', async (req: Request, res: Response) => {
   try {
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
     const { disposalMethod, disposedBy, reason } = req.body;
-    const standard = await storage.disposeReferenceStandard(Number(req.params.id), {
+    const standard = await storage.disposeReferenceStandard(Number(req.params.id), guard.orgId, {
       disposalMethod,
       disposedBy,
       reason,

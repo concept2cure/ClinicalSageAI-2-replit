@@ -1,0 +1,20 @@
+## ci:insert-columns-declared with run_id removed from the migration
+  skipped (unjudgeable)        : 6
+  migration lineage tables     : 1405
+  tables unknown to BOTH       : 9
+  baselined (known, unfixed)   : 47
+
+✅ no new violations. 47 baselined and awaiting burn-down.
+exit=0
+
+## restored
+
+✅ no new violations. 47 baselined and awaiting burn-down.
+## ledger-migration.test.ts with run_id removed from the migration
+ × ai.gateway_audit_log migration > creates every column the writer inserts, on a fresh database 6ms
+   → expected [ 'run_id' ] to deeply equal []
+ × ai.gateway_audit_log migration > adds every provenance column to a table that already exists 1ms
+   → expected [ 'run_id' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)
+exit=1 (the test, with run_id removed; the gate: exit=0, blind to this table)

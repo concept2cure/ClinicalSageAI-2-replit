@@ -1,0 +1,9 @@
+$ npm run check:security-patterns
+check-security-patterns: 0 violations across 2843 file(s).
+exit=0
+$ npm run ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 23 baselined site(s) remain, exactly as baselined.
+exit=0
+$ npm run ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 125 baselined across 56 file(s).
+exit=0

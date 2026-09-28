@@ -14,6 +14,8 @@
 import { pool } from '../../db';
 // The roles that can sign here (routes/protocol-reviews.ts runs requireEditorAccess).
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
+import { requireProtocolForWriteTx } from '../protocol-development/protocol-development-service';
+import { resolveSignerIdentity, SignerNotAttributableError } from '../part11/resolve-signer-identity';
 import {
   summarizeReviewConsensus,
   evaluateReviewReadiness,
@@ -39,10 +41,40 @@ const DISPOSITIONS = ['approve', 'approve_with_changes', 'reject', 'abstain'];
 // ─── Assignments ─────────────────────────────────────────────────────────────
 
 export interface AssignReviewerInput {
-  reviewerName: string;
+  /** Required without an account. With one, blank means the account's own name. */
+  reviewerName?: string | null;
   reviewerUserId?: number | null;
   role?: string;
   dueDate?: string | null;
+}
+
+/** Capitals and runs of whitespace do not make two names different. */
+const nameKey = (s: string): string => s.trim().replace(/\s+/g, ' ').toLowerCase();
+
+/**
+ * The name an account-bound review is listed under: the account's own, as a
+ * signature from it would print it (resolveSignerIdentity).
+ *
+ * Periodic review 2026-09-28, editor family, SEC-C-7: the typed name was stored
+ * as given beside the account, so a review bound to B could be listed, and B's
+ * signed disposition shown, as "Dr A". The HTTP route and the AnA tool
+ * assign_protocol_reviewer both reach this through assignReviewerTx.
+ */
+async function accountReviewerName(client: Queryable, orgId: number, reviewerUserId: number, typed: string): Promise<string> {
+  let name: string;
+  try {
+    name = (await resolveSignerIdentity(client, reviewerUserId, orgId, 'review assignment')).name;
+  } catch (err) {
+    if (!(err instanceof SignerNotAttributableError)) throw err;
+    throw new ProtocolReviewError('BAD_INPUT', 'That reviewer\'s account has no name or email on record, so a review cannot be listed under it. Nothing was recorded.');
+  }
+  if (typed && nameKey(typed) !== nameKey(name)) {
+    throw new ProtocolReviewError(
+      'BAD_INPUT',
+      `That account is ${name}, and a review assigned to it is listed under that name, not "${typed}". Leave the name blank, or name a reviewer who has no account. Nothing was recorded.`,
+    );
+  }
+  return name;
 }
 
 /** Assign a reviewer to a protocol document for a given review role. */
@@ -54,9 +86,12 @@ export async function assignReviewerTx(
   input: AssignReviewerInput,
 ): Promise<{ id: number; role: string }> {
   if (!Number.isInteger(protocolDocumentId) || protocolDocumentId <= 0) throw new ProtocolReviewError('BAD_INPUT', 'A valid protocol_document_id is required.');
-  if (!input.reviewerName || !input.reviewerName.trim()) throw new ProtocolReviewError('BAD_INPUT', 'reviewer_name is required.');
+  const typed = (input.reviewerName ?? '').trim();
+  if (input.reviewerUserId == null && !typed) throw new ProtocolReviewError('BAD_INPUT', 'reviewer_name is required.');
   const role = input.role ?? 'general';
   if (!ROLES.includes(role)) throw new ProtocolReviewError('BAD_INPUT', `Invalid review role "${role}".`);
+  await requireProtocolForWriteTx(client, orgId, protocolDocumentId, { signedContent: false });
+  let reviewerName = typed;
   if (input.reviewerUserId != null) {
     // Only the assigned user can sign the disposition, and nothing reassigns a
     // review, so an assignment to someone who can never sign is a review that
@@ -71,31 +106,61 @@ export async function assignReviewerTx(
     if (!GOVERNED_WRITE_ROLES.has(String(member.rows[0].role ?? '').toLowerCase())) {
       throw new ProtocolReviewError('BAD_INPUT', `That reviewer's role (${member.rows[0].role}) cannot sign, so they could never record a disposition. Nothing was recorded.`);
     }
+    reviewerName = await accountReviewerName(client, orgId, input.reviewerUserId, typed);
   }
   const { rows } = await client.query(
     `INSERT INTO protocol_review_assignments (organization_id, protocol_document_id, reviewer_name, reviewer_user_id, role, status, due_date, created_by)
      VALUES ($1,$2,$3,$4,$5,'assigned',$6,$7) RETURNING id`,
-    [orgId, protocolDocumentId, input.reviewerName.trim(), input.reviewerUserId ?? null, role, input.dueDate ?? null, userId],
+    [orgId, protocolDocumentId, reviewerName, input.reviewerUserId ?? null, role, input.dueDate ?? null, userId],
   );
   return { id: Number(rows[0].id), role };
 }
 
+/** The signed act: the decision, who signs it, and the meaning they declare. */
+export interface DispositionAct {
+  disposition: string;
+  signerId: number;
+  meaning: string;
+}
+
 /**
- * Record a reviewer's disposition; marks the assignment completed. It is signed
- * (routes/protocol-reviews.ts), so who may sign it, and with which meaning,
- * depends on who the assignment names:
+ * Who may sign a disposition, and with which meaning, depends on who the
+ * assignment names:
  *   - a user account: only that user, signing as `review` or `approval`;
  *   - a name with no account: anyone may record that person's decision, but only
  *     by taking `responsibility` for the record. A `review` signature from them
  *     would claim a review they did not do.
+ * Pure: throws the refusal, returns nothing when the signer may sign.
+ */
+function assertMaySignDisposition(
+  assignment: { assignedTo: number | null; reviewerName: string },
+  act: Pick<DispositionAct, 'signerId' | 'meaning'>,
+): void {
+  const { assignedTo } = assignment;
+  if (assignedTo !== null && assignedTo !== act.signerId) {
+    throw new ProtocolReviewError('FORBIDDEN', 'This review is assigned to another user. Only they can sign its disposition. Nothing was recorded.');
+  }
+  if (assignedTo === act.signerId && act.meaning !== 'review' && act.meaning !== 'approval') {
+    throw new ProtocolReviewError('BAD_INPUT', 'Sign your own review as "review" or "approval". Nothing was recorded.');
+  }
+  if (assignedTo === null && act.meaning !== 'responsibility') {
+    throw new ProtocolReviewError(
+      'BAD_INPUT',
+      `${assignment.reviewerName} has no account here, so their decision can only be recorded by someone taking responsibility for the record. Sign as "responsibility". Nothing was recorded.`,
+    );
+  }
+}
+
+/**
+ * Record a reviewer's disposition; marks the assignment completed. It is signed
+ * (routes/protocol-reviews.ts), so assertMaySignDisposition decides who may sign
+ * it, and with which meaning.
  */
 export async function setDispositionTx(
   client: Queryable,
   orgId: number,
   assignmentId: number,
-  disposition: string,
-  signerId: number,
-  meaning: string,
+  act: DispositionAct,
 ): Promise<{
   id: number;
   disposition: string;
@@ -104,6 +169,7 @@ export async function setDispositionTx(
   reviewerName: string;
   onBehalfOf: string | null;
 }> {
+  const { disposition } = act;
   if (!DISPOSITIONS.includes(disposition)) throw new ProtocolReviewError('BAD_INPUT', `Invalid disposition "${disposition}".`);
   const a = await client.query(
     `SELECT id, protocol_document_id, reviewer_name, reviewer_user_id, status, disposition
@@ -121,18 +187,7 @@ export async function setDispositionTx(
     throw new ProtocolReviewError('INVALID_STATE', 'A disposition is already signed for this review. Nothing was recorded.');
   }
   const assignedTo = row.reviewer_user_id == null ? null : Number(row.reviewer_user_id);
-  if (assignedTo !== null && assignedTo !== signerId) {
-    throw new ProtocolReviewError('FORBIDDEN', 'This review is assigned to another user. Only they can sign its disposition. Nothing was recorded.');
-  }
-  if (assignedTo === signerId && meaning !== 'review' && meaning !== 'approval') {
-    throw new ProtocolReviewError('BAD_INPUT', 'Sign your own review as "review" or "approval". Nothing was recorded.');
-  }
-  if (assignedTo === null && meaning !== 'responsibility') {
-    throw new ProtocolReviewError(
-      'BAD_INPUT',
-      `${row.reviewer_name} has no account here, so their decision can only be recorded by someone taking responsibility for the record. Sign as "responsibility". Nothing was recorded.`,
-    );
-  }
+  assertMaySignDisposition({ assignedTo, reviewerName: row.reviewer_name }, act);
   await client.query(
     `UPDATE protocol_review_assignments SET disposition = $3, status = 'completed', updated_at = now() WHERE id = $1 AND organization_id = $2`,
     [assignmentId, orgId, disposition],
@@ -173,6 +228,7 @@ export async function addCommentTx(
   if (!Number.isInteger(protocolDocumentId) || protocolDocumentId <= 0) throw new ProtocolReviewError('BAD_INPUT', 'A valid protocol_document_id is required.');
   if (!input.comment || !input.comment.trim()) throw new ProtocolReviewError('BAD_INPUT', 'comment is required.');
   if (input.severity != null && !SEVERITIES.includes(input.severity)) throw new ProtocolReviewError('BAD_INPUT', `Invalid severity "${input.severity}".`);
+  await requireProtocolForWriteTx(client, orgId, protocolDocumentId, { signedContent: false });
   if (input.assignmentId != null) {
     const a = await client.query(
       `SELECT id FROM protocol_review_assignments WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,

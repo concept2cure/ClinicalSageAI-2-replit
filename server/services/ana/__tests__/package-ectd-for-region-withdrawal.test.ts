@@ -11,16 +11,25 @@
  * and is carried through, and a delete that still names a source_path reaches
  * the packager's refusal instead of being shipped.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import JSZip from 'jszip';
 
+// 2026-09-28: confirmed writes now need an editor role (registry wrapper,
+// writeRoleRefusal); CTX models a confirmed person who may edit, so the
+// membership lookup answers 'member'. The pg stub has no organization_users row.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { PACKAGE_ECTD_FOR_REGION } from '../AnaToolDefinitions';
 import { getToolHandler } from '../AnaToolExecutor';
 
-const CTX = { organizationId: 1, userId: 1 };
+const CTX = { organizationId: 1, userId: 1, humanConfirmed: true };
 const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
 
 type LeafSchema = { properties: Record<string, unknown>; required: string[] };

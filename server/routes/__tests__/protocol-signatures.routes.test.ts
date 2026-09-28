@@ -143,7 +143,9 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('POST /documents/:id/finalize is a real electronic signature', () => {
+// Split by where the refusal lands: before the transaction opens (nothing asked
+// or written) versus inside it (what commits together, what rolls back).
+describe('POST /documents/:id/finalize is a real electronic signature: refused before the transaction', () => {
   it('refuses without re-authentication, and writes nothing', async () => {
     h.reauth = { ok: false, error: 'REAUTH_PASSWORD_REQUIRED' };
     const r = await finalize({ reason: REASON, meaning: 'authorship' });
@@ -175,6 +177,25 @@ describe('POST /documents/:id/finalize is a real electronic signature', () => {
     expect(h.log).toEqual([]);
   });
 
+  it('a viewer cannot sign, and nothing is asked or written', async () => {
+    h.role = 'viewer';
+    const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
+    expect(r.status).toBe(403);
+    expect(verifyReauth).not.toHaveBeenCalled();
+    expect(h.log).toEqual([]);
+  });
+
+  it('an enrolled second factor that was not given is named as such', async () => {
+    h.reauth = { ok: false, error: 'REAUTH_TOTP_REQUIRED' };
+    const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
+    expect(r.status).toBe(401);
+    expect(r.body.error.code).toBe('REAUTH_TOTP_REQUIRED');
+    expect(r.body.error.message).toMatch(/authenticator/);
+    expect(h.log).toEqual([]);
+  });
+});
+
+describe('POST /documents/:id/finalize is a real electronic signature: the signing transaction', () => {
   it('finalizes, checks independence, and writes the ledger AND the signature row in one transaction', async () => {
     const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
@@ -239,23 +260,6 @@ describe('POST /documents/:id/finalize is a real electronic signature', () => {
     expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'approval', client });
   });
 
-  it('a viewer cannot sign, and nothing is asked or written', async () => {
-    h.role = 'viewer';
-    const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
-    expect(r.status).toBe(403);
-    expect(verifyReauth).not.toHaveBeenCalled();
-    expect(h.log).toEqual([]);
-  });
-
-  it('an enrolled second factor that was not given is named as such', async () => {
-    h.reauth = { ok: false, error: 'REAUTH_TOTP_REQUIRED' };
-    const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
-    expect(r.status).toBe(401);
-    expect(r.body.error.code).toBe('REAUTH_TOTP_REQUIRED');
-    expect(r.body.error.message).toMatch(/authenticator/);
-    expect(h.log).toEqual([]);
-  });
-
   it('an author approving their own protocol is refused before the finalization runs', async () => {
     h.sod = new SeparationOfDutiesError('you are an author of this record');
     const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
@@ -306,7 +310,7 @@ describe('PATCH /assignments/:id/disposition is a real electronic signature', ()
   it('passes the signer and the declared meaning to the domain write, then signs', async () => {
     const r = await disposition({ disposition: 'approve', reason: REASON, meaning: 'review', reauth: REAUTH });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
-    expect(setDispositionTx).toHaveBeenCalledWith(client, 2, 9, 'approve', 11, 'review');
+    expect(setDispositionTx).toHaveBeenCalledWith(client, 2, 9, { disposition: 'approve', signerId: 11, meaning: 'review' });
     expect(h.log).toEqual([
       'BEGIN',
       'SOD',

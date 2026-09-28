@@ -1,0 +1,3 @@
+ ✓ tests/db/canonical-documents-append-only.dbtest.ts > two transitions on one document (real PostgreSQL) > are serialized: one is recorded, the other is refused by the gate before any effect runs 819ms
+ ✓ tests/db/canonical-documents-append-only.dbtest.ts > the runtime role (non-superuser, real PostgreSQL) > cannot DELETE or TRUNCATE a lifecycle record, even holding both privileges 40ms
+      Tests  2 passed (2)

@@ -148,7 +148,8 @@ const props = () => ({ surface: { id: 'protocol-dev', label: 'Protocol', navTier
 async function openTab(opts: RouteOptions = {}) {
   route(opts);
   render(<Providers><ProtocolWorkspace {...props()} /></Providers>);
-  fireEvent.click(await screen.findByRole('button', { name: /IRB package/ }));
+  // 2026-09-28 · GA-2: the protocol strip's entries are tabs (role="tab"), not plain buttons.
+  fireEvent.click(await screen.findByRole('tab', { name: /IRB package/ }));
 }
 
 /** This tab's own pane. The protocol's left-hand outline renders the DOCUMENT's

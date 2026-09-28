@@ -113,3 +113,78 @@ describe('requirePlatformAdmin', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * The e-mail allowlist is a bootstrap path for the platform owner's OWN
+ * password sign-in. A federated sign-in asserts whatever e-mail the identity
+ * provider says, so a tenant's IdP (or anyone who can make one assert an
+ * address) claiming an allowlisted e-mail would otherwise reach every
+ * organisation's data (audit IAM-03, plan P0-3). The allowlist therefore does
+ * not apply to an identity whose token provider is `saml`; the
+ * platform_role_grants path is unchanged and still decides for that identity.
+ */
+describe('PLATFORM_ADMIN_EMAILS does not apply to a federated (SAML) identity', () => {
+  const OWNER = 'owner@concept2cure.ai';
+  const savedEnv = process.env.PLATFORM_ADMIN_EMAILS;
+  beforeEach(() => {
+    process.env.PLATFORM_ADMIN_EMAILS = OWNER;
+  });
+  afterEach(() => {
+    if (savedEnv === undefined) delete process.env.PLATFORM_ADMIN_EMAILS;
+    else process.env.PLATFORM_ADMIN_EMAILS = savedEnv;
+  });
+
+  const identity = (provider: string) => ({
+    externalSubject: '7',
+    provider,
+    legacyUserId: 7,
+    organizationId: 42,
+    role: 'member',
+    email: OWNER,
+  });
+
+  it('refuses an allowlisted e-mail asserted by an IdP (provider saml) — 403, grants consulted', async () => {
+    const req = mkReq({
+      userId: 7,
+      userRole: 'member',
+      userEmail: OWNER,
+      user: { id: 7, email: OWNER, role: 'member' },
+      identity: identity('saml'),
+    });
+    const res = mkRes();
+    const next = vi.fn();
+    expect(isPlatformAdmin(req)).toBe(false);
+    await requirePlatformAdmin(req, res, next);
+    expect(res.statusCode).toBe(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('still admits the same e-mail on a password session (provider password)', async () => {
+    const req = mkReq({
+      userId: 7,
+      userRole: 'member',
+      userEmail: OWNER,
+      user: { id: 7, email: OWNER, role: 'member' },
+      identity: identity('password'),
+    });
+    const res = mkRes();
+    const next = vi.fn();
+    expect(isPlatformAdmin(req)).toBe(true);
+    await requirePlatformAdmin(req, res, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('reads the provider from req.user when req.identity is absent', () => {
+    expect(
+      isPlatformAdmin(
+        mkReq({ userRole: 'member', userEmail: OWNER, user: { id: 7, email: OWNER, provider: 'saml' } })
+      )
+    ).toBe(false);
+    expect(
+      isPlatformAdmin(
+        mkReq({ userRole: 'member', userEmail: OWNER, user: { id: 7, email: OWNER, provider: 'local-jwt' } })
+      )
+    ).toBe(true);
+  });
+});

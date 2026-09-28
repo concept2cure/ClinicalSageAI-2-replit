@@ -1,0 +1,50 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/authoring/docs",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "title": "OQ-003 Clinical Overview 20260923162917",
+      "module": "M2",
+      "client_program_id": "7704c859-cfb0-4519-90bb-e0e1bfd9358d"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 30,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "document": {
+        "id": "b46d9b7b-708d-4b03-92a0-718cb2a91225",
+        "title": "OQ-003 Clinical Overview 20260923162917",
+        "module": "M2",
+        "product_code": null,
+        "locale": "en-US",
+        "status": "draft",
+        "created_by": "1",
+        "template_id": null,
+        "submitted_at": null,
+        "current_workflow_id": null,
+        "approved_at": null,
+        "frozen_at": null,
+        "locked_at": null,
+        "locked_by": null,
+        "version": null,
+        "tenant_id": 1,
+        "created_at": "2026-09-23T16:29:18.300Z",
+        "updated_at": "2026-09-23T16:29:18.300Z",
+        "client_program_id": "7704c859-cfb0-4519-90bb-e0e1bfd9358d",
+        "c2c_document_id": "doc_b92746be59e541658ce0d700e2aed8bb",
+        "provenance": null
+      },
+      "message": "Document created successfully",
+      "governance": {
+        "bound": true,
+        "c2cDocumentId": "doc_b92746be59e541658ce0d700e2aed8bb"
+      }
+    }
+  }
+}

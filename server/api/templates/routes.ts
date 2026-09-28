@@ -12,8 +12,11 @@ import { ectdTemplates } from '../../../shared/schema';
 import { eq, and, or, like, sql, type SQL } from 'drizzle-orm';
 import { SOP_TEMPLATES } from '../../services/qms/sopTemplates';
 import { resolveUserId } from '../../types/auth-request';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('templates-routes');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -247,12 +250,7 @@ router.get('/catalog', async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching template catalog:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch template catalog',
-      error: (error as Error).message
-    });
+    return serverError(res, log, 'fetching the template catalog', error);
   }
 });
 

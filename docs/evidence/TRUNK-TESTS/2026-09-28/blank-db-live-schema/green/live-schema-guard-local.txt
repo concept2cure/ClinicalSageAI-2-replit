@@ -1,0 +1,2 @@
+[ci:tables-live-schema] 1285 relations on the live database; 752 referenced by server SQL; 9 resolved as functions; 40 absent
+[ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (40 baselined)

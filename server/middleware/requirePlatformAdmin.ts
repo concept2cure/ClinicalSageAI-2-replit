@@ -15,7 +15,12 @@
  *      platform_admin / support), or
  *   2. emails on the PLATFORM_ADMIN_EMAILS allowlist (comma-separated env var)
  *      — the bootstrap path for the platform owner before a platform role is
- *      provisioned in the database.
+ *      provisioned in the database. It applies to the owner's OWN (password)
+ *      sign-in only: a federated (SAML) session's e-mail is whatever the
+ *      identity provider asserted, so a tenant's IdP claiming the owner's
+ *      address gets nothing from it (audit IAM-03). Such an identity is
+ *      decided by the platform_role_grants path (3) alone.
+ *   3. an active platform_role_grants row (DB-backed, see below).
  *
  * @compliance FDA 21 CFR Part 11 §11.10(d) — limiting system access to
  *             authorized individuals.
@@ -40,6 +45,17 @@ function allowlistedEmails(): Set<string> {
   );
 }
 
+/**
+ * Which authentication surface issued the request's token, when the
+ * authenticator recorded it: `req.identity.provider` on the server/auth.ts
+ * path ('local-jwt' for a password session, 'saml' for a federated one), else
+ * a `provider` field on req.user. Empty when neither is set.
+ */
+function tokenProvider(req: Request): string {
+  const fromUser = (req.user as { provider?: unknown } | undefined)?.provider;
+  return String(req.identity?.provider ?? fromUser ?? '').toLowerCase();
+}
+
 /** True when the authenticated request belongs to a platform administrator. */
 export function isPlatformAdmin(req: Request): boolean {
   const primaryRole = (req.userRole || req.user?.role || '').toString().toLowerCase();
@@ -47,8 +63,10 @@ export function isPlatformAdmin(req: Request): boolean {
   if (PLATFORM_ROLES.has(primaryRole)) return true;
   if (roles.some(r => PLATFORM_ROLES.has(r))) return true;
 
+  // The e-mail allowlist does not apply to a federated identity: its e-mail is
+  // the identity provider's word, not the owner's password (see header, 2).
   const email = (req.userEmail || req.user?.email || '').toString().toLowerCase();
-  if (email && allowlistedEmails().has(email)) return true;
+  if (email && tokenProvider(req) !== 'saml' && allowlistedEmails().has(email)) return true;
 
   return false;
 }

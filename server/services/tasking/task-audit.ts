@@ -15,18 +15,23 @@
  * discarded its outcome at nine sites, so a PIN-signed completion could commit
  * with no ledger row and answer 200.) The owned branch of `auditTaskAction`
  * remains best-effort for callers with no transaction of their own, and REPORTS
- * its outcome rather than hiding it. Not yet moved: unifiedTasks.routes.ts
- * (/api/regulatory/tasks — three sites, still baselined in
- * ci:discarded-audit-write) and the completion cascade in task-side-effects.ts,
- * which changes successor status with no lineage row at all.
+ * its outcome rather than hiding it. Handed the completion's transaction, the
+ * completion cascade (task-side-effects) returns one row per dependent whose
+ * record it changed — a status move, or only its blockedBy[] — and
+ * PATCH /api/tasks/tasks/:id writes them this way, after the completion's own
+ * row, and the /api/regulatory/tasks routes (unifiedTasks.routes.ts) use the
+ * same contract for every write, the cascade included. Not yet moved: the
+ * cascade as the AnA command executor calls it, with no transaction, which
+ * still changes dependents' status and blockedBy[] with no lineage row.
  *
  * @module server/services/tasking/task-audit
  */
+import type { PoolClient } from 'pg';
 import { pool } from '../../db.js';
 
 /** Anything that can run a query — the pool, or a client inside a transaction. */
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
-import { recordGovernedAction } from '../../routes/c2c/actions.js';
+import { recordGovernedAction, type RecordGovernedActionParams } from '../../routes/c2c/actions.js';
 import { queryableFromDrizzle, type DrizzleRunner } from '../../db/drizzle-queryable.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
@@ -186,14 +191,27 @@ export async function auditTaskAction(
     return { recorded: true, enlisted: true };
   }
 
-  const client = await pool.connect();
+  return recordInOwnedTransaction(row);
+}
+
+/**
+ * The owned-transaction branch of `auditTaskAction`: open a transaction, write
+ * the lineage row on it, and REPORT the outcome. Best-effort — never throws.
+ */
+async function recordInOwnedTransaction(row: RecordGovernedActionParams): Promise<TaskAuditOutcome> {
+  // Acquired INSIDE the try: a connection that cannot be opened is a lineage
+  // row that was not written, and says so like any other failure here. Outside
+  // it, the rejection escaped to the caller's catch-all — the notify route then
+  // reported a notification it had already delivered as "Failed to send".
+  let client: PoolClient | undefined;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
     await recordGovernedAction(client, row);
     await client.query('COMMIT');
     return { recorded: true, enlisted: false };
   } catch (err: any) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    await client?.query('ROLLBACK').catch(() => undefined);
     // Best-effort lineage — never break the task mutation on an audit failure.
     // The ROLLBACK above is what keeps a failure from leaving half a pair. The
     // store's own message stays in this log line and is NOT returned: several
@@ -201,7 +219,7 @@ export async function auditTaskAction(
     console.warn('[tasking] audit lineage write failed (non-fatal):', err?.message);
     return { recorded: false, reason: 'WRITE_FAILED', enlisted: false };
   } finally {
-    client.release();
+    client?.release();
   }
 }
 
