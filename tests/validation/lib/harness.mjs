@@ -227,7 +227,15 @@ export async function sharedSession(role, baseUrl = BASE_URL) {
   } catch {
     session = null;
   }
-  return session?.accessToken ? validatedSession(baseUrl, session, session.method) : null;
+  if (!session?.accessToken) return null;
+  // A shared session can end during a run: since P1-1 (2026-09-26) a session
+  // left idle for fifteen minutes is over. An ended session is no session, and
+  // the caller signs in again, as a person would.
+  try {
+    return await validatedSession(baseUrl, session, session.method);
+  } catch {
+    return null;
+  }
 }
 
 /** The run identity's credential when one is supplied, else null (dev-login). */

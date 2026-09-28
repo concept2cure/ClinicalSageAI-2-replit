@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/submissions/sequences/3/leaves",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "sectionCode": "m1.2",
+      "title": "Cover letter",
+      "documentTable": "vault_documents",
+      "documentUuid": "c30104ba-48d2-4723-809a-2f2d8c8e41b9",
+      "lifecycleOp": "new",
+      "reason": "Placed by the validation run for this sequence"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 24,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "CROSS_PROJECT",
+        "message": "This document belongs to another project. A filing can hold only its own project’s documents."
+      }
+    }
+  }
+}
