@@ -1,0 +1,54 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/projects/ebd39930-030c-44d6-98ce-b2662ea751ca/activity",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 24,
+    "rateLimitRetries": 0,
+    "body": {
+      "activity": [
+        {
+          "id": "37739e77-229d-43f7-8eb1-c1a35248b3c1",
+          "action": "c2c.project.create",
+          "resource_type": "regulatory_programs",
+          "resource_id": "ebd39930-030c-44d6-98ce-b2662ea751ca",
+          "actor_id": 1,
+          "details": {
+            "project_id": "ebd39930-030c-44d6-98ce-b2662ea751ca",
+            "name": "OQ-001 IND program 20260928011900",
+            "code": "OIP2-82UA",
+            "program_type": "ind",
+            "product_type": "biologic",
+            "primary_agency": "FDA",
+            "created_via": "v2-new-project-wizard",
+            "submission_id": 15,
+            "submission_created": true,
+            "submission_application_type": "ind",
+            "project_anchor_id": 13,
+            "project_anchor_created": true
+          },
+          "actor_name": "JM Smith",
+          "occurred_at": "2026-09-28T01:19:33.017Z",
+          "ip_address": null
+        },
+        {
+          "id": "6d53fa5f-fab7-4feb-a5f9-17a1fb1731f8",
+          "action": "c2c.work.transition",
+          "resource_type": "document",
+          "resource_id": "doc_b511e58af38e40bbb47189d0819ea283",
+          "actor_id": 1,
+          "details": null,
+          "actor_name": "JM Smith",
+          "occurred_at": "2026-09-28T01:19:32.996Z",
+          "ip_address": null
+        }
+      ]
+    }
+  }
+}
