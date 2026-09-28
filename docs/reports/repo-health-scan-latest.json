@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T15:59:15.488Z",
+  "generatedAt": "2026-09-28T16:08:36.598Z",
   "git": {
-    "sha": "14affeed09e004214cbdfe2d7918d6b9796c37e3",
+    "sha": "ea2d0d0633550e754d8c8f4908da40a609d6e8c7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2024,12 +2024,12 @@
         "bytes": 175247
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 159625
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 160206
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 158952
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 159625
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2207,7 +2207,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3579
+        "lines": 3597
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2391,7 +2391,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1939
+        "lines": 1968
       },
       {
         "file": "server/routes/c2c/projects.ts",
