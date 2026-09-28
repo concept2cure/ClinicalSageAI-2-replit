@@ -928,7 +928,9 @@ interface ProjPortfolioEntry {
   ws: string;
   code: string;
   stage: string;
-  readiness: number;
+  /** Share of the program's governed sections approved; null when there is
+   *  nothing to measure or the measurement failed. */
+  readiness: number | null;
   status: string;
   lead: string;
   blocker: string | null;
@@ -988,8 +990,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   /* A mean over no programmes has no value. `kv` covers a read that has not
      settled; this covers one that settled with zero rows, where the `|| 1`
      divisor still produced a confident "0%". */
-  const meanReadiness = projects.length
-    ? Math.round(projects.reduce((s, p) => s + p.readiness, 0) / projects.length) + '%'
+  const measured = projects.filter((p): p is ProjPortfolioEntry & { readiness: number } => p.readiness != null);
+  const meanReadiness = measured.length
+    ? Math.round(measured.reduce((s, p) => s + p.readiness, 0) / measured.length) + '%'
     : '—';
   const health = [
     { l: 'Active programs', n: kv(countFloor(projects.length, truncated)), m: 'across MDX, Biotech, Pharma', t: '' },
@@ -1308,10 +1311,10 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
               <div className="pj-card-t">{p.title}</div>
               <div className="pj-card-m">{p.code} · {p.stage} · Lead {p.lead}</div>
               <div className="ph-bar-track" style={{ margin: '12px 0 6px' }}>
-                <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: p.readiness + '%' }} />
+                <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: (p.readiness ?? 0) + '%' }} />
               </div>
               <div className="pj-card-r">
-                <span>{p.readiness}% ready</span><span>{p.due}</span>
+                <span>{p.readiness == null ? 'Readiness not measured' : `${p.readiness}% ready`}</span><span>{p.due}</span>
               </div>
               <div className="pj-card-f">
                 <span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span>
@@ -1342,7 +1345,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
               <div>
                 <div style={{ fontSize: 11.5 }}>{p.stage}</div>
                 <div className="ph-bar-track" style={{ marginTop: 5 }}>
-                  <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: p.readiness + '%' }} />
+                  <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: (p.readiness ?? 0) + '%' }} />
                 </div>
               </div>
               <div style={{ fontSize: 11, color: p.blocker ? 'var(--warning)' : 'var(--text-400)' }}>{p.blocker ? '1 blocker' : '—'}</div>

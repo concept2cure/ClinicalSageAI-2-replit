@@ -503,7 +503,7 @@ async function readProgramDetail(id: string, orgId: number): Promise<Record<stri
   const measured = await readinessByProject([id], orgId);
   return {
     ...serializeProgramDetail(rows[0] as Record<string, unknown>),
-    readiness: measured ? (measured.get(id) ?? 0) : null,
+    readiness: measured?.get(id) ?? null,
   };
 }
 
@@ -570,9 +570,15 @@ router.get('/', async (req: Request, res: Response) => {
       (page as Array<{ id: string }>).map((p) => p.id),
       orgId,
     );
-    for (const p of page as Array<{ id: string; readiness: number }>) {
-      const r = real?.get(p.id);
-      if (r != null) p.readiness = r;
+    /* A measurement that failed, or a program with no governed sections to
+       measure, is no figure: null, which the card renders as "not measured".
+       Both used to fall back to the stored progress_percent 0 — a failed read
+       rendered as a measured "0% ready", which the note above admits was "not
+       a good answer". A share over no sections is undefined, as a mean over
+       no programs is. (A program with its dossier spine and nothing approved
+       is a real, measured 0 and still reads 0%.) */
+    for (const p of page as Array<{ id: string; readiness: number | null }>) {
+      p.readiness = real?.get(p.id) ?? null;
     }
 
     return res.json({

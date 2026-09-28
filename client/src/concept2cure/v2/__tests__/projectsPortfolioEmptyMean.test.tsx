@@ -40,7 +40,7 @@ const summaryItem = (label: RegExp) =>
   Array.from(document.querySelectorAll('.pj-summary-i')).find((el) => label.test(el.textContent ?? ''));
 const figure = (label: RegExp) => summaryItem(label)?.querySelector('strong')?.textContent ?? null;
 
-const row = (id: string, status: string, readiness: number) => ({
+const row = (id: string, status: string, readiness: number | null) => ({
   id, title: `Program ${id}`, ws: 'Pharma', code: id.toUpperCase(), stage: 'Planning',
   readiness, status, lead: 'Rae Okafor', blocker: null, due: '—',
 });
@@ -75,5 +75,31 @@ describe('Projects — a mixed portfolio still has a mean', () => {
     expect(figure(/blocked/i)).toBe('1');
     // (40 + 20 + 90) / 3 = 50 — the mean still covers every program shown.
     expect(figure(/average readiness/i)).toBe('50%');
+  });
+});
+
+describe('Projects — a program with nothing measurable has no readiness figure', () => {
+  /* The server answers readiness null when the measurement failed or a
+     program has no governed sections to measure (server/routes/c2c/projects.ts);
+     both used to reach the card as a stored, never-updated "0% ready". */
+  it('says "not measured" on its card, never "0% ready"', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) =>
+      url === '/api/c2c/projects' ? ok({ data: [row('u1', 'active', null)] }) : ok({ data: [] }),
+    );
+    render(<Projects {...props()} />);
+    await waitFor(() => expect(screen.getByText('Program u1')).toBeTruthy());
+    expect(screen.getByText('Readiness not measured')).toBeTruthy();
+    expect(screen.queryByText('0% ready')).toBeNull();
+    expect(figure(/average readiness/i)).toBe('—');
+  });
+
+  it('averages only the programs that were measured', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) =>
+      url === '/api/c2c/projects' ? ok({ data: [row('m1', 'active', 40), row('u1', 'active', null)] }) : ok({ data: [] }),
+    );
+    render(<Projects {...props()} />);
+    await waitFor(() => expect(screen.getByText('Program m1')).toBeTruthy());
+    // 40 over the one measured program — not (40 + 0) / 2.
+    expect(figure(/average readiness/i)).toBe('40%');
   });
 });
