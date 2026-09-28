@@ -928,13 +928,18 @@ function tryParseSignPayload(raw: string | undefined): PackageSignStepPayload | 
  *
  * OQ-7 mandate: WHERE organization_id = $1 is the tenant guard. The
  * superseded_by IS NULL clause enforces OQ-4 (§11.70 append-only) — only the
- * current, non-rolled-back signature is returned. ORDER BY created_at DESC
+ * current, non-rolled-back signature is returned. ORDER BY id DESC
  * is defense-in-depth; in practice at most one row matches because every
  * resign produces a NEW row whose digest is different (any change to inputs
  * changes the digest).
  *
- * Returns the signature id on hit, null on miss-or-cross-org (collapsed
- * semantics — caller cannot distinguish).
+ * Returns the signature on hit, null on miss-or-cross-org (collapsed
+ * semantics — caller cannot distinguish). A hit carries the §11.50
+ * manifestation — printed name, date and time, meaning — because the screens
+ * that show a release signature have no other source for it: before periodic
+ * review 2026-09-22 (Part 11 finding 4) this selected `id` alone, and the
+ * Submission Center's §11.70 panel showed a signature nobody could attribute.
+ * A field the row does not hold comes back null, never a stand-in.
  *
  * THROWS `VerificationUnavailableError` when the lookup could not run (WO-16B
  * finding 14). This used to catch every error, log it as "non-fatal" and
@@ -944,10 +949,31 @@ function tryParseSignPayload(raw: string | undefined): PackageSignStepPayload | 
  * check that never ran. A caller that needs the verdict must now decide what
  * "could not check" means; none of them may read it as "revoked".
  */
+export interface ActiveReleaseSignature {
+  id: number;
+  signerId: number | null;
+  signerName: string | null;
+  signerTitle: string | null;
+  /** `signature_meaning` as signed — 'approval' for a package release (OQ-8). */
+  meaning: string | null;
+  /** ISO-8601 instant of signing. */
+  signedAt: string | null;
+}
+
+function nullableText(v: unknown): string | null {
+  return typeof v === 'string' && v.trim() ? v : null;
+}
+
+function isoInstantOrNull(v: unknown): string | null {
+  if (v == null) return null;
+  const d = v instanceof Date ? v : new Date(String(v));
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export async function findActiveReleaseSignature(params: {
   organizationId: number;
   boundPayloadDigest: string;
-}): Promise<{ id: number } | null> {
+}): Promise<ActiveReleaseSignature | null> {
   if (!Number.isFinite(params.organizationId) || params.organizationId <= 0) {
     return null;
   }
@@ -967,7 +993,8 @@ export async function findActiveReleaseSignature(params: {
          `id` is the serial primary key, so newest-first is identical, and it
          exists on every provisioning path. This is the only consumer of that
          column anywhere in the server. */
-      `SELECT id FROM electronic_signatures
+      `SELECT id, signer_id, signer_name, signer_title, signature_meaning, signed_at
+         FROM electronic_signatures
         WHERE organization_id = $1
           AND bound_payload_digest = $2
           AND superseded_by IS NULL
@@ -979,7 +1006,15 @@ export async function findActiveReleaseSignature(params: {
     const row = result.rows[0] as Record<string, unknown>;
     const id = Number(row.id);
     if (!Number.isFinite(id) || id <= 0) return null;
-    return { id };
+    const signerId = row.signer_id == null ? null : Number(row.signer_id);
+    return {
+      id,
+      signerId: Number.isFinite(signerId) ? signerId : null,
+      signerName: nullableText(row.signer_name),
+      signerTitle: nullableText(row.signer_title),
+      meaning: nullableText(row.signature_meaning),
+      signedAt: isoInstantOrNull(row.signed_at),
+    };
   } catch (err) {
     console.error(
       '[Orchestrator] findActiveReleaseSignature could not run — not treating this as "no active signature":',

@@ -214,7 +214,12 @@ export async function seed(ctx) {
   const { api, run, baseUrl, identity } = ctx;
   const startedAt = new Date();
   const tally = makeTally(run);
-  const me = must(await api('GET', '/api/auth/me'), 200, 'auth/me').user ?? {};
+  // /api/auth/me answers the user at the top level today; `.user` alone read
+  // {} and sent every review request with no reviewer (id NaN → null), which
+  // the route stored as a pending review nobody could act on. Same envelope
+  // rule as lib.mjs identityOf.
+  const meBody = must(await api('GET', '/api/auth/me'), 200, 'auth/me');
+  const me = meBody.user ?? meBody.data ?? meBody;
   const signer = await connectSigner({ baseUrl, authorEmail: identity.email });
   run.record('identities', {
     author: { email: identity.email, userId: identity.userId, organizationId: identity.organizationId },

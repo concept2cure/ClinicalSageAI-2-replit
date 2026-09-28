@@ -1,0 +1,43 @@
+# 2026-09-26T04:09:43Z — after the fix (working tree on 5b55e2b5)
+$ npx vitest run server/routes/__tests__/ssoRoutes.test.ts server/services/__tests__/saml-provider.test.ts server/routes/__tests__/authSurfaceSecurity.test.ts client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts client/src/concept2cure/auth/__tests__/computeRedirect.test.ts client/src/services/portal/__tests__/authService-adopt-session.test.ts
+}
+stdout | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a new user is provisioned with a membership in the config org only
+{
+  "timestamp": "2026-09-26T04:09:46.303Z",
+  "level": "info",
+  "message": "[sso] SAML SSO login successful for user=bob@acme.test, org=42",
+  "context": {}
+}
+stdout | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an existing user's name is not overwritten from the assertion
+{
+  "timestamp": "2026-09-26T04:09:46.308Z",
+  "level": "info",
+  "message": "[sso] SAML SSO login successful for user=alice@acme.test, org=42",
+  "context": {}
+}
+stderr | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an account that is not active is refused (403), with a failure event
+{
+  "timestamp": "2026-09-26T04:09:46.311Z",
+  "level": "warn",
+  "message": "[sso] SAML sign-in refused: account 7 is not active",
+  "context": {}
+}
+stderr | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a validation failure is refused (401) and written as a failure event in the config org's tenant
+{
+  "timestamp": "2026-09-26T04:09:46.315Z",
+  "level": "warn",
+  "message": "[sso] SAML validation failed: signature did not verify",
+  "context": {}
+}
+stderr | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a configured slug with no organisation row is refused (403) and written as a failure event
+{
+  "timestamp": "2026-09-26T04:09:46.319Z",
+  "level": "error",
+  "message": "[sso] SAML org resolution failed: No organization found for SAML org slug \"orphan\"",
+  "context": {}
+}
+ Test Files  6 passed (6)
+      Tests  60 passed (60)
+   Start at  04:09:44
+   Duration  2.33s (transform 1.66s, setup 379ms, import 3.66s, tests 406ms, environment 514ms)
+exit=0

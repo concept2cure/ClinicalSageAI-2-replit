@@ -1,0 +1,3 @@
+vault.document_catalog|f|f|0
+vault.document_read_receipts|f|f|0
+vault.document_chunks|t|f|4

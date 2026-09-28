@@ -41,8 +41,12 @@ export interface LeafBytes {
   ctdSection: string;
   /** Leaf filename within its module folder, e.g. 'drug-product.pdf'. */
   fileName: string;
-  /** The already-rendered leaf content (a PDF). */
-  bytes: Buffer;
+  /**
+   * The already-rendered leaf content (a PDF). Absent ONLY for a withdrawal:
+   * `operation: 'delete'` files a backbone entry that points at the document in
+   * the sequence that holds it, and ships no bytes of its own.
+   */
+  bytes?: Buffer;
   /** Human-readable leaf title for the backbone. */
   title: string;
   /**
@@ -56,6 +60,20 @@ export interface LeafBytes {
   operation?: EctdLeaf['operation'];
   /** ICH modified-file pointer for replace/append/delete (prior sequence path). */
   modifiedFile?: string;
+  /**
+   * The leaf's checksum, for a WITHDRAWAL only: it ships no bytes, so this
+   * cannot be computed here and must be the one the document was filed under —
+   * the backbone entry checks the file in the prior sequence, not a new one.
+   * Ignored for every other operation, where the shipped bytes are hashed.
+   */
+  md5?: string;
+  /**
+   * The DOCUMENT's stable identity across sequences, when the caller has one.
+   * Published in the bundle's leaf manifest so the sequence AFTER this one
+   * recognises the same document through a change of file name — the name is
+   * composed from the section it sits in, and a section can be renamed.
+   */
+  leafKey?: string;
 }
 
 export interface PackageLeafBytesParams {
@@ -104,6 +122,30 @@ export async function packageLeafBytes(params: PackageLeafBytesParams): Promise<
     const usedNames = new Set<string>();
     const packagerLeaves: EctdLeaf[] = [];
     for (const leaf of params.leaves) {
+      // A withdrawal carries no bytes: it is a backbone entry pointing at the
+      // prior sequence that holds the document. It writes no temp file, takes
+      // no name in this package, and must keep the file name it was FILED
+      // under — a numeric suffix here would point the withdrawal at a document
+      // the agency does not have.
+      if (leaf.operation === 'delete' && !leaf.bytes) {
+        packagerLeaves.push({
+          ctdSection: leaf.ctdSection,
+          operation: 'delete',
+          sourcePath: '',
+          fileName: leaf.fileName,
+          title: leaf.title,
+          ...(leaf.md5 ? { md5: leaf.md5 } : {}),
+          ...(leaf.modifiedFile ? { modifiedFile: leaf.modifiedFile } : {}),
+          ...(leaf.leafKey ? { leafKey: leaf.leafKey } : {}),
+        });
+        continue;
+      }
+      if (!leaf.bytes) {
+        throw new Error(
+          `Leaf ${leaf.ctdSection}/${leaf.fileName} has no bytes and is not a withdrawal ` +
+            `(operation ${JSON.stringify(leaf.operation ?? 'new')}). A leaf that files content must carry it.`,
+        );
+      }
       // Deterministic, collision-free on-disk filename: two leaves that share a
       // filename get a numeric suffix so neither temp write nor packaging drops
       // one. (Placement uniqueness within the backbone is the packager's job.)
@@ -127,6 +169,7 @@ export async function packageLeafBytes(params: PackageLeafBytesParams): Promise<
         fileName,
         title: leaf.title,
         ...(leaf.modifiedFile ? { modifiedFile: leaf.modifiedFile } : {}),
+        ...(leaf.leafKey ? { leafKey: leaf.leafKey } : {}),
       });
     }
 

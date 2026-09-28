@@ -254,12 +254,15 @@ export interface CompleteCatalogResult {
   ok: boolean;
   refusal?: string;
   coverage?: SpanCoverageReport;
+  /** Present only on a key_data refusal: every value the text does not state, by path. */
+  unverifiedKeyData?: import('./document-catalog-core.js').UnverifiedKeyDataLeaf[];
   embeddingStatus?: 'embedded' | 'failed';
 }
 
 /**
- * Write the comprehension tier — refused below full read coverage. The
- * embedding is best-effort and its outcome is recorded (embedding_status),
+ * Write the comprehension tier — refused below full read coverage, and
+ * refused when any key_data value does not occur in the text that was read.
+ * The embedding is best-effort and its outcome is recorded (embedding_status),
  * never assumed: a catalog entry whose embedding failed is still a valid
  * record that says its semantic index is missing.
  */
@@ -272,7 +275,8 @@ export async function completeCatalog(args: {
   keyData?: Record<string, unknown> | null;
   userId?: number | null;
 }): Promise<CompleteCatalogResult> {
-  const doc = await loadDocumentForOrg(args.documentId, args.organizationId);
+  // The text that was served is the text key_data is verified against.
+  const doc = await loadDocumentForOrg(args.documentId, args.organizationId, { includeText: true });
   if (!doc) {
     return { ok: false, refusal: 'Document not found in your organization\'s programs.' };
   }
@@ -294,10 +298,18 @@ export async function completeCatalog(args: {
     };
   }
 
+  /* Coverage proves the model was served every character; it proved nothing
+     about what the model then wrote. key_data was stored as the model typed
+     it, so a CoA reading batch 23-104 and assay 99.2 % was recorded as batch
+     23-105 and assay 98.4 and served back as fact by every reader of the
+     catalog. The gate now also checks each value against the same stored text
+     read_project_document served, before the embedding and the write, so a
+     refusal stores nothing (CLAUDE.md Rule 2). */
   const coverage = await getReadCoverage(doc.id, doc.contentHash, doc.catalog.charCount);
-  const verdict = assertCatalogWriteAllowed(coverage);
+  const verdict = assertCatalogWriteAllowed(coverage, args.keyData, doc.extractedText);
   if (!verdict.allowed) {
-    return { ok: false, refusal: verdict.reason ?? 'Catalog write refused.', coverage };
+    const { reason, unverifiedKeyData } = verdict;
+    return { ok: false, refusal: reason ?? 'Catalog write refused.', coverage, unverifiedKeyData };
   }
 
   // Embed the comprehension record so it is semantically retrievable. The

@@ -60,6 +60,14 @@ export interface SurfaceActionDirective {
   surfaceId: string;
   label: string;
   params?: Record<string, string>;
+  /**
+   * The program the server resolved for this operation. It rides beside the
+   * registry's fields and resolveSurfaceAction never produces it: program
+   * identity is tenant data the registry cannot vouch for, and the model's
+   * params are cut to the declared ones, so only the server sets it
+   * (act_on_screen, for projects.open-program).
+   */
+  program?: { id: string; name?: string; code?: string };
 }
 
 export type SurfaceActionResolution =

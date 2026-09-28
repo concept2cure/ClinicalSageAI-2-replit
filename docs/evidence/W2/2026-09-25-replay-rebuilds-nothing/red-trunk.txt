@@ -1,0 +1,35 @@
+clean trunk 8606dcbbd, fresh PostgreSQL 16 database: install-fresh, deploy-migrate, then the gate
+
+❌ Install failed: 1 tenant-keyed table(s) carry no RLS policy — rows are readable across tenants once anything reads them: public.users (child of public.organizations, row security off)
+
+[ci:replay-rebuilds-nothing] replayed deploy-migrate over 8869 constraints and indexes: 13 rebuilt, 0 dropped, 5 created
+
+[ci:replay-rebuilds-nothing] ❌ a replay deploy changed objects it had no reason to touch.
+
+  rebuilt (dropped and re-added, so re-validated / rebuilt under lock on every deploy):
+    CHECK       public.c2c_document_aliases c2c_document_aliases_store_check
+    CHECK       public.c2c_documents c2c_documents_doc_type_check
+    FOREIGN KEY public.client_workspaces client_workspaces_organization_id_organizations_id_fk
+    CHECK       public.cmc_interview_sessions cmc_interview_sessions_status_chk
+    FOREIGN KEY public.connector_credentials connector_credentials_organization_id_organizations_id_fk
+    CHECK       public.document_span_lineage document_span_lineage_kind_shape
+    CHECK       public.document_span_lineage document_span_lineage_kind_valid
+    CHECK       public.ivdr_packs ivdr_packs_status_check
+    CHECK       public.submission_orchestrator_runs submission_orchestrator_runs_region_check
+    CHECK       public.submission_orchestrator_runs submission_orchestrator_runs_status_check
+    FOREIGN KEY public.supply_chain_batches supply_chain_batches_organization_id_organizations_id_fk
+    FOREIGN KEY public.supply_chain_materials supply_chain_materials_organization_id_organizations_id_fk
+    FOREIGN KEY public.supply_chain_suppliers supply_chain_suppliers_organization_id_organizations_id_fk
+
+  created by a replay (the first deploy did not converge):
+    INDEX       public.idx_ivdr_binder_evidence_atom
+    INDEX       public.idx_ivdr_binder_evidence_chunk
+    INDEX       public.idx_ivdr_binder_evidence_source_type
+    CHECK       public.ivdr_binder_evidence chk_binder_evidence_source_integrity
+    CHECK       public.ivdr_binder_evidence ivdr_binder_evidence_source_type_check
+
+  Each rebuilt CHECK holds ACCESS EXCLUSIVE for a full scan of its table; each
+  foreign key blocks writes to the child and the parent for its scan; each index
+  is a full build. On a client's database that is every deploy, while it serves.
+  FIX: amend the creating file in place (CLAUDE.md, Rule 1) so the replacement runs
+  only when pg_get_constraintdef differs — see this script's header for the shape.

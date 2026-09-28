@@ -1,0 +1,208 @@
+# the PF-11 placement tests, the walk and the placement callers, with the fix
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is placed while the gate is assembling
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is removed while the gate is assembling
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > upsertLeaf re-checks the status under the sequence row lock, not only before it
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > removeLeaf re-checks the status under the sequence row lock, not only before it
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a dependent freeze while a lower sequence is dispatched but not sent — as an ordering refusal, not a package defect
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > does not refuse a sequence of only new leaves that shares no section with the unsent lower one
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a new leaf in a section the unsent lower sequence files (its operation derives from that filing)
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses dispatch on the same rule
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the higher direction: a lower sequence is not filed behind a locked higher one it depends on > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the higher direction: a lower sequence is not filed behind a locked higher one it depends on > refuses dispatch of a frozen lower sequence once a higher one acting on the same document is already filed
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the higher direction: a lower sequence is not filed behind a locked higher one it depends on > a dispatched, unsent higher sequence refuses the lower one with the remedy that works, not "send it first"
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a pre-existing pair of locked, unsent sequences in a shared section is not deadlocked > lets the lower one dispatch, and holds the higher one until it is sent
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule spans the regions of a submission, as the prior-state loader does > names the region of the sequence it waits on
+ ✓ tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > IND sequences with their own 1571 and cover letter freeze and dispatch while the lower one is dispatched, not sent
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > a replace of the SAME document the unsent lower sequence files is still refused, with the filing-order message
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > a lower IND sequence still freezes and dispatches after a higher one with its own transmittal pair is filed
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a withdrawal that names no document still binds the ordering rule by section > a withdrawal naming no document binds by section: a dispatched, unsent one holds a higher sequence filing in that section
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a withdrawal that names no document still binds the ordering rule by section > a withdrawal naming no document is refused behind a dispatched higher sequence that files in its section
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+  RED    bytes-durable — baselined DR-ANA-11 → LX-02; observed null
+  RED    tool-accepts-sources — baselined AC-02, DR-ANA-13 → LX-06; observed false
+  RED    model-recorded — baselined AC-01, DR-ANA-13 → LX-06; observed undefined
+  RED    turn-recorded — baselined AC-01, DR-ANA-13 → LX-06; observed [null,null]
+  RED    source-span — baselined AC-02, DR-ANA-13 → LX-06; observed 0
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+  RED    source-span-survives — baselined AC-02, AC-03 → LX-06 then LX-08; observed 0
+  RED    spans-bound-to-revision — baselined AC-04 → LX-08; observed [null]
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+  RED    seal-binds-revision-and-lineage — baselined AC-04, AC-10 → LX-08 then LX-09; observed {"heads":2,"bound":0,"lineageDigests":0}
+  RED    filing-names-sealed-version — baselined SUB-7, AC-14 → LX-10; observed false
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+ ✓ tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+  RED    reachable-from-the-product — baselined SUB-1 → LX-13; observed 0
+  RED    bytes-retained — baselined SUB-2 → LX-12; observed false
+  RED    transmittal-names-sequence — baselined SUB-2 → LX-12; observed false
+  RED    transmit-record-names-bundle — baselined SUB-2 → LX-12; observed false
+  RED    vault-leaf-to-seal — baselined SUB-7 → LX-10; observed 0
+  RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
+  RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
+  RED    data-room-shows-use — baselined DR-ANA-14 → LX-06 then LX-08 then LX-14; observed 0
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+ ✓ tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError)
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the requiredAgencyMetadata refusal raised by the gateway
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError)
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when the SFTP credentials are set but the ssh2-sftp-client module is absent (MDN close)
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NOT_DELIVERED (FDA refuses our client certificate at the TLS handshake): row rejected, claim released
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — DELIVERED_UNCONFIRMED (HTTP 502 after the whole bundle): in transit, the claim stays transmitting
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — HTTP 502 from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting
+[bundle-executor] Plan 1805a802-92cd-4b37-ab35-35ee5cf489cf state transition failed: Invalid state transition: unresolved → resolved_pending_review. Valid transitions from "unresolved": proposed_resolution, cancelled
+ ✓ tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — a reset from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError keeps the claim at transmitting
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError keeps the claim at transmitting
+ ✓ tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+ ✓ tests/golden-journeys/submission-release-signature.journey.test.ts > Journey B phase 2 — the Part 11 release-signature gate > runs the release gate
+ ✓ tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+ ✓ tests/golden-journeys/marketing-application.journey.test.ts > Journey B — marketing application spine (canonical DDL) > runs the submission spine
+ ✓ tests/golden-journeys/submission-export-validation.journey.test.ts > eCTD export → reopen → external-validator qualification > assembles a real package, reopens it, re-verifies checksums, and qualifies it externally
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses another organization’s unified_documents id
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses another organization’s ctd_onboarding_documents id
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses a c2c_document_sections row whose PARENT document belongs to another organization
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > persists NO leaf row for any of those refusals
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — the caller’s own sources are accepted AND pinned > pins the sha256 of the latest workflow version for its own unified_documents leaf
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — the caller’s own sources are accepted AND pinned > pins the sha256 of the section body for its own c2c_document_sections leaf
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > drift guard > the tenancy dispatch covers every table the read-side resolver can materialize
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into a 1 sequence (frozen) places nothing and reports the refusal
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into a 2 sequence (dispatched) places nothing and reports the refusal
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into an open sequence places the leaf as before, and says so
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > reports another organization's sequence as a refusal, not as a silent skip
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > reports a section code the submission vocabulary refuses
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > never takes the placement outcome from the model
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > does not swallow an error that is not a placement refusal
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > finds the harnesses at all — the gate is not vacuous
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > and the applier itself still declares files that ALTER what it creates
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > no harness builds a table and then skips an applier file that alters it
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > lists its migrations as calls or array elements, never as bare strings
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (create)
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (update)
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > names the allowed tables in the refusal so the caller can correct it
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts coauthor_documents — a table the resolver branches on
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts unified_documents — a table the resolver branches on
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts ctd_onboarding_documents — a table the resolver branches on
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts rendered_leaf_files — a table the resolver branches on
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts c2c_document_sections — a table the resolver branches on
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts vault_documents — a table the resolver branches on
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf addressed by an integer — a uuid-keyed store has no integer to name
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf with no uuid at all — it would name no document
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a uuid on an integer-keyed table — that store has no uuids
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault document belonging to another organization, and pins nothing
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > pins the vault document content hash onto the leaf it writes
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > still accepts a leaf with no document pointer at all
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > records the reason given on a new placement
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > writes no reason key when the caller gave none, rather than inventing one
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > refuses to freeze a sequence carrying an unapproved document, and changes nothing
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > reaches the state change when the package is transmittable
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > applies to dispatch as well
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses a value that is not a CTD code, and writes nothing
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > names the value it refused, and what one looks like
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses ''
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '   '
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses 'foo'
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '6.1'
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses 'm1/us/1.2'
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '1'
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '3'
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses on UPDATE too — a leaf cannot be edited into an unplaceable section
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > stores a precise section EXACTLY as given — 3.2.S.4.2 is not collapsed
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.1' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.2' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.5' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.7' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.9' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.12.4' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.13' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.1.1' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm5.3.5' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm3.2.S.2' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '2.5' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '3.2.S' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '3.2.S.4.2' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '5.3.5.1' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '1.14.4.2' — a code this product actually writes
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > accepts an eSTAR device section on a 510(k), which the CTD gate refused outright
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > accepts an IRB package slot on an IRB submission
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > refuses that same eSTAR code on an IND, because an IND files on CTD headings
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > refuses a CTD code on an IRB submission, in the other direction
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > refuses a misspelled IRB slot by name, because that list is closed
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > refuses a path fragment on a 510(k) too — the folder-name defect is vocabulary-independent
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > falls back to the CTD gate for an application type it does not recognise
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > narrows to CTD when the submission row cannot be read at all
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > still accepts a CTD code when the submission row cannot be read
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a Vault document of another project, and writes nothing
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a governed section of another project’s filing document
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s authoring filing copy (reached through the alias map)
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > places the project’s own document, and the ledger names the document, its pin and the project
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses re-pointing an existing leaf at another project’s document
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > allows a placement it cannot judge (the submission records no project), and records both sides
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > canTransitionSequence > allows the forward path draft → assembling → validated → frozen → dispatched
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > canTransitionSequence > allows backward moves to rework (assembling → draft, validated → assembling)
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > canTransitionSequence > forbids skipping states and reviving a dispatched sequence
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > canTransitionSequence > forbids unknown states
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > isSequenceLocked > locks frozen and dispatched sequences
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > isSequenceLocked > leaves draft/assembling/validated mutable
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins the SHA-256 of the document content it filed
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > the pin is re-derivable by an inspector from the document row
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > REGRESSION: a document edited after filing no longer matches its pin
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins NULL, not sha256 of empty, when the document has no content
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins nothing when the leaf carries no document pointer
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > re-pins on update, so a re-pointed leaf cannot keep an old attestation
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > still refuses a document that belongs to another organization
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no environment is named — it never defaults to production
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an environment outside staging|production
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no application number is recorded
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an UNASSIGNED placeholder application number
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a whitespace-only application number
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > resendRefusal — a transmitted sequence is not sent again > refuses sent and acknowledged, allows pending and rejected
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > refuses a resend while a transmit is in flight
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still allows the states that were always re-sendable
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still refuses the terminal states
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > claims the slot with a compare-and-set on the value it read
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > takes the claim BEFORE the package is assembled
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > resolves the attempt with a write predicated on that claim
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > never releases the claim after the bytes may have left
+ ✓ server/services/submission-service/__tests__/remove-leaf.test.ts > removeLeaf > refuses on a frozen sequence before touching anything
+ ✓ server/services/submission-service/__tests__/remove-leaf.test.ts > removeLeaf > refuses to remove a leaf another leaf lifecycle-references
+ ✓ server/services/submission-service/__tests__/remove-leaf.test.ts > removeLeaf > soft-deletes a removable leaf and writes the audit event
+ ✓ server/services/submission-service/__tests__/remove-leaf.test.ts > removeLeaf > a scoped miss is NOT_FOUND, never a silent success
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > finds the journeys (guards the scanner itself)
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > cer-eu-mdr.journey.test.ts
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > device-510k-estar.journey.test.ts
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > drug-nda-ectd.journey.test.ts
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > haq-correction.journey.test.ts
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > ind-authoring.journey.test.ts
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > marketing-application.journey.test.ts
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > submission-export-package.journey.test.ts
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > submission-export-validation.journey.test.ts
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > submission-release-signature.journey.test.ts
+ ✓ tests/golden-journeys/__tests__/journey-recorder-expect-blocked.test.ts > JourneyRecorder.expectBlocked > records a thrown non-assertion error as the block (service-level semantics)
+ ✓ tests/golden-journeys/__tests__/journey-recorder-expect-blocked.test.ts > JourneyRecorder.expectBlocked > rethrows an assertion failure inside the step and files the step as failed
+ ✓ tests/golden-journeys/__tests__/journey-recorder-expect-blocked.test.ts > JourneyRecorder.expectBlocked > rejects a step that returns blocked: false
+ ✓ server/services/submission-service/__tests__/leaf-parent-scoping.test.ts > upsertLeaf parentLeafId scoping > rejects a parentLeafId that is not a leaf in this sequence for this org
+ ✓ server/services/submission-service/__tests__/leaf-parent-scoping.test.ts > upsertLeaf parentLeafId scoping > allows a parentLeafId that resolves to a leaf in this sequence for this org
+ ✓ server/services/submission-service/__tests__/leaf-parent-scoping.test.ts > upsertLeaf parentLeafId scoping > does not run a parent lookup when no parentLeafId is given (new leaf)
+ ✓ server/services/submission-service/__tests__/leaf-parent-scoping.test.ts > SubmissionError > carries a code
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > governed freeze/dispatch — compare-and-set on the authorized state > both governed writes predicate on the status that was read
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > governed freeze/dispatch — compare-and-set on the authorized state > passes the read status as that predicate, not a constant
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > governed freeze/dispatch — compare-and-set on the authorized state > reports a lost race as INVALID_STATE, not "not found"
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > the generic transitionSequence twin carries the same guard > adds the read status to its where clause
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > the generic transitionSequence twin carries the same guard > refuses when the compare-and-set matched nothing
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > the transmit terminal write explains its own zero-row case > says the package already went to the gateway
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes FDA (all client types) to ESG
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes Japan (all client types) to the PMDA gateway
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes EU drug/biologic (pharma|biotech) to CESP
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes EU device/IVD (mdx|ivd) to EUDAMED
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > returns null for an unknown region (caller raises VALIDATION)
+ Test Files  28 passed | 1 skipped (29)
+      Tests  187 passed | 2 skipped (189)

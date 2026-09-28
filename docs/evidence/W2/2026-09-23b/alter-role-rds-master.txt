@@ -1,0 +1,32 @@
+# Minting app_service as an RDS-shaped master (LOGIN CREATEROLE CREATEDB, not superuser)
+# PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1). tests/db/app-role-provisioning-rds-shape.dbtest.ts builds that shape on a real server.
+
+## BEFORE — scripts/db/provision-app-role.mjs at 897d79579
+ ✓ tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > the master really is RDS-shaped: CREATEROLE, not superuser, no BYPASSRLS 4ms
+ × tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > mints the existing runtime role: LOGIN, and still not superuser / BYPASSRLS / replication 17ms
+   → permission denied to alter role
+ × tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > the minted role can connect with the password and read what it was granted 8ms
+ × tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > REFUSES a pre-existing role it cannot make safe, instead of reporting it minted 21ms
+   → expected [Function] to throw error matching /BYPASSRLS/ but got 'permission denied to alter role'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+error: permission denied to alter role
+    318|       log(`  ✓ role ${role} aligned (LOGIN · NOSUPERUSER · NOBYPASSRLS…
+Serialized Error: { length: 160, severity: 'ERROR', code: '42501', detail: 'Only roles with the SUPERUSER attribute may change the SUPERUSER attribute.', hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'user.c', routine: 'AlterRole' }
+AssertionError: expected [Function] to throw error matching /BYPASSRLS/ but got 'permission denied to alter role'
+"permission denied to alter role"
+
+## AFTER — this change
+ ✓ tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > the master really is RDS-shaped: CREATEROLE, not superuser, no BYPASSRLS 4ms
+ ✓ tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > mints the existing runtime role: LOGIN, and still not superuser / BYPASSRLS / replication 21ms
+ ✓ tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > the minted role can connect with the password and read what it was granted 5ms
+ ✓ tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > REFUSES a pre-existing role it cannot make safe, instead of reporting it minted 14ms
+      Tests  4 passed (4)
+
+## Unit suite (server/db/__tests__/provision-app-role.test.ts), fake db now models role attributes
+### against the old provisioner
+ × server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > ALTERs as a non-superuser (the RDS master) without naming superuser-only attributes 11ms
+ × server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > REFUSES an existing role a non-superuser cannot make safe, rather than reporting it minted 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 27 passed (29)
+### against this change
+      Tests  29 passed (29)

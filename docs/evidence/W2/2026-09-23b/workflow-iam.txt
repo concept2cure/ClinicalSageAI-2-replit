@@ -1,0 +1,25 @@
+# Every AWS call each workflow job makes vs the role it can assume (scripts/ops/terraform-preflight-proof.mjs, checkWorkflowIam)
+
+## Before the workflow change: build-push and smoke-test still assume AWS_DEPLOY_ROLE_ARN
+[terraform-preflight-proof] ok — terraform test: 18 passed, 0 failed, 0 errored
+[terraform-preflight-proof] FAIL — workflow IAM: deploy-aws.yml job build-push: runs outside the GitHub environment but assumes the deploy role, whose trust admits only the environment; AssumeRoleWithWebIdentity would be refused
+[terraform-preflight-proof] FAIL — workflow IAM: deploy-aws.yml job smoke-test: runs outside the GitHub environment but assumes the deploy role, whose trust admits only the environment; AssumeRoleWithWebIdentity would be refused
+[terraform-preflight-proof] 2 check(s) failed.
+
+## After: build-push and smoke-test assume AWS_BUILD_ROLE_ARN
+[terraform-preflight-proof] ok — terraform test: 18 passed, 0 failed, 0 errored
+[terraform-preflight-proof] ok — every AWS call the deploy and provision workflows make is granted to the role its job can assume (38 job×action pairs)
+[terraform-preflight-proof] every check holds.
+
+## Mutation: the deploy role loses ecs:StopTask (the runner stops a task past its deadline)
+0
+[terraform-preflight-proof] ok — terraform test: 18 passed, 0 failed, 0 errored
+[terraform-preflight-proof] FAIL — workflow IAM: deploy-aws.yml job migrate: needs ecs:StopTask, which the deploy role does not grant
+[terraform-preflight-proof] FAIL — workflow IAM: provision-database.yml job provision: needs ecs:StopTask, which the deploy role does not grant
+[terraform-preflight-proof] 2 check(s) failed.
+
+## Mutation: the runner gains a call nobody mapped (aws ecs list-tasks)
+1
+[terraform-preflight-proof] ok — terraform test: 18 passed, 0 failed, 0 errored
+[terraform-preflight-proof] FAIL — workflow IAM: deploy-aws.yml job migrate: `aws ecs list-tasks` is not in CLI_TO_IAM, so its permission is unchecked
+[terraform-preflight-proof] FAIL — workflow IAM: provision-database.yml job provision: `aws ecs list-tasks` is not in CLI_TO_IAM, so its permission is unchecked

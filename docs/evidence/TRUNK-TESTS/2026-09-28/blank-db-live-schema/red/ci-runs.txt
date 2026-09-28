@@ -1,0 +1,54 @@
+CI workflow runs on concept2cure-v2, read through the GitHub Actions API on 2026-09-28.
+One line per job: job id, status, conclusion, name, and the steps that did not succeed.
+
+## run 36299276112 at 00870fe4
+108563787234 completed success Lint  
+108563787271 completed success Security Scan  
+108563787277 completed success Security Contract Tests  
+108563787282 completed failure Nightly Governance Strict | failing steps: Repo health audit (strict debt gate); Strict debt gates (zero-baseline promotion targets)
+108563787313 completed success Secret scan (full history)  
+108565544342 completed success AIOS Audit Assets  
+108565544347 completed success Test  
+108565544363 completed success Integration Tests  
+108565544367 completed success Production Boot Smoke (RLS on, non-superuser role)  
+108565544371 completed success Coverage (ratchet)  
+108565544383 completed success AnA Readiness Tests  
+108565544408 completed failure Blank DB Provisioning + Deploy Migration | failing steps: Server SQL resolves against the LIVE provisioned schema (ratchet)
+108570274864 completed success Build  
+108570464248 completed skipped Release evidence gate  
+108570464327 completed skipped Assemble Release Evidence  
+
+## run 36359214634 at d224ecff
+108732891628 completed success Security Scan  
+108732891738 completed success Security Contract Tests  
+108732891751 completed success Secret scan (full history)  
+108732891807 completed success Lint  
+108732892526 completed skipped Nightly Governance Strict  
+108734914593 completed success AnA Readiness Tests  
+108734914605 completed success Test  
+108734914613 completed failure Blank DB Provisioning + Deploy Migration | failing steps: Server SQL resolves against the LIVE provisioned schema (ratchet)
+108734914616 completed success Integration Tests  
+108734914617 completed success Coverage (ratchet)  
+108734914670 completed success AIOS Audit Assets  
+108734914687 completed success Production Boot Smoke (RLS on, non-superuser role)  
+108741146558 completed success Build  
+108741413496 completed skipped Assemble Release Evidence  
+108741413742 completed skipped Release evidence gate  
+
+## run 36363304648 at 7ddc0638
+108744637068 completed success Secret scan (full history)  
+108744637163 completed success Security Scan  
+108744637242 completed success Lint  
+108744637288 completed success Security Contract Tests  
+108744638126 completed skipped Nightly Governance Strict  
+108746711978 completed success Production Boot Smoke (RLS on, non-superuser role)  
+108746711995 completed success AnA Readiness Tests  
+108746712010 completed success Test  
+108746712012 completed success Coverage (ratchet)  
+108746712026 completed success Integration Tests  
+108746712065 completed failure Blank DB Provisioning + Deploy Migration | failing steps: Server SQL resolves against the LIVE provisioned schema (ratchet)
+108746712088 completed success AIOS Audit Assets  
+108753251149 completed success Build  
+108753508733 completed skipped Assemble Release Evidence  
+108753508758 completed skipped Release evidence gate  
+

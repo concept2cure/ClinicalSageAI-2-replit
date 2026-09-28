@@ -146,6 +146,8 @@ export interface SurfaceActionChip {
   actionId: string;
   surfaceId: string;
   params?: Record<string, string>;
+  /** The program the server resolved for the operation (SurfaceActionDirective.program). */
+  program?: SurfaceActionDirective['program'];
   executed: true;
 }
 
@@ -193,7 +195,7 @@ export function toSurfaceActionChips(
   const out: SurfaceActionChip[] = [];
   for (const d of directives) {
     if (out.length >= MAX_NAVIGATION_ACTIONS) break;
-    const key = `${d.actionId}:${JSON.stringify(d.params ?? {})}`;
+    const key = `${d.actionId}:${JSON.stringify(d.params ?? {})}:${d.program?.id ?? ''}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push({
@@ -202,6 +204,7 @@ export function toSurfaceActionChips(
       actionId: d.actionId,
       surfaceId: d.surfaceId,
       ...(d.params && Object.keys(d.params).length > 0 ? { params: d.params } : {}),
+      ...(d.program && typeof d.program.id === 'string' ? { program: d.program } : {}),
       executed: true,
     });
   }

@@ -173,8 +173,42 @@ export function computeLifecycleOperations(
   opts: { includeUnchanged?: boolean; priorSequencePrefix?: string } = {}
 ): LifecycleResult {
   const prefix = opts.priorSequencePrefix ?? '';
-  const priorByKey = new Map<string, PriorLeaf>();
-  for (const p of prior) priorByKey.set(keyOf(p), p);
+  /* Matching a desired leaf to the prior leaf that IS the same document.
+     `leafKey` is the stable identity and is preferred — a document whose file
+     name changed (because the section it sits in was renamed, and the name is
+     composed from that) is still that document, and matching on the path filed
+     it a second time at the same CTD section with both copies left current at
+     the agency.
+
+     The path index is kept as a FALLBACK rather than replaced: a history filed
+     before leaf keys existed carries none, and matching a keyed desired leaf
+     against an unkeyed prior one on the key alone would call every document
+     already on file `new` and re-file the whole application. A prior leaf is
+     consumed on match so two desired leaves can never supersede the same one. */
+  const priorByLeafKey = new Map<string, PriorLeaf>();
+  const priorByPath = new Map<string, PriorLeaf>();
+  for (const p of prior) {
+    if (p.leafKey) priorByLeafKey.set(p.leafKey, p);
+    priorByPath.set(`${p.ctdSection}/${p.fileName}`, p);
+  }
+  const consumed = new Set<PriorLeaf>();
+  const takePrior = (d: DesiredLeaf): PriorLeaf | undefined => {
+    const byIdentity = d.leafKey ? priorByLeafKey.get(d.leafKey) : undefined;
+    const byPath = priorByPath.get(`${d.ctdSection}/${d.fileName}`);
+    // The path stands in for identity only where one side HAS no identity. Two
+    // leaves that both carry keys, and different ones, are two documents that
+    // happen to share a file name — treating one as the other would file a
+    // `replace` that supersedes the wrong document at the agency.
+    const hit =
+      byIdentity ??
+      (byPath && !(d.leafKey && byPath.leafKey && byPath.leafKey !== d.leafKey) ? byPath : undefined);
+    if (hit) {
+      if (hit.leafKey) priorByLeafKey.delete(hit.leafKey);
+      priorByPath.delete(`${hit.ctdSection}/${hit.fileName}`);
+      consumed.add(hit);
+    }
+    return hit;
+  };
 
   const summary: LifecycleSummary = { new: 0, replace: 0, append: 0, delete: 0, unchanged: 0 };
   const leaves: EctdLeaf[] = [];
@@ -187,7 +221,7 @@ export function computeLifecycleOperations(
     }
     seenDesired.add(key);
 
-    const prev = priorByKey.get(key);
+    const prev = takePrior(d);
     const { leafKey: _lk, md5, appendOnChange: _aoc, withdraw, ...base } = d;
 
     if (withdraw) {
@@ -245,8 +279,13 @@ export function computeLifecycleOperations(
 
   // A prior leaf the new sequence does not mention is still on file at the
   // agency, unchanged. It is counted, not emitted, and never withdrawn.
+  //
+  // Counted by what was actually MATCHED, not by comparing key shapes: a
+  // desired leaf keyed on the document's identity and a prior leaf keyed on its
+  // path never compare equal, so a document that was in fact replaced was also
+  // counted as still-on-file — one leaf reported as two.
   for (const p of prior) {
-    if (seenDesired.has(keyOf(p))) continue;
+    if (consumed.has(p)) continue;
     summary.unchanged++;
   }
 

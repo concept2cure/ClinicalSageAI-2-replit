@@ -1,0 +1,4 @@
+[ci:tables-live-schema] 1281 relations on the live database; 745 referenced by server SQL; 9 resolved as functions; 41 absent
+[ci:tables-live-schema] ✅ 1 baselined table(s) are NO LONGER REFERENCED by server SQL — the querying code was removed, so they are out of scope. They were NOT created; remove them from the baseline to ratchet down:
+    • document_approvals
+[ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (42 baselined)

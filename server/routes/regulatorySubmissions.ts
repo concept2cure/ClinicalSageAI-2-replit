@@ -13,6 +13,7 @@ import { and, eq, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db';
 import { requireFeature } from '../middleware/featureToggleMiddleware';
+import { FeatureToggleService } from '../services/featureToggleService';
 import { regulatorySubmissions, regulatoryTasks, stageGates } from '../../shared/schema';
 import { getSecureOrgId } from '../utils/tenantContext';
 
@@ -81,16 +82,23 @@ const createGranuleSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-function getTenantContext(req: Request, res: Response) {
-  const orgRaw = getSecureOrgId(req as any);
-  const organizationId = orgRaw ? Number(orgRaw) : NaN;
-  if (!Number.isFinite(organizationId) || organizationId <= 0) {
-    res.status(401).json({ error: 'Organization context required' });
-    return null;
-  }
-
+/**
+ * The workspace the request names, once shown to be the organisation's own:
+ * `undefined` when none is named, `null` when the claim is another
+ * organisation's.
+ *
+ * The workspace is a claim (security audit 2026-09-24, IAM-15 / plan P1-7b):
+ * it filtered every read here and POST /projects wrote it into
+ * regulatory_submissions.client_workspace_id, with nothing showing it was this
+ * organisation's. The ownership read is the one the feature gate makes.
+ */
+async function claimedWorkspace(
+  req: Request,
+  organizationId: number
+): Promise<number | null | undefined> {
   const workspaceRaw =
     (req as any).tenantContext?.clientWorkspaceId ||
+    // security-allow: workspace-claim — verified against the session's organisation below (P1-7b)
     req.headers['x-client-workspace-id'] ||
     req.query.clientWorkspaceId ||
     req.query.client_workspace_id;
@@ -99,10 +107,33 @@ function getTenantContext(req: Request, res: Response) {
     Number.isFinite(clientWorkspaceId) && (clientWorkspaceId as number) > 0
       ? (clientWorkspaceId as number)
       : undefined;
+  if (safeClientWorkspaceId === undefined) return undefined;
+  const own = await FeatureToggleService.workspaceInOrganization(
+    safeClientWorkspaceId,
+    organizationId
+  );
+  return own ? safeClientWorkspaceId : null;
+}
+
+async function getTenantContext(req: Request, res: Response) {
+  const orgRaw = getSecureOrgId(req as any);
+  const organizationId = orgRaw ? Number(orgRaw) : NaN;
+  if (!Number.isFinite(organizationId) || organizationId <= 0) {
+    res.status(401).json({ error: 'Organization context required' });
+    return null;
+  }
+
+  const clientWorkspaceId = await claimedWorkspace(req, organizationId);
+  if (clientWorkspaceId === null) {
+    // Refused outright rather than narrowed to nothing, and without saying
+    // whether the id exists elsewhere.
+    res.status(403).json({ error: 'Client workspace does not belong to the caller organization' });
+    return null;
+  }
   const userIdRaw = (req as any).userId ?? (req as any).user?.id ?? 0;
   const userId = Number.isFinite(Number(userIdRaw)) ? Number(userIdRaw) : 0;
 
-  return { organizationId, clientWorkspaceId: safeClientWorkspaceId, userId };
+  return { organizationId, clientWorkspaceId, userId };
 }
 
 async function loadSubmissionByParam(
@@ -154,7 +185,7 @@ async function loadTaskByParam(idParam: string, organizationId: number) {
 
 router.get('/projects', async (req, res) => {
   try {
-    const tenant = getTenantContext(req, res);
+    const tenant = await getTenantContext(req, res);
     if (!tenant) return;
 
     const conditions = [eq(regulatorySubmissions.organizationId, tenant.organizationId)];
@@ -174,7 +205,7 @@ router.get('/projects', async (req, res) => {
 
 router.post('/projects', async (req, res) => {
   try {
-    const tenant = getTenantContext(req, res);
+    const tenant = await getTenantContext(req, res);
     if (!tenant) return;
     const parsed = createSubmissionSchema.safeParse(req.body);
     if (!parsed.success) return validationError(res, parsed.error);
@@ -213,7 +244,7 @@ router.post('/projects', async (req, res) => {
 
 router.get('/projects/:id', async (req, res) => {
   try {
-    const tenant = getTenantContext(req, res);
+    const tenant = await getTenantContext(req, res);
     if (!tenant) return;
     const submission = await loadSubmissionByParam(
       req.params.id,
@@ -232,7 +263,7 @@ router.get('/projects/:id', async (req, res) => {
 
 router.get('/projects/:id/sequences', async (req, res) => {
   try {
-    const tenant = getTenantContext(req, res);
+    const tenant = await getTenantContext(req, res);
     if (!tenant) return;
     const submission = await loadSubmissionByParam(
       req.params.id,
@@ -261,7 +292,7 @@ router.get('/projects/:id/sequences', async (req, res) => {
 
 router.post('/projects/:id/sequences', async (req, res) => {
   try {
-    const tenant = getTenantContext(req, res);
+    const tenant = await getTenantContext(req, res);
     if (!tenant) return;
     const submission = await loadSubmissionByParam(
       req.params.id,
@@ -301,7 +332,7 @@ router.post('/projects/:id/sequences', async (req, res) => {
 
 router.get('/sequences/:id/modules', async (req, res) => {
   try {
-    const tenant = getTenantContext(req, res);
+    const tenant = await getTenantContext(req, res);
     if (!tenant) return;
     const gate = await loadStageGateByParam(req.params.id, tenant.organizationId);
     if (!gate) {
@@ -326,7 +357,7 @@ router.get('/sequences/:id/modules', async (req, res) => {
 
 router.post('/sequences/:id/modules', async (req, res) => {
   try {
-    const tenant = getTenantContext(req, res);
+    const tenant = await getTenantContext(req, res);
     if (!tenant) return;
     const gate = await loadStageGateByParam(req.params.id, tenant.organizationId);
     if (!gate) {
@@ -371,7 +402,7 @@ router.post('/sequences/:id/modules', async (req, res) => {
 
 router.get('/modules/:id/granules', async (req, res) => {
   try {
-    const tenant = getTenantContext(req, res);
+    const tenant = await getTenantContext(req, res);
     if (!tenant) return;
     const task = await loadTaskByParam(req.params.id, tenant.organizationId);
     if (!task) {
@@ -387,7 +418,7 @@ router.get('/modules/:id/granules', async (req, res) => {
 
 router.post('/modules/:id/granules', async (req, res) => {
   try {
-    const tenant = getTenantContext(req, res);
+    const tenant = await getTenantContext(req, res);
     if (!tenant) return;
     const task = await loadTaskByParam(req.params.id, tenant.organizationId);
     if (!task) {

@@ -1,0 +1,12 @@
+# 20260925b with the key as first written (NO ACTION), before ON DELETE SET NULL (program_id)
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > is on the applier, after both tables it joins
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > backfills the one-to-one, same-tenant link from the creation audit row
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > leaves a submission two projects both claim unanchored — never resolved by guessing
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > does not anchor to another organization’s project, and reads only creation rows
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > refuses, at the database, a submission anchored to another organization’s project
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > replays cleanly, as every deploy does, and changes nothing it already decided
+ × tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > lets a program be deleted: the submission stays, its organization intact, un-anchored
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Caused by: error: update or delete on table "regulatory_programs" violates foreign key constraint "submissions_program_same_org_fk" on table "submissions"
+Serialized Error: { length: 374, severity: 'ERROR', code: '23503', detail: 'Key (id, organization_id)=(11111111-1111-4111-8111-111111111111, 1) is still referenced from table "submissions".', hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: 'public', table: 'submissions', dataType: undefined, constraint: 'submissions_program_sam
+      Tests  1 failed | 6 passed (7)

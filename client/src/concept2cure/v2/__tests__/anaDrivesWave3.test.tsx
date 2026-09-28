@@ -95,6 +95,23 @@ describe('Risk — AnA operates the real risk file', () => {
     expect(outcome).toEqual({ status: 'applied', detail: 'Showing the residual matrix' });
   });
 
+  it('a hazard name that is not in the file is refused WITH the hazards listed, so AnA can retry with a real one', async () => {
+    render(<Risk {...props()} />);
+    await screen.findAllByText(/Electrical shock/);
+    await waitFor(() => expect(registeredSurfaceId()).toBe('risk'));
+
+    let outcome: { status: string; detail?: string; reason?: string } = { status: '' };
+    act(() => {
+      outcome = applySurfaceAction(
+        directive('risk.select-hazard', { hazard: 'battery fire' }),
+        vi.fn(),
+      ) as typeof outcome;
+    });
+    expect(outcome.status).toBe('failed');
+    expect(outcome.reason).toContain('No hazard matching "battery fire"');
+    expect(outcome.reason).toContain('Hazards listed: "HZ-01 — Electrical shock", "HZ-02 — Software freeze mid-procedure".');
+  });
+
   it('focus-cell opens the hazard sitting at a band pair, and an empty cell is an honest miss', async () => {
     render(<Risk {...props()} />);
     await screen.findAllByText(/Electrical shock/);

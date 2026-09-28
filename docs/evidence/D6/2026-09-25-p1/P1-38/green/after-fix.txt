@@ -1,0 +1,304 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stdout | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+    "mode": "on"
+  }
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+stdout | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+stderr | server/routes/__tests__/setup.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/__tests__/setup.test.ts
+stdout | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > GET /status reports not-initialized on an empty install 49ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > GET /status reports initialized once a user exists 15ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize rejects a missing organization name 18ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize rejects a weak password 6ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 9728 protected-resource metadata for /mcp 20ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 8414 authorization-server metadata with PKCE S256 and dynamic registration 4ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp without a token with 401 and a resource_metadata challenge 15ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp with a forged token with 401 (same verifier as the API: HS256 + rotation) 4ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > rejects a refresh-class token on the MCP path (token-class allow-list) 6ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > curated tool catalog > has 19 uniquely named tools, each with all four annotation hints, a scope and exactly one governed write 7ms
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize creates the first org + admin on an empty install
+    "organizationId": 1,
+    "attempted": 19,
+    "granted": 0,
+    "failed": 19,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp"
+    ],
+    "errors": [
+      "[vitest] No \"query\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+    ],
+    "scope": null,
+    "remediation": "npm run ops:provision-launch-modules -- --org 1"
+  }
+stdout | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize creates the first org + admin on an empty install
+  }
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > returns the gateway’s own refusal verbatim when no provider key is configured 345ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > maps an AnA handler error to a verbatim refusal, never an empty success 1ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize creates the first org + admin on an empty install 418ms
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize mints the bootstrap token as a registered session: openSession, and sid / sst / idl in the token (P1-38)
+    "organizationId": 1,
+    "attempted": 19,
+    "granted": 0,
+    "failed": 19,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp"
+    ],
+    "errors": [
+      "[vitest] No \"query\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+    ],
+    "scope": null,
+    "remediation": "npm run ops:provision-launch-modules -- --org 1"
+  }
+stdout | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize mints the bootstrap token as a registered session: openSession, and sid / sst / idl in the token (P1-38)
+  }
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize mints the bootstrap token as a registered session: openSession, and sid / sst / idl in the token (P1-38) 372ms
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > an unknown e-mail pays exactly one bcrypt comparison, at the stored hashes' cost, and is still 401 INVALID_CREDENTIALS 747ms
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > a known account with no stored password pays the same one comparison, and is 401 376ms
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > control: a known account with the wrong password is compared against its own hash only, never the pad 8ms
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize writes the org, its admin, and the org's own workspace under the org's tenant, in one transaction
+    "organizationId": 1,
+    "attempted": 19,
+    "granted": 0,
+    "failed": 19,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp"
+    ],
+    "errors": [
+      "[vitest] No \"query\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+    ],
+    "scope": null,
+    "remediation": "npm run ops:provision-launch-modules -- --org 1"
+  }
+stdout | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize writes the org, its admin, and the org's own workspace under the org's tenant, in one transaction
+  }
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize writes the org, its admin, and the org's own workspace under the org's tenant, in one transaction 391ms
+stdout | server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a sign-in beyond the limit ends the oldest session: its next request and its refresh are refused, the others are not
+    "account": "42",
+    "limit": 2,
+    "ended": 1
+  }
+stdout | server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > the newest session is never the one that ends, whatever the limit
+    "account": "42",
+    "limit": 1,
+    "ended": 1
+  }
+stdout | server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > registerSession names the sessions it ended; a signed-out session frees its slot; accounts do not count against one another
+    "account": "42",
+    "limit": 1,
+    "ended": 1
+  }
+stdout | server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a superseded session stays superseded for the lifetime it could still be presented in, and is not revived by being asked
+    "account": "42",
+    "limit": 1,
+    "ended": 1
+  }
+stdout | server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > connector sessions and browser sessions hold slots in separate pools of the same account, each at the tenant limit
+    "account": "connector:42",
+    "limit": 1,
+    "ended": 1
+  }
+stdout | server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > connector sessions and browser sessions hold slots in separate pools of the same account, each at the tenant limit
+    "account": "42",
+    "limit": 1,
+    "ended": 1
+  }
+ ✓ server/services/__tests__/session-inactivity.test.ts > the idle window > is the tenant setting in minutes, clamped to [1 min, 24 h], and the default when unset or malformed 2ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the idle window > read back from a token is the idl claim, else the default 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the session claims > a new session has a fresh id, starts now and carries the tenant window 2ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the session claims > a continued session keeps its id, start and window; a token from before sessions had ids starts at its own issue 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the session claims > keys activity by the session id, else by the token itself 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > a session never seen is measured from its token: within the window it is admitted and recorded, past it it is idle 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > each admitted request extends the window; a gap longer than the window ends the session 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > a check that is not the user acting does not extend the window 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > an idle session is not touched by being asked 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > a session older than the lifetime is over however active 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > tokens minted before sessions had ids are independent of one another 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > refreshInactivityReason — a refresh token > reads the session's activity and never records any 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > refreshInactivityReason — a refresh token > a session with no record is measured from its start; a lifetime is a lifetime 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > refreshInactivityReason — a refresh token > a refresh token from before sessions had ids is checked for its lifetime only 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > is the tenant setting, clamped to [1, 20], and 5 when unset or malformed 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a sign-in beyond the limit ends the oldest session: its next request and its refresh are refused, the others are not 3ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > the newest session is never the one that ends, whatever the limit 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > registerSession names the sessions it ended; a signed-out session frees its slot; accounts do not count against one another 2ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a session past its lifetime holds no slot 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a superseded session stays superseded for the lifetime it could still be presented in, and is not revived by being asked 2ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > opens a session whose idle window is the token TTL held inside the platform window, starting now, with a fresh id 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > the lifetime rule is the platform rule and the token is idle past its TTL 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > connector sessions and browser sessions hold slots in separate pools of the same account, each at the tenant limit 4ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > a connector session found over frees its own pool's slot 58ms
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize fails closed when the workspace write is refused — no 201, no token
+  }
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize fails closed when the workspace write is refused — no 201, no token 373ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize is self-closing once a user exists 6ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > redeems a recovery code through the login verifier (the login screen's "Use a recovery code") 65ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > never completes an authenticator account's sign-in with an emailed code 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > still verifies an emailed code for an account without an authenticator 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > mints no emailed code for an authenticator account (409, names the authenticator and the recovery codes) 4ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > re-issues a code for an account without an authenticator through the capped re-issue, never a fresh challenge 4ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > refuses a challenge that has had its limit of codes: 429 MFA_RESEND_LIMIT, no mail, one audit row 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login for a known account > control: issues a fresh challenge through createEmailOtp, never the capped re-issue, so the count of codes starts again with the password 21ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login with an unknown e-mail > pays the bcrypt comparison a wrong password pays, so the answer time does not say the e-mail is unknown 773ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > a suspended account is refused (403 AUTH_ACCOUNT_INACTIVE) before its password is compared, and the refusal is audited 47ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > control: an active account with the wrong password is 401 12ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > a challenge for an account suspended since it was issued does not become a session; no code is spent 8ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check 46ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > mints a successor and revokes the presented access token 65ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a refresh token: nothing minted, nothing revoked 6ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa_challenge token: nothing minted, nothing revoked 5ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa-partial token: nothing minted, nothing revoked 8ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > cannot renew a session the password change ended (iat before password_changed_at) 5ms
+stdout | server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED)
+    "account": "7",
+    "limit": 1,
+    "ended": 1
+  }
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session idle past its window (401 SESSION_IDLE) 70ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session that began more than 12 hours ago (401 SESSION_LIFETIME) 7ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > refreshes an active session and carries its id, start and window into both new tokens 6ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > a refresh token minted before sessions had ids is checked for its lifetime only 10ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED) 7ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account is never verified by an emailed code: the emailed-code verifier is not called, and a wrong authenticator code is 401 43ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with its authenticator code, recorded as totp 8ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with a recovery code, recorded as backup_code 5ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > control: an account without an authenticator is verified by its emailed code, recorded as email 5ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > control: an account without an authenticator whose emailed code is wrong is 401, after the authenticator verifier had its turn 5ms
+ ✓ server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token 38ms
+stdout | Object.info (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:141:13)
+    "userId": "1",
+    "resourceType": "organization",
+    "resourceId": "7",
+    "success": true
+  }
+stderr | Object.error (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:156:13)
+    "auditEventId": "audit_1790429634489_z0lde2ytd",
+    "action": "authorization.organization_switch",
+    "reason": "the canonical store returned no write result"
+  }
+stdout | server/services/__tests__/session-registry-redis.test.ts > the registry when Redis answers > a session superseded on one task is refused on another: the marker lives in Redis
+    "account": "42",
+    "limit": 1,
+    "ended": 1
+  }
+stderr | server/services/__tests__/session-registry-redis.test.ts > the registry when Redis answers > when Redis fails, the memory tier decides for this task
+    "error": "redis away"
+  }
+stderr | server/services/__tests__/session-registry-redis.test.ts > the registry when Redis answers > when Redis fails, the memory tier decides for this task
+    "error": "redis away"
+  }
+stdout | server/services/__tests__/session-registry-redis.test.ts > the registry when Redis answers > when Redis fails, the memory tier decides for this task
+    "account": "42",
+    "limit": 1,
+    "ended": 1
+  }
+ ✓ server/services/__tests__/session-registry-redis.test.ts > the registry when Redis answers > decides in one atomic script: no read on one round trip and an eviction on the next 6ms
+ ✓ server/services/__tests__/session-registry-redis.test.ts > the registry when Redis answers > Redis's decision is the only one: a session signed out on another task does not make this task end a live one 2ms
+ ✓ server/services/__tests__/session-registry-redis.test.ts > the registry when Redis answers > a session superseded on one task is refused on another: the marker lives in Redis 3ms
+ ✓ server/services/__tests__/session-registry-redis.test.ts > the registry when Redis answers > when Redis fails, the memory tier decides for this task 2ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > no route mints session claims without registering them 3ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > each sign-in door opens its session through openSession 1ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > finds the mints (the scan is not empty and every payload is a literal it can read) 1ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > a type:access payload spreads the session openSession, openConnectorSession or continuedSessionClaims gave it 1ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > a file that mints an access token gets its session from the service, never from newSessionClaims 2ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > passes the organization from the verified request, not the signature id alone 24ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > refuses when the request carries no organization 5ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > cannot be told which organization to read — the caller does not get a vote 4ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > rejects a non-numeric id instead of querying on NaN 3ms
+stdout | server/mcp/__tests__/platform-token-session.test.ts
+    "mode": "on"
+  }
+stderr | server/mcp/__tests__/platform-token-session.test.ts
+stderr | server/mcp/__tests__/platform-token-session.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+stdout | server/mcp/__tests__/platform-token-session.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+stderr | server/mcp/__tests__/platform-token-session.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+stdout | server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > connector sessions hold slots in their own pool: beyond the limit the oldest connector token is superseded, the browser session is not
+    "account": "connector:7",
+    "limit": 5,
+    "ended": 1
+  }
+stdout | server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the limit is the membership organisation's maxConcurrentSessions, as at sign-in
+    "account": "connector:7",
+    "limit": 1,
+    "ended": 1
+  }
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the token carries the session claims: a fresh id, its start, and the token TTL as its idle window 7ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the idle window is the TTL held inside the platform window [1 min, 24 h] 2ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the lifetime rule is the platform rule: the session is over ABSOLUTE_SESSION_HOURS after its start, whatever the TTL 1ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > connector sessions hold slots in their own pool: beyond the limit the oldest connector token is superseded, the browser session is not 4ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the limit is the membership organisation's maxConcurrentSessions, as at sign-in 2ms
+ Test Files  14 passed (14)
+      Tests  90 passed (90)
+   Start at  13:33:48
+   Duration  7.53s (transform 3.15s, setup 431ms, import 12.55s, tests 6.39s, environment 1ms)

@@ -1,0 +1,590 @@
+# Green run — HEAD 7fbe51c5 + working tree, 2026-09-26T13:12Z
+# NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts server/startup/__tests__/tenant-impersonation-detector.test.ts server/middleware/__tests__/tenantLifecycleGuard.test.ts server/middleware/__tests__/storageQuotaGuard.test.ts server/middleware/__tests__/authBoundary.test.ts server/middleware/__tests__/csp-nonce.test.ts server/middleware/__tests__/csrf-webhook-exemption.test.ts server/middleware/__tests__/enterprise-security-dev-origins.test.ts server/middleware/__tests__/audit-outcome-headers-exposed.test.ts server/bootstrap/__tests__/api-auth-gate.test.ts
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > lets a platform super_admin through a DENY posture — the bypass
+  "timestamp": "2026-09-26T13:12:32.756Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "1",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "POST",
+    "path": "/api/widgets"
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > EVALUATES the posture rather than skipping it, so the bypass is auditable
+  "timestamp": "2026-09-26T13:12:32.758Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "1",
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > proceeds — not 503 — when the posture is unreadable
+  "timestamp": "2026-09-26T13:12:32.759Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor proceeding on an unverifiable tenant posture",
+  "context": {
+    "organizationId": 42,
+    "method": "GET",
+    "path": "/api/widgets"
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > proceeds when the posture lookup throws
+  "timestamp": "2026-09-26T13:12:32.766Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Tenant lifecycle guard crashed — refusing access (fail-closed)",
+  "context": {
+    "organizationId": 42,
+    "error": "db is on fire"
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > recognises a platform role carried in the roles array
+  "timestamp": "2026-09-26T13:12:32.767Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Platform actor overrode a tenant lifecycle refusal",
+  "context": {
+    "actorId": "1",
+    "organizationId": 42,
+    "state": "active",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > does NOT bypass for an org-scoped admin
+  "timestamp": "2026-09-26T13:12:32.768Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "active",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > decisions > refuses a suspended tenant with 403 and the machine-readable code
+  "timestamp": "2026-09-26T13:12:32.773Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/api/widgets"
+
+stdout | server/middleware/__tests__/tenantLifecycleGuard.test.ts > decisions > read-only: blocks a POST
+  "timestamp": "2026-09-26T13:12:32.774Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 42,
+    "state": "past_due",
+    "decision": "read_only",
+    "method": "POST",
+    "path": "/api/widgets"
+
+stderr | server/middleware/__tests__/tenantLifecycleGuard.test.ts > fail-closed > refuses with 503 when the posture lookup throws
+  "timestamp": "2026-09-26T13:12:32.784Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle-guard] Tenant lifecycle guard crashed — refusing access (fail-closed)",
+  "context": {
+    "organizationId": 42,
+    "error": "db is on fire"
+
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > carve-outs > recognises the billing prefix 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > carve-outs > recognises the data-portability surfaces 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > carve-outs > does not let a lookalike path ride on a prefix entry 0ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > carve-outs > passes a carve-out through without consulting the posture at all 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > lets a platform super_admin through on a healthy tenant 6ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > lets a platform super_admin through a DENY posture — the bypass 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > EVALUATES the posture rather than skipping it, so the bypass is auditable 2ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > proceeds — not 503 — when the posture is unreadable 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > proceeds when the posture lookup throws 7ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > recognises a platform role carried in the roles array 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > platform actors > does NOT bypass for an org-scoped admin 4ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > decisions > allows an active tenant and attaches the posture to the request 0ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > decisions > refuses a suspended tenant with 403 and the machine-readable code 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > decisions > read-only: lets a GET through 0ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > decisions > read-only: blocks a POST 1ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > fail-closed > refuses with 503 when the posture is indeterminate 0ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > fail-closed > refuses with 503 when the posture lookup throws 10ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > identities with no tenant > passes through when the identity carries no numeric organization 0ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > identities with no tenant > rejects a non-integer organization claim rather than coercing it 0ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > idempotency > short-circuits when an outer mount already decided the request 0ms
+ ✓ server/middleware/__tests__/tenantLifecycleGuard.test.ts > idempotency > lets CORS preflight through untouched 0ms
+stderr | server/middleware/__tests__/storageQuotaGuard.test.ts > the decision > refuses an upload that would cross the limit, with the numbers in the body
+  "timestamp": "2026-09-26T13:12:32.806Z",
+  "level": "warn",
+  "message": "[storage-quota-guard] Storage quota exceeded — refusing upload",
+  "context": {
+    "organizationId": 42,
+    "path": "/api/documents/upload",
+    "usedBytes": 5368709120,
+    "limitBytes": 5368709120,
+    "incomingBytes": 10485760
+
+stderr | server/middleware/__tests__/storageQuotaGuard.test.ts > report mode > lets an over-quota upload through but still counts and logs it
+  "timestamp": "2026-09-26T13:12:32.832Z",
+  "level": "warn",
+  "message": "[storage-quota-guard] Storage quota exceeded (report mode — not blocking)",
+  "context": {
+    "organizationId": 42,
+    "path": "/api/documents/upload",
+    "usedBytes": 5368709120,
+    "limitBytes": 5368709120,
+    "incomingBytes": 10485760
+
+stderr | server/middleware/__tests__/storageQuotaGuard.test.ts > the fail-OPEN arm > allows the upload when usage cannot be measured
+  "timestamp": "2026-09-26T13:12:32.834Z",
+  "level": "warn",
+  "message": "[storage-quota-guard] Storage quota could not be evaluated; allowing the request",
+  "context": {
+    "organizationId": 42,
+    "path": "/api/documents/upload",
+    "error": "connection terminated"
+
+stderr | server/middleware/__tests__/storageQuotaGuard.test.ts > the fail-OPEN arm > allows the upload when the limit cannot be read
+  "timestamp": "2026-09-26T13:12:32.835Z",
+  "level": "warn",
+  "message": "[storage-quota-guard] Storage quota could not be evaluated; allowing the request",
+  "context": {
+    "organizationId": 42,
+    "path": "/api/documents/upload",
+    "error": "relation \"organizations\" does not exist"
+
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > which requests the guard looks at > evaluates a multipart upload 10ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > which requests the guard looks at > evaluates a raw octet-stream body 1ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > which requests the guard looks at > evaluates any write with a large declared body, whatever its type 0ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > which requests the guard looks at > ignores a small JSON mutation 0ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > which requests the guard looks at > ignores reads entirely, however large the response will be 0ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > which requests the guard looks at > treats a chunked upload as content-bearing with zero declared bytes 0ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > which requests the guard looks at > ignores a malformed Content-Length rather than trusting it 0ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > the decision > admits an upload that fits and charges it against the cached figure 5ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > the decision > refuses an upload that would cross the limit, with the numbers in the body 17ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > the decision > never refuses a tenant whose plan is unlimited 1ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > the decision > attaches the decision for downstream handlers and the UI 8ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > the decision > short-circuits a request an outer mount already evaluated 0ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > report mode > lets an over-quota upload through but still counts and logs it 1ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > carve-outs and non-tenant requests > lets a tenant over quota still reach billing 0ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > carve-outs and non-tenant requests > passes through an identity with no numeric organization 0ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > carve-outs and non-tenant requests > does not accept a non-numeric organization id as a tenant 0ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > the fail-OPEN arm > allows the upload when usage cannot be measured 1ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > the fail-OPEN arm > allows the upload when the limit cannot be read 1ms
+ ✓ server/middleware/__tests__/storageQuotaGuard.test.ts > the fail-OPEN arm > does not refuse when the organization row has vanished 0ms
+stdout | server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts
+  "timestamp": "2026-09-26T13:12:34.124Z",
+  "level": "info",
+  "message": "[startup:auth-boundary] Default-deny auth boundary mounted on /api",
+  "context": {
+    "modeAtBoot": "enforce"
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > Bearer(org 7) + x-organization-id: 9 → 403 TENANT_MISMATCH, and the audit row names the path the client sent
+[SECURITY] Tenant impersonation attempt blocked {
+  jwtOrg: 7,
+  headerOrg: '9',
+  userId: '42',
+  path: '/api/vault/documents',
+  method: 'GET',
+  ipAddress: '127.0.0.1'
+
+ ✓ server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > Bearer(org 7) + x-organization-id: 9 → 403 TENANT_MISMATCH, and the audit row names the path the client sent 34ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > Bearer(org 7) + x-organization-id: 7 → the handler runs, with the organisation taken from the session 10ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > no token + x-organization-id: 9 → the boundary answers 401 AUTH_001 first; the detector never runs and nothing is audited 5ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > on a PUBLIC_API_ALLOWLIST path the boundary establishes no session, so the detector has nothing to compare: the request passes and nothing is audited 11ms
+stderr | server/middleware/__tests__/csrf-webhook-exemption.test.ts > CSRF exemption for signature-verified webhooks > the rest of /api/billing is still protected
+[SECURITY] CSRF: state-changing request without Origin/Referer/Bearer on /api/billing/checkout
+
+stderr | server/middleware/__tests__/csrf-webhook-exemption.test.ts > CSRF exemption for signature-verified webhooks > a path that merely STARTS WITH the exempt prefix is not exempt
+[SECURITY] CSRF: state-changing request without Origin/Referer/Bearer on /api/billing/webhooksevil
+
+ ✓ server/middleware/__tests__/csrf-webhook-exemption.test.ts > CSRF exemption for signature-verified webhooks > a Stripe-shaped request reaches the handler 160ms
+ ✓ server/middleware/__tests__/csrf-webhook-exemption.test.ts > CSRF exemption for signature-verified webhooks > the rest of /api/billing is still protected 37ms
+ ✓ server/middleware/__tests__/csrf-webhook-exemption.test.ts > CSRF exemption for signature-verified webhooks > a path that merely STARTS WITH the exempt prefix is not exempt 27ms
+ ✓ server/middleware/__tests__/csrf-webhook-exemption.test.ts > CSRF exemption for signature-verified webhooks > GET is unaffected — the exemption did not change method handling 16ms
+stdout | server/startup/__tests__/tenant-impersonation-detector.test.ts
+  "timestamp": "2026-09-26T13:12:35.516Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+  "timestamp": "2026-09-26T13:12:35.524Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts
+  "timestamp": "2026-09-26T13:12:35.525Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+
+stdout | server/startup/__tests__/tenant-impersonation-detector.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > refuses a header naming another organisation (403 TENANT_MISMATCH) and audits it
+[SECURITY] Tenant impersonation attempt blocked {
+  jwtOrg: 7,
+  headerOrg: '9',
+  userId: 7,
+  path: '/api/vault/documents',
+  method: 'GET',
+  ipAddress: '203.0.113.5'
+
+  "timestamp": "2026-09-26T13:12:35.721Z",
+  "level": "info",
+  "message": "[startup:auth-boundary] Default-deny auth boundary mounted on /api",
+  "context": {
+    "modeAtBoot": "warn"
+
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > refuses a header naming another organisation (403 TENANT_MISMATCH) and audits it 10ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > passes a header naming the session's own organisation 1ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > passes a request with no header 0ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > with no session it neither refuses nor adopts the header (the boundary already answered) 0ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > where it is mounted > applyAuthBoundary mounts the boundary and then the detector on /api 4ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/clients through authMiddleware
+  "timestamp": "2026-09-26T13:12:36.106Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+ ✓ server/middleware/__tests__/audit-outcome-headers-exposed.test.ts > Access-Control-Expose-Headers covers the audit-outcome carriers > exposes every audit-outcome header 11ms
+ ✓ server/middleware/__tests__/audit-outcome-headers-exposed.test.ts > Access-Control-Expose-Headers covers the audit-outcome carriers > every audit-outcome header actually set by a route is in the list above 78ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP nonce + script-src hardening > emits a CSP header with a nonce in script-src 33ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP nonce + script-src hardening > drops unsafe-inline from script-src 9ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP nonce + script-src hardening > includes strict-dynamic in script-src 4ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP nonce + script-src hardening > issues a fresh nonce on every request 14ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP style-src split > emits style-src-elem and style-src-attr instead of style-src 3ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP style-src split > keeps unsafe-inline only on style-src-attr (covers React style={{}} props) 10ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP style-src split > requires a nonce in style-src-elem 3ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP violation reporting > includes report-uri pointing at /api/csp-report (legacy browsers) 5ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP violation reporting > includes report-to referencing the csp-endpoint group (modern API) 3ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP violation reporting > emits a Reporting-Endpoints header binding csp-endpoint to /api/csp-report 4ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP hardening directives > locks base-uri to self 3ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP hardening directives > restricts form-action to self 3ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP hardening directives > sets frame-ancestors to self (clickjacking defense) 4ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > Permissions-Policy > emits a Permissions-Policy header 2ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > Permissions-Policy > denies camera, microphone, geolocation by default 2ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > Permissions-Policy > allows clipboard-write on self (editor copy actions) 3ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > report-only CSP does not carry upgrade-insecure-requests > omits the directive in the development (report-only) policy 15ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > report-only CSP does not carry upgrade-insecure-requests > keeps the directive in the enforcing production policy 14ms
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/clients through authMiddleware
+✅ Platform health/auth routes mounted
+
+stderr | server/middleware/__tests__/enterprise-security-dev-origins.test.ts > dev CORS/CSRF origin allowlist — loopback IP parity (blank-page fix) > does NOT allow an unlisted origin (the guard still bites)
+[SECURITY] Blocked CORS request from unauthorized origin: http://evil.example
+
+ ✓ server/middleware/__tests__/enterprise-security-dev-origins.test.ts > dev CORS/CSRF origin allowlist — loopback IP parity (blank-page fix) > allows http://127.0.0.1:5000 (the dev/E2E runner origin that used to 403) 2ms
+ ✓ server/middleware/__tests__/enterprise-security-dev-origins.test.ts > dev CORS/CSRF origin allowlist — loopback IP parity (blank-page fix) > allows http://127.0.0.1:3000 (Vite alt dev port) 5ms
+ ✓ server/middleware/__tests__/enterprise-security-dev-origins.test.ts > dev CORS/CSRF origin allowlist — loopback IP parity (blank-page fix) > still allows http://localhost:5000 (unchanged) 0ms
+ ✓ server/middleware/__tests__/enterprise-security-dev-origins.test.ts > dev CORS/CSRF origin allowlist — loopback IP parity (blank-page fix) > does NOT allow an unlisted origin (the guard still bites) 3ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/clients/42 through authMiddleware
+  "timestamp": "2026-09-26T13:12:37.023Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/clients/42 through authMiddleware
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/clients through authMiddleware 3335ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/clients/42/security-settings through authMiddleware
+  "timestamp": "2026-09-26T13:12:37.213Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/clients/42/security-settings through authMiddleware
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/clients/42 through authMiddleware 256ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/ind/anything through authMiddleware
+  "timestamp": "2026-09-26T13:12:37.464Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/ind/anything through authMiddleware
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/clients/42/security-settings through authMiddleware 195ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/ind-submissions/SUB-1 through authMiddleware
+  "timestamp": "2026-09-26T13:12:37.625Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/ind-submissions/SUB-1 through authMiddleware
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/ind/anything through authMiddleware 259ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/documents/by-id/9 through authMiddleware
+  "timestamp": "2026-09-26T13:12:37.785Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/documents/by-id/9 through authMiddleware
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/ind-submissions/SUB-1 through authMiddleware 175ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/projects/1 through authMiddleware
+  "timestamp": "2026-09-26T13:12:37.995Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/projects/1 through authMiddleware
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/documents/by-id/9 through authMiddleware 154ms
+stdout | server/middleware/__tests__/authBoundary.test.ts
+  "timestamp": "2026-09-26T13:12:38.230Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+  "timestamp": "2026-09-26T13:12:38.232Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+
+stderr | server/middleware/__tests__/authBoundary.test.ts
+  "timestamp": "2026-09-26T13:12:38.232Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+
+stderr | server/middleware/__tests__/authBoundary.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+
+stdout | server/middleware/__tests__/authBoundary.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/middleware/__tests__/authBoundary.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > resolves an explicit warn to enforce in production (a single variable cannot turn default-deny off)
+[authBoundary] AUTH_BOUNDARY_MODE=warn ignored in production: the /api boundary enforces.
+
+ ✓ server/middleware/__tests__/authBoundary.test.ts > isPublicApiPath > matches an exact entry only for itself, not sub-paths 2ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > isPublicApiPath > matches a prefix entry for the path and its sub-paths 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > isPublicApiPath > does not let a lookalike ride on a prefix entry 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > isPublicApiPath > defaults to deny for protected surfaces 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > resolves an explicit warn to enforce in production (a single variable cannot turn default-deny off) 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > enforces in production by default 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > warns in staging and dev/test by default (soak, never silent-open in prod) 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > honours an explicit AUTH_BOUNDARY_MODE override outside production, and enforce anywhere 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > passes CORS preflight without authenticating 9ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > passes an allowlisted public path without authenticating 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > passes a request already authenticated upstream (idempotent) 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > rejects an authenticated request that carries no resolvable tenant (AUTH_011) 3ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > and lets the same request through when RLS is not enforcing 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > enforce mode delegates a protected unauthenticated request to the canonical 401 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > installs tenant execution context only after authentication succeeds 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > warn mode lets an unauthenticated protected request through and logs once per route 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > warn mode ALSO installs tenant execution context after a successful auth 1ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/cer/x through authMiddleware
+  "timestamp": "2026-09-26T13:12:38.376Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/cer/x through authMiddleware
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/projects/1 through authMiddleware 222ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/manufacturing/y through authMiddleware
+  "timestamp": "2026-09-26T13:12:38.536Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/manufacturing/y through authMiddleware
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/cer/x through authMiddleware 361ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/pharmacovigilance/z through authMiddleware
+  "timestamp": "2026-09-26T13:12:38.677Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/pharmacovigilance/z through authMiddleware
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/manufacturing/y through authMiddleware 159ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/fda510k/abc through authMiddleware
+  "timestamp": "2026-09-26T13:12:38.817Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/fda510k/abc through authMiddleware
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/pharmacovigilance/z through authMiddleware 140ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/auth/login (auth)
+  "timestamp": "2026-09-26T13:12:38.961Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/auth/login (auth)
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/fda510k/abc through authMiddleware 143ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/auth/signup (auth)
+  "timestamp": "2026-09-26T13:12:39.117Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/auth/signup (auth)
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/auth/login (auth) 139ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/login (auth)
+  "timestamp": "2026-09-26T13:12:39.278Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/login (auth)
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/auth/signup (auth) 156ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/register (auth)
+  "timestamp": "2026-09-26T13:12:39.571Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/register (auth)
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/login (auth) 240ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/health (health)
+  "timestamp": "2026-09-26T13:12:39.720Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/health (health)
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/register (auth) 216ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/metrics (metrics)
+  "timestamp": "2026-09-26T13:12:39.861Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/metrics (metrics)
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/health (health) 148ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/csp-report (csp-report)
+  "timestamp": "2026-09-26T13:12:40.005Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/csp-report (csp-report)
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/metrics (metrics) 146ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/billing/webhooks/stripe (webhook)
+  "timestamp": "2026-09-26T13:12:40.232Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/billing/webhooks/stripe (webhook)
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/csp-report (csp-report) 128ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/billing/dtc-pricing (pricing)
+  "timestamp": "2026-09-26T13:12:40.365Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/billing/dtc-pricing (pricing)
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/billing/webhooks/stripe (webhook) 239ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/v1/something (public-api)
+  "timestamp": "2026-09-26T13:12:40.486Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/v1/something (public-api)
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/billing/dtc-pricing (pricing) 130ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/firecrawl-webhooks/x (firecrawl-webhook)
+  "timestamp": "2026-09-26T13:12:40.590Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/firecrawl-webhooks/x (firecrawl-webhook)
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/v1/something (public-api) 109ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — boundary cases > treats /api/health-imposter as protected (not a prefix match)
+  "timestamp": "2026-09-26T13:12:40.694Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — boundary cases > treats /api/health-imposter as protected (not a prefix match)
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/firecrawl-webhooks/x (firecrawl-webhook) 102ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — boundary cases > matches /api/health/* as a public sub-path
+  "timestamp": "2026-09-26T13:12:40.817Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — boundary cases > matches /api/health/* as a public sub-path
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — boundary cases > treats /api/health-imposter as protected (not a prefix match) 112ms
+stderr | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — boundary cases > treats /api/clients-foo as protected even though /api/auth exists
+  "timestamp": "2026-09-26T13:12:40.923Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+
+stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — boundary cases > treats /api/clients-foo as protected even though /api/auth exists
+✅ Platform health/auth routes mounted
+
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — boundary cases > matches /api/health/* as a public sub-path 126ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — boundary cases > treats /api/clients-foo as protected even though /api/auth exists 103ms
+
+ Test Files  10 passed (10)
+      Tests  119 passed (119)
+   Start at  13:12:31
+   Duration  9.14s (transform 3.89s, setup 656ms, import 7.82s, tests 8.23s, environment 1ms)
+

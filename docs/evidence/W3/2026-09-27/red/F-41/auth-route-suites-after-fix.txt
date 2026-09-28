@@ -1,0 +1,21 @@
+Files run (every test that drives the auth or user-administration routes):
+  server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts
+  server/bootstrap/__tests__/api-auth-gate.test.ts
+  server/bootstrap/__tests__/routes-reach-the-bundle.test.ts
+  server/middleware/__tests__/authBoundary.test.ts
+  server/middleware/__tests__/enterprise-auth-limiter-key.test.ts
+  server/middleware/__tests__/establishRequestTenantScope.test.ts
+  server/middleware/__tests__/launch-scope-api-gate.test.ts
+  server/middleware/__tests__/platform-role-escalation.test.ts
+  server/middleware/__tests__/redisRateLimiter-category.test.ts
+  server/middleware/__tests__/role-claims.test.ts
+  server/routes/__tests__/auth-mfa-challenge-factors.test.ts
+  server/routes/__tests__/auth-refresh-inactivity.test.ts
+  server/routes/__tests__/auth-refresh-session-currency.test.ts
+  server/routes/__tests__/auth-signup-verification.test.ts
+  server/routes/__tests__/authSurfaceSecurity.test.ts
+  server/routes/__tests__/passwordResetAuditTrail.test.ts
+  tests/services/atomic-quota-organization-ceilings.test.ts
+
+ Test Files  17 passed (17)
+      Tests  224 passed (224)

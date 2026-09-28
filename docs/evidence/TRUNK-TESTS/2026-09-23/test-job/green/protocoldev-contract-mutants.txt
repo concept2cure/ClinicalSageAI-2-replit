@@ -1,0 +1,4 @@
+after (HEAD's file, fixed test): PASS — 
+M1 register onDone no longer re-reads (onChanged removed): FAIL — → expected '<ProtocolRegisterForm\n          kind…' to contain 'onChanged?.()'
+M2 register onDone announces its own copy: FAIL — → expected '<ProtocolRegisterForm\n          kind…' to contain 'registerDoneMessage('
+M3 the file as it was before a3e66c99 (mount above the toast): PASS — 

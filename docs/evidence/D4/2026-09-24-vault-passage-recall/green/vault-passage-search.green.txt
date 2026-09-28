@@ -1,0 +1,149 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T16:28:18.301Z","pid":8935,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T16:28:18.302Z","pid":8935,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T16:28:18.302Z","pid":8935,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-passage-search.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T16:28:18.372Z', poolSize: 1 }
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-passage-search.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-09-24T16:28:18.568Z","pid":8935,"hostname":"vm","context":{"filename":"DBTEST-PASSAGE-DOC-TOX.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:8935) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-passage-search.dbtest.ts
+{
+  "timestamp": "2026-09-24T16:28:18.634Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 342,
+    "wordCount": 49,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T16:28:18.740Z', poolSize: 2 }
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+{
+  "timestamp": "2026-09-24T16:28:18.759Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "63ba50e8-2b31-42fb-b72f-e35ec54b36c9",
+    "code": "DBTEST-PASSAGE-DOC-TOX",
+    "type": "REPORT",
+    "size": 342,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-09-24T16:28:18.769Z","pid":8935,"hostname":"vm","context":{"filename":"DBTEST-PASSAGE-DOC-STAB.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-passage-search.dbtest.ts
+{
+  "timestamp": "2026-09-24T16:28:18.770Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 326,
+    "wordCount": 47,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+{
+  "timestamp": "2026-09-24T16:28:18.790Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "09cf179f-2329-4f63-9559-b9ae4c54b81e",
+    "code": "DBTEST-PASSAGE-DOC-STAB",
+    "type": "REPORT",
+    "size": 326,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-09-24T16:28:18.808Z","pid":8935,"hostname":"vm","context":{"filename":"DBTEST-PASSAGE-DOC-OTHER.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-passage-search.dbtest.ts
+{
+  "timestamp": "2026-09-24T16:28:18.808Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 342,
+    "wordCount": 49,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+{
+  "timestamp": "2026-09-24T16:28:18.827Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b0a2ae2f-0b58-40e4-9277-7c31aa8fca75",
+    "code": "DBTEST-PASSAGE-DOC-OTHER",
+    "type": "REPORT",
+    "size": 342,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/vault-passage-search.dbtest.ts > the chunk corpus is written by ingest > chunked and embedded both uploads, and the catalog ledger says so 4ms
+stdout | tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > returns the passage that answers the question, from the right document
+⚠️ OpenAI API key not configured
+⚠️ Anthropic API key not configured
+✅ Advanced RAG Pipeline initialized
+
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > returns the passage that answers the question, from the right document 3253ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > answers a tox question from the tox document 20ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > never returns another organization's document, even for identical text 15ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > states the coverage it searched, read from the chunking ledger 20ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > REFUSES without an organization identity rather than reporting no matches 1ms
+{"level":40,"time":"2026-09-24T16:28:22.288Z","pid":8935,"hostname":"vm","context":{"filename":"three-sections.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic
+{
+  "timestamp": "2026-09-24T16:28:22.451Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 10813,
+    "wordCount": 1851,
+    "pagesMapped": 3
+  }
+}
+
+stdout | tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic
+{
+  "timestamp": "2026-09-24T16:28:22.483Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "dd39936b-33b7-47ea-95ca-9d970106b189",
+    "code": "DBTEST-PASSAGE-DOC-PAGED",
+    "type": "REPORT",
+    "size": 4750,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic 343ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  16:28:16
+   Duration  6.23s (transform 3.57s, setup 70ms, import 146ms, tests 5.72s, environment 0ms)
+

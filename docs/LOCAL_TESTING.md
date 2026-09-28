@@ -91,7 +91,9 @@ are programs to open.
 
 Live Drive is **on by default**. The switch sits beside the composer on Home and
 in every conversation ("AnA drives: on"), with a **Demos** menu next to it.
-Prefs saved under the old off-by-default are read as on, once.
+Prefs saved under the old off-by-default are read as on, once. In the side rail
+the same setting is the **Ask / Agent** control: Agent is AnA operating the
+screens, Ask is AnA answering with the moves offered as buttons.
 
 Type these in the Home composer. Each should move the screen while AnA is still
 answering, and the reply should stream token by token:
@@ -101,15 +103,21 @@ answering, and the reply should stream token by token:
 | `take me to biostatistics` | the Biostatistics screen opens |
 | `take me to the vault` | with no program open, AnA names your programs or picks the one you mean, then opens that program's Vault |
 | `open program BX-301` | Projects → BX-301 opens → its project home |
-| `search the vault for stability` | the Vault opens and its search runs |
+| `search the vault for stability` | the Vault opens and its search runs; with no program open AnA asks which first, and an empty Vault is refused by name ("no documents yet"), not searched |
 | `give me the training demo` | a full product tour, one screen per step, narrated, with the "AnA is demonstrating" strip, **Take over** (Esc) and **Stop** |
 | Demos → *Sales demonstration* | the same, started from the menu |
 
 When AnA leaves the conversation screen, the rail opens and the same
 conversation continues there. Switch "AnA drives" off and the same asks come
-back as buttons under her answer that do the move when pressed. A move the
-screen refuses (a program that does not exist, a screen still loading) shows in
-the drive strip as "Could not …" and AnA is told, so she says so.
+back as buttons under her answer that do the move when pressed.
+
+AnA waits for each move to land before she writes her next words (up to ten
+seconds), so what she says matches the screen. A move the screen refuses (a
+program that does not exist, a document name it does not list, a screen still
+loading) shows in the drive strip as "Could not …", and she is told why before
+she answers. Where the screen lists names ("Documents listed: …"), she retries
+with one of them — the sales demonstration's "open one of their documents" stop
+works this way on programs that have authoring documents.
 
 With `LAUNCH_SCOPE_ENFORCE=on` (the production default), screens outside the
 launch catalog are refused by name ("not in this release") instead of opened,

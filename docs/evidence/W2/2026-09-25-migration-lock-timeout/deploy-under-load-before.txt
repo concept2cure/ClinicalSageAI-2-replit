@@ -1,0 +1,4 @@
+BEFORE — trunk applier (no lock_timeout)
+deploy-migrate exit=0 in 9649 ms; 38 requests; worst request latency 7721 ms (reader held 8000 ms)
+  ✓ 309/309 migration files applied
+✅ Schema migration complete — safe to roll services.

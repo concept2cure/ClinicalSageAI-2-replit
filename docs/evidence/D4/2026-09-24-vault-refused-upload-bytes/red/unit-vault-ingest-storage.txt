@@ -1,0 +1,275 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "type": "report",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "type": "report",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row
+{
+  "level": "error",
+  "message": "[vault-ingest] Vault file persistence failed — refusing to record the document",
+  "context": {
+    "reason": "bucket unreachable",
+    "contentHash": "f3c9d586682936c8987ce11239d2d886f1b9710840ddcf4d36211f4e6a3d3398"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage
+{
+  "level": "warn",
+  "message": "[vault-ingest] Vault ingest denied: program not owned by caller organization",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused: content already recorded in this program",
+  "context": {}
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "type": "report",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+{
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "connection reset"
+  }
+}
+
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project 8ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses with no organization context at all 0ms
+ × server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed 5ms
+   → expected "vi.fn()" to be called with arguments: [ 'ver-abc', 7 ]
+
+Number of calls: 0
+
+ × server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed 2ms
+   → expected "vi.fn()" to be called with arguments: [ 'ver-abc', 7 ]
+
+Number of calls: 0
+
+ × server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed 1ms
+   → expected "vi.fn()" to be called with arguments: [ 'ver-abc', 7 ]
+
+Number of calls: 0
+
+ × server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it 2ms
+   → expected "vi.fn()" to be called with arguments: [ 'ver-abc', 7 ]
+
+Number of calls: 0
+
+ × server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates 2ms
+   → expected "vi.fn()" to be called with arguments: [ 'ver-abc', 7 ]
+
+Number of calls: 0
+
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes 1ms
+ × server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved 4ms
+   → expected 'The document could not be recorded in…' not to match /Nothing was saved/
+ × server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal 1ms
+   → expected 'A different document is already recor…' to match /could not be removed from storage/
+ × server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted 2ms
+   → expected 'The document could not be recorded in…' not to match /Nothing was saved/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'ver-abc', 7 ]
+
+Number of calls: 0
+
+ ❯ server/services/vault/__tests__/vault-ingest-storage.test.ts:216:17
+    214|     const res = await ingestVaultDocument(args());
+    215|     expect(res).toMatchObject({ ok: false, status: 409, code: 'VERSION…
+    216|     expect(del).toHaveBeenCalledWith('ver-abc', ORG);
+       |                 ^
+    217|   });
+    218|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'ver-abc', 7 ]
+
+Number of calls: 0
+
+ ❯ server/services/vault/__tests__/vault-ingest-storage.test.ts:227:17
+    225|     const res = await ingestVaultDocument(args());
+    226|     expect(res).toMatchObject({ ok: false, status: 409, code: 'DUPLICA…
+    227|     expect(del).toHaveBeenCalledWith('ver-abc', ORG);
+       |                 ^
+    228|   });
+    229|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'ver-abc', 7 ]
+
+Number of calls: 0
+
+ ❯ server/services/vault/__tests__/vault-ingest-storage.test.ts:234:17
+    232|     const res = await ingestVaultDocument(args({ folderId: 'no-such-fo…
+    233|     expect(res).toMatchObject({ ok: false, status: 400, code: 'INVALID…
+    234|     expect(del).toHaveBeenCalledWith('ver-abc', ORG);
+       |                 ^
+    235|   });
+    236|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'ver-abc', 7 ]
+
+Number of calls: 0
+
+ ❯ server/services/vault/__tests__/vault-ingest-storage.test.ts:244:17
+    242|     expect(res).toMatchObject({ ok: false, status: 500, code: 'INGEST_…
+    243|     expect((res as { message: string }).message).toMatch(/Nothing was …
+    244|     expect(del).toHaveBeenCalledWith('ver-abc', ORG);
+       |                 ^
+    245|   });
+    246|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'ver-abc', 7 ]
+
+Number of calls: 0
+
+ ❯ server/services/vault/__tests__/vault-ingest-storage.test.ts:250:17
+    248|     connect.mockRejectedValue(new Error('pool exhausted'));
+    249|     await expect(ingestVaultDocument(args())).rejects.toThrow('pool ex…
+    250|     expect(del).toHaveBeenCalledWith('ver-abc', ORG);
+       |                 ^
+    251|   });
+    252|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+AssertionError: expected 'The document could not be recorded in…' not to match /Nothing was saved/
+
+- Expected:
+/Nothing was saved/
+
++ Received:
+"The document could not be recorded in the vault. Nothing was saved."
+
+ ❯ server/services/vault/__tests__/vault-ingest-storage.test.ts:271:25
+    269|     expect(res).toMatchObject({ ok: false, code: 'INGEST_FAILED' });
+    270|     const message = (res as { message: string }).message;
+    271|     expect(message).not.toMatch(/Nothing was saved/);
+       |                         ^
+    272|     expect(message).toMatch(/could not be removed from storage/);
+    273|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal
+AssertionError: expected 'A different document is already recor…' to match /could not be removed from storage/
+
+- Expected:
+/could not be removed from storage/
+
++ Received:
+"A different document is already recorded at code \"CSR-201\" version \"1.0\" for this program. Nothing was changed. Upload it under a new version rather than replacing the existing record."
+
+ ❯ server/services/vault/__tests__/vault-ingest-storage.test.ts:281:50
+    279|     const res = await ingestVaultDocument(args());
+    280|     expect(res).toMatchObject({ ok: false, status: 409, code: 'VERSION…
+    281|     expect((res as { message: string }).message).toMatch(/could not be…
+       |                                                  ^
+    282|   });
+    283|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+AssertionError: expected 'The document could not be recorded in…' not to match /Nothing was saved/
+
+- Expected:
+/Nothing was saved/
+
++ Received:
+"The document could not be recorded in the vault. Nothing was saved."
+
+ ❯ server/services/vault/__tests__/vault-ingest-storage.test.ts:295:25
+    293|     expect(del).not.toHaveBeenCalled();
+    294|     const message = (res as { message: string }).message;
+    295|     expect(message).not.toMatch(/Nothing was saved/);
+       |                         ^
+    296|     expect(message).toMatch(/check the Vault/);
+    297|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 6 passed (14)
+   Start at  16:50:47
+   Duration  469ms (transform 119ms, setup 81ms, import 74ms, tests 39ms, environment 0ms)
+

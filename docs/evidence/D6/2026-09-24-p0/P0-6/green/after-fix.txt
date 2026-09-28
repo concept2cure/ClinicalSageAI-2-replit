@@ -1,0 +1,98 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /models advertises only what runs > lists no model as active except the rule-based extractor 33ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /models advertises only what runs > claims no pretraining corpus, because nothing was pretrained 10ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /models advertises only what runs > still names the retired ids, so an integrator can see what changed 7ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /models advertises only what runs > states the limitations that decide whether the output is usable 5ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=layoutlmv3 27ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=donut 5ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=table-transformer 4ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=dit 3ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=ensemble 10ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields does not reach a legacy flat file, whoever asks 25ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze does not echo the path for a missing file inside the caller’s own prefix 6ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /health describes the mechanism it has > names no primary model 4ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables does not echo the path for a missing file inside the caller’s own prefix 3ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /health describes the mechanism it has > does not claim an OCR fallback it never applies 3ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields does not echo the path for a missing file inside the caller’s own prefix 2ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /health describes the mechanism it has > says what its scores are 3ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze refuses org B naming org A’s file, without the path or its contents 10ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables refuses org B naming org A’s file, without the path or its contents 6ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields refuses org B naming org A’s file, without the path or its contents 5ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze still reads the caller’s own file (positive control) 10ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables still reads the caller’s own file (positive control) 5ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields still reads the caller’s own file (positive control) 5ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze fails closed with no tenant context on the request 4ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables fails closed with no tenant context on the request 5ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields fails closed with no tenant context on the request 4ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze does not reach a legacy flat file, whoever asks 4ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables does not reach a legacy flat file, whoever asks 6ms
+ ✓ server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > writes two same-titled documents under the org prefix at distinct paths, keeping both 26ms
+ ✓ server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > fails a path collision instead of overwriting (flag wx) 4ms
+ ✓ server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > refuses and writes nothing when the organization is missing 21ms
+ ✓ server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > refuses and writes nothing when the organization is empty 42ms
+ ✓ server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > refuses and writes nothing when the organization is zero 8ms
+ ✓ server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > refuses and writes nothing when the organization is non-numeric 2ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > isPathWithin > accepts the root itself and real descendants 3ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > isPathWithin > REJECTS a sibling that merely shares the prefix 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > isPathWithin > normalises traversal before comparing 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > refuses a path inside another organization’s vault 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > refuses the vault root and the caller’s OWN vault path too 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > refuses a vault path reached by traversal from an allowed root 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > keeps the vault out of the allowlist itself 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under exports 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under csrs 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under ectd 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > accepts a relative path and returns it resolved 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects absolute system path 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects traversal out of a root 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects empty 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects whitespace only 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a NUL byte, which truncates the path in some syscalls 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: null 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: undefined 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: a number 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: an object 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: an array 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under exports 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under exports 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > resolves the caller’s own file under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > resolves the caller’s own file under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > resolves the caller’s own file under exports 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > is containment, not a string prefix: org-77 is not inside org-7 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a traversal out of the caller’s prefix into another tenant’s 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: zero 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: negative 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: NaN 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: empty string 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: non-numeric string 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > leaves the reference corpus csrs readable with an organization given 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > leaves the reference corpus ectd readable with an organization given 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > keeps the no-organization form for internal callers 0ms
+stderr | tests/routes/concept2cure-export-governance.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/routes/concept2cure-export-governance.test.ts > Concept2Cure export governance gates > blocks DOCX export when strict review gate is enabled and approval is missing 6ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > Concept2Cure export governance gates > allows DOCX export in non-strict mode and injects governance headers + review notice 3ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > Concept2Cure export governance gates > rejects a fabricated approval state without complete reviewer attribution 1ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > Concept2Cure export governance gates > labels a human-authored export as draft and not agency-validated 1ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > Concept2Cure export governance gates > allows PPTX export in strict mode when approved and includes reviewer headers 2ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > answers 404 to org B for a file org A generated, without naming the path 21ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > still serves the owning organization (positive control) 11ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > never serves a legacy flat file, even to a tenant that would have owned it 4ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > refuses when no tenant context is attached rather than falling back to a shared directory 4ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > rejects a filename carrying separators before it reaches the filesystem 3ms
+
+ Test Files  4 passed (4)
+      Tests  85 passed (85)
+   Start at  01:19:11
+   Duration  5.37s (transform 3.09s, setup 676ms, import 5.29s, tests 1.38s, environment 1ms)
+

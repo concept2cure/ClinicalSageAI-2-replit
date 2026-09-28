@@ -61,7 +61,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger.js';
-import auditService from '../services/auditService.js';
+import { recordAuditRow } from '../services/audit/audit-write-outcome.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { resolveMasterAdmin } from '../services/entitlements/master-admin.js';
 import { writeModuleGrant } from '../services/entitlements/module-grants.js';
@@ -209,8 +209,9 @@ router.post('/', async (req: Request, res: Response) => {
     const request = mapRow(full.rows[0] as AccessRequestRow);
 
     // Recorded whether or not the row is new: an ask repeated is itself a fact
-    // an administrator may later need to see.
-    await auditService.logAction({
+    // an administrator may later need to see. WO-16C: the outcome is carried
+    // in `auditTrail`, not discarded; the ask stands either way.
+    const auditTrail = await recordAuditRow({
       tenantId: actor.organizationId ?? undefined,
       userId: actor.userId ?? undefined,
       action: 'data_modify',
@@ -225,7 +226,7 @@ router.post('/', async (req: Request, res: Response) => {
       },
     });
 
-    return res.status(alreadyOpen ? 200 : 201).json({ request, alreadyOpen });
+    return res.status(alreadyOpen ? 200 : 201).json({ request, alreadyOpen, auditTrail });
   } catch (err) {
     logger.error('access request create failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Your request was not recorded. Please try again.' });
@@ -441,7 +442,9 @@ export async function decideAccessRequest(req: Request, res: Response) {
       client.release();
     }
 
-    await auditService.logAction({
+    // WO-16C: an answer can change what a workspace is entitled to; whether its
+    // §11.10(e) row was written is carried in `auditTrail`, not discarded.
+    const auditTrail = await recordAuditRow({
       tenantId: organizationId,
       userId: actor.userId ?? undefined,
       action: 'data_modify',
@@ -468,6 +471,7 @@ export async function decideAccessRequest(req: Request, res: Response) {
       /** An approval writes an unbounded grant. Said in the response so no
        *  caller has to assume how long it lasts. */
       granted: body.decision === 'approved',
+      auditTrail,
     });
   } catch (err) {
     logger.error('access request decision failed', err as Record<string, unknown>);

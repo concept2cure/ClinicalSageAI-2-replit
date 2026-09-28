@@ -23,11 +23,27 @@
 
 import { getEmbeddingProvider } from './ai-gateway/embeddings/embedding-provider';
 import pg from 'pg';
+import { assertTenantIsCurrent, isTenantUuid, TenantKeyRequiredError } from '../db/currentTenant';
 import crypto from 'crypto';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
 // ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * searchHybrid's options, named: six callers passed their similarity THRESHOLD
+ * where `semanticWeight` went, so no floor ran while their provenance recorded
+ * one (docs/evidence/D4/2026-09-26-retrieval-floor/). `semanticWeight` ranks
+ * (default 0.7); `minSemanticScore` is the floor on cosine similarity, and the
+ * only value a caller may record as ai_retrieval_runs.threshold.
+ */
+export interface HybridSearchOptions {
+  limit: number;
+  organizationUuid: string; // the session's key (server/db/currentTenant.ts)
+  projectId?: string;
+  semanticWeight?: number;
+  minSemanticScore?: number;
+}
 
 export type EmbeddingModel =
   | 'text-embedding-3-small'
@@ -118,7 +134,7 @@ export class EnhancedEmbeddingService {
     // EMBEDDING_PROVIDER=local) — no hard OpenAI dependency at construction, so
     // this service boots in an air-gapped deployment.
     this.pool = pool;
-    console.log('✅ Enhanced Embedding Service initialized');
+    console.info('✅ Enhanced Embedding Service initialized');
   }
 
   /**
@@ -458,7 +474,7 @@ export class EnhancedEmbeddingService {
       params.push(filters.domain);
     }
     if (filters?.source) {
-      filterSql += ` AND a.source = $${paramIndex++}`;
+      filterSql += ` AND a.source = $${paramIndex}`;
       params.push(filters.source);
     }
 
@@ -500,10 +516,7 @@ export class EnhancedEmbeddingService {
    */
   async searchHybrid(
     query: string,
-    limit = 10,
-    semanticWeight = 0.7,
-    organizationUuid?: string,
-    projectId?: string
+    options: HybridSearchOptions
   ): Promise<
     Array<{
       id: string;
@@ -516,69 +529,79 @@ export class EnhancedEmbeddingService {
       sourceType: string | null;
     }>
   > {
+    // No search without a tenant key, and the key is the session's. Without a
+    // key this ran search_atoms_hybrid unfiltered, ranking EVERY tenant's atoms
+    // wherever RLS was not filtering — and Authoring's AI draft and deep
+    // research never passed one. With a key it trusted the key, which nine
+    // routes built from the client's x-org-uuid header when the scope had none.
+    // Both refusals come before the embedding call, so a refused search costs
+    // nothing. docs/evidence/D3/2026-09-24-atom-search-tenant-key/.
+    const { limit, organizationUuid, projectId, semanticWeight = 0.7, minSemanticScore } = options;
+    if (!isTenantUuid(organizationUuid)) {
+      throw new TenantKeyRequiredError('atom search refused: no tenant key');
+    }
+    await assertTenantIsCurrent(this.pool, { organizationUuid });
+
     // Generate query embedding
     const queryResult = await this.embed(query, this.defaultModel);
 
-    // Push org filter INTO the query to avoid cross-tenant data leakage.
-    // When organizationUuid is provided, wrap search_atoms_hybrid with a
-    // CTE that restricts candidates to the tenant's atoms BEFORE scoring.
-    let rows: any[];
-    if (organizationUuid) {
-      const projectFilterClause = projectId
-        ? `AND a.source_type IN ('artifact', 'data_room_upload') AND a.source_id IN (
-             SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = $6
-           )`
-        : '';
-      const { rows: orgRows } = await this.pool.query(
-        `
-        WITH org_atoms AS (
-          SELECT a.id
-          FROM lumen_data_atoms a
-          JOIN organizations o ON a.organization_id = o.id
-          WHERE o.uuid = $5
-            ${projectFilterClause}
-        ),
-        hybrid AS (
-          SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4)
-        )
-        SELECT h.*
-        FROM hybrid h
-        INNER JOIN org_atoms oa ON h.id = oa.id
-        ORDER BY h.combined_score DESC
-        LIMIT $4
-        `,
-        projectId
-          ? [
-              query,
-              `[${queryResult.embedding.join(',')}]`,
-              semanticWeight,
-              limit,
-              organizationUuid,
-              Number(projectId),
-            ]
-          : [query, `[${queryResult.embedding.join(',')}]`, semanticWeight, limit, organizationUuid]
-      );
-      rows = orgRows;
-    } else {
-      const { rows: allRows } = await this.pool.query(
-        `
-        SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4)
-        `,
-        [query, `[${queryResult.embedding.join(',')}]`, limit, semanticWeight]
-      );
-      rows = allRows;
-    }
-
-    return this.attachSourceIdentity(
-      rows.map((row: any) => ({
-        id: row.id,
-        content: row.content,
-        title: row.title,
-        score: parseFloat(row.combined_score),
-        semanticScore: parseFloat(row.semantic_score),
-        keywordScore: parseFloat(row.keyword_score),
-      }))
+    // Arguments by position, as search_atoms_hybrid declares them:
+    //   ($1 query_text, $2 query_embedding, $3 semantic_weight, $4 keyword_weight,
+    //    $5 match_count, filter_atom_type, filter_atom_ids).
+    // They were passed out of order: the org branch sent the limit as
+    // keyword_weight, the other branch sent it as semantic_weight, and neither
+    // sent match_count, so the function always returned its default 10.
+    //
+    // The org (and project) filter goes INTO the function as filter_atom_ids,
+    // so it restricts the candidates before they are ranked and limited.
+    // Joining the function's top rows to the org's atoms afterwards returned a
+    // project nothing whenever other projects' atoms scored higher, and would
+    // have ranked across tenants on any connection RLS does not filter.
+    // docs/evidence/D4/2026-09-24-atom-search/.
+    const embeddingLiteral = `[${queryResult.embedding.join(',')}]`;
+    const keywordWeight = 1 - semanticWeight;
+    // With a floor, fetch past the limit before filtering: the function ranks by
+    // the COMBINED score, so atoms below the floor can outrank ones above it,
+    // and filtering only the top `limit` would drop evidence that qualifies.
+    const fetchCount = minSemanticScore === undefined ? limit : limit * 3;
+    const projectFilterClause = projectId
+      ? `AND a.source_type IN ('artifact', 'data_room_upload') AND a.source_id IN (
+           SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = $7
+         )`
+      : '';
+    const { rows } = await this.pool.query(
+      `
+      WITH org_atoms AS (
+        SELECT a.id
+        FROM lumen_data_atoms a
+        JOIN organizations o ON a.organization_id = o.id
+        WHERE o.uuid = $6
+          ${projectFilterClause}
+      )
+      SELECT h.*
+      FROM search_atoms_hybrid($1, $2::vector, $3, $4, $5, NULL, ARRAY(SELECT id FROM org_atoms)) h
+      ORDER BY h.combined_score DESC
+      `,
+      projectId
+        ? [query, embeddingLiteral, semanticWeight, keywordWeight, fetchCount, organizationUuid, Number(projectId)]
+        : [query, embeddingLiteral, semanticWeight, keywordWeight, fetchCount, organizationUuid]
     );
+
+    const hits = rows.map((row: any) => ({
+      id: row.id,
+      content: row.content,
+      title: row.title,
+      score: parseFloat(row.combined_score),
+      semanticScore: parseFloat(row.semantic_score),
+      keywordScore: parseFloat(row.keyword_score),
+    }));
+    // The floor is on cosine similarity to the query. A keyword-only match has
+    // no semantic score (0) and does not clear any positive floor.
+    const admitted =
+      minSemanticScore === undefined
+        ? hits
+        : hits.filter(h => Number.isFinite(h.semanticScore) && h.semanticScore >= minSemanticScore).slice(0, limit);
+    return this.attachSourceIdentity(admitted);
   }
 
   /**

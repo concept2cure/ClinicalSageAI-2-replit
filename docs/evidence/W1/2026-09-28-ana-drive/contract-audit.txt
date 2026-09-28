@@ -1,0 +1,151 @@
+AnA's requests against the Messages API contract — 2026-09-28 (continued)
+
+Why: the browser battery ran against a local stand-in for the Anthropic
+Messages API, and until this pass the stand-in enforced one rule (an empty
+non-final message is refused). A request shape the real API refuses would have
+passed the battery and failed the first real turn. The stand-in now refuses
+everything below, each rule taken from where the API documents it:
+  - claude-api skill: shared/models.md, shared/error-codes.md,
+    shared/prompt-caching.md
+  - live docs (fetched 2026-09-28): api/messages, build-with-claude/effort,
+    build-with-claude/mid-conversation-system-messages,
+    build-with-claude/prompt-caching
+
+Rules enforced (400 unless noted):
+  - model id: retired ids (Claude 3 family, Claude 2, Opus 4.1 from
+    2026-08-05) and unknown ids -> 404 not_found_error
+  - max_tokens: a positive integer, at most the model's output maximum
+  - unknown top-level, message, content-block, tool and thinking keys
+    ("Extra inputs are not permitted")
+  - empty content in any message but an optional final assistant one; empty
+    text blocks; cache_control on an empty text block
+  - first message from the assistant (error-codes.md)
+  - role "system" in messages: only on Opus 5.5, Opus 5, Opus 4.8 and the
+    Fable/Mythos 5 family; never first; must directly follow a user turn; must
+    end the array or precede an assistant turn; text only
+  - tool_use without a tool_result in the next message, and the reverse
+  - tool names ^[a-zA-Z0-9_-]{1,128}$, unique; input_schema.type "object"
+  - more than 4 cache_control breakpoints
+  - tool_choice any/tool on Opus 5.5 and Fable 5.1; tool_choice without tools
+  - temperature/top_p/top_k on Opus 4.7+, Opus 5.x, Sonnet 5 and Fable
+  - thinking "enabled" (budget_tokens) on adaptive-only models; "disabled"
+    on Opus 5.5 and Fable, and on Opus 5 at effort xhigh/max; "adaptive" on
+    Haiku 4.5; budget_tokens < 1024 or >= max_tokens; temperature other than 1,
+    or top_k, with budget thinking
+  - output_config.effort on Haiku 4.5 and Sonnet 4.5; xhigh on Sonnet 4.6 and
+    Opus 4.6
+  - assistant prefill on Fable
+The stand-in also streams the way a real adaptive model does: a thinking block
+(empty, closed by its signature) ahead of the text and the tool call, and a
+ping event.
+
+Not a rule: consecutive user or assistant turns. The live API reference says
+"Consecutive user or assistant turns in your request will be combined into a
+single turn", so the skill's error table, which lists them as a 400, is out of
+date on that point.
+
+── The stand-in's own rules, each made to fail on a request built to break it ──
+PASS 200 (want 200) valid: opus-5-5, tool, inline system last
+PASS 200 (want 200) valid: inline system then assistant
+PASS 200 (want 200) valid: sonnet-4-6 budget thinking, temperature 1
+PASS 404 (want 404) retired model — model: claude-3-5-sonnet-20241022
+PASS 404 (want 404) retired opus 4.1 — model: claude-opus-4-1-20250805
+PASS 400 (want 400) system after assistant — messages.2: a system message must immediately follow a user turn (it follows assistant)
+PASS 400 (want 400) system followed by user — messages.1: a system message must precede an assistant turn or end the array (it precedes user)
+PASS 400 (want 400) system first — messages.0: a system message that carries content cannot be the first entry in messages
+PASS 400 (want 400) system on sonnet-5 — messages.1: role 'system' is not supported on this model
+PASS 400 (want 400) temperature on opus-5-5 — temperature: sampling parameters are not supported on claude-opus-5-5
+PASS 400 (want 400) budget thinking on opus-5 — "thinking.type.enabled" is not supported for this model. Use "thinking.type.adaptive" and "output_config.effor
+PASS 400 (want 400) thinking disabled on opus-5-5 — "thinking.type.disabled" is not supported for this model. Use "thinking.type.adaptive" and "output_config.effo
+PASS 400 (want 400) tool name with a dot — tools.0.name: String should match pattern '^[a-zA-Z0-9_-]{1,128}$' (got "vault.search")
+PASS 400 (want 400) extra key on a tool — tools.0.custom.category: Extra inputs are not permitted
+PASS 400 (want 400) extra key on a message — messages.0.foldLabel: Extra inputs are not permitted
+PASS 400 (want 400) five cache breakpoints — A maximum of 4 blocks with cache_control may be provided. Found 5.
+PASS 400 (want 400) effort on haiku — output_config.effort: effort is not supported on claude-haiku-4-5
+PASS 400 (want 400) xhigh on sonnet-4-6 — output_config.effort: 'xhigh' is not supported on claude-sonnet-4-6
+PASS 400 (want 400) haiku thinking with temperature 0.3 — `temperature` may only be set to 1 when thinking is enabled
+PASS 400 (want 400) budget >= max_tokens — `max_tokens` must be greater than `thinking.budget_tokens`
+PASS 400 (want 400) first message assistant — messages: first message must use the "user" role
+PASS 400 (want 400) empty user turn mid-conversation — messages.0: all messages must have non-empty content except for the optional final assistant message
+PASS 400 (want 400) forced tool_choice on opus-5-5 — tool_choice: type "tool" and "any" are not supported for this model.
+PASS 400 (want 400) tool_use with no tool_result — messages.1: tool_use ids were found without tool_result blocks immediately after: t1. Each tool_use block must
+PASS 400 (want 400) max_tokens over the model limit — max_tokens: 100000 > 64000, which is the maximum allowed number of output tokens for claude-haiku-4-5
+all 25 cases as expected
+
+── What AnA sent, and what the stand-in refused ──
+Every request body was captured. Two configurations, because the gateway sends
+different shapes to different models: with model tiering on (the default),
+drive rounds are served by Sonnet 5, which does not take mid-conversation
+system messages, so the gateway folds AnA's operator turns into the user turn;
+with tiering off (ANA_MODEL_TIERING=off) they go to Opus 5.5, which takes them
+as they are and enforces the placement rules.
+
+== Tiering on (the default): two battery runs ==
+requests: 90   refused by the contract: 0
+  claude-opus-5-5 (single): 4
+  claude-sonnet-5 (stream): 86
+requests carrying a mid-conversation system turn: 0 (0 turns)
+cache breakpoints per request: {0: 4, 1: 86}
+output_config.effort: {'medium': 90}   thinking param: {'null': 90}   max_tokens: {6144: 86, 700: 4}
+distinct tool names sent: 143 (all match ^[a-zA-Z0-9_-]{1,128}$)
+
+== Tiering off: every round on the flagship ==
+requests: 45   refused by the contract: 0
+  claude-opus-5-5 (single): 2
+  claude-opus-5-5 (stream): 43
+requests carrying a mid-conversation system turn: 26 (34 turns)
+  placement user -> system -> assistant: 31
+  placement user -> system -> end: 3
+cache breakpoints per request: {0: 2, 1: 43}
+output_config.effort: {'medium': 45}   thinking param: {'null': 45}   max_tokens: {6144: 43, 700: 2}
+distinct tool names sent: 143 (all match ^[a-zA-Z0-9_-]{1,128}$)
+
+── The battery through the strict stand-in ──
+Tiering on:
+PASS  take me to biostatistics → Biostatistics opens  — /concept2cure/conversation-thread → /concept2cure/biostatistics
+PASS  biostat: no tool-missing / error text
+PASS  take me to the vault → a program's Vault opens  — /concept2cure/conversation-thread → /concept2cure/vault
+PASS  vault: a real program is open (no "open a program" state)
+PASS  open program BX-301 → its project home  — /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home
+PASS  open program: BX-301 is the program shown
+PASS  search the vault for stability → Vault opens  — /concept2cure/conversation-thread → /concept2cure/vault
+PASS  vault search: the query is in the search box, or an empty vault is refused out loud  — ["stability"]
+PASS  rail: take me to biostatistics → Biostatistics opens  — /concept2cure/projects → /concept2cure/biostatistics
+PASS  rail: the conversation is still there after the move
+PASS  training demo visits every stop in order  — seen: /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home → /concept2cure/vault → /concept2cure/authorin
+PASS  training demo shows "AnA is demonstrating"
+PASS  training demo reaches its end
+PASS  sales demo visits its stops  — seen: /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home → /concept2cure/authoring → /concept2cure/protocol-dev → 
+PASS  sales demo: a guessed document name is refused with the real titles, and AnA retries with one  — Could not open a document for authoring: No document matching "Quarterly summary" in scope (sta
+PASS  sales demo reaches its end
+PASS  drive off: the ask does not move the screen  — /concept2cure/conversation-thread
+PASS  drive off: a Biostatistics chip is offered and works  — chip=true after=/concept2cure/biostatistics
+PASS  no uncaught page errors
+19/19 passed
+
+Tiering off (every round on Opus 5.5):
+PASS  take me to biostatistics → Biostatistics opens  — /concept2cure/conversation-thread → /concept2cure/biostatistics
+PASS  biostat: no tool-missing / error text
+PASS  take me to the vault → a program's Vault opens  — /concept2cure/conversation-thread → /concept2cure/vault
+PASS  vault: a real program is open (no "open a program" state)
+PASS  open program BX-301 → its project home  — /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home
+PASS  open program: BX-301 is the program shown
+PASS  search the vault for stability → Vault opens  — /concept2cure/conversation-thread → /concept2cure/vault
+PASS  vault search: the query is in the search box, or an empty vault is refused out loud  — ["stability"]
+PASS  rail: take me to biostatistics → Biostatistics opens  — /concept2cure/projects → /concept2cure/biostatistics
+PASS  rail: the conversation is still there after the move
+PASS  training demo visits every stop in order  — seen: /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home → /concept2cure/vault → /concept2cure/authorin
+PASS  training demo shows "AnA is demonstrating"
+PASS  training demo reaches its end
+PASS  sales demo visits its stops  — seen: /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home → /concept2cure/authoring → /concept2cure/protocol-dev → 
+PASS  sales demo: a guessed document name is refused with the real titles, and AnA retries with one  — Could not open a document for authoring: No document matching "Quarterly summary" in scope (sta
+PASS  sales demo reaches its end
+PASS  drive off: the ask does not move the screen  — /concept2cure/conversation-thread
+PASS  drive off: a Biostatistics chip is offered and works  — chip=true after=/concept2cure/biostatistics
+PASS  no uncaught page errors
+19/19 passed
+
+The first tiered run scored 18/19: the battery read the stand-in's log from a
+file name this run did not write to, so the check could not see a retry the
+log (fake-strict.log, round #35) shows AnA made. The path was made
+configurable (FAKE_LOG) and the run repeated, above.

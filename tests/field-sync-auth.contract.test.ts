@@ -109,7 +109,7 @@ const PREREQ = `
   -- The account's standing (services/account-standing.ts, VSR-001 F-29) is read
   -- on every authenticated request as well, and one that cannot be read is
   -- refused with 503, for the same reason. The caller's account is in use.
-  CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active');
+  CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active', password_changed_at TIMESTAMP);
   INSERT INTO users (id) VALUES (7);
   CREATE TABLE fda_510k_projects (
     id SERIAL PRIMARY KEY,

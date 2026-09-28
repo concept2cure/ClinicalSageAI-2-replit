@@ -1,0 +1,2508 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion 76ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05)
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05)
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review 58ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05) 57ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file 57ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires 5ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials 3ms
+stdout | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-26T18:57:56.306Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:57:56.307Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-26T18:57:56.308Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-26T18:57:56.317Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:57:56.319Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-26T18:57:56.319Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts
+[database] Database connection successful
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-26T18:57:56.700Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-26T18:57:56.787Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/section-author-kind.pglite.integration.test.ts > c2c_snapshot_section_version — author_kind (fixed) > records an unstated author as unspecified, not as a human 5128ms
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > persists the ledger pair AND the Part 11 signature row, committed together
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > persists the ledger pair AND the Part 11 signature row, committed together 6137ms
+stderr | server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > writes BOTH the c2c_ana_actions row and the audit_logs row, mutually backlinked
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > writes BOTH the c2c_ana_actions row and the audit_logs row, mutually backlinked 6378ms
+ ✓ server/routes/c2c/__tests__/section-author-kind.pglite.integration.test.ts > c2c_snapshot_section_version — author_kind (fixed) > still records the origins that were actually stated 2950ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > non-derivable target: binds the audit chain hash under the EXPLICIT ledger basis (no fabricated content hash) 2676ms
+ ✓ server/routes/c2c/__tests__/section-author-kind.pglite.integration.test.ts > c2c_snapshot_section_version — author_kind (fixed) > carries forward 20260814g's mandatory reason-for-change 2851ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > accepts the domain command update (was rejected by the pre-migration CHECK) 4230ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > derivable target (ectd-sequence): binds a REAL content digest of the leaf manifest 3448ms
+ ✓ server/routes/c2c/__tests__/section-author-kind.pglite.integration.test.ts > c2c_snapshot_section_version — author_kind (fixed) > records an unrecognised origin as unspecified rather than guessing 2677ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > accepts the domain command reaffirm (was rejected by the pre-migration CHECK) 3490ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > §11.200 attribution hash re-derives from the persisted manifest bytes 2639ms
+ ✓ server/routes/c2c/__tests__/section-author-kind.pglite.integration.test.ts > c2c_snapshot_section_version — the defect this replaces > the superseded migration recorded an unstated author as human 2748ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > accepts the domain command create (was rejected by the pre-migration CHECK) 2574ms
+stderr | server/routes/c2c/__tests__/c2c-router.parity.test.ts > review routes live in one router > the reviews router answers every review path, and the main router none of them
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/c2c-router.parity.test.ts > review routes live in one router > the reviews router answers every review path, and the main router none of them
+{
+  "timestamp": "2026-09-26T18:58:14.080Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > ATOMIC / FAIL CLOSED: when the signature row cannot be written, the ledger writes roll back too 2639ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > review routes live in one router > the reviews router answers every review path, and the main router none of them 3610ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > notification, work-item and escalation routes live in one router > the notifications router answers every one of them, and the main router none 1ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > accepts the domain command delete (was rejected by the pre-migration CHECK) 2546ms
+stdout | server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not
+{
+  "timestamp": "2026-09-26T18:58:16.720Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:16.721Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not
+{
+  "timestamp": "2026-09-26T18:58:16.722Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: an unresolvable signer aborts the sign (no anonymous signatures) 2427ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not 900ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > project task routes live in one router > the tasks router answers every one of them, and the main router none 23ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > conversation mutations live in one router > the conversations router answers every one of them, and the main router none 28ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the export family lives in one router > the exports router answers every export path, and the main router none 102ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > accepts the domain command assign (was rejected by the pre-migration CHECK) 2436ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the artifact domain lives in one router > the artifacts router answers every artifact path, and the main router none 1877ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > AI editing lives in one router > the ai-editing router answers every /ai path, and the main router none 117ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > HAQ session persistence lives in one router > the haq-sessions router answers every HAQ path, and the main router none 27ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the program twin and project-context reads live in one router > the program-twin router answers every one of them, and the main router none 41ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the context-integrity and intelligence endpoints live in one router > the context-intelligence router answers every one of them, and the main router none 109ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the project knowledge, activity and linked-project routes live in one router > the project-knowledge router answers every one of them, and the main router none 35ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the governance and platform-operations routes live in one router > the governance-ops router answers every one of them, and the main router none 31ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the connected-app and knowledge-document routes live in one router > the knowledge-sources router answers every one of them, and the main router none 129ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: a sign that declares no meaning is refused before anything is written 3072ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > accepts the domain command approve (was rejected by the pre-migration CHECK) 2348ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: a free-text meaning is refused; only the closed vocabulary is a §11.50 meaning 2318ms
+stdout | tests/routes/estar-official-pdf.test.ts
+{
+  "timestamp": "2026-09-26T18:58:22.405Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:22.410Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | tests/routes/estar-official-pdf.test.ts
+{
+  "timestamp": "2026-09-26T18:58:22.411Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > accepts the domain command review (was rejected by the pre-migration CHECK) 2428ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > enumerates AcroForm fields into a skeleton map from inline template bytes 65ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > fails closed (422) when no template is available to scaffold against 691ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > honest fail-closed (no template / empty map) > returns 422 with blockers and officialEstarPdf:false; never persists 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > end-to-end official PDF when template + verified map present > produces a real PDF and asserts officialEstarPdf:true truthfully 16ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > not ready (no template / empty map) > reports ready:false with blockers and persists nothing 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > ready (template + verified map present) > reports ready:true with no blockers 7ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'device', descriptorId: 'pma-device' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'ivd', descriptorId: 'pma-ivd' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'q_sub', variant: 'device', descriptorId: 'q_sub-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'ide', variant: 'ivd', descriptorId: 'ide-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: '513g', variant: 'device', descriptorId: '513g-prestar' } is accepted and fails closed 1ms
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-09-26T18:58:24.619Z",
+  "level": "error",
+  "message": "[510k-estar-routes] estar official-fields preview failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-09-26T18:58:24.620Z",
+  "level": "error",
+  "message": "[510k-estar-routes] estar official-fields preview failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-09-26T18:58:24.621Z",
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-09-26T18:58:24.626Z",
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it
+{
+  "timestamp": "2026-09-26T18:58:24.649Z",
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "The official eSTAR could not be retained (STORAGE_WRITE_FAILED): The document could not be stored."
+  }
+}
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > the task board's spelling of the vocabulary ('APPROVED') is accepted and stored as declared 2346ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > governed wins, request fills the gap, blanks + ignored keys are reported, provenance is persisted 28ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > without useProgramData the loader is never consulted and the response carries no fieldReport 7ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > with nothing governed and nothing requested no official eSTAR is produced at all 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: one row per mapped field with value + source; unsourced keys are null/null but name their declared home; no request data 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: the Phase 3 homes are sourced when the program and registration rows hold them 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 404 when the ident resolves to nothing in this organization — and reads no governed data 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 422 ESTAR_FIELD_MAP_NOT_POPULATED when the descriptor has no verified map 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 400 on a bad query (missing ident / unknown variant) 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 0ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > retains the delivered bytes and reports where they went 7ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it 7ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > says plainly when a legacy project has no vault, and still delivers 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > names the erased keys in the 200 body AND in the registered metadata 243ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > reports an EMPTY erased list rather than omitting it (assessed ≠ unassessed) 152ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 when every written value is one the form erases (P3) 285ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 on the reviewer's non-string declaring entity (P1, over HTTP) 64ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (governed path) > says the same thing beside the fieldReport, and in the metadata 11ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > accepts the domain command transmittal_rollback (was rejected by the pre-migration CHECK) 2439ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > files the document and says where it went 563ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > the governed record names what was filed, not only the form 612ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > non-sign governed commands do not write electronic_signatures (regression) 2839ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > reads the tenant and the program from the REQUEST, never from the body 692ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > hands the resolver a client it can actually query with 720ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > chains successive governed actions and verifyAuditChain confirms integrity 2637ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses the export, with the reason, when a section is not fileable 464ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses a slot the template does not declare 408ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > rejects a malformed attachment request at the schema, before any work 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > does not inflate the administrative field report by one 629ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > never builds a resolver when no attachment was asked for 279ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > caller-owned transaction: sign writes ride the external client and roll back with it 2740ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is ready, and says the store is ok, when the store answers 45ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when the store does not answer 7ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when the probe throws 4ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when no store can be selected 4ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > produces a chain a later tamper breaks (verifyAuditChain catches it) 2614ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > the migration's anchor CHECK refuses an anchorless signature row 2468ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > records both rows ATOMICALLY — a rolled-back transaction persists neither 2366ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready, and does not hang, when the store never answers 3008ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > recordGovernedAction alone stays ledger-only (domain callers unaffected) 2305ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > commits both rows together when the transaction commits 2619ms
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > helpers the dead module duplicated > parses project ids with and without the proj_ prefix
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > helpers the dead module duplicated > parses project ids with and without the proj_ prefix
+{
+  "timestamp": "2026-09-26T18:58:36.434Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > inserts the first upload 8ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > is idempotent for identical bytes — a retry still succeeds 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > returns NO row for different bytes, which the route turns into a 409 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > leaves the original hash and storage key untouched 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > accepts the new bytes under a new version 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > raises 23505 for the same bytes under a different code 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > is handled by the route rather than falling through to INGEST_FAILED 0ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > keeps the stored copy it names, its file name, retention policy and lineage 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > a record with no storage handle takes the retry's as one unit 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the defect the predicate prevents is still demonstrable > WITHOUT the predicate, the same upload overwrites the recorded hash 4ms
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > helpers the dead module duplicated > applies visibility-tier gating by role
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > helpers the dead module duplicated > applies visibility-tier gating by role
+{
+  "timestamp": "2026-09-26T18:58:37.489Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > helpers the dead module duplicated > parses project ids with and without the proj_ prefix 1966ms
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > GET /projects/:projectId/submission-center/items > lists the project's items with the lifecycle states in meta
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > GET /projects/:projectId/submission-center/items > lists the project's items with the lifecycle states in meta
+{
+  "timestamp": "2026-09-26T18:58:37.645Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > helpers the dead module duplicated > applies visibility-tier gating by role 206ms
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > GET /projects/:projectId/submission-center/items > fails closed with 503 naming the missing table, and reads nothing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > GET /projects/:projectId/submission-center/items > fails closed with 503 naming the missing table, and reads nothing
+{
+  "timestamp": "2026-09-26T18:58:37.827Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > GET /projects/:projectId/submission-center/items > lists the project's items with the lifecycle states in meta 182ms
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > refuses an illegal transition with 400 and writes nothing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > refuses an illegal transition with 400 and writes nothing
+{
+  "timestamp": "2026-09-26T18:58:37.986Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > GET /projects/:projectId/submission-center/items > fails closed with 503 naming the missing table, and reads nothing 175ms
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > 404s an item that is not in this org and project
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > 404s an item that is not in this org and project
+{
+  "timestamp": "2026-09-26T18:58:38.169Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > refuses an illegal transition with 400 and writes nothing 155ms
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > applies a legal transition, audits it, and notifies through the one writer only past ready_for_publish
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > applies a legal transition, audits it, and notifies through the one writer only past ready_for_publish
+{
+  "timestamp": "2026-09-26T18:58:38.330Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > 404s an item that is not in this org and project 178ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > applies a legal transition, audits it, and notifies through the one writer only past ready_for_publish 165ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > classifies risk from the command and hashes the payload into audit_logs 2424ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > renders the filing cabinet with the upload inside its suggested folder 155ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > shows the unfiled queue and the header review count 69ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > a failed vault read is an error, never "no documents" 42ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > reports the derived pipeline stages and lists sources on demand 91ms
+stdout | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+{
+  "timestamp": "2026-09-26T18:58:39.746Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:39.748Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+{
+  "timestamp": "2026-09-26T18:58:39.748Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+{
+  "timestamp": "2026-09-26T18:58:39.832Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable data room renders as a failure, never an empty room 50ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an empty data room says it is empty 56ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable branch is said, never silently omitted from the tree 39ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > labels the classifier's proposal as the classifier's, with its confidence 57ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > does not label AnA's suggestion as the classifier's 58ms
+ ✓ server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written 1336ms
+ ✓ server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a wrong password, counts it, and writes nothing 11ms
+ ✓ server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > requires the enrolled code 11ms
+ ✓ server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses the document's author (separation of duties), and nothing is written 5ms
+ ✓ server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > locks, once, for a re-verified signer who is not the author 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > confirming a suggested filing POSTs to /file and re-reads the tree 143ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > a rejected filing (expired session) is reported as refused, never as recorded 80ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > renders a search input the human can actually use 57ms
+ ✓ server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts > recordGovernedAction against real Postgres > still refuses an empty command (the drift-proof length bound is live) 2277ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > searches on the server and shows the hits, not a substring filter 136ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches 278ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > says how many of the total are shown when the page is not all of them 90ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > states the window and the real total when the server truncated the page 64ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > says nothing when the whole cabinet fits — no note on the common case 41ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > leaves the unfiled queue alone — it is programme-wide, not a page count 49ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — placing a document into a submission > offers the action on an uploaded document and files it by BARE uuid 361ms
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a revoked member → 403 and the handler never runs (no scope)
+{
+  "timestamp": "2026-09-26T18:58:41.465Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)",
+  "context": {
+    "userId": 7,
+    "organizationId": 2
+  }
+}
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > both answer 503, never a pass, when the standing cannot be read
+{
+  "timestamp": "2026-09-26T18:58:41.473Z",
+  "level": "error",
+  "message": "[auth] Account standing could not be read",
+  "context": {}
+}
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authenticateToken refuses a live member of a suspended organization
+{
+  "timestamp": "2026-09-26T18:58:41.480Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/probe"
+  }
+}
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authMiddleware refuses a live member of a suspended organization
+{
+  "timestamp": "2026-09-26T18:58:41.482Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/probe"
+  }
+}
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read
+{
+  "timestamp": "2026-09-26T18:58:41.487Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle] Tenant posture requested for an organization that does not exist",
+  "context": {
+    "organizationId": 2
+  }
+}
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read
+{
+  "timestamp": "2026-09-26T18:58:41.487Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "purged",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/probe"
+  }
+}
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authenticateToken
+{
+  "timestamp": "2026-09-26T18:58:41.489Z",
+  "level": "warn",
+  "message": "[storage-quota-guard] Storage quota exceeded — refusing upload",
+  "context": {
+    "organizationId": 2,
+    "path": "/probe",
+    "usedBytes": 5368709120,
+    "limitBytes": 5368709120,
+    "incomingBytes": 10485760
+  }
+}
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authMiddleware (the global /api gate)
+{
+  "timestamp": "2026-09-26T18:58:41.491Z",
+  "level": "warn",
+  "message": "[storage-quota-guard] Storage quota exceeded — refusing upload",
+  "context": {
+    "organizationId": 2,
+    "path": "/probe",
+    "usedBytes": 5368709120,
+    "limitBytes": 5368709120,
+    "incomingBytes": 10485760
+  }
+}
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > tells a SUSPENDED tenant it is suspended, not that it is out of disk
+{
+  "timestamp": "2026-09-26T18:58:41.495Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "POST",
+    "path": "/probe"
+  }
+}
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses a past-due tenant on an upload, having allowed it a safe verb
+{
+  "timestamp": "2026-09-26T18:58:41.496Z",
+  "level": "info",
+  "message": "[tenant-lifecycle-guard] Request refused by tenant lifecycle posture",
+  "context": {
+    "organizationId": 2,
+    "state": "past_due",
+    "decision": "read_only",
+    "method": "POST",
+    "path": "/probe"
+  }
+}
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a valid token yields an active scope for the downstream handler 1006ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > no token → 401 and the handler never runs (no scope) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a revoked member → 403 and the handler never runs (no scope) 3ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authenticateToken refuses a suspended account, before a scope opens 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authMiddleware (global /api gate) refuses a suspended account, before a scope opens 3ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authenticateToken refuses a inactive account, before a scope opens 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authMiddleware (global /api gate) refuses a inactive account, before a scope opens 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > both answer 503, never a pass, when the standing cannot be read 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authenticateToken 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authMiddleware (global /api gate) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authMiddleware behind authenticateToken leaves the published context carrying it 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > a valid token yields an active scope for the downstream handler 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > no token → 401 and the handler never runs (no scope) 0ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authenticateToken refuses a live member of a suspended organization 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authMiddleware refuses a live member of a suspended organization 3ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > a past-due organization still reaches the handler on a safe verb 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authenticateToken 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authMiddleware (the global /api gate) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > admits an upload that fits, with the scope still open for the handler 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > does not evaluate storage on a small JSON write 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > tells a SUSPENDED tenant it is suspended, not that it is out of disk 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses a past-due tenant on an upload, having allowed it a safe verb 1ms
+DATABASE_URL_PROD not found, using DATABASE_URL as fallback
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses production with no STORAGE_PROVIDER 2ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses a provider it does not implement 0ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses S3 without a bucket, and accepts it with one 1ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses local disk unless the operator states it is durable 1ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > is a no-op outside production 1ms
+DATABASE_URL_PROD not found, using DATABASE_URL as fallback
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > the server configuration fires it on import > refuses to load production configuration that names no vault store 436ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > the server configuration fires it on import > loads it once the store is named 286ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > names the vault document by uuid, on the vault_documents table 309ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > writes NO snapshot — that is the whole point of the uuid column 108ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > reports the leaf the server actually wrote 105ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > surfaces the server verdict verbatim and never claims a placement 81ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > writes nothing for a section code no document can be filed at 72ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the target picker is the shared one > offers the draft sequence and disables the frozen one, saying why 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files a vault document into an IRB package at an IRB slot 69ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > refuses a CTD code in an IRB package, naming the IRB vocabulary 97ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files into a 510(k) at an eSTAR section 76ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > stays strict for an eCTD submission: an IRB slot is not a CTD section 70ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > says why, and offers no placement 10ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > a PDF is filed as before 49ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the placement carries its reason > keeps Place disabled until a reason meets the floor, and says why 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no class that no stylesheet defines 268ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > renders the shared dialog shell the other dialogs use 36ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > is labelled by its own title 29ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the placement carries its reason > sends the trimmed reason with the leaf 61ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > moves focus into the dialog on open 34ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > returns focus to whatever opened it 39ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on Escape 30ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on a click outside, but not on a click inside 39ms
+stderr | client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and selects it
+An update to DocumentHistory inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > shows the filed document by title once the read settles, with the spine still the open folder 170ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and selects it 105ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > a vault with no uploads says so in the lane rather than rendering nothing 44ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — document types are named in words > names a search hit's document type in words, not the stored wire token 194ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — document types are named in words > the upload type picker offers the shared labels, not the wire tokens with underscores swapped for spaces 42ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > publishes the selected section on the editor deep-link channel before navigating 126ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > carries the section but NOT an invented family for a dossier the channel cannot name 68ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — what AnA is told about a selected file > a search hit is not "0% complete": no authoring completion was assessed 127ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > leaves no stale target behind for the next, unrelated visit to the editor 67ms
+stderr | server/routes/__tests__/vault-file-authorization.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/__tests__/vault-file-authorization.test.ts
+{
+  "timestamp": "2026-09-26T18:58:44.997Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/routes/__tests__/vault-file-authorization.test.ts
+{
+  "timestamp": "2026-09-26T18:58:45.240Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:45.240Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/__tests__/vault-file-authorization.test.ts
+{
+  "timestamp": "2026-09-26T18:58:45.240Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses with 403 and never reaches the governed write 32ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses whatever case the role arrives in 6ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses a caller with no role at all 11ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits member 6ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits manager 5ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits admin 4ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits owner 5ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits super_admin 5ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > organization context is still required > refuses a writing role with no organization 8ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > POST /api/vault/ingest — who may put bytes in the vault > gates the role BEFORE the upload is parsed 92ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > POST /api/vault/ingest — who may put bytes in the vault > lets a writing role past the gate 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > shows the recorded title, type and classification 51ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > will not save without a change and a reason of the required length 41ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > sends only the changed fields with the reason, and says it was recorded once the server says so 39ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > reports a refusal as a refusal, keeps the form, and claims nothing 30ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > says nothing changed when the values were already recorded, and does not reload 37ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — what AnA is told about the selected document > an upload has no completion figure — null, not 0% complete 174ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — "N documents" counts documents, not tree entries > one authored document with three sections is "1 document", to the user and to AnA 65ms
+stdout | server/routes/c2c/__tests__/projects-authorization.test.ts
+{
+  "timestamp": "2026-09-26T18:58:46.890Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:46.892Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts
+{
+  "timestamp": "2026-09-26T18:58:46.892Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts
+{
+  "timestamp": "2026-09-26T18:58:46.995Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > warn mode ALLOWS the denied request, so the rule can soak before it rejects
+{
+  "timestamp": "2026-09-26T18:58:47.505Z",
+  "level": "warn",
+  "message": "[c2c-projects] Program mutation allowed without authorization (mode=warn). This request would be rejected in enforce mode.",
+  "context": {
+    "route": "POST /:id/evidence",
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "userId": 99,
+    "orgRole": "member",
+    "leadUserId": 3
+  }
+}
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows the program lead 44ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > DENIES an org member who is neither the lead nor a manager 6ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows an org manager who does not lead the program 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > denies when the program has no lead — unowned is not everyone-owned 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > 404s a program outside the caller org — never 403, which would confirm it exists 6ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > warn mode ALLOWS the denied request, so the rule can soak before it rejects 5ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > an unrecognized mode falls back to enforce rather than opening up 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > DELETE /:id/evidence/:evId — authorization > DENIES a non-lead, non-manager org member 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > DELETE /:id/evidence/:evId — authorization > allows the lead 5ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > program metadata is readable by a non-lead org member 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > team roster is readable by a non-lead org member 3ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > pinned evidence is readable by a non-lead org member 3ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > activity is readable by a non-lead org member 3ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > workstreams is readable by a non-lead org member 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > drafts is readable by a non-lead org member 4ms
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written
+{
+  "timestamp": "2026-09-26T18:58:47.573Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "audit_logs write failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01)
+{
+  "timestamp": "2026-09-26T18:58:47.589Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "5a43da87-ea35-481c-91d6-eedcd423c84d",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 403 without org context 30ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 when name is missing 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 on an invalid programType (never reaches SQL) 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > inserts into regulatory_programs and returns the portfolio display contract 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > derives product_type from program_type when the client omits it 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > retries with a suffixed code on a unique-code collision (23505) 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > runs the insert and the scaffold in ONE transaction, and releases the client 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written 20ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > surfaces a scaffold skip in the 201 body instead of failing or hiding it 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > reports the scaffolded document and section count on success 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01) 4ms
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS
+{
+  "timestamp": "2026-09-26T18:58:47.594Z",
+  "level": "error",
+  "message": "[c2c-projects] 42P01 names a relation that EXISTS — not a provisioning failure",
+  "context": {
+    "correlationId": "286b2e52-b637-4f33-86aa-ed5abf64b968",
+    "step": "creating the project",
+    "store": "audit_logs",
+    "code": "42P01",
+    "route": "/api/c2c/projects",
+    "detail": "relation \"audit_logs\" does not exist"
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS
+{
+  "timestamp": "2026-09-26T18:58:47.594Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "relation \"audit_logs\" does not exist",
+    "correlationId": null,
+    "code": "42P01"
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent
+{
+  "timestamp": "2026-09-26T18:58:47.598Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "2175ddcd-8a68-42c2-8307-499a69bee58c",
+    "step": "creating the project",
+    "store": "audit_logs",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails
+{
+  "timestamp": "2026-09-26T18:58:47.621Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "submissions insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01)
+{
+  "timestamp": "2026-09-26T18:58:47.626Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "d22fb2a4-edb5-4065-b599-5a6020866b04",
+    "step": "creating the project",
+    "store": "submissions",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object
+{
+  "timestamp": "2026-09-26T18:58:47.630Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "1c0273b6-8487-4fe0-b288-c03de63db452",
+    "step": "creating the project",
+    "store": "submissions",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed
+{
+  "timestamp": "2026-09-26T18:58:47.634Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "1815f722-b63a-4473-91e6-cc74442149fc",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed
+{
+  "timestamp": "2026-09-26T18:58:47.639Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "null value in column \"code\" violates not-null constraint",
+    "correlationId": "3b46779335ffb1ec4187935db4df7570",
+    "code": "23502"
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure
+{
+  "timestamp": "2026-09-26T18:58:47.643Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "boom",
+    "correlationId": "3b46779335ffb1ec4187935db4df7570",
+    "code": "23502"
+  }
+}
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses the create when the org is at its licensed program quota 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates the submissions row transactionally for a drug program (nda) 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > reuses only a spine already anchored to THIS program 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a device program (510k) 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a CER program 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01) 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure 4ms
+stderr | server/routes/__tests__/vault-download.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/__tests__/vault-download.test.ts
+{
+  "timestamp": "2026-09-26T18:58:47.652Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/routes/__tests__/vault-download.test.ts
+{
+  "timestamp": "2026-09-26T18:58:47.774Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:47.775Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/__tests__/vault-download.test.ts
+{
+  "timestamp": "2026-09-26T18:58:47.775Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/__tests__/vault-download.test.ts > integrity > serves the bytes when they match the recorded hash
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+stderr | server/routes/__tests__/vault-download.test.ts > integrity > REFUSES bytes that do not match the recorded hash
+{
+  "timestamp": "2026-09-26T18:58:47.896Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "recorded": "ffffffffffff",
+    "actual": "ff2022db4319"
+  }
+}
+stderr | server/routes/__tests__/vault-download.test.ts > integrity > says the stored file is missing when the bytes are gone from disk
+{
+  "timestamp": "2026-09-26T18:58:47.908Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: stored file missing on disk",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "key": "uploads/vault/11111111-1111-4111-8111-111111111111/ff2022db4319b278aead60812ad32722c336bcd1ccd37b7126a76404f126a074.pdf"
+  }
+}
+stderr | server/routes/__tests__/vault-download.test.ts > path safety > refuses a storage key that escapes the uploads root
+{
+  "timestamp": "2026-09-26T18:58:47.914Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: storage key escapes the uploads root",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222"
+  }
+}
+stderr | server/routes/__tests__/vault-download.test.ts > path safety > refuses an absolute key outside the uploads root
+{
+  "timestamp": "2026-09-26T18:58:47.919Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: storage key escapes the uploads root",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222"
+  }
+}
+ ✓ server/routes/__tests__/vault-download.test.ts > scope > 403 without org context 26ms
+ ✓ server/routes/__tests__/vault-download.test.ts > scope > 404 when the programme is not this org’s — the document is never looked up 7ms
+ ✓ server/routes/__tests__/vault-download.test.ts > scope > 404 when the document does not belong to the programme 6ms
+ ✓ server/routes/__tests__/vault-download.test.ts > scope > 404 on a non-uuid id rather than a 500 from the uuid cast 9ms
+ ✓ server/routes/__tests__/vault-download.test.ts > integrity > serves the bytes when they match the recorded hash 10ms
+ ✓ server/routes/__tests__/vault-download.test.ts > integrity > REFUSES bytes that do not match the recorded hash 10ms
+ ✓ server/routes/__tests__/vault-download.test.ts > integrity > says the record has no stored file rather than 404ing the record itself 5ms
+ ✓ server/routes/__tests__/vault-download.test.ts > integrity > says the stored file is missing when the bytes are gone from disk 7ms
+ ✓ server/routes/__tests__/vault-download.test.ts > path safety > refuses a storage key that escapes the uploads root 6ms
+ ✓ server/routes/__tests__/vault-download.test.ts > path safety > refuses an absolute key outside the uploads root 3ms
+stderr | server/routes/__tests__/vault-download.test.ts > audit > REFUSES the download when the audit write fails, and sends nothing
+{
+  "timestamp": "2026-09-26T18:58:47.936Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: audit write failed",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "err": "audit store unavailable"
+  }
+}
+stderr | server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > refuses when the provider has no such version for this organization
+{
+  "timestamp": "2026-09-26T18:58:47.955Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: stored version not readable for this organization",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222"
+  }
+}
+stderr | server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > does not fall back to disk when the provider read fails
+{
+  "timestamp": "2026-09-26T18:58:47.965Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: storage provider read failed",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "reason": "bucket unreachable"
+  }
+}
+stderr | server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > hash-verifies provider bytes against the record, same as disk bytes
+{
+  "timestamp": "2026-09-26T18:58:47.968Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "recorded": "ff2022db4319",
+    "actual": "912cf2f281e7"
+  }
+}
+ ✓ server/routes/__tests__/vault-download.test.ts > audit > records the download before any byte is sent 9ms
+ ✓ server/routes/__tests__/vault-download.test.ts > audit > records the served content hash, so the trail names which edition left 4ms
+ ✓ server/routes/__tests__/vault-download.test.ts > audit > REFUSES the download when the audit write fails, and sends nothing 4ms
+ ✓ server/routes/__tests__/vault-download.test.ts > audit > does not audit a refused read 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > serves a provider-backed row from the provider, never from disk 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > passes the caller organization to the provider — the only tenant gate on bytes 4ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > prefers the version id when the row carries both addresses 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > still serves a legacy row from disk, untouched by the move 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > refuses when the provider has no such version for this organization 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > does not fall back to disk when the provider read fails 9ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > hash-verifies provider bytes against the record, same as disk bytes 4ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > refuses a row carrying neither address 2ms
+stderr | server/routes/c2c/__tests__/promote-generation-provenance.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/promote-generation-provenance.test.ts
+{
+  "timestamp": "2026-09-26T18:58:48.693Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/projects-closeout.test.ts
+{
+  "timestamp": "2026-09-26T18:58:48.888Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:48.890Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-closeout.test.ts
+{
+  "timestamp": "2026-09-26T18:58:48.890Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/projects-closeout.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/projects-closeout.test.ts
+{
+  "timestamp": "2026-09-26T18:58:48.990Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+{
+  "timestamp": "2026-09-26T18:58:49.122Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:49.123Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+{
+  "timestamp": "2026-09-26T18:58:49.123Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+{
+  "timestamp": "2026-09-26T18:58:49.208Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > archives an active program and audits it in the same transaction 27ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > takes a row lock, so concurrent close-outs cannot both claim the change 9ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > scopes the pre-read to the caller org 4ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > DENIES a non-lead, non-manager and writes nothing 4ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > allows an org manager who does not lead the program 4ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > refuses to archive twice 3ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > refuses to archive a deleted program 3ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > 404s a program outside the caller org, without revealing it exists 4ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/unarchive > restores an archived program to active 6ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/unarchive > refuses to unarchive something that is not archived 4ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > DELETE /:id > soft deletes — sets deleted_at, never a hard DELETE 8ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > DELETE /:id > DENIES a non-lead, non-manager 5ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > DELETE /:id > refuses to delete twice 3ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > archived programs leave the portfolio > excludes archived by default 4ms
+ ✓ server/routes/c2c/__tests__/projects-closeout.test.ts > archived programs leave the portfolio > includes them on request, so close-out is reversible from the UI 7ms
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused, not waved through, when the enrolment state cannot be read
+[part11] MFA enrolment check failed during sign: users table unreachable
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > an account taken out of use (VSR-001 F-28) > cannot sign a governed action, with the right password and code 30ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > cannot sign with the password alone 4ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > signs with the password and a current code 10ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused with a wrong code 12ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused, not waved through, when the enrolment state cannot be read 9ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with no second factor enrolled > signs with the password alone 4ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with no second factor enrolled > is refused when it presents a code that does not verify — callers record a present code as verified 4ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > is required 2ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > must verify 4ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > is refused the same way when the signer has no stored password 2ms
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > promote routes the draft as governed drafting > asks for document_drafting and pins no model, on the first call and the retry 44ms
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the record names the model that actually served > provider and model come from the response, and the mode is ai_generated 7ms
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the record names the model that actually served > a retry that produced the stored text is the one recorded 6ms
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the record names the model that actually served > an empty retry keeps the first draft AND the first draft's model 5ms
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the conversation-export fallback is recorded as imported, with no model > when the gateway refuses, the stored text is the conversation and no model is named 28ms
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the conversation-export fallback is recorded as imported, with no model > no literal model name reaches the record on any path 10ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > admits the delivered bytes through the canonical vault ingest 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > versions by content, so the same bytes are idempotent and new bytes are a new version 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > says plainly when a program has no vault to retain into 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when storage refused the bytes — an unretained submission artifact is not delivered 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the program is not ours — an unretained submission artifact is not delivered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when different bytes already hold this version — an unretained submission artifact is not delivered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the ingest itself fails, rather than reporting a retention 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the stored hash is not the delivered hash 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > reads this org only, only retained eSTARs, and only live rows 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > maps the row to what a signer needs to tell two eSTARs apart 1ms
+stderr | server/routes/c2c/__tests__/tasks-tenant-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > does not seed fictional evidence merely by importing the store 2ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > installs kit evidence only through the explicit sample boundary 2ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > excludes the synthesized audit seed from section activity outside sample mode 1ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > empty backend hydration removes prior sample evidence 1ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > live hydration replaces sample evidence rather than merging it 1ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > distinguishes authorization failures, outages, and empty live data 0ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > dossierStore live-data integrity > uses live and explicit sample states without masking loading implicitly 0ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > live audit events attribute only what the client can actually observe > records a section edit with no invented source address 1ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > live audit events attribute only what the client can actually observe > records NO audit event for a file attach — the server owns that entry 1ms
+ ✓ client/src/concept2cure/mdx/store/__tests__/dossierStore.dataIntegrity.test.ts > live audit events attribute only what the client can actually observe > holds for every live event the store can emit, not only the two probed above 0ms
+stdout | server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts
+{
+  "timestamp": "2026-09-26T18:58:50.607Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:50.608Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts
+{
+  "timestamp": "2026-09-26T18:58:50.608Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts
+{
+  "timestamp": "2026-09-26T18:58:50.702Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/rule-packs — provenance reaches the caller > emits a normalised provenance object and no raw columns 24ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/rule-packs — provenance reaches the caller > a pre-migration database reports undeclared rather than nothing 5ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/rule-packs — provenance reaches the caller > reads the columns through to_jsonb, so a missing column cannot 500 the route 4ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/rule-packs — provenance reaches the caller > carries ?docType and ?agency across the mount rewrite 5ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/rule-packs — provenance reaches the caller > is unfiltered only when the caller asked for no filter 6ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/documents/:id/outline — provenance travels with the tree > carries the outline basis on the document the editor renders 5ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/documents/:id/outline — provenance travels with the tree > a pre-migration database still yields a stated basis, the undeclared one 3ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/documents/:id/outline — provenance travels with the tree > reads the columns through to_jsonb here too 3ms
+ ✓ server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts > GET /api/c2c/documents/:id/outline — provenance travels with the tree > 403 without org context, before any query runs 5ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks constrains organization_id 23ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks/summary constrains organization_id 6ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks resolves the project within the org 14ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks 404s on a project belonging to another org 5ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks/bulk resolves the project within the org 5ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > PUT /projects/:id/tasks/:taskId constrains organization_id 4ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > DELETE /projects/:id/tasks/:taskId constrains organization_id 3ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — assessment > POST /projects/:id/tasks/assess constrains organization_id on both reads 4ms
+stderr | server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+{
+  "timestamp": "2026-09-26T18:58:51.685Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+{
+  "timestamp": "2026-09-26T18:58:52.015Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:52.016Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+{
+  "timestamp": "2026-09-26T18:58:52.016Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/vault-document-details-route.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/vault-document-details-route.test.ts
+{
+  "timestamp": "2026-09-26T18:58:52.070Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/vault-document-details-route.test.ts
+{
+  "timestamp": "2026-09-26T18:58:52.297Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:52.298Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/vault-document-details-route.test.ts
+{
+  "timestamp": "2026-09-26T18:58:52.298Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/project-vault-branches.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/project-vault-branches.test.ts
+{
+  "timestamp": "2026-09-26T18:58:52.374Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/vault-document-details-route.test.ts > Edit details route > a failed write is a 500 that says nothing was changed, never a save
+{
+  "timestamp": "2026-09-26T18:58:52.406Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] project vault details error",
+  "context": {
+    "err": "connection reset"
+  }
+}
+ ✓ server/routes/c2c/__tests__/vault-document-details-route.test.ts > Edit details route > carries the request to the writer with the session identity, and returns what changed 32ms
+ ✓ server/routes/c2c/__tests__/vault-document-details-route.test.ts > Edit details route > refuses a viewer at the gate, before the writer runs 5ms
+ ✓ server/routes/c2c/__tests__/vault-document-details-route.test.ts > Edit details route > passes on only string fields: anything else is not a value to write 5ms
+ ✓ server/routes/c2c/__tests__/vault-document-details-route.test.ts > Edit details route > reports the writer's refusal as it was given 15ms
+ ✓ server/routes/c2c/__tests__/vault-document-details-route.test.ts > Edit details route > a failed write is a 500 that says nothing was changed, never a save 5ms
+stderr | server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > a real failure in a branch is still a failure — not silently degraded
+{
+  "timestamp": "2026-09-26T18:58:52.588Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] project vault read error",
+  "context": {
+    "err": "connection reset"
+  }
+}
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > lists CMC-compiled Module 3 artifacts organized by CTD section 34ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > lists what the Upload button ingested — the row really does appear in the tree, WHERE its filing says 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > reports an unprovisioned store as unavailable — never as an empty branch 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > reports an UNANCHORED program as unavailable, not as a missing Module 3 branch 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > an ANCHORED program with nothing filed yet is an honest empty, not an unavailable 12ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > a real failure in a branch is still a failure — not silently degraded 5ms
+stderr | server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stdout | server/routes/c2c/__tests__/projects-list.test.ts
+{
+  "timestamp": "2026-09-26T18:58:54.044Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:54.045Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-list.test.ts
+{
+  "timestamp": "2026-09-26T18:58:54.045Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/projects-list.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/projects-list.test.ts
+{
+  "timestamp": "2026-09-26T18:58:54.142Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > returns { data } rows shaped to the portfolio display contract
+{
+  "timestamp": "2026-09-26T18:58:54.331Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > reports hasMore and trims the extra probe row off the page
+{
+  "timestamp": "2026-09-26T18:58:54.347Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > selects only columns that exist on regulatory_programs
+{
+  "timestamp": "2026-09-26T18:58:54.372Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > 403 without org context 52ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > returns { data } rows shaped to the portfolio display contract 13ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > clamps ?limit to its maximum and never issues an unbounded read 8ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > reports hasMore and trims the extra probe row off the page 5ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > fails closed to an empty envelope when the store is not provisioned 17ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > 404s a non-uuid id instead of 500ing on the uuid cast 4ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > selects only columns that exist on regulatory_programs 8ms
+ ✓ server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts > POST /projects/:projectId/artifacts/:artifactId/signatures — removed > is not routed: a fully formed signing request gets 404 and touches no store 28ms
+ ✓ server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts > POST /projects/:projectId/artifacts/:artifactId/signatures — removed > the GET (§11.70 history) survives; the POST does not 1ms
+ ✓ server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts > POST /projects/:projectId/artifacts/:artifactId/signatures — removed > the router has no local signature-hash recipe and no re-auth wiring left behind 1ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > a Vault download joins the sequenced chain > is written as a sequenced row, not a legacy one 36ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > a Vault download joins the sequenced chain > leaves the tenant chain verifiable 43ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > lists this document's events only, newest first, with who did them 25ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > names each row's predecessor in the TENANT chain, not the document's previous row 26ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > carries the tenant chain verdict, not a verdict of its own 7ms
+stderr | server/routes/c2c/__tests__/project-vault-document-count.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/project-vault-document-count.test.ts
+{
+  "timestamp": "2026-09-26T18:58:55.639Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/project-vault-document-count.test.ts
+{
+  "timestamp": "2026-09-26T18:58:55.852Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:55.853Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/project-vault-document-count.test.ts
+{
+  "timestamp": "2026-09-26T18:58:55.853Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/project-vault-document-count.test.ts > GET /api/c2c/project-vault/:id — documentCount counts documents > an authored document is one document, however many sections its rule pack has
+{
+  "timestamp": "2026-09-26T18:58:55.928Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "select \"id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) limit $3",
+    "enforcement": "off"
+  }
+}
+ ✓ server/routes/c2c/__tests__/project-vault-document-count.test.ts > GET /api/c2c/project-vault/:id — documentCount counts documents > an authored document is one document, however many sections its rule pack has 36ms
+ ✓ server/routes/c2c/__tests__/project-vault-document-count.test.ts > GET /api/c2c/project-vault/:id — documentCount counts documents > uploads count the programme, not the page the tree carries 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-document-count.test.ts > GET /api/c2c/project-vault/:id — documentCount counts documents > a branch that could not be read is unknown in the breakdown, not zero 21ms
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a body over the limit is 413 FILE_TOO_LARGE, naming the limit 40ms
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a type the filter refuses is 415 UNSUPPORTED_FILE_TYPE 9ms
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a second file where one is allowed is 400 UPLOAD_INVALID 8ms
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > an admitted file reaches the handler 7ms
+stdout | server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts
+{
+  "timestamp": "2026-09-26T18:58:56.577Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:56.578Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts
+{
+  "timestamp": "2026-09-26T18:58:56.578Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts
+[database] Database connection successful
+stderr | server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts
+{
+  "timestamp": "2026-09-26T18:58:56.641Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts > filingCabinet — a document filed under another view > every upload the cabinet is given appears in it exactly once 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts > filingCabinet — a document filed under another view > shows it under a folder that says it was filed under another view, naming where 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts > filingCabinet — a document filed under another view > adds no such folder when every document is in view 1ms
+stderr | server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+{
+  "timestamp": "2026-09-26T18:58:57.056Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/summarize-fail-closed.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/summarize-fail-closed.test.ts
+{
+  "timestamp": "2026-09-26T18:58:57.244Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses a .exe with 400 FILE_TYPE_NOT_ALLOWED and stores nothing (F-4) 31ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses an upload under the wrong field name with 400, not 500 (multer LIMIT_UNEXPECTED_FILE) 6ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > still admits an allowed type to the governed ingest (the happy path is untouched) 8ms
+stdout | server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+{
+  "timestamp": "2026-09-26T18:58:57.307Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:57.308Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+{
+  "timestamp": "2026-09-26T18:58:57.308Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > runs both reads — the count and the rows 41ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > every vault read names the caller organization in its own SQL 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > binds the caller organization, not a value from the request 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > counts over exactly the set it returns rows from 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > does not reach the store at all for an empty query 5ms
+stderr | server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > a model failure stores nothing and answers 503
+{
+  "timestamp": "2026-09-26T18:58:58.171Z",
+  "level": "error",
+  "message": "[concept2cure-context-intelligence] AI summarization failed: provider unavailable",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > an unreadable reply stores nothing and answers 503
+{
+  "timestamp": "2026-09-26T18:58:58.176Z",
+  "level": "error",
+  "message": "[concept2cure-context-intelligence] AI summarization failed: the summary reply was unreadable",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > an empty reply stores nothing and answers 503
+{
+  "timestamp": "2026-09-26T18:58:58.180Z",
+  "level": "error",
+  "message": "[concept2cure-context-intelligence] AI summarization failed: the summary reply was unreadable",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > JSON with no objective stores nothing and answers 503
+{
+  "timestamp": "2026-09-26T18:58:58.184Z",
+  "level": "error",
+  "message": "[concept2cure-context-intelligence] AI summarization failed: the summary reply was unreadable",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > a readable summary is stored 29ms
+ ✓ server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > a model failure stores nothing and answers 503 6ms
+ ✓ server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > an unreadable reply stores nothing and answers 503 4ms
+ ✓ server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > an empty reply stores nothing and answers 503 4ms
+ ✓ server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > JSON with no objective stores nothing and answers 503 4ms
+stderr | server/routes/c2c/__tests__/project-vault-completion.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/project-vault-completion.test.ts
+{
+  "timestamp": "2026-09-26T18:58:58.410Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project
+{
+  "timestamp": "2026-09-26T18:58:58.430Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "type": "report",
+    "size": 28,
+    "hasText": false
+  }
+}
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row
+{
+  "timestamp": "2026-09-26T18:58:58.436Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "type": "report",
+    "size": 28,
+    "hasText": false
+  }
+}
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row
+{
+  "timestamp": "2026-09-26T18:58:58.439Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault file persistence failed — refusing to record the document",
+  "context": {
+    "reason": "bucket unreachable",
+    "contentHash": "f3c9d586682936c8987ce11239d2d886f1b9710840ddcf4d36211f4e6a3d3398"
+  }
+}
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage
+{
+  "timestamp": "2026-09-26T18:58:58.442Z",
+  "level": "warn",
+  "message": "[vault-ingest] Vault ingest denied: program not owned by caller organization",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "orgId": 7
+  }
+}
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed
+{
+  "timestamp": "2026-09-26T18:58:58.444Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "timestamp": "2026-09-26T18:58:58.445Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused: content already recorded in this program",
+  "context": {}
+}
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "timestamp": "2026-09-26T18:58:58.445Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed
+{
+  "timestamp": "2026-09-26T18:58:58.446Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "timestamp": "2026-09-26T18:58:58.448Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "timestamp": "2026-09-26T18:58:58.448Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates
+{
+  "timestamp": "2026-09-26T18:58:58.450Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes
+{
+  "timestamp": "2026-09-26T18:58:58.455Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "type": "report",
+    "size": 28,
+    "hasText": false
+  }
+}
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "timestamp": "2026-09-26T18:58:58.456Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "timestamp": "2026-09-26T18:58:58.457Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest could not remove refused bytes from storage",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal
+{
+  "timestamp": "2026-09-26T18:58:58.458Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest could not remove refused bytes from storage",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7,
+    "err": "bucket unreachable"
+  }
+}
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+{
+  "timestamp": "2026-09-26T18:58:58.458Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "connection reset"
+  }
+}
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+{
+  "timestamp": "2026-09-26T18:58:58.458Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest reported a failure, but a record holds its stored bytes — kept",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > the INSERT computes retention_until from the named, active policy, bound to the same parameter as retention_policy, and a re-upload does not restart a clock that has started
+{
+  "timestamp": "2026-09-26T18:58:58.459Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "type": "report",
+    "size": 28,
+    "hasText": false
+  }
+}
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project 9ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > a viewer: 403, nothing stored, nothing written 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > no role at all: refused the same way 0ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses with no organization context at all 0ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes 4ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > the INSERT computes retention_until from the named, active policy, bound to the same parameter as retention_policy, and a re-upload does not restart a clock that has started 1ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > selects the stored device columns and returns them for a 510(k) IVD program 24ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > a drug program is unchanged: existing keys present, device fields honestly null 6ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > serializeProgramDetail never invents: a metadata string that is not JSON, or a null, yields nulls 1ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > POST /api/c2c/projects — the create answers with the same serializer > 201 carries `program` from serializeProgramDetail, so the read returns what the write stored 14ms
+stdout | server/routes/c2c/__tests__/project-vault-completion.test.ts
+{
+  "timestamp": "2026-09-26T18:58:58.595Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:58.595Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/project-vault-completion.test.ts
+{
+  "timestamp": "2026-09-26T18:58:58.595Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > a drafted section is not 100% — it is 0% until the filing approves it
+{
+  "timestamp": "2026-09-26T18:58:58.679Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "select \"id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) limit $3",
+    "enforcement": "off"
+  }
+}
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > a drafted section is not 100% — it is 0% until the filing approves it 43ms
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > an approved section is 100% 12ms
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > an untouched mandatory section is 0% and still flags itself as a blocker 11ms
+stdout | server/routes/c2c/__tests__/projects-readiness.test.ts
+{
+  "timestamp": "2026-09-26T18:58:59.799Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:59.801Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-readiness.test.ts
+{
+  "timestamp": "2026-09-26T18:58:59.801Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/vault-structure.test.ts
+{
+  "timestamp": "2026-09-26T18:58:59.855Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:59.856Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/vault-structure.test.ts
+{
+  "timestamp": "2026-09-26T18:58:59.856Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/projects-readiness.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/projects-readiness.test.ts
+{
+  "timestamp": "2026-09-26T18:58:59.921Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/vault-download-integrity.test.ts
+{
+  "timestamp": "2026-09-26T18:58:59.892Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:58:59.893Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts
+{
+  "timestamp": "2026-09-26T18:58:59.893Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/vault-download-integrity.test.ts
+[database] Database connection successful
+stderr | server/routes/c2c/__tests__/vault-structure.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/vault-structure.test.ts
+{
+  "timestamp": "2026-09-26T18:58:59.965Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts
+{
+  "timestamp": "2026-09-26T18:59:00.006Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > still returns the list when the governed store is absent
+{
+  "timestamp": "2026-09-26T18:59:00.112Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "relation \"c2c_documents\" does not exist",
+    "code": "42P01"
+  }
+}
+ ✓ server/routes/c2c/__tests__/vault-structure.test.ts > GET /api/c2c/projects/:id/vault-structure > derives the DEVICE view + eSTAR section tree for a device project 24ms
+ ✓ server/routes/c2c/__tests__/vault-structure.test.ts > GET /api/c2c/projects/:id/vault-structure > falls back to the service view when the project has no product type 5ms
+ ✓ server/routes/c2c/__tests__/vault-structure.test.ts > GET /api/c2c/projects/:id/vault-structure > 404s a project that is not in the caller org 4ms
+ ✓ server/routes/c2c/__tests__/vault-structure.test.ts > GET /api/c2c/projects/:id/vault-structure > 403s without an organization context 3ms
+stderr | server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > a failed readiness read is null — not assessed — never the stored 0
+{
+  "timestamp": "2026-09-26T18:59:00.131Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "relation \"c2c_documents\" does not exist",
+    "code": "42P01"
+  }
+}
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > reports the governed section completion, not the frozen progress_percent 21ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > asks only about the projects on this page, and scopes to the caller org 6ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > uses the same status set as the readiness trigger 4ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > still returns the list when the governed store is absent 5ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > reports the governed section share, not the frozen progress_percent 5ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > agrees with the list for the same program 6ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > a program with no governed sections has approved nothing: 0, as on its card 3ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > a failed readiness read is null — not assessed — never the stored 0 5ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > scopes the aggregate to this program and the caller org 4ms
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > REFUSES bytes that no longer match the recorded hash
+{
+  "timestamp": "2026-09-26T18:59:00.174Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "doc-1",
+    "recorded": "a27efdfe974d",
+    "actual": "35e5b81a076f"
+  }
+}
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > reports a missing file distinctly from a corrupt one
+{
+  "timestamp": "2026-09-26T18:59:00.177Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: stored file missing on disk",
+  "context": {
+    "documentId": "doc-1",
+    "key": "uploads/nope/gone.bin"
+  }
+}
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > refuses a record that carries no storage address at all
+{
+  "timestamp": "2026-09-26T18:59:00.178Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: record carries no storage address",
+  "context": {
+    "documentId": "doc-1"
+  }
+}
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > refuses a storage key that escapes the uploads root
+{
+  "timestamp": "2026-09-26T18:59:00.179Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: storage key escapes the uploads root",
+  "context": {
+    "documentId": "doc-1"
+  }
+}
+ ✓ server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > returns the bytes when they match the recorded hash 7ms
+ ✓ server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > returns the bytes when no hash was ever recorded, rather than refusing 1ms
+ ✓ server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > REFUSES bytes that no longer match the recorded hash 8ms
+ ✓ server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > reports a missing file distinctly from a corrupt one 1ms
+ ✓ server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > refuses a record that carries no storage address at all 1ms
+ ✓ server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > refuses a storage key that escapes the uploads root 1ms
+ ✓ server/routes/c2c/__tests__/templates-list.test.ts > GET /api/c2c/templates > 401 without org context 21ms
+ ✓ server/routes/c2c/__tests__/templates-list.test.ts > GET /api/c2c/templates > returns a { data } envelope whose rows carry docTypes 7ms
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-09-26T18:59:01.229Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:59:01.231Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-09-26T18:59:01.231Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Database connection successful
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-09-26T18:59:01.300Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/vault-recorded-provider.test.ts
+{
+  "timestamp": "2026-09-26T18:59:01.377Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:59:01.378Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/vault-recorded-provider.test.ts
+{
+  "timestamp": "2026-09-26T18:59:01.378Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/vault-recorded-provider.test.ts
+[database] Database connection successful
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a suggested upload renders inside its taxonomy folder 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > an unfiled upload renders in the Unfiled queue — visible, never dropped 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > every preset folder of the view renders even when empty 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a confirmed upload counts as placed, and its leaf carries real provenance only 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a row with a folder but unfiled status stays in the queue (placement wins over stale folder) 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf carries the file type the filing action decides on > projects mime_type as mimeType 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > an upload has no authoring completion, and says so > projects pct as null, not 0 0ms
+stderr | server/routes/c2c/__tests__/vault-recorded-provider.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/vault-recorded-provider.test.ts
+{
+  "timestamp": "2026-09-26T18:59:01.530Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/vault-recorded-provider.test.ts > readVerifiedVaultBytes reads from the recorded store > still refuses another organization's read of it
+{
+  "timestamp": "2026-09-26T18:59:01.562Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: stored version not readable for this organization",
+  "context": {
+    "documentId": "doc-local"
+  }
+}
+stderr | server/routes/c2c/__tests__/vault-recorded-provider.test.ts > readVerifiedVaultBytes reads from the recorded store > refuses a recorded store this server does not implement, without asking the configured one
+{
+  "timestamp": "2026-09-26T18:59:01.563Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: the store this document was saved in cannot be opened",
+  "context": {
+    "documentId": "doc-gcs",
+    "recorded": "gcs",
+    "reason": "storage provider 'gcs' cannot be opened: not a provider this server implements"
+  }
+}
+stderr | server/routes/c2c/__tests__/vault-recorded-provider.test.ts > readVerifiedVaultBytes reads from the recorded store > refuses, as unreadable, a recorded store this server cannot currently open
+{
+  "timestamp": "2026-09-26T18:59:01.564Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: the store this document was saved in cannot be opened",
+  "context": {
+    "documentId": "doc-s3",
+    "recorded": "s3",
+    "reason": "storage provider 's3' cannot be opened: S3StorageProvider: AWS_S3_BUCKET environment variable required"
+  }
+}
+ ✓ server/routes/c2c/__tests__/vault-recorded-provider.test.ts > readVerifiedVaultBytes reads from the recorded store > serves a document recorded `local` while the server is configured for S3 4ms
+ ✓ server/routes/c2c/__tests__/vault-recorded-provider.test.ts > readVerifiedVaultBytes reads from the recorded store > still refuses another organization's read of it 2ms
+ ✓ server/routes/c2c/__tests__/vault-recorded-provider.test.ts > readVerifiedVaultBytes reads from the recorded store > refuses a recorded store this server does not implement, without asking the configured one 1ms
+ ✓ server/routes/c2c/__tests__/vault-recorded-provider.test.ts > readVerifiedVaultBytes reads from the recorded store > refuses, as unreadable, a recorded store this server cannot currently open 1ms
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+{
+  "timestamp": "2026-09-26T18:59:01.612Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > is told it is the wrong store, and never that the file is missing 3ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > a genuinely unknown vault id still says plainly that the vault does not hold it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > catalog_project_document — a chat upload id > is refused with the same honest reason, without a pointless lookup 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > files the upload through the SAME governed ingest the Vault surface uses 3ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > refuses a vault UUID — a document already in the vault needs no filing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > asks which program rather than guessing one 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > relays a governed refusal with its reason, claiming nothing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > the read refusal now names a tool that exists 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > returns the comprehension record for a cataloged document 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > omits it entirely for a document nobody has studied 0ms
+stderr | server/routes/c2c/__tests__/log-audit-entry-outcome.test.ts
+{
+  "timestamp": "2026-09-26T18:59:02.550Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the store is missing (42P01)
+{
+  "timestamp": "2026-09-26T18:59:02.657Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42P01",
+    "detail": "relation \"projects\" does not exist"
+  }
+}
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when a column is missing (42703)
+{
+  "timestamp": "2026-09-26T18:59:02.659Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42703",
+    "detail": "column \"owner_id\" does not exist"
+  }
+}
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when permission is refused (42501)
+{
+  "timestamp": "2026-09-26T18:59:02.661Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42501",
+    "detail": "permission denied for table projects"
+  }
+}
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the connection drops (08006)
+{
+  "timestamp": "2026-09-26T18:59:02.663Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "08006",
+    "detail": "connection failure"
+  }
+}
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the statement is cancelled (57014)
+{
+  "timestamp": "2026-09-26T18:59:02.664Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "57014",
+    "detail": "canceling statement due to statement timeout"
+  }
+}
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > denies on a genuine no-match, with no error 4ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > denies an unparseable project id 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the store is missing (42P01) 3ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when a column is missing (42703) 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when permission is refused (42501) 2ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the connection drops (08006) 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the statement is cancelled (57014) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx > Vault search — selection > clicking the second hit shows the second hit, not the first 191ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx > Vault search — selection > a hit for a filed document keeps its filing actions 118ms
+stderr | server/routes/c2c/__tests__/log-audit-entry-outcome.test.ts > logAuditEntry reports which of its three outcomes happened > an unresolvable actor is reported as unattributed, not as a clean write
+{
+  "timestamp": "2026-09-26T18:59:03.512Z",
+  "level": "warn",
+  "message": "[concept2cure-api] Audit entry is UNATTRIBUTED — writing sentinel 0 for a non-existent org/user",
+  "context": {
+    "auditId": "audit_1790449143512_2136476dd7d1b78c",
+    "action": "UPDATE",
+    "entityType": "artifact",
+    "entityId": "art-1",
+    "organizationResolved": true,
+    "userResolved": false
+  }
+}
+stderr | server/routes/c2c/__tests__/log-audit-entry-outcome.test.ts > logAuditEntry reports which of its three outcomes happened > a rejected INSERT is reported as not written, and still does not throw
+{
+  "timestamp": "2026-09-26T18:59:03.514Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "relation \"regulatory_audit_logs\" does not exist",
+    "action": "DELETE",
+    "entityType": "artifact",
+    "entityId": "art-1"
+  }
+}
+stderr | server/routes/c2c/__tests__/log-audit-entry-outcome.test.ts > logAuditEntry reports which of its three outcomes happened > a failed write and an unattributed one are different answers
+{
+  "timestamp": "2026-09-26T18:59:03.515Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "db down",
+    "action": "CREATE",
+    "entityType": "artifact",
+    "entityId": "a"
+  }
+}
+stderr | server/routes/c2c/__tests__/log-audit-entry-outcome.test.ts > logAuditEntry reports which of its three outcomes happened > a failed write and an unattributed one are different answers
+{
+  "timestamp": "2026-09-26T18:59:03.515Z",
+  "level": "warn",
+  "message": "[concept2cure-api] Audit entry is UNATTRIBUTED — writing sentinel 0 for a non-existent org/user",
+  "context": {
+    "auditId": "audit_1790449143515_01578b5641250fd2",
+    "action": "CREATE",
+    "entityType": "artifact",
+    "entityId": "a",
+    "organizationResolved": false,
+    "userResolved": true
+  }
+}
+ ✓ server/routes/c2c/__tests__/log-audit-entry-outcome.test.ts > logAuditEntry reports which of its three outcomes happened > a committed row is reported as written, and attributed 4ms
+ ✓ server/routes/c2c/__tests__/log-audit-entry-outcome.test.ts > logAuditEntry reports which of its three outcomes happened > an unresolvable actor is reported as unattributed, not as a clean write 1ms
+ ✓ server/routes/c2c/__tests__/log-audit-entry-outcome.test.ts > logAuditEntry reports which of its three outcomes happened > a rejected INSERT is reported as not written, and still does not throw 1ms
+ ✓ server/routes/c2c/__tests__/log-audit-entry-outcome.test.ts > logAuditEntry reports which of its three outcomes happened > a failed write and an unattributed one are different answers 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a status the map covers resolves to its own chip > resolves every key in the map to itself 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a status the map covers resolves to its own chip > keeps the filing vocabulary distinct from the authoring one 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a status the map does not cover says so > does not claim "Draft" for an unrecognised value 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a status the map does not cover says so > returns a usable chip, not undefined 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a prototype key is not a status > treats "constructor" as unknown, never as a chip 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a prototype key is not a status > treats "toString" as unknown, never as a chip 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a prototype key is not a status > treats "valueOf" as unknown, never as a chip 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a prototype key is not a status > treats "hasOwnProperty" as unknown, never as a chip 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts > a prototype key is not a status > treats "__proto__" as unknown, never as a chip 1ms
+stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts
+{
+  "timestamp": "2026-09-26T18:59:03.898Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/vault-document-history-route.test.ts
+{
+  "timestamp": "2026-09-26T18:59:04.113Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:59:04.114Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts
+{
+  "timestamp": "2026-09-26T18:59:04.114Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > a failed read is an error, never an empty history
+{
+  "timestamp": "2026-09-26T18:59:04.195Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault document history read failed",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "err": "boom"
+  }
+}
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > reads this document's rows from the ledger, in a tenant-stamped transaction 30ms
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > 404s a document that is not this program's or this org's, and reads nothing 6ms
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > a failed read is an error, never an empty history 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > lists who did what to this document, newest first, with the chain verdict 155ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a failed read says so, and does not read as a document with no history 89ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a full window reads as a floor, says so, and AnA is told 135ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a broken chain is reported, not hidden 106ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a refused source is shown as needing review, not as classified 110ms
+stdout | server/routes/c2c/__tests__/projects-sources-window.test.ts
+{
+  "timestamp": "2026-09-26T18:59:05.464Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:59:05.466Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/projects-sources-window.test.ts
+{
+  "timestamp": "2026-09-26T18:59:05.466Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/projects-sources-window.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/projects-sources-window.test.ts
+{
+  "timestamp": "2026-09-26T18:59:05.558Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > asks for one past the window and reports a full window as truncated 25ms
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > says which sources a re-upload retired; a row older than the column is current 5ms
+stdout | server/routes/c2c/__tests__/writeMutation-tenant-context.test.ts
+{
+  "timestamp": "2026-09-26T18:59:06.228Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T18:59:06.230Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/c2c/__tests__/writeMutation-tenant-context.test.ts
+{
+  "timestamp": "2026-09-26T18:59:06.230Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/c2c/__tests__/writeMutation-tenant-context.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/c2c/__tests__/writeMutation-tenant-context.test.ts
+{
+  "timestamp": "2026-09-26T18:59:06.300Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/writeMutation-tenant-context.test.ts > writeMutation — tenant context stamping > stamps tenant context inside the committed transaction (org-scoped) 6ms
+ Test Files  61 passed (61)
+      Tests  496 passed (496)
+   Start at  18:57:53
+   Duration  72.33s (transform 10.27s, setup 2.15s, import 57.04s, tests 136.03s, environment 7.71s)

@@ -18,6 +18,7 @@
  */
 
 import { createScopedLogger } from '../../utils/logger';
+import { programInOrganization } from '../c2c/program-access';
 import type { AuthoringPool } from './authoring-documents';
 import {
   createDocumentFromDraft,
@@ -62,16 +63,17 @@ export interface DraftToolResult {
 /**
  * Resolve the open program as a regulatory_programs UUID the organization
  * owns. Null when there is none — the caller refuses.
+ *
+ * Both branches end at the same check. The legacy integer project's anchor
+ * (`projects.regulatory_program_id`) is a soft link with no key, so a row can
+ * name another organization's program, a missing one or a deleted one; it is
+ * never trusted on its own (PF-04 precondition P2).
  */
 export async function resolveOpenProgram(pool: AuthoringPool, ctx: DraftToolContext): Promise<string | null> {
   const orgId = Number(ctx.organizationId);
   const ref = typeof ctx.projectRef === 'string' ? ctx.projectRef.trim() : '';
   if (ref && UUID_RE.test(ref)) {
-    const owns = await pool.query(
-      `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-      [ref, orgId],
-    );
-    return owns.rows[0]?.id ? String(owns.rows[0].id) : null;
+    return (await programInOrganization(pool, ref, orgId)) ? ref : null;
   }
   const legacy = Number(ctx.projectId);
   if (Number.isSafeInteger(legacy) && legacy > 0) {
@@ -80,7 +82,8 @@ export async function resolveOpenProgram(pool: AuthoringPool, ctx: DraftToolCont
       [legacy, orgId],
     );
     const programId = anchored.rows[0]?.regulatory_program_id;
-    return typeof programId === 'string' && UUID_RE.test(programId) ? programId : null;
+    if (typeof programId !== 'string' || !UUID_RE.test(programId)) return null;
+    return (await programInOrganization(pool, programId, orgId)) ? programId : null;
   }
   return null;
 }
@@ -168,7 +171,9 @@ export async function draftAuthoringDocumentTool(
     };
     return JSON.stringify(result);
   } catch (err) {
+    // The driver's message names tables and constraints; it goes to the log,
+    // never to the model, which relays tool text to the user.
     logger.error('draft_authoring_document failed', { err: err instanceof Error ? err.message : String(err) });
-    return JSON.stringify({ error: `draft_authoring_document failed: ${err instanceof Error ? err.message : String(err)}` });
+    return JSON.stringify({ error: 'draft_authoring_document failed: the document could not be written. Nothing was saved.' });
   }
 }

@@ -33,5 +33,11 @@
   "language": {
     "label": "Jazyk",
     "select": "Vyberte jazyk"
+  },
+  "session": {
+    "stillThere": "Jste tu ještě?",
+    "signOutIn": "Z důvodu nečinnosti budete za {{seconds}} s odhlášeni.",
+    "staySignedIn": "Zůstat přihlášen",
+    "signOutNow": "Odhlásit se nyní"
   }
 }

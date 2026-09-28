@@ -1,0 +1,14 @@
+######## mutant: production without 'trust_proxy_hops = 2' — the hops check must fail
+tests/composition.tftest.hcl... in progress
+  run "production_plans_with_a_domain_and_a_secret"... pass
+  run "the_api_task_trusts_two_hops"... fail
+Error: Test assertion failed
+  on tests/composition.tftest.hcl line 52, in run "the_api_task_trusts_two_hops":
+  52:     condition     = contains([for e in output.b9_api_container_environment : "${e.name}=${e.value}"], "TRUST_PROXY_HOPS=2")
+    ├────────────────
+    │ output.b9_api_container_environment is tuple with 6 elements
+The API task definition must carry TRUST_PROXY_HOPS=2.
+tests/composition.tftest.hcl... tearing down
+tests/composition.tftest.hcl... fail
+Failure! 1 passed, 1 failed.
+exit=1

@@ -150,6 +150,16 @@ function runWithSignStep(opts: {
   };
 }
 
+/** The active release signature, with its §11.50 manifestation. */
+const ACTIVE_SIGNATURE = {
+  id: 7,
+  signerId: 12,
+  signerName: 'A. Reviewer',
+  signerTitle: 'Head of Regulatory Affairs',
+  meaning: 'approval',
+  signedAt: '2026-09-20T14:03:05.000Z',
+};
+
 /** A fully valid, sealed, signed payload for the happy path. */
 function validPayload(snapshot = SNAPSHOT) {
   const payloadDigest = digestFor(snapshot);
@@ -164,7 +174,7 @@ function validPayload(snapshot = SNAPSHOT) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockFindActiveReleaseSignature.mockResolvedValue({ id: 7 });
+  mockFindActiveReleaseSignature.mockResolvedValue(ACTIVE_SIGNATURE);
 });
 
 // ── Happy path ──────────────────────────────────────────────────────────────
@@ -186,6 +196,40 @@ describe('resolveSignedPackageForExport — accepts an intact signed package', (
     expect(result.descriptor.sealVerdict).toBe('ok');
     expect(result.descriptor.gatewayReady).toBe(true);
     expect(result.descriptor.applicationNumber).toBe('IND123456');
+  });
+
+  it('carries the signer, time and meaning of the active signature (§11.50, review P11-4)', async () => {
+    mockGetRun.mockResolvedValue(runWithSignStep({ payload: validPayload() }));
+
+    const result = await resolveSignedPackageForExport({ runId: RUN_ID, organizationId: ORG, env: SEALED_ENV });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.descriptor).toMatchObject({
+      signatureId: 7,
+      signerId: 12,
+      signerName: 'A. Reviewer',
+      signerTitle: 'Head of Regulatory Affairs',
+      signatureMeaning: 'approval',
+      signedAt: '2026-09-20T14:03:05.000Z',
+    });
+  });
+
+  it('passes a missing manifestation field through as null, not as a stand-in', async () => {
+    mockGetRun.mockResolvedValue(runWithSignStep({ payload: validPayload() }));
+    mockFindActiveReleaseSignature.mockResolvedValue({
+      ...ACTIVE_SIGNATURE,
+      signerTitle: null,
+      meaning: null,
+    });
+
+    const result = await resolveSignedPackageForExport({ runId: RUN_ID, organizationId: ORG, env: SEALED_ENV });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.descriptor.signerTitle).toBeNull();
+    expect(result.descriptor.signatureMeaning).toBeNull();
+    expect(result.descriptor.signerName).toBe('A. Reviewer');
   });
 
   it('accepts an unsealed run under an unsealed posture', async () => {

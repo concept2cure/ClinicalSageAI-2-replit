@@ -21,6 +21,7 @@ import React from 'react';
 import { useLocation } from 'wouter';
 import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
 import { AnaRail, CmdK, Rail, TopBar, type AnaMessage } from './Shell';
+import { activityPropsFor, hasReportableWork as hasReportableActivity } from './AnaActivity';
 import {
   useAnaChat,
   type AnaChatMessage,
@@ -30,15 +31,15 @@ import {
 import {
   driveReducer,
   INITIAL_DRIVE_STATE,
-  shouldApplyNavigation,
-  shouldApplyAction,
   validateDriveDirective,
+  whyNotApply,
   type DriveAction,
   type DriveLock,
 } from './liveDrive';
 import {
   advertisedScreenActions,
   applySurfaceAction,
+  readDirectiveProgram,
   validateDriveAction,
 } from './surfaceActions';
 import { LiveDriveOverlay } from './LiveDriveOverlay';
@@ -46,6 +47,7 @@ import { LiveDriveControlsContext } from './LiveDriveSwitch';
 import { resolveSurfaceIdForTarget, stashNavParamsForTarget } from './navParams';
 import { createDriveQueue, type DriveMove } from './driveQueue';
 import { publishShellProject } from './shellProject';
+import type { SentAttachment } from '../hooks/useChatUpload';
 import { getAuthHeaders } from '@/utils/authToken';
 import { useActiveSurfaceContext, toModuleContext } from './surfaceContext';
 import { useAuth } from '@/services/portal/authService';
@@ -117,8 +119,6 @@ import './styles/authoring-v2.css';
 import './styles/research-v2.css';
 import './styles/misc-surfaces-v2.css';
 import './styles/device-v2.css';
-import './styles/pathway-core-v2.css';
-import './styles/pathway-panels-v2.css';
 /* LAST, deliberately. `surface-text-ramp.css` re-bases `--text-400` /
    `--text-300` on every element that establishes a tinted surface, so it has to
    load after the sheets that declare those surfaces — a custom property set
@@ -236,61 +236,19 @@ export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
     evidence: m.evidence,
     /* Built by E14, panelled by E14, carried by nobody until now. */
     crlPremortem: m.crlPremortem,
-    /* Everything the turn reported about how it was answered. This used to be
-       dropped here — useAnaChat captured the tools, rounds, lens and drafts,
-       and the rail rendered a single line of body text — so AnA could run
-       three deterministic engines across two rounds and the person waiting saw
-       the word "Thinking…". */
-    activity: {
-      streaming: m.streaming,
-      phase: m.statusPhase,
-      lens: m.detectedLens,
-      documentType: m.detectedDocumentType,
-      toolCalls: m.toolCalls,
-      thinking: m.thinking,
-      draftTitle: m.generatedDraft?.title,
-      /* The clock. Sent-at has been on every turn since the hook was written
-         and was dropped here like the rest; completed-at is recorded on
-         post_done, stop and failure. */
-      startedAt: m.sentAt,
-      completedAt: m.completedAt,
-    },
+    /* Everything the turn reported about how it was answered — through the
+       one mapping every host uses (AnaActivity.activityPropsFor). This used to
+       be built here field by field, and again in ConversationThread, and each
+       copy dropped something the other carried. */
+    activity: activityPropsFor(m),
+    /* The draft, for its output card beneath the turn. */
+    output: m.generatedDraft?.title ? { generatedDraft: m.generatedDraft, streaming: m.streaming } : undefined,
   };
 }
 
 /** True when the activity record has something real to show for this turn. */
 function hasReportableWork(m: AnaChatMessage): boolean {
-  return Boolean(
-    (m.toolCalls && m.toolCalls.length > 0) ||
-      m.detectedLens ||
-      m.detectedDocumentType ||
-      m.thinking ||
-      m.generatedDraft?.title,
-  );
-}
-
-/**
- * The program a project-scoped drive directive carries, when the server
- * resolved one (navigate_to's `program`): `{ id, name?, code? }` with a
- * non-empty string id, or null. It rides beside the registry's directive —
- * program identity is tenant data, not registry state, so re-validation
- * against the registry cannot vouch for it; the surfaces that read the open
- * program validate it by fetching, as they do after any selection.
- */
-export function readDirectiveProgram(
-  raw: unknown
-): { id: string; name?: string; code?: string } | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const p = (raw as { program?: unknown }).program;
-  if (!p || typeof p !== 'object') return null;
-  const { id, name, code } = p as { id?: unknown; name?: unknown; code?: unknown };
-  const idStr = typeof id === 'number' ? String(id) : typeof id === 'string' ? id.trim() : '';
-  if (!idStr) return null;
-  return {
-    id: idStr,
-    ...(typeof name === 'string' && name.trim() ? { name: name.trim() } : {}),
-    ...(typeof code === 'string' && code.trim() ? { code: code.trim() } : {}),
-  };
+  return hasReportableActivity(activityPropsFor(m));
 }
 
 /**
@@ -392,9 +350,9 @@ export function V2App() {
      released the reducer's `active` (drafts persist post-`done`). */
   const droveThisTurnRef = React.useRef(false);
   /* The chat whose turn is driving — its Stop and steer are the ones the drive
-     strip must reach, and it is where an on-screen outcome AnA needs to hear
-     about (an operation the screen refused) is sent mid-turn. The shell's own
-     chat is only one of the chats that can drive. */
+     strip must reach. The shell's own chat is only one of the chats that can
+     drive. (A move's outcome is NOT reported through this: see
+     settleMove.) */
   const driveControlsRef = React.useRef<DriveTurnControls | null>(null);
   /* Counts driving turns, so a turn's late release cannot end a newer one. */
   const driveTurnRef = React.useRef(0);
@@ -402,22 +360,43 @@ export function V2App() {
   const activeIdRef = React.useRef(activeId);
   activeIdRef.current = activeId;
   /* Tell AnA, mid-turn, that a move she made did not land — so she corrects
-     course instead of narrating a screen that did not change. Rides the
-     run-control interject (an operator turn the server splices into her next
-     round); a turn that has already finished has no next round, and the
-     overlay and transcript still show the failure. */
-  const reportMoveFailure = React.useCallback((move: DriveMove, reason: string) => {
+     course instead of narrating a screen that did not change.
+
+     Through `reportScreen`, never `interject`. Interject is the PERSON's
+     steer: it was recorded as a human control event, shown back as "You
+     steered AnA", and resumed a run the person had paused — for something the
+     app observed and nobody said. The server frames the report as an app
+     observation for her (buildScreenReportTurn), so only the fact is sent.
+
+     And to the run of the turn that MADE the move — the controls the move
+     carries — never "whichever chat is driving now": an operation can settle
+     after a newer turn has started, and that run never made the move. A move
+     with no controls has no run to tell, and a turn that has finished has no
+     next round (reportScreen resolves false); the strip and transcript still
+     show the failure either way. */
+  /* Every move AnA makes is settled back to her run exactly once: landed, or
+     not made with the screen's reason. The server holds her next round until
+     each move of the last one is settled, so the answer she writes next is
+     written from what the screen did — a failure reported after she had
+     already written "I've searched the Vault" was read by no round at all.
+     Once per move: a move can reach more than one path (it fails, and the
+     queue then drops it) and must not be reported twice. */
+  const settledMovesRef = React.useRef(new WeakSet<DriveMove>());
+  const settleMove = React.useCallback((move: DriveMove, notMadeReason?: string) => {
+    if (settledMovesRef.current.has(move)) return;
+    settledMovesRef.current.add(move);
+    const controls = move.controls;
+    if (!controls) return;
+    if (notMadeReason === undefined) {
+      if (move.moveId) void controls.moveLanded(move.moveId).catch(() => undefined);
+      return;
+    }
     const what =
       move.kind === 'navigate'
         ? `Opening the ${move.directive.label} screen`
         : `"${move.directive.label}" on the ${move.directive.surfaceId} screen`;
-    const controls = driveControlsRef.current;
-    if (!controls) return;
     void controls
-      .interject(
-        `[Screen report] ${what} did not happen: ${reason} ` +
-          'Tell the person plainly, then choose another way to finish the task.'
-      )
+      .reportScreen(`[Screen report] ${what} did not happen: ${notMadeReason}`, move.moveId)
       .catch(() => undefined);
   }, []);
   /* AnA's moves reach the screen through ONE serial queue: each navigation
@@ -464,30 +443,81 @@ export function V2App() {
         const reason = anaLockReason(target);
         return reason ? `That screen is ${reason} for this workspace.` : null;
       },
+      /* The strip's step is recorded HERE, when the move has landed — for a
+         navigation, once its screen is showing. It used to be recorded when
+         the navigation arrived, so the strip named a screen as opened while
+         it was still queued behind another move, or before it failed to open.
+         (Its budget was charged on arrival — see onDriveEvent.)
+
+         Only for the turn that made it. A move in flight when a newer turn
+         begins still lands, and recorded then it was counted as the NEW
+         turn's: a demonstration started over a running answer read "1 stop"
+         before it had made one. A failure is still shown whichever turn made
+         it (below) — an error is never dropped; a landing is progress, and
+         claims it only for its own turn. */
       onApplied: (move, detail) => {
-        if (move.kind === 'act') {
-          dispatchDrive({
-            kind: 'action',
-            actionId: move.directive.actionId,
-            label: detail || move.directive.label,
-            round: move.round,
-          });
+        settleMove(move);
+        if (move.turn !== driveTurnRef.current) return;
+        if (move.kind === 'navigate') {
+          dispatchDrive({ kind: 'navigation', directive: move.directive, round: move.round });
+          return;
         }
+        dispatchDrive({
+          kind: 'action',
+          actionId: move.directive.actionId,
+          label: detail || move.directive.label,
+          round: move.round,
+        });
       },
       onFailed: (move, reason) => {
         dispatchDrive({
           kind: 'move_failed',
+          moveKind: move.kind,
           targetId: move.kind === 'act' ? move.directive.actionId : move.directive.targetId,
           label: move.directive.label,
           reason,
         });
-        reportMoveFailure(move, reason);
+        settleMove(move, reason);
       },
+      onDropped: (move, reason) => settleMove(move, reason),
       sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
     });
   }
+  /* End the drive NOW: nothing more the driving turn sends is applied, even
+     moves already on their way. Every way the person ends a drive goes
+     through this one path: Take over, the switch, the strip's Stop, a tour or
+     demonstration that replaces a running answer, and the driving chat's own
+     Stop or new conversation (`drive_stopped`, below).
+
+     Clearing the queue is not enough when the turn is being stopped.
+     useAnaChat.stop() cancels the run on the server FIRST and drops the
+     stream only once the server answers (so the audit records the person's
+     Stop, not a disconnect). Until then the stream keeps delivering moves the
+     server had already written. Each one found the drive still live, passed
+     the gate and was queued after the clear, so the screen kept moving after
+     Stop, and into the tour that replaced the answer. Once the drive is taken
+     over, the gate refuses them; the next turn's drive_state starts a fresh
+     drive. */
+  const haltDrive = React.useCallback(() => {
+    droveThisTurnRef.current = false;
+    // Each dropped move is settled back to AnA with this — she hears that the
+    // person took the screen back, not that her move was lost somewhere.
+    driveQueueRef.current?.clear('The person stopped or took over the drive, so it was not made.');
+    dispatchDrive({ kind: 'take_over' });
+  }, [dispatchDrive]);
   const onDriveEvent = React.useCallback(
     (ev: DriveSseEvent, controls?: DriveTurnControls) => {
+      if (ev.type === 'drive_stopped') {
+        /* The person stopped a driving turn from its chat — the rail's
+           composer, the conversation screen's, a dock's — or replaced it with
+           another conversation. Only the chat sees those, and it says so here
+           before its cancel is awaited. Halted only if that turn is the one
+           driving now: an older chat's turn being stopped must not end a
+           drive a newer turn has since begun. Read before the controls are
+           taken as the driving ones below, which this event must not do. */
+        if (controls && controls === driveControlsRef.current) haltDrive();
+        return;
+      }
       if (controls) driveControlsRef.current = controls;
       if (ev.type === 'drive_turn_end') {
         /* Release the drive only once every move the turn made has landed —
@@ -502,7 +532,42 @@ export function V2App() {
         return;
       }
       if (ev.type === 'drive_state') {
-        if (ev.enabled) driveTurnRef.current += 1;
+        if (ev.promoted === true) {
+          /* The server switched THIS driving turn to a demonstration mid-way
+             (start_product_demo answered). A MODE change for the drive already
+             running — never a fresh enable. Read as one, it counted a new
+             turn, re-engaged the reducer and set demo mode, so a drive the
+             person had just taken over or switched off re-armed itself and
+             went on moving the screen. So it applies only to a drive that is
+             live, not taken over, with the switch still on — and it leaves the
+             turn's identity, "this turn drove" and the queued moves alone. */
+          const live = driveRef.current;
+          if (ev.enabled && live.active && !live.takenOver && prefsRef.current.liveDrive) {
+            const mode = ev.mode === 'demo' ? 'demo' : 'assist';
+            dispatchDrive({ kind: 'mode', mode });
+            /* Kept for the follow-up turns ("continue", a question asked
+               mid-demo) so they carry the demo budgets too. */
+            if (mode === 'demo') setDriveMode('demo');
+          }
+          return;
+        }
+        if (ev.enabled) {
+          /* A new turn begins driving. Moves still queued from an earlier turn
+             belong to a turn that is over — played now, they would land under
+             this turn's budget and narration, on a screen this turn never
+             chose. A move already in flight finishes, reports to its own turn
+             (settleMove), and is not recorded as this turn's (onApplied). The
+             cleared ones are settled as not made (onDropped). */
+          driveQueueRef.current?.clear();
+          /* Consent is the switch, per turn. A turn sent while it was on can
+             begin driving after the person switched it off; engaging then
+             would undo the switch-off exactly as a promotion used to. */
+          if (!prefsRef.current.liveDrive) {
+            droveThisTurnRef.current = false;
+            return;
+          }
+          driveTurnRef.current += 1;
+        }
         droveThisTurnRef.current = ev.enabled;
         dispatchDrive({
           kind: 'drive_state',
@@ -511,9 +576,6 @@ export function V2App() {
           reason: ev.reason,
           requiredTier: ev.requiredTier,
         });
-        /* A demonstration asked for in plain words is promoted to demo mode by
-           the server mid-turn; keep it for the follow-up turns ("continue",
-           a question asked mid-demo) so they carry the demo budgets too. */
         if (ev.enabled && ev.mode === 'demo') setDriveMode('demo');
         return;
       }
@@ -525,17 +587,51 @@ export function V2App() {
            refuses a screen that does not implement the operation). The step is
            recorded when the screen reports it done, never before. */
         const actionDirective = validateDriveAction(ev.directive);
-        if (!actionDirective || !shouldApplyAction(driveRef.current)) return;
-        driveQueueRef.current?.push({ kind: 'act', directive: actionDirective, round: ev.round });
+        /* A move refused here is still settled back — as not made, with why. */
+        const notMade = actionDirective
+          ? whyNotApply(driveRef.current, 'act')
+          : 'This screen does not recognise that operation, so it was not made.';
+        if (notMade || !actionDirective) {
+          if (controls && ev.moveId) {
+            const what = actionDirective
+              ? `"${actionDirective.label}" on the ${actionDirective.surfaceId} screen`
+              : 'An operation';
+            void controls
+              .reportScreen(`[Screen report] ${what} did not happen: ${notMade}`, ev.moveId)
+              .catch(() => undefined);
+          }
+          return;
+        }
+        /* Charged now, as the server charged it; recorded when it lands. */
+        dispatchDrive({ kind: 'reserve', moveKind: 'act' });
+        driveQueueRef.current?.push({
+          kind: 'act',
+          directive: actionDirective,
+          round: ev.round,
+          controls,
+          turn: driveTurnRef.current,
+          moveId: ev.moveId,
+        });
         return;
       }
       /* drive_navigation: the screen moves ONLY to what the shared registry
          itself resolves (fail closed), only while the drive is genuinely live
          (per-turn consent, take-over kills it instantly), and only under the
-         per-turn cap. */
+         per-turn cap — charged now, recorded when its screen shows. */
       const directive = validateDriveDirective(ev.directive);
-      if (!directive || !shouldApplyNavigation(driveRef.current)) return;
-      dispatchDrive({ kind: 'navigation', directive, round: ev.round });
+      const notMade = directive
+        ? whyNotApply(driveRef.current, 'navigate')
+        : 'This screen does not recognise that destination, so the move was not made.';
+      if (notMade || !directive) {
+        if (controls && ev.moveId) {
+          const what = directive ? `Opening the ${directive.label} screen` : 'A move';
+          void controls
+            .reportScreen(`[Screen report] ${what} did not happen: ${notMade}`, ev.moveId)
+            .catch(() => undefined);
+        }
+        return;
+      }
+      dispatchDrive({ kind: 'reserve', moveKind: 'navigate' });
       /* The program the server resolved for a project-scoped target travels
          beside the registry's directive (it is data, not registry state). */
       const program = readDirectiveProgram(ev.directive);
@@ -543,9 +639,12 @@ export function V2App() {
         kind: 'navigate',
         directive: program ? { ...directive, program } : directive,
         round: ev.round,
+        controls,
+        turn: driveTurnRef.current,
+        moveId: ev.moveId,
       } as DriveMove);
     },
-    [dispatchDrive]
+    [dispatchDrive, haltDrive]
   );
   /* Which chat is driving. The shell's own chat is the one the rail shows, so
      when ITS drive carries the person off a screen that draws its own
@@ -672,9 +771,7 @@ export function V2App() {
      collapsed menu. Taking the wheel for a turn is not a decision about the
      next one; the toggle is where that decision lives. */
   const takeOverDrive = () => {
-    droveThisTurnRef.current = false;
-    driveQueueRef.current?.clear();
-    dispatchDrive({ kind: 'take_over' });
+    haltDrive();
     setDriveMode('assist');
   };
   /* ── One-click drive asks: the guided tour + the demonstrations ────────
@@ -694,6 +791,11 @@ export function V2App() {
     if (!prefs.liveDrive) set('liveDrive', true);
     if (anaChat.isStreaming) {
       pendingDriveAskRef.current = { ask, mode };
+      /* The answer being stopped may still have moves queued, and more still
+         arriving while its cancel is in flight. They belong to the turn this
+         ask replaces, and would otherwise keep playing, first in the gap and
+         then into the new turn. Halted, not just cleared: see haltDrive. */
+      haltDrive();
       void anaChat.stop();
       return;
     }
@@ -730,13 +832,12 @@ export function V2App() {
     (v: boolean) => {
       set('liveDrive', v);
       if (!v) {
-        driveQueueRef.current?.clear();
-        dispatchDrive({ kind: 'take_over' });
+        haltDrive();
         setDriveMode('assist');
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatchDrive]
+    [haltDrive]
   );
   const lastMsg = anaChat.messages[anaChat.messages.length - 1];
   /* What AnA is doing right now, for the drive strip — only ever a label the
@@ -881,11 +982,14 @@ export function V2App() {
      React key, so the seed is always read by a mount that happens now. */
   const [convoEpoch, setConvoEpoch] = React.useState(0);
   const startShellConversation = React.useCallback(
-    (seed: string) => {
+    (seed: string, seedFiles?: SentAttachment[]) => {
       try {
-        (window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } }).C2C_CONVO = {
+        (
+          window as unknown as { C2C_CONVO?: { id: string; seed?: string | null; seedFiles?: SentAttachment[] } }
+        ).C2C_CONVO = {
           id: 'new',
           seed,
+          seedFiles,
         };
       } catch {
         /* non-fatal: the thread opens empty rather than seeded */
@@ -897,10 +1001,12 @@ export function V2App() {
   );
 
   /* AnA ask — routes to the REAL streaming assistant (/api/ana-ri/stream via
-     useAnaChat). The [Agent] prefix (rail agent toggle) is a task hint the
-     server's agentic tool loop handles, so we strip it and stream a grounded
-     reply. Governed action execution stays reachable via the action chips
-     (onAct → §11.50 e-sign). No fabricated/sample reply is ever shown.
+     useAnaChat). What the person typed is sent as typed: the rail's Ask /
+     Agent control is the Live Drive preference and rides on the request, not
+     a prefix in the text (it used to be "[Agent] ", stripped right here, so
+     the two modes did the same thing). Governed action execution stays
+     reachable via the action chips (onAct → §11.50 e-sign). No
+     fabricated/sample reply is ever shown.
 
      THE GUARD. Surfaces that own the conversation no longer receive this
      function at all (the SurfaceView union removes `onAsk` from their props),
@@ -910,15 +1016,15 @@ export function V2App() {
      nothing visible here, and your question waiting for you, opened, on the
      next surface that does draw one. The question goes to the surface that
      shows it instead. */
-  const ask = (text: string) => {
-    const clean = text.replace(/^\[Agent\]\s*/i, '').trim();
+  const ask = (text: string, files?: SentAttachment[]) => {
+    const clean = text.trim();
     if (!clean) return;
     if (ownsConversation) {
-      startShellConversation(clean);
+      startShellConversation(clean, files);
       return;
     }
     if (!prefs.anaOpen) set('anaOpen', true);
-    void anaChat.send(clean);
+    void anaChat.send(clean, files);
   };
 
   /* Governed + ungoverned actions both execute through ANA, the real agentic
@@ -940,7 +1046,7 @@ export function V2App() {
 
   let body: React.ReactNode;
   if (activeId === 'home') {
-    body = <Home onNav={nav} onAsk={ask} segment={prefs.segment} />;
+    body = <Home onNav={nav} onAsk={ask} segment={prefs.segment} mode={prefs.anaMode} setMode={(m) => set('anaMode', m)} />;
   } else if (view?.ownsConversation) {
     /* Narrowed by the union: this component's props do not include `onAsk`, so
        there is no way to hand it a rail that is not being rendered. */
@@ -1165,9 +1271,11 @@ export function V2App() {
         narration={ownsConversation ? driveNarration : undefined}
         onTakeOver={takeOverDrive}
         /* Stop and steer reach the chat that is DRIVING, which is not always
-           the shell's own (the editor dock's, the co-author's). */
+           the shell's own (the editor dock's, the co-author's). Stop ends the
+           drive first: the stopped run keeps streaming until its cancel is
+           answered (see haltDrive). */
         onStop={() => {
-          driveQueueRef.current?.clear();
+          haltDrive();
           const c = driveControlsRef.current;
           if (c) c.stop();
           else void anaChat.stop();

@@ -1,0 +1,23 @@
+# The revision the preflight checks is the revision that rolls (review findings SEC-5 / PIPE-2).
+# Each mutation of deploy-aws.yml must fail scripts/ops/terraform-preflight-proof.mjs.
+
+## After this change
+[terraform-preflight-proof] ok — terraform test: 14 passed, 0 failed, 0 errored
+[terraform-preflight-proof] ok — the preflight published the revision it checked (arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-api:1)
+[terraform-preflight-proof] ok — the revision the preflight checked is the one migrate and deploy-api derive from (ARN pinned end to end)
+[terraform-preflight-proof] every check holds.
+
+## Mutation 1: deploy-api derives its revision from the family's latest again
+[terraform-preflight-proof] ok — terraform test: 14 passed, 0 failed, 0 errored
+[terraform-preflight-proof] FAIL — revision pinning: job "deploy-api" does not derive the revision it rolls from the checked ARN
+[terraform-preflight-proof] 1 check(s) failed.
+
+## Mutation 2: the preflight no longer publishes the ARN it checked
+[terraform-preflight-proof] ok — terraform test: 14 passed, 0 failed, 0 errored
+[terraform-preflight-proof] FAIL — the preflight accepted but did not publish api_td_arn=arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-api:1 (got "")
+[terraform-preflight-proof] 1 check(s) failed.
+
+## Mutation 3: deploy-api no longer refuses a family that moved after the check
+[terraform-preflight-proof] ok — terraform test: 14 passed, 0 failed, 0 errored
+[terraform-preflight-proof] FAIL — revision pinning: job "deploy-api" does not refuse when the family moved after the check
+[terraform-preflight-proof] 1 check(s) failed.

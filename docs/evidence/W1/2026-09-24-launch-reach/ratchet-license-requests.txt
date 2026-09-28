@@ -1,0 +1,3 @@
+# ratchet 41 -> 40: license_requests now exists on the provisioned database (as app_service).
+[ci:tables-live-schema] 1282 relations on the live database; 745 referenced by server SQL; 9 resolved as functions; 40 absent
+[ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (40 baselined)

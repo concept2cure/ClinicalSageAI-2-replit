@@ -101,6 +101,66 @@ function normalizeBody(body: Record<string, any>): Record<string, any> {
   return out;
 }
 
+/**
+ * The first parent a CRO body names — its client, study or submission — that is
+ * not this org's, or null. normalizeBody strips the row's own tenant key, but
+ * these are foreign keys, and Postgres checks a foreign key without RLS: a study
+ * could be filed against another org's client, which that org then could not
+ * delete, and a 200 against a 500 told the caller which ids exist (ledger L195).
+ */
+async function foreignParent(
+  rdb: ReturnType<typeof requestDb>,
+  orgId: number,
+  payload: Record<string, any>
+): Promise<'clientId' | 'studyId' | 'submissionId' | null> {
+  const idOf = (value: unknown): number | null => {
+    const id = Number(value);
+    return Number.isSafeInteger(id) ? id : null;
+  };
+  if (payload.clientId != null) {
+    const id = idOf(payload.clientId);
+    const found =
+      id == null
+        ? []
+        : await rdb
+            .select({ id: croClients.id })
+            .from(croClients)
+            .where(and(eq(croClients.id, id), eq(croClients.organizationId, orgId)))
+            .limit(1);
+    if (!found.length) return 'clientId';
+  }
+  if (payload.studyId != null) {
+    const id = idOf(payload.studyId);
+    const found =
+      id == null
+        ? []
+        : await rdb
+            .select({ id: croStudies.id })
+            .from(croStudies)
+            .where(and(eq(croStudies.id, id), eq(croStudies.organizationId, orgId)))
+            .limit(1);
+    if (!found.length) return 'studyId';
+  }
+  if (payload.submissionId != null) {
+    const id = idOf(payload.submissionId);
+    const found =
+      id == null
+        ? []
+        : await rdb
+            .select({ id: croRegulatorySubmissions.id })
+            .from(croRegulatorySubmissions)
+            .where(
+              and(
+                eq(croRegulatorySubmissions.id, id),
+                eq(croRegulatorySubmissions.organizationId, orgId)
+              )
+            )
+            .limit(1);
+    if (!found.length) return 'submissionId';
+  }
+  return null;
+}
+
 function requireOrg(req: Request, res: Response): number | null {
   const orgId = getOrgId(req);
   if (!orgId) {
@@ -300,6 +360,8 @@ router.post('/studies', async (req: Request, res: Response) => {
         .status(400)
         .json({ error: 'clientId, studyNumber and studyTitle are required' });
     }
+    const foreign = await foreignParent(rdb, orgId, payload);
+    if (foreign) return res.status(404).json({ error: `${foreign} not found` });
     const [row] = await rdb
       .insert(croStudies)
       .values({ ...payload, organizationId: orgId } as any)
@@ -319,9 +381,12 @@ router.put('/studies/:id', async (req: Request, res: Response) => {
   const rdb = requestDb(req);
   try {
     const id = parseInt(String(req.params.id), 10);
+    const payload = normalizeBody(req.body);
+    const foreign = await foreignParent(rdb, orgId, payload);
+    if (foreign) return res.status(404).json({ error: `${foreign} not found` });
     const [row] = await rdb
       .update(croStudies)
-      .set({ ...normalizeBody(req.body), updatedAt: new Date() } as any)
+      .set({ ...payload, updatedAt: new Date() } as any)
       .where(and(eq(croStudies.id, id), eq(croStudies.organizationId, orgId)))
       .returning();
     if (!row) return res.status(404).json({ error: 'Study not found' });
@@ -365,6 +430,8 @@ router.post('/submissions', async (req: Request, res: Response) => {
         .status(400)
         .json({ error: 'clientId, submissionType and regulatoryRegion are required' });
     }
+    const foreign = await foreignParent(rdb, orgId, payload);
+    if (foreign) return res.status(404).json({ error: `${foreign} not found` });
     const [row] = await rdb
       .insert(croRegulatorySubmissions)
       .values({ ...payload, organizationId: orgId } as any)
@@ -384,9 +451,12 @@ router.put('/submissions/:id', async (req: Request, res: Response) => {
   const rdb = requestDb(req);
   try {
     const id = parseInt(String(req.params.id), 10);
+    const payload = normalizeBody(req.body);
+    const foreign = await foreignParent(rdb, orgId, payload);
+    if (foreign) return res.status(404).json({ error: `${foreign} not found` });
     const [row] = await rdb
       .update(croRegulatorySubmissions)
-      .set({ ...normalizeBody(req.body), updatedAt: new Date() } as any)
+      .set({ ...payload, updatedAt: new Date() } as any)
       .where(
         and(
           eq(croRegulatorySubmissions.id, id),
@@ -433,6 +503,8 @@ router.post('/milestones', async (req: Request, res: Response) => {
     if (!payload.clientId || !payload.title || !payload.category) {
       return res.status(400).json({ error: 'clientId, title and category are required' });
     }
+    const foreign = await foreignParent(rdb, orgId, payload);
+    if (foreign) return res.status(404).json({ error: `${foreign} not found` });
     const [row] = await rdb
       .insert(croMilestones)
       .values({ ...payload, organizationId: orgId } as any)
@@ -452,9 +524,12 @@ router.put('/milestones/:id', async (req: Request, res: Response) => {
   const rdb = requestDb(req);
   try {
     const id = parseInt(String(req.params.id), 10);
+    const payload = normalizeBody(req.body);
+    const foreign = await foreignParent(rdb, orgId, payload);
+    if (foreign) return res.status(404).json({ error: `${foreign} not found` });
     const [row] = await rdb
       .update(croMilestones)
-      .set({ ...normalizeBody(req.body), updatedAt: new Date() } as any)
+      .set({ ...payload, updatedAt: new Date() } as any)
       .where(and(eq(croMilestones.id, id), eq(croMilestones.organizationId, orgId)))
       .returning();
     if (!row) return res.status(404).json({ error: 'Milestone not found' });

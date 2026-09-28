@@ -130,9 +130,12 @@ async function cleanup(): Promise<void> {
   const client = await owner.connect();
   try {
     await client.query('BEGIN');
-    // audit_logs is append-only on the deploy path; this is its documented door.
-    await client.query("SET LOCAL app.audit_archive_bypass = 'on'");
+    // audit_logs is append-only on the deploy path. A suite tears its own rows down as the
+    // table owner with the DELETE trigger disabled for this transaction only: the archive door
+    // (audit_logs_archive_delete(), P0-8a) refuses rows inside the 24-month hot window.
+    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
     await client.query('DELETE FROM audit_logs WHERE tenant_id = $1', [ORG]);
+    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
@@ -514,11 +517,18 @@ describe('a password-reset token is used once', () => {
       f.id,
     ]);
 
-    const passwords = ['Dbtrp-Reset-First-2026!', 'Dbtrp-Reset-Second-2026!'];
+    // Both must pass the whole policy, so a refusal here can only be the race.
+    // The reset refuses a password built from the account's words (IAM-17): the
+    // address's local part (`dbtrp`, the pid, the run id), the name (`lane`,
+    // `replay`) and the product. So no `dbtrp`, and no run of four digits a pid
+    // could match.
+    const passwords = ['Quartz-Harbor-Lantern-7!', 'Velvet-Orchid-Summit-9?'];
     const results = await Promise.all(
       passwords.map((newPassword) => request(app).post('/api/auth/reset-password').send({ token, newPassword })),
     );
     expect(results.map((r) => r.status).sort(), JSON.stringify(results.map((r) => r.body))).toEqual([200, 400]);
+    // The loser lost the token, not the policy (AUTH_001 would be a policy refusal).
+    expect(results.find((r) => r.status === 400)?.body.error.code).toBe('AUTH_006');
 
     const winner = passwords[results.findIndex((r) => r.status === 200)];
     const { rows } = await owner.query('SELECT password_hash, reset_token FROM users WHERE id = $1', [f.id]);

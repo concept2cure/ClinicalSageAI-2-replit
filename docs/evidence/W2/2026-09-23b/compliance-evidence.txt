@@ -1,0 +1,31 @@
+# terraform/modules/compliance-evidence/tests/evidence.tftest.hcl — each old defect, re-introduced, must fail
+
+## As written
+  Success! 4 passed, 0 failed.
+
+## Default encryption names an alias again
+    run "the_bucket_admits_cloudtrail_and_refuses_plaintext"... fail
+  tests/evidence.tftest.hcl... fail
+  Failure! 3 passed, 1 failed.
+
+## Bucket policy without the CloudTrail ACL check
+    run "the_bucket_admits_cloudtrail_and_refuses_plaintext"... fail
+  tests/evidence.tftest.hcl... fail
+  Failure! 3 passed, 1 failed.
+
+## Names hard-coded to ros-staging again
+    run "the_key_admits_cloudtrail_and_logs_for_this_trail_and_log_group_only"... fail
+    run "the_bucket_admits_cloudtrail_and_refuses_plaintext"... fail
+    run "names_come_from_the_prefix_not_ros_staging"... fail
+  tests/evidence.tftest.hcl... fail
+  Failure! 1 passed, 3 failed.
+
+## CloudTrail may no longer generate data keys with the key (as under the old empty policy)
+    run "the_key_admits_cloudtrail_and_logs_for_this_trail_and_log_group_only"... fail
+  tests/evidence.tftest.hcl... fail
+  Failure! 3 passed, 1 failed.
+
+## The trail logs its own deliveries again (the AWSLogs/ exclusion removed)
+    run "the_trail_does_not_log_its_own_deliveries"... fail
+  tests/evidence.tftest.hcl... fail
+  Failure! 3 passed, 1 failed.

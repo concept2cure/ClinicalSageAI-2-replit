@@ -24,6 +24,7 @@ import FeatureToggleService from '../services/featureToggleService';
 import { ensureCoreTables } from '../db/ensureCoreTables';
 import { setSchemaReadiness } from './readiness-state';
 import { runWithSystemTenantScope } from '../db/tenantStore';
+import { assertAuditImmutabilityForProduction } from './audit-enforcement';
 
 // NOTE (D9, 2026-08-13): the `startPythonBackend()` stub that lived here (and
 // always resolved null) was removed together with the dead Python stack under
@@ -236,6 +237,13 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
     setSchemaReadiness('error', `core table verification threw: ${err?.message ?? String(err)}`);
     console.error('❌ CRITICAL: Core table verification failed:', err?.message ?? String(err));
   }
+
+  // 21 CFR Part 11 §11.10(e): every audit store's immutability trigger must be
+  // in force before this process serves a request (security audit 2026-09-24
+  // finding DP-06, plan item P0-9a). Production refuses to boot without them —
+  // the throw propagates to startServer().catch, which exits non-zero; elsewhere
+  // the gap is logged. The check declares its own system tenant scope.
+  await assertAuditImmutabilityForProduction(pool);
 }
 
 /**

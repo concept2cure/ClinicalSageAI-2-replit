@@ -1,0 +1,24 @@
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > migrations/20260921_audit_logs_chain_seq.sql on the shared fixture > adds chain_seq, the position trigger and the sequence, and replays without error 29ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > migrations/20260921_audit_logs_chain_seq.sql on the shared fixture > names the same announcement GUC the writer uses (one recipe) 2ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > assigns increasing chain_seq per tenant and the verifier walks it 46ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > verifies by commit order even when occurred_at runs backwards 14ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > refuses a row whose tenant_id differs from the position the writer took (fail closed) 14ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > records a chained row written without a position as legacy and still verifies it 12ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > records a row written outside a transaction as legacy (the lock and announcement end with their statement) 4ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > anchors a tenant's first sequenced row to its legacy head 15ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > detects a tampered sequenced row and names the segment 22ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > diagnoses the pre-fix fork: a legacy row committing to genesis instead of its predecessor 4ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > seals through the same walk: valid when intact, failing closed after a break 23ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > migrations/20260921_audit_logs_chain_seq.sql on the shared fixture > adds chain_seq, the position trigger and the sequence, and replays without error 19ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > migrations/20260921_audit_logs_chain_seq.sql on the shared fixture > names the same announcement GUC the writer uses (one recipe) 1ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > assigns increasing chain_seq per tenant and the verifier walks it 40ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > verifies by commit order even when occurred_at runs backwards 15ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > refuses a row whose tenant_id differs from the position the writer took (fail closed) 10ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > records a chained row written without a position as legacy and still verifies it 10ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > records a row written outside a transaction as legacy (the lock and announcement end with their statement) 4ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > anchors a tenant's first sequenced row to its legacy head 13ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > detects a tampered sequenced row and names the segment 21ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > diagnoses the pre-fix fork: a legacy row committing to genesis instead of its predecessor 4ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > seals through the same walk: valid when intact, failing closed after a break 25ms
+ Test Files  2 passed (2)
+      Tests  22 passed (22)

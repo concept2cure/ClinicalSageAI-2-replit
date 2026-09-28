@@ -1,0 +1,24 @@
+# terraform/modules/github-deploy-roles/tests/roles.tftest.hcl — each mutation must fail a run
+
+## As written
+  Success! 6 passed, 0 failed.
+
+## Build role gains ecs:UpdateService (a job outside the environment could roll production)
+    run "the_build_role_cannot_change_what_production_runs"... fail
+  tests/roles.tftest.hcl... fail
+  Failure! 5 passed, 1 failed.
+
+## Deploy role trusts any subject in the repository
+    run "the_deploy_role_answers_only_to_the_github_environment"... fail
+  tests/roles.tftest.hcl... fail
+  Failure! 5 passed, 1 failed.
+
+## iam:PassRole without the PassedToService condition
+    run "no_wildcards_beyond_the_actions_that_cannot_be_scoped"... fail
+  tests/roles.tftest.hcl... fail
+  Failure! 5 passed, 1 failed.
+
+## ecs:UpdateService on Resource "*"
+    run "no_wildcards_beyond_the_actions_that_cannot_be_scoped"... fail
+  tests/roles.tftest.hcl... fail
+  Failure! 5 passed, 1 failed.

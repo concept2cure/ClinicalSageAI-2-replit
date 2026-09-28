@@ -128,6 +128,13 @@ const ENFORCED = [
      future edit that darkens the fill without darkening the label, or lightens
      one side only, fails here rather than in a customer's VPAT. */
   ['accent-on-strong', 'accent-strong'],
+  /* The same pairing for the three semantic fills: a label on a success,
+     warning or error ground. White is the label in light; in dark the fills
+     lift lighter and the label must turn to ink. Asserting the PAIR keeps
+     the two halves flipping together. */
+  ['on-success', 'success'],
+  ['on-warning', 'warning'],
+  ['on-error', 'error'],
 ];
 
 /**

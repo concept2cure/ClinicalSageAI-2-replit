@@ -77,7 +77,7 @@ export async function getIntelligencePrefix(
     const [clientCtx, projectCtx, wisdomBlock] = await Promise.all([
       buildClientIntelligenceContext(organizationId).catch(() => null),
       parsedProjectId
-        ? buildProjectIntelligenceContext(parsedProjectId).catch(() => null)
+        ? buildProjectIntelligenceContext(parsedProjectId, organizationId).catch(() => null)
         : Promise.resolve(null),
       // AnA Wisdom Engine — inject learned wisdom (risks, lessons, patterns).
       // Non-blocking: if it fails, chat still works without wisdom context.

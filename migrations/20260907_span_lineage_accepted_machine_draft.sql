@@ -33,13 +33,26 @@
 -- human edits the words. Nothing is inferred and nothing is backfilled: a
 -- clause recorded before this kind existed stays as it was recorded.
 --
--- RULE 1 (CLAUDE.md): the two CHECKs are replaced with the repo's idempotent
--- DROP CONSTRAINT IF EXISTS / ADD CONSTRAINT idiom (as 20260806b widened
--- c2c_documents_doc_type_check). A CHECK holds no data, so re-running is a
--- no-op that converges on the same definition; the column is ADD COLUMN IF NOT
--- EXISTS. db/migrations/20260803 creates the table with CREATE TABLE IF NOT
--- EXISTS, so on a provisioned database it never revisits the constraints —
--- which is why they are widened here rather than amended in place.
+-- RULE 1 (CLAUDE.md): the column is ADD COLUMN IF NOT EXISTS.
+-- db/migrations/20260803 creates the table with CREATE TABLE IF NOT EXISTS, so
+-- on a provisioned database it never revisits the constraints — which is why
+-- they are widened here rather than amended in place.
+--
+-- AMENDED IN PLACE 2026-09-25 (RULE 1) — the two CHECK replacements are now
+-- conditional. As first written they were an unconditional DROP / ADD, on the
+-- reasoning that "a CHECK holds no data, so re-running is a no-op that
+-- converges on the same definition". That holds for the end state and not for
+-- the step before it: ADD CONSTRAINT validates every existing row, and
+-- 20260908 (next in the set) widens both constraints to a fourth kind,
+-- machine_draft. So on every deploy this file re-imposed its three-kind list
+-- over the table, and from the first machine_draft span on — any AnA draft
+-- nobody has accepted yet — the ADD failed and the deploy stopped here.
+-- Reproduced on PGlite by tests/schema-contract/check-constraint-replay.pglite.test.ts.
+-- Each constraint is now replaced only while its current definition does not
+-- yet admit accepted_machine_draft: a fresh database still goes 20260803 →
+-- here → 20260908, and a provisioned one keeps whatever later file widened it.
+-- ci:migration-drop-safety now refuses an unconditional replacement of a
+-- constraint that a later file in the set also defines.
 --
 -- ROLLBACK
 --   Retire the rows first (UPDATE … SET deleted_at = now() WHERE
@@ -63,30 +76,46 @@ BEGIN
   EXECUTE $q$COMMENT ON COLUMN public.document_span_lineage.machine_author_id IS
     'For provenance_kind = accepted_machine_draft: the machine author that drafted the span (a MACHINE_AUTHOR_IDS key, e.g. ana). NULL for every other kind. asserted_by / asserted_at name the human who accepted it.'$q$;
 
-  ALTER TABLE public.document_span_lineage
-    DROP CONSTRAINT IF EXISTS document_span_lineage_kind_valid;
-  ALTER TABLE public.document_span_lineage
-    ADD CONSTRAINT document_span_lineage_kind_valid
-      CHECK (provenance_kind IN ('cre_evidence_source', 'author_assertion', 'accepted_machine_draft'));
+  -- Replaced only while the current definition does not yet admit this file's
+  -- kind (see the 2026-09-25 amendment above). Never narrows what 20260908 widened.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = 'public.document_span_lineage'::regclass
+       AND conname = 'document_span_lineage_kind_valid'
+       AND pg_get_constraintdef(oid) LIKE '%''accepted_machine_draft''%'
+  ) THEN
+    ALTER TABLE public.document_span_lineage
+      DROP CONSTRAINT IF EXISTS document_span_lineage_kind_valid;
+    ALTER TABLE public.document_span_lineage
+      ADD CONSTRAINT document_span_lineage_kind_valid
+        CHECK (provenance_kind IN ('cre_evidence_source', 'author_assertion', 'accepted_machine_draft'));
+  END IF;
 
-  ALTER TABLE public.document_span_lineage
-    DROP CONSTRAINT IF EXISTS document_span_lineage_kind_shape;
-  ALTER TABLE public.document_span_lineage
-    ADD CONSTRAINT document_span_lineage_kind_shape
-      CHECK (
-        (provenance_kind = 'cre_evidence_source'
-          AND reference_id IS NOT NULL
-          AND payload_sha256 IS NOT NULL)
-        OR
-        (provenance_kind = 'author_assertion'
-          AND asserted_by IS NOT NULL
-          AND asserted_at IS NOT NULL)
-        OR
-        (provenance_kind = 'accepted_machine_draft'
-          AND machine_author_id IS NOT NULL
-          AND asserted_by IS NOT NULL
-          AND asserted_at IS NOT NULL)
-      );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = 'public.document_span_lineage'::regclass
+       AND conname = 'document_span_lineage_kind_shape'
+       AND pg_get_constraintdef(oid) LIKE '%''accepted_machine_draft''%'
+  ) THEN
+    ALTER TABLE public.document_span_lineage
+      DROP CONSTRAINT IF EXISTS document_span_lineage_kind_shape;
+    ALTER TABLE public.document_span_lineage
+      ADD CONSTRAINT document_span_lineage_kind_shape
+        CHECK (
+          (provenance_kind = 'cre_evidence_source'
+            AND reference_id IS NOT NULL
+            AND payload_sha256 IS NOT NULL)
+          OR
+          (provenance_kind = 'author_assertion'
+            AND asserted_by IS NOT NULL
+            AND asserted_at IS NOT NULL)
+          OR
+          (provenance_kind = 'accepted_machine_draft'
+            AND machine_author_id IS NOT NULL
+            AND asserted_by IS NOT NULL
+            AND asserted_at IS NOT NULL)
+        );
+  END IF;
 END
 $mig$;
 

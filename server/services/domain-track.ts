@@ -1,5 +1,7 @@
+import { DEPLOYED_DOMAIN_TRACKS } from '../../shared/constants/operating-system-vocab';
+
 /**
- * The one vocabulary for `domain_track` on the governance ledger.
+ * The behaviour around `domain_track` on the governance ledger.
  *
  * ## Why this module exists
  *
@@ -24,36 +26,19 @@
  * into a warning — so the governance ledger recorded nothing at all while
  * every caller was told the decision had been recorded.
  *
- * So: one exported list, one type, one assertion, imported by every writer.
- * A value outside the list now fails at the service boundary with a message
- * naming the allowed set, instead of surfacing as a constraint violation
- * inside somebody's catch block.
- *
- * Changing this list means changing the CHECK constraint in that migration
- * too — amended in place, per RULE 1. The list and the constraint are one
- * fact written twice, and `domain-track.test.ts` reads the migration to
- * prove they still agree.
+ * The list itself lives in `shared/constants/operating-system-vocab.ts`, the
+ * file that exists to mirror these CHECK constraints and that the
+ * schema-contract tier asserts against the real DDL. This module adds the
+ * behaviour around it: the assertion every writer calls before its INSERT, and
+ * the attribution rule below. A value outside the list now fails at the service
+ * boundary with a message naming the allowed set, instead of surfacing as a
+ * constraint violation inside somebody's catch block.
  *
  * @module server/services/domain-track
  */
 
-/**
- * The disciplines the governance ledger recognises, in the order the
- * migration's CHECK constraint lists them.
- */
-export const DOMAIN_TRACKS = [
-  'clinical',
-  'nonclinical',
-  'cmc',
-  'biostatistics',
-  'regulatory',
-  'pharmacology',
-  'safety',
-  'labeling',
-  'commercial',
-] as const;
-
 /** A discipline on the governance ledger. Never a product modality. */
+export const DOMAIN_TRACKS = DEPLOYED_DOMAIN_TRACKS;
 export type DomainTrack = (typeof DOMAIN_TRACKS)[number];
 
 /**

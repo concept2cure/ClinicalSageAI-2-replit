@@ -73,6 +73,53 @@ export interface ReleaseSignatureStatus {
   runId?: string;
   /** electronic_signatures.id, when a verifying signature was found. */
   signatureId?: number;
+  /**
+   * Which spine's answer this is. The orchestrator is consulted first and its
+   * verdict stands unless it is `unsigned`; only then is the sequence's own
+   * governed signature consulted. That precedence decides whether recording a
+   * dispatch signature NOW can satisfy the requirement (see
+   * `signingNowResolvesRelease`), so it is reported, not left for a caller to
+   * infer from which ids happen to be present.
+   */
+  decidedBy?: 'orchestrator' | 'sequence';
+}
+
+/**
+ * Would recording the sequence's own dispatch-intent signature now satisfy the
+ * release-signature requirement?
+ *
+ * WHY THIS EXISTS. The Submission Center's Dispatch button records the
+ * sequence's dispatch signature and then dispatches — one governed click. For
+ * IND / NDA / BLA / MAA the dispatch gate requires a release signature to
+ * already exist, and on the submissions spine the release signature IS that
+ * dispatch signature (`sequence-release-signature.ts`, RELEASE_INTENT). A
+ * button gated on the pre-signing verdict therefore never rendered, and no
+ * such sequence could be dispatched from the product's own screen.
+ *
+ * The answer is yes only when the SEQUENCE spine decides — the orchestrator's
+ * verdict stands unless it is `unsigned`, so a new sequence signature is never
+ * consulted over an orchestrator run that is awaiting its signer or was
+ * revoked — and only for the two verdicts a new, newest signature replaces:
+ *
+ *   • `unsigned` — nothing is on record; the new signature is.
+ *   • `revoked`  — the newest signature decides, and the new one is newest.
+ *
+ * Never for `invalid`: on a frozen sequence a dispatch signature that no longer
+ * binds the leaf manifest is evidence the content changed after signing, and
+ * the gate blocks it whether or not a signature is required. Inviting a fresh
+ * signature over it would paper over tamper evidence. Never for `undetermined`:
+ * a failed lookup is not an absent signature, so nothing is offered on it.
+ * `signed` needs no new signature and is not "resolved by signing".
+ *
+ * Pure, and the only place this rule lives. The client reads its consequence
+ * (`dispatchGateOnSigning`) and never re-derives it — a client that re-derived
+ * gate semantics is how the Freeze button came to read the wrong verdict.
+ */
+export function signingNowResolvesRelease(
+  status: Pick<ReleaseSignatureStatus, 'verdict' | 'decidedBy'>,
+): boolean {
+  if (status.decidedBy !== 'sequence') return false;
+  return status.verdict === 'unsigned' || status.verdict === 'revoked';
 }
 
 /** Map a signed-export refusal onto a dispatch verdict. */
@@ -388,13 +435,16 @@ export async function resolveReleaseSignatureStatus(params: {
   region?: string | null;
 }): Promise<ReleaseSignatureStatus> {
   const orchestrator = await resolveOrchestratorReleaseSignature(params);
-  if (orchestrator.verdict !== 'unsigned') return orchestrator;
+  if (orchestrator.verdict !== 'unsigned') return { ...orchestrator, decidedBy: 'orchestrator' };
 
   const sequenceId =
     typeof params.sequenceId === 'number' && Number.isFinite(params.sequenceId) && params.sequenceId > 0
       ? params.sequenceId
       : null;
-  if (sequenceId === null) return orchestrator;
+  // No sequence to consult: the orchestrator's `unsigned` is the answer, and a
+  // sequence signature could not be seen by this resolver even if one were
+  // recorded — so it is the orchestrator that decided.
+  if (sequenceId === null) return { ...orchestrator, decidedBy: 'orchestrator' };
 
   const sequenceSpine = await resolveSequenceReleaseSignature({
     sequenceId,
@@ -407,6 +457,7 @@ export async function resolveReleaseSignatureStatus(params: {
       detail:
         `${orchestrator.detail ?? 'no orchestrator release signature'}; ` +
         `and ${sequenceSpine.detail ?? 'no signature on the sequence itself'}`,
+      decidedBy: 'sequence',
     };
   }
 
@@ -414,6 +465,7 @@ export async function resolveReleaseSignatureStatus(params: {
     verdict: sequenceSpine.verdict,
     detail: sequenceSpine.detail,
     signatureId: sequenceSpine.signatureId,
+    decidedBy: 'sequence',
   };
 }
 

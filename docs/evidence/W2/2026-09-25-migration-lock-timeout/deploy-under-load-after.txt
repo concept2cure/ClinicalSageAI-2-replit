@@ -1,0 +1,6 @@
+AFTER — lock_timeout 2000 ms, bounded retry
+deploy-migrate exit=0 in 9486 ms; 95 requests; worst request latency 1985 ms (reader held 8000 ms)
+  … db/migrations/20260730_fk_delete_policies_port.sql: lock not available (attempt 1/12); rolled back, retrying in 1000 ms
+  … db/migrations/20260730_fk_delete_policies_port.sql: lock not available (attempt 2/12); rolled back, retrying in 2000 ms
+  ✓ 309/309 migration files applied
+✅ Schema migration complete — safe to roll services.

@@ -109,7 +109,9 @@ beforeAll(async () => {
   pglite = new PGlite();
   await pglite.exec(`
     CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
-    CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT, name TEXT);
+    -- shared/schema.ts users: an account-bound assignment is listed under the
+    -- account's own name (resolveSignerIdentity reads name, email, title; SEC-C-7).
+    CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT, name TEXT, title TEXT);
     CREATE TABLE research_personnel (id SERIAL PRIMARY KEY);
     -- shared/schema.ts organizationUsers: the membership and org role a reviewer assignment is checked against.
     CREATE TABLE organization_users (
@@ -118,7 +120,7 @@ beforeAll(async () => {
     INSERT INTO organizations (id, name) VALUES (${ORG},'a'), (${OTHER_ORG},'b');
     INSERT INTO users (id, email, name) VALUES
       (${CREATOR},'c@e.test','Creator'), (${EDITOR},'e@e.test','Editor'),
-      (${REVIEWER},'r@e.test','Reviewer'), (${STRANGER},'s@e.test','Stranger'), (${VIEWER},'v@e.test','Viewer');
+      (${REVIEWER},'r@e.test','Dr. Reviewer'), (${STRANGER},'s@e.test','Stranger'), (${VIEWER},'v@e.test','Viewer');
     INSERT INTO organization_users (organization_id, user_id, role) VALUES
       (${ORG},${CREATOR},'admin'), (${ORG},${EDITOR},'member'), (${ORG},${REVIEWER},'member'),
       (${ORG},${VIEWER},'viewer'), (${OTHER_ORG},${STRANGER},'member');

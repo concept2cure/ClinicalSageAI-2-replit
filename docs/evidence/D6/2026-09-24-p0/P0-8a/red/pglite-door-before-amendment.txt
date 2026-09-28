@@ -1,0 +1,590 @@
+# PGlite, HEAD af833c44, 2026-09-25T02:08:52Z — server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts against the UNAMENDED db/migrations/20260617_audit_logs_immutability.sql and the unchanged service
+# command: npx vitest run --config vitest.config.ts server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > a plain DELETE as the runtime role is refused with the IMMUTABILITY_VIOLATION shape
+ × server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > SET LOCAL app.audit_archive_bypass = 'on' no longer opens the door for the runtime role (Phase A §9)
+   → promise resolved "undefined" instead of rejecting
+ × server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the GUC does not open the door for the superuser session either
+   → promise resolved "undefined" instead of rejecting
+ × server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service statement deletes an old, archived batch and writes the archive record
+   → relation "audit_log_archives" does not exist
+ × server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch containing a row newer than the cutoff, and writes no record
+   → relation "audit_log_archives" does not exist
+ × server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a cutoff inside the 24-month hot window even for old rows
+   → expected [Function] to throw error matching /AUDIT_ARCHIVE_REFUSED.*hot window/ but got 'function public.audit_logs_archive_de…'
+ × server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses an empty locator, an empty checksum and a checksum that is not a sha256
+   → expected [Function] to throw error matching /AUDIT_ARCHIVE_REFUSED.*locator/ but got 'function public.audit_logs_archive_de…'
+ × server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch naming a row that is not in audit_logs, and an empty batch
+   → expected [Function] to throw error matching /AUDIT_ARCHIVE_REFUSED.*not in audit_l…/ but got 'function public.audit_logs_archive_de…'
+ × server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > EXECUTE is not public: a role without the grant cannot open the door
+   → expected [Function] to throw error matching /permission denied for function/ but got 'function public.audit_logs_archive_de…'
+ × server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the door is owned by audit_archiver, is SECURITY DEFINER, and audit_archiver cannot log in
+   → function "public.audit_logs_archive_delete(uuid[], text, text, timestamptz)" does not exist
+ × server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the archive record is itself append-only
+   → function public.audit_logs_archive_delete(uuid[], unknown, unknown, timestamp with time zone) does not exist
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > UPDATE and TRUNCATE on audit_logs stay refused
+ × server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the migration replays cleanly (Rule 1): a second apply changes nothing and the door still works
+   → function "public.audit_logs_archive_delete(uuid[], text, text, timestamptz)" does not exist
+ × server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service issues only the door call: no bypass GUC, no raw DELETE, in its source
+   → expected '/**\n * Nightly audit-log archive job…' not to match /audit_archive_bypass/
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > SET LOCAL app.audit_archive_bypass = 'on' no longer opens the door for the runtime role (Phase A §9)
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:140:37
+    138|     const [id] = await seed('3 years');
+    139|     await asRuntime(async () => {
+    140|       await expect(deleteWithGuc(id)).rejects.toThrow(/IMMUTABILITY_VI…
+       |                                     ^
+    141|     });
+    142|     expect(await countIds([id])).toBe(1);
+ ❯ asRuntime server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:91:18
+ ❯ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:139:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the GUC does not open the door for the superuser session either
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:147:35
+    145|   it('the GUC does not open the door for the superuser session either'…
+    146|     const [id] = await seed('3 years');
+    147|     await expect(deleteWithGuc(id)).rejects.toThrow(/IMMUTABILITY_VIOL…
+       |                                   ^
+    148|     expect(await countIds([id])).toBe(1);
+    149|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service statement deletes an old, archived batch and writes the archive record
+ FAIL  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch containing a row newer than the cutoff, and writes no record
+error: relation "audit_log_archives" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 117, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '32', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT count(*)::int AS n FROM audit_log_archives', params: [], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a cutoff inside the 24-month hot window even for old rows
+AssertionError: expected [Function] to throw error matching /AUDIT_ARCHIVE_REFUSED.*hot window/ but got 'function public.audit_logs_archive_de…'
+
+- Expected:
+/AUDIT_ARCHIVE_REFUSED.*hot window/
+
++ Received:
+"function public.audit_logs_archive_delete(uuid[], unknown, unknown, timestamp with time zone) does not exist"
+
+ ❯ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:207:7
+    205|       await expect(
+    206|         pg.query(`SELECT public.audit_logs_archive_delete($1::uuid[], …
+    207|       ).rejects.toThrow(/AUDIT_ARCHIVE_REFUSED.*hot window/);
+       |       ^
+    208|       await expect(
+    209|         pg.query(`SELECT public.audit_logs_archive_delete($1::uuid[], …
+ ❯ asRuntime server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:91:18
+ ❯ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:204:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses an empty locator, an empty checksum and a checksum that is not a sha256
+AssertionError: expected [Function] to throw error matching /AUDIT_ARCHIVE_REFUSED.*locator/ but got 'function public.audit_logs_archive_de…'
+
+- Expected:
+/AUDIT_ARCHIVE_REFUSED.*locator/
+
++ Received:
+"function public.audit_logs_archive_delete(uuid[], unknown, unknown, timestamp with time zone) does not exist"
+
+ ❯ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:220:33
+    218|       pg.query(`SELECT public.audit_logs_archive_delete($1::uuid[], $2…
+    219|     await asRuntime(async () => {
+    220|       await expect(call('', SHA)).rejects.toThrow(/AUDIT_ARCHIVE_REFUS…
+       |                                 ^
+    221|       await expect(call('   ', SHA)).rejects.toThrow(/AUDIT_ARCHIVE_RE…
+    222|       await expect(call(LOCATOR, '')).rejects.toThrow(/AUDIT_ARCHIVE_R…
+ ❯ asRuntime server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:91:18
+ ❯ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:219:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch naming a row that is not in audit_logs, and an empty batch
+AssertionError: expected [Function] to throw error matching /AUDIT_ARCHIVE_REFUSED.*not in audit_l…/ but got 'function public.audit_logs_archive_de…'
+
+- Expected:
+/AUDIT_ARCHIVE_REFUSED.*not in audit_logs/
+
++ Received:
+"function public.audit_logs_archive_delete(uuid[], unknown, unknown, timestamp with time zone) does not exist"
+
+ ❯ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:237:7
+    235|           SHA,
+    236|         ]),
+    237|       ).rejects.toThrow(/AUDIT_ARCHIVE_REFUSED.*not in audit_logs/);
+       |       ^
+    238|       await expect(
+    239|         pg.query(`SELECT public.audit_logs_archive_delete($1::uuid[], …
+ ❯ asRuntime server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:91:18
+ ❯ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:230:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > EXECUTE is not public: a role without the grant cannot open the door
+AssertionError: expected [Function] to throw error matching /permission denied for function/ but got 'function public.audit_logs_archive_de…'
+
+- Expected:
+/permission denied for function/
+
++ Received:
+"function public.audit_logs_archive_delete(uuid[], unknown, unknown, timestamp with time zone) does not exist"
+
+ ❯ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:251:7
+    249|       await expect(
+    250|         pg.query(`SELECT public.audit_logs_archive_delete($1::uuid[], …
+    251|       ).rejects.toThrow(/permission denied for function/);
+       |       ^
+    252|     } finally {
+    253|       await pg.exec('RESET ROLE');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the door is owned by audit_archiver, is SECURITY DEFINER, and audit_archiver cannot log in
+ FAIL  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the migration replays cleanly (Rule 1): a second apply changes nothing and the door still works
+error: function "public.audit_logs_archive_delete(uuid[], text, text, timestamptz)" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 188, severity: 'ERROR', code: '42883', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'unnamed portal parameter $1 = \'...\'', schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'regproc.c', routine: 'regprocedurein', query: 'SELECT pg_get_userbyid(p.proowner) AS owner, p.prosecdef AS secdef,\n              (SELECT rolcanlogin FROM pg_roles WHERE rolname = \'audit_archiver\') AS canlogin,\n              COALESCE((SELECT bool_or(a.grantee = 0) FROM aclexplode(p.proacl) a WHERE a.privilege_type = \'EXECUTE\'), false) AS public_exec\n         FROM pg_proc p WHERE p.oid = $1::regprocedure', params: [ 'public.audit_logs_archive_delete(uuid[], text, text, timestamptz)' ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the archive record is itself append-only
+error: function public.audit_logs_archive_delete(uuid[], unknown, unknown, timestamp with time zone) does not exist
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 276, severity: 'ERROR', code: '42883', detail: undefined, hint: 'No function matches the given name and argument types. You might need to add explicit type casts.', position: '8', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_func.c', routine: 'ParseFuncOrColumn', query: 'SELECT public.audit_logs_archive_delete($1::uuid[], $2, $3, now() - interval \'25 months\')', params: [ [ '62e5a153-142b-401b-9faf-279e46210cd7' ], 's3://audit-archive-test/2026/09/25/batch.json', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service issues only the door call: no bypass GUC, no raw DELETE, in its source
+AssertionError: expected '/**\n * Nightly audit-log archive job…' not to match /audit_archive_bypass/
+
+- Expected:
+/audit_archive_bypass/
+
++ Received:
+"/**
+ * Nightly audit-log archive job.
+ *
+ * Moves rows older than the hot retention window (default 24 months) out of
+ * `audit_logs` into a cold-storage archive, then deletes them from the hot
+ * table. Per `docs/operations/audit-log-retention-policy.md`.
+ *
+ * Design contract:
+ *   1. Read a batch of rows past the cutoff, ordered by created_at ASC.
+ *   2. Compute SHA-256 over the batch (canonical JSON).
+ *   3. Hand the batch + checksum to the archive sink (S3 in prod; filesystem
+ *      in dev; in-memory in tests).
+ *   4. Verify the sink wrote successfully (sink returns the stored checksum).
+ *   5. Only then delete the batch from `audit_logs`.
+ *
+ * Failures abort the batch — the rows stay in the hot table. The job is
+ * idempotent: re-running picks up where it left off because the cutoff is
+ * a date, not a watermark.
+ *
+ * Tenant safety: the archive preserves `tenant_id` on every row so
+ * downstream queries against the cold archive can still filter by org.
+ */
+
+import crypto from 'crypto';
+import { promises as fs } from 'fs';
+import path from 'path';
+import type { Pool, PoolClient } from 'pg';
+import { stableStringify } from '../../../shared/canonical-json.js';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  type S3ClientConfig,
+} from '@aws-sdk/client-s3';
+
+export interface ArchiveSink {
+  /**
+   * Persist a batch and return the checksum the sink stored. The caller
+   * compares it against the locally-computed checksum and aborts on mismatch.
+   */
+  writeBatch(args: {
+    batchId: string;
+    rows: Array<Record<string, unknown>>;
+    sha256: string;
+  }): Promise<{ storedSha256: string; locator: string }>;
+}
+
+export interface ArchiveOptions {
+  /** Rows older than this date move to cold storage. Default: now - 24mo. */
+  olderThan?: Date;
+  /** Max rows per batch. Larger batches reduce overhead but raise memory. */
+  batchSize?: number;
+  /** Stop after N batches. Useful for nightly time-boxing. Default: unlimited. */
+  maxBatches?: number;
+  /** Where the archive lands. Required. */
+  sink: ArchiveSink;
+}
+
+export interface ArchiveRunResult {
+  rowsArchived: number;
+  batches: number;
+  startedAt: string;
+  finishedAt: string;
+  cutoff: string;
+  errors: string[];
+}
+
+const DEFAULT_BATCH_SIZE = 1_000;
+const DEFAULT_HOT_WINDOW_MS = 24 * 30 * 24 * 60 * 60 * 1000; // 24 months ≈ 720 days
+
+export async function runAuditArchive(
+  client: Pool | PoolClient,
+  opts: ArchiveOptions,
+): Promise<ArchiveRunResult> {
+  const cutoff = opts.olderThan ?? new Date(Date.now() - DEFAULT_HOT_WINDOW_MS);
+  const batchSize = opts.batchSize ?? DEFAULT_BATCH_SIZE;
+  const maxBatches = opts.maxBatches ?? Infinity;
+
+  const result: ArchiveRunResult = {
+    rowsArchived: 0,
+    batches: 0,
+    startedAt: new Date().toISOString(),
+    finishedAt: '',
+    cutoff: cutoff.toISOString(),
+    errors: [],
+  };
+
+  while (result.batches < maxBatches) {
+    const { rows } = await client.query<Record<string, unknown>>(
+      `SELECT * FROM audit_logs
+       WHERE created_at < $1
+       ORDER BY created_at ASC
+       LIMIT $2`,
+      [cutoff, batchSize],
+    );
+
+    if (rows.length === 0) break;
+
+    const batchId = crypto.randomUUID();
+    const sha256 = computeBatchHash(rows);
+
+    let stored: { storedSha256: string; locator: string };
+    try {
+      stored = await opts.sink.writeBatch({ batchId, rows, sha256 });
+    } catch (err) {
+      result.errors.push(
+        `Sink write failed (batch ${batchId}): ${
+          err instanceof Error ? err.message : 'unknown'
+        }`,
+      );
+      break;
+    }
+
+    if (stored.storedSha256 !== sha256) {
+      result.errors.push(
+        `Checksum mismatch (batch ${batchId}): sink stored ${stored.storedSha256}, expected ${sha256}. Aborting; rows remain in hot table.`,
+      );
+      break;
+    }
+
+    // Only after the sink confirms the bytes landed do we delete from hot.
+    //
+    // audit_logs has a BEFORE DELETE immutability trigger
+    // (db/migrations/20260617_audit_logs_immutability.sql) that aborts every
+    // DELETE UNLESS this session GUC is set. We opt in with `SET LOCAL
+    // app.audit_archive_bypass = 'on'` so the bypass is scoped to THIS
+    // transaction only and reverts automatically at COMMIT/ROLLBACK — it cannot
+    // leak to any other statement or connection.
+    //
+    // SET LOCAL only affects the connection it runs on, so BEGIN / SET LOCAL /
+    // DELETE / COMMIT MUST all run on the SAME connection. When the caller hands
+    // us a Pool, each `pool.query` may use a different pooled connection, which
+    // would silently break both the transaction and the GUC scope. So we check
+    // out a single dedicated client for the transactional delete and release it
+    // afterwards. When the caller already passed a PoolClient (single
+    // connection), we use it directly.
+    const ids = rows.map(r => (r as any).id);
+    const poolConnect = (client as Pool).connect;
+    const txClient: PoolClient = typeof poolConnect === 'function'
+      ? await (client as Pool).connect()
+      : (client as PoolClient);
+    try {
+      await txClient.query('BEGIN');
+      await txClient.query(`SET LOCAL app.audit_archive_bypass = 'on'`);
+      // `audit_logs.id` is uuid (migrations/0000_sweet_joseph.sql, shared/schema.ts),
+      // never integer. The previous `::int[]` cast made this DELETE fail on every
+      // batch with a type error — archival copied rows to cold storage and then
+      // never freed them from the hot table. Caught while wiring the §11.10(e)
+      // immutability triggers: this is the ONE path the DELETE trigger exempts,
+      // so it has to actually work, or \"archive then delete\" silently becomes
+      // \"archive and retain forever\".
+      await txClient.query(`DELETE FROM audit_logs WHERE id = ANY($1::uuid[])`, [ids]);
+      await txClient.query('COMMIT');
+    } catch (err) {
+      try {
+        await txClient.query('ROLLBACK');
+      } catch {
+        /* ignore rollback failure */
+      }
+      result.errors.push(
+        `Delete-from-hot failed (batch ${batchId}): ${
+          err instanceof Error ? err.message : 'unknown'
+        }. Rows remain in hot table (already safely archived to cold).`,
+      );
+      break;
+    } finally {
+      // Release only a client we checked out ourselves; never release a
+      // caller-owned PoolClient.
+      if (txClient !== (client as unknown as PoolClient)) {
+        (txClient as PoolClient).release();
+      }
+    }
+
+    result.rowsArchived += rows.length;
+    result.batches += 1;
+
+    // Stop if we drained below the batch size — no more rows past cutoff.
+    if (rows.length < batchSize) break;
+  }
+
+  result.finishedAt = new Date().toISOString();
+  return result;
+}
+
+export function computeBatchHash(rows: Array<Record<string, unknown>>): string {
+  // Canonical JSON: sort keys, no whitespace. Same scheme as the attestation
+  // signature so any external verifier needs only one canonicalizer.
+  const canon = '[' + rows.map(canonicalJSON).join(',') + ']';
+  return crypto.createHash('sha256').update(canon).digest('hex');
+}
+
+/**
+ * Canonical form for the batch checksum. The sink echoes back what it stored
+ * and the caller compares within the same call, so both sides move together —
+ * no stored digest is recomputed against (see the migration note).
+ */
+function canonicalJSON(value: unknown): string {
+  return stableStringify(value);
+}
+
+// ─── Filesystem sink (dev/CI; production overrides with S3) ────────────────
+
+export class FilesystemArchiveSink implements ArchiveSink {
+  constructor(private dir: string) {}
+
+  async writeBatch(args: {
+    batchId: string;
+    rows: Array<Record<string, unknown>>;
+    sha256: string;
+  }): Promise<{ storedSha256: string; locator: string }> {
+    await fs.mkdir(this.dir, { recursive: true });
+    const filePath = path.join(this.dir, `${args.batchId}.json`);
+    const body = JSON.stringify({
+      batchId: args.batchId,
+      sha256: args.sha256,
+      writtenAt: new Date().toISOString(),
+      rows: args.rows,
+    });
+    await fs.writeFile(filePath, body, 'utf8');
+    // Re-read + re-hash so the verification step is end-to-end, not just
+    // \"trust this in-memory variable\".
+    const reread = await fs.readFile(filePath, 'utf8');
+    const parsed = JSON.parse(reread);
+    const storedSha256 = computeBatchHash(parsed.rows);
+    return { storedSha256, locator: filePath };
+  }
+}
+
+// ─── S3 sink (production) ──────────────────────────────────────────────────
+
+export interface S3ArchiveSinkConfig {
+  /** S3 bucket name. The bucket should live in a separate AWS account
+   *  with a one-way trust per the retention policy. */
+  bucket: string;
+  /** Prefix inside the bucket. Date-partitioned per write to ease lifecycle. */
+  prefix?: string;
+  /** AWS region. Default: process.env.AWS_REGION. */
+  region?: string;
+  /** Storage class. Default: STANDARD_IA for hot archive, set
+   *  GLACIER_DEEP_ARCHIVE for the long-term tier. */
+  storageClass?: 'STANDARD' | 'STANDARD_IA' | 'GLACIER' | 'DEEP_ARCHIVE';
+  /** SSE config — pass 'aws:kms' + key id for KMS, or 'AES256' for SSE-S3. */
+  serverSideEncryption?: 'AES256' | 'aws:kms';
+  sseKmsKeyId?: string;
+  /** Optional client overrides (test injection). */
+  clientConfig?: S3ClientConfig;
+}
+
+export class S3ArchiveSink implements ArchiveSink {
+  private client: S3Client;
+  private bucket: string;
+  private prefix: string;
+  private storageClass: 'STANDARD' | 'STANDARD_IA' | 'GLACIER' | 'DEEP_ARCHIVE';
+  private sse?: 'AES256' | 'aws:kms';
+  private sseKmsKeyId?: string;
+
+  constructor(cfg: S3ArchiveSinkConfig) {
+    this.client = new S3Client({
+      region: cfg.region ?? process.env.AWS_REGION,
+      ...cfg.clientConfig,
+    });
+    this.bucket = cfg.bucket;
+    this.prefix = (cfg.prefix ?? 'audit-archive').replace(/\\/+$/, '');
+    this.storageClass = cfg.storageClass ?? 'STANDARD_IA';
+    this.sse = cfg.serverSideEncryption;
+    this.sseKmsKeyId = cfg.sseKmsKeyId;
+  }
+
+  async writeBatch(args: {
+    batchId: string;
+    rows: Array<Record<string, unknown>>;
+    sha256: string;
+  }): Promise<{ storedSha256: string; locator: string }> {
+    // Date-partitioned key: 2026/05/01/<batchId>.json. Makes lifecycle
+    // rules trivial (transition to Glacier after N days; expire never).
+    const ts = new Date();
+    const yyyy = ts.getUTCFullYear();
+    const mm = String(ts.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(ts.getUTCDate()).padStart(2, '0');
+    const key = `${this.prefix}/${yyyy}/${mm}/${dd}/${args.batchId}.json`;
+
+    const body = JSON.stringify({
+      batchId: args.batchId,
+      sha256: args.sha256,
+      writtenAt: new Date().toISOString(),
+      rows: args.rows,
+    });
+
+    // Use S3's ContentMD5 + ChecksumSHA256 so the upload itself is
+    // verified end-to-end. Mismatch causes PutObject to throw.
+    const checksumSHA256 = sha256OfStringBase64(body);
+
+    const put = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: body,
+      ContentType: 'application/json',
+      StorageClass: this.storageClass,
+      ChecksumSHA256: checksumSHA256,
+      Metadata: {
+        'batch-id': args.batchId,
+        'rows-sha256': args.sha256,
+        'row-count': String(args.rows.length),
+      },
+      ...(this.sse ? { ServerSideEncryption: this.sse } : {}),
+      ...(this.sseKmsKeyId ? { SSEKMSKeyId: this.sseKmsKeyId } : {}),
+    });
+    await this.client.send(put);
+
+    // Re-read the object and re-compute the rows hash. This is the
+    // production analog of the filesystem sink's re-read check —
+    // confirms the bytes that landed at S3 are the bytes we sent.
+    const get = new GetObjectCommand({ Bucket: this.bucket, Key: key });
+    const got = await this.client.send(get);
+    const reread = await streamToString(got.Body as NodeJS.ReadableStream);
+    const parsed = JSON.parse(reread);
+    const storedSha256 = computeBatchHash(parsed.rows);
+
+    return {
+      storedSha256,
+      locator: `s3://${this.bucket}/${key}`,
+    };
+  }
+
+  /**
+   * Verify that an archive object exists and its rows hash matches the
+   * given expectation. Used by audit / restore flows.
+   */
+  async verifyBatch(locator: string, expectedSha256: string): Promise<boolean> {
+    const m = locator.match(/^s3:\\/\\/([^/]+)\\/(.+)$/);
+    if (!m) throw new Error(`Invalid s3 locator: ${locator}`);
+    const head = new HeadObjectCommand({ Bucket: m[1], Key: m[2] });
+    const meta = await this.client.send(head);
+    const recorded = meta.Metadata?.['rows-sha256'];
+    return recorded === expectedSha256;
+  }
+}
+
+function sha256OfStringBase64(s: string): string {
+  return crypto.createHash('sha256').update(s, 'utf8').digest('base64');
+}
+
+async function streamToString(stream: NodeJS.ReadableStream): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
+"
+
+ ❯ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts:312:21
+    310|   it('the service issues only the door call: no bypass GUC, no raw DEL…
+    311|     const src = fs.readFileSync(SERVICE, 'utf8');
+    312|     expect(src).not.toMatch(/audit_archive_bypass/);
+       |                     ^
+    313|     expect(src).not.toMatch(/DELETE\s+FROM\s+audit_logs/i);
+    314|     expect(archiveDeleteFromSource()).toMatch(/\$1::uuid\[\],\s*\$2,\s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 2 passed (14)
+   Start at  02:08:53
+   Duration  3.00s (transform 97ms, setup 95ms, import 49ms, tests 2.38s, environment 0ms)
+
+exit=1

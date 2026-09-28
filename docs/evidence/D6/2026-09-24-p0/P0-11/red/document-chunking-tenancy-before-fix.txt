@@ -1,0 +1,103 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > a refused foreign document leaves the other tenant's ledger row alone
+{
+  "timestamp": "2026-09-25T01:18:33.970Z",
+  "level": "warn",
+  "message": "[document-chunking] Vault chunking failed — recorded on the catalog ledger",
+  "context": {
+    "documentId": "5b1f0d1e-0000-4000-8000-00000000abcd",
+    "error": "Document is not in the caller's organization; refusing to index it."
+  }
+}
+
+ × server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > refuses a document that is not in the caller's organization, writing nothing 54ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ × server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > refuses a foreign document before any embedding call 4ms
+   → expected [ { …(2) } ] to have a length of +0 but got 1
+ × server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > embeds an owned document under that organization's tenant scope 2ms
+   → expected undefined to be '42' // Object.is equality
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > every statement that touches vault.document_chunks is bound to the organization 1ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > a refused foreign document leaves the other tenant's ledger row alone 2ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > the ledger write for an owned document is bound to the organization too 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > refuses a document that is not in the caller's organization, writing nothing
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ server/services/vault/__tests__/document-chunking.tenancy.test.ts:87:29
+     85|     expect(calls.some(c => /INSERT INTO vault\.document_chunks|DELETE …
+     86|     // Refused up front: no transaction is even opened for it.
+     87|     expect(poolConnect).not.toHaveBeenCalled();
+       |                             ^
+     88|     expect(calls.map(c => c.sql)).not.toContain('BEGIN');
+     89|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > refuses a foreign document before any embedding call
+AssertionError: expected [ { …(2) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/vault/__tests__/document-chunking.tenancy.test.ts:99:24
+     97|     const result = await chunkAndEmbedDocument({ documentId: DOC, orga…
+     98|     expect(result.ok).toBe(false);
+     99|     expect(embedCalls).toHaveLength(0);
+       |                        ^
+    100|     // The ownership question was asked, bound to the caller's organiz…
+    101|     const ownership = poolCalls.filter(c => /SELECT 1 FROM vault\.docu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > embeds an owned document under that organization's tenant scope
+AssertionError: expected undefined to be '42' // Object.is equality
+
+- Expected:
+"42"
+
++ Received:
+undefined
+
+ ❯ server/services/vault/__tests__/document-chunking.tenancy.test.ts:112:36
+    110|     expect(embedCalls).toHaveLength(1);
+    111|     expect(embedCalls[0].texts).toEqual(['Some extracted text.']);
+    112|     expect(embedCalls[0].tenantId).toBe(String(ORG));
+       |                                    ^
+    113|   });
+    114|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+   Start at  01:18:33
+   Duration  581ms (transform 166ms, setup 112ms, import 46ms, tests 67ms, environment 0ms)
+

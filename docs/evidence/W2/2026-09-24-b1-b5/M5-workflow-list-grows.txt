@@ -1,0 +1,24 @@
+# M5-workflow-list-grows: the preflight gains a name (EXAMPLE_NEW_REQUIREMENT) the task definition lacks
+# The fix reverted in place, then restored. terraform test exit=1 (non-zero = caught)
+
+tests/boot_contract.tftest.hcl... in progress
+  run "every_name_the_deploy_preflight_requires_is_in_the_task_definition"... fail
+  run "the_database_urls_are_urls_not_the_rds_json_secret"... pass
+  run "the_database_name_is_one_rds_accepts"... pass
+  run "the_health_check_is_the_images_own_probe_on_readyz"... pass
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
+  run "refuses_a_short_key"... pass
+  run "refuses_placement_approvals_that_are_not_a_json_object"... pass
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+Failure! 6 passed, 1 failed.
+Error: Test assertion failed
+  on tests/boot_contract.tftest.hcl line 75, in run "every_name_the_deploy_preflight_requires_is_in_the_task_definition":
+  75:     condition = alltrue([
+  76:       for n in regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../../.github/workflows/deploy-aws.yml")))) :
+  77:       contains(output.api_task_boot_contract.names, n)
+  78:     ])
+    ├────────────────
+    │ output.api_task_boot_contract.names is list of string with 20 elements
+The API task definition lacks a name deploy-aws.yml's preflight requires.
+Missing: EXAMPLE_NEW_REQUIREMENT

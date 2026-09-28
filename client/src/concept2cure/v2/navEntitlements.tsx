@@ -59,6 +59,10 @@ export interface NavEntitlementsPayload {
   tier: string | null;
   industryMode: string | null;
   masterAdmin: boolean;
+  /** Whether the Master Administration guard would admit this viewer
+   *  (server: resolvePlatformAdmin). Optional so an older payload validates;
+   *  absent reads as false. */
+  platformAdmin?: boolean;
   /** False ⇒ the server computed no verdicts; render no lock state. */
   resolved: boolean;
   /** Whether the deployment enforces the launch catalog. Optional so an
@@ -74,6 +78,13 @@ export interface NavEntitlementsValue {
   resolved: boolean;
   /** True when the viewer holds the platform-owner grant (everything unlocked). */
   masterAdmin: boolean;
+  /**
+   * True only when the server said the Master Administration guard admits this
+   * viewer. False until it answers and on any failure: this only decides
+   * whether the console is OFFERED, and offering it to someone it refuses is
+   * the failure this exists to prevent. Not the same set as `masterAdmin`.
+   */
+  platformAdmin: boolean;
   /** The organization's plan tier, when known. */
   tier: string | null;
 }
@@ -82,6 +93,7 @@ const EMPTY: NavEntitlementsValue = {
   verdictFor: () => null,
   resolved: false,
   masterAdmin: false,
+  platformAdmin: false,
   tier: null,
 };
 
@@ -122,9 +134,11 @@ export function NavEntitlementsProvider({ children }: { children: React.ReactNod
 
   const value = React.useMemo<NavEntitlementsValue>(() => {
     const payload = state.data;
+    // Independent of the catalog read, so it survives resolved:false.
+    const platformAdmin = payload?.platformAdmin === true;
     // Rule 1: anything short of a resolved payload yields no verdicts at all.
     if (!payload || payload.resolved !== true || !Array.isArray(payload.surfaces)) {
-      return EMPTY;
+      return platformAdmin ? { ...EMPTY, platformAdmin } : EMPTY;
     }
     const byId = new Map<string, NavSurfaceEntitlement>();
     for (const s of payload.surfaces) {
@@ -135,6 +149,7 @@ export function NavEntitlementsProvider({ children }: { children: React.ReactNod
       verdictFor: (id: string) => byId.get(id) ?? null,
       resolved: true,
       masterAdmin: payload.masterAdmin === true,
+      platformAdmin,
       tier: typeof payload.tier === 'string' ? payload.tier : null,
     };
   }, [state.data]);

@@ -1,0 +1,8 @@
+$ # (4) detector behind the boundary, (5) enterprise standing check, (9) AI bucket, (10) mount-level auth applied on top of 2ec744b7
+NER extraction error: Error: model exploded
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > a suspended account is refused (403 AUTH_ACCOUNT_INACTIVE) before its password is compared, and the refusal is audited 41ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > a challenge for an account suspended since it was issued does not become a session; no code is spent 10ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > where it is mounted > applyAuthBoundary mounts the boundary and then the detector on /api 3ms
+ Test Files  14 passed (14)
+      Tests  113 passed (113)
+exit=0

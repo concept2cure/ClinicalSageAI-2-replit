@@ -57,6 +57,21 @@ Implemented at `server/services/audit/audit-archive.service.ts`. Runner
 script: `scripts/run-audit-archive.mjs`. Invoke via `npm run audit:archive`
 or directly from cron:
 
+**The delete step goes through one door (since 2026-09-25).** The BEFORE
+DELETE trigger on `audit_logs` admits a DELETE only from inside
+`public.audit_logs_archive_delete(ids, locator, sha256, cutoff)`, a
+`SECURITY DEFINER` function owned by the NOLOGIN role `audit_archiver`
+(`db/migrations/20260617_audit_logs_immutability.sql`). No session setting
+opens it any more (security audit 2026-09-24 DP-04, plan P0-8a). The door
+refuses, for the whole batch, a cutoff later than `now() - 24 months` (the
+hot window above, now enforced by the database), any named row newer than
+the cutoff, an empty locator, a checksum that is not a 64-character hex
+digest, or a row that is no longer present; it writes one row to the
+append-only `public.audit_log_archives` (count, `created_at` span, cutoff,
+locator, sha256, who ran it) and then deletes exactly the named rows. The
+service calls it only after the sink has confirmed the stored checksum, and
+a refusal is counted and reported, never swallowed.
+
 ```cron
 0 3 * * *  cd /opt/concept2cure && npm run audit:archive >> /var/log/audit-archive.log 2>&1
 ```
@@ -91,6 +106,15 @@ A separate role (`bff_archive`) used only by the nightly archive job has
 `DELETE` rights on the hot tables. The archive job runs after a
 successful copy to S3, gated by a CHECKSUM verification on the archived
 batch.
+
+> **As deployed (2026-09-25).** The role names above predate the current
+> recipe (`scripts/db/provision-app-role.mjs`): the application role is
+> `app_service`, and the archive role is `audit_archiver` — NOLOGIN, so
+> nothing signs in as it; its DELETE right is exercised only inside the
+> door function above, which `app_service` may EXECUTE. `app_service`
+> still holds a table-level DELETE grant from the recipe's schema-wide
+> GRANT; the trigger refuses it, and withdrawing the grant is the open
+> half of plan item P0-8.
 
 A third role (`bff_dba`) reserved for human DBAs has full rights but
 must only be used through an audited break-glass path (logged to a

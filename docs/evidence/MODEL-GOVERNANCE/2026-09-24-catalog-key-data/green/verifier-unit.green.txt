@@ -1,0 +1,75 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > ACCEPTS the faithful values, written the way the document writes them 4ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > ACCEPTS the same values typed in plain ASCII, any case, either mu 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > REFUSES every invented value and NAMES each leaf with the value it carried 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > names only the failing leaves when faithful and invented values are mixed 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a boolean leaf even though "released" is a word in the text 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a null leaf and an empty string — neither transcribes anything 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a figure the document does not state, even a derived one 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > checks a leaf inside an array inside an object, and names its full path 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > quotes a key that is not a plain identifier, so the path is unambiguous 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > does not verify keys — labels are the model’s naming, not a claim about the text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > has nothing to verify when there is no key_data 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a number’s decimal form must match exactly: no prefix, suffix or neighbour 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > thousands grouping may be added or removed for a number — but a group is not the number 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > an identifier fragment is not the identifier 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a hyphen separates tokens: 24 is stated by "24-month" 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a sign is part of the figure: −5 °C states -5, not 5 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a superscript exponent is not folded into the digits (NFKC alone makes 10³ read "103") 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a unit glued to a figure makes one token: 10 is not "10mg", "10mg" is 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a value the extraction wrapped across a line, or padded with spaces, still occurs 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > fails closed against a document with no text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > REFUSES invented key_data even after a complete read, carrying the named leaves 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > judges coverage first: a partial read is refused on coverage, not on values 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > allows a complete read whose key_data the text states 0ms
+stdout | server/services/vault/__tests__/document-catalog.service.test.ts
+{
+  "timestamp": "2026-09-24T16:36:09.728Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T16:36:09.729Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-catalog.service.test.ts
+{
+  "timestamp": "2026-09-24T16:36:09.729Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-catalog.service.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > mergeSpans > unions touching and overlapping spans into one 3ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > mergeSpans > clamps to [0, charCount] and drops spans that vanish 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > mergeSpans > keeps genuinely disjoint spans apart 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > reports exact gaps between reads, in order 1ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > is complete only at exact full coverage — 99.9% is not "reviewed" 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > double-reading does not inflate coverage 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > a document with no text can never be "completely read" 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > REFUSES a first-page-only read and names the exact unread ranges 1ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > REFUSES a middle gap even when both ends were read 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > REFUSES a document whose extraction produced nothing 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > allows the write only once every character has been served 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > an empty result is a FAILURE with a reason, never "extracted, 0 chars" 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > a file type nothing could extract says exactly that 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > a thrown extraction error is carried, not swallowed 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > real text is recorded with its method, confidence and counts 1ms
+
+ Test Files  2 passed (2)
+      Tests  38 passed (38)
+   Start at  16:36:08
+   Duration  1.61s (transform 783ms, setup 152ms, import 1.31s, tests 31ms, environment 0ms)
+

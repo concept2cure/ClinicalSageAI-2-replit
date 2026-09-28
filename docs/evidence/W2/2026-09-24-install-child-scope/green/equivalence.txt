@@ -1,0 +1,8 @@
+# Equivalence: the database the fixed install path produces vs the one trunk's path produces
+# A: blank -> install-fresh at d46d52515 (exit 1 at its verify step; every schema step had run) -> deploy-migrate x2
+# B: blank -> install-fresh with this change (exit 0) -> deploy-migrate x2
+
+pg_policies, every schema (schema.table | name | permissive | cmd | roles | qual | with_check):
+  A 1876 rows, B 1876 rows, diff lines 0
+base tables, every non-system schema (schema.table relrowsecurity relforcerowsecurity):
+  A 1234 rows, B 1234 rows, diff lines 0

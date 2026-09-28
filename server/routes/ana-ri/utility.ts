@@ -21,12 +21,12 @@ import { loadAgentActivity } from '../../services/ana/agent-activity.js';
 import { resolveDriveState } from '../../services/ana-ri/live-drive.js';
 import { executeCommands, type CommandContext } from '../../services/ana-ri/command-executor.js';
 import {
-  requiresPart11Signoff,
-  requiresEsignature,
+  governedTierOf,
   MIN_REASON_FOR_CHANGE_LEN,
 } from '../../services/ana-ri/part11-governance.js';
-import { reverifySigner } from '../../services/part11/reverify-signer.js';
-import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
+import { isProposeOnlyCommand } from '../../services/ana-ri/command-rbac.js';
+import { TOOL_REGISTER, toolAuthorizationOf } from '../../services/ana/tool-authorization.js';
+import { verifyGovernedESignature } from './governed-esignature.js';
 import {
   readPendingApproval,
   recordApprovalDecision,
@@ -134,12 +134,21 @@ async function releaseWaitingRun(
   toolUseId: string,
   userId: number,
   reasonForChange: string,
-  outcome: { result?: unknown; error?: string },
+  outcome: { result?: unknown; error?: string; declined?: true },
 ): Promise<void> {
+  // Bound with the SAME resolver the lookup used (resolveAuthorisedAction), so
+  // the decision is written against exactly the tenant whose run was proven to
+  // be waiting. Only reached when that lookup found the run, which already
+  // required a non-null org — the guard is for the type, not a live branch.
+  const organizationId = resolveOrgId(req);
+  if (organizationId === null) {
+    log.error('Refusing to record an approval decision with no organization', { runId, toolUseId });
+    return;
+  }
   try {
-    await recordApprovalDecision(requestPgClient(req), runId, {
+    await recordApprovalDecision(requestPgClient(req), runId, organizationId, {
       toolUseId,
-      decided: outcome.error ? 'denied' : 'approved',
+      decided: outcome.error || outcome.declined ? 'denied' : 'approved',
       decidedAt: new Date().toISOString(),
       byUserId: userId,
       reasonForChange,
@@ -152,6 +161,145 @@ async function releaseWaitingRun(
       error: err?.message,
     });
   }
+}
+
+/**
+ * A tool that writes on its own handler is confirmed like a command, but only
+ * from a held run: its context — the project, and the model that wrote the
+ * content — comes from the run row (runConfirmedTool), never from the browser.
+ */
+function refuseToolWithoutHeldRun(res: Response): Response {
+  return sendError(res, 400, 'This action can only be confirmed while AnA is waiting on it', null, 'TOOL_NEEDS_HELD_RUN');
+}
+
+/** The refusal for a tool this route may not run, or null when it may (or it is a command). */
+function refuseUnrunnableTool(
+  res: Response,
+  decision: ReturnType<typeof heldToolDecision>,
+  held: unknown,
+): Response | null {
+  if (decision === 'command') return null;
+  if (!held) return refuseToolWithoutHeldRun(res);
+  if (decision === 'not-confirmable') {
+    return sendError(res, 400, 'This is not an action AnA can take on a confirmation', null, 'NOT_AN_ANA_ACTION');
+  }
+  return null;
+}
+
+/**
+ * Whether this decision is about one of AnA's own tools rather than a platform
+ * command, and if so whether a person's yes can run it.
+ *
+ * A held tool is known by the context its run recorded (heldToolContext, set
+ * for every tool but the command carrier), so a tool and a command that share
+ * a name cannot be confused. Without a held run, a registered tool name is
+ * still a tool — refused below for want of that context.
+ *
+ * The register is asked again, on the held params: only a write a person may
+ * confirm runs here. A person's own act never does, whatever the row says.
+ */
+function heldToolDecision(
+  command: string,
+  params: Record<string, unknown>,
+  held: Awaited<ReturnType<typeof readPendingApproval>> | null,
+): 'command' | 'tool' | 'not-confirmable' {
+  const isTool = held ? Boolean(held.toolContext) : !isProposeOnlyCommand(command) && command in TOOL_REGISTER;
+  if (!isTool) return 'command';
+  return !held || toolAuthorizationOf(command, params).class === 'confirm' ? 'tool' : 'not-confirmable';
+}
+
+/**
+ * Run a confirmed tool (tool-authorization.ts `confirm`) with the context the waiting run
+ * recorded when it asked.
+ *
+ * The handler is reached through the same registry every path uses, so its own
+ * gates still run: the approved-model check reads the recorded serving model,
+ * and the confirm gate reads the flag stamped here — a person's yes to exactly
+ * this call. Loaded lazily: the tool module is large and this route rarely
+ * needs it.
+ */
+async function runConfirmedTool(
+  name: string,
+  params: Record<string, unknown>,
+  held: NonNullable<Awaited<ReturnType<typeof readPendingApproval>>>,
+  organizationId: number,
+  userId: number,
+): Promise<unknown> {
+  const { getToolHandler } = await import('../../services/ana/AnaToolExecutor.js');
+  const handler = getToolHandler(name);
+  if (!handler) throw new Error(`${name} is not an available tool`);
+  const recorded = held.toolContext;
+  const out = await handler(params, {
+    organizationId,
+    userId,
+    projectId: recorded?.projectId ?? null,
+    projectRef: recorded?.projectRef ?? null,
+    servingModel: recorded?.servingModel ?? null,
+    humanConfirmed: true,
+  });
+  try {
+    return JSON.parse(out);
+  } catch {
+    return out;
+  }
+}
+
+/**
+ * A person's no to an action AnA is holding a turn on.
+ *
+ * Cancelling a live prompt used to close the dialog and tell the server
+ * nothing, so the turn waited out the pause ceiling — and with every write now
+ * proposed (P0-12), that would be most turns. The decision is audited (a
+ * person chose it) and recorded against the run, whose waiting turn tells the
+ * model the action was declined and must not be retried. Nothing executes.
+ *
+ * Only meaningful for a held run: a proposal from a finished turn has nothing
+ * waiting on it, and dismissing it is already the whole of declining.
+ */
+async function declineHeldAction(
+  req: Request,
+  res: Response,
+  held: {
+    pendingForRun: Awaited<ReturnType<typeof readPendingApproval>>;
+    runId: string;
+    toolUseId: string;
+    command: string;
+    userId: number;
+    numericOrgId: number;
+  },
+): Promise<Response> {
+  if (!held.pendingForRun) {
+    return sendError(res, 400, 'A decline needs the run that is waiting on it', null, 'NO_PENDING_APPROVAL');
+  }
+  const audit = await auditService.logAction({
+    tenantId: held.numericOrgId,
+    userId: held.userId,
+    action: 'ana.governed_action.declined',
+    resourceType: 'ana_command',
+    resourceId: held.command,
+    ipAddress: clientIpOf(req) ?? undefined,
+    userAgent: req.headers['user-agent'] as string | undefined,
+    details: { command: held.command, runId: held.runId, toolUseId: held.toolUseId, proposedByAgent: true },
+  });
+  // A decline runs nothing, so a lost audit row does not stop it — refusing
+  // would leave AnA holding the turn for a decision already made. It is not
+  // hidden either: logged, and carried to the client, which says so.
+  if (!audit.persisted) {
+    log.error('Decline recorded against the run but its audit row was not persisted', {
+      command: held.command,
+      runId: held.runId,
+      reason: audit.error ?? 'no durable store accepted the row',
+    });
+  }
+  await releaseWaitingRun(req, held.runId, held.toolUseId, held.userId, '', { declined: true });
+  return sendSuccess(res, {
+    success: true,
+    declined: true,
+    auditRecorded: audit.persisted,
+    message: audit.persisted
+      ? 'Declined. AnA will carry on without it.'
+      : 'Declined, and AnA will carry on without it — but the decline could not be written to the audit trail.',
+  });
 }
 
 /** Register utility endpoints on the given router. */
@@ -421,14 +569,30 @@ export function mountUtilityRoutes(router: Router): void {
       return sendError(res, authorised.status, authorised.error, null, authorised.code);
     }
     const { pendingForRun, runId, toolUseId, command, params } = authorised;
-    const password = typeof body.password === 'string' ? body.password : '';
-    const mfaToken = typeof body.mfaToken === 'string' ? body.mfaToken : undefined;
 
-    // This route is ONLY for governed commands — reads/drafting go through chat.
-    if (!command || !requiresPart11Signoff(command)) {
+    // A person's no to an action AnA is holding a turn on. Checked before any
+    // tier rule: declining asks for nothing, whatever the tier.
+    if (body.decision === 'decline') {
+      return declineHeldAction(req, res, { pendingForRun, runId, toolUseId, command, userId, numericOrgId });
+    }
+
+    // This route is ONLY for proposed commands — every write (P0-12); reads go
+    // through chat. The tier decides what the person supplies: 'confirm' an
+    // explicit yes, 'reason' a reason for change, 'esignature' the reason and
+    // re-authentication.
+    const toolDecision = heldToolDecision(command, params, pendingForRun);
+    const toolRefusal = refuseUnrunnableTool(res, toolDecision, pendingForRun);
+    if (toolRefusal) return toolRefusal;
+    const isTool = toolDecision !== 'command';
+    if (!command || !(isProposeOnlyCommand(command) || isTool)) {
       return sendError(res, 400, 'A governed command name is required', null, 'NOT_A_GOVERNED_COMMAND');
     }
-    if (reasonForChange.length < MIN_REASON_FOR_CHANGE_LEN) {
+    const tier = governedTierOf(command);
+    if (tier === 'confirm') {
+      if (body.confirm !== true) {
+        return sendError(res, 400, 'Confirm the proposed action to run it', null, 'CONFIRMATION_REQUIRED');
+      }
+    } else if (reasonForChange.length < MIN_REASON_FOR_CHANGE_LEN) {
       return sendError(
         res,
         400,
@@ -441,21 +605,14 @@ export function mountUtilityRoutes(router: Router): void {
     // Tiered policy: high-impact actions additionally require a manifested
     // e-signature; the rest require only the reason-for-change. §11.200:
     // re-verify the signer server-side for the e-sign tier (never a client flag).
-    const eSignRequired = requiresEsignature(command);
-    let secondFactorVerified = false;
-    // The instant the server actually verified the signer, captured here rather
-    // than synthesised downstream. Handlers that hand the human gate to an
-    // external gateway (FDA ESG transmit) pass this through as the
-    // transmission's `reauthVerifiedAt`, so it must be a real observation.
-    let signatureVerifiedAt: Date | undefined;
-    if (eSignRequired) {
-      const verification = await reverifySigner(userId, { password, mfaToken }, signerReverificationDeps());
-      if (!verification.ok) {
-        return sendError(res, verification.status, verification.error, { code: verification.code }, 'SIGNATURE_REJECTED');
-      }
-      secondFactorVerified = verification.secondFactorVerified;
-      signatureVerifiedAt = new Date();
-    }
+    const eSignRequired = tier === 'esignature';
+
+    // The signer's declared §11.50 meaning, then re-verification (§11.200), in
+    // that order and before the audit row — see governed-esignature.ts.
+    const esign = eSignRequired ? await verifyGovernedESignature(userId, body) : undefined;
+    if (esign && !esign.ok) return sendError(res, esign.status, esign.error, esign.details, esign.code);
+    const signatureMeaning = esign?.meaning;
+    const secondFactorVerified = esign?.secondFactorVerified ?? false;
 
     // §11.10(e): record the sign-off to the audit trail before executing.
     // No governed mutation without a durable audit record.
@@ -473,12 +630,13 @@ export function mountUtilityRoutes(router: Router): void {
     const signoffAudit = await auditService.logAction({
       tenantId: numericOrgId,
       userId,
-      action: eSignRequired ? 'ana.governed_action.esign' : 'ana.governed_action.reason',
+      action: `ana.governed_action.${tier === 'esignature' ? 'esign' : tier}`,
       resourceType: 'ana_command',
       resourceId: command,
       ipAddress: clientIpOf(req) ?? undefined,
       userAgent: req.headers['user-agent'] as string | undefined,
-      details: { command, reasonForChange, eSignRequired, secondFactorVerified },
+      // With the declared §11.50 meaning on the e-signature tier; absent otherwise.
+      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified, ...(signatureMeaning && { signatureMeaning }) },
     });
     if (!signoffAudit.persisted) {
       log.error('Governed action aborted: sign-off audit row was not persisted', {
@@ -495,7 +653,8 @@ export function mountUtilityRoutes(router: Router): void {
       userId,
       organizationId: numericOrgId,
       part11Enforce: true,
-      // THE ONLY ASSIGNMENT OF THIS FIELD IN THE CODEBASE.
+      // ONE OF THE TWO ASSIGNMENTS OF THIS FIELD, BOTH IN THIS ROUTE (the other
+      // is runConfirmedTool's, for the tools that write on their own handlers).
       //
       // executeCommands refuses every propose-only command unless it is true,
       // so this literal is the sole path by which an agent-proposed governed
@@ -509,17 +668,31 @@ export function mountUtilityRoutes(router: Router): void {
       // conventional rather than structural, and the anti-drift test asserts
       // the identifier appears in exactly one source file.
       humanConfirmed: true,
-      signoff: {
-        reasonForChange,
-        // For the reason-only tier there is no e-signature; the gate does not
-        // require one for these commands (validateSignoff requireSignature=false).
-        signatureVerified: eSignRequired,
-        signaturePurpose: 'approval',
-        verifiedAt: signatureVerifiedAt,
-      },
+      // The confirm tier carries no sign-off: the command is in neither Part 11
+      // set, so the executor's sign-off gate does not apply to it, and an
+      // invented reason would be a false record.
+      ...(tier === 'confirm'
+        ? {}
+        : {
+            signoff: {
+              reasonForChange,
+              // For the reason-only tier there is no e-signature; the gate does not
+              // require one for these commands (validateSignoff requireSignature=false).
+              signatureVerified: eSignRequired,
+              // The e-signature tier carries the meaning the signer declared
+              // (resolved above; the route refuses without one). The reason
+              // tier is unchanged: it keeps the value it always carried, which
+              // no handler reads for that tier — there is no signature there to
+              // mean anything.
+              signaturePurpose: signatureMeaning ?? 'approval',
+              verifiedAt: esign?.verifiedAt,
+              authenticationMethod: esign?.authenticationMethod,
+              secondFactorVerified: esign?.secondFactorVerified,
+            },
+          }),
     };
     try {
-      const [result] = await executeCommands([{ command, params } as any], ctx);
+      const [result] = isTool ? [await runConfirmedTool(command, params, pendingForRun!, numericOrgId, userId)] : await executeCommands([{ command, params } as any], ctx);
       // The execution stays HERE, in the one place that stamps humanConfirmed.
       // The waiting turn is handed the RESULT, not the right to run the command
       // itself — a second dispatcher would be a second writer of that flag, and

@@ -1,3 +1,6 @@
+# Root variables for production. Validation lives in terraform/stack, the one place
+# the rules are written; a value that breaks one fails plan there.
+
 variable "region" {
   type    = string
   default = "us-east-1"
@@ -50,23 +53,12 @@ variable "worker_desired_count" {
   default = 1
 }
 
-# ── Container image ──────────────────────────────────────────────────────────
-# Immutable, deployer-supplied image reference. No default so a mutable
-# `:latest` tag can never be silently deployed — the deploy pipeline must pass
-# an explicit SHA/digest-pinned tag (e.g. -var "image_tag=sha-<gitsha>").
-# TODO(GA-blocker): pin to image digest (sha256:...) instead of a tag for
-# fully reproducible, rollback-safe deploys.
+# ── Image, TLS, domain ───────────────────────────────────────────────────────
+
 variable "image_tag" {
   type        = string
-  description = "Immutable container image tag/digest to deploy (e.g. sha-<gitsha> or @sha256:...). Must not be 'latest'."
-
-  validation {
-    condition     = var.image_tag != "latest"
-    error_message = "image_tag must be an immutable tag or digest, not the mutable 'latest' tag."
-  }
+  description = "Immutable container image tag/digest to deploy (e.g. sha-<gitsha> or @sha256:...). Must not be 'latest'. Validated in terraform/stack."
 }
-
-# ── TLS / Domain ─────────────────────────────────────────────────────────────
 
 variable "acm_certificate_arn" {
   type        = string
@@ -76,18 +68,46 @@ variable "acm_certificate_arn" {
 variable "cloudfront_certificate_arn" {
   type        = string
   description = "ACM certificate ARN in us-east-1 for CloudFront"
-  default     = ""
 }
 
 variable "domain_aliases" {
   type        = list(string)
-  description = "Custom domain names for CloudFront"
-  default     = []
+  description = "Custom domain names for CloudFront. At least one: validated in terraform/stack."
 }
 
-# ── Secrets (pass via -var or TF_VAR_ env) ───────────────────────────────────
+# ── Secrets (pass via -var or TF_VAR_; validated in terraform/stack) ─────────
+
+variable "cloudfront_origin_secret" {
+  type      = string
+  sensitive = true
+}
 
 variable "jwt_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "refresh_token_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "mfa_encryption_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "audit_hmac_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "audit_hmac_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "connector_encryption_key" {
   type      = string
   sensitive = true
 }
@@ -97,7 +117,29 @@ variable "openai_api_key" {
   sensitive = true
 }
 
-# ── Tags ─────────────────────────────────────────────────────────────────────
+# Login OTP delivery (SMTP); validated in terraform/stack. Port is fixed at 465.
+variable "smtp_host" {
+  type = string
+}
+
+variable "smtp_user" {
+  type      = string
+  sensitive = true
+}
+
+variable "smtp_pass" {
+  type      = string
+  sensitive = true
+}
+
+variable "smtp_from" {
+  type = string
+}
+
+# D1 brief B4: the founder's compliance decision. No default, no example.
+variable "ai_provider_placement_approvals" {
+  type = string
+}
 
 variable "tags" {
   type = map(string)

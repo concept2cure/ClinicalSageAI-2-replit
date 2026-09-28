@@ -18,10 +18,10 @@
 
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 
-import { AnaActivity } from '../AnaActivity';
-import type { AnaToolCall } from '../../components/ana/useAnaChat';
+import { AnaActivity, activityPropsFor, splitLabel } from '../AnaActivity';
+import type { AnaChatMessage, AnaToolCall } from '../../components/ana/useAnaChat';
 
 afterEach(cleanup);
 
@@ -132,6 +132,42 @@ describe('AnaActivity — the work is visible while it happens', () => {
 
     expect(screen.getByText('First pass')).toBeTruthy();
     expect(screen.getByText(/Went back · round 2/)).toBeTruthy();
+  });
+
+  it('names no rounds when she declared a plan — the plan is the structure', () => {
+    render(
+      <AnaActivity
+        streaming
+        planChanges={[{ kind: 'added', title: 'Read the protocol', at: 1, initial: true }]}
+        toolCalls={[
+          call({ name: 'update_plan', label: 'Updating the plan · 1 step', round: 1 }),
+          call({ round: 2, label: 'Precedent search' }),
+          call({ round: 4, label: 'Citation coverage' }),
+        ]}
+      />,
+    );
+    expect(screen.queryByText(/Went back/)).toBeNull();
+    expect(screen.queryByText('First pass')).toBeNull();
+  });
+
+  it('says a draft once when the step that wrote it already names it', () => {
+    const { rerender } = render(
+      <AnaActivity
+        draftTitle="Primary endpoint summary"
+        toolCalls={[call({ name: 'draft_authoring_document', label: 'Drafting "Primary endpoint summary"' })]}
+      />,
+    );
+    fireEvent.click(document.querySelector('.ana-activity-toggle') as HTMLElement);
+    const rows = () => [...document.querySelectorAll('.ana-activity-list > li')].map((li) => li.textContent ?? '');
+    expect(rows().filter((t) => t.includes('Drafted Primary endpoint summary'))).toEqual([]);
+    // A step that FAILED does not stand in for it, and neither does no step.
+    rerender(
+      <AnaActivity
+        draftTitle="Primary endpoint summary"
+        toolCalls={[call({ name: 'draft_authoring_document', label: 'Drafting "Primary endpoint summary"', status: 'error' })]}
+      />,
+    );
+    expect(rows().filter((t) => t.includes('Drafted Primary endpoint summary'))).toHaveLength(1);
   });
 
   it('states how the question was read', () => {
@@ -332,5 +368,287 @@ describe('AnaActivity — the clock', () => {
     const { container } = render(<AnaActivity startedAt={1_700_000_000_000} toolCalls={[call()]} />);
     const toggle = container.querySelector('.ana-activity-toggle') as HTMLElement;
     expect(toggle.textContent).not.toMatch(/ in \d/);
+  });
+});
+
+describe('AnaActivity — each row opens in place, like the work it records', () => {
+  it('puts a step\'s duration and the inputs she passed behind that step\'s own chevron', () => {
+    const { container } = render(
+      <AnaActivity
+        streaming
+        toolCalls={[call({ label: 'Searching the literature for "estimand"', latencyMs: 2_340, round: 1, input: { alpha: 0.05 } })]}
+      />,
+    );
+    const row = screen.getByRole('button', { name: /Searching the literature for/ });
+    // Verb muted, object not: the eye lands on what she worked on.
+    expect(container.querySelector('.ana-activity-obj')?.textContent).toBe('estimand');
+    expect(row.getAttribute('aria-expanded')).toBe('false');
+    // Mounted while collapsed so aria-controls resolves; hidden until opened.
+    const detail = document.getElementById(row.getAttribute('aria-controls') as string) as HTMLElement;
+    expect(detail.hasAttribute('hidden')).toBe(true);
+    fireEvent.click(row);
+    expect(detail.hasAttribute('hidden')).toBe(false);
+    expect(within(detail).getByText(/Took 2\.3s · round 1/)).toBeTruthy();
+    const inputs = within(detail).getByRole('region', { name: 'Inputs AnA passed to this step' });
+    expect(inputs.textContent).toContain('"alpha": 0.05');
+    expect(inputs.getAttribute('tabindex')).toBe('0');
+  });
+
+  it('records her plan once as "Planned N steps", with the steps behind the chevron', () => {
+    render(
+      <AnaActivity
+        streaming
+        planChanges={[
+          { kind: 'added', title: 'Read the protocol', at: 1, initial: true },
+          { kind: 'started', title: 'Read the protocol', at: 1, initial: true },
+          { kind: 'added', title: 'Draft the synopsis', at: 1, initial: true },
+          { kind: 'added', title: 'Check citations', at: 5 },
+        ]}
+        toolCalls={[
+          call({ name: 'update_plan', label: 'Updating the plan · 2 steps', startedAt: 1 }),
+          call({ label: 'Reading the protocol', startedAt: 2 }),
+        ]}
+      />,
+    );
+    const planned = screen.getByRole('button', { name: /Planned 2 steps/ });
+    fireEvent.click(planned);
+    const steps = document.getElementById(planned.getAttribute('aria-controls') as string) as HTMLElement;
+    expect(within(steps).getByText('Read the protocol')).toBeTruthy();
+    expect(within(steps).getByText('Draft the synopsis')).toBeTruthy();
+    // A step added later is its own row, in the order it happened.
+    expect(screen.getByText('Added step')).toBeTruthy();
+    // Her bookkeeping call is the plan it recorded, not a second tool row.
+    expect(screen.queryByText('Updating the plan · 2 steps')).toBeNull();
+    const rows = [...document.querySelectorAll('.ana-activity-list > li')].map((li) => li.textContent);
+    expect(rows.findIndex((t) => t?.includes('Planned'))).toBeLessThan(rows.findIndex((t) => t?.includes('Reading the protocol')));
+    expect(rows.findIndex((t) => t?.includes('Reading the protocol'))).toBeLessThan(rows.findIndex((t) => t?.includes('Added step')));
+  });
+
+});
+
+describe('AnaActivity — her plan, live and reopened', () => {
+  it('does not say the plan twice: the folded line counts the work, the first row is the plan', () => {
+    render(
+      <AnaActivity
+        planChanges={[
+          { kind: 'added', title: 'Read the protocol', at: 1, initial: true },
+          { kind: 'added', title: 'Draft the synopsis', at: 1, initial: true },
+        ]}
+        toolCalls={[call({ label: 'Reading the protocol', startedAt: 2, endedAt: 3 })]}
+        startedAt={0}
+        completedAt={72_000}
+      />,
+    );
+    const toggle = document.querySelector('.ana-activity-toggle') as HTMLElement;
+    expect(toggle.textContent).toContain('1 tool run · in 1m 12s');
+    expect(toggle.textContent).not.toContain('Planned');
+    if (toggle.getAttribute('aria-expanded') !== 'true') fireEvent.click(toggle);
+    const first = document.querySelector('.ana-activity-list > li');
+    expect(first?.textContent).toContain('Planned 2 steps');
+  });
+
+  it('says "Plan", not "Planned", for a reopened thread that kept only the final list', () => {
+    render(
+      <AnaActivity
+        plan={[
+          { title: 'Read the protocol', status: 'completed' },
+          { title: 'Draft the synopsis', status: 'completed' },
+        ]}
+      />,
+    );
+    const toggle = screen.getByRole('button');
+    expect(toggle.textContent).toContain('Plan · 2 steps');
+    expect(toggle.textContent).not.toContain('Planned');
+  });
+
+  it('keeps a FAILED plan call as a failed row — a failure is never folded away', () => {
+    const { container } = render(
+      <AnaActivity toolCalls={[call({ name: 'update_plan', label: 'Updating the plan', status: 'error' })]} />,
+    );
+    expect(screen.getByRole('button').textContent).toContain('1 failed');
+    // And as a row of its own once the record is open, not only as a count.
+    fireEvent.click(screen.getByRole('button'));
+    const failed = container.querySelector('.ana-activity-step.is-error');
+    expect(failed?.textContent).toContain('Updating the plan');
+  });
+
+  it('claims no duration for a settled step whose end was never recorded', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_700_000_100_000);
+    render(<AnaActivity streaming toolCalls={[call({ status: 'success', startedAt: 1_700_000_000_000, input: { a: 1 } })]} />);
+    const row = screen.getByRole('button', { name: /Sample size/ });
+    // A clock read off "now" for a finished step would say 1m 40s and keep growing.
+    expect(row.textContent).not.toMatch(/\d+(\.\d)?s|\dm/);
+    vi.useRealTimers();
+  });
+
+  it('says on the folded line when a fallback provider answered', () => {
+    render(<AnaActivity toolCalls={[call()]} fallback />);
+    expect(screen.getByRole('button').textContent).toContain('answered by a fallback provider');
+  });
+
+  it('is fed by one mapping from the turn, which carries the plan and the fallback', () => {
+    const m: AnaChatMessage = {
+      id: 'a',
+      role: 'assistant',
+      text: '',
+      fallback: true,
+      planChanges: [{ kind: 'added', title: 'X', at: 1, initial: true }],
+      generatedDraft: { title: 'IB', content: '' },
+      sentAt: 1,
+      completedAt: 2,
+    };
+    expect(activityPropsFor(m)).toMatchObject({ fallback: true, draftTitle: 'IB', startedAt: 1, completedAt: 2 });
+    expect(activityPropsFor(m).planChanges).toHaveLength(1);
+  });
+
+  it('splits a label at the argument the server quoted, and leaves the rest whole', () => {
+    expect(splitLabel('Searching the literature for "estimand"')).toEqual({ verb: 'Searching the literature for', object: 'estimand' });
+    expect(splitLabel('Convening the drafting council for "2.5" — draft, verify')).toEqual({
+      verb: 'Convening the drafting council for',
+      object: '2.5',
+      rest: '— draft, verify',
+    });
+    expect(splitLabel('Sample size — biostatistics engine')).toEqual({ verb: 'Sample size — biostatistics engine' });
+  });
+});
+
+describe('AnaActivity — whether the turn was recorded', () => {
+  const sha = 'ab12cd34ef56'.padEnd(64, '0');
+
+  it('a recorded turn carries one quiet row with the start of its hash, and the whole of it behind the row', () => {
+    const { container } = render(
+      <AnaActivity toolCalls={[call()]} turnRecord={{ status: 'recorded', id: 'rec-1', sha256: sha }} completedAt={2} startedAt={1} />,
+    );
+    // Settled, the record is folded; the row is one of its rows.
+    fireEvent.click(container.querySelector('.ana-activity-toggle') as HTMLElement);
+    const body = within(container.querySelector('.ana-activity-body') as HTMLElement);
+    expect(body.getByText('Recorded')).toBeTruthy();
+    expect(body.getByText(sha.slice(0, 12))).toBeTruthy();
+    fireEvent.click(body.getByRole('button', { name: /Recorded/ }));
+    expect(body.getByText(`SHA-256 ${sha}`)).toBeTruthy();
+    expect(container.querySelector('.ana-activity-unrecorded')).toBeNull();
+  });
+
+  it('a turn that was not recorded says so under the turn, unfolded, with the reason', () => {
+    const { container } = render(
+      <AnaActivity
+        toolCalls={[call()]}
+        turnRecord={{ status: 'not_recorded', reason: 'The record of this turn could not be written.' }}
+      />,
+    );
+    const note = container.querySelector('.ana-activity-unrecorded') as HTMLElement;
+    expect(note).toBeTruthy();
+    // Outside the folded body: visible without opening anything.
+    expect(container.querySelector('.ana-activity-body')?.contains(note)).toBe(false);
+    expect(note.textContent).toContain('Not recorded — The record of this turn could not be written.');
+  });
+
+  it('says it even for a turn with nothing else to report', () => {
+    const { container } = render(
+      <AnaActivity turnRecord={{ status: 'not_recorded', reason: 'This turn had no organization to file it under.' }} />,
+    );
+    expect(container.textContent).toContain('Not recorded — This turn had no organization to file it under.');
+  });
+
+  it('claims nothing while the turn is in flight, or when the server said nothing', () => {
+    const live = render(
+      <AnaActivity streaming phase="Working…" toolCalls={[call({ status: 'running' })]} turnRecord={{ status: 'recorded', id: 'r', sha256: sha }} />,
+    );
+    expect(live.container.textContent).not.toContain('Recorded');
+    cleanup();
+    const silent = render(<AnaActivity toolCalls={[call()]} />);
+    expect(silent.container.textContent).not.toContain('Recorded');
+    expect(silent.container.textContent).not.toContain('Not recorded');
+  });
+
+  it('activityPropsFor carries the status from the turn', () => {
+    const m = { id: 'a', role: 'assistant', text: '', turnRecord: { status: 'recorded', id: 'r', sha256: sha } } as AnaChatMessage;
+    expect(activityPropsFor(m).turnRecord).toEqual({ status: 'recorded', id: 'r', sha256: sha });
+  });
+});
+
+describe('AnaActivity — a turn the loop cut short says so, unfolded', () => {
+  /* The loop stops for a reason. `max_rounds` means the round cap forced the
+     answer; `duplicate_thrash` means she was repeating a step. Either way the
+     answer below is what she had when she was stopped, not what she would have
+     said — and before this note the only visible difference from a finished
+     turn was none at all. Every case here is settled (streaming FALSE) and
+     makes NO clicks: the note must be read without opening anything. */
+  const settled = { toolCalls: [call()], startedAt: 1_000, completedAt: 73_000 };
+  const stoppedNote = (container: HTMLElement) => container.querySelector('.ana-activity-stopped') as HTMLElement | null;
+  const outsideBody = (container: HTMLElement, el: HTMLElement) =>
+    !(container.querySelector('.ana-activity-body') as HTMLElement).contains(el);
+
+  it('a round-limit stop is a note outside the folded body, with Continue, and Continue sends once', () => {
+    const onContinue = vi.fn();
+    const { container } = render(<AnaActivity {...settled} stoppedReason="max_rounds" rounds={12} onContinue={onContinue} />);
+
+    // The body is folded — and the note is still there.
+    expect((container.querySelector('.ana-activity-body') as HTMLElement).hasAttribute('hidden')).toBe(true);
+    const note = stoppedNote(container)!;
+    expect(note).toBeTruthy();
+    expect(note.getAttribute('role')).toBe('note');
+    expect(outsideBody(container, note)).toBe(true);
+    expect(note.textContent).toContain("AnA reached this turn's round limit (12 rounds) before she said she was done.");
+
+    const button = within(note).getByRole('button', { name: 'Continue' });
+    expect(button.getAttribute('type')).toBe('button');
+    fireEvent.click(button);
+    expect(onContinue).toHaveBeenCalledTimes(1);
+  });
+
+  it('says the limit without a number when the round count is unknown', () => {
+    const { container } = render(<AnaActivity {...settled} stoppedReason="max_rounds" />);
+    expect(stoppedNote(container)?.textContent).toContain("AnA reached this turn's round limit before she said she was done.");
+  });
+
+  it('a repeated-step stop says so, and offers no Continue — continuing would repeat it', () => {
+    const onContinue = vi.fn();
+    const { container } = render(<AnaActivity {...settled} stoppedReason="duplicate_thrash" rounds={3} onContinue={onContinue} />);
+    const note = stoppedNote(container)!;
+    expect(note).toBeTruthy();
+    expect(outsideBody(container, note)).toBe(true);
+    expect(note.textContent).toContain('AnA stopped because she was repeating the same step. Tell her what to change.');
+    expect(container.querySelector('.ana-activity-continue')).toBeNull();
+  });
+
+  it('a stop the person made carries no note — they pressed Stop, they know', () => {
+    const { container } = render(<AnaActivity {...settled} stoppedReason="cancelled" rounds={2} onContinue={vi.fn()} />);
+    expect(stoppedNote(container)).toBeNull();
+    expect(container.querySelector('.ana-activity-continue')).toBeNull();
+  });
+
+  it('a turn she ended herself carries no note', () => {
+    const { container } = render(<AnaActivity {...settled} stoppedReason="no_more_tools" rounds={2} onContinue={vi.fn()} />);
+    expect(stoppedNote(container)).toBeNull();
+  });
+
+  it('offers Continue only where the host offers it — the latest settled turn', () => {
+    // No handler (an earlier turn, or a host with no send path): the note
+    // stands, the button does not.
+    const { container } = render(<AnaActivity {...settled} stoppedReason="max_rounds" rounds={12} />);
+    expect(stoppedNote(container)).toBeTruthy();
+    expect(container.querySelector('.ana-activity-continue')).toBeNull();
+  });
+
+  it('says nothing about a stop while the turn is still in flight', () => {
+    // `done` arrives before `post_done`; the turn is still streaming between
+    // the two, and the note waits for it to settle, as the record note does.
+    const { container } = render(<AnaActivity streaming phase="Finishing…" toolCalls={[call()]} stoppedReason="max_rounds" rounds={12} onContinue={vi.fn()} />);
+    expect(stoppedNote(container)).toBeNull();
+  });
+
+  it('says it even for a turn with nothing else to report', () => {
+    const { container } = render(<AnaActivity stoppedReason="max_rounds" rounds={5} />);
+    expect(stoppedNote(container)?.textContent).toContain('(5 rounds)');
+  });
+
+  it('keeps the open-while-streaming, folded-after pin', () => {
+    const { rerender, container } = render(<AnaActivity streaming toolCalls={[call()]} stoppedReason="max_rounds" rounds={12} />);
+    expect(container.querySelector('.ana-activity-toggle')).toBeNull();
+    rerender(<AnaActivity toolCalls={[call()]} stoppedReason="max_rounds" rounds={12} />);
+    expect(container.querySelector('.ana-activity-toggle')?.getAttribute('aria-expanded')).toBe('false');
+    expect(stoppedNote(container)).toBeTruthy();
   });
 });

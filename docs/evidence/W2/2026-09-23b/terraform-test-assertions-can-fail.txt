@@ -1,0 +1,45 @@
+# The ARN and health-check assertions can fail (critic finding 2026-09-24: with one
+# shared mock ARN for every secret they could not). Each mutation must fail the suite.
+
+## main.tf: DATABASE_URL pointed at the jwt_secret secret
+1
+  run "renders_the_boot_contract"... fail
+  on tests/boot_contract.tftest.hcl line 145, in run "renders_the_boot_contract":
+ 146:       for pair in [["DATABASE_URL", "database_url"], ["APP_DATABASE_URL", "app_database_url"]] :
+    │ module.ecs.api_container_definitions is "[{\"environment\":[{\"name\":\"NODE_ENV\",\"value\":\"production\"},{\"name\":\"PORT\",\"value\":\"5000\"},{\"name\":\"TRUST_PROXY_HOPS\",\"value\":\"1\"},{\"name\":\"RLS_ENFORCE\",\"value\":\"on\"},{\"name\":\"AI_SENSITIVE_DATA_POLICY_MODE\",\"value\":\"enforce\"},{\"name\":\"AI_PROVIDER_PLACEMENT_APPROVALS\",\"value\":\"{\\\"anthropic\\\":{\\\"region\\\":\\\"global\\\",\\\"zeroRetentionApproved\\\":true,\\\"approvedDataClasses\\\":[\\\"pii\\\"],\\\"approvedIntendedUses\\\":[\\\"drafting\\\"]}}\"},{\"name\":\"APP_URL\",\"value\":\"https://app.example.com\"},{\"name\":\"ALLOWED_ORIGINS\",\"value\":\"https://app.example.com\"},{\"name\":\"CONCEPT2CURE_SIGNER_MODE\",\"value\":\"kms\"},{\"name\":\"CONCEPT2CURE_SIGNER_KMS_KEY_ID\",\"value\":\"alias/fda-signing-key-2026\"},{\"name\":\"CONCEPT2CURE_SIGNER_KMS_REGION\",\"value\":\"us-east-1\"}],\"essential\":true,\"healthCheck\":{\"command\":[\"CMD\",\"node\",\"-e\",\"require('http').get('http://localhost:5000/healthz',r=\\u003eprocess.exit(r.statusCode===200?0:1)).on('error',()=\\u003eprocess.exit(1))\"],\"interval\":30,\"retries\":3,\"startPeriod\":60,\"timeout\":10},\"image\":\"d77f00v8:sha-00000000\",\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"/ecs/c2c-production/api\",\"awslogs-region\":\"us-east-1\",\"awslogs-stream-prefix\":\"api\"}},\"name\":\"api\",\"portMappings\":[{\"containerPort\":5000,\"protocol\":\"tcp\"}],\"secrets\":[{\"name\":\"DATABASE_URL\",\"valueFrom\":\"vrr0ghw6\"},{\"name\":\"APP_DATABASE_URL\",\"valueFrom\":\"ptqxtxzz\"},{\"name\":\"JWT_SECRET\",\"valueFrom\":\"vrr0ghw6\"},{\"name\":\"REFRESH_TOKEN_SECRET\",\"valueFrom\":\"gv344bzs\"},{\"name\":\"MFA_ENCRYPTION_KEY\",\"valueFrom\":\"qefc17v3\"},{\"name\":\"AUDIT_HMAC_KEY\",\"valueFrom\":\"ah8witqu\"},{\"name\":\"AUDIT_HMAC_SECRET\",\"valueFrom\":\"mn8ncym3\"},{\"name\":\"CONNECTOR_ENCRYPTION_KEY\",\"valueFrom\":\"821xhk2d\"},{\"name\":\"OPENAI_API_KEY\",\"valueFrom\":\"mlk5aflu\"}]}]"
+DATABASE_URL / APP_DATABASE_URL must be the composed connection-string
+
+## ecs-fargate/main.tf: container health check switched to /readyz
+1
+  run "renders_the_boot_contract"... fail
+  on tests/boot_contract.tftest.hcl line 174, in run "renders_the_boot_contract":
+ 175:       strcontains(join(" ", jsondecode(module.ecs.api_container_definitions)[0].healthCheck.command), "/healthz'"),
+The container health check must probe /healthz (liveness), not /readyz.
+Failure! 13 passed, 1 failed.
+
+## restored
+Success! 14 passed, 0 failed.
+
+## Proof step 5 alone: health check switched to /readyz AND the tftest's /healthz assertion
+## suspended, so the proof's own path-routed stub is what must catch it.
+[terraform-preflight-proof] ok — terraform test: 14 passed, 0 failed, 0 errored
+[terraform-preflight-proof] FAIL — health check does not behave: live but not ready (/healthz 200, /readyz 503) → exit 1, /healthz 503 → exit 1, nothing listening → exit 1
+[terraform-preflight-proof] 1 check(s) failed.
+exit=1
+
+## main.tf: both composed URLs set to sslmode=disable (a comment elsewhere still says verify-full)
+2
+  run "renders_the_boot_contract"... fail
+  on tests/boot_contract.tftest.hcl line 160, in run "renders_the_boot_contract":
+DATABASE_URL / APP_DATABASE_URL must be postgresql://<role>:<48
+Failure! 13 passed, 1 failed.
+
+## main.tf: APP_SERVICE_DB_PASSWORD added to the plain environment, value = the generated password
+  run "renders_the_boot_contract"... fail
+  on tests/boot_contract.tftest.hcl line 177, in run "renders_the_boot_contract":
+APP_SERVICE_DB_PASSWORD must not be on the API or worker task definition.
+  on tests/boot_contract.tftest.hcl line 190, in run "renders_the_boot_contract":
+A secret value appears in a task definition's plain environment.
+
+## restored
+Success! 14 passed, 0 failed.

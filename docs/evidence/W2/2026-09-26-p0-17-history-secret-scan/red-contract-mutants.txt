@@ -1,0 +1,22 @@
+## mutant: checkout with fetch-depth: 1 (one commit scanned)
+ × tests/ci/secret-history-scan.contract.test.ts > CI scans every commit on the branch, and fails on a new finding > has the job, with the whole history checked out 6ms
+   → a shallow checkout scans one commit: expected 1 to be +0 // Object.is equality
+      Tests  1 failed | 7 passed (8)
+
+## mutant: the Neon rule drifts from the working-tree gate ({12,} -> {20,})
+ × tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > the same connection-URI and Neon patterns 8ms
+   → expected '\b(npg_[A-Za-z0-9]{20,})\b' to be '\b(npg_[A-Za-z0-9]{12,})\b' // Object.is equality
+ × tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > as patterns: the INF-22 shape is found; stand-ins and local hosts are not 3ms
+   → expected false to be true // Object.is equality
+      Tests  2 failed | 6 passed (8)
+
+## mutant: the INF-22 block relabelled 'not a secret'
+ × tests/ci/secret-history-scan.contract.test.ts > .gitleaksignore lists history, each finding with its status and reason > the INF-22 credential is listed as live, not as a false positive 5ms
+   → expected '# status: not a secret\n# reason: the…' to match /^# status: live/m
+      Tests  1 failed | 7 passed (8)
+
+## mutant: the scan step made advisory (continue-on-error: true)
+ × tests/ci/secret-history-scan.contract.test.ts > CI scans every commit on the branch, and fails on a new finding > installs a pinned gitleaks and runs it blocking over HEAD with the repository config 5ms
+   → no step may be advisory: expected true to be undefined
+      Tests  1 failed | 7 passed (8)
+

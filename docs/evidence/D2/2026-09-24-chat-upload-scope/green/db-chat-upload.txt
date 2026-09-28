@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T18:32:30.564Z","pid":9596,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T18:32:30.565Z","pid":9596,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T18:32:30.565Z","pid":9596,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/chat-upload.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T18:32:30.633Z', poolSize: 1 }
+
+stdout | tests/db/chat-upload.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/chat-upload.dbtest.ts
+Loaded 0 academic documents
+
+stderr | tests/db/chat-upload.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/chat-upload.dbtest.ts > POST /api/chat/upload — a client document reaches its tenant > accepts the upload and records it for the organization
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "stability-note.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+(node:9596) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/chat-upload.dbtest.ts > POST /api/chat/upload — a client document reaches its tenant > accepts the upload and records it for the organization
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790274758386_fhx8ny",
+    "method": "utf8",
+    "chars": 43
+  }
+}
+
+stdout | tests/db/chat-upload.dbtest.ts > POST /api/chat/upload — a client document reaches its tenant > accepts the upload and records it for the organization
+{
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790274758386_fhx8ny",
+    "sourceId": 29,
+    "supersededId": null
+  }
+}
+
+ ✓ tests/db/chat-upload.dbtest.ts > POST /api/chat/upload — a client document reaches its tenant > accepts the upload and records it for the organization 151ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  18:32:28
+   Duration  9.78s (transform 6.90s, setup 67ms, import 102ms, tests 9.36s, environment 0ms)
+

@@ -52,7 +52,7 @@ export function LiveDriveOverlay({
      text on a refusal rather than emptying the box as if it had been sent. */
   onSteer?: (message: string) => void | boolean | Promise<boolean | void>;
 }) {
-  const { active, mode, steps, turnApplied, turnActionsApplied } = state;
+  const { active, mode, steps, turnLanded } = state;
   const [steer, setSteer] = React.useState('');
 
   /* Escape = take over, from anywhere, while the drive is live. Registered
@@ -85,9 +85,21 @@ export function LiveDriveOverlay({
   if (!active) return null;
   const last = steps.length > 0 ? steps[steps.length - 1] : null;
   const demo = mode === 'demo';
-  /* Moves applied THIS turn — real counts from the reducer, never a script
-     position the client cannot verify. */
-  const moves = turnApplied + turnActionsApplied;
+  /* Moves that LANDED this turn — real counts from the reducer, never a script
+     position the client cannot verify, and never a move still queued or one
+     that failed (those are charged to the budget, not counted as stops). */
+  const moves = turnLanded;
+  /* A failure is worded by what the move was. A navigation's label is a
+     screen's name ("CMC / Quality (Module 3)"): the screen did not open. An
+     operation's label is a verb phrase ("Search the vault") and reads as one
+     after "Could not". Every failure used to take the operation wording, so a
+     screen that did not open read "Could not cMC / Quality (Module 3): …". */
+  const failedLine =
+    last && last.failed
+      ? last.kind === 'navigate'
+        ? `Could not open ${last.label}: ${last.failed}`
+        : `Could not ${last.label.charAt(0).toLowerCase() + last.label.slice(1)}: ${last.failed}`
+      : null;
 
   const submitSteer = () => {
     const text = steer.trim();
@@ -122,9 +134,9 @@ export function LiveDriveOverlay({
             {last.label}
           </span>
         )}
-        {last && last.failed && (
-          <span className="ana-drive-step is-failed" title={`${last.label}: ${last.failed}`}>
-            Could not {last.label.charAt(0).toLowerCase() + last.label.slice(1)}: {last.failed}
+        {failedLine && (
+          <span className="ana-drive-step is-failed" title={failedLine}>
+            {failedLine}
           </span>
         )}
         {onSteer && (

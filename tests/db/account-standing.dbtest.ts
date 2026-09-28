@@ -137,9 +137,12 @@ async function cleanup(): Promise<void> {
   const client = await owner.connect();
   try {
     await client.query('BEGIN');
-    // audit_logs is append-only on the deploy path; this is its documented door.
-    await client.query("SET LOCAL app.audit_archive_bypass = 'on'");
+    // audit_logs is append-only on the deploy path. A suite tears its own rows down as the
+    // table owner with the DELETE trigger disabled for this transaction only: the archive door
+    // (audit_logs_archive_delete(), P0-8a) refuses rows inside the 24-month hot window.
+    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
     await client.query('DELETE FROM audit_logs WHERE tenant_id = $1', [ORG]);
+    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});

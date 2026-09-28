@@ -1,0 +1,470 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+[drafting] task could not be recorded: relation "drafting_tasks" does not exist
+ ✓ server/routes/__tests__/drafting-task-object-authz.test.ts > POST /api/v1/drafting/start_task: the program must be the organisation's own > records a task for a program the session's organisation owns (202), having read the program with the organisation as a predicate 59ms
+ ✓ server/routes/__tests__/drafting-task-object-authz.test.ts > POST /api/v1/drafting/start_task: the program must be the organisation's own > refuses a program of another organisation (404) and writes nothing 8ms
+ ✓ server/routes/__tests__/drafting-task-object-authz.test.ts > POST /api/v1/drafting/start_task: the program must be the organisation's own > refuses a session with no organisation (401) before any read 6ms
+ ✓ server/routes/__tests__/drafting-task-object-authz.test.ts > POST /api/v1/drafting/start_task: the program must be the organisation's own > a task that could not be recorded is an error (503), never a success held in process memory 8ms
+ ✓ server/routes/__tests__/drafting-task-object-authz.test.ts > GET /api/v1/drafting/task_status/:task_id: the task is read within the organisation > returns the organisation's own task (200) 9ms
+ ✓ server/routes/__tests__/drafting-task-object-authz.test.ts > GET /api/v1/drafting/task_status/:task_id: the task is read within the organisation > is 404 for another organisation's task 5ms
+[drafting] task status could not be read: connection terminated
+ ✓ server/routes/__tests__/drafting-task-object-authz.test.ts > GET /api/v1/drafting/task_status/:task_id: the task is read within the organisation > refuses a session with no organisation (401) 6ms
+ ✓ server/routes/__tests__/drafting-task-object-authz.test.ts > GET /api/v1/drafting/task_status/:task_id: the task is read within the organisation > a read that failed is an error (503), not "not found" and not a memory copy 6ms
+ ✓ server/__tests__/security/tenant-isolation-vault-list.contract.test.ts > Tenant isolation — vault/list > scopes every documents query to the authed org 41ms
+ ✓ server/__tests__/security/tenant-isolation-vault-list.contract.test.ts > Tenant isolation — vault/list > vault/statistics is org-scoped too 9ms
+ ✓ server/__tests__/security/tenant-isolation-vault-list.contract.test.ts > Tenant isolation — vault/list > 401s without org context and never touches documents 12ms
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts
+{
+  "timestamp": "2026-09-26T12:18:07.487Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T12:18:07.488Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+{
+  "timestamp": "2026-09-26T12:18:07.488Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+ ✓ server/src/routes/__tests__/stability-results-object-authz.test.ts > PATCH /results/:resultId > updates the tenant's own result in one transaction: read with the tenant predicate, write, audit with the previous value, COMMIT 31ms
+ ✓ server/src/routes/__tests__/stability-results-object-authz.test.ts > PATCH /results/:resultId > is 404 for a result outside the tenant, and writes nothing 6ms
+ ✓ server/src/routes/__tests__/stability-results-object-authz.test.ts > PATCH /results/:resultId > is 401 without a verified actor, before any connection is taken 4ms
+ ✓ server/src/routes/__tests__/stability-results-object-authz.test.ts > DELETE /results/:resultId > deletes the tenant's own result and records what was deleted, in one transaction 4ms
+ ✓ server/src/routes/__tests__/stability-results-object-authz.test.ts > DELETE /results/:resultId > is 404 for a result outside the tenant, and deletes nothing 4ms
+ ✓ server/src/routes/__tests__/stability-results-object-authz.test.ts > DELETE /results/:resultId > is 401 without a verified actor 3ms
+{
+  "timestamp": "2026-09-26T12:18:09.062Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by signature check",
+  "context": {
+    "filename": "data.csv",
+    "declaredMime": "text/csv",
+    "reason": "text/csv content not text-shaped (binary detected)"
+  }
+}
+{
+  "timestamp": "2026-09-26T12:18:09.069Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "results.csv",
+    "reason": "clamav_not_configured"
+  }
+}
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses a body over the size limit with 413 instead of buffering it 140ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses an executable named file whatever type it declares (415) 12ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses a declared type this router does not read (415) 7ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses bytes that are not what the declared type says (the shared byte check) 7ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > control: a real CSV passes the guard and reaches the handler 5ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+{
+  "timestamp": "2026-09-26T12:18:09.106Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/src/routes/__tests__/stability-router-honesty.test.ts
+{
+  "timestamp": "2026-09-26T12:18:09.307Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T12:18:09.309Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+{
+  "timestamp": "2026-09-26T12:18:09.309Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+stdout | server/src/routes/__tests__/stability-router-honesty.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ FDA 510(k) eSTAR routes mounted (auth-gated)
+✅ FDA 510(k) device profile routes mounted (auth-gated)
+✅ CERV2 Export routes mounted (auth-gated)
+✅ CERV2 AI routes mounted (auth-gated)
+✅ Doc Orchestration routes mounted (auth-gated)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Review board routes mounted (GET /api/review/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Task management board route mounted (GET /api/task-management/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > study status is the table's vocabulary > maps client words onto the constraint and defaults to the column default 4ms
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > study status is the table's vocabulary > refuses a state the table cannot hold rather than storing a different one 1ms
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > study status is the table's vocabulary > plans only the ICH Q1A conditions it has settings for 1ms
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > a create that cannot be recorded honestly is refused before any write > 400 for DRAFT, without taking a connection 65ms
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > a create that cannot be recorded honestly is refused before any write > 400 for a storage condition with no defined setting (no invented 5°C) 4ms
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > a create that cannot be recorded honestly is refused before any write > 401 without a verified actor, because the study could not be audited 5ms
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > updates that are not implemented say so > PUT /studies/:id is 501 and states nothing changed 3ms
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > updates that are not implemented say so > PATCH /studies/:id/status is 501, not "updated successfully" 4ms
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Project home route mounted (GET /api/project-home/:projectId)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Preclinical (Module 4) ingestion routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ PDF task + compression routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ CERV2 unified document routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ PDEV → IND workflow routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ FDA 510(k) eSTAR routes mounted (auth-gated)
+✅ FDA 510(k) device profile routes mounted (auth-gated)
+✅ CERV2 Export routes mounted (auth-gated)
+✅ CERV2 AI routes mounted (auth-gated)
+✅ Doc Orchestration routes mounted (auth-gated)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Review board routes mounted (GET /api/review/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Task management board route mounted (GET /api/task-management/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Project home route mounted (GET /api/project-home/:projectId)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Preclinical (Module 4) ingestion routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ PDF task + compression routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ CERV2 unified document routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ PDEV → IND workflow routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ FDA 510(k) eSTAR routes mounted (auth-gated)
+✅ FDA 510(k) device profile routes mounted (auth-gated)
+✅ CERV2 Export routes mounted (auth-gated)
+✅ CERV2 AI routes mounted (auth-gated)
+✅ Doc Orchestration routes mounted (auth-gated)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Review board routes mounted (GET /api/review/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Task management board route mounted (GET /api/task-management/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Project home route mounted (GET /api/project-home/:projectId)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Preclinical (Module 4) ingestion routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ PDF task + compression routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ CERV2 unified document routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ PDEV → IND workflow routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ FDA 510(k) eSTAR routes mounted (auth-gated)
+✅ FDA 510(k) device profile routes mounted (auth-gated)
+✅ CERV2 Export routes mounted (auth-gated)
+✅ CERV2 AI routes mounted (auth-gated)
+✅ Doc Orchestration routes mounted (auth-gated)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Review board routes mounted (GET /api/review/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Task management board route mounted (GET /api/task-management/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Project home route mounted (GET /api/project-home/:projectId)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Preclinical (Module 4) ingestion routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ PDF task + compression routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ CERV2 unified document routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ PDEV → IND workflow routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ FDA 510(k) eSTAR routes mounted (auth-gated)
+✅ FDA 510(k) device profile routes mounted (auth-gated)
+✅ CERV2 Export routes mounted (auth-gated)
+✅ CERV2 AI routes mounted (auth-gated)
+✅ Doc Orchestration routes mounted (auth-gated)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Review board routes mounted (GET /api/review/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Task management board route mounted (GET /api/task-management/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Project home route mounted (GET /api/project-home/:projectId)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Preclinical (Module 4) ingestion routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ PDF task + compression routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ CERV2 unified document routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ PDEV → IND workflow routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ FDA 510(k) eSTAR routes mounted (auth-gated)
+✅ FDA 510(k) device profile routes mounted (auth-gated)
+✅ CERV2 Export routes mounted (auth-gated)
+✅ CERV2 AI routes mounted (auth-gated)
+✅ Doc Orchestration routes mounted (auth-gated)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Review board routes mounted (GET /api/review/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Task management board route mounted (GET /api/task-management/board)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Project home route mounted (GET /api/project-home/:projectId)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Preclinical (Module 4) ingestion routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ PDF task + compression routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ CERV2 unified document routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ PDEV → IND workflow routes mounted
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session 6796ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session 15ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session 8ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session 8ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session 11ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend 12ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the /api/v1 drafting routes require a session of their own > POST /api/v1/drafting/start_task is refused without a session 21ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the /api/v1 drafting routes require a session of their own > GET /api/v1/drafting/task_status/task_1 is refused without a session 5ms
+ Test Files  6 passed (6)
+      Tests  38 passed (38)
+   Start at  12:18:04
+   Duration  9.55s (transform 7.33s, setup 314ms, import 10.71s, tests 7.38s, environment 1ms)

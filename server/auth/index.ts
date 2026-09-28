@@ -26,11 +26,12 @@
 // Re-export from existing implementations during migration.
 // NOTE: isPublicRoute and hasPermission are NOT exported by middleware/auth.ts
 // (this was a broken re-export, previously hidden because the file skipped type
-// checking). hasPermission actually lives in middleware/tenantIsolation.ts;
-// isPublicRoute does not exist anywhere in the codebase, so it is dropped rather
-// than re-exported as undefined.
+// checking). isPublicRoute does not exist anywhere in the codebase, so it is
+// dropped rather than re-exported as undefined; hasPermission was re-exported
+// from middleware/tenantIsolation.ts, an unmounted second tenant detector with
+// no importer, deleted 2026-09-26 (IAM-18 (4) re-check) — nothing imported the
+// re-export either.
 export { authenticateJWT, requireRole } from '../middleware/auth.js';
-export { hasPermission } from '../middleware/tenantIsolation.js';
 export { authMiddleware } from '../auth';
 export { default as rbacService } from '../services/roleBasedAccess.js';
 

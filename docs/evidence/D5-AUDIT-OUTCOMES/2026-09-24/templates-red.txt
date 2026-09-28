@@ -1,0 +1,11 @@
+# RED — templates: tests run against the unfixed implementation (server/services/templates/templateStore.ts server/routes/c2c/templates.ts stashed at 872c47182)
+ × server/services/templates/__tests__/template-store-audit-outcome.test.ts > templateStore writers carry the audit-row outcome > createTemplate: a lost row still creates the template, and says the row is missing 38ms
+ × server/services/templates/__tests__/template-store-audit-outcome.test.ts > templateStore writers carry the audit-row outcome > updateTemplate: a written row says so 1ms
+ × server/services/templates/__tests__/template-store-audit-outcome.test.ts > templateStore writers carry the audit-row outcome > deactivateTemplate: a lost row still deactivates, and says the row is missing 6ms
+ × server/services/templates/__tests__/template-store-audit-outcome.test.ts > templateStore writers carry the audit-row outcome > a writer that throws is reported as a lost row, not as success 2ms
+ × server/services/templates/__tests__/template-store-audit-outcome.test.ts > /api/c2c/templates forwards the outcome > PUT answers the updated template with auditTrail 387ms
+ × server/services/templates/__tests__/template-store-audit-outcome.test.ts > /api/c2c/templates forwards the outcome > DELETE answers success with auditTrail 9ms
+ × server/services/templates/__tests__/template-store-audit-outcome.test.ts > /api/c2c/templates forwards the outcome > POST (create from spec) answers 201 with auditTrail 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  7 failed (7)

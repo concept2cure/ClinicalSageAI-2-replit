@@ -171,6 +171,25 @@ if ! npm run --silent ci:column-reachability 2>&1; then
 fi
 echo "   ✅ Column reachability passed."
 
+# Schema is created by an applier, never by a request. Production's runtime role
+# cannot CREATE in public and owns no table, and PostgreSQL checks that BEFORE
+# IF NOT EXISTS — so a runtime CREATE TABLE is refused in production even when
+# the table exists, and succeeds on every developer machine. That is how the
+# enterprise onboarding intake lost every request in production. Reads files
+# only, no database (~1.5s).
+echo "   Validating server code runs no DDL on the runtime connection..."
+if ! npm run --silent ci:runtime-ddl 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Runtime DDL check FAILED."
+  echo "   Server code issues DDL that production's runtime role cannot run."
+  echo "   Create the object in a migration listed in C2C_MIGRATION_FILES"
+  echo "   (CLAUDE.md RULE 1); where a table might be missing, verify it with"
+  echo "   to_regclass and fail loudly. Never create schema at request time."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No runtime DDL."
+
 # The third migration invariant, and the only one nothing was enforcing: every
 # .sql file in db/migrations must appear in migrations_manifest.json, which is
 # what orders them for the appliers that read it. `db:sync-manifest:check`
@@ -222,6 +241,25 @@ if ! npm run --silent ci:undefined-css-classes 2>&1; then
 fi
 echo "   ✅ v2 class names passed."
 
+# `credentials: 'include'` is not authentication here: the /api gate reads the
+# Authorization header and nothing else. Seven client call sites shipped without
+# the bearer token, among them the shared e-signature modal (no signer could be
+# verified) and every vault upload. authBoundary is 'warn' outside production, so
+# a missing token can pass on a laptop and 401 for every user — and URLs passed
+# as parameters or `${BASE}${path}` templates hid three of them from a sweep.
+# This checks every raw fetch() whatever its URL, against the SERVER's own
+# public allowlist. Cheap: no database, no build.
+echo "   Validating every raw client fetch() sends the bearer token..."
+if ! npm run --silent ci:unauthenticated-fetch 2>&1; then
+  echo ""
+  echo "🚫 ERROR: unauthenticated fetch check FAILED."
+  echo "   Send headers: { ...getAuthHeaders() } (or buildAuthHeaders()), or use apiRequest."
+  echo "   A public endpoint belongs on PUBLIC_API_ALLOWLIST, not in the gate's baseline."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Client fetch() authentication passed."
+
 # Cheap, no database, and guards a privilege-escalation footgun: `SET
 # app.bypass_rls` is SESSION-scoped, so it survives client.release() and the
 # next checkout — a different tenant — inherits a full RLS bypass across 142
@@ -269,6 +307,43 @@ if ! npm run --silent check:catalog-copy 2>&1; then
   exit 1
 fi
 echo "   ✅ Catalog copy passed."
+
+# ── Fixture and mock data reaching a tenant (unconditional) ──
+#
+# docs/LAUNCH_DEFINITION_OF_DONE.md row D2 requires `ci:fixture-fallback` and
+# `ci:no-mock-in-prod-routes` "set to block". Both ran only in ci.yml's `lint`
+# job, which under RULE 0 (every change pushed straight to concept2cure-v2, no
+# PRs) blocks nothing: a reintroduced fixture lands on the only branch and CI
+# turns red afterwards. This hook is the one place that runs BEFORE the code
+# lands, so this is where "block" is true.
+#
+# The two defects they catch are the ones a regulated tenant cannot detect:
+# `live ?? FIXTURE` substitutes example rows on exactly the occasions the read
+# failed (an empty tenant, an expired token, a 500), and a MOCK_* constant in a
+# route handler ships invented records as the tenant's own. Both were shown
+# failing on a launch file before this was added (periodic review 2026-09-24:
+# `live ?? FIXTURE_DOCS` in Vault.tsx and `MOCK_PROGRAMS` in
+# taskManagement.routes.ts, each rc=1, each restored byte-identical). ~0.5 s each.
+echo "   Checking for fixture fallback in client surfaces..."
+if ! npm run --silent ci:fixture-fallback 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Ungated fixture fallback FAILED."
+  echo "   A surface falls back to example rows when its read fails. Use"
+  echo "   useSampleRows(live, fixture) behind the explicit sample-mode boundary."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No ungated fixture fallback."
+
+echo "   Checking for mock data in production routes..."
+if ! npm run --silent ci:no-mock-in-prod-routes 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Mock data in a production route FAILED."
+  echo "   A route handler ships invented records. Fail closed instead."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No mock data in production routes."
 
 # ── Fabricated signer identity (unconditional) ──
 #
@@ -354,6 +429,56 @@ if ! npm run --silent ci:sign-ceremony 2>&1; then
 fi
 echo "   ✅ Every new sign ledger row has its ceremony."
 
+# ── Every upload site is bounded, filtered and byte-checked ──────────────────
+#
+# A multer site without limits.fileSize buffers whatever a client sends; one
+# without a fileFilter accepts any declared type; one whose file never calls
+# assertUploadSafe trusts the declared MIME type and runs no scan (security
+# audit 2026-09-24, IAM-14). The baseline names the remaining sites per file
+# with a written reason; it only shrinks.
+echo "   Checking that every upload site is bounded, filtered and byte-checked..."
+if ! npm run --silent ci:upload-guards 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a multer site without limits.fileSize, a fileFilter, or assertUploadSafe."
+  echo "   Use makeUploadFileFilter and receiveUpload (server/middleware/uploadAllowlist.ts)"
+  echo "   and assertUploadSafe (server/middleware/uploadSafety.ts); see server/src/routes/stability.router.ts."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Every upload site is guarded, or baselined with a reason."
+
+# ── Trivy suppressions expire and are owned ─────────────────────────────────
+#
+# A .trivyignore entry with no expiry hides a finding forever; a tree-wide
+# ignore of a per-resource check (S3 public access, bucket encryption,
+# CloudTrail validation) lets the next resource ship without it (security
+# audit 2026-09-24, INF-11).
+echo "   Checking .trivyignore hygiene (expiry, owner, reason; no tree-wide resource ignores)..."
+if ! npm run --silent ci:trivyignore-hygiene 2>&1; then
+  echo ""
+  echo "🚫 ERROR: .trivyignore has an entry without exp:, owner: or reason:, or a tree-wide resource ignore."
+  echo ""
+  exit 1
+fi
+echo "   ✅ .trivyignore entries are bounded and owned."
+
+# ── No 5xx body carries the caught error's text ──────────────────────────────
+#
+# serverError() answers with a static envelope and logs the detail against the
+# request id; a 5xx that reads .message off a caught error tells the client the
+# relation, driver or provider that failed (security audit 2026-09-24, IAM-18).
+# The baseline is per file and only shrinks: npm run ci:server-error-leaks:write-baseline
+# after the gate reports sites fixed, never before it is green.
+echo "   Checking that no 5xx body carries the caught error's text..."
+if ! npm run --silent ci:server-error-leaks 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a 5xx response body reads .message (or the stack/detail) off a caught error."
+  echo "   Answer through serverError(res, log, where, err) from server/lib/api-response.ts."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No 5xx body carries the caught error's text."
+
 # ── The commit has to build for somebody other than you ──────────────────────
 #
 # On 19 Sep 2026 an unanchored `uploads/` in .gitignore -- meant for the runtime
@@ -399,5 +524,51 @@ if ! npm run --silent ci:pushed-lint-errors 2>&1; then
   exit 1
 fi
 echo "   ✅ No ESLint errors in the pushed files."
+
+# ── ESLint WARNINGS: the pushed files must not gain any ───────────────────────
+#
+# ci:eslint-warning-ratchet holds the repo's warning total at its baseline, in CI
+# only, so a lane could add a warning, push, and leave the Lint job red for the
+# next lane. A red Lint job also skips Build and Release Evidence. On 2026-09-25
+# the ratchet stood at +11 across sixteen files, one to four each. This runs the
+# ratchet's own --since mode on the pushed files (both versions of each; seconds)
+# and refuses net growth. The warnings already on trunk are not this push's and
+# do not block it.
+echo "   Checking that the pushed files gained no ESLint warnings..."
+if ! npm run --silent ci:pushed-lint-warnings 2>&1; then
+  echo ""
+  echo "🚫 ERROR: the files this push changes gained ESLint warnings (listed above)."
+  echo "   They would turn CI's warning ratchet red for every lane. Fix them here;"
+  echo "   do not regenerate the baseline to make room."
+  echo ""
+  exit 1
+fi
+echo "   ✅ The pushed files gained no ESLint warnings."
+
+# ── TypeScript, before the push rather than after ────────────────────────────
+#
+# CI fails on ANY type error (.typecheck-baseline.json is ratcheted to 0). But
+# Rule 0 means no PRs — every push lands on concept2cure-v2 directly — so CI
+# only ever reports a type error AFTER it is on trunk. Nothing here typechecked.
+# Twice on 19 Sep 2026 a red typecheck reached trunk that way, both tests not
+# updated when a signature tightened, and each time the next person to push had
+# to fix somebody else's error before their own would go green.
+#
+# This runs the SAME gate CI runs (typecheck-no-regression, with its guards for a
+# compiler that died of OOM and a tsconfig that checked zero files), in its
+# --incremental mode, and only when the push changes something that can change a
+# type — .ts/.tsx (deletions included), typed JSON, tsconfig, package manifests.
+# A docs- or SQL-only push skips it and says so. ~45 s warm, ~95 s after editing
+# a widely imported file, ~5 min once after an install while the cache builds.
+echo "   Typechecking (only if this push can change a type)..."
+if ! npm run --silent ci:pushed-typecheck 2>&1; then
+  echo ""
+  echo "🚫 ERROR: The typecheck gate failed."
+  echo "   This is the check CI would fail on — after the push had already landed."
+  echo "   Fix the errors above and re-push."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Typecheck passed (or nothing type-relevant was pushed)."
 
 echo "✅ Pre-push checks complete — all gates passed."

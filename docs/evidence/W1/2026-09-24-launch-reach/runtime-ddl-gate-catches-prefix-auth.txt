@@ -1,0 +1,15 @@
+# ci:runtime-ddl on the REAL tree with the pre-fix server/routes/auth.ts (254f502da~1) restored in place — the defect it exists to catch.
+[ci:runtime-ddl] 85 DDL statement(s) in 15 runtime server file(s); 14 baselined
+
+[ci:runtime-ddl] ❌ server code issues DDL on a connection production cannot run it on.
+
+  server/routes/auth.ts — 1 DDL statement(s), not baselined:
+      server/routes/auth.ts:2342  CREATE TABLE IF NOT EXISTS l
+
+  Production's runtime role cannot CREATE in public and owns no table, and PostgreSQL
+  checks that before IF NOT EXISTS — so this statement is refused in production even
+  when the object exists, and succeeds on every developer machine. Create the object
+  in a migration listed in C2C_MIGRATION_FILES (CLAUDE.md RULE 1). Where a table might
+  be missing, verify it with to_regclass and fail loudly; never create it at runtime.
+
+exit=1

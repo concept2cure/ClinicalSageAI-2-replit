@@ -13,9 +13,42 @@
 
 import type { ToolContext } from './AnaToolExecutor.js';
 
+/**
+ * Every tool whose handler refuses without the catalog — the ones that call
+ * requireCatalog below. governedToolsetFor drops these from the toolset when an
+ * organization's catalog is off, because a tool that can only refuse is not a
+ * tool to offer. catalog-gated-tools.test.ts derives the set from the handlers'
+ * requireCatalog calls and fails if this list drifts from them either way.
+ */
+export const CATALOG_GATED_TOOLS: readonly string[] = [
+  'catalog_project_document',
+  'file_chat_upload_to_vault',
+  'list_project_documents',
+  'place_project_document',
+  'read_project_document',
+  'search_document_passages',
+  'search_project_documents',
+];
+
+/**
+ * The refusal when a gated tool is reached anyway.
+ *
+ * It used to end "Say so plainly", after naming the internal feature key — so
+ * AnA told a regulatory user that "feature ana.document_catalog" was not
+ * enabled: a setting they cannot see, cannot change, and should never have to
+ * learn the name of. It now tells the model what is TRUE for the user (their
+ * files are in the Vault; AnA cannot open them from here; a file attached to
+ * the conversation can be read) and keeps the key for the operator reading the
+ * log, not for the person in the chat. With the gated tools dropped from the
+ * toolset when the catalog is off, this is reached only by a caller that
+ * bypasses governedToolsetFor.
+ */
 export const DISABLED_MESSAGE =
-  'The document catalog is not enabled for this organization (feature ana.document_catalog). ' +
-  'Say so plainly; do not simulate a listing.';
+  "AnA cannot open this organization's Vault documents from the conversation — that access is not " +
+  'enabled for the organization (operator note: feature ana.document_catalog). Tell the user plainly ' +
+  'that you cannot read their Vault files here, that the files are safe in the Vault, and that a file ' +
+  'attached to this conversation can be read. Do not name internal settings, do not say a document does ' +
+  'not exist, and do not simulate a listing.';
 
 export type CatalogService = typeof import('../vault/document-catalog.service.js');
 

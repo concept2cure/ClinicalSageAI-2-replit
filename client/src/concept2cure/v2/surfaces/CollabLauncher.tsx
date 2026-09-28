@@ -513,7 +513,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
     <div className="cl-field-grp">
       <div className="cl-ctxbar">
         <span className="cl-ctx-k">From</span>
-        <span className="cl-ctx-chip"><span className="ico">{I.target || I.crosshair || I.zap}</span>{surfaceCtx.entityLabel || surfaceCtx.surfaceLabel}</span>
+        <span className="cl-ctx-chip"><span className="ico">{I.target}</span>{surfaceCtx.entityLabel || surfaceCtx.surfaceLabel}</span>
         <span className="cl-ctx-meta">stamped as <code>sourceEntityType: {surfaceCtx.entityType}</code></span>
       </div>
       <div className="cl-field"><label htmlFor="cl-task">Task<i>*</i></label>

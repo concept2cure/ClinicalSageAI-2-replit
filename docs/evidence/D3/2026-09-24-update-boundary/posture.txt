@@ -1,0 +1,24 @@
+# Posture of the database these runs used — read from the catalog, 2026-09-24
+# The same from-blank PostgreSQL 16 install as ../2026-09-24-governed-decisions/ and
+# ../2026-09-24-report-os-tenant/ (install-fresh + deploy-migrate at e0e42ec4).
+
+app_service                    superuser=false bypassrls=false
+
+# Tables behind the defects this effort fixed or classified:
+ctq_factors                    rls=true force=true policies=1
+post_market_documents          rls=true force=true policies=1
+qc_batch_releases              ABSENT — no migration in the set creates it
+qc_deviations                  ABSENT — no migration in the set creates it
+qc_microbiological_tests       ABSENT — no migration in the set creates it
+qc_oos_investigations          ABSENT — no migration in the set creates it
+qc_reference_standards         ABSENT — no migration in the set creates it
+qc_specifications              ABSENT — no migration in the set creates it
+qmp_traceability_matrix        rls=true force=true policies=1
+quality_management_plans       rls=true force=true policies=1
+regulatory_documents           rls=true force=true policies=1
+
+# regulatory_documents has no project_id column. The CMC model that
+# server/api/cmc/projectRoutes.ts binds declares one (shared/cmc-schema.ts), so every
+# insert through POST /api/cmc/projects/:projectId/documents fails on a deployed database.
+# qmp_traceability_matrix.qmp_id references quality_management_plans(id); a FK check does
+# not go through RLS, which is why the QMP re-point is not refused in production posture.

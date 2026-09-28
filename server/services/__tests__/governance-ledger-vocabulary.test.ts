@@ -40,6 +40,10 @@ import {
   assertDomainTrack,
   domainTrackForCtdSection,
 } from '../domain-track';
+import {
+  DEPLOYED_DOMAIN_TRACKS,
+  DEPLOYED_RECOMMENDATION_TYPES,
+} from '../../../shared/constants/operating-system-vocab';
 
 const REPO_ROOT = join(__dirname, '..', '..', '..');
 const MIGRATION = join(
@@ -86,6 +90,14 @@ describe('the ledger vocabulary matches the constraint that enforces it', () => 
 
     expect([...DOMAIN_TRACKS]).toEqual(onDecisions);
     expect(onAssumptions).toEqual(onDecisions);
+  });
+
+  it('the shared vocabulary is where the list lives, and matches the DDL', () => {
+    expect([...DEPLOYED_DOMAIN_TRACKS]).toEqual(checkListFor(sql, 'decision_records', 'domain_track'));
+    expect([...DEPLOYED_RECOMMENDATION_TYPES])
+      .toEqual(checkListFor(sql, 'decision_records', 'recommendation_type'));
+    // domain-track.ts must not carry a second copy of it.
+    expect(DOMAIN_TRACKS).toBe(DEPLOYED_DOMAIN_TRACKS);
   });
 
   it('the default track is itself one of the allowed values', () => {
