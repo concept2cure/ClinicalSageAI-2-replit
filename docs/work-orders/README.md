@@ -98,6 +98,7 @@ to one line; edit only your own row to limit merge conflicts.
 | **D7 / D5 — P11-28b: the Dispatch button is gated on a signature its own click creates.** From `docs/evidence/reviews/2026-09-28/ectd-lane-second-pass/part11-ux.md`. For IND / NDA / BLA / MAA the Submission Center's Dispatch button reads `gate`, which requires a release signature to already exist, and the signature it would accept is the one the click records — so no such sequence can be dispatched through the product's own screen, which D7's test sequence needs. Fix: the server states whether signing now clears the dispatch gate (the resolver's spine precedence lives there, and re-deriving it in the client is how P11-28a happened); the client reads that. `server/services/ectd/{assess-dispatch-readiness,release-signature-status}.ts` (the resolver's return and the assessment's verdicts only), `SubmissionSeqWorkspaces.tsx` (`DispatchWorkspace` only), their tests | `…session_01VB8JEGfy93uohAfBxSwmYx` | **released** 2026-09-28 — row **D7**. Done: server reports `dispatchGateOnSigning` (`composeStepVerdicts`, `signingNowResolvesRelease`), Dispatch reads it; 12 probes red-then-green (`docs/evidence/D7/2026-09-28-dispatch-reachable/`). Owed: a pglite sign→dispatch case for an IND |
 | **D5 — a quality-gating verdict is never chosen by an empty collection.** `server/services/qms/quality-gating-verdict.ts` (new: `assessSection`, `batchVerdict`, the one assessment both routes run), `server/routes/{tenant-quality-validation,quality-management-api}.ts` (validate-section, batch-validate, the plan dashboard, `GET /plans/:id` only), `client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx`, the two QMS entries in `scripts/ci/writerless-stores-baseline.json`, both quality API references. Closes the fail-open `7983d7299` handed to the QMS lane ("report 'not assessed'") and the three `= ANY(($1, …))` routes that always answered 500 | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done `da00b021a`: red 28/28 against HEAD and 20/28 against the first version (adversarially reviewed), green 28/28; client red 3/5, green 18/18. Evidence: `docs/evidence/D5-GOVERNED-PATH/2026-09-22/` (README "CI, 2026-09-23") |
 | **D5 — AnA's completion cascade commits its ledger rows with the completion.** `server/services/ana-ri/command-executor.ts` `updateTask`'s board block and `boardWriteWithLineage` only; `server/services/tasking/task-side-effects.ts` if a pool-client entry point is needed. The cascade AnA runs after `boardWriteWithLineage` COMMITs is on the pool with no ledger row for the dependents it unblocks; the HTTP routes already run it in the completion's transaction (`cascadeUnblockOnCompletionInTx`) | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: the cascade runs on the completion's transaction (`cascadeUnblockOnCompletionOnClient`), its rows after the completion's; red 2/2 on HEAD, green; the two older AnA task suites moved onto one pool fixture (`__tests__/pglite-pool.fixture.ts`). Evidence: `docs/evidence/D5/2026-09-28-ana-cascade-ledger/` |
+| **D5 — every task put on the board at project creation, or raised from a statistical assessment, has its task.create row.** `server/services/tasking/blueprint-milestones.ts` (new: the one blueprint-milestone seeder), the milestone block of `POST /projects` in `server/routes/concept2cure.ts`, `createTasksForDesign` in `server/services/biostatistics-bridge/bridge-service.ts`, its entry in `scripts/ci/discarded-audit-write-baseline.json`. Both wrote board tasks outside any transaction: the seeder with no ledger row at all, the bridge best-effort with the outcome discarded | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: one transaction each, every task with its row, all or none, nothing when the creator cannot be named; red 5/5 (seeder, HEAD's code), 1/1 (route), 4/4 (bridge), green 20/20. Evidence: `docs/evidence/D5/2026-09-28-task-create-ledger/` |
 
 If you are one of the sessions above, correct your own row. If a lane you want
 is claimed, take the next unclaimed finding in §3 rather than duplicating it.
@@ -830,6 +831,30 @@ in all of them. Reproduced locally at `6bd237ca9`.
 3. **Coverage (ratchet)** fails only because the coverage run fails on (1).
    Blank DB's `ci:purge-coverage` is item 4 of the hand-ons above
    (`ana_turn_records`).
+4. **→ The lane that added `server/routes/study-design-planning.ts`
+   (`dd52716ed`, 2026-09-28 17:00, inside its window).**
+   `node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression` fails:
+   *"1 NEW route(s) on the shared pool above baseline of 229 … New
+   tenant-facing routes must use requestDb(req): server/routes/study-design-planning.ts"*.
+5. **→ Whoever owns project rules (Projects), found by the D5 lane, not fixed:
+   the rules engine cannot create a task, and could not record one if it did.**
+   - `POST /api/project-rules` (`server/routes/project-rules.ts:159`) binds
+     `JSON.stringify(data.tags)` to `project_rules.tags`, a `text[]`. Postgres
+     refuses both `'[]'` and `'["a"]'` (*malformed array literal*), so no rule
+     can be created and none exists on a deployed database. It is the table's
+     only writer. It also never sets `created_by_id`, and rule create, update
+     and delete write no audit row.
+   - The rules engine's `create_task` (`server/services/rules-engine/actions/index.ts:82`)
+     inserts `status 'todo'`, outside `TASK_STATUSES`. It inserts
+     `module_type = params.moduleType || null` against a `NOT NULL` column,
+     and both shipped templates (`project-rules.ts:527,571`) omit `moduleType`.
+     It writes no `task.create` row. No emitter passes a `userId`
+     (`projects-management.ts:315,480,487`, `sentinel/scheduler.ts:171`), so
+     there is no actor to record.
+   - Before this path is revived, a rule needs a recorded author to attribute
+     its actions to, and `create_task` needs the pattern
+     `tasking/blueprint-milestones.ts` uses: the insert and its row on one
+     transaction, and nothing written when no one can be named.
 
 ## 1. The rules come first
 

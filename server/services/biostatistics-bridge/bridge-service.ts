@@ -38,7 +38,7 @@ import {
   rowsToStudyDesign,
 } from '../study-design/study-design-repository';
 import type { StudyDesign } from '../study-design/study-design-types';
-import { auditTaskAction } from '../tasking/task-audit';
+import { auditTaskActionInTx } from '../tasking/task-audit';
 import unifiedTaskService from '../unifiedTaskService';
 import {
   applyPlanPatch,
@@ -371,6 +371,13 @@ export interface CreatedBridgeTask {
  * Raise the selected proposed tasks on the canonical board. Each task carries
  * the design as its source entity and the blueprint key in its metadata, so a
  * re-run proposes the same set and skips what is already open.
+ *
+ * One transaction: each task and its task.create row, all or none. (Until
+ * 2026-09-28 each task committed on its own and its row was written best-effort
+ * with the outcome discarded, so a ledger failure left tasks on the board that
+ * no record said anyone had created, answered "created"; the tasks named no
+ * creator either.) A ledger failure, or a caller who cannot be named, throws
+ * TaskAuditNotRecordedError and nothing is raised.
  */
 export async function createTasksForDesign(args: {
   organizationId: number;
@@ -389,49 +396,52 @@ export async function createTasksForDesign(args: {
   const already = new Set(assessment.existingTaskKeys);
   const created: CreatedBridgeTask[] = [];
   const skipped: string[] = [];
-  for (const b of chosen) {
-    if (already.has(b.key)) { skipped.push(b.key); continue; }
-    const task = await unifiedTaskService.createUnifiedTask({
-      moduleType: 'Biostatistics',
-      title: b.title,
-      description: b.description,
-      category: b.category,
-      taskType: b.taskType,
-      priority: b.priority,
-      organizationId: args.organizationId,
-      projectId: assessment.filing.projectId ?? undefined,
-      sourceEntityType: 'study_design',
-      sourceEntityId: args.studyId,
-      tags: ['biostatistics', b.trigger, ...(b.deliverable ? [b.deliverable] : [])],
-      metadata: {
-        blueprintKey: b.key,
-        trigger: b.trigger,
-        deliverable: b.deliverable ?? null,
-        regulatoryImpact: b.regulatoryImpact,
-        criticalPath: b.criticalPath,
-        applicationType: assessment.filing.applicationType,
-        programId: assessment.filing.programId,
-        raisedBy: 'biostat-bridge',
-      },
-    });
-    await auditTaskAction({
-      orgId: args.organizationId,
-      userId: args.userId,
-      command: 'task.create',
-      taskId: task.taskId,
-      payload: {
+  await db.transaction(async (tx) => {
+    for (const b of chosen) {
+      if (already.has(b.key)) { skipped.push(b.key); continue; }
+      const task = await unifiedTaskService.createUnifiedTask({
         moduleType: 'Biostatistics',
         title: b.title,
+        description: b.description,
+        category: b.category,
+        taskType: b.taskType,
         priority: b.priority,
-        status: 'pending',
+        organizationId: args.organizationId,
+        projectId: assessment.filing.projectId ?? undefined,
         sourceEntityType: 'study_design',
         sourceEntityId: args.studyId,
-        blueprintKey: b.key,
-      },
-      reason: args.reason ?? `Raised from the biostatistics assessment of "${assessment.title}" (${b.trigger})`,
-    });
-    created.push({ taskId: task.taskId, key: b.key, title: b.title, priority: b.priority });
-  }
+        tags: ['biostatistics', b.trigger, ...(b.deliverable ? [b.deliverable] : [])],
+        metadata: {
+          blueprintKey: b.key,
+          trigger: b.trigger,
+          deliverable: b.deliverable ?? null,
+          regulatoryImpact: b.regulatoryImpact,
+          criticalPath: b.criticalPath,
+          applicationType: assessment.filing.applicationType,
+          programId: assessment.filing.programId,
+          raisedBy: 'biostat-bridge',
+        },
+        createdById: args.userId ?? undefined,
+      }, tx);
+      await auditTaskActionInTx(tx, {
+        orgId: args.organizationId,
+        userId: args.userId,
+        command: 'task.create',
+        taskId: task.taskId,
+        payload: {
+          moduleType: 'Biostatistics',
+          title: b.title,
+          priority: b.priority,
+          status: 'pending',
+          sourceEntityType: 'study_design',
+          sourceEntityId: args.studyId,
+          blueprintKey: b.key,
+        },
+        reason: args.reason ?? `Raised from the biostatistics assessment of "${assessment.title}" (${b.trigger})`,
+      });
+      created.push({ taskId: task.taskId, key: b.key, title: b.title, priority: b.priority });
+    }
+  });
   return { created, skipped };
 }
 
