@@ -212,8 +212,11 @@ describe('protocol-dev — "Ask AnA" reaches the rail', () => {
     render(<Providers><ProtocolWorkspace {...p} /></Providers>);
     fireEvent.click(await screen.findByRole('button', { name: /Ask AnA/ }));
     expect(p.onAsk).toHaveBeenCalledTimes(1);
+    // The protocol is named by the fenced screen context, not spliced into the
+    // person's words from its stored number (periodic review 2026-09-28, SEC-C-4).
     expect(String((p.onAsk as ReturnType<typeof vi.fn>).mock.calls[0][0]))
-      .toMatch(/Review X-201 for completeness/);
+      .toMatch(/Review the protocol open on screen for completeness/);
+    expect(String((p.onAsk as ReturnType<typeof vi.fn>).mock.calls[0][0])).not.toContain('X-201');
   });
 });
 

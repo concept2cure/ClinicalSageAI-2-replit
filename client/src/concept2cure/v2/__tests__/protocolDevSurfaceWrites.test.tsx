@@ -492,7 +492,10 @@ describe('empty state', () => {
     expect(await screen.findByText(/C2C-101/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Ask AnA to draft the synopsis/ }));
     expect(p.onAsk).toHaveBeenCalled();
-    expect(String(p.onAsk.mock.calls[0][0])).toContain('C2C-101');
+    // The screen names the programme; the request does not carry its stored
+    // name as the person's words (periodic review 2026-09-28, SEC-C-4).
+    expect(String(p.onAsk.mock.calls[0][0])).toMatch(/programme open in this workspace/);
+    expect(String(p.onAsk.mock.calls[0][0])).not.toContain('C2C-101');
     fireEvent.click(screen.getByRole('button', { name: /Start a protocol/ }));
     expect(await screen.findByRole('dialog')).toBeTruthy();
   });

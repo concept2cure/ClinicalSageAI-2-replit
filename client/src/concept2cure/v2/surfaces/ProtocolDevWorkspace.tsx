@@ -12,7 +12,7 @@
  * Nothing on this screen is appended locally, so no pane can show a row the
  * record does not hold.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as PG from './ProtocolGov';
 import { apiRequest } from '@/lib/queryClient';
 import { C2CForm } from '../C2CForm';
@@ -83,6 +83,10 @@ export interface WorkspaceDocProps {
    *  saying nothing would present stale rows as current. */
   reloadError?: string;
   onChanged?: () => void;
+  /** The section open on screen, reported up so the surface context can name
+   *  it: "Draft with AnA" asks about "the section open on screen" and sends no
+   *  stored title (periodic review 2026-09-28, SEC-C-4). */
+  onOpenSection?: (sectionId: string | null) => void;
 }
 
 /* ── Cover page ────────────────────────────────────────────────────────── */
@@ -138,8 +142,13 @@ function ProtocolHeader({ doc, canWrite, exporting, refreshing, onAsk, onExport,
       <div className="pd-head-r">
         <span className="pd-autosave">{'v' + (str(doc.version) || '—') + updatedSuffix(doc.updated)}</span>
         {refreshing && <span className="pd-autosave" role="status">Re-reading the record…</span>}
+        {/* The protocol number is stored text any member can set, and this turn
+            is sent as the person's own words; spliced in, an instruction planted
+            there went around the server's fence on screen context. AnA reads
+            which protocol from that fenced context (periodic review 2026-09-28,
+            editor family, SEC-C-4). */}
         <PG.Btn icon="sparkles" variant="outline"
-          onClick={() => onAsk('Review ' + str(doc.shortTitle) + ' for completeness and list what blocks finalization.')}>
+          onClick={() => onAsk('Review the protocol open on screen for completeness and list what blocks finalization.')}>
           Ask AnA
         </PG.Btn>
         <PG.Btn icon="fileText" variant="outline" onClick={onExport}>{exporting ? 'Exporting…' : 'Export'}</PG.Btn>
@@ -303,7 +312,7 @@ function TabStrip({ tab, onTab }: { tab: string; onTab: (id: string) => void }) 
 /** The open edit/parameter drawer and the row it addresses. */
 type FormState = { kind: PdevFormKind; target?: PdevFormTarget };
 
-export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadError, onChanged }: WorkspaceDocProps) {
+export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadError, onChanged, onOpenSection }: WorkspaceDocProps) {
   const [tab, setTab] = useState('document');
   const [activeSec, setActiveSec] = useState(str(doc.openSection));
   const [exporting, setExporting] = useState(false);
@@ -319,6 +328,8 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
   const sections = asRows(doc.sections);
   const sec = sections.find((s) => s.id === activeSec) ?? sections[0];
   const onSec = (s: Row) => { setActiveSec(str(s.id)); setTab(str(s.tab) || 'document'); };
+  const openSectionId = sec ? str(sec.id) : null;
+  useEffect(() => { onOpenSection?.(openSectionId); }, [openSectionId, onOpenSection]);
 
   const openReg = (kind: RegisterKind) => {
     if (!canWrite) { fireToast('This protocol row has no numeric document id — governed writes need the governed store.', 'error'); return; }
