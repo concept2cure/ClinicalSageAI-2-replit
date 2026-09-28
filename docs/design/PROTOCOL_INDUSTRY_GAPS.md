@@ -163,7 +163,7 @@ tool and a surface to land honestly:
 | MMRM sample size and power | `stats/mmrm-design.ts` | **Wired in this change.** `StatisticalPlan.mmrmAssumptions` records the sponsor's covariance, ρ, SD, δ and per-visit retention; `study-design/mmrm-sizing.ts` sizes with the engine, never lets its defaults (power 0.90, complete data) stand in for a missing assumption, compares the planned N both ways and cross-checks the visit count against the SoA. Reachable at `/api/study-design/:id/mmrm`, in the projections pane, and as AnA's `review_mmrm_sizing` |
 | External-control borrowing: power prior, commensurate prior, tipping point | `stats/external-control.ts` | **Wired in this change** at design stage. `StudyDesign.externalControlPlan` records source, method, discount, planned concurrent size; `study-design/external-control-plan.ts` lists each element FDA's 2023 draft guidance expects pre-specified (stated or not — a fixed a0 is not a conflict plan) and the engine's borrowing strength at the planned concurrent-control size. No posterior or effect is computed: those are analysis-stage. Reachable at `/api/study-design/:id/external-control`, in the projections pane, and as AnA's `review_external_control_plan` |
 | Multiplicity procedures: Bonferroni, Holm, Hochberg, fixed-sequence, graphical | `stats/multiplicity.ts` | **Wired in this change.** `study-design/multiplicity-check.ts` simulates the named procedure's family-wise error over the confirmatory family (with the unadjusted rate for contrast and the Monte Carlo SE), decides "controlled" against a stated tolerance, checks the alpha allocation covers the family, states the independence assumption, and refuses to approximate a graphical or gatekeeping procedure the spine does not parameterise. MUL-001 still gates presence; this checks substance. Reachable at `/api/study-design/:id/multiplicity`, in the projections pane, and as AnA's `review_multiplicity_control` |
-| Win ratio, RMST | `stats/win-ratio.ts`, `stats/rmst.ts` | Composite and time-to-event endpoint methods |
+| Win ratio, RMST | `stats/win-ratio.ts`, `stats/rmst.ts` | **Deliberately not wired at protocol stage.** Both are analysis-on-data engines (subject-level pairs; Kaplan–Meier curves): before data exist there is nothing for them to compute, and a projection that ran them on assumed data would be the fabrication the guardrails forbid. What a protocol owes here is pre-specification — the RMST horizon τ, the win-ratio hierarchy — which belongs in the design gates once the spine records them |
 
 `sample-size.ts` solves continuous endpoints exactly and binary /
 time-to-event on the normal approximation, with margins for non-inferiority
@@ -185,9 +185,16 @@ most of that; wiring them is the order of work below.
     sponsor practice and a readability gate is deterministic.
 13. **Endpoint adjudication (CEC) charter** alongside the DMC charter the
     safety design already carries.
-14. **Biospecimen model** — the SoA's `pk` / `biomarker` / `lab` activities
-    have no specimen, volume, custody or retention attributes; the lab manual
-    is derived from exactly those.
+14. **Biospecimen model — built in this change.** `SoaActivity.specimen`
+    (type, volume, processing, storage, retention) and
+    `study-design/biospecimen-profile.ts`: what each sampling activity still
+    lacks for the lab manual, and blood per visit, in total, over the worst
+    8-week window and the busiest week. The OHRP expedited-review category (2)
+    figures are reported as labelled reference points for both populations —
+    never as safety limits, never as a gap — because the design does not record
+    healthy-volunteer status and drug trials are usually full-board reviewed.
+    Reachable at `/api/study-design/:id/biospecimens`, in the pane, and as
+    AnA's `review_biospecimen_profile`.
 15. **Site payment schedule from SoA × budget** — the per-visit schedule a
     clinical-trial agreement needs, computable from what the budget register
     and the SoA already hold.
@@ -235,7 +242,7 @@ the reachability gate — and is a separate change so it can be reviewed as one.
    first because Project Optimus is the live regulatory pressure *(dose-finding
    enrollment forecasting, group-sequential operating characteristics, MMRM
    sizing, the external-control plan and multiplicity done in this change; win
-   ratio and RMST remain)*.
+   ratio and RMST are analysis-stage and deliberately not wired)*.
 5. Tier 3 in the order listed. Item 16 waits for reference data.
 6. Retire `/api/protocol`.
 

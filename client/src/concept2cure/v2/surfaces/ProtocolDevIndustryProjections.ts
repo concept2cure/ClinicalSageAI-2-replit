@@ -421,6 +421,43 @@ export function multiplicityView(payload: Obj): ProjectionView {
   };
 }
 
+/* ── Biospecimens and blood volume (Tier 3) ─────────────────────────────── */
+
+const known = (v: unknown, suffix: string): string => (typeof v === 'number' ? `${v}${suffix}` : 'not computable');
+
+export function biospecimenView(payload: Obj): ProjectionView {
+  const p = (payload.biospecimens ?? {}) as Obj;
+  const b = (p.bloodVolume ?? null) as Obj | null;
+  const refs = rows(b?.referencePoints);
+  return {
+    standard: str(p.basis),
+    percent: null,
+    status: str(p.status),
+    gaps: strings(p.gaps),
+    note: b
+      ? [
+        `Blood per participant: ${num(b.totalScheduledMl)} mL scheduled, up to ${num(b.totalUpperBoundMl)} mL with conditional draws` +
+          (b.totalsAreLowerBounds ? ' — LOWER BOUNDS: a draw records no volume.' : '.'),
+        `Worst 8-week window: ${known(b.maxEightWeekScheduledMl, ' mL')}; most draw visits in one week: ${known(b.maxDrawVisitsInAnyWeek, '')}.`,
+        ...refs.map((r) => `Reference ${num(r.eightWeekLimitMl)} mL / 8 weeks (${str(r.appliesTo)}): ` +
+          (r.exceededScheduled === null ? 'not known.' : r.exceededScheduled ? 'above.' : 'within.')),
+        str(b.meaning),
+        ...strings(p.notes),
+      ].join(' ')
+      : strings(p.notes).join(' '),
+    entries: rows(p.specimens).map((s) => {
+      const sp = (s.specimen ?? null) as Obj | null;
+      return {
+        key: 'specimen:' + str(s.activityId),
+        label: str(s.name),
+        status: sp ? str(sp.type) : 'unspecified',
+        text: sp ? [sp.volumeMl ? `${num(sp.volumeMl)} mL` : '', str(sp.processing), str(sp.storage), str(sp.retention)].filter(Boolean).join(' · ') : '',
+        gaps: strings(s.unspecified).map((u) => `${u} not specified`),
+      };
+    }),
+  };
+}
+
 /** In the order the design document names them. */
 export const INDUSTRY_PROJECTIONS: ProjectionSpec[] = [
   {
@@ -482,5 +519,10 @@ export const INDUSTRY_PROJECTIONS: ProjectionSpec[] = [
     id: 'multiplicity', label: 'Multiplicity control', path: 'multiplicity',
     of: 'Whether the study design object’s multiplicity procedure holds the family-wise error at alpha over its confirmatory endpoints, by seeded simulation.',
     normalize: multiplicityView,
+  },
+  {
+    id: 'biospecimens', label: 'Specimens and blood volume', path: 'biospecimens',
+    of: 'What the Schedule of Activities collects, what the lab manual still needs, and how much blood a participant gives. Reference points are expedited-review thresholds, not safety limits.',
+    normalize: biospecimenView,
   },
 ];

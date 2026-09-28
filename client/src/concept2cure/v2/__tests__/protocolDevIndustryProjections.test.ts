@@ -17,7 +17,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  ctqView, dctView, doseEscalationView, enrollmentView, externalControlView, INDUSTRY_PROJECTIONS, interimOcView, mmrmView, multiplicityView, spiritView,
+  biospecimenView, ctqView, dctView, doseEscalationView, enrollmentView, externalControlView, INDUSTRY_PROJECTIONS, interimOcView, mmrmView, multiplicityView, spiritView,
   trialSchemaView, usdmView, whoIctrpView,
 } from '../surfaces/ProtocolDevIndustryProjections';
 
@@ -276,6 +276,23 @@ describe('multiplicity control', () => {
     expect(v.note).toContain('Each hypothesis at full alpha: family-wise error 0.0973 (Monte Carlo SE 0.0021).');
     expect(v.note).toContain('independence caveat');
     expect(v.entries.map((e) => e.label)).toEqual(['A', 'B']);
+  });
+});
+
+describe('specimens and blood volume', () => {
+  it('prints lower bounds as lower bounds and an unknown reference comparison as not known', () => {
+    const v = biospecimenView({ biospecimens: {
+      status: 'partial', gaps: ['g'], notes: [],
+      specimens: [{ activityId: 'bm', name: 'Biomarker', specimen: null, unspecified: ['specimen type, volume, processing and storage'] }],
+      bloodVolume: {
+        totalScheduledMl: 28, totalUpperBoundMl: 32, totalsAreLowerBounds: true, maxEightWeekScheduledMl: null, maxDrawVisitsInAnyWeek: null,
+        referencePoints: [{ appliesTo: 'healthy adults', eightWeekLimitMl: 550, exceededScheduled: null }], meaning: 'not safety limits',
+      },
+    } });
+    expect(v.note).toContain('28 mL scheduled, up to 32 mL with conditional draws — LOWER BOUNDS');
+    expect(v.note).toContain('Worst 8-week window: not computable');
+    expect(v.note).toContain('Reference 550 mL / 8 weeks (healthy adults): not known.');
+    expect(v.entries[0]).toMatchObject({ status: 'unspecified', gaps: ['specimen type, volume, processing and storage not specified'] });
   });
 });
 
