@@ -389,11 +389,6 @@ export interface GovernedTransmitOutcome {
   preTransmitWarnings: string[] | null;
 }
 
-/** Operator wording for a content change that landed during the send. */
-export const CONTENT_CHANGED_DURING_TRANSMIT =
-  'The package content changed while the transmission was in progress. The agency received the assembled bundle ' +
-  'as recorded on this transmittal (its sha256); the package no longer matches it. Review the change and re-assemble ' +
-  'before any further transmission.';
 
 /**
  * Run the full governed transmit ceremony and hand the bytes to the regional

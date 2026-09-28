@@ -403,3 +403,22 @@ describe('the e-signature tier records the declared §11.50 meaning', () => {
     expect(audits[0].details).not.toHaveProperty('signatureMeaning');
   });
 });
+
+/* 2026-09-28: the FDA ESG transmit handler recorded secondFactorVerified:false
+   for every signer; the route now hands it what reverifySigner verified. */
+describe('the e-signature sign-off carries the verified factors', () => {
+  it('the sign-off carries the factors re-verification actually checked (MFA as MFA)', async () => {
+    reverify.mockResolvedValueOnce({ ok: true, authenticationMethod: 'password+mfa', secondFactorVerified: true } as any);
+    const res = await post({
+      command: 'k510_workflow.transmit',
+      params: { packageId: 42, environment: 'staging', signatureMeaning: 'APPROVER' },
+      reasonForChange: 'RA + QA sign-off complete; transmitting the cleared package',
+      password: 'correct horse battery staple',
+      mfaToken: '123456',
+    });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const signoff = executed[0].ctx.signoff as Record<string, unknown>;
+    expect(signoff.secondFactorVerified).toBe(true);
+    expect(signoff.authenticationMethod).toBe('password+mfa');
+  });
+});

@@ -28,6 +28,8 @@ export type GovernedESignature =
       ok: true;
       /** The canonical meaning the signer declared. */
       meaning: GovernedSignMeaning;
+      /** What reverifySigner actually checked: 'password' or 'password+mfa'. */
+      authenticationMethod: 'password' | 'password+mfa';
       secondFactorVerified: boolean;
       /**
        * The instant the server actually verified the signer, observed here
@@ -63,6 +65,7 @@ export async function verifyGovernedESignature(
   return {
     ok: true,
     meaning: declared.meaning,
+    authenticationMethod: verification.authenticationMethod,
     secondFactorVerified: verification.secondFactorVerified,
     verifiedAt: new Date(),
   };
