@@ -715,7 +715,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
             <div className="dl-sign-note">
               Opens the assistant — nothing is routed to a signer from here. A
               binding 21 CFR §11 signature is applied in the authoring workspace,
-              where it is PIN-verified and sealed against a frozen version.
+              where the signer's password is re-verified and the signature is sealed against a frozen version.
             </div>
             </>
           )}

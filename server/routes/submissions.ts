@@ -1423,6 +1423,15 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
     } finally {
       await result.cleanup();
     }
+    // 2026-09-23 (W5/D7, residual repair): the leaves no technical-file slot
+    // claims are returned and reported BY NAME (they were visible only folded
+    // into `skipped`); `unmappedTechnicalDocumentation` lists the Annex II/III
+    // ones, which are why `ready` is false. IV.* conformity / registration
+    // leaves are listed in unmappedLeaves and do not count.
+    // 2026-09-23 (W5/D7, final pass): `matchedByTitleOnly` names each placed
+    // source a slot matched by its title alone (a Vault-built CER, say). It
+    // does not change `ready`; it is reported so it is never mistaken for a
+    // keyed placement.
     const report = {
       ready: result.ready,
       fileCount: result.bundle.fileCount,
@@ -1430,6 +1439,9 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       skipped: result.skipped.length,
       unresolved: result.unresolvedLeaves.length,
       unfinalized: result.unfinalized,
+      unmapped: result.unmappedLeaves.length,
+      unmappedTechnicalDocumentation: result.unmappedLeaves.filter((u) => u.inTechnicalDocumentation).map((u) => u.source),
+      matchedByTitleOnly: result.matchedByTitleOnly,
     };
     const consequence = await deliverTechnicalFile(ctx, {
       bytes,
@@ -1454,6 +1466,8 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       materialized: result.materialized,
       skipped: result.skipped,
       unresolvedLeaves: result.unresolvedLeaves,
+      unmappedLeaves: result.unmappedLeaves,
+      matchedByTitleOnly: result.matchedByTitleOnly,
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       ...consequence,
@@ -1509,6 +1523,9 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
       orgId: ctx.organizationId,
       context: 'submissions.technical-file.export',
     });
+    // 2026-09-23 (W5/D7, residual repair): unmapped leaves by name — see the
+    // sequence assemble route above. (Final pass, same date: and the
+    // title-only placements, likewise.)
     const report = {
       ready: result.ready,
       fileCount: result.fileCount,
@@ -1517,6 +1534,9 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
       skipped: result.skipped.length,
       unresolved: result.unresolvedLeaves.length,
       unfinalized: result.unfinalized,
+      unmapped: result.unmappedLeaves.length,
+      unmappedTechnicalDocumentation: result.unmappedLeaves.filter((u) => u.inTechnicalDocumentation).map((u) => u.source),
+      matchedByTitleOnly: result.matchedByTitleOnly,
     };
     const consequence = await deliverTechnicalFile(ctx, {
       bytes: result.buffer,
@@ -1542,6 +1562,8 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
       leafCount: result.leafCount,
       skipped: result.skipped,
       unresolvedLeaves: result.unresolvedLeaves,
+      unmappedLeaves: result.unmappedLeaves,
+      matchedByTitleOnly: result.matchedByTitleOnly,
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       ...consequence,

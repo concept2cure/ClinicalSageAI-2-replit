@@ -1,0 +1,764 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/submission-gateways/__tests__/refused-before-wire.test.ts
+{
+  "timestamp": "2026-09-23T06:17:12.993Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T06:17:13.012Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/refused-before-wire.test.ts
+{
+  "timestamp": "2026-09-23T06:17:13.012Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/refused-before-wire.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — the guard refuses before the gateway > is true for a guard refusal, and the gateway is never called 3ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for TransportError raised by impl.transmit 11ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for GatewayError raised by impl.transmit 10ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for a plain Error raised by impl.transmit 5ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an unmarked ValidationError raised by impl.transmit 4ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an arbitrary error that merely carries transmitted === false (typed, not duck-typed) 6ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the FDA NextGen REST refusal (UnverifiedTransportError, transmitted === false) 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the requiredAgencyMetadata refusal raised before the transmittal row 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > requiredAgencyMetadata marks both of its refusals, and only those 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > test setup keeps staged bundles out of the repository > resolves the bundle root outside the working tree 1ms
+stdout | server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it
+{
+  "timestamp": "2026-09-23T06:17:24.396Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it 170ms
+stderr | tests/submission-ops-assemble-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-assemble-routes.test.ts
+{
+  "timestamp": "2026-09-23T06:17:26.547Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/submission-ops-assemble-routes.test.ts > package identity: one id contract across the package API > GET /packages/:packageId resolves the numeric row id as well as the pkg_ text id (tenant-scoped either way) 41ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 404s when the package is not in the tenant 24ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 409s when the package is not locked 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REQUIRES the operator’s reason — no placeholder is ever written into the audit row 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles for Health Canada (the gate’s own remediation for a CA transmit) 39ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES to store a bundle whose identifiers changed while it was being assembled (STALE_ASSEMBLY), and never reverts the newer metadata 29ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES to store a bundle whose CONTENT changed while it was being assembled: a mapping added or removed meanwhile bumps the package’s content revision 13ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > captures the revision BEFORE reading content: a mapping change that lands during the content read discards the zip too 15ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > stores the new bundle WITHOUT the previous bundle’s preflight summary (a summary that outlives its bundle is aggregated as current) 12ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a package that never recorded a content revision is protected too: the first mapping change during assembly discards the bundle 11ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > records the CONTENT FINGERPRINT the bundle was built from (sections, mappings, declared placements, artifact content) so the transmit gate can prove the zip still reflects the package 25ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > walks the sections in a DETERMINISTIC order: the row id breaks a tie on sortOrder, so identical content cannot assemble to different bytes 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > records the content fingerprint for a DEVICE format too (eSTAR), where the leaf model differs 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a discarded stale assembly removes its durable (S3) copy too, and says so 11ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > merges the descriptor onto the package’s CURRENT metadata, not the pre-assembly snapshot 19ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles ONE LEAF PER ARTIFACT at each artifact's own CTD section, persists, and returns the descriptor 45ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > FAILS CLOSED on an unplaceable section: LEAF-UNPLACED error, leaf excluded, counts match what shipped 18ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REJECTS a declared code that is not a real heading (3.foo) instead of nesting it under a container 20ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > SURFACES a module disagreement (CSR section, artifact filed under Module 3) instead of filing it silently 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > ships an artifact mapped twice (duplicate row, or into two sections) as ONE leaf and surfaces the duplicate mapping 17ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > the same document at two DIFFERENT sections (a reference cited from 4.3 and 5.4) is two leaves, not a duplicate 25ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > composes leaf file names inside the 64-character eCTD rule, keeping the artifact discriminator 27ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > BLOCKS when the package records no agency identifiers — never ships an internal id as the application number 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REJECTS a malformed application number (it becomes a filesystem path component) 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s on a sequence that is not four digits (path-traversal vector) and never reaches the packager 3ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > accepts a four-digit sequence and passes it through, once there is a filing for it to follow 25ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a submission type the region has no code for — 'amendment' reached the packager and 500'd 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > names the accepted terms when a follow-up declares no submission type at all 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a changed leaf reaches the PACKAGER as a replace, pointing at the sequence that holds the version it supersedes 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a leaf byte-identical to the one on file is NOT handed to the packager — a sequence carries what changed 38ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > the descriptor and its validation describe the leaves that SHIPPED, not the ones the drop removed 49ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a follow-up in which nothing changed rather than storing a leafless bundle as transmittable 20ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a gap and a backfill: a sequence out of order is diffed against filings made after it 19ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > stores the leaf manifest on the descriptor — the inventory the NEXT sequence diffs against 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembling does NOT file the sequence: only a successful transmit puts a leaf on file 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles the same content to the same bytes twice — the lifecycle diff and the signed digest both depend on it 1131ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a follow-up sequence on a package that has transmitted nothing — an assembled-but-unsent bundle is not on file 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s when region and format disagree (FDA + pmda_ectd) 3ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a packager REFUSAL answers 422 with its findings persisted and clears the stale bundle — never a bare 500 with an old zip left transmittable 11ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s a region override that contradicts a DEVICE family (510k is an FDA eSTAR; PMDA cannot be its region) 2ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a PMDA region override re-derives the format, and the descriptor records the format the packager BUILT 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > a DRAFT artifact in an IND package assembles with an error-severity LEAF-UNAPPROVED finding, and governed transmit refuses the stored bundle 20ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > an all-approved package (approved and locked) has no LEAF-UNAPPROVED finding and no error 13ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > every non-approved status counts (review, and a status outside the vocabulary), one finding per artifact 20ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > applies to a DEVICE format too: a review artifact in a 510(k) eSTAR bundle is refused at transmit 11ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > describes the leaves that SHIP: a draft whose leaf is byte-identical to the one on file is not in the sequence, and is not a finding 40ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 690ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 7ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 5ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing 7ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates 3ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package whose descriptor carries no structural-validation evidence 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package with error-severity structural findings 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a descriptor pointing outside the submission-bundle namespace 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses when the package has never been assembled 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data 7ms
+stdout | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts
+{
+  "timestamp": "2026-09-23T06:17:32.408Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T06:17:32.409Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts
+{
+  "timestamp": "2026-09-23T06:17:32.410Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses a secured leaf transmitted to FDA's test environment (staging) 661ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses in production too 9ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses secured PDF bytes under a non-.pdf name 3ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > covers the PMDA eCTD format 4ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses a bundle that cannot be opened, rather than reading it as clear 2ms
+stderr | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > lets a bundle carrying the official Form FDA 1571 as FDA issued it past the security check
+{
+  "timestamp": "2026-09-23T06:17:34.123Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/submission-gateways/fda-esg.ts:263:31",
+    "queryPreview": "INSERT INTO submission_transmittals ( organization_id, program_id, package_id, region, gateway, format, submission_type, transport, bundle_path, bundle_sha25...",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > lets a bundle carrying the official Form FDA 1571 as FDA issued it past the security check 301ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — every bundle format, eSTAR included > refuses a secured leaf in a bundle labelled estar 5ms
+stderr | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — every bundle format, eSTAR included > lets a filled official eSTAR — FDA-secured, as FDA issued it — past the security check
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — every bundle format, eSTAR included > lets a filled official eSTAR — FDA-secured, as FDA issued it — past the security check
+{
+  "timestamp": "2026-09-23T06:17:34.549Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — every bundle format, eSTAR included > lets a filled official eSTAR — FDA-secured, as FDA issued it — past the security check 775ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — encrypted leaves > refuses to package a leaf that carries an /Encrypt dictionary, naming the leaf 547ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — encrypted leaves > packages the same set without the secured leaf 44ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses a secured 540 KB leaf (trailer past the head window, before the tail window) 5ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses secured PDF bytes shipped under a non-.pdf name 2ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > packages a filled official Form FDA 1571 at m1.1 byte-for-byte, as FDA issued it 635ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent 587ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError) 4ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the requiredAgencyMetadata refusal raised by the gateway 3ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError keeps the claim at transmitting 2ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError keeps the claim at transmitting 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > refuses to file a 510(k) as a New Drug Application 25ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > refuses pma, de_novo, maa and cta for the same reason 35ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > never emits fdaat1 for anything that is not actually an NDA 139ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > an original IND is not declared an IND Safety Report 28ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > a follow-up sequence does not guess that it is an original 6ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > both refusals are ValidationErrors — the type every caller branches on to show the reason 16ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > the unresolved-submission-type refusal names terms that actually resolve 12ms
+stdout | tests/mdx-submission-gateway-routes.test.ts
+{
+  "timestamp": "2026-09-23T06:17:41.956Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T06:17:41.963Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-routes.test.ts
+{
+  "timestamp": "2026-09-23T06:17:41.963Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways returns 403 without org context 20ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways/transmittals returns 403 without org context 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways/transmittals/1 returns 403 without org context 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > POST /api/mdx/gateways/fda/esg/transmit returns 403 without org context 11ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways/transmittals/1/status returns 403 without org context 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways/transmittals/1/ack returns 403 without org context 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > POST /api/mdx/gateways/transmittals/1/findings returns 403 without org context 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > PATCH /api/mdx/gateways/findings/1/resolve returns 403 without org context 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > POST /api/mdx/gateways/fda/esg/transmit is refused for a read-only viewer 5ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > POST /api/mdx/gateways/transmittals/1/rollback is refused for a read-only viewer 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > POST /api/mdx/gateways/transmittals/1/findings is refused for a read-only viewer 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > PATCH /api/mdx/gateways/findings/1/resolve is refused for a read-only viewer 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > a viewer keeps every READ on this router — the gate is on writes only 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > a admin may still transmit 5ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > a manager may still transmit 8ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > a member may still transmit 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > GET /api/mdx/gateways/transmittals > resolves submitted_by to the person, so the log names who transmitted 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > GET /api/mdx/gateways > returns one row per gateway with configured flag 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > rejects unknown region 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > rejects body without bundle hash 2ms
+stderr | tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 201 with transmittal id on success
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 201 with transmittal id on success
+{
+  "timestamp": "2026-09-23T06:17:42.197Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "governed sign: signer user 777 is not a member of org 99 — cannot attribute signature (§11.100).",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > loads the stored bundle when only packageId is supplied (no explicit bundle)
+{
+  "timestamp": "2026-09-23T06:17:42.207Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "governed sign: signer user 777 is not a member of org 99 — cannot attribute signature (§11.100).",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 201 with transmittal id on success 13ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > refuses a transmit that declares no §11.50 signature meaning — nothing reaches the gateway 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > refuses a meaning outside the §11.50 vocabulary 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > loads the stored bundle when only packageId is supplied (no explicit bundle) 5ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > hard-blocks transmit (422) when the stored bundle has validation errors 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 422 when neither an explicit bundle nor a stored bundle exists 6ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 422 when neither bundle nor packageId is supplied 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > maps CredentialError to 412 19ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > maps GatewayError to 502 7ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > transmittals listing + detail > lists transmittals filtered by region 6ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > transmittals listing + detail > rejects invalid region in query 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > transmittals listing + detail > detail 404 when not in tenant 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > transmittals listing + detail > detail returns transmittal + findings 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > status + ack endpoints > status routes to the correct gateway impl 6ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > status + ack endpoints > ack download returns the ack buffer with correct content-type 7ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > status + ack endpoints > tells the client who wrote the acknowledgement bytes 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > status + ack endpoints > names a genuine agency acknowledgement as one 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > findings routes > POST finding 404s when transmittal not in tenant 6ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > findings routes > POST finding creates with severity 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > findings routes > PATCH resolve marks resolved 5ms
+stdout | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+{
+  "timestamp": "2026-09-23T06:17:44.235Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T06:24:54.453Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+{
+  "timestamp": "2026-09-23T06:24:54.454Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — legitimate validated package (C2C-SUB-003) > transmits a tenant-owned, in-namespace, validated package under production
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — legitimate validated package (C2C-SUB-003) > transmits a tenant-owned, in-namespace, validated package under production
+{
+  "timestamp": "2026-09-23T06:24:54.920Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "Cannot read properties of undefined (reading 'id')",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > refuses an explicit descriptor pointing at an arbitrary server-readable file 36ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > refuses an explicit descriptor using ../ traversal 5ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > refuses an explicit descriptor even when a legitimate packageId is also supplied 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > fails closed when NODE_ENV is unset (no environment declared => enforce) 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor whose path escapes the bundle namespace 5ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor with NO validation metadata (UNKNOWN is blocking, not zero errors) 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor whose validation block has no numeric errorCount 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > still hard-blocks a stored descriptor reporting structural errors 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor whose durable-storage key escapes the bundle prefix 6ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > rejects a traversal path on a stored descriptor in ANY environment (guard is unconditional) 6ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — cross-tenant packages (C2C-SUB-003) > cannot transmit another tenant's package by id 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — cross-tenant packages (C2C-SUB-003) > cannot side-step tenant scoping by naming another tenant's bundle file directly 3ms
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > records the sequence it just filed, so the NEXT sequence has a baseline to diff against
+{
+  "timestamp": "2026-09-23T06:24:54.928Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "Cannot read properties of undefined (reading 'id')",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > a bundle that files no sequence records no history, and says so rather than reporting a failure
+{
+  "timestamp": "2026-09-23T06:24:54.933Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "Cannot read properties of undefined (reading 'id')",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > a sequence whose leaf inventory is UNREADABLE is a lost baseline, not a non-event
+{
+  "timestamp": "2026-09-23T06:24:54.936Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-filed-sequence-no-manifest",
+  "context": {
+    "packageId": "5",
+    "sequence": "0000",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > a sequence whose leaf inventory is UNREADABLE is a lost baseline, not a non-event
+{
+  "timestamp": "2026-09-23T06:24:54.937Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "Cannot read properties of undefined (reading 'id')",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > an eCTD sequence with no inventory at all is reported as a failure, not as "not applicable"
+{
+  "timestamp": "2026-09-23T06:24:54.940Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-filed-sequence-no-manifest",
+  "context": {
+    "packageId": "5",
+    "sequence": "0001",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > an eCTD sequence with no inventory at all is reported as a failure, not as "not applicable"
+{
+  "timestamp": "2026-09-23T06:24:54.941Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "Cannot read properties of undefined (reading 'id')",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > the Part 11 sign row records WHICH sequence the signature filed, and whether the history took it
+{
+  "timestamp": "2026-09-23T06:24:54.945Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "Cannot read properties of undefined (reading 'id')",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > a content change that lands WHILE the gateway is sending is recorded on the sign row and announced in the response — never silently a clean transmit
+{
+  "timestamp": "2026-09-23T06:24:54.950Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "Cannot read properties of undefined (reading 'id')",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > warnings alone do not block a validated package
+{
+  "timestamp": "2026-09-23T06:24:54.962Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "Cannot read properties of undefined (reading 'id')",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > forwards submissionGrade / dtdStatus / regionalBackbone from the stored descriptor to gw.transmit
+{
+  "timestamp": "2026-09-23T06:24:54.965Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "Cannot read properties of undefined (reading 'id')",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > forwards the region the bundle was BUILT for (descriptor.region) as a gateway region, so device bundles are region-checked too
+{
+  "timestamp": "2026-09-23T06:24:54.968Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "Cannot read properties of undefined (reading 'id')",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > DROPS malformed evidence blocks instead of forwarding them (`{}` as a PDF/A grade read as full compliance)
+{
+  "timestamp": "2026-09-23T06:24:54.971Z",
+  "level": "error",
+  "message": "[mdx-submission-gateway] transmit-ledger-write-failed-after-successful-transmit",
+  "context": {
+    "message": "Cannot read properties of undefined (reading 'id')",
+    "region": "fda",
+    "gateway": "esg"
+  }
+}
+
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — legitimate validated package (C2C-SUB-003) > transmits a tenant-owned, in-namespace, validated package under production 10ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > records the sequence it just filed, so the NEXT sequence has a baseline to diff against 5ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > a bundle that files no sequence records no history, and says so rather than reporting a failure 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > a sequence whose leaf inventory is UNREADABLE is a lost baseline, not a non-event 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > an eCTD sequence with no inventory at all is reported as a failure, not as "not applicable" 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > the Part 11 sign row records WHICH sequence the signature filed, and whether the history took it 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > a content change that lands WHILE the gateway is sending is recorded on the sign row and announced in the response — never silently a clean transmit 5ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > refuses a stored descriptor whose package CONTENT changed since assembly (an artifact edited after the zip was built), before the gateway is reached 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > refuses a stored descriptor with NO content fingerprint, or one from an older scheme (UNKNOWN is blocking, never a match) 5ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > warnings alone do not block a validated package 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > forwards submissionGrade / dtdStatus / regionalBackbone from the stored descriptor to gw.transmit 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > forwards the region the bundle was BUILT for (descriptor.region) as a gateway region, so device bundles are region-checked too 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > DROPS malformed evidence blocks instead of forwarding them (`{}` as a PDF/A grade read as full compliance) 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > and the gate REFUSES that exact forwarded shape when the operator opts in (production + ECTD_REQUIRE_DTD / _PDFA) 1ms
+stdout | server/services/submission-gateways/__tests__/transmit-authorization.test.ts
+{
+  "timestamp": "2026-09-23T06:24:56.323Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T06:24:56.329Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/transmit-authorization.test.ts
+{
+  "timestamp": "2026-09-23T06:24:56.329Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/transmit-authorization.test.ts
+[database] Database connection successful
+
+stderr | server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > does not gate the read-only operations
+{
+  "timestamp": "2026-09-23T06:24:56.648Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/submission-gateways/fda-esg.ts:594:33",
+    "queryPreview": "SELECT transmission_id, status, ack_received_at FROM submission_transmittals WHERE id = $1 AND region = 'fda' AND gateway = 'esg'",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses a transmit with no authorization at all 2ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > explains why, and points at the governed route 2ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses every region, not only FDA 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses an authorization of an unrecognised kind 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses governed-http without a reason, an actor, or a verified re-auth time 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses governed-signature without a signature id 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > lets a properly authorized request through the guard to the gateway 4ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > does not gate the read-only operations 9ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > is labelled as a platform record, not an agency acknowledgement 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > names who generated it and says it is not proof of receipt 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > never heads itself "<Agency> Acknowledgement" — the old shape 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > still carries the agency-issued identifiers it legitimately holds 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > is honest about a transmission the gateway never acknowledged 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > acknowledgement filenames > marks a platform record in the filename, which outlives the page 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > acknowledgement filenames > names a genuine agency artefact as one 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > bundleTrustEnforced — fail closed on anything but declared dev/test > enforces for NODE_ENV="production" 2ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > bundleTrustEnforced — fail closed on anything but declared dev/test > enforces for NODE_ENV="staging" 1ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > bundleTrustEnforced — fail closed on anything but declared dev/test > enforces for NODE_ENV="PRODUCTION" 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > bundleTrustEnforced — fail closed on anything but declared dev/test > enforces for NODE_ENV="prod" 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > bundleTrustEnforced — fail closed on anything but declared dev/test > enforces for NODE_ENV="" 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > bundleTrustEnforced — fail closed on anything but declared dev/test > enforces for NODE_ENV="   " 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > bundleTrustEnforced — fail closed on anything but declared dev/test > enforces when NODE_ENV is unset entirely 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > bundleTrustEnforced — fail closed on anything but declared dev/test > relaxes only for declared local NODE_ENV="development" 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > bundleTrustEnforced — fail closed on anything but declared dev/test > relaxes only for declared local NODE_ENV="test" 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > bundleTrustEnforced — fail closed on anything but declared dev/test > relaxes only for declared local NODE_ENV="Development" 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > bundleTrustEnforced — fail closed on anything but declared dev/test > relaxes only for declared local NODE_ENV=" TEST " 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > path + key predicates > flags traversal, NUL and empty paths as unsafe syntax 1ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > path + key predicates > confines paths to the configured bundle root 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > path + key predicates > falls back to <cwd>/uploads/submission-bundles when SUBMISSION_BUNDLE_DIR is unset 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > path + key predicates > confines durable-storage keys to the submission-bundles prefix 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > readVerifiedBundle — namespace confinement > refuses a hash- and size-perfect file OUTSIDE the bundle root when enforcing 2ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > readVerifiedBundle — namespace confinement > refuses when NODE_ENV is unset (fail closed) 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > readVerifiedBundle — namespace confinement > refuses a ../ traversal path even in a declared test environment 0ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > readVerifiedBundle — namespace confinement > reads an in-namespace bundle whose bytes still match the descriptor 1ms
+ ✓ tests/submission-gateway-bundle-namespace.test.ts > readVerifiedBundle — namespace confinement > still refuses an in-namespace bundle whose bytes drifted (existing control preserved) 13ms
+stdout | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+{
+  "timestamp": "2026-09-23T06:24:58.063Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T06:24:58.066Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+{
+  "timestamp": "2026-09-23T06:24:58.067Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > returns a failed, non-blocking check and the leaf-security report with the gateway result 15ms
+ ✓ server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > reduces to the failed checks and warnings a transmit record carries; null when the guard reported nothing 6ms
+ ✓ server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts > PMDA Gateway — 2xx without a receipt identifier > refuses, records the transmittal rejected, and never writes received 7ms
+ ✓ server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts > PMDA Gateway — 2xx without a receipt identifier > refuses to transmit without the eCTD sequence number, before any transmittal row exists 2ms
+ ✓ server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts > PMDA Gateway — 2xx without a receipt identifier > refuses to transmit without a submission type 1ms
+ ✓ server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts > PMDA Gateway — 2xx without a receipt identifier > a 2xx that names a receipt is accepted with that receipt, and nothing else 1ms
+ ✓ server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts > PMDA Gateway — isConfigured > is false when the client certificate cannot be read, not only when a variable is missing 0ms
+ ✓ server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts > PMDA Gateway — checkStatus says where the status came from > a poll the agency answers is source=agency 1ms
+ ✓ server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts > PMDA Gateway — checkStatus says where the status came from > a poll that fails hands back the stored row as source=stored with the reason, not as the agency's answer 1ms
+ ✓ tests/submission-gateway-bundle-integrity.test.ts > readVerifiedBundle > returns the buffer when sha256 and size match the descriptor 5ms
+ ✓ tests/submission-gateway-bundle-integrity.test.ts > readVerifiedBundle > rejects a sha256 mismatch (drifted/corrupt bytes) 5ms
+ ✓ tests/submission-gateway-bundle-integrity.test.ts > readVerifiedBundle > rejects a size mismatch even when the file exists 1ms
+ ✓ tests/submission-gateway-bundle-integrity.test.ts > readVerifiedBundle > rejects a missing or unreadable bundle file 1ms
+stdout | server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts
+{
+  "timestamp": "2026-09-23T06:24:59.907Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T06:24:59.908Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts
+{
+  "timestamp": "2026-09-23T06:24:59.909Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts > executeGovernedTransmit — the sign is an electronic signature > writes the electronic_signatures row inside the ledger transaction with the declared meaning and the bundle digest 6ms
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts > executeGovernedTransmit — the sign is an electronic signature > records the weaker factors honestly when only a password was verified 2ms
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts > executeGovernedTransmit — the sign is an electronic signature > rolls the ledger transaction back and reports ledgerWriteFailed when the signature row cannot be written 4ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > resolveFdaEsgTransport > defaults to AS2 when unset (every existing deployment) 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > resolveFdaEsgTransport > selects REST when asked, case-insensitively, per environment prefix 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > resolveFdaEsgTransport > refuses an unrecognised value instead of falling back to AS2 silently 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > loadFdaRestCredentials > names every missing REST variable 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > loadFdaRestCredentials > uses the staging prefix for staging 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > no credentials → CredentialError naming the REST variables; nothing inserted, no socket 3ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > credentials present → typed UnverifiedTransportError, transmitted:false, no row, no socket, no identifier 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > the staging environment reads the FDA_ESG_STAGING_* REST variables 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > with the variable unset the AS2 path is still the one taken (CredentialError names the AS2 vars) 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no environment is named — it never defaults to production 3ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an environment outside staging|production 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no application number is recorded 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an UNASSIGNED placeholder application number 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a whitespace-only application number 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > resendRefusal — a transmitted sequence is not sent again > refuses sent and acknowledged, allows pending and rejected 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > refuses a resend while a transmit is in flight 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still allows the states that were always re-sendable 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still refuses the terminal states 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > claims the slot with a compare-and-set on the value it read 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > takes the claim BEFORE the package is assembled 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > resolves the attempt with a write predicated on that claim 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > never releases the claim after the bytes may have left 1ms
+ ✓ server/services/submission-gateways/__tests__/health-canada-gateway.test.ts > HealthCanadaGateway > is registered in the gateway registry as ca/hc_cesg (rest) 2ms
+ ✓ server/services/submission-gateways/__tests__/health-canada-gateway.test.ts > HealthCanadaGateway > reports not-configured when CESG credentials are absent 2ms
+ ✓ server/services/submission-gateways/__tests__/health-canada-gateway.test.ts > HealthCanadaGateway > throws CredentialError and records a rejected/auth row when unconfigured 3ms
+stdout | server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts
+{
+  "timestamp": "2026-09-23T06:25:03.398Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T06:25:03.399Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts
+{
+  "timestamp": "2026-09-23T06:25:03.399Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records a failed, non-blocking check and the guard warnings on the ledger payload, the signature manifest and the outcome 8ms
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records an empty list — not null — when the guard ran and every check passed 1ms
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records null — never "all passed" — when the guard reported nothing 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts > FdaEsgGateway SFTP transmit — no fabricated ACK > reports in_transit (not received) and a null ack after a bare SFTP upload 4ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts > FdaEsgGateway SFTP transmit — no fabricated ACK > does not stamp an ack_received_at on the transmittal row at upload time 2ms
+stdout | server/services/submission-service/__tests__/gateway-selection.test.ts
+{
+  "timestamp": "2026-09-23T06:25:05.231Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T06:25:05.232Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-service/__tests__/gateway-selection.test.ts
+{
+  "timestamp": "2026-09-23T06:25:05.233Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-service/__tests__/gateway-selection.test.ts
+[database] Database connection successful
+
+stderr | server/services/submission-service/__tests__/gateway-selection.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-service/__tests__/gateway-selection.test.ts
+{
+  "timestamp": "2026-09-23T06:25:05.346Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes FDA (all client types) to ESG 3ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes Japan (all client types) to the PMDA gateway 1ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes EU drug/biologic (pharma|biotech) to CESP 1ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes EU device/IVD (mdx|ivd) to EUDAMED 1ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > returns null for an unknown region (caller raises VALIDATION) 0ms
+
+ Test Files  22 passed (22)
+      Tests  246 passed (246)
+   Start at  06:17:07
+   Duration  478.33s (transform 8.25s, setup 827ms, import 459.41s, tests 12.46s, environment 4ms)
+
+
+=== skeptic probe rest-refusal-strands (asserts the STRANDED state; expected to FAIL now that the defect is fixed) ===
+refusedBeforeWire= true
+dispatchStatus after= pending
+resendRefusal= null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'pending' to be 'transmitting' // Object.is equality
+      Tests  1 failed (1)
+
+=== eslint on changed files ===
+eslint exit=0 (no output) for index.ts types.ts refused-before-wire.test.ts transmit-guard-refusal-releases-claim.test.ts tests/setup.ts
+=== scoped tsc (tsconfig extending repo tsconfig, files = changed files) ===
+server/services/signature/kms-signer.ts(26,85): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/services/signature/kms-signer.ts(165,26): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/services/signature/kms-signer.ts(167,24): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+(the 3 errors are the pre-existing missing optional @aws-sdk/client-kms in kms-signer.ts; none in changed files. Full-repo tsc was OOM-killed, exit 137, on the shared 4-CPU host.)

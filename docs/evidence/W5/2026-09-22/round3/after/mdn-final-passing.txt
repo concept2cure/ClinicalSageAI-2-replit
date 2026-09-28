@@ -1,0 +1,191 @@
+# MDN final pass — every test file of the touched modules, run one file at a time with --no-file-parallelism (2026-09-23T09:01:10Z)
+=== server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts ::  Tests 36 passed (36)
+=== server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts ::  Tests 86 passed (86)
+=== server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts ::  Tests 5 passed (5)
+=== server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts ::  Tests 4 passed (4)
+=== server/services/submission-gateways/__tests__/ectd-package-file-names.test.ts ::  Tests 3 passed (3)
+=== server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts ::  Tests 5 passed (5)
+=== server/services/submission-gateways/__tests__/fda-esg-ambiguous-delivery.test.ts ::  Tests 9 passed (9)
+=== server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts ::  Tests 33 passed (33)
+=== server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts ::  Tests 9 passed (9)
+=== server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts ::  Tests 2 passed (2)
+=== server/services/submission-gateways/__tests__/fda-filing-identity.test.ts ::  Tests 7 passed (7)
+=== server/services/submission-gateways/__tests__/governed-transmit-leaf-manifest.test.ts ::  Tests 3 passed (3)
+=== server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts ::  Tests 3 passed (3)
+=== server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts ::  Tests 3 passed (3)
+=== server/services/submission-gateways/__tests__/health-canada-gateway.test.ts ::  Tests 3 passed (3)
+=== server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts ::  Tests 7 passed (7)
+=== server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts ::  Tests 7 passed (7)
+=== server/services/submission-gateways/__tests__/pre-transmit-check.test.ts ::  Tests 18 passed (18)
+=== server/services/submission-gateways/__tests__/refused-before-wire.test.ts ::  Tests 13 passed (13)
+=== server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts ::  Tests 9 passed (9)
+=== server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts ::  Tests 5 passed (5)
+=== server/services/submission-gateways/__tests__/regional-packager.test.ts ::  Tests 18 passed (18)
+=== server/services/submission-gateways/__tests__/stf-packaging.test.ts ::  Tests 4 passed (4)
+=== server/services/submission-gateways/__tests__/transmit-authorization.test.ts ::  Tests 15 passed (15)
+=== server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts ::  Tests 2 passed (2)
+=== server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts ::  Tests 8 passed (8)
+=== server/services/ind-lifecycle/__tests__/e2b-icsr-composer.test.ts ::  Tests 20 passed (20)
+=== server/services/ind-lifecycle/__tests__/e2b-icsr-composer.test.ts ::  Tests 20 passed (20)
+=== server/services/ind-lifecycle/__tests__/e2b-icsr-message.test.ts ::  Tests 11 passed (11)
+=== server/services/ind-lifecycle/__tests__/e2b-icsr-message.test.ts ::  Tests 11 passed (11)
+=== server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts ::  Tests 17 passed (17)
+=== server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts ::  Tests 12 passed (12)
+=== server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts ::  Tests 41 passed (41)
+=== server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts ::  Tests 89 passed (89)
+=== server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts ::  Tests 1 failed | 11 passed (12)
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 11ms
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error
+
+# NOTE: mdx-esg-transmit-gateway.test.ts (server/services/ana-ri — OUT OF SCOPE, and carrying another session's uncommitted edits) pins HTTP 500 -> 'rejected', the behaviour this pass reverses by spec (5xx -> DELIVERED_UNCONFIRMED / in_transit). Needed fix there: use a 4xx (e.g. 403) for 'rejected', or expect 'in_transit' for 500.
+
+# Stability: as2-delivery-outcome + icsr-delivery-outcome (real sockets) run 5x consecutively: all passed each time.
+
+# Mutation checks (as2-transport.ts mutated, then restored; cmp verified):
+#  M1 'finish' alone counts as delivered (the r3 rule)   -> after-send: 2 failed
+#  M2 no TLS-shape override                             -> after-send: 1 failed
+#  M3 no TLS 1.3 settle window                          -> after-send: 1 failed
+#  M4 5xx classed as refusal                            -> as2-delivery-outcome: 4 failed; icsr-delivery-outcome: 5 failed
+#  M5 no cork (write before the server accepts the cert) -> icsr-delivery-outcome: 1 failed (TLS 1.3 small message read then reset)
+#  M6 uncork synchronously inside the TLS callback      -> 17 + 12 failed (request tail lost, hangs)
+
+# eslint (changed files):
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/fda-esg.ts
+  875:1  warning  File has too many lines (585). Maximum allowed is 500  max-lines
+
+✖ 1 problem (0 errors, 1 warning)
+
+# (fda-esg.ts max-lines was 602 before this pass; 585 now)
+
+# scoped tsc (/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/mdn-final/tsconfig.json): errors only in transitively-included, untouched files:
+server/middleware/establishRequestTenantScope.ts(162,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(164,9): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(227,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/signature/kms-signer.ts(26,85): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/services/signature/kms-signer.ts(165,26): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/services/signature/kms-signer.ts(167,24): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+
+# skeptic probes re-run: outputs in ev-r3/after/probes/
+## hang.rerun.txt
+200 headers + partial MDN body, then connection reset -> REJECTED RequestSentTransportError: HTTPS POST failed: the response was cut short after the whole request was sent to an authenticated server; the recipient may hold it
+## mtls.rerun.txt
+1. TLS1.3, valid client cert (control)
+   -> RESOLVED http=200
+2. TLS1.3, client cert NOT trusted by server (mTLS refused)
+   -> REJECTED TransportError: HTTPS POST failed: socket hang up
+3. TLS1.3, NO client cert (mTLS required)
+   -> REJECTED TransportError: HTTPS POST failed: C0BC6BA69B7F0000:error:0A00045C:SSL routines:ssl3_read_bytes:tlsv13 alert certificate required:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL alert number 116
+4. TLS1.2, client cert NOT trusted by server
+   -> REJECTED TransportError: HTTPS POST failed: Client network socket disconnected before secure TLS connection was established
+5. TLS1.2, NO client cert
+   -> REJECTED TransportError: HTTPS POST failed: C0BC6BA69B7F0000:error:0A000410:SSL routines:ssl3_read_bytes:ssl/tls alert handshake failure:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL alert number 40
+6. TLS1.3, untrusted client cert, 200KB body
+   -> REJECTED TransportError: HTTPS POST failed: socket hang up
+## r3c-fda-e2e.rerun.txt
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed (5)
+## r3c-icsr-resend.rerun.txt
+  attempt1: code=GATEWAY_TRANSMIT_FAILED transmitted=false msg=ICSR was NOT transmitted to FDA_FAERS; the transmission remains 'prepared'. Gateway transport failed: ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) timeout. Nothing reached the agency: the message was never handed in full to an authenticated gateway.
+  https POSTs to the agency: 2 (message-ids <e179ff0d-d4ab-4669-b397-7791aa80f278@SPONSOR-AS2>, <fa9ccad2-9edd-4bae-b178-27071dd14ee2@SPONSOR-AS2>)
+  attempt1: code=TRANSMISSION_UNCONFIRMED transmitted=undefined msg=ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-sent-automatically; processed: error The gateway answered HTTP 200 to AS2 message <d2fc3dd8-b8d5-4c15-b6fd-29b7dd5dc2b2@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend. Recording that failed (db.upda
+  https POSTs to the agency: 2 (message-ids <d2fc3dd8-b8d5-4c15-b6fd-29b7dd5dc2b2@SPONSOR-AS2>, <d451be93-9930-4b6d-ba1c-99e81fdce3ef@SPONSOR-AS2>)
+  attempt1: code=TRANSMISSION_UNCONFIRMED transmitted=undefined msg=ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): Agency MDN answers a different message (<someone-else@FDA>). The gateway answered HTTP 200 to AS2 message <09b1c4ff-9863-4341-bf2d-1f6e11722f02@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend. Recording that failed (db.update must not be reached on the refusal path); the row still reads 'prepared' — do NOT 
+  https POSTs to the agency: 2 (message-ids <09b1c4ff-9863-4341-bf2d-1f6e11722f02@SPONSOR-AS2>, <e68aff62-096c-4d2c-ab9c-cbde2e4a044f@SPONSOR-AS2>)
+  attempt1: code=TRANSMISSION_UNCONFIRMED transmitted=undefined msg=ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-sent-automatically; processed/superseded The gateway answered HTTP 200 to AS2 message <b61d2d6b-e1a1-40b7-ad8c-d2960f4fa2db@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend. Recording that failed (db.
+  https POSTs to the agency: 2 (message-ids <b61d2d6b-e1a1-40b7-ad8c-d2960f4fa2db@SPONSOR-AS2>, <faaf7939-5926-4211-8c86-f14a0e5d885e@SPONSOR-AS2>)
+  attempt1: code=TRANSMISSION_UNCONFIRMED transmitted=undefined msg=ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent. The gateway answered HTTP 200 to AS2 message <00ca843b-1b50-4335-94ed-70755865c342@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend. Recording that failed (db.update must not be reached on the refusal path); the row still read
+  https POSTs to the agency: 2 (message-ids <00ca843b-1b50-4335-94ed-70755865c342@SPONSOR-AS2>, <fb28de23-ac8b-4496-89d4-d33dfd1bf218@SPONSOR-AS2>)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+     83|     process.stderr.write(`[${_label}]\n  attempt1: code=${e1.code} tra…
+     84|       `  attempt2: code=${e2.code}\n  https POSTs to the agency: ${htt…
+      Tests  4 failed | 1 passed (5)
+## r3c-r2issues.rerun.txt
+OK   got=REJECTED     want=REJECTED     refusal naming ours in DN part
+## r3c-sftp.rerun.txt
+      Tests  1 passed (1)
+## r3c-unit.rerun.txt
+REJECTED           processed/error
+REJECTED           processed/Error (case)
+REJECTED           processed/ERROR: x
+REJECTED           processed/warning,error
+REJECTED           processed / error (spaces)
+REJECTED           processed/warning, x-error
+REJECTED           processed/unexpected-processing-error
+REJECTED           processed/authentication-failed
+REJECTED           processed/integrity-check-failed
+REJECTED           processed/decompression-failed
+REJECTED           failed/failure: sender-equals-receiver
+REJECTED           processed (comment)/error
+REJECTED           processed/(c)error
+REJECTED           processed\t/error
+REJECTED           refusal naming ours
+## r3d-conformant2.rerun.txt
+## r3d-fda-mtls-e2e.rerun.txt
+      Tests  2 passed (2)
+## r3d-icsr-resend.rerun.txt
+  attempt1: code=GATEWAY_TRANSMIT_FAILED transmitted=false msg=ICSR was NOT transmitted to FDA_FAERS; the transmission remains 'prepared'. Gateway transport failed: ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) timeout. Nothing reached the agency: the message was never handed in full to an authenticated gateway.
+  https POSTs to the agency: 2 (message-ids <809cb3d7-9014-44b5-8682-b8cc381d42b2@SPONSOR-AS2>, <ee9b8a2a-ea76-47c1-b9f5-a39023b10153@SPONSOR-AS2>)
+  attempt1: code=TRANSMISSION_UNCONFIRMED transmitted=undefined msg=ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-sent-automatically; processed: error The gateway answered HTTP 200 to AS2 message <f9614e1f-2556-4b97-a59c-4efb0b2d9108@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend. Recording that failed (db.upda
+  https POSTs to the agency: 2 (message-ids <f9614e1f-2556-4b97-a59c-4efb0b2d9108@SPONSOR-AS2>, <0111b441-010f-4d06-bc37-d6d90354337a@SPONSOR-AS2>)
+  attempt1: code=TRANSMISSION_UNCONFIRMED transmitted=undefined msg=ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): Agency MDN answers a different message (<someone-else@FDA>). The gateway answered HTTP 200 to AS2 message <a5b765c6-fc54-40ea-8650-aa09b5706851@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend. Recording that failed (db.update must not be reached on the refusal path); the row still reads 'prepared' — do NOT 
+  https POSTs to the agency: 2 (message-ids <a5b765c6-fc54-40ea-8650-aa09b5706851@SPONSOR-AS2>, <1c0cdf70-0dee-4bcf-a9dd-c90f0e8d270f@SPONSOR-AS2>)
+  attempt1: code=TRANSMISSION_UNCONFIRMED transmitted=undefined msg=ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-sent-automatically; processed/superseded The gateway answered HTTP 200 to AS2 message <32f990b2-3fdc-49ea-b6a5-482abf1e68d2@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend. Recording that failed (db.
+  https POSTs to the agency: 2 (message-ids <32f990b2-3fdc-49ea-b6a5-482abf1e68d2@SPONSOR-AS2>, <d3d664a7-341f-4f5d-be64-ec2291f46b20@SPONSOR-AS2>)
+  attempt1: code=TRANSMISSION_UNCONFIRMED transmitted=undefined msg=ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent. The gateway answered HTTP 200 to AS2 message <c59928e9-432e-41dc-9eff-e11a3ed97aaf@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend. Recording that failed (db.update must not be reached on the refusal path); the row still read
+  https POSTs to the agency: 2 (message-ids <c59928e9-432e-41dc-9eff-e11a3ed97aaf@SPONSOR-AS2>, <38a89811-1193-44b8-90c0-5605e7675ae2@SPONSOR-AS2>)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+     83|     process.stderr.write(`[${_label}]\n  attempt1: code=${e1.code} tra…
+     84|       `  attempt2: code=${e2.code}\n  https POSTs to the agency: ${htt…
+      Tests  4 failed | 1 passed (5)
+## r3d-m05.rerun.txt
+## r3d-r2issues.rerun.txt
+## r3d-vendor.rerun.txt
+ok   error: authentication-failed [CRLF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error: authentication-failed [LF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error:no-space [CRLF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error:no-space [LF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   Error: Decryption-Failed [CRLF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   Error: Decryption-Failed [LF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error: unexpected-processing-error [CRLF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error: unexpected-processing-error [LF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error no desc (RFC 2298 style) [CRLF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error no desc (RFC 2298 style) [LF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error, empty desc [CRLF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error, empty desc [LF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error desc with parens [CRLF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error desc with parens [LF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   failed/Failure: unsupported MIC [CRLF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   failed/Failure: unsupported MIC [LF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   failed/failure: sender-equals-receiver [CRLF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   failed/failure: sender-equals-receiver [LF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   folded after / then error [CRLF]  expected=REJECTED NEW=REJECTED HEAD=ACCEPT
+ok   folded after / then error [LF]  expected=REJECTED NEW=REJECTED HEAD=ACCEPT
+ok   error modifier w/ space before colon [CRLF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error modifier w/ space before colon [LF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error, warning (2 modifiers) [CRLF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+ok   error, warning (2 modifiers) [LF]  expected=REJECTED NEW=REJECTED HEAD=REFUSED
+## realnet.rerun.txt
+A. server reads whole body, replies 504 (proxy gateway timeout)
+   -> RESOLVED http=504 body="Gateway Timeout"
+B. server reads whole body, replies 502
+   -> RESOLVED http=502 body="Bad Gateway"
+C. server reads whole body, replies 200 headers + partial MDN, then resets
+   -> REJECTED RequestSentTransportError: HTTPS POST failed: the response was cut short after the whole request was sent to an authenticated server; the recipient may hold it
+D. server reads whole body, sends 200 headers then goes silent
+   -> REJECTED RequestSentTransportError: HTTPS POST timeout after the whole request was sent to an authenticated server; the recipient may hold it
+E. server reads whole body, never replies (timeout)
+   -> REJECTED RequestSentTransportError: HTTPS POST timeout after the whole request was sent to an authenticated server; the recipient may hold it
+F. connection refused
+   -> REJECTED TransportError: HTTPS POST failed: connect ECONNREFUSED 127.0.0.1:20505
+G. TLS: agency cert not trusted (handshake refused client-side)
+   -> REJECTED TransportError: HTTPS POST failed: self-signed certificate
+H. server reads whole body and resets
+   -> REJECTED RequestSentTransportError: HTTPS POST failed: socket hang up after the whole request was sent to an authenticated server; the recipient may hold it
+I. server never reads a 32MB body
+   -> REJECTED TransportError: HTTPS POST timeout
+## sserver.rerun.txt
+s_server -tls1_3, untrusted client cert -> TransportError: HTTPS POST failed: C07C753A327F0000:error:0A000418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL alert number 48 
+s_server -tls1_2, untrusted client cert -> TransportError: HTTPS POST failed: C07C753A327F0000:error:0A000418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL alert number 48 

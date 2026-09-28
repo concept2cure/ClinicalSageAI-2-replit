@@ -317,6 +317,26 @@ jobs:
           npm run ci:pq-evaluation-callers:selftest
           npm run ci:pq-evaluation-callers
 
+      # A pin to a model not approved for high-risk work serves any request that
+      # is not declared high-risk, whatever it drafts. Every such pin in server
+      # code is listed with the reason it is safe; a new one, or one removed
+      # without tightening the list, fails.
+      - name: Guardrails — no new pin to an unapproved model (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:unapproved-model-pins:selftest
+          npm run ci:unapproved-model-pins
+
+      # A request's client address is req.ip, resolved by the trust-proxy hop
+      # count and read through server/utils/client-ip.ts. A forwarding header's
+      # left-most entry is whatever the client sent; ~20 sites put it into
+      # e-signature and audit rows until 2026-09-23 (D6).
+      - name: Guardrails — one source for the client address (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:client-ip-single-source:selftest
+          npm run ci:client-ip-single-source
+
       - name: Guardrails — validation traceability resolves (with selftest)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: |
@@ -519,6 +539,16 @@ jobs:
           npm run ci:dead-audit-catch:self-test
           npm run ci:dead-audit-catch
 
+      - name: Guardrails — a sign ledger row comes from a signature ceremony (Part 11)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # recordGovernedAction(…, command: 'sign') is read as an electronic
+        # signature and checks nothing itself. Every such write must sit with a
+        # signer re-verification and an electronic_signatures row. The selftest
+        # runs first and fails on the pre-2026-09-23 protocol finalize route.
+        run: |
+          npm run ci:sign-ceremony:selftest
+          npm run ci:sign-ceremony
+
       - name: Guardrails — route mount authority audit (no regressions)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:audit-route-mounts:no-regression
@@ -663,7 +693,9 @@ jobs:
       # mocked config. This fails the PR that would undo that separation.
       - name: Guardrails — real-database tests never inherit the pg mock
         if: "!cancelled() && steps.install.conclusion == 'success'"
-        run: npm run ci:db-test-isolation
+        run: |
+          npm run ci:db-test-isolation:selftest
+          npm run ci:db-test-isolation
 
       - name: Guardrails — embedding runtime canonicality (corpus policy)
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -1596,6 +1628,15 @@ jobs:
           AUDIT_HMAC_KEY: ci-boot-smoke-audit-hmac-key-min-32-chars-eee
           MFA_ENCRYPTION_KEY: ci-boot-smoke-mfa-encryption-key-min-32-chars-fff
           CONNECTOR_ENCRYPTION_KEY: ci-boot-smoke-connector-encryption-key-32-ggg
+          # server/services/signature/signer-mode.ts refuses to boot production
+          # without a signer posture (unset and `dev` are both refused). This
+          # throwaway container has no KMS key, so it takes the one other
+          # production-legal posture: the HMAC seal keyed by AUDIT_HMAC_KEY
+          # above, with the symmetric-seal risk accepted explicitly. It proves
+          # boot, not signer non-repudiation — a real deployment chooses kms or
+          # records the same acceptance (docs/SOP_KEY_MANAGEMENT.md).
+          CONCEPT2CURE_SIGNER_MODE: hmac
+          CONCEPT2CURE_SIGNER_ACCEPT_HMAC: 'true'
           # This job has no AI provider, and since /readyz gained its `ana`
           # dependency (startup/ana-readiness-state.ts) that is no longer a
           # silent condition: a process where AnA cannot answer refuses to

@@ -1,0 +1,635 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > an APPROVED source files its own saved text and title — a forged body is not what gets approved 59ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > a FROZEN source likewise files its sealed text as finalized 19ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > refuses a source with no saved sections — there is nothing to file — and creates nothing 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404 7ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > leaves an unsourced POST as it was: the body is the text, and it is a draft 8ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > follows FINALIZED_DOCUMENT_READ_ONLY end to end: place, refused edit, place again 32ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text 34ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again 28ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records 39ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > placing an unchanged source again writes nothing 24ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a first placement after the approved sections were rewritten, and creates nothing 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a re-placement over an existing approved copy, and leaves the copy exactly as it was 23ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a section added after the seal (apply-template merge mode) 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a document renamed after its seal: the copy would carry a title nobody approved 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses an APPROVED source with no sealed record: what was approved cannot be established 9ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections 10ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a seal whose bytes no longer match its own hash 15ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > holds the copy to the LATEST seal (approval after freeze) 18ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > a draft source is not held to a seal (it has none), and still files as a draft 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses a source whose sections are headings with no text — the body would be empty 10ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses whitespace-only sections the same way 7ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > SOURCE_CHANGED: a source approved between the first read and the lock is refused, and nothing is written 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > DOCUMENT_ALIAS_CONFLICT: an alias naming another organization's row is refused, and neither row nor alias changes 15ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > a re-take that changes the copy writes one audit event with the text it replaced — even saved co-author edits 27ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > an unchanged re-take writes no audit event (and nothing else) 26ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > re-creating a deleted copy is recorded against the same id 28ms
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+{
+  "timestamp": "2026-09-23T08:16:07.083Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text
+{
+  "timestamp": "2026-09-23T08:16:08.486Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000e1 by member@org.test",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > refuses to file sections apply-template rewrote after the seal, and creates nothing
+{
+  "timestamp": "2026-09-23T08:16:08.553Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000f1 by member@org.test",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > refuses to re-take an existing sealed copy from rewritten sections, and the copy is untouched
+{
+  "timestamp": "2026-09-23T08:16:08.599Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000a1 by member@org.test",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text 160ms
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > refuses to file sections apply-template rewrote after the seal, and creates nothing 46ms
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > refuses to re-take an existing sealed copy from rewritten sections, and the copy is untouched 56ms
+stdout | server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+{
+  "timestamp": "2026-09-23T08:16:13.042Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+{
+  "timestamp": "2026-09-23T08:16:13.160Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands 272ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings 54ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done 23ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own 7ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict 12ms
+stdout | server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+{
+  "timestamp": "2026-09-23T08:16:13.347Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500 8ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule 4ms
+stdout | server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+{
+  "timestamp": "2026-09-23T08:16:13.411Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands 141ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings 37ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done 22ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict 13ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule 3ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim 5ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change 9ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too 12ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > treats a verdict stored with trailing whitespace as a verdict — the guard and its normaliser agree 5ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion 5ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing 5ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change 9ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too 10ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats a verdict stored with trailing whitespace as a verdict — the guard and its normaliser agree 5ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion 5ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > saves a content-only PUT on a draft — the one client caller, EctdCoauthor.saveContent 8ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling 24ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > lets a verdict be withdrawn to a working state (the fail-safe direction) 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone 8ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > saves a content-only PUT on a draft — the one client caller, EctdCoauthor.saveContent 7ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling 23ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > lets a verdict be withdrawn to a working state (the fail-safe direction) 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone 10ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > refuses moving an approved document to another module (it would land its verdict on another section) 9ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a refused status write neither bumps the version nor logs an update (its own approved-list branch is gone) 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a no-op restate logs no lifecycle event either 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > renders approved, locked and drafted sections to real PDFs; flags the draft as unfinalized 60ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > never materializes an empty section — it is unresolved with an honest reason 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > never renders a section whose parent document belongs to another organization 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > materializes the filed bytes and carries the md5 recorded at render time 15ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses another organization's rendered file — it reads as absent, not as content 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses bytes that no longer match the digest recorded at render time 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses a non-PDF render — the ICSR XML is transmitted, never shipped as a leaf 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses when the object is gone — an unretrievable file is a gap, never an empty leaf 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses bytes whose digest matches but which are not a PDF 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > renders a coauthor_documents leaf to a real PDF (unchanged path) 50ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > counts a materialized-but-draft source as unfinalized (approved is not counted) 13ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > renders a unified_documents leaf (latest version content) to a real PDF 9ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a coauthor_documents leaf with no content as UNRESOLVED, not a title-only leaf 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a unified_documents leaf with no version rows as UNRESOLVED, not a title-only leaf 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports an external vault_documents leaf as UNRESOLVED, never silently dropped 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > treats a prototype-key document_table as unknown, not as an external store 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > materializes a PDF ctd_onboarding_documents upload AS the leaf (real bytes, real md5) 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a NON-PDF upload unresolved (no binary→PDF conversion) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF-mime-but-not-PDF-bytes upload unresolved (magic-byte guard) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF upload whose file is missing unresolved (fail closed) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a cross-tenant ctd_onboarding upload unresolved (org-scoped lookup) 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a cross-tenant unified_documents leaf as UNRESOLVED (not dropped) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > resolves a MIXED set: coauthor + unified rendered, vault unresolved 11ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > deduplicates repeated table:id references (renders once) 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > materializes the vault copy, staging the RAW bytes 27ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > fetches the bytes with the CALLER organization 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > gives two vault leaves DISTINCT keys 8ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a LEGACY vault leaf addressed by an integer says an integer cannot name one 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a leaf with NEITHER pointer is skipped here and reported by the dispatch gate 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a malformed uuid is refused rather than raising 22P02 across the whole assembly 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > another organization vault document is not found 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a row that predates the storage provider names the backfill that fixes it 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes the provider will not return for this org are refused 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes that do not match the recorded hash are REFUSED, not staged 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a vault document that is not a PDF is refused on its BYTES, not its mime 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > reports the alias table as absent, not the leaf as sourceless 85ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > reports a row that was never aliased as canonicalId null 36ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > names the authoring document a snapshot represents 13ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > never crosses the tenant: another organization sees no alias for the same row 12ms
+ ✓ server/services/coauthor/__tests__/coauthor-status-write.test.ts > coauthor status vocabulary > splits the documented vocabulary into working states and verdicts 848ms
+ ✓ server/services/coauthor/__tests__/coauthor-status-write.test.ts > coauthor status vocabulary > plans a working state as a canonical set, and everything else as a restate 140ms
+ ✓ server/services/coauthor/__tests__/coauthor-status-write.test.ts > coauthor status vocabulary > treats verdicts as verdicts whatever their spelling 126ms
+ ✓ server/services/coauthor/__tests__/coauthor-status-write.test.ts > coauthor status vocabulary > refuses a status carrying control characters as invalid, rather than letting Postgres fail on it 92ms
+ ✓ server/services/coauthor/__tests__/coauthor-status-write.test.ts > coauthor status vocabulary > refuses to load if the resolver counts a working state as finalized 97ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders the REAL eCTD tree + selected document content 340ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > derives tree-footer KPIs from the real rows (not hardcoded) 123ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders REAL server validation findings when Validation is opened 142ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders the REAL ICH M4 compliance score when Compliance is opened 184ms
+stderr | client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > answers in its own pane and never writes to the rail this screen hides
+[useAnaChat] stream failed: Failed to parse URL from /api/ana-ri/stream
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > answers in its own pane and never writes to the rail this screen hides 189ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — honest empty state > shows an EmptyState — never a fixture — when the org has no documents 40ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — honest error state > shows an error EmptyState — never a fixture — when the read fails 48ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — tree search really filters (no dead input) > filters by title and section number, says so on no match, and clears 192ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — no fabricated validation or compliance results > reports validation as unavailable rather than inventing findings 136ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — no fabricated validation or compliance results > reports compliance as unavailable rather than inventing a score 153ms
+stderr | client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — the Co-Author can AUTHOR > mounts the ONE canonical editor over the document and saves through the store’s own PUT
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — the Co-Author can AUTHOR > mounts the ONE canonical editor over the document and saves through the store’s own PUT 326ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx > EctdCoauthor — the backbone footer while the documents read is in flight > states nothing has been read yet, and prints no count and no percentage 277ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx > EctdCoauthor — the backbone footer after a failed documents read > reports the backbone as not read rather than as an empty, 0%-ready dossier 86ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx > EctdCoauthor — the backbone footer when the read succeeds with no documents > keeps the counts it genuinely established and declines to score readiness 60ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx > EctdCoauthor — the backbone footer over a real backbone > reports the measured figures derived from the rows 122ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx > EctdCoauthor — the backbone footer over a real backbone > still reaches 100% and says so when every document really is approved 114ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx > EctdCoauthor — what a partial page, a document switch and a refusal may claim > a page shorter than the server total withholds the roll-up and says how much was read 118ms
+stderr | client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx > EctdCoauthor — what a partial page, a document switch and a refusal may claim > a validation verdict for document A never lands under document B
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx > EctdCoauthor — what a partial page, a document switch and a refusal may claim > a validation verdict for document A never lands under document B 555ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx > EctdCoauthor — what a partial page, a document switch and a refusal may claim > a refused validation says it was refused, with the reason, not merely "no result" 281ms
+stderr | server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > deletes and audits in one transaction
+{
+  "timestamp": "2026-09-23T08:16:42.565Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > fails closed — an audit failure rolls the delete back (500)
+{
+  "timestamp": "2026-09-23T08:16:42.596Z",
+  "level": "error",
+  "message": "[ectd-documents] Delete error",
+  "context": {
+    "err": "audit_events insert failed"
+  }
+}
+
+stderr | server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > fails closed — an audit failure rolls the delete back (500)
+{
+  "timestamp": "2026-09-23T08:16:42.628Z",
+  "level": "error",
+  "message": "[coauthor] Delete document error",
+  "context": {
+    "err": "audit_events insert failed"
+  }
+}
+
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > deletes and audits in one transaction 1014ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > fails closed — an audit failure rolls the delete back (500) 6ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > 404 when the document is absent performs no audit 4ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > deletes and audits in one transaction 14ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > fails closed — an audit failure rolls the delete back (500) 13ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > 404 when the document is absent performs no audit 3ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the dialog states the identity fact and picks real targets > renders the honest derivation statement — never a silent identity swap 210ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the dialog states the identity fact and picks real targets > loads the org submissions on open and the chosen submission’s sequences 41ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the dialog states the identity fact and picks real targets > excludes frozen sequences from selection WITH the reason shown 121ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the dialog states the identity fact and picks real targets > reports a failed submissions read honestly — no target to place into 28ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > files at the code the note announces, not at the keystrokes 66ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > places via GET saved sections → POST snapshot → PUT leaves with the snapshot id 79ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > a refused PUT surfaces the server verdict verbatim and never claims a placement 46ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > a failed snapshot POST stops the chain — the leaves endpoint is never called 47ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > refuses an empty document honestly — nothing is written at all 43ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the placement chain — snapshot then leaf, verdict verbatim > blocks placement while the section has unsaved changes, with the reason 43ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > assembleSnapshot mirrors the canonical bridge format > renders "## code — title" headings and skips nothing silently 0ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > assembleSnapshot mirrors the canonical bridge format > keeps bare headings for content-free sections — which is why the component refuses on section content, not on the assembled string 0ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > names the module folder a precise Module 3 section files into — full depth 30ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > canonicalises what the author typed — one CTD section, one folder 29ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > says a Module 1 section goes to the regional folder, whichever spelling is used 35ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > refuses a value that is not a CTD code, and will not place it 46ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > refuses a bare module — a container is not a section a document can be filed at 47ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > the section code says where the document will be filed, before it is > writes nothing at all for an unplaceable code — no snapshot, no leaf 55ms
+stderr | client/src/concept2cure/v2/__tests__/ectdCoauthorFinalizedRefusal.test.tsx > EctdCoauthor — a save refused because the document is approved > shows the server's reason and where to go, and does not report the save as done
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorFinalizedRefusal.test.tsx > EctdCoauthor — a save refused because the document is approved > shows the server's reason and where to go, and does not report the save as done 476ms
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an APPROVED document files as approved — the case that was impossible
+{
+  "timestamp": "2026-09-23T08:16:47.762Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a FROZEN document files as finalized
+{
+  "timestamp": "2026-09-23T08:16:47.777Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a DRAFT document still files as a draft, and still fails completeness
+{
+  "timestamp": "2026-09-23T08:16:47.782Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an unrecognised state files as a draft, never as something better
+{
+  "timestamp": "2026-09-23T08:16:47.785Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a source with no status at all files as a draft
+{
+  "timestamp": "2026-09-23T08:16:47.790Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status sent in the body
+{
+  "timestamp": "2026-09-23T08:16:47.798Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status even with no source document named
+{
+  "timestamp": "2026-09-23T08:16:47.802Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > records which document the status came from
+{
+  "timestamp": "2026-09-23T08:16:47.811Z",
+  "level": "error",
+  "message": "[coauthor] Create document error",
+  "context": {
+    "err": "Document alias requires a canonical uuid"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > leaves an unsourced snapshot with no provenance claim
+{
+  "timestamp": "2026-09-23T08:16:47.816Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an APPROVED document files as approved — the case that was impossible 46ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a FROZEN document files as finalized 6ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a DRAFT document still files as a draft, and still fails completeness 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an unrecognised state files as a draft, never as something better 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a source with no status at all files as a draft 9ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status sent in the body 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status even with no source document named 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > refuses a source document that is not this organization's 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > records which document the status came from 7ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > leaves an unsourced snapshot with no provenance claim 3ms
+ ✓ server/services/ana/__tests__/authoring-canonical-bridge.test.ts > authoring-canonical-bridge > builds a stable per-document thread key 2ms
+ ✓ server/services/ana/__tests__/authoring-canonical-bridge.test.ts > authoring-canonical-bridge > bridges into the spine when project + numeric actor + content are present 1ms
+ ✓ server/services/ana/__tests__/authoring-canonical-bridge.test.ts > authoring-canonical-bridge > falls back to the document module for placement when no ctd_section given 0ms
+ ✓ server/services/ana/__tests__/authoring-canonical-bridge.test.ts > authoring-canonical-bridge > skips (no write) when there is no project context 1ms
+ ✓ server/services/ana/__tests__/authoring-canonical-bridge.test.ts > authoring-canonical-bridge > skips when the actor is not a numeric users.id (protects Part 11 attribution) 1ms
+ ✓ server/services/ana/__tests__/authoring-canonical-bridge.test.ts > authoring-canonical-bridge > skips when the document has no assembled content 0ms
+ ✓ server/services/ana/__tests__/authoring-canonical-bridge.test.ts > authoring-canonical-bridge > never throws — a spine failure is reported as a skip 0ms
+
+ Test Files  16 passed (16)
+      Tests  171 passed (171)
+   Start at  08:15:58
+   Duration  49.94s (transform 4.01s, setup 612ms, import 13.72s, tests 30.37s, environment 2.43s)
+

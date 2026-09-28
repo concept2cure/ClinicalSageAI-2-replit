@@ -1125,6 +1125,7 @@ registerTool({
 // ─── Regulatory Precedent Engine Tools ─────────────────────────────────────
 
 import { precedentEngine } from '../precedent-engine';
+import { precedentOrgId } from '../precedent-isolation';
 
 registerTool({
   name: 'precedent.search',
@@ -1160,7 +1161,7 @@ registerTool({
     { name: 'query', type: 'string', description: 'Free-text query for semantic search' },
   ],
   aliases: ['precedent.find', 'regulatory.precedents'],
-  execute: async (params): Promise<ToolResult> => {
+  execute: async (params, ctx): Promise<ToolResult> => {
     try {
       const results = await precedentEngine.search({
         submissionType: params.submissionType || '510(k)',
@@ -1172,7 +1173,7 @@ registerTool({
         productCode: params.productCode,
         query: params.query,
         limit: 10,
-      });
+      }, precedentOrgId(ctx?.organizationId));
 
       if (results.length === 0) {
         return {
@@ -1246,7 +1247,7 @@ registerTool({
     { name: 'predicateDevice', type: 'string', description: 'Your predicate device (for 510k)' },
   ],
   aliases: ['precedent.diff', 'regulatory.compare'],
-  execute: async (params): Promise<ToolResult> => {
+  execute: async (params, ctx): Promise<ToolResult> => {
     try {
       const comparison = await precedentEngine.compare(
         {
@@ -1259,7 +1260,8 @@ registerTool({
           testingApproach: params.testingApproach,
           predicateDevice: params.predicateDevice,
         },
-        params.precedentId
+        params.precedentId,
+        precedentOrgId(ctx?.organizationId)
       );
 
       const riskEmoji = { low: '🟢', medium: '🟡', high: '🟠', critical: '🔴' };
@@ -1385,7 +1387,7 @@ registerTool({
     { name: 'productCode', type: 'string', description: 'FDA product code' },
   ],
   aliases: ['regulatory.strategy', 'submission.strategy'],
-  execute: async (params): Promise<ToolResult> => {
+  execute: async (params, ctx): Promise<ToolResult> => {
     try {
       const strategy = await precedentEngine.recommendStrategy({
         submissionType: params.submissionType || '510(k)',
@@ -1394,7 +1396,7 @@ registerTool({
         deviceName: params.deviceName,
         deviceClass: params.deviceClass,
         productCode: params.productCode,
-      });
+      }, precedentOrgId(ctx?.organizationId));
 
       const altList = strategy.alternativeStrategies
         .map(

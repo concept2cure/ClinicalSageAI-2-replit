@@ -137,6 +137,12 @@ beforeAll(async () => {
   await pglite.exec(migration('db/migrations/20260730_authoring_comments_router_columns.sql'));
   await pglite.exec(migration('db/migrations/20260727_collab_document_state.sql'));
 
+  // The accounts, with the one column the connection reads of them: whether
+  // each is in use (services/account-standing.ts, VSR-001 F-29), as
+  // migrations/0000_sweet_joseph.sql defines it.
+  await pglite.exec(`CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active');
+    INSERT INTO users (id) VALUES (${USER_A}), (${USER_B});`);
+
   // Two tenants, one document each, one section each.
   for (const [doc, section, tenant] of [
     [DOC_A, SECTION_A, ORG_A],
@@ -159,7 +165,8 @@ afterAll(async () => {
   await pglite?.close();
 });
 
-beforeEach(() => {
+beforeEach(async () => {
+  await pool.query(`UPDATE users SET status = 'active'`); // every account in use, as a case found it
   membershipRows = [
     { userId: USER_A, organizationId: ORG_A },
     { userId: USER_B, organizationId: ORG_B },
@@ -271,6 +278,17 @@ describe('authenticating a collaboration connection', () => {
     await expect(
       authenticateCollabConnection({ token: signedOut, documentName: `authoring:${DOC_A}` })
     ).rejects.toMatchObject({ reason: 'session-ended' });
+  });
+
+  it('refuses an account taken out of use since its token was issued (F-29)', async () => {
+    // Suspended by an administrator, or deprovisioned by the identity provider:
+    // its token is signed and unexpired, and opens no editing session.
+    const token = accessToken({ jti: 'collab-account-out-of-use' });
+    for (const status of ['suspended', 'inactive']) {
+      await pool.query(`UPDATE users SET status = $1 WHERE id = $2`, [status, USER_A]);
+      const refused = authenticateCollabConnection({ token, documentName: `authoring:${DOC_A}` });
+      await expect(refused).rejects.toMatchObject({ reason: 'account-inactive' });
+    }
   });
 
   it.each([

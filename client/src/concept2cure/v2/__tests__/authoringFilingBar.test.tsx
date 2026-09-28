@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
 /**
- * AuthoringFilingBar — proves the freeze + PIN e-sign filing actions are wired
+ * AuthoringFilingBar — proves the freeze and e-sign filing actions are wired
  * to the real authoring store and honest on failure. C2CForm (tested
- * separately) is stubbed so the test drives the backend wiring, not the form UI.
+ * separately) is stubbed for the freeze dialog. The e-signature runs the REAL
+ * shared EsignModal: it is the product's one signing dialog, and what it sends
+ * (the password, the code when one is enrolled, the meaning) is the point.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -15,7 +18,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 // Stub C2CForm: render a submit button that fires onSubmit with canned values
-// covering every field both dialogs read (reason/version/pin/meaning/intent).
+// covering every field the freeze dialog reads.
 //
 // The freeze dialog has TWO shapes — the ordinary one and the one the server's
 // "not settled" refusal re-asks with — so the stub also exposes the config's
@@ -30,7 +33,7 @@ vi.mock('../C2CForm', () => ({
       <div data-testid="form-sub">{config.sub}</div>
       <div data-testid="form-fields">{config.fields.map((f: any) => f.key).join(',')}</div>
       <button data-testid="form-submit" onClick={() => onSubmit({
-        reason: 'QA lock', version: '', pin: '1234', meaning: 'APPROVER', intent: 'reviewed',
+        reason: 'QA lock', version: '',
         ...(ackChoice.value ? { acknowledge: ackChoice.value } : {}),
       })}>
         {config.submitLabel}
@@ -46,15 +49,34 @@ function ok(payload: unknown, status = 200) {
   return { ok: status < 400, status, json: async () => payload } as Response;
 }
 
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 beforeEach(() => { apiRequest.mockReset(); ackChoice.value = undefined; });
 
 function renderBar(status = 'draft') {
   const onChanged = vi.fn();
   const fireToast = vi.fn();
-  render(<AuthoringFilingBar docId="D1" docTitle="M2.3 QOS" docStatus={status} onChanged={onChanged} fireToast={fireToast} />);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <AuthoringFilingBar docId="D1" docTitle="M2.3 QOS" docStatus={status} onChanged={onChanged} fireToast={fireToast} />
+    </QueryClientProvider>,
+  );
   return { onChanged, fireToast };
 }
+
+/** The dialog's own server checks (/api/esignature/verify-*), answered as for a signer with or without a code. */
+function stubSignerChecks(opts: { mfaRequired?: boolean } = {}) {
+  const verify = vi.fn(async (url: string) => ({
+    ok: true,
+    status: 200,
+    json: async () =>
+      url.endsWith('/verify-password') ? { valid: true, ...(opts.mfaRequired ? { mfaRequired: true } : {}) } : { valid: true },
+  }));
+  vi.stubGlobal('fetch', verify);
+  return verify;
+}
+
+const REASON = 'I approve this document for filing.';
 
 describe('AuthoringFilingBar — real filing actions', () => {
   it('freezes the document via the real endpoint and reports the server content hash', async () => {
@@ -185,33 +207,74 @@ describe('AuthoringFilingBar — real filing actions', () => {
     });
   });
 
-  it('applies an APPROVER e-signature via the real endpoint (approves + freezes)', async () => {
+  it('signs through the shared dialog: the password and meaning go to the real endpoint (approves + freezes)', async () => {
+    const verify = stubSignerChecks();
     apiRequest.mockResolvedValue(ok({ success: true, signatureId: 's1', documentHash: 'sig9hash0000', signedAt: '2026-07-21T00:00:00Z' }, 200));
     const { onChanged, fireToast } = renderBar('draft');
 
     fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Approval/ }));
+    fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
+    fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'correct horse' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
 
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/docs/D1/e-sign');
       expect(call).toBeTruthy();
-      expect(call![2] as any).toMatchObject({ pin: '1234', meaning: 'APPROVER', intent: 'reviewed' });
+      expect(call![2]).toEqual({ password: 'correct horse', meaning: 'APPROVER', intent: REASON });
     });
+    expect(verify).toHaveBeenCalledWith('/api/esignature/verify-password', expect.anything());
     expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/approved and frozen/));
     expect(onChanged).toHaveBeenCalled();
   });
 
-  it('rejects a bad PIN honestly and does not fabricate a signature', async () => {
-    apiRequest.mockResolvedValue(ok({ error: 'Invalid PIN' }, 401));
+  it('asks for the authenticator code when one is enrolled, and sends it with the signature', async () => {
+    stubSignerChecks({ mfaRequired: true });
+    apiRequest.mockResolvedValue(ok({ success: true, signatureId: 's2', documentHash: 'h', signedAt: '2026-07-21T00:00:00Z' }, 200));
+    renderBar('draft');
+
+    fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
+    fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'correct horse' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
+
+    const code = await within(dialog).findByLabelText(/code/i);
+    expect(apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/docs/D1/e-sign')).toBeUndefined();
+    fireEvent.change(code, { target: { value: '135790' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
+
+    await waitFor(() => {
+      const call = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/docs/D1/e-sign');
+      expect(call![2]).toEqual({ password: 'correct horse', mfaToken: '135790', meaning: 'REVIEWER', intent: REASON });
+    });
+  });
+
+  it('offers only the meanings the authoring store takes', async () => {
+    renderBar('draft');
+    fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+    const dialog = await screen.findByRole('dialog');
+    const offered = within(dialog).getAllByRole('radio').map((r) => r.textContent ?? '');
+    expect(offered.map((t) => t.replace(/You .*/, '').trim())).toEqual(['Authorship', 'Review', 'Approval']);
+  });
+
+  it('a refused credential is shown in the dialog, and nothing is signed or claimed', async () => {
+    stubSignerChecks();
+    apiRequest.mockResolvedValue(
+      ok({ error: 'Signature rejected: password verification failed (§11.200).', code: 'PASSWORD_VERIFICATION_FAILED' }, 401),
+    );
     const { onChanged, fireToast } = renderBar('draft');
 
     fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
+    fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'not it' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
 
-    // BP-W0-6: the tone is asserted, not just the words. This call used to pass
-    // no tone at all, so a rejected PIN rendered with the green success tick —
-    // failure and success were visually identical on the §11.50 signature.
-    await waitFor(() => expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/PIN was not verified/), 'error'));
+    const alert = await within(dialog).findByRole('alert');
+    expect(alert.textContent).toMatch(/password verification failed.*Nothing was signed/);
+    expect(fireToast).not.toHaveBeenCalled();
     expect(onChanged).not.toHaveBeenCalled();
   });
 

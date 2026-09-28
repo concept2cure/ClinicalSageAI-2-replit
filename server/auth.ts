@@ -13,6 +13,7 @@ import jwt from 'jsonwebtoken';
 import { config } from './config/environment';
 import { verifyJwtWithRotation } from './utils/jwtVerify';
 import { isTokenRevoked } from './services/token-revocation';
+import { ACCOUNT_INACTIVE_MESSAGE, isAccountActiveBeforeTenant } from './services/account-standing';
 import { requireAccessTokenReason } from './middleware/tokenType';
 import { runWithPreAuthScope } from './db/tenantStore';
 import { establishRequestTenantScope } from './middleware/establishRequestTenantScope';
@@ -113,6 +114,28 @@ declare global {
 }
 
 /**
+ * VSR-001 F-29: an account taken out of use (suspended by an administrator,
+ * deprovisioned by the identity provider) opens nothing, whenever its token was
+ * issued. Read on every request, so it takes effect on the account's next one;
+ * nothing read it before, and such an account kept its sessions for their whole
+ * life. Answers the request and returns true when it refused: 401 for an
+ * account out of use, 503 when the standing cannot be read (never a pass).
+ */
+async function refusedAccountOutOfUse(userId: number, res: Response): Promise<boolean> {
+  let active: boolean;
+  try {
+    active = await isAccountActiveBeforeTenant(userId);
+  } catch (err) {
+    logger.error('Account standing could not be read', err);
+    res.status(503).json({ error: 'The session could not be checked. Try again.', code: 'SESSION_UNCHECKED' });
+    return true;
+  }
+  if (active) return false;
+  res.status(401).json({ error: ACCOUNT_INACTIVE_MESSAGE, code: 'ACCOUNT_INACTIVE' });
+  return true;
+}
+
+/**
  * Authentication middleware
  * Validates Bearer JWT tokens only.
  * Sets req.userId, req.userRole, req.userEmail, req.tenantId, req.tenantContext.
@@ -156,6 +179,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
       const parsedUserId = parseFiniteInt(decoded.userId);
       const parsedOrganizationId = parseFiniteInt(decoded.organizationId);
+
+      if (parsedUserId !== null && (await refusedAccountOutOfUse(parsedUserId, res))) return;
       // This is the query that VERIFIES the token's tenant claim, so it cannot
       // itself run inside that tenant's scope — the claim is untrusted until it
       // returns. Pool instrumentation blocks unscoped queries once

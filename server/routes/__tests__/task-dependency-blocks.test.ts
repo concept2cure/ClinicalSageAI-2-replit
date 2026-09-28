@@ -58,9 +58,17 @@ vi.mock('../../db', () => {
     insert: () => insertChain,
     update: () => updateChain,
   };
+  // The edge, the block and their ledger rows now share one transaction.
+  db.transaction = (cb: (tx: unknown) => Promise<unknown>) => cb(db);
   return { db, pool: {} };
 });
-vi.mock('../../services/tasking/task-audit', () => ({ auditTaskAction: spies.auditTaskAction }));
+vi.mock('../../services/tasking/task-audit', () => ({
+  auditTaskAction: spies.auditTaskAction,
+  // The route records on its transaction via auditTaskActionInTx; the spy sees
+  // the same params either way.
+  auditTaskActionInTx: (_tx: unknown, params: unknown) => spies.auditTaskAction(params),
+  TaskAuditNotRecordedError: class extends Error {},
+}));
 vi.mock('../../services/notifications/notification-service', () => ({ createNotification: vi.fn() }));
 vi.mock('../../services/tasking/task-side-effects', () => ({
   notifyTaskEvent: spies.notifyTaskEvent,
@@ -74,7 +82,8 @@ function makeApp() {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    (req as any).user = { organizationId: 2, id: 7 };
+    // A writing role: the route is gated by requireEditorAccess.
+    (req as any).user = { organizationId: 2, id: 7, role: 'member' };
     next();
   });
   app.use('/api/task-management', taskManagementRoutes);

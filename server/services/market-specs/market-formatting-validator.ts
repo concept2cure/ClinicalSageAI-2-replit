@@ -35,14 +35,18 @@
  */
 
 import type { MarketSubmissionSpec } from './market-submission-specs';
-import { hasPdfHeader } from '../ectd/pdfa-detect';
+import { hasPdfHeader, isPdfLeaf } from '../ectd/pdfa-detect';
 import { assessLeafPdfSecurity } from '../ectd/leaf-pdf-security';
 
 /** Facts read from a file's own bytes (measureLeafFile). Never supplied by a caller's say-so. */
 export interface MeasuredFileFacts {
   sizeBytes: number;
+  /** The bytes are a PDF (%PDF- header in the first 1 KB, hasPdfHeader). */
   isPdf: boolean;
-  /** leaf-pdf-security's verdict for a PDF; null for a non-PDF. */
+  /**
+   * leaf-pdf-security's verdict for a PDF leaf (pdfa-detect isPdfLeaf: name
+   * .pdf OR header); null for a leaf that is neither.
+   */
   security: 'unsecured' | 'agency-form-as-issued' | 'secured' | null;
 }
 
@@ -53,7 +57,12 @@ export interface LeafFileDescriptor {
   filePath?: string;
   /** DECLARED file size in bytes — a claim; see `measured`. */
   fileSizeBytes?: number;
-  /** Format hint, e.g. "PDF". Inferred from the extension when omitted. */
+  /**
+   * DECLARED format, e.g. "PDF" — a claim. The file's extension decides its
+   * type when it has one (the agency reads the name); a declared format that
+   * disagrees with the extension is flagged. Used for the type only when the
+   * name has no extension.
+   */
   fileFormat?: string;
   /** DECLARED encryption — a claim; see `measured`. */
   encrypted?: boolean;
@@ -69,9 +78,15 @@ export async function measureLeafFile(
   file: { fileName: string; filePath?: string; fileFormat?: string; bytes: Uint8Array },
   market: string,
 ): Promise<LeafFileDescriptor> {
+  /* 2026-09-23 (W5/D7, round-2 review): security is judged whenever the one
+     PDF-leaf predicate holds (isPdfLeaf: name .pdf OR header) — the packager's
+     and transmit guard's rule. It was header-only here, so a .pdf whose header
+     sits past 1 KB came back unjudged and 'conformant' where both refuse it.
+     `isPdf` still records what the bytes are, so a .pdf whose bytes are not a
+     PDF is reported under ACCEPTED_FILE_TYPES. */
   const isPdf = hasPdfHeader(file.bytes);
   let security: MeasuredFileFacts['security'] = null;
-  if (isPdf) {
+  if (isPdfLeaf(file.fileName, file.bytes)) {
     const v = await assessLeafPdfSecurity(file.bytes, MARKET_TO_REGION[market] ?? null);
     security = v.verdict === 'fda-form-as-issued' ? 'agency-form-as-issued' : v.verdict;
   }
@@ -128,21 +143,59 @@ export interface FormattingReport {
 
 const MB = 1024 * 1024;
 
-/** Extract a lowercase extension token (without the dot), or '' when none. */
+/**
+ * Extract a lowercase extension token (without the dot), or '' when none.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic, second pass): whatever followed the last
+ * dot was the extension, so 'Cover letter v1.2' had the extension '2' and a
+ * real PDF declared PDF drew a mismatch and a not-accepted warning. A suffix is
+ * an extension only when it looks like one — 1–10 letters/digits, at least one
+ * a letter ('exe', 'mp4', '7z', 'sas7bdat'); otherwise the name has none and the
+ * declared format is used.
+ * 2026-09-23 (W5/D7, residual repair): the limit was 5, so a real longer
+ * extension ('dm.sas7bdat', 'report.numbers') read as none and the type was
+ * judged from the declaration instead of the name the agency reads.
+ */
 function ext(fileName: string): string {
   const i = fileName.lastIndexOf('.');
-  return i >= 0 ? fileName.slice(i + 1).toLowerCase() : '';
+  if (i < 0) return '';
+  const suffix = fileName.slice(i + 1).toLowerCase();
+  return /^(?=[a-z0-9]*[a-z])[a-z0-9]{1,10}$/.test(suffix) ? suffix : '';
 }
 
-/** The leaf's format token: declared, else the extension, else 'pdf' when the bytes are a PDF. */
-function formatToken(leaf: LeafFileDescriptor): string {
-  return (leaf.fileFormat || ext(leaf.fileName) || (leaf.measured?.isPdf ? 'pdf' : '')).toLowerCase();
+/**
+ * Where a leaf's type is judged from: its extension when it has one, else its
+ * declared format, else 'pdf' when its measured bytes are a PDF.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic): the declared format came FIRST, so a
+ * declaration overrode the name the agency reads — payload.exe declared 'PDF'
+ * was 'conformant'. The extension now decides; the declaration is checked
+ * against it by the caller.
+ */
+function leafFormat(leaf: LeafFileDescriptor): { format: string; from: 'extension' | 'declared' | 'bytes' | null } {
+  const e = ext(leaf.fileName);
+  if (e) return { format: e, from: 'extension' };
+  if (leaf.fileFormat) return { format: leaf.fileFormat, from: 'declared' };
+  if (leaf.measured?.isPdf) return { format: 'pdf', from: 'bytes' };
+  return { format: '', from: null };
 }
 
-/** Is the leaf a PDF — by its bytes when measured, else by its declared format or name. */
-function isPdfLeaf(leaf: LeafFileDescriptor): boolean {
-  if (leaf.measured) return leaf.measured.isPdf;
-  return formatToken(leaf) === 'pdf';
+/** The name half of the one PDF-leaf predicate (pdfa-detect isPdfLeaf), for a leaf whose header is already known absent. */
+const NO_BYTES = new Uint8Array(0);
+
+/**
+ * The canonical token of a format string — a spec's accepted-format entry or a
+ * leaf's declared format / extension: its leading alphanumeric run, lowercased.
+ * 'PDF', 'PDF (eSTAR form)', 'PDF attachments', 'PDF/A-1b', 'pdf' → 'pdf';
+ * 'XPT' → 'xpt'; 'eSTAR' → 'estar'.
+ *
+ * 2026-09-23 (W5/D7, round-2 review): a type was accepted when it was a
+ * SUBSTRING of an accepted format, so 'estar', 'form', 'a' and 'pd' were
+ * accepted formats. Tokens must now be equal.
+ */
+function canonicalFormat(format: string): string {
+  const m = /^\.?([a-z0-9]+)/.exec(format.trim().toLowerCase());
+  return m ? m[1] : '';
 }
 
 /**
@@ -167,6 +220,7 @@ export function validateLeavesAgainstMarketSpec(
   let allSizesMeasured = true;
 
   const namePattern = f.fileNamePattern ? new RegExp(f.fileNamePattern) : null;
+  const acceptedFormats = new Set(f.fileFormats.map(canonicalFormat).filter(Boolean));
 
   for (const leaf of leaves) {
     const name = leaf.fileName || '';
@@ -202,16 +256,50 @@ export function validateLeavesAgainstMarketSpec(
       }
     }
 
-    const token = formatToken(leaf);
-    if (!token) {
-      notJudged('ACCEPTED_FILE_TYPES', name, 'the file has no extension or declared format');
-    } else if (!f.fileFormats.some((a) => a.toLowerCase().includes(token))) {
+    /* 2026-09-23 (W5/D7, round-2 skeptic): the type is judged from the file's
+       extension when it has one, and a declared format is a claim checked
+       against it — it no longer decides the type (payload.exe declared 'PDF'
+       was 'conformant') nor narrows the not-a-PDF check (report.pdf declared
+       'DOCX' with ZIP bytes was a warning, undeclared it was an error). A type
+       judged only from a declaration, with no byte read, is not assessed. */
+    const { format, from } = leafFormat(leaf);
+    const token = canonicalFormat(format);
+    const declaredToken = leaf.fileFormat ? canonicalFormat(leaf.fileFormat) : '';
+    if (leaf.measured && !leaf.measured.isPdf && (isPdfLeaf(name, NO_BYTES) || declaredToken === 'pdf')) {
+      /* 2026-09-23 (W5/D7, round-2 review): a leaf named or declared PDF whose
+         bytes were read and are not a PDF was accepted by its extension. It is
+         an error, not the rule's usual warning: the warning covers a type the
+         datasheet may simply not list, whereas this file is not what it says
+         and will not open as one. Named .pdf (the name half of isPdfLeaf) OR
+         declared PDF — whatever else is declared. */
+      findings.push({
+        severity: 'error',
+        rule: 'ACCEPTED_FILE_TYPES',
+        leaf: name,
+        message: `File "${name}" is ${isPdfLeaf(name, NO_BYTES) ? 'named as a PDF' : `declared ${leaf.fileFormat}`} but its bytes are not a PDF (no %PDF- header in the first 1 KB).`,
+      });
+    }
+    if (from === 'extension' && leaf.fileFormat && declaredToken !== token) {
       findings.push({
         severity: 'warning',
         rule: 'ACCEPTED_FILE_TYPES',
         leaf: name,
-        message: `File "${name}" (${leaf.fileFormat || ext(name) || token}) is not among the accepted formats: ${f.fileFormats.join(', ')}.`,
+        message: `File "${name}" is declared ${leaf.fileFormat} but its extension is .${format}; the agency reads the extension.`,
       });
+    }
+    if (!format) {
+      notJudged('ACCEPTED_FILE_TYPES', name, 'the file has no extension or declared format');
+    } else if (!acceptedFormats.has(token)) {
+      findings.push({
+        severity: 'warning',
+        rule: 'ACCEPTED_FILE_TYPES',
+        leaf: name,
+        message: `File "${name}" (${format}) is not among the accepted formats: ${f.fileFormats.join(', ')}.`,
+      });
+    } else if (from === 'declared' && !leaf.measured) {
+      // An accepted declared format on a file with no extension and no byte
+      // read is a claimed clean value: it never makes the rule assessed.
+      notJudged('ACCEPTED_FILE_TYPES', name, 'the file has no extension and was not read; only its declared format was checked');
     }
 
     // Size: measured, or a claim. A claimed size over the limit is reported; a
@@ -235,7 +323,14 @@ export function validateLeavesAgainstMarketSpec(
       }
     }
 
-    // Security: measured from a PDF's bytes, or a claim.
+    // Security: measured from a PDF leaf's bytes, or a claim.
+    /* 2026-09-23 (W5/D7, round-2 review): an unread leaf is never exempt. The
+       rule was listed as not assessed only when the declared format was exactly
+       'pdf', so a declared 'PDF attachments' (us-estar's own vocabulary),
+       'PDF/A-1b' or 'XPT' skipped it silently and could come back 'conformant'
+       with no byte read. Unread, a file may be PDF bytes under any name or
+       format — the packager judges by header too — so only its measured bytes
+       take it out of the rule; a declared format never narrows it. */
     if (!f.encryptionAllowed) {
       const security = leaf.measured?.security;
       if (security === 'secured' || (leaf.measured === undefined && leaf.encrypted === true)) {
@@ -247,8 +342,8 @@ export function validateLeavesAgainstMarketSpec(
             `File "${name}" is encrypted / permission-restricted${leaf.measured ? '' : ' (as declared)'}, ` +
             `which ${spec.authority} does not accept.`,
         });
-      } else if (leaf.measured === undefined && isPdfLeaf(leaf)) {
-        notJudged('PDF_NO_SECURITY', name, 'the PDF was not read, so its security settings are unknown');
+      } else if (leaf.measured === undefined) {
+        notJudged('PDF_NO_SECURITY', name, 'the file was not read, so whether it is a secured PDF is unknown');
       }
     }
   }

@@ -1,0 +1,80 @@
+===== mdn-edge3.probe.ts
+== F1 failed, different message
+   parsed={"omid":"<someone-else@FDA>","accepted":false,"failed":true}
+   => UNCONFIRMED -> FDA row "in_transit" (lock held) :: Agency MDN answers a different message (<someone-else@FDA>).
+== F2 processed/error, different message
+   parsed={"omid":"<someone-else@FDA>","accepted":false,"failed":true}
+   => UNCONFIRMED -> FDA row "in_transit" (lock held) :: Agency MDN answers a different message (<someone-else@FDA>).
+== F3 failed, OMID <>
+   parsed={"omid":"<>","accepted":false,"failed":true}
+   => UNCONFIRMED -> FDA row "in_transit" (lock held) :: Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent.
+== F4 failed, OMID absent
+   parsed={"omid":null,"accepted":false,"failed":true}
+   => UNCONFIRMED -> FDA row "in_transit" (lock held) :: Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent.
+== F5 failed, OMID two msg-ids
+   parsed={"omid":"<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@SPONSOR-AS2> <other@X>","accepted":false,"failed":true}
+   => UNCONFIRMED -> FDA row "in_transit" (lock held) :: Agency MDN Original-Message-ID (<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@SPONSOR-AS2> <other@X>) is not a single msg-id, so it cannot be tied to the message sent.
+== M1 processed/failed (round-2 regex refused "failed")
+   parsed={"omid":"<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@SPONSOR-AS2>","accepted":false,"failed":true}
+   => REJECTED -> FDA row "rejected" (lock released) :: Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; processed/failed: signature check failed
+== M2 processed/x-error
+   parsed={"omid":"<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@SPONSOR-AS2>","accepted":false,"failed":true}
+   => REJECTED -> FDA row "rejected" (lock released) :: Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; processed/x-error: bad
+== M3 processed/decryption-failed
+   parsed={"omid":"<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@SPONSOR-AS2>","accepted":false,"failed":true}
+   => REJECTED -> FDA row "rejected" (lock released) :: Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; processed/decryption-failed
+== M4 processed/Error (control)
+   parsed={"omid":"<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@SPONSOR-AS2>","accepted":false,"failed":true}
+   => REJECTED -> FDA row "rejected" (lock released) :: Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; processed/Error: authentication-failed
+== M5 processed/warning (RFC acceptance)
+   parsed={"omid":"<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@SPONSOR-AS2>","accepted":true,"failed":false}
+   => ACCEPTED -> FDA row "received"
+== C1 unclosed comment swallows /error
+   parsed={"omid":"<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@SPONSOR-AS2>","accepted":false,"failed":false}
+   => UNCONFIRMED -> FDA row "in_transit" (lock held) :: Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-sent-automatically; processed (see note /error: decryption-failed
+== C2 unclosed comment in OMID
+   parsed={"omid":"<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@SPONSOR-AS2> (FDA","accepted":true,"failed":false}
+   => UNCONFIRMED -> FDA row "in_transit" (lock held) :: Agency MDN Original-Message-ID (<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@SPONSOR-AS2> (FDA) is not a single msg-id, so it cannot be tied to the message sent.
+== N1 no ";" at all
+   parsed={"omid":"<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@SPONSOR-AS2>","accepted":false,"failed":false}
+   => UNCONFIRMED -> FDA row "in_transit" (lock held) :: Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): processed
+===== conformant.probe.ts
+ACCEPT      P1 unsigned report, outer CT in HTTP hdr, CRLF
+ACCEPT      P3 signed MDN (Axway shape), CRLF
+ACCEPT      P4 report w/ multipart/alternative human part, outer CT in HTTP hdr, CRLF
+ACCEPT      P5 report w/ 3rd part text/rfc822-headers (orig multipart/signed), outer CT in HTTP hdr, CRLF
+ACCEPT      P6 signed MDN w/ rfc822-headers 3rd part, CRLF
+ACCEPT      P7 DN part with CTE first and charset param, outer declared, CRLF
+ACCEPT      P8 single-part DN with its own CT header, CRLF
+ACCEPT      P9 bare DN, Original-Message-ID without brackets, CRLF
+ACCEPT      P10 human part with no CT header, outer in HTTP hdr, CRLF
+ACCEPT      P11 signed MDN with multipart/signed CT in body too, CRLF
+ACCEPT      P12 bare DN processed/warning: duplicate-document, CRLF
+ACCEPT      P1 unsigned report, outer CT in HTTP hdr, LF
+ACCEPT      P3 signed MDN (Axway shape), LF
+ACCEPT      P4 report w/ multipart/alternative human part, outer CT in HTTP hdr, LF
+ACCEPT      P5 report w/ 3rd part text/rfc822-headers (orig multipart/signed), outer CT in HTTP hdr, LF
+ACCEPT      P6 signed MDN w/ rfc822-headers 3rd part, LF
+ACCEPT      P7 DN part with CTE first and charset param, outer declared, LF
+ACCEPT      P8 single-part DN with its own CT header, LF
+ACCEPT      P9 bare DN, Original-Message-ID without brackets, LF
+ACCEPT      P10 human part with no CT header, outer in HTTP hdr, LF
+ACCEPT      P11 signed MDN with multipart/signed CT in body too, LF
+ACCEPT      P12 bare DN processed/warning: duplicate-document, LF
+===== regr-unit2.probe.ts
+P13 unsigned report; human text/plain quotes original headers incl. a boundary param
+   HEAD=ACCEPT  NEW=ACCEPT
+P14 unsigned report; DN part header block begins with a blank-free CTE then CT (control)
+   HEAD=ACCEPT  NEW=ACCEPT
+P15 bare DN, processed/failed: signature check failed (non-RFC modifier)
+   HEAD=REFUSED  NEW=REJECTED
+P16 bare DN, processed/decryption-failed
+   HEAD=REFUSED  NEW=REJECTED
+P17 bare DN, processed (unclosed comment /error: decryption-failed
+   HEAD=REFUSED  NEW=UNCONFIRMED
+P18 bare DN, processed/Warning: duplicate-document
+   HEAD=ACCEPT  NEW=ACCEPT
+P19 bare DN, lowercase field names
+   HEAD=ACCEPT  NEW=ACCEPT
+P20 bare DN, Original-Message-ID with uppercase id vs sent lowercase
+   HEAD=ACCEPT  NEW=ACCEPT

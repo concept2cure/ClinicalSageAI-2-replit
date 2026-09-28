@@ -1,0 +1,39 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A24",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 24,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": 18,
+          "document_id": null,
+          "version_id": null,
+          "signed_target": "qms-document:24",
+          "signature_type": "qms-document-approval",
+          "signature_purpose": "OQ-006 step 05: SOP approved for validation (signed)",
+          "signer_id": 11,
+          "signer_name": "OQ Signer",
+          "signer_title": "Chief Science Officer",
+          "signer_email": "oq-signer@validation.local",
+          "signature_meaning": "APPROVED",
+          "signature_hash": "bf918ddd877f6168066a8bf2aef41134d4a017469e73aef9adeadb7f2b94a4ee",
+          "binding_basis": "qms-document-version-content-sha256",
+          "second_factor_verified": true,
+          "is_valid": true,
+          "signed_at": "2026-09-23T05:21:08.798Z",
+          "ip_address": "127.0.0.1"
+        }
+      ]
+    }
+  }
+}

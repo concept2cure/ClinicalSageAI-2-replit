@@ -1,0 +1,90 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+{
+  "timestamp": "2026-09-23T09:11:54.374Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text
+{
+  "timestamp": "2026-09-23T09:11:56.289Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000e1 by member@org.test",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files
+{
+  "timestamp": "2026-09-23T09:11:56.356Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000f1 by member@org.test",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text 168ms
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section
+{
+  "timestamp": "2026-09-23T09:11:56.402Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000a1 by member@org.test",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing
+{
+  "timestamp": "2026-09-23T09:11:56.498Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000c1 by member@org.test",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files 49ms
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section 65ms
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > a DRAFT document still takes a template (the lock is the refusal, not the route) 17ms
+ × server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing 47ms
+   → expected [ '1.2', '1.1' ] to deeply equal [ '1.1', '1.2' ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing
+AssertionError: expected [ '1.2', '1.1' ] to deeply equal [ '1.1', '1.2' ]
+
+- Expected
++ Received
+
+  [
+-   "1.1",
+    "1.2",
++   "1.1",
+  ]
+
+ ❯ server/routes/__tests__/coauthorSnapshotSeal.test.ts:290:66
+    288|         .rows[0].frozen_content,
+    289|     );
+    290|     expect(sealed.sections.map((x: { code: string }) => x.code)).toEqu…
+       |                                                                  ^
+    291|
+    292|     const res = await place(DOC);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  09:11:46
+   Duration  9.87s (transform 2.66s, setup 120ms, import 2.84s, tests 6.45s, environment 0ms)
+

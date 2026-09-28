@@ -851,6 +851,14 @@ export async function esgTransmit(
        ledger entry is written inside executeGovernedTransmit, which reports its
        own failure as `outcome.ledgerWriteFailed`, recorded in this row's details
        below. */
+    // The package checks the transmit guard ran that FAILED without blocking,
+    // and its warnings (preTransmitFindings, via the governed transmit): on this
+    // row and in the returned data, where they were dropped. null = the guard
+    // reported nothing. 2026-09-23 (W5/D7, round-2 review).
+    const preTransmitFacts = {
+      preTransmitFailedChecks: outcome.preTransmitFailedChecks,
+      preTransmitWarnings: outcome.preTransmitWarnings,
+    };
     const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
@@ -866,6 +874,7 @@ export async function esgTransmit(
         bundleSha256: outcome.bundle.sha256,
         ledgerWriteFailed: outcome.ledgerWriteFailed,
         contentAfterTransmit: outcome.contentAfterTransmit,
+        ...preTransmitFacts,
       },
     });
 
@@ -882,6 +891,7 @@ export async function esgTransmit(
         region: 'fda',
         gateway: 'esg',
         environment,
+        ...preTransmitFacts,
         agentAuditTrail,
       },
       message:

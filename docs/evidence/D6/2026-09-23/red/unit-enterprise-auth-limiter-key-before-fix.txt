@@ -1,0 +1,7 @@
+# RED: server/middleware/__tests__/enterprise-auth-limiter-key.test.ts with server/middleware/enterprise-security.ts at HEAD dbf41866e (left-most X-Forwarded-For key, validation off); restored after. 2026-09-23T09:28:24Z
+
+ × server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > a client that claims a new address on every attempt is still stopped at the limit 179ms
+   → a new claimed address bought a new allowance: expected 401 to be 429 // Object.is equality
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > control: different clients keep their own allowances 122ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed (2)

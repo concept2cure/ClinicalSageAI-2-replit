@@ -1,0 +1,39 @@
+# RED: reset-link origin tests against the code BEFORE the fix (server/services/password-setup-token.ts server/routes/auth.ts server/routes/tenant-users.ts at HEAD dbf41866e, restored after)
+# 2026-09-23T09:09:38Z
+
+ ✓ tests/services/password-setup-token.test.ts > mintPasswordSetupToken > mints a 32-byte hex token, stores only its SHA-256, and expires exactly TTL later 3ms
+ ✓ tests/services/password-setup-token.test.ts > mintPasswordSetupToken > two mints never share a token 1ms
+ ✓ tests/services/password-setup-token.test.ts > mintPasswordSetupToken > the invitation TTL is 21 days; the reset TTL is 15 minutes 0ms
+ ✓ tests/services/password-setup-token.test.ts > mintPasswordSetupToken > refuses a TTL that is not a positive number 1ms
+ ✓ tests/services/password-setup-token.test.ts > passwordSetupUrl / resolveAppBaseUrl > links to the login page’s reset view with the token as the query 0ms
+ ✓ tests/services/password-setup-token.test.ts > passwordSetupUrl / resolveAppBaseUrl > APP_URL wins; otherwise the request origin 0ms
+ × tests/services/password-setup-token.test.ts > passwordSetupUrl / resolveAppBaseUrl > in production the Host header is never a link origin (password-reset poisoning, D6) > uses APP_URL, whatever Host says 6ms
+   → expected 'https://attacker.example' to be 'https://app.example.com' // Object.is equality
+ × tests/services/password-setup-token.test.ts > passwordSetupUrl / resolveAppBaseUrl > in production the Host header is never a link origin (password-reset poisoning, D6) > refuses when APP_URL is unset, rather than fall back to Host 1ms
+   → expected [Function] to throw an error
+ × tests/services/password-setup-token.test.ts > passwordSetupUrl / resolveAppBaseUrl > in production the Host header is never a link origin (password-reset poisoning, D6) > refuses when APP_URL is blank, rather than fall back to Host 1ms
+   → expected [Function] to throw an error
+ × tests/services/password-setup-token.test.ts > passwordSetupUrl / resolveAppBaseUrl > in production the Host header is never a link origin (password-reset poisoning, D6) > refuses when APP_URL is not a URL, rather than fall back to Host 1ms
+   → expected [Function] to throw an error
+ × tests/services/password-setup-token.test.ts > passwordSetupUrl / resolveAppBaseUrl > in production the Host header is never a link origin (password-reset poisoning, D6) > refuses when APP_URL is plain http, rather than fall back to Host 1ms
+   → expected [Function] to throw an error
+ ✓ tests/services/password-setup-token.test.ts > unusableInvitePasswordHash > is never a bcrypt hash, so bcrypt.compare cannot match it 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records the request for a real account 29ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records an attempt against an address with no account 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > still says exactly the same thing either way 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production, a forged Host does not become the link the victim is emailed 4ms
+ × server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued 10ms
+   → a reset link was emailed with the attacker's Host as its origin: expected "vi.fn()" to not be called at all, but actually been called 1 times
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records the change itself, which used to be only a logger line 351ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > refuses, and records, a token another request used first — no second success 341ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records a token that matched no account 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records an expired token 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > does not audit a change it refused before looking anything up 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/services/password-setup-token.test.ts > passwordSetupUrl / resolveAppBaseUrl > in production the Host header is never a link origin (password-reset poisoning, D6) > uses APP_URL, whatever Host says
+ FAIL  tests/services/password-setup-token.test.ts > passwordSetupUrl / resolveAppBaseUrl > in production the Host header is never a link origin (password-reset poisoning, D6) > refuses when APP_URL is unset, rather than fall back to Host
+ FAIL  tests/services/password-setup-token.test.ts > passwordSetupUrl / resolveAppBaseUrl > in production the Host header is never a link origin (password-reset poisoning, D6) > refuses when APP_URL is blank, rather than fall back to Host
+ FAIL  tests/services/password-setup-token.test.ts > passwordSetupUrl / resolveAppBaseUrl > in production the Host header is never a link origin (password-reset poisoning, D6) > refuses when APP_URL is not a URL, rather than fall back to Host
+ FAIL  tests/services/password-setup-token.test.ts > passwordSetupUrl / resolveAppBaseUrl > in production the Host header is never a link origin (password-reset poisoning, D6) > refuses when APP_URL is plain http, rather than fall back to Host
+ FAIL  server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued
+      Tests  6 failed | 16 passed (22)

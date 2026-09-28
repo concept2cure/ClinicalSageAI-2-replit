@@ -1,5 +1,13 @@
 # TrialSage Vault™ Enhanced Reference Model - Integration Guide
 
+> **Superseded 2026-09-22 — do not follow this guide.** `server/hooks/refModel.js`
+> was never imported (absent from the production bundle) and read five tables
+> no applier creates (`document_types`, `document_subtypes`, `lifecycle`,
+> `folders`, `retention_rules`); it was deleted. The live paths are
+> `public.document_folders` via `server/routes/folder-management.js` and
+> `vault.retention_policies` via `server/jobs/retentionCron.ts`. Rebuilding this
+> reference model would create a parallel store beside them.
+
 This guide provides step-by-step instructions for integrating the Enhanced Reference Model into the TrialSage Vault™ application. The Reference Model is based on Veeva-style document management with document types, subtypes, lifecycles, and automated retention policies.
 
 ## 1. Components Overview

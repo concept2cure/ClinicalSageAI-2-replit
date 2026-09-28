@@ -1,0 +1,27 @@
+# Server: TRUST_PROXY_HOPS=1, fresh process. Unknown account, wrong password.
+# A. Twelve clients, each arriving through the load balancer, which appends the client address.
+A 1  X-Forwarded-For: 203.0.113.1  -> 401
+A 2  X-Forwarded-For: 203.0.113.2  -> 401
+A 3  X-Forwarded-For: 203.0.113.3  -> 401
+A 4  X-Forwarded-For: 203.0.113.4  -> 401
+A 5  X-Forwarded-For: 203.0.113.5  -> 401
+A 6  X-Forwarded-For: 203.0.113.6  -> 401
+A 7  X-Forwarded-For: 203.0.113.7  -> 401
+A 8  X-Forwarded-For: 203.0.113.8  -> 401
+A 9  X-Forwarded-For: 203.0.113.9  -> 401
+A10  X-Forwarded-For: 203.0.113.10  -> 401
+A11  X-Forwarded-For: 203.0.113.11  -> 401
+A12  X-Forwarded-For: 203.0.113.12  -> 401
+# B. One client (203.0.113.200) claiming a different address on every attempt; the load balancer appends the real one.
+B 1  X-Forwarded-For: 198.51.100.1, 203.0.113.200  -> 401
+B 2  X-Forwarded-For: 198.51.100.2, 203.0.113.200  -> 401
+B 3  X-Forwarded-For: 198.51.100.3, 203.0.113.200  -> 401
+B 4  X-Forwarded-For: 198.51.100.4, 203.0.113.200  -> 401
+B 5  X-Forwarded-For: 198.51.100.5, 203.0.113.200  -> 401
+B 6  X-Forwarded-For: 198.51.100.6, 203.0.113.200  -> 401
+B 7  X-Forwarded-For: 198.51.100.7, 203.0.113.200  -> 401
+B 8  X-Forwarded-For: 198.51.100.8, 203.0.113.200  -> 401
+B 9  X-Forwarded-For: 198.51.100.9, 203.0.113.200  -> 401
+B10  X-Forwarded-For: 198.51.100.10, 203.0.113.200  -> 401
+B11  X-Forwarded-For: 198.51.100.11, 203.0.113.200  -> 429
+B12  X-Forwarded-For: 198.51.100.12, 203.0.113.200  -> 429

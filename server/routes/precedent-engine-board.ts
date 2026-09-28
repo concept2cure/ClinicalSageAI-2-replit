@@ -58,6 +58,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { precedentEngine, type RegistryStatus } from '../services/precedent-engine';
+import { precedentOrgId } from '../services/precedent-isolation';
 import { buildDeviceLenses, isDevicePathway, lensKeysFor } from '../services/precedent/device-lenses';
 import { createScopedLogger } from '../utils/logger';
 
@@ -267,9 +268,7 @@ function getOrgId(req: Request): number | undefined {
     (req as any).tenantId ??
     (req as any).tenantContext?.organizationId ??
     (req as any).user?.organizationId;
-  if (raw === undefined || raw === null || raw === '') return undefined;
-  const n = typeof raw === 'number' ? raw : Number(raw);
-  return Number.isFinite(n) ? n : undefined;
+  return precedentOrgId(raw);
 }
 
 // ─── Router Factory ────────────────────────────────────────────────────────────
@@ -286,8 +285,9 @@ export default function createPrecedentEngineBoardRoutes(): Router {
    *
    * Fail-closed: each of the seven service calls runs under Promise.allSettled,
    * so a missing table or a single analyzer failure degrades that section to an
-   * honest empty value instead of failing the whole board. (The service itself
-   * already swallows per-query table-missing errors and returns [].)
+   * honest empty value instead of failing the whole board. The corpus SEARCH is
+   * the exception — see below: since 2026-09-22 the service lets a failed
+   * corpus read reject, and the board answers it with a 500, not "0 precedents".
    */
   router.get('/', async (req: Request, res: Response) => {
     const parsed = BoardQuerySchema.safeParse(req.query);
@@ -335,7 +335,7 @@ export default function createPrecedentEngineBoardRoutes(): Router {
       const [resultsR, riskR, strategyR] = await Promise.allSettled([
         precedentEngine.searchWithSources(searchInput, organizationId),
         precedentEngine.analyzeRisk(analysisInput),
-        precedentEngine.recommendStrategy(analysisInput),
+        precedentEngine.recommendStrategy(analysisInput, organizationId),
       ]);
       const [crlR, rtfR, emaR, adcommR] = device
         ? [skipped('CRL'), skipped('RTF'), skipped('EMA'), skipped('AdComm')]
@@ -366,9 +366,10 @@ export default function createPrecedentEngineBoardRoutes(): Router {
         }
       }
 
-      // Fail closed on the precedent SEARCH read. searchWithSources already
-      // swallows per-query table-missing errors and returns [] internally, so a
-      // rejection here is a genuine failure — coercing it to [] published
+      // Fail closed on the precedent SEARCH read. searchWithSources no longer
+      // swallows a failed corpus read (it did until 2026-09-22, which is how a
+      // 42703 on every database read as an empty corpus), so a rejection here
+      // is a genuine failure — coercing it to [] published
       // "0 precedents" to the assistant, indistinguishable from an empty corpus
       // and defeating the surface's own "a failed read, not an empty corpus"
       // branch (which only fires on a non-200). Surface it (→ the 500 → the

@@ -174,8 +174,10 @@ DATABASE_URL=${DATABASE_URL}
 JWT_SECRET=dev_local_jwt_secret_change_me_0123456789abcdef
 JWT_SECRET_DEV=dev_local_jwt_secret_change_me_0123456789abcdef
 
-# RLS rollout is off (shadow) in dev; see server/db/rlsEnforcement.ts.
-RLS_ENFORCE=off
+# Development runs the isolation posture production runs and refuses to boot
+# without (server/db/rlsEnforcement.ts). Shadow mode (off) is a posture no
+# customer runs, and in it the Vault accepts no upload (VSR-001 F-15, decision (a)).
+RLS_ENFORCE=on
 
 # Enables POST /api/auth/dev-login — the sign-in card's dev-only "Demo access"
 # button (client/src/concept2cure/components/concept2cure-auth/Concept2CureLogin.tsx).

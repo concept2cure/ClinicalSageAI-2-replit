@@ -1,0 +1,12 @@
+{
+  "role": "app_service",
+  "attrs": {
+    "rolname": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false
+  },
+  "deniedCount": 0,
+  "denied": [],
+  "ownedRlsNotForcedCount": 0,
+  "ownedRlsNotForced": []
+}

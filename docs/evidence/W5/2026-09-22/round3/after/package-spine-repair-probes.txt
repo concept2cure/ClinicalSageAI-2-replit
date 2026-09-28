@@ -1,0 +1,78 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/revoke-and-lock.probe.test.ts
+{
+  "timestamp": "2026-09-23T08:49:42.202Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T08:49:42.204Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/revoke-and-lock.probe.test.ts
+{
+  "timestamp": "2026-09-23T08:49:42.204Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/revoke-and-lock.probe.test.ts
+[database] Database connection successful
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/revoke-and-lock.probe.test.ts > r3b > revocation after assembly
+approved->review: drift
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/revoke-and-lock.probe.test.ts > r3b > revocation after assembly
+re-approved same version: match
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/revoke-and-lock.probe.test.ts > r3b > revocation after assembly
+locked at v1: match
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/revoke-and-lock.probe.test.ts > r3b > revocation after assembly
+locked->draft: drift
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/revoke-and-lock.probe.test.ts > r3b > revocation after assembly
+archived (bundle-executor supersede): drift
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/revoke-and-lock.probe.test.ts > r3b > lock after an unreviewed edit
+locked v2, approved v1, published v2 => {"filable":false,"reason":"edited-after-approval","problem":"it was edited after approval — the current content is v2, the approved version is v1, and it was locked at v2 — so the locked content is not the content that was approved and what would ship is unreviewed","remedy":"unlock it and take it through review and approval again (locked → draft → review, then review → approved), then lock it (approved → locked), which records the version approved and locked"}
+same artifact before the lock => {"filable":false,"reason":"edited-after-approval","problem":"it was edited after approval — the current content is v2, the approved version is v1 — so the approved version was edited since approval and what would ship is unreviewed","remedy":"return it to review and approve it again (approved → review, then review → approved), which records the version approved"}
+case/strings => {"filable":true}
+LOCKED uppercase => {"filable":true}
+
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/revoke-and-lock.probe.test.ts > r3b > revocation after assembly 2805ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/revoke-and-lock.probe.test.ts > r3b > lock after an unreviewed edit 8ms
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/lock-after-edit-route.probe.test.ts > PROBE r3b: lock after an unreviewed edit > approved (approvedVersionId 2) edited to v3, then PUT status locked
+{
+  "timestamp": "2026-09-23T08:49:47.619Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Cannot read properties of undefined (reading 'snapshotId')",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/lock-after-edit-route.probe.test.ts > PROBE r3b: lock after an unreviewed edit > approved (approvedVersionId 2) edited to v3, then PUT status locked
+HTTP 500 {"success":false,"error":{"message":"Failed to update artifact status"}}
+status UPDATE set: {"status":"locked","updatedAt":"2026-09-23T08:49:47.617Z","lockedAt":"2026-09-23T08:49:47.617Z","lockedById":777,"publishedVersionId":3,"publishedAt":"2026-09-23T08:49:47.617Z","metadata":{"harness":{"clientTrack":"x","submissionProgram":"x","persona":"x","regulatorScope":"x","documentClass":"x","readinessGate":"x","workspaceTarget":"x","originSurface":"x","recommendationSource":"x","regulatorIntent":"x","gateChecks":[],"blockingReasons":[],"readinessOutcome":"ok"}}}
+artifactApproval after the lock => {"filable":false,"reason":"edited-after-approval","problem":"it was edited after approval — the current content is v3, the approved version is v2, and it was locked at v3 — so the locked content is not the content that was approved and what would ship is unreviewed","remedy":"unlock it and take it through review and approval again (locked → draft → review, then review → approved), then lock it (approved → locked), which records the version approved and locked"}
+
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/package-spine/lock-after-edit-route.probe.test.ts > PROBE r3b: lock after an unreviewed edit > approved (approvedVersionId 2) edited to v3, then PUT status locked 101ms
+
+ Test Files  2 passed (2)
+      Tests  3 passed (3)
+   Start at  08:49:39
+   Duration  7.66s (transform 1.63s, setup 149ms, import 4.22s, tests 2.93s, environment 0ms)
+

@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 <repo>
+
+{"level":30,"time":"2026-09-23T09:07:34.595Z","pid":11539,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-23T09:07:34.596Z","pid":11539,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-23T09:07:34.596Z","pid":11539,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/second-factor-binding.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-23T09:07:34.894Z', poolSize: 1 }
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+[mfa] MFA enabled for user 83
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+[mfa] MFA enabled for user 84
+
+{"level":30,"time":"2026-09-23T09:08:05.000Z","pid":11539,"hostname":"vm","context":{"userId":83,"tenantId":"91950","resourceId":"83"},"msg":"[audit-service] [AUDIT] user_mfa_setup user"}
+{"level":30,"time":"2026-09-23T09:08:35.000Z","pid":11539,"hostname":"vm","context":{"userId":83,"tenantId":91950,"resourceId":"83"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T09:08:35.000Z","pid":11539,"hostname":"vm","context":{"userId":83,"tenantId":"91950","resourceId":"83"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/second-factor-binding.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > is refused, hands out no secret, and leaves the stored one as it was 78ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing them in 49ms
+{"level":30,"time":"2026-09-23T09:08:05.000Z","pid":11539,"hostname":"vm","context":{"userId":85,"tenantId":"91950","resourceId":"85"},"msg":"[audit-service] [AUDIT] user_mfa_setup user"}
+stdout | tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > a member without two-step verification can enrol, and the enrolment is recorded
+[mfa] MFA enabled for user 85
+
+{"level":30,"time":"2026-09-23T09:08:05.000Z","pid":11539,"hostname":"vm","context":{"userId":85,"tenantId":"91950","resourceId":"85"},"msg":"[audit-service] [AUDIT] user_mfa_enable user"}
+{"level":30,"time":"2026-09-23T09:08:35.000Z","pid":11539,"hostname":"vm","context":{"userId":85,"tenantId":"91950","resourceId":"85"},"msg":"[audit-service] [AUDIT] user_mfa_setup user"}
+{"level":30,"time":"2026-09-23T09:08:05.000Z","pid":11539,"hostname":"vm","context":{"userId":86,"tenantId":"91950","resourceId":"86"},"msg":"[audit-service] [AUDIT] user_mfa_setup user"}
+{"level":30,"time":"2026-09-23T09:08:05.000Z","pid":11539,"hostname":"vm","context":{"userId":86,"tenantId":"91950","resourceId":"86"},"msg":"[audit-service] [AUDIT] user_mfa_setup user"}
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing for them 23ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > records the refused attempt against the account 2ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > a member without two-step verification can enrol, and the enrolment is recorded 41ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > once enrolled, that member is refused a new secret too 13ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > an enrolment not yet confirmed can be restarted: nothing is switched on until a code confirms it 37ms
+{"level":30,"time":"2026-09-23T09:08:05.000Z","pid":11539,"hostname":"vm","context":{"userId":84,"tenantId":"91950","resourceId":"84"},"msg":"[audit-service] [AUDIT] user_mfa_disable user"}
+stdout | tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > the owner rotates by turning it off with a current code, then enrolling again
+[mfa] MFA disabled for user 84
+
+{"level":30,"time":"2026-09-23T09:08:05.000Z","pid":11539,"hostname":"vm","context":{"userId":84,"tenantId":"91950","resourceId":"84"},"msg":"[audit-service] [AUDIT] user_mfa_disable user"}
+{"level":30,"time":"2026-09-23T09:08:05.000Z","pid":11539,"hostname":"vm","context":{"userId":84,"tenantId":"91950","resourceId":"84"},"msg":"[audit-service] [AUDIT] user_mfa_setup user"}
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > the owner rotates by turning it off with a current code, then enrolling again 56ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  09:07:32
+   Duration  4.26s (transform 1.51s, setup 69ms, import 213ms, tests 3.69s, environment 0ms)
+
+stderr | tests/db/second-factor-binding.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stderr | tests/db/second-factor-binding.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+

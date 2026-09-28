@@ -1,7 +1,7 @@
 {
   "$comment": "Tables a per-request server path reads that carry NO tenant column, so no RLS sweep in this repository can policy them. Each entry needs a reason whose first word is one of: global | derived | exempt | unreviewed. \"unreviewed\" is a DEFECT awaiting triage, not a category — three cross-tenant disclosures on 2026-09-10 were all tables that would have sat here as \"unreviewed\". Shrink this file; never grow it. See docs/work-orders/WO-13-grdhe-tenant-scoping.md.",
   "generatedAt": "2026-09-19T02:40:04.942Z",
-  "total": 115,
+  "total": 112,
   "entries": {
     "adversarial.regulatory_adversarial_precedents": "unreviewed — no one has classified this table yet",
     "ai_claim_citations": "unreviewed — no one has classified this table yet",
@@ -49,14 +49,11 @@
     "conversation_os_tool_manifests": "unreviewed — no one has classified this table yet",
     "ctd_nonclinical_studies": "unreviewed — no one has classified this table yet",
     "document_audit_logs": "unreviewed — no one has classified this table yet",
-    "document_subtypes": "unreviewed — no one has classified this table yet",
-    "document_types": "unreviewed — no one has classified this table yet",
     "ectd.module_structure": "unreviewed — no one has classified this table yet",
     "ectd.project_folders": "unreviewed — no one has classified this table yet",
     "embedding_audit_log": "unreviewed — no one has classified this table yet",
     "external_intelligence_findings": "unreviewed — no one has classified this table yet",
     "external_intelligence_runs": "unreviewed — no one has classified this table yet",
-    "faers_reports": "unreviewed — no one has classified this table yet",
     "fda_510k_initial_data_forms": "unreviewed — no one has classified this table yet",
     "guidance_reference_index": "unreviewed — no one has classified this table yet",
     "intelligence.agency_requirements": "unreviewed — no one has classified this table yet",

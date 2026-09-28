@@ -1534,6 +1534,10 @@ export function SubmissionCenter({
           }`}
           defaultMeaning={flow.kind === 'freeze' ? 'approval' : 'release'}
           signer={authUser ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email } : undefined}
+          // The server's re-authentication demands the authenticator code
+          // whenever the signer has one enrolled; without this the modal never
+          // asked for it and an enrolled signer could not freeze or dispatch.
+          requireMfa={authUser?.mfaEnabled === true}
           onClose={() => setFlow(null)}
           onSign={(input) => runGoverned(flow, input)}
         />

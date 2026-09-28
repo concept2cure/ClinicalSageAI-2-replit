@@ -20,10 +20,11 @@ import { db, pool } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
 import { packageEctdSubmission } from '../submission-gateways/regional-packager';
 import type { SubmissionBundle } from '../submission-gateways/types';
-import { buildPackagerInputFromCore, type LeafFileResolver } from './core-to-packager';
+import { buildPackagerInputFromCore, coreLeafFromSubmissionLeaf, type LeafFileResolver } from './core-to-packager';
 import { loadLatestPriorManifestBySubmission, loadRehearsalPriorManifestBySubmission } from './prior-sequence-loader';
-import { computeLifecycleOperations, type DesiredLeaf } from './lifecycle-operator';
+import { computeLifecycleOperations, type DesiredLeaf, type PriorLeaf } from './lifecycle-operator';
 import { computeSequencePrefix } from './sequence-manifest';
+import { leafFileCarriesKey, leafSourceKey } from './leaf-source-resolver';
 import auditService from '../auditService';
 
 export interface PackageFromCoreParams {
@@ -91,6 +92,90 @@ function dropUnbindableLifecycle(
   input.leaves = kept as typeof input.leaves;
 }
 
+/** Record a leaf's declared replace/append, keyed as the lifecycle operator keys it. */
+function recordDeclaredAct(
+  declared: Map<string, 'replace' | 'append'>,
+  leaf: { ctdSection: string; fileName: string },
+  operation: string,
+): void {
+  if (operation === 'replace' || operation === 'append') declared.set(`${leaf.ctdSection}/${leaf.fileName}`, operation);
+}
+
+/**
+ * A declared delete binds to the filed leaf it withdraws. A row that
+ * names a document binds by that document's IDENTITY: the filed leaf
+ * with its current derived name, else the one filed leaf in the
+ * section whose name carries its source key (the label part of a leaf
+ * name — module_number or title — can change after filing; the key
+ * cannot). Only a row that names no document binds by section, and
+ * only when that is unambiguous. Nothing is bound by guessing.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic): the section binding used to be
+ * tried only when the row named no document, so a document whose name
+ * changed after filing matched no prior leaf and the lifecycle
+ * operator threw "nothing on file to delete" out of the whole assembly.
+ * 2026-09-23 (W5/D7, round-2 skeptic, second pass): the first repair
+ * fell back to the SECTION for a named row too, which bound it to the
+ * section's only filed leaf whatever document that was — a withdrawal
+ * of a document never filed there, or a stale re-withdrawal of one
+ * already withdrawn, filed a transmit-clear delete of a different,
+ * still-current document. A named row now binds by identity or not at
+ * all; an unbindable one is reported in `skipped` (which blocks
+ * transmit) and the rest of the sequence still assembles.
+ * 2026-09-23 (W5/D7, residual repair): the source of a document the
+ * sequence only withdraws is no longer read (materializeLeafSources),
+ * so `leaf.fileName` is empty unless another leaf of this sequence
+ * ships the same document. Nothing here needs the source row: the
+ * binding is by key against the filed manifest. When the key is
+ * carried by no filed leaf, or by more than one, the withdrawal is
+ * reported in `skipped` — never guessed, never dropped.
+ *
+ * Returns the bound filed leaf's name, or null when the withdrawal was
+ * reported in `skipped` instead.
+ */
+function bindWithdrawalToFiledLeaf(
+  leaf: { ctdSection: string; fileName: string },
+  ref: { key: string | null },
+  priorLeaves: readonly PriorLeaf[],
+  skipped: Array<{ sectionCode: string; reason: string }>,
+): string | null {
+  const inSection = priorLeaves.filter((pl) => pl.ctdSection === leaf.ctdSection);
+  let fileName = leaf.fileName;
+  if (ref.key) {
+    const byName = !!fileName && inSection.some((pl) => pl.fileName === fileName);
+    if (!byName) {
+      const key = ref.key;
+      const mine = inSection.filter((pl) => leafFileCarriesKey(pl.fileName, key));
+      if (mine.length !== 1) {
+        // Named by its source key, the one identity it always has.
+        const subject = `withdrawal of ${key}`;
+        skipped.push({
+          sectionCode: leaf.ctdSection,
+          reason:
+            mine.length === 0
+              ? `${subject}: no filed leaf in ${leaf.ctdSection} is this document — it was never filed ` +
+                'there, or has already been withdrawn; no other filed document is withdrawn in its place'
+              : `${subject} is ambiguous: ${mine.length} filed leaves in ${leaf.ctdSection} carry document ${key}`,
+        });
+        return null;
+      }
+      fileName = mine[0].fileName;
+    }
+  } else if (inSection.length === 1) {
+    fileName = inSection[0].fileName;
+  } else {
+    skipped.push({
+      sectionCode: leaf.ctdSection,
+      reason:
+        inSection.length === 0
+          ? 'withdrawal names a section with no leaf in the prior sequence'
+          : `withdrawal is ambiguous: ${inSection.length} prior leaves share section ${leaf.ctdSection}`,
+    });
+    return null;
+  }
+  return fileName;
+}
+
 /**
  * Assemble + package a sequence's leaves from the canonical core. Tenant-scoped:
  * the sequence, submission, and leaves must all belong to `organizationId`.
@@ -141,25 +226,32 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
       )
     );
 
+  const coreLeaves = leafRows.map(coreLeafFromSubmissionLeaf);
+  // The document each declared delete names, in row order —
+  // buildPackagerInputFromCore carries every delete row through, in that
+  // order, so the i-th delete leaf of `input` is the i-th entry here (checked
+  // below). null: the row names no document.
+  const deleteRefs = coreLeaves
+    .filter((l) => String(l.lifecycleOp ?? '').trim().toLowerCase() === 'delete')
+    .map((l) => ({
+      sectionCode: l.sectionCode,
+      key: l.documentTable && (l.documentId || l.documentUuid)
+        ? leafSourceKey(l.documentTable, l.documentId, l.documentUuid)
+        : null,
+    }));
+
   const { input, skipped } = buildPackagerInputFromCore({
     sequence: { sequenceNumber: sequence.sequenceNumber, region: sequence.region, type: sequence.type },
     submission: { applicationType: submission.applicationType, productName: submission.productName },
-    leaves: leafRows.map((l) => ({
-      sectionCode: l.sectionCode,
-      title: l.title,
-      lifecycleOp: l.lifecycleOp,
-      checksum: l.checksum,
-      documentTable: l.documentTable,
-      documentId: l.documentId,
-      // 2026-09-22 (W5/D7): the uuid half of the reference. Without it every
-      // vault-backed leaf reached resolveFile with documentId null and no uuid,
-      // resolved to nothing and landed in `skipped` — AFTER materialization had
-      // staged it, so it was never `unresolved` either, and transmit (which read
-      // only unresolvedLeaves) sent the sequence without the document.
-      documentUuid: l.documentUuid,
-      granularity: l.granularity,
-      documentType: l.documentType,
-    })),
+    // 2026-09-22 (W5/D7): the projection must carry the uuid half of the
+    // reference. Without it every vault-backed leaf reached resolveFile with
+    // documentId null and no uuid, resolved to nothing and landed in `skipped` —
+    // AFTER materialization had staged it, so it was never `unresolved` either,
+    // and transmit (which read only unresolvedLeaves) sent the sequence without
+    // the document. 2026-09-23 (W5/D7, round-2 review): the row is read through
+    // the one shared projection, so this packager and the device technical-file
+    // assembler cannot drift apart on it again.
+    leaves: coreLeaves,
     resolveFile: params.resolveFile,
     applicationId: params.applicationId,
     sponsorId: params.sponsorId,
@@ -202,6 +294,7 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
       // replace, and a declared replace the diff could not bind was filed as
       // 'new' — the superseded version stayed current at the agency.
       const declared = new Map<string, 'replace' | 'append'>();
+      let deleteIndex = 0;
       for (const leaf of input.leaves) {
         // The operator computes new/replace/append from the checksum diff. The
         // one operation it cannot compute is a WITHDRAWAL, which is the author's
@@ -212,27 +305,26 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
         const { operation, ...rest } = leaf;
         if (operation !== 'delete') {
           desired.push({ ...rest, md5: leaf.md5 ?? '', ...(operation === 'append' ? { appendOnChange: true } : {}) });
-          if (operation === 'replace' || operation === 'append') declared.set(`${leaf.ctdSection}/${leaf.fileName}`, operation);
+          recordDeclaredAct(declared, leaf, operation);
           continue;
         }
-        // A declared delete carries a section code and, when the row still
-        // names a document, a file name. Bind it to the prior leaf by full
-        // identity when possible, else by section when that is unambiguous —
-        // and never by guessing.
-        let fileName = leaf.fileName;
-        if (!fileName) {
-          const inSection = prior.leaves.filter((pl) => pl.ctdSection === leaf.ctdSection);
-          if (inSection.length === 1) fileName = inSection[0].fileName;
-          else {
-            skipped.push({
-              sectionCode: leaf.ctdSection,
-              reason:
-                inSection.length === 0
-                  ? 'withdrawal names a section with no leaf in the prior sequence'
-                  : `withdrawal is ambiguous: ${inSection.length} prior leaves share section ${leaf.ctdSection}`,
-            });
-            continue;
-          }
+        const ref = deleteRefs[deleteIndex++];
+        if (!ref || ref.sectionCode !== leaf.ctdSection) {
+          throw new Error(
+            `Internal: declared withdrawal in section ${leaf.ctdSection} does not line up with its submission_leaves row ` +
+              '— refusing to bind a withdrawal to an unknown document.',
+          );
+        }
+        const fileName = bindWithdrawalToFiledLeaf(leaf, ref, prior.leaves, skipped);
+        if (fileName === null) continue;
+        if (desired.some((d) => d.withdraw && d.ctdSection === leaf.ctdSection && d.fileName === fileName)) {
+          // Two declared deletes bound to the same filed leaf — the operator
+          // would throw on the duplicate identity.
+          skipped.push({
+            sectionCode: leaf.ctdSection,
+            reason: `withdrawal of ${fileName} is declared twice in this sequence`,
+          });
+          continue;
         }
         // A withdrawal ships no bytes: computeLifecycleOperations drops the
         // resolved sourcePath from every delete it emits (2026-09-23, W5/D7).

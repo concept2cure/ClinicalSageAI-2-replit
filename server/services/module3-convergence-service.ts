@@ -20,8 +20,18 @@ import {
   tablesToMarkdown,
   CmcSourceType,
   type CanonicalSource,
+  type ComposedSection,
 } from './module3Composer';
-import { appendixSectionsRequiringSourceType, composeAppendices, emittableAppendices } from './module3-extensions';
+import {
+  appendixSectionsRequiringSourceType,
+  composeAppendices,
+  composeRegional,
+  emittableAppendices,
+  REGIONAL_SECTION_LABELS,
+  regionalRequiredFields,
+} from './module3-extensions';
+import { resolveProjectRegionCode } from './cmc/module3-compile';
+import { createScopedLogger } from '../utils/logger';
 import { enforceAuthorLineage } from './clinical-regulatory-evidence/lineage-gate';
 import { governedActor } from './part11/governed-actor';
 import {
@@ -29,6 +39,8 @@ import {
   type ArtifactProjectResolution,
   type ArtifactSpineState,
 } from './cmc/resolve-cmc-artifact-project';
+
+const logger = createScopedLogger('module3-convergence');
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -102,6 +114,12 @@ const SECTION_LABELS: Record<string, string> = {
   '3.2.A.1': 'Facilities and Equipment',
   '3.2.A.2': 'Adventitious Agents Safety Evaluation',
   '3.2.A.3': 'Excipients',
+  /* And 3.2.R, for the same reason the appendices were added: compile
+     persists a 3.2.R.1.<region> row like any other section, so a label table
+     without it left that row unnamed on every surface that reads this map —
+     while the export gate counted it. Spread from the templates rather than
+     retyped, so a new region cannot appear in one place and not the other. */
+  ...REGIONAL_SECTION_LABELS,
 };
 
 // ── Public API ─────────────────────────────────────────────────
@@ -263,9 +281,31 @@ export async function getModule3BuildStatus(
      3.2.A.* is marked stale when its sources change), so they are reported
      here too — a board that walked only the seventeen core keys reported zero
      stale sections while the export gate refused on a stale appendix. */
-  const composedAll = composeModule3FromCanonicalSources(canonicalSources).concat(
-    emittableAppendices(composeAppendices(canonicalSources)),
-  );
+  /* 3.2.R composes for the region the linked submission records, through the
+     SAME reader the compile uses — so the board enumerates exactly the
+     sections the compile persisted. Without this the board walked core rules
+     and appendices only: a persisted 3.2.R.1.<region> row had no label, no
+     row on the board and no way to be approved from it, while the export gate
+     counted it and refused. The board could therefore read 100% ready against
+     a gate that would not let the project export.
+
+     A failure here is SAID and skipped, as the compile's own regional pass is:
+     a board that cannot resolve a region still reports every other section. */
+  let regionalComposed: ComposedSection[] = [];
+  try {
+    const region = await resolveProjectRegionCode(pool, orgId, projectId);
+    if (region) regionalComposed = composeRegional(canonicalSources, region);
+  } catch (regionalErr) {
+    logger.warn('[module3-convergence] regional (3.2.R) enumeration skipped', {
+      orgId,
+      projectId,
+      err: regionalErr instanceof Error ? regionalErr.message : String(regionalErr),
+    });
+  }
+
+  const composedAll = composeModule3FromCanonicalSources(canonicalSources)
+    .concat(emittableAppendices(composeAppendices(canonicalSources)))
+    .concat(regionalComposed);
   const composedBySection = new Map(composedAll.map((c) => [c.sectionKey, c] as const));
   const appendixRules = composedAll
     .filter((c) => c.sectionKey.startsWith('3.2.A'))
@@ -273,6 +313,25 @@ export async function getModule3BuildStatus(
       sectionKey: c.sectionKey,
       requiredSourceTypes: CMC_SOURCE_TYPES.filter((st) => appendixSectionsRequiringSourceType(st).includes(c.sectionKey)),
     }));
+  /* A regional subsection declares the payload FIELDS it reads, not source
+     types, so its 'requiredSourceTypes' is derived from which source types
+     actually carry those fields in this project — the same question the core
+     rules answer from a static list. An empty list is honest: it means no
+     recorded source supplies anything this regional section reads. */
+  const regionalRules = regionalComposed.map((c) => {
+    const fields = regionalRequiredFields(c.sectionKey);
+    const types = new Set<string>();
+    for (const row of sourceRes.rows) {
+      const payload = (row.sourcePayload ?? {}) as Record<string, unknown>;
+      if (fields.some((f) => payload[f] !== undefined && payload[f] !== null && payload[f] !== '')) {
+        types.add(String(row.sourceType));
+      }
+    }
+    return {
+      sectionKey: c.sectionKey,
+      requiredSourceTypes: CMC_SOURCE_TYPES.filter((st) => types.has(st)),
+    };
+  });
 
   // Group source objects by type — for the section's lastUpdated only. A
   // retired source no longer composes, but retiring it IS an edit to the
@@ -285,7 +344,7 @@ export async function getModule3BuildStatus(
   }
 
   // Build per-section status
-  const results: Module3SectionBuildStatus[] = [...MODULE3_SECTION_RULES, ...appendixRules].map((rule) => {
+  const results: Module3SectionBuildStatus[] = [...MODULE3_SECTION_RULES, ...appendixRules, ...regionalRules].map((rule) => {
     const sectionKey = rule.sectionKey;
     const sectionLabel = SECTION_LABELS[sectionKey] || sectionKey;
 

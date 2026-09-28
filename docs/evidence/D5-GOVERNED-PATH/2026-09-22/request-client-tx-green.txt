@@ -1,0 +1,14 @@
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > does not call pool.connect() until the first query 4ms
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > reuses the same connection across multiple queries 1ms
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > forwards query args verbatim to the underlying client 1ms
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > release() is a no-op when no connection was ever acquired 1ms
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > release() clears session vars and returns the client to the pool 1ms
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > evicts the client when applying tenant session vars fails 1ms
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > evicts the client when clearing any tenant session var fails 3ms
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > does not offer a cleanup-failed client to the next tenant borrower 2ms
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > throws when query() is called after release() 1ms
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > coalesces concurrent first-query calls into a single connect() 0ms
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient: an open transaction never goes back to the pool > a connection released inside an open transaction is discarded, not returned to the pool 2ms
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient: an open transaction never goes back to the pool > a failed transaction is discarded too 1ms
+✓ server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient: an open transaction never goes back to the pool > a committed transaction returns the connection to the pool 0ms
+Tests  13 passed (13)

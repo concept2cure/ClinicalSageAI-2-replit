@@ -29,6 +29,7 @@ import { and, eq } from 'drizzle-orm';
 import { projects } from '../../../shared/schema';
 import type { RequestDb } from '../../db/requestDb';
 import { createScopedLogger } from '../../utils/logger.js';
+import { DEFAULT_WORKSPACE_MARKER } from './organization-default-workspace';
 
 const logger = createScopedLogger('program-project-anchor');
 
@@ -81,6 +82,8 @@ interface PreflightRow {
   has_column: number | string;
   workspace_count: number | string;
   workspace_id: number | string | null;
+  /** The organisation's own workspace, when one is marked. */
+  default_workspace_id: number | string | null;
 }
 
 /**
@@ -113,9 +116,22 @@ interface PreflightRow {
  * given workspace may see a project at all. Assigning the wrong one grants or
  * denies visibility to the wrong people.
  *
- * So the anchor is created only where the workspace is UNAMBIGUOUS — the org
- * has exactly one client workspace, in which case there is no choice to make
- * and every project in that org is in it. With none, or with more than one, the
+ * So the anchor is created only where the workspace is UNAMBIGUOUS, which is
+ * two cases, in this order:
+ *
+ *   1. The organisation has its OWN workspace — one marked
+ *      `metadata.defaultForOrganization`, written by
+ *      services/c2c/organization-default-workspace.ts. A regulatory program
+ *      belongs to the sponsor organisation, not to one of its clients, so this
+ *      is where its PM-spine project belongs however many client workspaces sit
+ *      beside it. This branch is what lets a CRO add client workspaces through
+ *      the live POST /api/clients without its own programs silently stopping
+ *      anchoring the moment it has two.
+ *   2. Failing that, the organisation has exactly one client workspace, in
+ *      which case there is no choice to make and every project in that org is
+ *      in it.
+ *
+ * With none, or with more than one and none of them the organisation's own, the
  * anchor is SKIPPED and the reason is reported. This is the same standard the
  * migration's backfill holds itself to: link on the unambiguous case, leave the
  * rest NULL, never guess.
@@ -143,13 +159,29 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
        (SELECT count(*) FROM client_workspaces
          WHERE organization_id = $1)                             AS workspace_count,
        (SELECT min(id) FROM client_workspaces
-         WHERE organization_id = $1)                             AS workspace_id`,
-    [orgId],
+         WHERE organization_id = $1)                             AS workspace_id,
+       -- The organisation's OWN workspace, written by
+       -- services/c2c/organization-default-workspace.ts and marked as such.
+       -- Preferred over the count below: a regulatory program belongs to the
+       -- sponsor organisation, not to one of its client workspaces, so this is
+       -- the answer the count was only ever standing in for. Without it, a
+       -- tenant that adds a client workspace through the live POST /api/clients
+       -- goes from one workspace to two and stops anchoring every program it
+       -- creates afterwards.
+       (SELECT min(id) FROM client_workspaces
+         WHERE organization_id = $1
+           AND (metadata ->> $2) = 'true')                       AS default_workspace_id`,
+    [orgId, DEFAULT_WORKSPACE_MARKER],
   );
   const row = preflight.rows[0];
   const hasColumn = Number(row?.has_column ?? 0) > 0;
   const workspaceCount = Number(row?.workspace_count ?? 0);
-  const workspaceId = row?.workspace_id == null ? null : Number(row.workspace_id);
+  const defaultWorkspaceId =
+    row?.default_workspace_id == null ? null : Number(row.default_workspace_id);
+  // The organisation's own workspace when it has one; otherwise the single
+  // workspace it has, which the count check below is what makes safe.
+  const workspaceId =
+    defaultWorkspaceId ?? (row?.workspace_id == null ? null : Number(row.workspace_id));
 
   if (!hasColumn) {
     return {
@@ -183,11 +215,12 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
         'The program was created; it carries no PM-spine anchor until a workspace exists.',
     };
   }
-  if (workspaceCount > 1) {
+  if (workspaceCount > 1 && defaultWorkspaceId === null) {
     return {
       projectId: null, created: false, skipped: 'AMBIGUOUS_CLIENT_WORKSPACE',
       detail:
-        `This organization has ${workspaceCount} client workspaces and the program names none of them. ` +
+        `This organization has ${workspaceCount} client workspaces, none of them marked as the ` +
+        'organization\u2019s own, and the program names none of them. ' +
         'projects.client_workspace_id decides who can see a project, so it is not defaulted. ' +
         'The program was created; it carries no PM-spine anchor.',
     };

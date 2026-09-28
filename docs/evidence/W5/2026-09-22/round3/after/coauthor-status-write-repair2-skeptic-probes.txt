@@ -1,0 +1,158 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R1a legacy all-zero order_index: filed text order vs what the editor shows and what the client used to file
+{
+  "timestamp": "2026-09-23T08:17:36.395Z",
+  "level": "error",
+  "message": "[coauthor] Create document error",
+  "context": {
+    "err": "Failed query: SELECT version, frozen_content, content_hash FROM frozen_documents\n      WHERE document_id = $1 AND tenant_id = $2\n      ORDER BY frozen_at DESC, id DESC LIMIT 1\nparams: 0e000000-0000-4000-8000-000000000001,7"
+  }
+}
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R1b a copy filed by the pre-fix client (approved) is REWRITTEN on re-placement of an unchanged approved source
+{
+  "timestamp": "2026-09-23T08:17:36.420Z",
+  "level": "error",
+  "message": "[coauthor] Create document error",
+  "context": {
+    "err": "Failed query: SELECT version, frozen_content, content_hash FROM frozen_documents\n      WHERE document_id = $1 AND tenant_id = $2\n      ORDER BY frozen_at DESC, id DESC LIMIT 1\nparams: 0e000000-0000-4000-8000-000000000002,7"
+  }
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R1b a copy filed by the pre-fix client (approved) is REWRITTEN on re-placement of an unchanged approved source
+R1b response 500 {}
+R1b before: "## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 — Beta\n\nbeta"
+R1b after : "## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 — Beta\n\nbeta" status approved updated_at 2026-09-01T00:00:00.000Z
+R1b approved row content changed? false | audit rows for it: 0
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R1a legacy all-zero order_index: filed text order vs what the editor shows and what the client used to file 55ms
+   → Cannot read properties of undefined (reading 'id')
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R1b a copy filed by the pre-fix client (approved) is REWRITTEN on re-placement of an unchanged approved source 18ms
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R2 a draft copy edited and saved in EctdCoauthor (200) is silently overwritten by the next placement
+R2 save in EctdCoauthor: 200 <p>edited in co-author</p>
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R2 a draft copy edited and saved in EctdCoauthor (200) is silently overwritten by the next placement
+R2 re-place: 200 {"replaced":true} -> "## 1.3 — Letter\n\nsource text" | audit rows: 1
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R3 headings-only source (client refuses) — server accepts
+R3 422 SOURCE_HAS_NO_SAVED_CONTENT undefined undefined
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R4 re-placement into a different section keeps the first moduleNumber
+R4 200 module_number now m1.2
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R5 SOURCE_CHANGED and DOCUMENT_ALIAS_CONFLICT reachability (id held by another org)
+{
+  "timestamp": "2026-09-23T08:17:36.510Z",
+  "level": "error",
+  "message": "[coauthor] Create document error",
+  "context": {
+    "err": "Failed query: SELECT version, frozen_content, content_hash FROM frozen_documents\n      WHERE document_id = $1 AND tenant_id = $2\n      ORDER BY frozen_at DESC, id DESC LIMIT 1\nparams: 0e000000-0000-4000-8000-000000000006,7"
+  }
+}
+
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R2 a draft copy edited and saved in EctdCoauthor (200) is silently overwritten by the next placement 45ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R3 headings-only source (client refuses) — server accepts 8ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R4 re-placement into a different section keeps the first moduleNumber 25ms
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R5 SOURCE_CHANGED and DOCUMENT_ALIAS_CONFLICT reachability (id held by another org) 10ms
+   → Cannot read properties of undefined (reading 'id')
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts
+{
+  "timestamp": "2026-09-23T08:17:41.659Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts
+✅ Template tables initialized
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts > apply-template rewrites an APPROVED source; re-placement files it as approved > APPROVED doc: sections PATCH is refused by the lock, apply-template is not
+[dbg] direct [{"id":"0c000000-0000-4000-8000-0000000000a1","tenant_id":7,"status":"APPROVED"}] [{"relrowsecurity":false,"relforcerowsecurity":false}] [{"current_user":"postgres","su":true}] true
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts > apply-template rewrites an APPROVED source; re-placement files it as approved > APPROVED doc: sections PATCH is refused by the lock, apply-template is not
+[dbg] pool rows [{"id":"0c000000-0000-4000-8000-0000000000a1","tenant_id":7,"status":"APPROVED"}]
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts > apply-template rewrites an APPROVED source; re-placement files it as approved > APPROVED doc: sections PATCH is refused by the lock, apply-template is not
+[dbg] bridge {"title":"Specifications","content":"## 3.2.P.5 — Control of Drug Product\n\nAPPROVED SPEC TEXT","module":"m3"}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts > apply-template rewrites an APPROVED source; re-placement files it as approved > APPROVED doc: sections PATCH is refused by the lock, apply-template is not
+[probe] first placement -> 409 {"error":"SOURCE_NOT_SEALED","message":"This document is marked approved, but there is no sealed record of the text that was approved, so a copy cannot be filed as approved. Nothing was filed or changed."} undefined undefined
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts > apply-template rewrites an APPROVED source; re-placement files it as approved > APPROVED doc: sections PATCH is refused by the lock, apply-template is not 64ms
+   → expected 409 to be 201 // Object.is equality
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts > freeze by an ordinary member (no signature) -> finalized copy > a DRAFT with no approval, frozen by a member, files as finalized
+{
+  "timestamp": "2026-09-23T08:17:43.260Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000d1 by member@org.test",
+  "context": {}
+}
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts > freeze by an ordinary member (no signature) -> finalized copy > a DRAFT with no approval, frozen by a member, files as finalized
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts > freeze by an ordinary member (no signature) -> finalized copy > a DRAFT with no approval, frozen by a member, files as finalized
+[freeze] member freeze -> 200 {"success":true,"contentHash":"c224e99f8bc1c393bd069bf1d40805b70f348671c718ac3ac4ae11d2992610ee","version":"v1.0.frozen","frozenAt":"2026-09-23T08:17:43.277Z"}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts > freeze by an ordinary member (no signature) -> finalized copy > a DRAFT with no approval, frozen by a member, files as finalized
+[freeze] signatures on doc: {"n":0} ; place -> 201 finalized
+
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts > freeze by an ordinary member (no signature) -> finalized copy > a DRAFT with no approval, frozen by a member, files as finalized 113ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts > apply-template rewrites an APPROVED source; re-placement files it as approved > APPROVED doc: sections PATCH is refused by the lock, apply-template is not
+AssertionError: expected 409 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 409
+
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/apply-template-approved.probe.test.ts:142:26
+    140|       .send({ title: 'x', moduleNumber: 'm3.2.p.5', sourceAuthoringDoc…
+    141|     console.log('[probe] first placement ->', first.status, JSON.strin…
+    142|     expect(first.status).toBe(201);
+       |                          ^
+    143|     const id = first.body.document.id;
+    144|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R1a legacy all-zero order_index: filed text order vs what the editor shows and what the client used to file
+TypeError: Cannot read properties of undefined (reading 'id')
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts:198:48
+    196|     const expectedByClient = clientAssemble(await clientView(SRC));
+    197|     const res = await place(SRC);
+    198|     const stored = await row(res.body.document.id);
+       |                                                ^
+    199|     console.log('R1a status', res.status, 'stored.status', stored?.sta…
+    200|     console.log('R1a client/editor order :', JSON.stringify(expectedBy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts > REGRESSION PROBES > R5 SOURCE_CHANGED and DOCUMENT_ALIAS_CONFLICT reachability (id held by another org)
+TypeError: Cannot read properties of undefined (reading 'id')
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3/coauthor/regression.probe.test.ts:263:49
+    261|     const SRC = '0e000000-0000-4000-8000-000000000006';
+    262|     await source(SRC, 'APPROVED', [['1.6', 'L', 'x']]);
+    263|     const id = (await place(SRC)).body.document.id;
+       |                                                 ^
+    264|     await request(app).delete(`/api/coauthor/documents/${id}`);
+    265|     await h.pglite.query('INSERT INTO organizations (id, name) VALUES …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 5 passed (8)
+   Start at  08:17:29
+   Duration  13.72s (transform 2.48s, setup 164ms, import 3.82s, tests 9.32s, environment 0ms)
+

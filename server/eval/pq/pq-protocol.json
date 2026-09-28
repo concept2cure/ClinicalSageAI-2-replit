@@ -21,16 +21,21 @@
     },
     "extraction": {
       "required": true,
-      "executable": false,
-      "notExecutableReason": "No live extraction path: server/eval/doc-quality/run-eval.ts scores captured candidateExtraction only, and names the per-doc-type extraction service it would need. Captured candidates are never scored in a PQ — they are not the model's output.",
-      "criteria": { "minF1": 0.8 },
-      "criteriaSource": "server/eval/doc-quality/README.md: '--min-f1 0.8'."
+      "executable": true,
+      "criteria": {
+        "minF1": 0.8
+      },
+      "criteriaSource": "server/eval/doc-quality/README.md: '--min-f1 0.8'.",
+      "harness": "server/eval/doc-quality/gold-tasks.json, extraction tasks that carry an input and expectedFields; the pinned model is asked directly by server/eval/pq/run-pq.ts (buildExtractionPrompt) and scored by doc-quality-metrics scoreExtractionTask. It is deliberately NOT routed through a per-document-type extraction service: that would measure the service and whichever model it selects, which is the attribution failure the rag component is still blocked on."
     },
     "rag": {
       "required": true,
       "executable": false,
       "notExecutableReason": "server/services/ragRouter.ts ragQuery takes no model parameter — the answer is generated inside the RAG pipeline by whatever it selects — so a RAG run cannot be attributed to the model under qualification. It also needs a populated corpus (ENABLE_CORPUS_INGESTION is off; see ga-readiness-report 'Precedent corpus ingestion sweep'), and its faithfulness judge (server/eval/rag/run-eval.ts) is itself an unpinned model.",
-      "criteria": { "minHitRate": 0.6, "minFaithfulness": 0.7 },
+      "criteria": {
+        "minHitRate": 0.6,
+        "minFaithfulness": 0.7
+      },
       "criteriaSource": "server/eval/rag/README.md: '--min-hit-rate 0.6 --min-faithfulness 0.7   # gate CI'."
     }
   }

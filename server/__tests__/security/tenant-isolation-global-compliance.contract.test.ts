@@ -54,6 +54,16 @@ vi.mock('../../db', () => {
   };
   const pool = {
     query: vi.fn(async (sql: string, params: any[] = []) => {
+      // The session-revocation lookup (AUTH-03, 0d99ca0) runs in the canonical
+      // auth chain before any route: a row here means "this token was signed
+      // out". The tokens this suite signs are live, so the list holds none of
+      // them. Answering it like a data read made every request SESSION_ENDED
+      // (401) before the org-path check under test was reached. Not recorded in
+      // `calls`: it is auth, not a data query the route ran.
+      if (/FROM revoked_tokens/i.test(sql)) return { rows: [], rowCount: 0 };
+      // The account-standing read (F-29) runs in the same chain, for the same
+      // reason: the accounts these tokens name are in use. Auth, not a data query.
+      if (/SELECT status FROM users/i.test(sql)) return { rows: [{ status: 'active' }], rowCount: 1 };
       calls.push({ sql, params });
       return { rows: [{ id: 1, organization_id: ORG_A }], rowCount: 1 };
     }),

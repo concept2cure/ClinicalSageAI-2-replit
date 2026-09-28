@@ -55,6 +55,19 @@ export interface PqGenerationResult {
   error?: string;
 }
 
+/** One extraction task as it actually ran. Same attribution rules as generation. */
+export interface PqExtractionResult {
+  taskId: string;
+  docType: string;
+  servedModel: string | null;
+  servedModelVerified: boolean;
+  /** null when the task produced nothing scorable (no reply, or unparseable). */
+  f1: number | null;
+  precision: number | null;
+  recall: number | null;
+  error?: string;
+}
+
 export interface PqVerdictResult {
   verdict: PqVerdict;
   reasons: string[];
@@ -126,11 +139,70 @@ function criteriaMissed(criteria: Record<string, number>, counted: PqGenerationR
   return out;
 }
 
+/**
+ * The extraction component's shortfalls and missed criteria.
+ *
+ * Mirrors generation deliberately: a task that produced nothing is a shortfall,
+ * a task answered by another model is a shortfall, and the criterion is
+ * measured only over tasks the pinned model verifiably answered — otherwise a
+ * fallback model's score would count toward qualifying the pinned one.
+ *
+ * A component that is required and executable but ran no task is INCOMPLETE,
+ * not PASS. Before this, extraction was `executable: false` and so was reported
+ * by unexecutableComponents; once it can run, "it did not run" has to be said
+ * some other way or a PQ would pass having skipped a required component.
+ */
+function extractionFindings(
+  protocol: PqProtocol,
+  extraction: PqExtractionResult[],
+): { incomplete: string[]; missed: string[] } {
+  const ext = protocol.components.extraction;
+  if (!ext?.required || !ext.executable) return { incomplete: [], missed: [] };
+
+  const scored = extraction.filter((e) => !e.error && e.f1 !== null);
+  if (scored.length === 0) {
+    const errs = extraction.filter((e) => e.error).map((e) => `${e.taskId}: ${e.error}`);
+    return {
+      incomplete: [
+        'required component "extraction" is executable but produced no scorable output',
+        ...errs.slice(0, 5),
+      ],
+      missed: [],
+    };
+  }
+
+  const incomplete: string[] = [];
+  const errored = extraction.filter((e) => e.error);
+  if (errored.length) {
+    incomplete.push(`${errored.length} extraction task(s) produced no output: ${errored.map((e) => e.taskId).join(', ')}`);
+  }
+  const unverified = scored.filter((e) => !e.servedModelVerified);
+  if (unverified.length) {
+    incomplete.push(
+      `${unverified.length} extraction task(s) were answered by a model that is not the pinned version, or did not say: ` +
+        unverified.map((e) => `${e.taskId}=${e.servedModel ?? 'unreported'}`).join(', '),
+    );
+  }
+
+  const missed: string[] = [];
+  const counted = scored.filter((e) => e.servedModelVerified);
+  const minF1 = ext.criteria.minF1;
+  if (typeof minF1 === 'number' && counted.length) {
+    const meanF1 = counted.reduce((a, e) => a + (e.f1 as number), 0) / counted.length;
+    if (meanF1 < minF1) missed.push(`mean extraction F1 ${meanF1.toFixed(3)} is below ${minF1}`);
+  }
+  return { incomplete, missed };
+}
+
 function isApproved(protocol: PqProtocol): boolean {
   return protocol.status === 'approved' && Boolean(protocol.approvedBy) && Boolean(protocol.approvedOn);
 }
 
-export function computeVerdict(protocol: PqProtocol, generation: PqGenerationResult[]): PqVerdictResult {
+export function computeVerdict(
+  protocol: PqProtocol,
+  generation: PqGenerationResult[],
+  extraction: PqExtractionResult[] = [],
+): PqVerdictResult {
   const gen = protocol.components.generation;
   if (!gen) return { verdict: 'INCOMPLETE', reasons: ['protocol declares no generation component'] };
 
@@ -140,12 +212,17 @@ export function computeVerdict(protocol: PqProtocol, generation: PqGenerationRes
     return { verdict: 'NOT_EXECUTED', reasons: ['no generation task produced a scorable output', ...errs.slice(0, 5)] };
   }
 
+  const ext = extractionFindings(protocol, extraction);
   const incomplete = [
     ...unexecutableComponents(protocol),
     ...taskShortfalls(generation, scored),
     ...sampleShortfall(gen.criteria.minTasksPerDocType, scored),
+    ...ext.incomplete,
   ];
-  const missed = criteriaMissed(gen.criteria, scored.filter((g) => g.servedModelVerified));
+  const missed = [
+    ...criteriaMissed(gen.criteria, scored.filter((g) => g.servedModelVerified)),
+    ...ext.missed,
+  ];
 
   // FAIL outranks INCOMPLETE: a model that missed a criterion has failed
   // something real, and reporting it as merely incomplete would hide that.
@@ -179,6 +256,8 @@ export interface PqRecord {
   startedAt: string;
   finishedAt: string;
   generation: PqGenerationResult[];
+  /** Absent on records written before the extraction component could execute. */
+  extraction?: PqExtractionResult[];
   verdict: PqVerdict;
   reasons: string[];
 }

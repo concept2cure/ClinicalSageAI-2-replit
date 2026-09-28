@@ -43,9 +43,11 @@ describe('eGrants AnA tools — context + input guards', () => {
     const out = JSON.parse(await getToolHandler('open_grant_closeout')!({ award_id: 1 }, {} as any));
     expect(out.error).toMatch(/tenant \+ user context/);
   });
-  it('finalize_grant_closeout requires an award_id', async () => {
+  // Finalizing, executing and approving are electronic signatures, which AnA
+  // cannot give; ana-cannot-sign.test.ts proves these three write nothing.
+  it('finalize_grant_closeout refuses to sign, whatever the input', async () => {
     const out = JSON.parse(await getToolHandler('finalize_grant_closeout')!({}, { organizationId: 1, userId: 1 } as any));
-    expect(out.error).toMatch(/award_id is required/);
+    expect(out).toMatchObject({ ok: false, signatureRequired: true });
   });
   it('record_subaward requires award_id and subrecipient_name', async () => {
     const out = JSON.parse(await getToolHandler('record_subaward')!({ award_id: 1 }, { organizationId: 1, userId: 1 } as any));
@@ -55,9 +57,9 @@ describe('eGrants AnA tools — context + input guards', () => {
     const out = JSON.parse(await getToolHandler('screen_subaward')!({ subaward_id: 1, screen_status: 'maybe' }, { organizationId: 1, userId: 1 } as any));
     expect(out.error).toMatch(/screen_status \(cleared\|excluded\)/);
   });
-  it('execute_subaward requires a subaward_id', async () => {
+  it('execute_subaward refuses to sign, whatever the input', async () => {
     const out = JSON.parse(await getToolHandler('execute_subaward')!({}, { organizationId: 1, userId: 1 } as any));
-    expect(out.error).toMatch(/subaward_id is required/);
+    expect(out).toMatchObject({ ok: false, signatureRequired: true });
   });
   it('add_grant_budget_line rejects an invalid category', async () => {
     const out = JSON.parse(await getToolHandler('add_grant_budget_line')!({ award_id: 1, category: 'yachts', budgeted_amount: 10 }, { organizationId: 1, userId: 1 } as any));
@@ -79,9 +81,9 @@ describe('eGrants AnA tools — context + input guards', () => {
     const out = JSON.parse(await getToolHandler('request_no_cost_extension')!({ award_id: 1 }, { organizationId: 1, userId: 1 } as any));
     expect(out.error).toMatch(/new_end_date/);
   });
-  it('approve_no_cost_extension rejects an invalid authority', async () => {
-    const out = JSON.parse(await getToolHandler('approve_no_cost_extension')!({ nce_id: 1, authority: 'wizard' }, { organizationId: 1, userId: 1 } as any));
-    expect(out.error).toMatch(/authority \(grantee\|sponsor\)/);
+  it('approve_no_cost_extension refuses to sign, and the model cannot supply the approving authority', async () => {
+    const out = JSON.parse(await getToolHandler('approve_no_cost_extension')!({ nce_id: 1, authority: 'sponsor' }, { organizationId: 1, userId: 1 } as any));
+    expect(out).toMatchObject({ ok: false, signatureRequired: true });
   });
   it('record_grant_opportunity rejects an invalid funding_agency', async () => {
     const out = JSON.parse(await getToolHandler('record_grant_opportunity')!({ opportunity_number: 'PA-26-001', title: 'X', funding_agency: 'martian' }, { organizationId: 1, userId: 1 } as any));

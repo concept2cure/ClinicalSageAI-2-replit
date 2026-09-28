@@ -1,0 +1,108 @@
+[mdr] code="1.11" "GSPRs" HEAD=["gspr"] CUR=["gspr"]
+[mdr] code="1.11" "GSPRs_checklist" HEAD=["gspr"] CUR=["gspr"]
+[mdr] code="1.11" "IFUs" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "IFUs_EN" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "IFUs_all_languages" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "Labelling_IFU" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "Instructions_for_Use" HEAD=[] CUR=["manufacturer-information"]  <<DIFF
+[mdr] code="1.11" "Clinical_Evaluation_Report" HEAD=[] CUR=["clinical-evaluation"]  <<DIFF
+[mdr] code="1.11" "Clinical Evaluation Report (CER)" HEAD=["clinical-evaluation"] CUR=["clinical-evaluation"]
+[mdr] code="1.11" "Clinical-Evaluation-Plan-and-Report" HEAD=[] CUR=["clinical-evaluation"]  <<DIFF
+[mdr] code="1.11" "ClinicalEvaluationReport" HEAD=[] CUR=["clinical-evaluation"]  <<DIFF
+[mdr] code="1.11" "CLINICAL_EVALUATION_REPORT" HEAD=[] CUR=["clinical-evaluation"]  <<DIFF
+[mdr] code="1.11" "PMS_Plan" HEAD=[] CUR=["pms-plan"]  <<DIFF
+[mdr] code="1.11" "PMSPlan" HEAD=[] CUR=["pms-plan"]  <<DIFF
+[mdr] code="1.11" "PMSplan" HEAD=[] CUR=["pms-plan"]  <<DIFF
+[mdr] code="1.11" "Post-market surveillance plan" HEAD=["pms-plan"] CUR=["pms-plan"]
+[mdr] code="1.11" "Risk_Management_Report" HEAD=[] CUR=["risk-management"]  <<DIFF
+[mdr] code="1.11" "RiskManagementFile" HEAD=[] CUR=["risk-management"]  <<DIFF
+[mdr] code="1.11" "Benefit_Risk_Analysis" HEAD=[] CUR=["risk-management"]  <<DIFF
+[mdr] code="1.11" "Device_Description" HEAD=[] CUR=["device-description"]  <<DIFF
+[mdr] code="1.11" "Intended_Purpose" HEAD=[] CUR=["device-description"]  <<DIFF
+[mdr] code="1.11" "Design_and_Manufacturing" HEAD=[] CUR=["design-manufacturing"]  <<DIFF
+[mdr] code="1.11" "Manufacturing_Process_Validation" HEAD=[] CUR=["design-manufacturing"]  <<DIFF
+[mdr] code="1.11" "Verification_and_Validation" HEAD=[] CUR=["preclinical-clinical"]  <<DIFF
+[mdr] code="1.11" "Preclinical_Testing" HEAD=["preclinical-clinical"] CUR=["preclinical-clinical"]
+[mdr] code="1.11" "Labelling" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "Clinical evaluation plan v1" HEAD=["clinical-evaluation"] CUR=[]  <<DIFF
+[mdr] code="1.11" "clinical evaluation update plan" HEAD=["clinical-evaluation"] CUR=["clinical-evaluation"]
+[mdr] code="1.11" "Non-clinical and clinical evaluation" HEAD=["clinical-evaluation"] CUR=["clinical-evaluation"]
+[mdr] code="1.11" "GSPR_CheckList" HEAD=["gspr"] CUR=["gspr"]
+[mdr] code="1.11" "Device descriptions" HEAD=["device-description"] CUR=["device-description"]
+[mdr] code="1.11" "GSPRchecklist" HEAD=["gspr"] CUR=["gspr"]
+[mdr] code="1.11" "IFUen" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "IFUmanual" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "IFUManual" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "GSPR-checklists" HEAD=["gspr"] CUR=["gspr"]
+[mdr] code="1.11" "eIFUs" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "EIFUs" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "eIFU" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "EIFU" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "Risk managementfile" HEAD=["risk-management"] CUR=["risk-management"]
+[mdr] code="1.11" "Gifu" HEAD=["manufacturer-information"] CUR=[]  <<DIFF
+[mdr] code="1.11" "GIFU_audit" HEAD=["manufacturer-information"] CUR=[]  <<DIFF
+[mdr] code="1.11" "mdrgspr" HEAD=["gspr"] CUR=[]  <<DIFF
+[mdr] code="1.11" "Preclinical evaluation" HEAD=["preclinical-clinical","clinical-evaluation"] CUR=["preclinical-clinical"]  <<DIFF
+[mdr] code="1.11" "Clinical evaluations" HEAD=["clinical-evaluation"] CUR=["clinical-evaluation"]
+[mdr] code="1.11" "Clinical evaluation plans" HEAD=["clinical-evaluation"] CUR=[]  <<DIFF
+[mdr] code="1.11" "Clinical evaluationplan" HEAD=["clinical-evaluation"] CUR=[]  <<DIFF
+[mdr] code="1.11" "Instructions for users" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="1.11" "Manufacturing processes" HEAD=["design-manufacturing"] CUR=["design-manufacturing"]
+[mdr] code="1.11" "Validations and verifications" HEAD=[] CUR=[]
+[mdr] code="1.11" "Verification and validations" HEAD=["preclinical-clinical"] CUR=["preclinical-clinical"]
+[mdr] code="1.11" "benefit-risks" HEAD=["risk-management"] CUR=["risk-management"]
+[mdr] code="1.11" "Intended purposes" HEAD=["device-description"] CUR=["device-description"]
+[mdr] code="" "GSPRs" HEAD=["gspr"] CUR=["gspr"]
+[mdr] code="" "GSPRs_checklist" HEAD=["gspr"] CUR=["gspr"]
+[mdr] code="" "IFUs" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "IFUs_EN" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "IFUs_all_languages" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "Labelling_IFU" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "Instructions_for_Use" HEAD=[] CUR=["manufacturer-information"]  <<DIFF
+[mdr] code="" "Clinical_Evaluation_Report" HEAD=[] CUR=["clinical-evaluation"]  <<DIFF
+[mdr] code="" "Clinical Evaluation Report (CER)" HEAD=["clinical-evaluation"] CUR=["clinical-evaluation"]
+[mdr] code="" "Clinical-Evaluation-Plan-and-Report" HEAD=[] CUR=["clinical-evaluation"]  <<DIFF
+[mdr] code="" "ClinicalEvaluationReport" HEAD=[] CUR=["clinical-evaluation"]  <<DIFF
+[mdr] code="" "CLINICAL_EVALUATION_REPORT" HEAD=[] CUR=["clinical-evaluation"]  <<DIFF
+[mdr] code="" "PMS_Plan" HEAD=[] CUR=["pms-plan"]  <<DIFF
+[mdr] code="" "PMSPlan" HEAD=[] CUR=["pms-plan"]  <<DIFF
+[mdr] code="" "PMSplan" HEAD=[] CUR=["pms-plan"]  <<DIFF
+[mdr] code="" "Post-market surveillance plan" HEAD=["pms-plan"] CUR=["pms-plan"]
+[mdr] code="" "Risk_Management_Report" HEAD=[] CUR=["risk-management"]  <<DIFF
+[mdr] code="" "RiskManagementFile" HEAD=[] CUR=["risk-management"]  <<DIFF
+[mdr] code="" "Benefit_Risk_Analysis" HEAD=[] CUR=["risk-management"]  <<DIFF
+[mdr] code="" "Device_Description" HEAD=[] CUR=["device-description"]  <<DIFF
+[mdr] code="" "Intended_Purpose" HEAD=[] CUR=["device-description"]  <<DIFF
+[mdr] code="" "Design_and_Manufacturing" HEAD=[] CUR=["design-manufacturing"]  <<DIFF
+[mdr] code="" "Manufacturing_Process_Validation" HEAD=[] CUR=["design-manufacturing"]  <<DIFF
+[mdr] code="" "Verification_and_Validation" HEAD=[] CUR=["preclinical-clinical"]  <<DIFF
+[mdr] code="" "Preclinical_Testing" HEAD=["preclinical-clinical"] CUR=["preclinical-clinical"]
+[mdr] code="" "Labelling" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "Clinical evaluation plan v1" HEAD=["clinical-evaluation"] CUR=[]  <<DIFF
+[mdr] code="" "clinical evaluation update plan" HEAD=["clinical-evaluation"] CUR=["clinical-evaluation"]
+[mdr] code="" "Non-clinical and clinical evaluation" HEAD=["clinical-evaluation"] CUR=["clinical-evaluation"]
+[mdr] code="" "GSPR_CheckList" HEAD=["gspr"] CUR=["gspr"]
+[mdr] code="" "Device descriptions" HEAD=["device-description"] CUR=["device-description"]
+[mdr] code="" "GSPRchecklist" HEAD=["gspr"] CUR=["gspr"]
+[mdr] code="" "IFUen" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "IFUmanual" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "IFUManual" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "GSPR-checklists" HEAD=["gspr"] CUR=["gspr"]
+[mdr] code="" "eIFUs" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "EIFUs" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "eIFU" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "EIFU" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "Risk managementfile" HEAD=["risk-management"] CUR=["risk-management"]
+[mdr] code="" "Gifu" HEAD=["manufacturer-information"] CUR=[]  <<DIFF
+[mdr] code="" "GIFU_audit" HEAD=["manufacturer-information"] CUR=[]  <<DIFF
+[mdr] code="" "mdrgspr" HEAD=["gspr"] CUR=[]  <<DIFF
+[mdr] code="" "Preclinical evaluation" HEAD=["preclinical-clinical","clinical-evaluation"] CUR=["preclinical-clinical"]  <<DIFF
+[mdr] code="" "Clinical evaluations" HEAD=["clinical-evaluation"] CUR=["clinical-evaluation"]
+[mdr] code="" "Clinical evaluation plans" HEAD=["clinical-evaluation"] CUR=[]  <<DIFF
+[mdr] code="" "Clinical evaluationplan" HEAD=["clinical-evaluation"] CUR=[]  <<DIFF
+[mdr] code="" "Instructions for users" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[mdr] code="" "Manufacturing processes" HEAD=["design-manufacturing"] CUR=["design-manufacturing"]
+[mdr] code="" "Validations and verifications" HEAD=[] CUR=[]
+[mdr] code="" "Verification and validations" HEAD=["preclinical-clinical"] CUR=["preclinical-clinical"]
+[mdr] code="" "benefit-risks" HEAD=["risk-management"] CUR=["risk-management"]
+[mdr] code="" "Intended purposes" HEAD=["device-description"] CUR=["device-description"]

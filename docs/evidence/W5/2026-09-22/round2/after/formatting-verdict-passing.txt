@@ -1,0 +1,226 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > classifyPdfA — /Encrypt anywhere in the file > finds a trailer /Encrypt in a 540 KB file (the band neither window read) 38ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > classifyPdfA — /Encrypt anywhere in the file > finds every size in the band, 513 through 575 KB 129ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > classifyPdfA — /Encrypt anywhere in the file > finds a #-escaped /Encrypt, which every reader decodes to /Encrypt 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > classifyPdfA — /Encrypt anywhere in the file > finds an /Encrypt in an earlier incremental section in the middle of a 2 MB file 29ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > classifyPdfA — /Encrypt anywhere in the file > does not read a different name as /Encrypt 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > classifyPdfA — /Encrypt anywhere in the file > pdfNameOffsets points at each occurrence and hasPdfHeader tolerates a short preamble 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > measured facts > reads encryption from the bytes and calls a measured clean set conformant 313ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > measured facts > does not flag an FDA form submitted as FDA issued it 115ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a declared-clean PDF is NOT assessed for security or size — the verdict says so 3ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF attachments" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a declared violation is still reported, and marked as declared 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF (eSTAR form)" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a file with no extension or format is not judged for type — it used to pass 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF/A-1b" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > no files is not a conformant package 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "eSTAR" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > an unread leaf declared as a non-PDF format is still not assessed for security 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > a declared encrypted:true is still a finding, not a not-assessed entry 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "estar") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "form") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.docx" (declared "a") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "attachments") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd refuses the fragment token "x.pdf" (declared "pd") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd refuses the fragment token "x.pdf" (declared "df") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF (eSTAR form)" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF attachments" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared undefined as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd accepts "x.pdf" declared "PDF/A-1b" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd accepts "x.PDF" declared undefined as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > eu-mdr accepts "td.pdf" declared "pdf/a" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.docx is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xpt is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xml is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xlsx is flagged on each and x.pdf on none 3ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.txt is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > pdfa-detect exports the predicate 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a .pdf whose header is past 1 KB is judged for security — and refused, as the packager and transmit guard refuse it 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a .pdf whose bytes are not a PDF is reported under ACCEPTED_FILE_TYPES, not accepted by its extension 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > so does a leaf DECLARED as PDF whose bytes are not a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > secured PDF bytes under a non-.pdf name are still judged 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a measured non-PDF leaf (neither name nor header) is judged, not left unassessed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > the packager and the transmit guard use the shared predicate, not an inline copy 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > assessLeafPdfSecurity — an FDA form as FDA issued it > the vendored 1571 and 3674 are FDA-secured (the premise) 89ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > assessLeafPdfSecurity — an FDA form as FDA issued it > accepts a filled official 1571 and 3674 for FDA 627ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > assessLeafPdfSecurity — an FDA form as FDA issued it > accepts the blank form as issued 10ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > assessLeafPdfSecurity — an FDA form as FDA issued it > grants the FDA exception to FDA only 62ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > assessLeafPdfSecurity — an FDA form as FDA issued it > refuses a form whose FDA-issued bytes were altered 63ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > assessLeafPdfSecurity — an FDA form as FDA issued it > refuses a form whose appended update points /Encrypt at a new dictionary 65ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > assessLeafPdfSecurity — an FDA form as FDA issued it > refuses a form whose appended update redefines FDA's encryption dictionary 59ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > assessLeafPdfSecurity — an FDA form as FDA issued it > refuses an ordinary secured PDF for FDA, and says why 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.test.ts > assessLeafPdfSecurity — an FDA form as FDA issued it > reports an unsecured PDF as unsecured 0ms
+stdout | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts
+{
+  "timestamp": "2026-09-23T04:29:20.120Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T04:29:20.122Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stdout | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — encrypted leaves > refuses to package a leaf that carries an /Encrypt dictionary, naming the leaf 330ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — encrypted leaves > packages the same set without the secured leaf 32ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses a secured 540 KB leaf (trailer past the head window, before the tail window) 4ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses secured PDF bytes shipped under a non-.pdf name 6ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > packages a filled official Form FDA 1571 at m1.1 byte-for-byte, as FDA issued it 477ms
+ ✓ server/services/ectd/__tests__/pdfa-detect.test.ts > classifyPdfA > rejects a non-PDF buffer 2ms
+ ✓ server/services/ectd/__tests__/pdfa-detect.test.ts > classifyPdfA > reads the PDF version from the header 1ms
+ ✓ server/services/ectd/__tests__/pdfa-detect.test.ts > classifyPdfA > detects a declared PDF/A part and conformance from XMP (attribute form) 1ms
+ ✓ server/services/ectd/__tests__/pdfa-detect.test.ts > classifyPdfA > detects PDF/A identifiers in element form 0ms
+ ✓ server/services/ectd/__tests__/pdfa-detect.test.ts > classifyPdfA > flags an encrypted PDF as unacceptable for eCTD 0ms
+ ✓ server/services/ectd/__tests__/pdfa-detect.test.ts > classifyPdfA > treats a valid header without PDF/A claim as acceptable but undeclared 0ms
+ ✓ server/services/ectd/__tests__/pdfa-detect.test.ts > classifyPdfA > accepts an ArrayBuffer input 0ms
+ ✓ server/services/ectd/__tests__/pdfa-detect.test.ts > classifyPdfA — /Encrypt lives in the trailer, not the header > detects encryption declared in the trailer of a file larger than the head window 71ms
+ ✓ server/services/ectd/__tests__/pdfa-detect.test.ts > classifyPdfA — /Encrypt lives in the trailer, not the header > does not invent encryption for a large unsecured PDF 59ms
+ ✓ server/services/ectd/__tests__/pdfa-detect.test.ts > classifyPdfA — /Encrypt lives in the trailer, not the header > still catches it in a small file, where head and tail overlap 0ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — internal consistency > has unique ids scoped to their market and required fields 3ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — internal consistency > summary counts are internally consistent 1ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — internal consistency > covers the formats the Submission Center operates 0ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — eCTD invariants > every eCTD family spec has an index.xml backbone, regional XML, 4-digit sequencing, and lifecycle ops 2ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — eCTD invariants > device/portal families correctly carry no eCTD backbone 0ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — cross-references > an eCTD spec ruleCorpusRegion resolves to corpus rules 0ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — cross-references > region-coded specs map to the system region codes (fda|eu|jp) 1ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — cross-references > scopes by market 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafIdSlug > drops the extension, lowercases, and dashes non-alphanumerics 2ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafIdSlug > falls back to "file" for an empty slug 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > gives leaves in the SAME section distinct IDs (the duplicate-ID bug) 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > dedupes a true collision with a deterministic numeric suffix 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > always produces a valid XML ID token 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > buildMd5Index > sorts by codepoint, not locale (stable across environments) 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > buildMd5Index > emits "md5  relPath" lines 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > files an m-prefixed Module 1 leaf under the regional folder, not "mm/" 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > spells a Module 1 leaf the same way whichever form the caller stored 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > keeps a precise Module 3 section precise — 3.2.S.4.2 is not 3.2.S 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > gives one CTD section one folder, whatever case it was typed in 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > a Module 2-5 leaf resolves against the root backbone, not a regional one 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > keeps the per-study subfolder for a study report 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > follows the region for Module 1 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > recognises the m-prefixed form every Module 1 filing path writes 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > recognises the bare form too 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > is false for Modules 2-5, so they are not swept into the regional backbone 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > an unparseable section belongs to no module — leafPackagePath refuses it by name 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses a secured leaf transmitted to FDA's test environment (staging) 282ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses in production too 5ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses secured PDF bytes under a non-.pdf name 3ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > covers the PMDA eCTD format 6ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses a bundle that cannot be opened, rather than reading it as clear 9ms
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-09-23T04:29:22.100Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T04:29:22.101Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > lets a bundle carrying the official Form FDA 1571 as FDA issued it past the security check 164ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — every bundle format, eSTAR included > refuses a secured leaf in a bundle labelled estar 10ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — clean input > passes well-formed FDA eCTD files with no findings 2ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > flags an uppercase / spaced file name against the naming pattern 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > flags an over-length file name 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > flags an over-length path 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > warns on a non-accepted file type 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > errors on an encrypted file (encryption not allowed) 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > errors when the total exceeds the EU 600 MB submission limit 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — spec-driven (applies to every market) > uses the EU pattern (periods allowed) where FDA would also pass 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — spec-driven (applies to every market) > does not impose a submission size limit where the spec defines none (JP per-file path ok) 0ms
+ ✓ server/services/market-specs/__tests__/estar-advisory-formatting.test.ts > eSTAR advisory formatting (E1 wiring) > resolves the us-estar market spec 2ms
+ ✓ server/services/market-specs/__tests__/estar-advisory-formatting.test.ts > eSTAR advisory formatting (E1 wiring) > validates the built eSTAR package into a well-formed report 2ms
+ ✓ server/services/market-specs/__tests__/estar-advisory-formatting.test.ts > eSTAR advisory formatting (E1 wiring) > flags an encrypted attachment (the case the advisory is meant to catch) 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — every bundle format, eSTAR included > lets a filled official eSTAR — FDA-secured, as FDA issued it — past the security check 698ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > registers a handler for every submission-center tool 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > exposes every submission-center tool in ALL_ANA_TOOLS with a valid schema 4ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > diffs prior vs desired and assigns operations 4ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > forwards prior href + prior_sequence_prefix so a replace emits modified-file 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > refuses to auto-load a prior sequence without tenant context (org from ToolContext only) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > does NOT engage auto-load when explicit prior_leaves are supplied (org not required) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > maps v3 operations to RPS and emits one document + CoU per leaf 141ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > points relatedContextOfUse at the prior sequence for a lifecycle op 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > returns serialized RPS message XML when include_xml is set 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf.xml per study 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > check_ectd_cross_references (pure) > resolves present references and flags missing targets 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > validate_ectd_package (pure) > returns a verdict, score, and findings for a leaf set 43ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > explain_validation_findings refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > cross_region_gap_analysis validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > dispatch_qc_check refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > trace_provenance refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence refuses without org/user context (upsertLeaf is tenant-scoped) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence validates required inputs before touching the core 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > check_consistency validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules returns the corpus without tenant context 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules validates the region enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec returns a single spec by id 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec filters by market without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec validates the family enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template returns a document spine by id 12ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template lists a family without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting enforces a spec and flags a bad name 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting errors on an unknown spec 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_submission_requirements returns and assesses a type 10ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility checks all-criteria-met 6ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility errors on an unknown designation 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change recommends a category from flags 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change lists the catalog without flags 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure gap-checks a CER 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device applies the MDR rules 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_reviewer_checklist returns the 510(k) reviewer questions 14ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device validates the framework 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_biocompatibility_endpoints returns endpoints for a permanent implant 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure now handles rmf 6ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint assembles the reverse-workflow view 31ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint validates the submission type 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer refuses without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer requires a report_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy maps device evidence across regions 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy validates the kind 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_regulatory_timeline returns the 510(k) RTA + decision goal 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint now includes a readiness scorecard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_udi computes the GS1 check digit 6ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_electrical_standards adds collaterals from facts 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_sterilization_requirements resolves the method standard 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_regulatory_capabilities enumerates the layer 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product maps PMOA to the lead center 5ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product validates components 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_qms returns the clause structure and gap-checks 6ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_labeling adds sterile elements for a sterile device 10ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document requires a numeric document_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document validates required inputs 0ms
+
+ Test Files  10 passed (10)
+      Tests  179 passed (179)
+   Start at  04:29:18
+   Duration  6.93s (transform 6.49s, setup 353ms, import 9.25s, tests 4.22s, environment 1ms)
+

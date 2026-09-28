@@ -12,6 +12,7 @@ import {
   mintPasswordSetupToken,
   passwordSetupUrl,
   resolveAppBaseUrl,
+  PublicOriginNotConfiguredError,
   unusableInvitePasswordHash,
 } from '../../server/services/password-setup-token';
 
@@ -67,6 +68,27 @@ describe('passwordSetupUrl / resolveAppBaseUrl', () => {
     expect(resolveAppBaseUrl(req)).toBe('https://configured.example.com');
     delete process.env.APP_URL;
     expect(resolveAppBaseUrl(req)).toBe('https://req.example.com');
+  });
+
+  describe('in production the Host header is never a link origin (password-reset poisoning, D6)', () => {
+    // The request a victim never sent: an attacker's POST /forgot-password
+    // naming the victim, sent straight to the load balancer with its own Host.
+    const forged = { protocol: 'https', get: (h: string) => (h === 'host' ? 'attacker.example' : undefined) };
+
+    it('uses APP_URL, whatever Host says', () => {
+      expect(resolveAppBaseUrl(forged, { NODE_ENV: 'production', APP_URL: 'https://app.example.com' })).toBe(
+        'https://app.example.com',
+      );
+    });
+
+    it.each([
+      ['unset', undefined],
+      ['blank', '   '],
+      ['not a URL', 'app.example.com'],
+      ['plain http', 'http://app.example.com'],
+    ])('refuses when APP_URL is %s, rather than fall back to Host', (_what, APP_URL) => {
+      expect(() => resolveAppBaseUrl(forged, { NODE_ENV: 'production', APP_URL })).toThrow(PublicOriginNotConfiguredError);
+    });
   });
 });
 

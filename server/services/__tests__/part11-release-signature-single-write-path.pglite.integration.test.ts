@@ -189,6 +189,8 @@ const ORG = 77;
 const SIGNER = 501;
 const DOC = 9001;
 const PASSWORD = 'correct horse battery staple';
+/** A signer the ceremony verified with the password alone (no factor enrolled). */
+const PASSWORD_ONLY = { ok: true, authenticationMethod: 'password', secondFactorVerified: false } as const;
 const CONTENT = '<h1>Module 2.5 Clinical Overview</h1><p>Final for release.</p>';
 
 let pg: PGlite;
@@ -210,7 +212,8 @@ const signRelease = (over: Record<string, unknown> = {}) =>
     documentType: 'submission-release',
     signatureReason: 'Release for FDA gateway transmission (reviewed and approved)',
     signatureMeaning: 'approval',
-    password: PASSWORD,
+    // What the route's ceremony verified (services/part11/reverify-signer.ts).
+    reverified: PASSWORD_ONLY,
     signerRole: 'Head of Regulatory Affairs',
     ...over,
   } as any);
@@ -264,7 +267,7 @@ describe('release signing goes through the one electronic_signatures writer', ()
     expect(sig.signed_at).toBeTruthy();
     expect(sig.authentication_timestamp).toBeTruthy();
 
-    // §11.200 factors, exactly as this path verifies them.
+    // §11.200 factors, exactly as the ceremony verified them.
     expect(sig.authentication_method).toBe('password');
     expect(sig.second_factor_verified).toBe(false);
 
@@ -351,6 +354,25 @@ describe('release signing goes through the one electronic_signatures writer', ()
     await pg.query(`UPDATE document_versions SET content = '' WHERE id = $1`, [versionId]);
     await expect(signRelease()).rejects.toThrow(/no stored content/i);
     expect(await rows(`SELECT * FROM electronic_signatures`)).toHaveLength(0);
+  });
+});
+
+describe('the row records what the signing ceremony verified (services/part11/reverify-signer.ts)', () => {
+  it('records a verified second factor as verified (it always wrote password / false)', async () => {
+    await signRelease({ reverified: { ok: true, authenticationMethod: 'password+mfa', secondFactorVerified: true } });
+    const [sig] = await rows(`SELECT authentication_method, second_factor_verified, signature_manifest FROM electronic_signatures`);
+    expect(sig.authentication_method).toBe('password+mfa');
+    expect(sig.second_factor_verified).toBe(true);
+    expect(asManifest(sig.signature_manifest).authenticationMethod).toBe('password+mfa');
+  });
+
+  it('writes nothing for a signer the ceremony did not verify', async () => {
+    await expect(signRelease({ reverified: undefined })).rejects.toThrow(/not re-verified/);
+    await expect(
+      signRelease({ reverified: { ok: false, status: 401, code: 'PASSWORD_VERIFICATION_FAILED', error: 'no' } }),
+    ).rejects.toThrow(/not re-verified/);
+    expect(await rows(`SELECT * FROM electronic_signatures`)).toHaveLength(0);
+    expect(await rows(`SELECT * FROM device_audit_trail`)).toHaveLength(0);
   });
 });
 

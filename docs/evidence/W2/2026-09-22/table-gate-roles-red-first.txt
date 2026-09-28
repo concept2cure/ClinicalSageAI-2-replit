@@ -1,0 +1,14 @@
+# (i) roles entry removed from migration-reachability-baseline.json, rbac-routes.js still present:
+[ci:migration-reachability] 1343 durably-created tables; 1 server-referenced table(s) created only by a deploy-dead migration; 0 baselined
+
+[ci:migration-reachability] ❌ 1 NEW unreachable table reference(s):
+
+  roles
+    created only by : db/migrations/_consolidated/006_roles.sql
+    referenced by   : server/api/enterprise/rbac-routes.js
+
+
+  EXCEPT roles: created only under db/migrations/_consolidated/,
+  which must never be wired. Delete the dead reference, move it onto the
+  canonical store, or write a NEW replay-safe migration in the set.
+exit=1

@@ -1,0 +1,15 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ tests/dev-up-env-local.test.ts > the environment `npm run up` writes > enforces row-level security, as production does 1ms
+ ✓ tests/dev-up-env-local.test.ts > the environment `npm run up` writes > wins over a .env that still says off 2ms
+ ✓ tests/dev-up-env-local.test.ts > the environment `npm run up` writes > is the one up.mjs writes 0ms
+ ✓ tests/dev-up-env-local.test.ts > the development defaults > scripts/setup-local-db.sh sets RLS_ENFORCE=on 1ms
+ ✓ tests/dev-up-env-local.test.ts > the development defaults > .env.example sets RLS_ENFORCE=on 1ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  08:21:42
+   Duration  254ms (transform 74ms, setup 70ms, import 25ms, tests 7ms, environment 0ms)
+

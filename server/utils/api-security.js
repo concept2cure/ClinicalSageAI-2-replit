@@ -3,6 +3,7 @@
  *
  * This module provides security-related utilities for API endpoints.
  */
+import { clientIpKey } from './client-ip.js';
 
 /**
  * Sanitizes API input to prevent injection attacks
@@ -29,7 +30,7 @@ export function sanitizeInput(input) {
 export function logApiUsage(req, endpoint, params = {}) {
   const timestamp = new Date().toISOString();
   const userId = req.user?.id || 'anonymous';
-  const userIp = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+  const userIp = clientIpKey(req);
 
   // In a real implementation, this would write to a database or log service
   console.log(`[${timestamp}] API: ${endpoint} | User: ${userId} | IP: ${userIp}`);

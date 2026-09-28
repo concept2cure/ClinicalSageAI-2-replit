@@ -45,6 +45,15 @@ const MAX_SUBS = 10;
 
 const str = (v: unknown): string => (v == null ? '' : String(v));
 
+/* 2026-09-23 (W5/D7, co-author final pass): coauthor 'finalized' maps to
+   'locked', not 'signed'. 'finalized' is what a FROZEN authoring document
+   files as (services/coauthor/coauthor-snapshot.ts snapshotStatusFor), and
+   freezing needs no signature — any org member may freeze. Reporting it as
+   'signed' said a Form 1571 had been signed when nobody signed it. 'locked' is
+   the surface's own complete-but-unsigned state: the content is sealed and
+   locked, and nothing more is claimed. 'signed' is kept only for a stored
+   'signed'. Whether an unsigned freeze should count as complete at all is a
+   founder decision and is unchanged here: 'locked' is still COMPLETE. */
 /** coauthor_documents.status (real, coarse) → the surface's readiness vocabulary. */
 const STATUS_MAP: Record<string, string> = {
   draft: 'drafting',
@@ -52,7 +61,7 @@ const STATUS_MAP: Record<string, string> = {
   in_progress: 'drafting',
   review: 'qa_review',
   approved: 'approved',
-  finalized: 'signed',
+  finalized: 'locked',
   signed: 'signed',
   locked: 'locked',
 };
@@ -60,9 +69,11 @@ const STATUS_MAP: Record<string, string> = {
 const mapStatus = (raw: unknown): string => STATUS_MAP[str(raw).toLowerCase()] ?? 'drafting';
 
 /** Ordering to keep the most-advanced status when two docs land on one section, and to
- *  pick the least-advanced OPEN section as a module's gate. */
+ *  pick the least-advanced OPEN section as a module's gate. 2026-09-23 (W5/D7, co-author
+ *  final pass): a bare lock (coauthor 'locked' / 'finalized', no signature) ranks below
+ *  the sign-off states, as in the IND assembler. */
 const RANK: Record<string, number> = {
-  not_started: 0, drafting: 2, qa_review: 4, approved: 5, signed: 6, locked: 7,
+  not_started: 0, drafting: 2, qa_review: 4, locked: 5, approved: 6, signed: 7,
 };
 const COMPLETE = new Set(['approved', 'signed', 'locked']);
 

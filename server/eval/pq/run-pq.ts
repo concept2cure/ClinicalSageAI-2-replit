@@ -38,10 +38,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { APPROVED_MODELS } from '../../services/ai-governance/approved-models.js';
 import { getGateway } from '../../services/ai-gateway/gateway.js';
-import { type GoldDocTask, buildGenerationPrompt, scoreGenerationTask } from '../doc-quality/doc-quality-metrics.js';
+import {
+  type GoldDocTask,
+  buildExtractionPrompt,
+  buildGenerationPrompt,
+  parseExtraction,
+  scoreExtractionTask,
+  scoreGenerationTask,
+} from '../doc-quality/doc-quality-metrics.js';
 import {
   computeVerdict,
   servedModelMatches,
+  type PqExtractionResult,
   type PqGenerationResult,
   type PqProtocol,
   type PqRecord,
@@ -65,6 +73,89 @@ function gitSha(): string | null {
   }
 }
 
+/** Whether the protocol says the extraction component should run at all. */
+function extractionComponentRuns(protocol: PqProtocol): boolean {
+  const ext = protocol.components.extraction;
+  return Boolean(ext?.required && ext.executable);
+}
+
+/**
+ * The extraction component, as its own phase.
+ *
+ * Same rules as generation, for the same reason: the pinned model is asked
+ * directly and the model the provider REPORTS serving is checked. It is
+ * deliberately NOT routed through a per-document-type extraction service —
+ * that would measure the service (and whichever model IT selects), which is
+ * the attribution failure the rag component is still blocked on.
+ */
+async function runExtractionPhase(
+  protocol: PqProtocol,
+  tasks: GoldDocTask[],
+  gateway: Pick<ReturnType<typeof getGateway>, 'evaluateModel'>,
+  entry: { id: string; pinnedVersion: string },
+): Promise<PqExtractionResult[]> {
+  if (!extractionComponentRuns(protocol)) return [];
+  const minF1 = protocol.components.extraction?.criteria.minF1 ?? 0.8;
+  const runnable = tasks.filter(
+    (t) =>
+      t.taskType === 'extraction' &&
+      typeof t.input === 'string' &&
+      t.input.trim() &&
+      t.expectedFields &&
+      Object.keys(t.expectedFields).length > 0,
+  );
+
+  const out: PqExtractionResult[] = [];
+  for (const task of runnable) {
+    try {
+      const response = await gateway.evaluateModel(entry.id, {
+        taskType: 'document_drafting',
+        messages: [{ role: 'user', content: buildExtractionPrompt(task) }],
+        temperature: 0,
+        callerModule: 'pq-runner',
+      });
+      const served = response.resolvedModel ?? null;
+      const fields = parseExtraction(response.content);
+      if (!fields) {
+        // Not a score of zero: a reply that does not parse is a task that
+        // produced no scorable output, and scoring it zero would be
+        // indistinguishable from a model that extracted every field wrongly.
+        throw new Error('the reply contained no JSON object');
+      }
+      const score = scoreExtractionTask(task, fields, minF1);
+      const verified = servedModelMatches(served, entry.pinnedVersion);
+      out.push({
+        taskId: task.id,
+        docType: task.docType,
+        servedModel: served,
+        servedModelVerified: verified,
+        f1: score.f1,
+        precision: score.precision,
+        recall: score.recall,
+      });
+      console.info(
+        `  ${task.id.padEnd(34)} [${task.docType}] F1=${score.f1.toFixed(2)} ` +
+          `(P=${score.precision.toFixed(2)} R=${score.recall.toFixed(2)}) served=${served ?? 'unreported'}` +
+          `${verified ? '' : '  ← NOT the pinned version'}`,
+      );
+    } catch (err) {
+      const message = (err as Error).message;
+      out.push({
+        taskId: task.id,
+        docType: task.docType,
+        servedModel: null,
+        servedModelVerified: false,
+        f1: null,
+        precision: null,
+        recall: null,
+        error: message.slice(0, 300),
+      });
+      console.info(`  ${task.id.padEnd(34)} [${task.docType}] NOT EXECUTED — ${message.slice(0, 120)}`);
+    }
+  }
+  return out;
+}
+
 export interface RunPqOptions {
   modelId: string;
   /** Write the record. The CLI's --record. */
@@ -79,6 +170,7 @@ export interface RunPqResult {
   verdict: PqRecord['verdict'];
   reasons: string[];
   generation: PqGenerationResult[];
+  extraction: PqExtractionResult[];
   recordPath: string | null;
 }
 
@@ -146,7 +238,9 @@ export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
     }
   }
 
-  const { verdict, reasons } = computeVerdict(protocol, generation);
+  const extraction = await runExtractionPhase(protocol, bank.tasks, gateway, entry);
+
+  const { verdict, reasons } = computeVerdict(protocol, generation, extraction);
   console.info(`${'─'.repeat(72)}\nVerdict: ${verdict}`);
   for (const r of reasons) console.info(`  - ${r}`);
 
@@ -167,6 +261,7 @@ export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
       startedAt,
       finishedAt: new Date().toISOString(),
       generation,
+      extraction,
       verdict,
       reasons,
     };
@@ -176,7 +271,7 @@ export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
     writeFileSync(recordPath, `${JSON.stringify(rec, null, 2)}\n`);
     console.info(`\nrecord: ${path.relative(REPO_ROOT, recordPath)}`);
   }
-  return { verdict, reasons, generation, recordPath };
+  return { verdict, reasons, generation, extraction, recordPath };
 }
 
 /* CLI. Only when invoked directly — the tests import runPq. */

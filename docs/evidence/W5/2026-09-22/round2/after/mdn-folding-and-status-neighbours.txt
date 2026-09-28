@@ -1,0 +1,209 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/fda-submission-honesty.contract.test.ts > the simulating second ESG transport stays deleted > server/services/ESGSubmissionService.ts does not exist 5ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the simulating second ESG transport stays deleted > nothing under server/ imports it 555ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the simulating second ESG transport stays deleted > no server code mints a simulated ESG transaction or acknowledgement 685ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > there is exactly one path from the platform to an agency gateway > only the governed transmit and the eCTD spine invoke a gateway transmit 468ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > there is exactly one path from the platform to an agency gateway > the product's 510(k) transmit handler runs the shared governed transmit 1ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > there is exactly one path from the platform to an agency gateway > the HTTP transmit route runs the same shared governed transmit 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the governed transmit cannot be reached without a named human gate > the 510(k) transmit handler requires a verified Part 11 signature unconditionally 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the governed transmit cannot be reached without a named human gate > the handler refuses rather than synthesising a re-authentication time 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the governed transmit cannot be reached without a named human gate > transmit is in the Part 11 e-signature tier, so only the governed-action route can dispatch it 1ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the governed transmit cannot be reached without a named human gate > the gateway registry still refuses any transmit that names no human gate 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the governed transmit cannot be reached without a named human gate > the governed transmit never invents the verification instant itself 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > a missing credential is a refusal that names the configuration > the FDA ESG gateway raises CredentialError listing every missing variable 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > a missing credential is a refusal that names the configuration > CredentialError renders the missing names into its message 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > a missing credential is a refusal that names the configuration > the 510(k) handler surfaces it as a refusal, never as a transmission 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the 510(k) endpoint does not claim a transmission it never made > does not record the package as submitted to FDA 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the 510(k) endpoint does not claim a transmission it never made > reports transmitted: false rather than success 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the 510(k) endpoint does not claim a transmission it never made > does not stamp an HTTP status code for a call that was never made 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the 510(k) endpoint does not claim a transmission it never made > points the caller at the path that does transmit 0ms
+stdout | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts
+{
+  "timestamp": "2026-09-23T04:38:54.428Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T04:38:54.429Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts
+{
+  "timestamp": "2026-09-23T04:38:54.429Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts
+[database] Database connection successful
+
+stdout | server/services/submission-gateways/__tests__/transmit-authorization.test.ts
+{
+  "timestamp": "2026-09-23T04:38:55.128Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T04:38:55.129Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/transmit-authorization.test.ts
+{
+  "timestamp": "2026-09-23T04:38:55.129Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/transmit-authorization.test.ts
+[database] Database connection successful
+
+stderr | server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > does not gate the read-only operations
+{
+  "timestamp": "2026-09-23T04:38:55.503Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/submission-gateways/fda-esg.ts:582:33",
+    "queryPreview": "SELECT transmission_id, status, ack_received_at FROM submission_transmittals WHERE id = $1 AND region = 'fda' AND gateway = 'esg'",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses a transmit with no authorization at all 3ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > explains why, and points at the governed route 2ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses every region, not only FDA 3ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses an authorization of an unrecognised kind 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses governed-http without a reason, an actor, or a verified re-auth time 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses governed-signature without a signature id 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > lets a properly authorized request through the guard to the gateway 2ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > does not gate the read-only operations 11ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > is labelled as a platform record, not an agency acknowledgement 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > names who generated it and says it is not proof of receipt 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > never heads itself "<Agency> Acknowledgement" — the old shape 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > still carries the agency-issued identifiers it legitimately holds 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > is honest about a transmission the gateway never acknowledged 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > acknowledgement filenames > marks a platform record in the filename, which outlives the page 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > acknowledgement filenames > names a genuine agency artefact as one 0ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent 1508ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > resolveFdaEsgTransport > defaults to AS2 when unset (every existing deployment) 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > resolveFdaEsgTransport > selects REST when asked, case-insensitively, per environment prefix 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > resolveFdaEsgTransport > refuses an unrecognised value instead of falling back to AS2 silently 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > loadFdaRestCredentials > names every missing REST variable 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > loadFdaRestCredentials > uses the staging prefix for staging 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > no credentials → CredentialError naming the REST variables; nothing inserted, no socket 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > credentials present → typed UnverifiedTransportError, transmitted:false, no row, no socket, no identifier 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > the staging environment reads the FDA_ESG_STAGING_* REST variables 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > with the variable unset the AS2 path is still the one taken (CredentialError names the AS2 vars) 2ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses a secured leaf transmitted to FDA's test environment (staging) 486ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses in production too 4ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses secured PDF bytes under a non-.pdf name 2ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > covers the PMDA eCTD format 2ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > refuses a bundle that cannot be opened, rather than reading it as clear 1ms
+stderr | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > lets a bundle carrying the official Form FDA 1571 as FDA issued it past the security check
+{
+  "timestamp": "2026-09-23T04:38:56.608Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/submission-gateways/fda-esg.ts:263:31",
+    "queryPreview": "INSERT INTO submission_transmittals ( organization_id, program_id, package_id, region, gateway, format, submission_type, transport, bundle_path, bundle_sha25...",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — leaf security from the signed bundle > lets a bundle carrying the official Form FDA 1571 as FDA issued it past the security check 191ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — every bundle format, eSTAR included > refuses a secured leaf in a bundle labelled estar 3ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts > FdaEsgGateway SFTP transmit — no fabricated ACK > reports in_transit (not received) and a null ack after a bare SFTP upload 6ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts > FdaEsgGateway SFTP transmit — no fabricated ACK > does not stamp an ack_received_at on the transmittal row at upload time 2ms
+stdout | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+{
+  "timestamp": "2026-09-23T04:38:56.821Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T04:38:56.823Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+{
+  "timestamp": "2026-09-23T04:38:56.823Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+[database] Database connection successful
+
+stderr | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — every bundle format, eSTAR included > lets a filled official eSTAR — FDA-secured, as FDA issued it — past the security check
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — every bundle format, eSTAR included > lets a filled official eSTAR — FDA-secured, as FDA issued it — past the security check
+{
+  "timestamp": "2026-09-23T04:38:57.148Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > returns a failed, non-blocking check and the leaf-security report with the gateway result 18ms
+ ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — every bundle format, eSTAR included > lets a filled official eSTAR — FDA-secured, as FDA issued it — past the security check 961ms
+stdout | server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts
+{
+  "timestamp": "2026-09-23T04:38:58.072Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T04:38:58.073Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts
+{
+  "timestamp": "2026-09-23T04:38:58.074Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts > executeGovernedTransmit — the sign is an electronic signature > writes the electronic_signatures row inside the ledger transaction with the declared meaning and the bundle digest 5ms
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts > executeGovernedTransmit — the sign is an electronic signature > records the weaker factors honestly when only a password was verified 1ms
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts > executeGovernedTransmit — the sign is an electronic signature > rolls the ledger transaction back and reports ledgerWriteFailed when the signature row cannot be written 3ms
+
+ Test Files  8 passed (8)
+      Tests  57 passed (57)
+   Start at  04:38:51
+   Duration  6.96s (transform 4.92s, setup 450ms, import 11.32s, tests 5.00s, environment 1ms)
+

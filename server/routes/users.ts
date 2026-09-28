@@ -17,6 +17,7 @@ import {
 
 import { verifyLiveToken } from '../services/token-revocation';
 import { isDevAuthAllowed } from '../auth/dev-auth-policy.js';
+import { sessionMfaFields } from '../services/mfa-enrolment';
 
 const router = Router();
 
@@ -174,9 +175,10 @@ router.get('/me', async (req: Request, res: Response) => {
       organizationId: decoded.organizationId,
       organizationName: orgName,
       organizationClientType: orgClientType,
-      mfaEnabled: userData.mfaEnabled || false,
-      mfaMethods: [],
-      mustChangePassword: userData.mustChangePassword || false,
+      // One reading of the account, the session's (mfa-enrolment.ts); mfaMethods
+      // was the literal [] until 2026-09-23 (VSR-001 §13.3 item 4).
+      ...sessionMfaFields(userData),
+      mustChangePassword: userData.mustChangePassword === true,
       avatarUrl: userData.avatar || null,
       createdAt: userData.createdAt?.toISOString() || new Date().toISOString(),
       lastLoginAt: userData.lastLogin?.toISOString() || new Date().toISOString(),

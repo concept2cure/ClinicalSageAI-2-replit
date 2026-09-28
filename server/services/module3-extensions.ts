@@ -865,6 +865,74 @@ interface RegionalSubsection {
   generator: (matched: CanonicalSource[]) => { narrative: string; tables: GeneratedTable[] };
 }
 
+/**
+ * ── Why the regional pointer tables have a STATUS column ─────────────────────
+ *
+ * These four generators used to state, in filed §3.2.R.1 dossier content, that
+ * documents existed:
+ *
+ *   US: 'Container Closure (Type III DMF)' → 'Letter of Authorization on file'
+ *   EU: 'QP Declaration on GMP Compliance' → 'included in Module 1.5.2'
+ *   CA: 'Drug Master File (Type I)'        → 'Letter of Access on file'
+ *
+ * and their narratives said the same in prose ('are provided in Module 1.6',
+ * 'is documented in 3.2.P.4', 'the Japan-specific specifications are
+ * presented'). No canonical CMC source type holds any of them — the set is
+ * CMC_SOURCE_TYPES in module3Composer.ts, and there is no letter-of-
+ * authorization, QP-declaration or letter-of-access member — so the assertion
+ * was made over a register that could not hold the fact either way. A reviewer
+ * read 'on file' for a dossier in which nothing was on file, and the sponsor's
+ * own IND cross-reference gate would at the same moment be raising 'has no
+ * Letter of Authorization on file' for the same product.
+ *
+ * A §3.2.R.1 pointer is now three things a reviewer can act on: the item the
+ * region requires, the authority requiring it, and where this dossier stands
+ * on it. Three statuses, and nothing else is expressible:
+ *
+ *   · cross-referenced to a §3.2 section this dossier composes — a real
+ *     pointer, and the export gate is what makes it true;
+ *   · required in Module 1, which Module 3 cannot see and therefore cannot
+ *     vouch for — stated as the requirement, never as provision;
+ *   · not recorded in this dossier.
+ *
+ * The status is never a free string at the call site: it comes from the three
+ * constructors below, so a fourth "on file" cannot be typed back in.
+ */
+
+/** Status of one regional item. Constructed, never written at a call site. */
+type RegionalStatus = { readonly text: string };
+
+/** The item lives in a §3.2 section this dossier composes. */
+const crossReferenced = (section: string): RegionalStatus => ({
+  text: `Cross-referenced to ${section} of this dossier`,
+});
+
+/**
+ * The item belongs to Module 1. Module 3 cannot read Module 1, so this states
+ * the requirement and where it is filed — it does not claim it was filed.
+ */
+const requiredInModule1 = (location: string): RegionalStatus => ({
+  text: `Required in ${location} — outside Module 3; not verified by this section`,
+});
+
+/** Nothing in the canonical CMC source set records this item. */
+const notRecorded = (): RegionalStatus => ({ text: 'Not recorded in this dossier' });
+
+interface RegionalPointer {
+  item: string;
+  /** The regulation, guideline or annex that requires it. */
+  basis: string;
+  status: RegionalStatus;
+}
+
+function regionalPointerTable(title: string, pointers: RegionalPointer[]): GeneratedTable {
+  return {
+    title,
+    headers: ['Item', 'Regulatory basis', 'Status in this dossier'],
+    rows: pointers.map(p => [p.item, p.basis, p.status.text]),
+  };
+}
+
 const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
   {
     sectionKey: '3.2.R.1.US',
@@ -897,37 +965,56 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
           'Batch Size': batchSize,
         })
       );
-      tables.push({
-        title: 'US-Specific Documentation Pointers',
-        headers: ['Item', 'Reference / Location'],
-        rows: [
+      tables.push(
+        regionalPointerTable('US-Specific Documentation Pointers', [
           // NDA / ANDA — governed by 21 CFR Part 314
-          [
-            'Executed Batch Records (NDA / ANDA)',
-            'Provided per 21 CFR 314.50(d)(1)(ii) — see 3.2.P.3.4',
-          ],
-          [
-            'Comparability Protocols (NDA / ANDA)',
-            'Per 21 CFR 314.70 — referenced in 3.2.P.2 / 3.2.P.3',
-          ],
-          // BLA — governed by 21 CFR Parts 600–680
-          [
-            'Executed Batch Records (BLA)',
-            'Provided per 21 CFR 601.2 (content & format of BLA) — see 3.2.P.3.4',
-          ],
-          ['Post-Approval Changes (BLA)', 'Per 21 CFR 601.12 — referenced in 3.2.P.2 / 3.2.P.3'],
+          {
+            item: 'Executed Batch Records (NDA / ANDA)',
+            basis: '21 CFR 314.50(d)(1)(ii)',
+            status: crossReferenced('3.2.P.3.4'),
+          },
+          {
+            item: 'Comparability Protocols (NDA / ANDA)',
+            basis: '21 CFR 314.70',
+            status: crossReferenced('3.2.P.2 / 3.2.P.3'),
+          },
+          // BLA — governed by 21 CFR Parts 600-680
+          {
+            item: 'Executed Batch Records (BLA)',
+            basis: '21 CFR 601.2 (content and format of a BLA)',
+            status: crossReferenced('3.2.P.3.4'),
+          },
+          {
+            item: 'Post-Approval Changes (BLA)',
+            basis: '21 CFR 601.12',
+            status: crossReferenced('3.2.P.2 / 3.2.P.3'),
+          },
           // Cross-application items
-          [
-            'Method Validation Package',
-            'Per FDA Guidance for Industry (Analytical Procedures and Methods Validation)',
-          ],
-          ['Container Closure (Type III DMF)', 'Letter of Authorization on file — see 3.2.P.7'],
-          [
-            'Establishment Information',
-            `FEI / DUNS for ${mfgSite || '[site]'} — see Form FDA 356h`,
-          ],
-        ],
-      });
+          {
+            item: 'Method Validation Package',
+            basis: 'FDA Guidance for Industry — Analytical Procedures and Methods Validation',
+            status: crossReferenced('3.2.P.5.3'),
+          },
+          {
+            item: 'Container Closure (Type III DMF)',
+            // The DMF holder's letter of authorization is what grants the
+            // right of reference. No CMC source type records one, so this
+            // section cannot say whether it exists.
+            basis: 'Letter of Authorization from the DMF holder, per 21 CFR 314.420',
+            status: notRecorded(),
+          },
+          {
+            item: 'Establishment Information (FEI / DUNS, registration status)',
+            basis: `Form FDA 356h${mfgSite ? ` — for ${mfgSite}` : ''}`,
+            status: requiredInModule1('Module 1 (Form FDA 356h)'),
+          },
+          {
+            item: 'Field copies, certifications, patent and exclusivity information',
+            basis: '21 CFR 314.50(a), (f) and (h)',
+            status: requiredInModule1('Module 1 (administrative)'),
+          },
+        ])
+      );
       return {
         narrative:
           `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — United States contains FDA-specific ` +
@@ -936,15 +1023,17 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
             ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. `
             : '') +
           (mfgSite ? `Primary US-listed manufacturing site: ${mfgSite}. ` : '') +
-          `\n\nThis section provides pointers to the regulations applicable by submission type. For NDA / ANDA: ` +
-          `(i) executed batch records per 21 CFR 314.50(d)(1)(ii), (ii) the method validation package per ` +
-          `FDA Guidance for Industry, (iii) comparability protocols per 21 CFR 314.70, and (iv) Type III Drug ` +
-          `Master File (DMF) letters of authorization for container closure components. For BLA: equivalent ` +
-          `content per 21 CFR 601.2 (BLA content & format) and 21 CFR 601.12 (post-approval changes), with ` +
-          `additional product- and establishment-specific requirements under 21 CFR Parts 600–680. ` +
-          `\n\nEstablishment information (FEI / DUNS / registration status) for all manufacturing, packaging, ` +
-          `testing, and labeling sites listed in Form FDA 356h is cross-referenced. Field copies, certifications, ` +
-          `and patent/exclusivity information are provided in Module 1 (administrative). ` +
+          `\n\nThe table below lists what FDA requires by submission type, the authority requiring it, and ` +
+          `where this dossier stands on each item. For NDA / ANDA that is (i) executed batch records per ` +
+          `21 CFR 314.50(d)(1)(ii), (ii) the method validation package per FDA Guidance for Industry, ` +
+          `(iii) comparability protocols per 21 CFR 314.70, and (iv) a Type III Drug Master File letter of ` +
+          `authorization for container closure components. For BLA it is the equivalent content per ` +
+          `21 CFR 601.2 and 21 CFR 601.12, with the product- and establishment-specific requirements of ` +
+          `21 CFR Parts 600-680. ` +
+          `\n\nEstablishment information (FEI / DUNS / registration status) for every manufacturing, packaging, ` +
+          `testing and labeling site, together with field copies, certifications and patent/exclusivity ` +
+          `information, is required in Module 1. Module 3 does not carry Module 1, so this section states those ` +
+          `requirements and does not attest that they have been met. ` +
           (comp ? `\n\nComposition statement: ${comp}.` : ''),
         tables,
       };
@@ -968,27 +1057,42 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
           Strength: strength,
         })
       );
-      tables.push({
-        title: 'EU-Specific Documentation Pointers',
-        headers: ['Item', 'Reference / Location'],
-        rows: [
-          [
-            'QP Declaration on GMP Compliance',
-            'Per Annex 16 of EU GMP Guide — included in Module 1.5.2',
-          ],
-          ['Manufacturing Authorisation', 'Copy of MIA for each EU-based site — Module 1.2'],
-          [
-            'Process Validation Scheme',
-            'Per Annex 15 (Qualification & Validation) — cross-ref 3.2.P.3.5',
-          ],
-          [
-            'Certificate of Suitability (CEP)',
-            'Where applicable, for drug substance and excipients — Module 1',
-          ],
-          ['Environmental Risk Assessment', 'Per EMA/CHMP/SWP/4447/00 Rev. 1 — Module 1.6'],
-          ['TSE/BSE Compliance', 'Per EMA EMEA/410/01 rev. 3 — cross-ref 3.2.A.2 and 3.2.A.3'],
-        ],
-      });
+      tables.push(
+        regionalPointerTable('EU-Specific Documentation Pointers', [
+          {
+            item: 'QP Declaration on GMP Compliance',
+            // No CMC source type records a QP declaration, so this section
+            // cannot say whether one was made, let alone that it is in 1.5.2.
+            basis: 'Annex 16 of the EU GMP Guide; filed in Module 1.5.2',
+            status: notRecorded(),
+          },
+          {
+            item: 'Manufacturing Authorisation (MIA) for each EU site',
+            basis: 'Directive 2001/83/EC Article 40; filed in Module 1.2',
+            status: requiredInModule1('Module 1.2'),
+          },
+          {
+            item: 'Process Validation Scheme',
+            basis: 'Annex 15 of the EU GMP Guide (Qualification and Validation)',
+            status: crossReferenced('3.2.P.3.5'),
+          },
+          {
+            item: 'Certificate of Suitability (CEP), where applicable',
+            basis: 'Ph. Eur. certification procedure (EDQM)',
+            status: notRecorded(),
+          },
+          {
+            item: 'Environmental Risk Assessment',
+            basis: 'EMA/CHMP/SWP/4447/00 Rev. 1; filed in Module 1.6',
+            status: requiredInModule1('Module 1.6'),
+          },
+          {
+            item: 'TSE/BSE Compliance',
+            basis: 'EMA EMEA/410/01 rev. 3',
+            status: crossReferenced('3.2.A.2 and 3.2.A.3'),
+          },
+        ])
+      );
       return {
         narrative:
           `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — European Union contains EMA-specific ` +
@@ -997,13 +1101,14 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
           (form
             ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. `
             : '') +
-          `\n\nThis section provides pointers to the Qualified Person (QP) declaration on GMP compliance ` +
-          `(per Annex 16 of the EU GMP Guide), Manufacturing Authorisations (MIA) for each EU-based ` +
-          `manufacturing site, the process validation scheme aligned with Annex 15 (Qualification & ` +
-          `Validation), and Certificates of Suitability (CEP) for the drug substance and applicable excipients. ` +
-          `\n\nEnvironmental Risk Assessment (ERA) per EMA/CHMP/SWP/4447/00 Rev. 1 and TSE/BSE compliance ` +
-          `documentation per EMA EMEA/410/01 rev. 3 are provided in Module 1.6 and cross-referenced from ` +
-          `3.2.A.2 / 3.2.A.3 of this dossier. ` +
+          `\n\nThe table below lists what the EU requires, the authority requiring it, and where this dossier ` +
+          `stands on each item: the Qualified Person (QP) declaration on GMP compliance under Annex 16 of the ` +
+          `EU GMP Guide, a Manufacturing Authorisation (MIA) for each EU-based site, the process validation ` +
+          `scheme aligned with Annex 15, and Certificates of Suitability (CEP) for the drug substance and any ` +
+          `applicable excipient. ` +
+          `\n\nThe Environmental Risk Assessment per EMA/CHMP/SWP/4447/00 Rev. 1 is required in Module 1.6, ` +
+          `which Module 3 does not carry; TSE/BSE compliance per EMA EMEA/410/01 rev. 3 is addressed in ` +
+          `3.2.A.2 and 3.2.A.3 of this dossier. ` +
           (comp ? `\n\nComposition statement: ${comp}.` : ''),
         tables,
       };
@@ -1027,27 +1132,40 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
           Strength: strength,
         })
       );
-      tables.push({
-        title: 'Japan-Specific Documentation Pointers',
-        headers: ['Item', 'Reference / Location'],
-        rows: [
-          [
-            'Foreign Manufacturer Accreditation',
-            'Per Article 13-3, PMD Act — Module 1 (J-administrative)',
-          ],
-          ['Marketing Authorization Holder (MAH)', 'Designated MAH details — Module 1'],
-          ['JP Compendial Compliance', 'JP 18th Edition — referenced in 3.2.P.4 and 3.2.P.5'],
-          ['GMP Compliance Certificate', 'Per MHLW Ordinance No. 179 — Module 1'],
-          [
-            'Japanese-Specific Specifications',
-            'Where JP monograph differs from USP/Ph. Eur. — see 3.2.P.5',
-          ],
-          [
-            'Stability Data — Japanese Climate Zone',
-            'Zone II data per ICH Q1A(R2) (long-term 25 °C / 60% RH; intermediate 30 °C / 65% RH) per PMDA expectations — cross-ref 3.2.P.8',
-          ],
-        ],
-      });
+      tables.push(
+        regionalPointerTable('Japan-Specific Documentation Pointers', [
+          {
+            item: 'Foreign Manufacturer Accreditation',
+            basis: 'Article 13-3, PMD Act; filed in Module 1 (J-administrative)',
+            status: requiredInModule1('Module 1 (J-administrative)'),
+          },
+          {
+            item: 'Marketing Authorization Holder (MAH) designation',
+            basis: 'PMD Act; filed in Module 1',
+            status: requiredInModule1('Module 1'),
+          },
+          {
+            item: 'JP Compendial Compliance',
+            basis: 'Japanese Pharmacopoeia, 18th Edition',
+            status: crossReferenced('3.2.P.4 and 3.2.P.5'),
+          },
+          {
+            item: 'GMP Compliance Certificate',
+            basis: 'MHLW Ordinance No. 179; filed in Module 1',
+            status: requiredInModule1('Module 1'),
+          },
+          {
+            item: 'Japanese-specific specifications, where the JP monograph differs from USP / Ph. Eur.',
+            basis: 'PMDA review expectation',
+            status: crossReferenced('3.2.P.5'),
+          },
+          {
+            item: 'Stability data, Japanese climate Zone II',
+            basis: 'ICH Q1A(R2) — long-term 25 C / 60% RH, intermediate 30 C / 65% RH',
+            status: crossReferenced('3.2.P.8'),
+          },
+        ])
+      );
       return {
         narrative:
           `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — Japan contains PMDA / MHLW-specific ` +
@@ -1056,14 +1174,16 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
           (form
             ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. `
             : '') +
-          `\n\nThis section provides pointers to Foreign Manufacturer Accreditation under Article 13-3 of ` +
-          `the PMD Act, designation of the Japanese Marketing Authorization Holder (MAH), and GMP ` +
-          `compliance certification per MHLW Ordinance No. 179. ` +
-          `\n\nCompendial compliance with the Japanese Pharmacopoeia (JP 18th Edition) is documented in ` +
-          `3.2.P.4 (Control of Excipients) and 3.2.P.5 (Control of Drug Product). Where JP monograph ` +
-          `requirements differ from USP or Ph. Eur., the Japan-specific specifications are presented. ` +
-          `Stability data covering Japanese climate Zone II per ICH Q1A(R2) (long-term 25 °C / 60% RH; ` +
-          `intermediate 30 °C / 65% RH), as expected by PMDA, are cross-referenced to 3.2.P.8. ` +
+          `\n\nThe table below lists what PMDA / MHLW require, the authority requiring it, and where this ` +
+          `dossier stands on each item. Foreign Manufacturer Accreditation under Article 13-3 of the PMD Act, ` +
+          `designation of the Japanese Marketing Authorization Holder (MAH) and GMP compliance certification ` +
+          `under MHLW Ordinance No. 179 are all required in Module 1, which Module 3 does not carry; this ` +
+          `section states those requirements and does not attest that they have been met. ` +
+          `\n\nCompendial compliance with the Japanese Pharmacopoeia (JP 18th Edition) is addressed in ` +
+          `3.2.P.4 (Control of Excipients) and 3.2.P.5 (Control of Drug Product), which is also where any ` +
+          `Japan-specific specification appears when the JP monograph differs from USP or Ph. Eur. Stability ` +
+          `data for Japanese climate Zone II per ICH Q1A(R2) (long-term 25 C / 60% RH; intermediate ` +
+          `30 C / 65% RH) is addressed in 3.2.P.8. ` +
           (comp ? `\n\nComposition statement: ${comp}.` : ''),
         tables,
       };
@@ -1086,21 +1206,28 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
           Strength: strength,
         })
       );
-      tables.push({
-        title: 'Canada-Specific Documentation Pointers',
-        headers: ['Item', 'Reference / Location'],
-        rows: [
-          [
-            'Yearly Biologic Product Report (YBPR)',
-            'Per Health Canada Guidance — Submission of Biologic Drug Substance and Product Information',
-          ],
-          ['Certified Product Information Document (CPID)', 'Module 1 (Canadian administrative)'],
-          [
-            'Drug Master File (Type I — Drug Substance)',
-            'Letter of Access on file — cross-ref 3.2.S',
-          ],
-        ],
-      });
+      tables.push(
+        regionalPointerTable('Canada-Specific Documentation Pointers', [
+          {
+            item: 'Yearly Biologic Product Report (YBPR), where applicable',
+            basis:
+              'Health Canada Guidance — Submission of Biologic Drug Substance and Product Information',
+            status: notRecorded(),
+          },
+          {
+            item: 'Certified Product Information Document (CPID)',
+            basis: 'Health Canada requirement; filed in Module 1 (Canadian administrative)',
+            status: requiredInModule1('Module 1 (Canadian administrative)'),
+          },
+          {
+            item: 'Drug Master File (Type I — Drug Substance)',
+            // As with the US Type III DMF: the letter of access is what grants
+            // the right of reference, and no CMC source type records one.
+            basis: 'Letter of Access from the DMF holder',
+            status: notRecorded(),
+          },
+        ])
+      );
       return {
         narrative:
           `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — Canada contains Health Canada-specific ` +
@@ -1108,9 +1235,10 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
           (form
             ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. `
             : '') +
-          `\n\nThis section provides pointers to the Certified Product Information Document (CPID), the Yearly ` +
-          `Biologic Product Report (YBPR) commitment where applicable, and Drug Master File letters of access for ` +
-          `the drug substance and packaging components.`,
+          `\n\nThe table below lists what Health Canada requires, the authority requiring it, and where this ` +
+          `dossier stands on each item: the Certified Product Information Document (CPID), the Yearly Biologic ` +
+          `Product Report (YBPR) commitment where applicable, and a Drug Master File letter of access for the ` +
+          `drug substance and packaging components.`,
         tables,
       };
     },
@@ -1338,6 +1466,25 @@ export function appendixSectionsRequiringSourceType(sourceType: CmcSourceType): 
 export const REGIONS_WITH_REGIONAL_TEMPLATE: ReadonlySet<string> = new Set(
   REGIONAL_SUBSECTIONS.map(rs => rs.region)
 );
+
+/**
+ * sectionKey → title for every 3.2.R subsection this module can compose.
+ *
+ * Derived from REGIONAL_SUBSECTIONS rather than retyped, for the reason the
+ * appendix labels were added to SECTION_LABELS: compile persists a
+ * 3.2.R.1.<region> row like any other section, and a label table without it
+ * left that row with no label anywhere — so the build board could not list it,
+ * score it or offer it for approval, while the export gate counted it. A board
+ * reporting 100% against a gate that refuses is the failure mode.
+ */
+export const REGIONAL_SECTION_LABELS: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(REGIONAL_SUBSECTIONS.map(rs => [rs.sectionKey, rs.title])),
+);
+
+/** The source-payload fields a 3.2.R subsection reads, by section key. */
+export function regionalRequiredFields(sectionKey: string): string[] {
+  return REGIONAL_SUBSECTIONS.find(rs => rs.sectionKey === sectionKey)?.requiredFields ?? [];
+}
 
 /**
  * Whether Module 3 has any 3.2.R template for this region.

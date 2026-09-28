@@ -1,0 +1,362 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > reads an Original-Message-ID folded onto a CRLF continuation line 7ms
+   → expected null to be '<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c…' // Object.is equality
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > reads an Original-Message-ID folded with a bare LF and a tab 1ms
+   → expected null to be '<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c…' // Object.is equality
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > reads a Disposition folded after its action mode 2ms
+   → expected 'automatic-action/MDN-sent-automatical…' to be 'automatic-action/MDN-sent-automatical…' // Object.is equality
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > a folded failure modifier is still a refusal 3ms
+   → expected 'Agency MDN did not accept the message…' to match object { kind: 'refused', …(1) }
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > does not join a following field that is not a continuation 1ms
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — which refusals are rejections > an accepting MDN that names no message is "unlinked": delivered, receipt unconfirmed 1ms
+   → expected 'Agency MDN names no Original-Message-…' to match object { kind: 'unlinked', …(1) }
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — which refusals are rejections > an MDN for a different message stays a refusal 1ms
+   → expected 'Agency MDN acknowledges a different m…' to match object { kind: 'refused', …(1) }
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — which refusals are rejections > a failed disposition stays a refusal even when it names no message 1ms
+   → expected 'Agency MDN did not accept the message…' to match object { kind: 'refused', …(1) }
+ × server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — which refusals are rejections > a body with no disposition stays a refusal 1ms
+   → expected 'Agency returned success with no MDN d…' to match object { kind: 'refused', …(1) }
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > refuses to transmit a not-ready message (readiness gating) in any env 5ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > refuses a not-ready message even in production 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > throws in production with no gateway configured (never fakes an ACK) 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > audits a production refusal as not-configured 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > returns a deterministic simulated receipt outside production 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > does not use Date.now() for the asserted timestamp (injectable clock) 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > with a gateway configured, no longer refuses as not-implemented: the real call is attempted 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > puts the E2B message on the wire as a signed AS2 envelope and reports transmitted only on an accepting MDN 6ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > signs the body with the sponsor key (a real RSA-SHA256 signature, verifiable with the public key) 5ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses — typed, audited — when the agency answers non-2xx 3ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses a 2xx whose MDN rejects the message — a 200 is not an acceptance 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses a 2xx whose MDN acknowledges a different message 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses an accepting MDN that names no message — it cannot be tied to what was sent (2026-09-22 W5/D7) 2ms
+ × server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > accepts an MDN whose Original-Message-ID is folded onto a continuation line 7ms
+   → ICSR was NOT transmitted to FDA_FAERS (gateway-rejected): Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent; confirm receipt at the agency.
+ × server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > accepts an MDN whose Disposition is folded after its action mode 2ms
+   → ICSR was NOT transmitted to FDA_FAERS (gateway-rejected): Agency MDN did not accept the message: automatic-action/MDN-sent-automatically;
+ × server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > an accepting MDN that names no message is receipt-unproven, not gateway-rejected, and the audit keeps the MDN 5ms
+   → expected 'gateway-rejected' to be 'receipt-unproven' // Object.is equality
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses a 2xx with no MDN disposition at all 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > surfaces a socket failure as a transport-stage refusal, audited 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > with an AS2 config missing its key or agency AS2 id, refuses BEFORE any network call and names the variables 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — HTTPS Basic upload > is selected when only a password is configured, sends Basic auth, and reports the gateway receipt id 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — HTTPS Basic upload > refuses a 2xx that carries no receipt identifier — delivery it cannot cite is not recorded 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — HTTPS Basic upload > refuses a non-2xx 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — HTTPS Basic upload > a password config with no username refuses before the wire and names the variable 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > returns null when no URL is set 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > returns null when a URL is set but no credentials 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > returns config when URL + password are present 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > returns config when URL + cert path are present 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > carries the AS2 identity variables and an explicit protocol override 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > ignores an unrecognised protocol value rather than guessing a third transport 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 2 — raw MDN persistence > persists the raw MDN body on the AS2 receipt UPDATE 7ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 2 — raw MDN persistence > downloadAcknowledgment returns the persisted raw MDN verbatim when present 7ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 2 — raw MDN persistence > falls back to a LABELLED platform record for pre-fix rows (mdn_raw=NULL) 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > checkStatus — says where the status came from > reports source=stored: FDA ESG re-reads its own row and does not ask the agency 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > SFTP path — the application number is required, never invented > refuses an over-1GB bundle with no application number before any transmittal row exists 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > SFTP path — the application number is required, never invented > refuses an UNASSIGNED placeholder application number 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > a failed disposition records the transmittal rejected, keeps the raw MDN, and throws 6ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > processed/error is a refusal; processed/warning is an acceptance 3ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an MDN for a different message is refused 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > a body with no disposition at all is refused 2ms
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN with a folded Original-Message-ID is the receipt of the message sent 7ms
+   → Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent; confirm receipt at the agency.
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN with a folded Disposition is the receipt of the message sent 2ms
+   → Agency MDN did not accept the message: automatic-action/MDN-sent-automatically;
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN that names no message is not recorded rejected: the transmittal stays inside the duplicate-send lock 5ms
+   → expected { …(2) } to be undefined
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 6 — rollbackTransmittal governed action > flips status to rolled_back AND records a transmittal_rollback governed action 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 6 — rollbackTransmittal governed action > refuses with RollbackNotPermittedError when the row has not shipped (pending) 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 6 — rollbackTransmittal governed action > refuses with RollbackNotPermittedError when the row is already rolled_back 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 7 — findActiveTransmittal lookup > returns the existing active row for (org, package_id, bundle_sha256) 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 7 — findActiveTransmittal lookup > returns null when no active row exists in THIS tenant (cross-tenant double-transmit allowed) 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 7 — findActiveTransmittal lookup > returns null when no packageId is supplied (lock surface only covers packaged transmits) 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > accepts an MDN whose Original-Message-ID is folded onto a continuation line
+IcsrGatewayTransmitError: ICSR was NOT transmitted to FDA_FAERS (gateway-rejected): Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent; confirm receipt at the agency.
+ ❯ transmitViaAs2 server/services/ind-lifecycle/icsr-gateway-transport.ts:312:11
+    310|   const refusal = mdnRefusal(parseMdn(raw), as2MessageId);
+    311|   if (refusal) {
+    312|     throw new IcsrGatewayTransmitError(built.gateway, 'gateway-rejecte…
+       |           ^
+    313|   }
+    314|   const receiptId = headerString(response.headers['message-id']) ?? as…
+ ❯ Module.transmitIcsr server/services/ind-lifecycle/icsr-gateway-transport.ts:419:11
+ ❯ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts:341:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { stage: 'gateway-rejected', httpStatus: 200, agencyResponseRaw: 'Original-Message-ID:\r\n <2ab1d829-7560-4763-871b-77a2624f31f0@SPONSOR-AS2>\r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n', transmitted: false }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > accepts an MDN whose Disposition is folded after its action mode
+IcsrGatewayTransmitError: ICSR was NOT transmitted to FDA_FAERS (gateway-rejected): Agency MDN did not accept the message: automatic-action/MDN-sent-automatically;
+ ❯ transmitViaAs2 server/services/ind-lifecycle/icsr-gateway-transport.ts:312:11
+    310|   const refusal = mdnRefusal(parseMdn(raw), as2MessageId);
+    311|   if (refusal) {
+    312|     throw new IcsrGatewayTransmitError(built.gateway, 'gateway-rejecte…
+       |           ^
+    313|   }
+    314|   const receiptId = headerString(response.headers['message-id']) ?? as…
+ ❯ Module.transmitIcsr server/services/ind-lifecycle/icsr-gateway-transport.ts:419:11
+ ❯ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts:347:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { stage: 'gateway-rejected', httpStatus: 200, agencyResponseRaw: 'Original-Message-ID: <f8b37436-bbec-4640-8493-16fa1bcad5b2@SPONSOR-AS2>\r\nDisposition: automatic-action/MDN-sent-automatically;\r\n\tprocessed\r\n', transmitted: false }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > an accepting MDN that names no message is receipt-unproven, not gateway-rejected, and the audit keeps the MDN
+AssertionError: expected 'gateway-rejected' to be 'receipt-unproven' // Object.is equality
+
+Expected: "receipt-unproven"
+Received: "gateway-rejected"
+
+ ❯ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts:356:23
+    354|     const err = await transmitIcsr(readyMessage(), { now: fixedClock, …
+    355|     expect(err).toBeInstanceOf(IcsrGatewayTransmitError);
+    356|     expect(err.stage).toBe('receipt-unproven');
+       |                       ^
+    357|     expect(err.agencyResponseRaw).toBe(wire.body);
+    358|     expect(audit).toHaveBeenCalledWith(expect.objectContaining({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > reads an Original-Message-ID folded onto a CRLF continuation line
+AssertionError: expected null to be '<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c…' // Object.is equality
+
+- Expected:
+"<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@ZZFDA_CONCEPT2CURE_SPONSOR_TEST>"
+
++ Received:
+null
+
+ ❯ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts:31:33
+     29|   it('reads an Original-Message-ID folded onto a CRLF continuation lin…
+     30|     const p = parseMdn(mdn(`Original-Message-ID:\r\n ${MESSAGE_ID}\r\n…
+     31|     expect(p.originalMessageId).toBe(MESSAGE_ID);
+       |                                 ^
+     32|     expect(p.accepted).toBe(true);
+     33|     expect(mdnRefusal(p, MESSAGE_ID)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > reads an Original-Message-ID folded with a bare LF and a tab
+AssertionError: expected null to be '<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c…' // Object.is equality
+
+- Expected:
+"<3f1c2b9e-7a4d-4e2b-9c1a-5d6e7f8a9b0c@ZZFDA_CONCEPT2CURE_SPONSOR_TEST>"
+
++ Received:
+null
+
+ ❯ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts:38:33
+     36|   it('reads an Original-Message-ID folded with a bare LF and a tab', (…
+     37|     const p = parseMdn(mdn(`Original-Message-ID:\n\t${MESSAGE_ID}\nDis…
+     38|     expect(p.originalMessageId).toBe(MESSAGE_ID);
+       |                                 ^
+     39|     expect(mdnRefusal(p, MESSAGE_ID)).toBeNull();
+     40|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > reads a Disposition folded after its action mode
+AssertionError: expected 'automatic-action/MDN-sent-automatical…' to be 'automatic-action/MDN-sent-automatical…' // Object.is equality
+
+Expected: "automatic-action/MDN-sent-automatically; processed"
+Received: "automatic-action/MDN-sent-automatically;"
+
+ ❯ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts:47:27
+     45|       'Disposition: automatic-action/MDN-sent-automatically;\r\n proce…
+     46|     ));
+     47|     expect(p.disposition).toBe(ACCEPTING);
+       |                           ^
+     48|     expect(p.accepted).toBe(true);
+     49|     expect(mdnRefusal(p, MESSAGE_ID)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > a folded failure modifier is still a refusal
+AssertionError: expected 'Agency MDN did not accept the message…' to match object { kind: 'refused', …(1) }
+
+- Expected:
+{
+  "kind": "refused",
+  "reason": StringMatching /did not accept/,
+}
+
++ Received:
+"Agency MDN did not accept the message: automatic-action/MDN-sent-automatically;"
+
+ ❯ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts:58:39
+     56|     ));
+     57|     expect(p.accepted).toBe(false);
+     58|     expect(mdnRefusal(p, MESSAGE_ID)).toMatchObject({ kind: 'refused',…
+       |                                       ^
+     59|   });
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — which refusals are rejections > an accepting MDN that names no message is "unlinked": delivered, receipt unconfirmed
+AssertionError: expected 'Agency MDN names no Original-Message-…' to match object { kind: 'unlinked', …(1) }
+
+- Expected:
+{
+  "kind": "unlinked",
+  "reason": StringMatching /names no Original-Message-ID/,
+}
+
++ Received:
+"Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent; confirm receipt at the agency."
+
+ ❯ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts:71:15
+     69|   it('an accepting MDN that names no message is "unlinked": delivered,…
+     70|     const r = mdnRefusal(parseMdn(mdn(`Disposition: ${ACCEPTING}\r\n`)…
+     71|     expect(r).toMatchObject({ kind: 'unlinked', reason: expect.stringM…
+       |               ^
+     72|   });
+     73|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — which refusals are rejections > an MDN for a different message stays a refusal
+AssertionError: expected 'Agency MDN acknowledges a different m…' to match object { kind: 'refused', …(1) }
+
+- Expected:
+{
+  "kind": "refused",
+  "reason": StringMatching /different message/,
+}
+
++ Received:
+"Agency MDN acknowledges a different message (<other@X>)."
+
+ ❯ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts:76:15
+     74|   it('an MDN for a different message stays a refusal', () => {
+     75|     const r = mdnRefusal(parseMdn(mdn(`Original-Message-ID: <other@X>\…
+     76|     expect(r).toMatchObject({ kind: 'refused', reason: expect.stringMa…
+       |               ^
+     77|   });
+     78|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — which refusals are rejections > a failed disposition stays a refusal even when it names no message
+AssertionError: expected 'Agency MDN did not accept the message…' to match object { kind: 'refused', …(1) }
+
+- Expected:
+{
+  "kind": "refused",
+  "reason": StringMatching /did not accept/,
+}
+
++ Received:
+"Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; failed/failure: sender-unauthorized"
+
+ ❯ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts:84:15
+     82|       MESSAGE_ID,
+     83|     );
+     84|     expect(r).toMatchObject({ kind: 'refused', reason: expect.stringMa…
+       |               ^
+     85|   });
+     86|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — which refusals are rejections > a body with no disposition stays a refusal
+AssertionError: expected 'Agency returned success with no MDN d…' to match object { kind: 'refused', …(1) }
+
+- Expected:
+{
+  "kind": "refused",
+  "reason": StringMatching /no MDN disposition/,
+}
+
++ Received:
+"Agency returned success with no MDN disposition in the body."
+
+ ❯ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts:88:50
+     86|
+     87|   it('a body with no disposition stays a refusal', () => {
+     88|     expect(mdnRefusal(parseMdn(''), MESSAGE_ID)).toMatchObject({ kind:…
+       |                                                  ^
+     89|   });
+     90| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN with a folded Original-Message-ID is the receipt of the message sent
+GatewayError: Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent; confirm receipt at the agency.
+ ❯ FdaEsgGateway.transmit server/services/submission-gateways/fda-esg.ts:510:15
+    508|           errorClass: 'gateway', errorMessage: refusal, mdnRaw,
+    509|         });
+    510|         throw new GatewayError(refusal, response.httpStatus, null, mdn…
+       |               ^
+    511|       }
+    512|       await updateTransmittal(transmittalId, {
+ ❯ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts:426:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { httpStatus: 200, gatewayCode: null, raw: '------=_Part_FDA_MDN\r\nContent-Type: message/disposition-notification\r\n\r\nReporting-UA: FDA-CESUB\r\nFinal-Recipient: rfc822; FDA-CESUB\r\nOriginal-Message-ID:\r\n <9c185c69-aef0-41d5-b479-4e0e16fa4378@SPONSOR-AS2>\r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n------=_Part_FDA_MDN--\r\n', errorClass: 'gateway' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN with a folded Disposition is the receipt of the message sent
+GatewayError: Agency MDN did not accept the message: automatic-action/MDN-sent-automatically;
+ ❯ FdaEsgGateway.transmit server/services/submission-gateways/fda-esg.ts:510:15
+    508|           errorClass: 'gateway', errorMessage: refusal, mdnRaw,
+    509|         });
+    510|         throw new GatewayError(refusal, response.httpStatus, null, mdn…
+       |               ^
+    511|       }
+    512|       await updateTransmittal(transmittalId, {
+ ❯ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts:436:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { httpStatus: 200, gatewayCode: null, raw: '------=_Part_FDA_MDN\r\nContent-Type: message/disposition-notification\r\n\r\nReporting-UA: FDA-CESUB\r\nFinal-Recipient: rfc822; FDA-CESUB\r\nOriginal-Message-ID: <687b95bd-7c9a-442c-83d9-7f39b278953a@SPONSOR-AS2>\r\nDisposition: automatic-action/MDN-sent-automatically;\r\n\tprocessed\r\n------=_Part_FDA_MDN--\r\n', errorClass: 'gateway' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN that names no message is not recorded rejected: the transmittal stays inside the duplicate-send lock
+AssertionError: expected { …(2) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "args": [
+    "rejected",
+    200,
+    "gateway",
+    "Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent; confirm receipt at the agency.",
+    "------=_Part_FDA_MDN
+Content-Type: message/disposition-notification
+
+Reporting-UA: FDA-CESUB
+Final-Recipient: rfc822; FDA-CESUB
+Disposition: automatic-action/MDN-sent-automatically; processed
+------=_Part_FDA_MDN--
+",
+    4242,
+  ],
+  "sql": "UPDATE submission_transmittals SET status = $1, http_status = $2, error_class = $3, error_message = $4, mdn_raw = $5, updated_at = NOW() WHERE id = $6",
+}
+
+ ❯ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts:447:30
+    445|     // 'rejected' is outside the lock and freed the same bundle for a …
+    446|     expect(err).toBeInstanceOf(Error);
+    447|     expect(rejectedUpdate()).toBeUndefined();
+       |                              ^
+    448|
+    449|     // Still not the agency's acceptance of THIS message: no 'received…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  14 failed | 43 passed (57)
+   Start at  04:35:05
+   Duration  701ms (transform 629ms, setup 220ms, import 719ms, tests 182ms, environment 0ms)
+

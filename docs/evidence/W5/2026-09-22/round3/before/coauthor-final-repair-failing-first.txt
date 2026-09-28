@@ -1,0 +1,110 @@
+# 2026-09-23 co-author final pass REPAIR — failing first (tree before the seed 112 backfill)
+## skeptic probe Q2/Q3 (verify-r4/coauthor/regression) on the unrepaired tree
+[Q2] docs 1 status APPROVED seals after re-seed 0
+[Q2] place -> 409 {"error":"SOURCE_NOT_SEALED","message":"This document is marked approved, but there is no sealed record of the text that was approved, so a copy cannot be filed as approved. Nothing was filed or changed."}
+[Q3] place -> 201 approved {"success":true,"document":{"id":1,"organizationId":7,"title":"Clinical Overview (CTD Module 2.5)","content":"## 2.5.1 — 2.5.1  Product development rationale\n\nBX-204 (rezatinib) is developed for adv
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r4/coauthor/regression/regress.reg.test.ts > regression probes > Q2: demo DB seeded by HEAD seed 112, re-seeded by current seed 112, then Place into filing 126ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r4/coauthor/regression/regress.reg.test.ts > regression probes > Q3: demo DB seeded by HEAD seed 99 (old seal shape), then Place into filing 58ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+    186|     console.log('[Q2] place ->', res.status, JSON.stringify(res.body).…
+      Tests  1 failed | 1 passed | 2 skipped (4)
+## server/routes/__tests__/coauthorSnapshotSeeds.test.ts
+exit 1
+ ✓ server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112-ind-authoring-doc: the IND demo document is sealed and files as approved (201) 222ms
+ × server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112 on a database the previous seed populated (APPROVED, no seal): a re-run seals it and it files as approved 45ms
+   → expected [] to have a length of 1 but got +0
+ × server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112 does not seal an unsealed APPROVED document whose sections are not the text it seeded 41ms
+   → expected [] to have a length of 1 but got +0
+ ✓ server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 99-doc-journey: the doc-journey document is sealed in the router format and files as approved (201) 113ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112 on a database the previous seed populated (APPROVED, no seal): a re-run seals it and it files as approved
+AssertionError: expected [] to have a length of 1 but got +0
+ FAIL  server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112 does not seal an unsealed APPROVED document whose sections are not the text it seeded
+AssertionError: expected [] to have a length of 1 but got +0
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+
+Note: in the second new case ("does not seal ... not the text it seeded") the inner assertion (0 seals, placement 409)
+holds on the unrepaired tree because that tree never backfills at all; the case fails here at its closing
+expectRouterSeal (the restored document is still not sealed). Its inner guard is shown failing on its own mutant
+(m_backfill_nomatch: the text-match check removed) in ev-r3/after/coauthor-final-repair-passing.txt.
+
+## Re-run after adding the fourth case ('no longer APPROVED'), on the pre-repair seed 112 (swapped in, then restored; cmp identical)
+ ✓ 112-ind-authoring-doc: the IND demo document is sealed and files as approved (201) 147ms
+ × 112 on a database the previous seed populated (APPROVED, no seal): a re-run seals it and it files as approved 27ms
+ × 112 does not seal an unsealed APPROVED document whose sections are not the text it seeded 30ms
+ × 112 does not seal an unsealed document that is no longer APPROVED 28ms
+ ✓ 99-doc-journey: the doc-journey document is sealed in the router format and files as approved (201) 65ms
+      Tests  3 failed | 2 passed (5)
+  (the new case fails at its closing expectRouterSeal on this tree; its guard is shown on mutant m_backfill_nostatus)
+
+
+## Second issue found while re-running the skeptics' probes (not in the blocking list; fixed in this repair)
+The regression probe file also carries Q1, which the skeptics recorded failing (verify-r4/coauthor/regression/regress-run.txt):
+[Q1] editor order: ["1.1","1.2"]
+[Q1] freeze -> 200
+[Q1] sealed order: [["1.1","2026-01-01T00:00:00.000Z","ffffffff-0000-4000-8000-0000000000a1"],["1.2","2026-01-01T00:00:00.000Z","00000000-0000-4000-8000-0000000000b1"]]
+[Q1] place -> 409 {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was finalized, so they cannot be filed as finalized. Nothing was filed or changed."}
+[Q1] copies written: 0
+Reproduced, and the reverse direction found: the seal compare re-sorted every seal by (order_index, created_at to the ms, id),
+while the database orders by the microsecond. For two tied sections created in one millisecond it (a) refused an untouched
+document (Q1) and (b) FILED, as finalized/approved, a document whose two sections were swapped after the seal.
+
+### server/routes/__tests__/coauthorSnapshotSeal.test.ts (real authoring router freeze), on the tree before this repair — exit 1
+ ✓ coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text 179ms
+ ✓ coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files 60ms
+ ✓ coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section 80ms
+ ✓ coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > a DRAFT document still takes a template (the lock is the refusal, not the route) 13ms
+ ✓ coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing 66ms
+ × coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > tied sections created inside one millisecond: the real freeze seals them and the copy files (201) 44ms
+   → {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was finalized, so they cannot be filed as finalized. Nothing was filed or changed."}: expected 409 to be 201 // Object.is equality
+ × coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the same document with its two sections swapped after the seal is still refused (409, nothing written) 14ms
+   → {"success":true,"document":{"id":5,"organizationId":7,"title":"SameMs","content":"## 1.2 — Beta\n\nbeta\n\n## 1.1 — Alpha\n\nalpha","sections":null,"status":"finalized","templateId":null,"createdBy":"3","clientWorkspace":null,"completionPercentage":null,"regulatoryComplianceScore":null,"metadata":{"docId":"0c000000-0000-4000-8000-0000000000d1","source":"authoring-document","status":"FROZEN","sealVersion":"v1.0.frozen","sealContentHash":"7afd0d5fd26454d90864ee36c631decacead90e2160a8c3ae65bda1ba44f9049"},"ectdModuleId":null,"moduleNumber":"m3.2.p.5","moduleName":null,"embedding":null,"creat
+      Tests  2 failed | 5 passed (7)
+
+### server/routes/__tests__/coauthorSnapshotFromSource.test.ts, on the pre-repair coauthor-snapshot.ts (swapped in, run, restored; cmp identical) — exit 1
+ ✓ coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > an APPROVED source files its own saved text and title — a forged body is not what gets approved 77ms
+ ✓ coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > a FROZEN source likewise files its sealed text as finalized 39ms
+ ✓ coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > refuses a source with no saved sections — there is nothing to file — and creates nothing 23ms
+ ✓ coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404 9ms
+ ✓ coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > leaves an unsourced POST as it was: the body is the text, and it is a draft 12ms
+ ✓ coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > follows FINALIZED_DOCUMENT_READ_ONLY end to end: place, refused edit, place again 38ms
+ ✓ coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text 48ms
+ ✓ coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again 47ms
+ ✓ coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records 42ms
+ ✓ coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > placing an unchanged source again writes nothing 43ms
+ ✓ coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a first placement after the approved sections were rewritten, and creates nothing 10ms
+ ✓ coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a re-placement over an existing approved copy, and leaves the copy exactly as it was 24ms
+ ✓ coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a section added after the seal (apply-template merge mode) 20ms
+ ✓ coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a document renamed after its seal: the copy would carry a title nobody approved 10ms
+ ✓ coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses an APPROVED source with no sealed record: what was approved cannot be established 7ms
+ ✓ coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections 11ms
+ ✓ coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a seal whose bytes no longer match its own hash 10ms
+ ✓ coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > holds the copy to the LATEST seal (approval after freeze) 27ms
+ ✓ coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > a draft source is not held to a seal (it has none), and still files as a draft 12ms
+ ✓ coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses a source whose sections are headings with no text — the body would be empty 9ms
+ ✓ coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses whitespace-only sections the same way 10ms
+ ✓ coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > SOURCE_CHANGED: a source approved between the first read and the lock is refused, and nothing is written 8ms
+ ✓ coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > DOCUMENT_ALIAS_CONFLICT: an alias naming another organization's row is refused, and neither row nor alias changes 20ms
+ ✓ coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > a re-take that changes the copy writes one audit event with the text it replaced — even saved co-author edits 33ms
+ ✓ coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > an unchanged re-take writes no audit event (and nothing else) 32ms
+ ✓ coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > re-creating a deleted copy is recorded against the same id 53ms
+ ✓ coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > both events carry their reason and are flagged regulatory-significant and GxP-relevant 71ms
+ ✓ coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (a) a section heading renamed after the seal, same text: 409, nothing written 17ms
+ ✓ coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (b) a section code changed after the seal: 409, nothing written 11ms
+ ✓ coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (c) two sections swapped in order after the seal, texts unchanged: 409, nothing written 24ms
+ ✓ coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (d) another tenant's seal of the same document id does not seal this tenant's document: 409, nothing written 17ms
+ ✓ coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > a seal without section ids (the shape seed 99 wrote) whose filed text matches is not reported as altered 19ms
+ ✓ coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > files the editor order 18ms
+ ✓ coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a seal the router wrote before it ordered ties (storage order) is read in the editor order, not refused 25ms
+ × coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a legacy seal with two ties inside one millisecond files them in the order sealed (201) 23ms
+   → {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was approved, so they cannot be filed as approved. Nothing was filed or changed."}: expected 409 to be 201 // Object.is equality
+ × coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > the same legacy seal, with those two swapped after it, is refused (409, nothing written) 18ms
+   → {"success":true,"document":{"id":20,"organizationId":7,"title":"SameMs","content":"## 1.2 — Beta\n\nbeta\n\n## 1.1 — Alpha\n\nalpha\n\n## 1.3 — Gamma\n\ngamma","sections":null,"status":"approved","templateId":null,"createdBy":"3","clientWorkspace":null,"completionPercentage":null,"regulatoryComplianceScore":null,"metadata":{"docId":"12000000-0000-4000-8000-000000000005","source":"authoring-document","status":"APPROVED","sealVersion":"v1.0.frozen","sealContentHash":"5396d82ddd5ab2a369fdf772e1aa48c4e1ad84fe66039688c7558eb313090c29"},"ectdModuleId":null,"moduleNumber":"m1.2","moduleName":nul
+ ✓ coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing 18ms
+ ✓ coauthorSnapshotFromSource.test.ts > the filed text is the text the seal check read > a section changed before the read and restored after it is refused, not filed 17ms
+ ✓ coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > ["0a000000-0000-4000-8000-000000000001"] is refused 400 and nothing is written 5ms
+ ✓ coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > {"id":"0a000000-0000-4000-8000-000000000001"} is refused 400 and nothing is written 3ms
+ ✓ coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > 42 is refused 400 and nothing is written 3ms
+ ✓ coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > true is refused 400 and nothing is written 3ms
+      Tests  2 failed | 40 passed (42)

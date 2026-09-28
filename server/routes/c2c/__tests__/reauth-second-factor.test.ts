@@ -23,14 +23,28 @@ const h = vi.hoisted(() => ({
   hash: '' as string | null,
   mfaEnabled: false as boolean | Error,
   validCode: '246810',
+  /** users.status: 'active', or how the account was taken out of use. */
+  status: 'active',
 }));
 
 vi.mock('../../../db.js', () => ({
   pool: {
     query: async (sql: string) =>
-      /password_hash/.test(sql) ? { rows: h.hash ? [{ password_hash: h.hash }] : [] } : { rows: [] },
+      /password_hash/.test(sql)
+        ? { rows: h.hash ? [{ password_hash: h.hash }] : [] }
+        : /SELECT status FROM users/.test(sql)
+          ? { rows: [{ status: h.status }] }
+          : { rows: [] },
     connect: async () => ({ query: async () => ({ rows: [] }), release: () => {} }),
   },
+}));
+// The account's lockout (auth-security-service). Before F-30 an unreadable
+// lockout read as "not locked", so this file never had to model it; the
+// lockout itself is pinned by tests/db/signing-lockout.dbtest.ts.
+vi.mock('../../../services/auth-security-service.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../services/auth-security-service.js')>()),
+  isAccountLocked: async () => ({ locked: false }),
+  recordFailedLogin: async () => ({ locked: false, remainingAttempts: 5 }),
 }));
 vi.mock('../../../services/mfaService.js', () => ({
   verifyToken: vi.fn(async (_userId: number, code: string) => code === h.validCode),
@@ -47,6 +61,20 @@ const PASSWORD = 'correct horse battery staple';
 beforeEach(() => {
   h.hash = bcrypt.hashSync(PASSWORD, 4);
   h.mfaEnabled = false;
+  h.status = 'active';
+});
+
+describe('an account taken out of use (VSR-001 F-28)', () => {
+  it('cannot sign a governed action, with the right password and code', async () => {
+    h.mfaEnabled = true;
+    for (const status of ['suspended', 'inactive']) {
+      h.status = status;
+      expect(await verifyReauth(7, { password: PASSWORD, totp: h.validCode })).toEqual({
+        ok: false,
+        error: 'REAUTH_ACCOUNT_INACTIVE',
+      });
+    }
+  });
 });
 
 describe('a signer with a second factor enrolled', () => {

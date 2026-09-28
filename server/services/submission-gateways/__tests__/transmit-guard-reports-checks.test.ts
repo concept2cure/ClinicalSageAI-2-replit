@@ -29,7 +29,7 @@ vi.mock('../fda-esg', () => ({
   },
 }));
 
-import { getGateway } from '../index';
+import { getGateway, preTransmitFindings } from '../index';
 import type { SubmissionBundle } from '../types';
 
 async function bundle(): Promise<SubmissionBundle> {
@@ -58,5 +58,23 @@ describe('transmit guard — the result carries what was checked', () => {
     expect(dtd).toMatchObject({ passed: false });
     expect(dtd?.detail).toMatch(/ich-ectd-3-2\.dtd/);
     expect(r.preTransmit?.leafSecurity).toEqual({ pdfEntries: 1, agencyFormsAsIssued: [] });
+  });
+
+  // 2026-09-23 (W5/D7, round-2 review): one reduction of that report, exported
+  // beside the guard, is what every transmit record carries — the sequence
+  // spine's §11.10(e) row and the governed transmit's sign record alike.
+  it('reduces to the failed checks and warnings a transmit record carries; null when the guard reported nothing', async () => {
+    const r = await getGateway('fda', 'esg').transmit({
+      organizationId: 7, userId: 11, programId: null, packageId: 1, bundle: await bundle(), environment: 'staging',
+      authorization: { kind: 'governed-signature', signatureActionId: 'sig-1', actorUserId: 11 },
+    });
+    const f = preTransmitFindings(r);
+    expect(f.failedChecks).toEqual(
+      expect.arrayContaining([expect.stringMatching(/^dtd-self-contained: missing: ich-ectd-3-2\.dtd/)]),
+    );
+    expect(f.failedChecks).toHaveLength(r.preTransmit!.checks.filter((c) => !c.passed).length);
+    expect(f.warnings).toEqual(r.preTransmit!.warnings);
+    // A result the guard attached nothing to is "reported nothing", never "all passed".
+    expect(preTransmitFindings({})).toEqual({ failedChecks: null, warnings: null });
   });
 });

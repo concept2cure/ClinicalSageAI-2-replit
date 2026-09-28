@@ -1,0 +1,6 @@
+# RED: the no-public-origin invite case with server/routes/tenant-users.ts at HEAD 902c2607d (origin resolved only after the account was created); restored after. 2026-09-23T10:18:11Z
+
+ × server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — in production with no public origin, nothing is created and the admin is told why (503) 263ms
+   → expected 503 "Service Unavailable", got 201 "Created"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 19 skipped (20)

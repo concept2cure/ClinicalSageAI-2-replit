@@ -327,6 +327,10 @@ export async function verifyClaim(
   // Compute overall verification status
   const failedChecks = checks.filter(c => c.result === 'fail');
   const warningChecks = checks.filter(c => c.result === 'warning');
+  // A check that did not run did not pass: until 2026-09-23 a skipped source
+  // match (model unavailable, or its reply unreadable) left a claim "verified"
+  // whenever the rule-based checks passed.
+  const skippedChecks = checks.filter(c => c.result === 'skipped');
   const criticalFails = failedChecks.filter(c => c.severity === 'critical');
 
   let verificationStatus: VerificationResult['verificationStatus'];
@@ -334,7 +338,7 @@ export async function verifyClaim(
     verificationStatus = 'failed';
   } else if (failedChecks.length > 0) {
     verificationStatus = 'flagged';
-  } else if (warningChecks.length > 0) {
+  } else if (warningChecks.length > 0 || skippedChecks.length > 0) {
     verificationStatus = 'partially_verified';
   } else {
     verificationStatus = 'verified';
@@ -458,8 +462,13 @@ async function checkSourceMatch(
       .map(s => `Source: ${s.title}\nExcerpt: ${(s.excerpt || s.description || '').slice(0, 500)}`)
       .join('\n\n');
 
+    // Whether a claim is supported by its evidence is a regulatory review
+    // verdict (a critical check in the claim's confidence score): only a model
+    // approved for it may serve it. It defaulted to gpt-4o as a 'general'
+    // request, which the gateway's approval check never sees.
     const aiResult = await ai.chat({
-      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      taskType: 'regulatory_review',
+      callerModule: 'confidenceScoringEngine.checkSourceMatch',
       temperature: 0.1,
       response_format: { type: 'json_object' },
       messages: [
@@ -480,7 +489,10 @@ Return JSON: {
       ],
     });
 
-    const parsed = JSON.parse(aiResult.content || '{}');
+    const parsed = JSON.parse(aiResult.content ?? '');
+    // An unreadable reply is no verdict: it read as "partially supported (0%)".
+    // Thrown to the catch below, which reports the check as skipped.
+    if (typeof parsed?.supported !== 'boolean') throw new Error('verification reply had no verdict');
 
     if (parsed.supported && parsed.confidence >= 0.7) {
       return {

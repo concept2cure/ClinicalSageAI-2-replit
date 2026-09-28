@@ -148,6 +148,24 @@ export class AgentExecutionError extends CouncilError {
 }
 
 /**
+ * The task type each council agent is routed as. The gateway decides which
+ * models may serve a request from its task type, so this is what keeps an
+ * unapproved model out of the council: all four agents do high-risk
+ * regulatory work — two draft the section, two review it.
+ *
+ * Until 2026-09-23 the reviewers were routed by output format instead — JSON
+ * meant `structured_output`, which any model may serve — so the Statistician
+ * checking the draft's numbers and the Critic reviewing it as an agency would
+ * could run on a model not approved for regulatory review.
+ */
+export function councilTaskType(operation: string): TaskType {
+  return operation === 'STATISTICIAN' || operation === 'CRITIC' ? 'regulatory_review' : 'document_drafting';
+}
+
+/** Code the gateway's ModelNotApprovedError carries (ai-gateway/gateway.ts). */
+const MODEL_NOT_APPROVED = 'MODEL_NOT_APPROVED_FOR_HIGH_RISK';
+
+/**
  * Normalized result of a council LLM call. Mirrors the fields the council
  * consumes downstream, mapped from the governed gateway's response.
  */
@@ -158,6 +176,50 @@ interface CouncilLLMResult {
   fallbackUsed: boolean;
   latencyMs: number;
   tokensUsed: { prompt: number; completion: number; total: number };
+}
+
+/**
+ * The list a reviewing agent's JSON reply must carry under `key`. An empty list
+ * is a real answer ("no numerical claims", "no issues"); a reply that does not
+ * parse, or has no such list, is not an answer — it throws a recoverable
+ * CouncilError so withRetry asks again, and the council fails if it never gets
+ * one.
+ */
+function parseAgentJson(
+  content: string | null | undefined,
+  key: string,
+  agent: string,
+  sessionId: string,
+  correlationId: string
+): unknown[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content ?? '');
+  } catch {
+    parsed = undefined;
+  }
+  const list = (parsed as Record<string, unknown> | undefined)?.[key];
+  if (!Array.isArray(list)) {
+    throw new CouncilError(
+      `The ${agent}'s review could not be read, so the draft was not reported as reviewed.`,
+      'UNREADABLE_AGENT_OUTPUT',
+      sessionId,
+      correlationId,
+      true
+    );
+  }
+  return list;
+}
+
+/** The Critic's overall verdict; anything unrecognised is the cautious REVISE. */
+function readAssessment(content: string | null | undefined): CriticResult['overallAssessment'] {
+  try {
+    const value = (JSON.parse(content ?? '') as { overall_assessment?: unknown }).overall_assessment;
+    if (value === 'PASS' || value === 'REVISE' || value === 'REJECT') return value;
+  } catch {
+    // parseAgentJson has already refused an unparseable reply.
+  }
+  return 'REVISE';
 }
 
 export class MultiAgentCouncilService {
@@ -219,7 +281,7 @@ export class MultiAgentCouncilService {
     }
 
     const wantsJson = (options?.responseFormat ?? 'text') === 'json';
-    const taskType: TaskType = wantsJson ? 'structured_output' : 'document_drafting';
+    const taskType = councilTaskType(operation);
 
     try {
       const response = await this.gateway.route({
@@ -253,6 +315,19 @@ export class MultiAgentCouncilService {
       log.error(
         `[Council:${correlationId}] ${operation}: LLM call failed via gateway: ${messageText}`
       );
+
+      // A governance refusal is not an outage: no provider failed, and retrying
+      // cannot change the answer. The gateway has already audited it.
+      if ((error as { code?: unknown } | null)?.code === MODEL_NOT_APPROVED) {
+        throw new CouncilError(
+          'No model approved for regulatory drafting and review is available right now, ' +
+            'so the council did not run on one that is not approved for it.',
+          MODEL_NOT_APPROVED,
+          undefined,
+          correlationId,
+          false
+        );
+      }
 
       // Tamper-proof audit of the failure (best-effort — never mask the original error).
       const auditLog = getTamperProofAuditLog(this.pool);
@@ -332,6 +407,8 @@ export class MultiAgentCouncilService {
       try {
         return await fn();
       } catch (error) {
+        // A refusal the council was told cannot change on retry is final.
+        if (error instanceof CouncilError && !error.recoverable) throw error;
         lastError = error instanceof Error ? error : new Error(String(error));
 
         if (attempt < maxRetries) {
@@ -690,60 +767,60 @@ export class MultiAgentCouncilService {
     );
 
     const latencyMs = llmResponse.latencyMs;
-    const outputText = llmResponse.content || '{}';
+    // An unreadable check is not a clean one. Until 2026-09-23 a reply that did
+    // not parse — or parsed without a verifications list — was recorded as
+    // "0 claims, 0 discrepancies" and the council went on to report the draft
+    // as checked. It now fails, so the council retries and then reports failure.
+    const verifications = parseAgentJson(llmResponse.content, 'verifications', 'Statistician', sessionId, correlationId);
+    const result: StatisticianResult = {
+      verifications: verifications as StatisticianResult['verifications'],
+      totalClaims: verifications.length,
+      discrepancyCount: 0,
+    };
 
-    let result: StatisticianResult;
-    try {
-      const parsed = JSON.parse(outputText);
-      result = {
-        verifications: parsed.verifications || [],
-        totalClaims: parsed.verifications?.length || 0,
-        discrepancyCount: (parsed.verifications || []).filter(
-          (v: { status: string }) => v.status === 'DISCREPANCY'
-        ).length,
-      };
-
-      // Execute actual data queries for each verification
-      for (const verification of result.verifications) {
-        const actualValueResult = await this.executeDataQuery(
-          verification.source,
-          verification.claim
-        );
-        if (actualValueResult !== null) {
-          const actualValue = actualValueResult.value;
-          verification.actualValue = actualValue;
-          if (verification.claimedValue !== actualValue) {
-            verification.status = 'DISCREPANCY';
-            verification.correction = actualValue;
-
-            // Log data discrepancy to tamper-proof audit
-            const auditLog = getTamperProofAuditLog(this.pool);
-            await auditLog.log(
-              'DATA_DISCREPANCY_DETECTED',
-              `Data discrepancy detected in claim`,
-              {
-                claim: verification.claim,
-                claimedValue: verification.claimedValue,
-                actualValue: actualValue,
-                source: verification.source,
-              },
-              { correlationId, resourceType: 'council_session', resourceId: sessionId }
-            );
-
-            log.debug(
-              `[Statistician:${correlationId}] CORRECTION: "${verification.claim}" - claimed "${verification.claimedValue}", actual "${actualValue}"`
-            );
-          } else {
-            verification.status = 'VERIFIED';
-          }
-        }
+    // The model extracts the claims; only a value read from a bound data source
+    // decides one (CLAUDE.md Rule 2). The model's own status and "correction"
+    // are not verdicts: until 2026-09-23 a claim no binding matched kept whatever
+    // status the model gave it — "VERIFIED" with nothing checked — and a binding
+    // that returned nothing (no row, a missing atom, an API binding with no
+    // client) was taken as the actual value, so the claim was marked a
+    // DISCREPANCY and "corrected" to an empty string.
+    for (const verification of result.verifications) {
+      const read = await this.executeDataQuery(verification.source, verification.claim);
+      delete verification.correction;
+      if (read === null || read.value === '') {
+        verification.status = 'UNVERIFIABLE';
+        verification.actualValue = null;
+        continue;
       }
+      const actualValue = read.value;
+      verification.actualValue = actualValue;
+      if (verification.claimedValue === actualValue) {
+        verification.status = 'VERIFIED';
+        continue;
+      }
+      verification.status = 'DISCREPANCY';
+      verification.correction = actualValue;
 
-      // Recalculate discrepancy count after live queries
-      result.discrepancyCount = result.verifications.filter(v => v.status === 'DISCREPANCY').length;
-    } catch (e) {
-      result = { verifications: [], totalClaims: 0, discrepancyCount: 0 };
+      // Log data discrepancy to tamper-proof audit
+      const auditLog = getTamperProofAuditLog(this.pool);
+      await auditLog.log(
+        'DATA_DISCREPANCY_DETECTED',
+        `Data discrepancy detected in claim`,
+        {
+          claim: verification.claim,
+          claimedValue: verification.claimedValue,
+          actualValue: actualValue,
+          source: verification.source,
+        },
+        { correlationId, resourceType: 'council_session', resourceId: sessionId }
+      );
+
+      log.debug(
+        `[Statistician:${correlationId}] CORRECTION: "${verification.claim}" - claimed "${verification.claimedValue}", actual "${actualValue}"`
+      );
     }
+    result.discrepancyCount = result.verifications.filter(v => v.status === 'DISCREPANCY').length;
 
     // Log execution
     await this.logExecution(sessionId, agent.agentId, 'STATISTICIAN', 2, {
@@ -845,7 +922,8 @@ export class MultiAgentCouncilService {
     if (bindingType === 'SQL') {
       const result = await this.pool.query(queryTemplate);
       const firstRow = result.rows[0] || {};
-      const value = String(firstRow[Object.keys(firstRow)[0]] || '');
+      // `??`, not `||`: a count of 0 is a value, not a missing one.
+      const value = String(firstRow[Object.keys(firstRow)[0]] ?? '');
       return {
         value,
         query: queryTemplate,
@@ -919,18 +997,12 @@ export class MultiAgentCouncilService {
     );
 
     const latencyMs = llmResponse.latencyMs;
-    const outputText = llmResponse.content || '{}';
-
-    let result: CriticResult;
-    try {
-      const parsed = JSON.parse(outputText);
-      result = {
-        issues: parsed.issues || [],
-        overallAssessment: parsed.overall_assessment || 'REVISE',
-      };
-    } catch (e) {
-      result = { issues: [], overallAssessment: 'REVISE' };
-    }
+    // As for the Statistician: an unreadable review is not "no issues found".
+    const issues = parseAgentJson(llmResponse.content, 'issues', 'Critic', sessionId, correlationId);
+    const result: CriticResult = {
+      issues: issues as CriticResult['issues'],
+      overallAssessment: readAssessment(llmResponse.content),
+    };
 
     // Log execution
     await this.logExecution(sessionId, agent.agentId, 'CRITIC', 3, {

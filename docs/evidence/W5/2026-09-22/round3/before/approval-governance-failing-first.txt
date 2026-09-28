@@ -1,0 +1,230 @@
+# approval-governance failing-first, Wed Sep 23 14:26:51 UTC 2026 — run on the current tree (HEAD + uncommitted round-3 work), tests written, implementation not yet changed
+
+=== server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > 20260923b_artifact_approval_follows_status.sql > is registered in C2C_MIGRATION_FILES above the final pair 4012ms
+   → expected -1 to be greater than -1
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > 20260923b_artifact_approval_follows_status.sql > carries no DROP (RULE 1) 18ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > review → approved through the status route records v1 and is filable 20ms
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approved → review clears the approval; promote_artifact back to approved is NOT filable 18ms
+   → expected 1 to be null
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > archived by markObjectSuperseded, then restored to approved by AnA, is NOT filable 16ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approve → lock at the same version keeps the approval: still filable 17ms
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > locked → draft (unlock) clears both the approval and the lock; re-approval records the new version 21ms
+   → expected 1 to be null
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > the status comparison is case-insensitive 22ms
+   → expected 1 to be null
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > an INSERT of a non-approved row carries no approval 15ms
+   → expected 1 to be null
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > clears a stale approval left on a non-approved row before the trigger existed 3207ms
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > applies twice: one trigger, and an approved row written between the runs keeps its approval 17ms
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > NOTICE-skips on a database without concept2cure_artifacts (the set-only blank replay) 3080ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > 20260923b_artifact_approval_follows_status.sql > is registered in C2C_MIGRATION_FILES above the final pair
+AssertionError: expected -1 to be greater than -1
+ FAIL  server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > 20260923b_artifact_approval_follows_status.sql > carries no DROP (RULE 1)
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20260923b_artifact_approval_follows_status.sql'
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20260923b_artifact_approval_follows_status.sql' }
+ FAIL  server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approved → review clears the approval; promote_artifact back to approved is NOT filable
+AssertionError: expected 1 to be null
+ FAIL  server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > archived by markObjectSuperseded, then restored to approved by AnA, is NOT filable
+TypeError: markObjectSuperseded is not a function
+ FAIL  server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > locked → draft (unlock) clears both the approval and the lock; re-approval records the new version
+AssertionError: expected 1 to be null
+ FAIL  server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > the status comparison is case-insensitive
+AssertionError: expected 1 to be null
+ FAIL  server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > an INSERT of a non-approved row carries no approval
+AssertionError: expected 1 to be null
+ FAIL  server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > clears a stale approval left on a non-approved row before the trigger existed
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20260923b_artifact_approval_follows_status.sql'
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20260923b_artifact_approval_follows_status.sql' }
+ FAIL  server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > applies twice: one trigger, and an approved row written between the runs keeps its approval
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20260923b_artifact_approval_follows_status.sql'
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20260923b_artifact_approval_follows_status.sql' }
+ FAIL  server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > NOTICE-skips on a database without concept2cure_artifacts (the set-only blank replay)
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20260923b_artifact_approval_follows_status.sql'
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20260923b_artifact_approval_follows_status.sql' }
+ Test Files  1 failed (1)
+      Tests  10 failed | 2 passed (12)
+
+=== server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts [ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts ]
+Error: Transform failed with 1 error:
+/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts:97:0: ERROR: Unexpected "const"
+  Unexpected "const"
+ Test Files  1 failed (1)
+      Tests  no tests
+
+=== server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a approver promoting from review: status approved, no approved version, not filable, and the warning says so 2540ms
+   → expected 'No approved version was recorded: the…' to contain 'Filing requires approval through revi…'
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a editor promoting from review: status approved, no approved version, not filable, and the warning says so 32ms
+   → expected 'No approved version was recorded: rol…' to contain 'Filing requires approval through revi…'
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a regulatory promoting from review: status approved, no approved version, not filable, and the warning says so 33ms
+   → expected 'No approved version was recorded: rol…' to contain 'Filing requires approval through revi…'
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a super_admin promoting from review: status approved, no approved version, not filable, and the warning says so 24ms
+   → expected 'No approved version was recorded: rol…' to contain 'Filing requires approval through revi…'
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting a DRAFT nobody reviewed records no approved version, and the warning says so 24ms
+   → expected 'Artifact was still in draft status — …' to contain 'Filing requires approval through revi…'
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting an artifact approved at v1 and edited to v2 does not re-stamp v2 (stays edited-after-approval) 25ms
+   → expected 'No approved version was recorded: the…' to contain 'Filing requires approval through revi…'
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting an artifact the governed act approved at its current version keeps it filable and claims nothing else 24ms
+   → expected 'No approved version was recorded: the…' not to match /cannot be filed|not filable|no appro…/i
+ ✓ server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > the human-approval gate is unchanged: no reason/confirmation, no approval and no version recorded 16ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a approver promoting from review: status approved, no approved version, not filable, and the warning says so
+AssertionError: expected 'No approved version was recorded: the…' to contain 'Filing requires approval through revi…'
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a editor promoting from review: status approved, no approved version, not filable, and the warning says so
+AssertionError: expected 'No approved version was recorded: rol…' to contain 'Filing requires approval through revi…'
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a regulatory promoting from review: status approved, no approved version, not filable, and the warning says so
+AssertionError: expected 'No approved version was recorded: rol…' to contain 'Filing requires approval through revi…'
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a super_admin promoting from review: status approved, no approved version, not filable, and the warning says so
+AssertionError: expected 'No approved version was recorded: rol…' to contain 'Filing requires approval through revi…'
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting a DRAFT nobody reviewed records no approved version, and the warning says so
+AssertionError: expected 'Artifact was still in draft status — …' to contain 'Filing requires approval through revi…'
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting an artifact approved at v1 and edited to v2 does not re-stamp v2 (stays edited-after-approval)
+AssertionError: expected 'No approved version was recorded: the…' to contain 'Filing requires approval through revi…'
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting an artifact the governed act approved at its current version keeps it filable and claims nothing else
+AssertionError: expected 'No approved version was recorded: the…' not to match /cannot be filed|not filable|no appro…/i
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+
+=== tests/artifact-status-lock-covers-approval.test.ts
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved v2 (approved at v2) → locked records published_version_id = 2, and the result is filable 29ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved at v2, edited to v3, then locked: REFUSED with 409, nothing written, and the message asks for re-approval 5ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved with no approved version recorded, then locked: REFUSED (fail closed) 4ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > review v3 → approved records approved_version_id = 3; an edit to v4 afterwards is not filable 7ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a reviewer still pending refuses the approval (400) and records no approved version 4ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a reviewer who did not approve refuses the approval (400) 4ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a quorum that cannot be read is not met: the approval is refused and records no approved version 4ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a decisions read that fails after the assignments read is not met either 4ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a manager is refused review → approved (403) and nothing is written 5ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a super_admin is refused review → approved (403) and nothing is written 3ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a author is refused review → approved (403) and nothing is written 3ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > POST …/audit-report/export: the locked report records its lock, and no approval nobody gave > inserts status locked with published_version_id = version = 1, approved_version_id unset, so it is not filable 4ms
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+
+=== server/routes/__tests__/lockArtifactCoversApproval.test.ts
+ ✓ server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /lock-artifact: the lock must cover the approval > approved at v1, current v1: locks, records published_version_id = 1, and the result is filable 682ms
+ ✓ server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /lock-artifact: the lock must cover the approval > approved at v1, edited to v2: REFUSED with 409, nothing written, and the message asks for re-approval 7ms
+ ✓ server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /lock-artifact: the lock must cover the approval > approved with no approved version recorded: REFUSED (fail closed) 4ms
+ ✓ server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /approve-artifact records the version it approved > review v3 → approved records approved_version_id = 3; an edit to v4 is not filable 5ms
+ × server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /approve-artifact applies the P12 review quorum > a reviewer still pending refuses the approval and records nothing 10ms
+   → expected true to be false // Object.is equality
+ × server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /approve-artifact applies the P12 review quorum > a reviewer who did not approve refuses the approval and records nothing 4ms
+   → expected true to be false // Object.is equality
+ × server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /approve-artifact applies the P12 review quorum > a quorum that cannot be read is not met: refused, nothing recorded 5ms
+   → expected true to be false // Object.is equality
+ ✓ server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /approve-artifact applies the P12 review quorum > every assigned reviewer approving records the version (filable) 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /approve-artifact applies the P12 review quorum > a reviewer still pending refuses the approval and records nothing
+AssertionError: expected true to be false // Object.is equality
+ FAIL  server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /approve-artifact applies the P12 review quorum > a reviewer who did not approve refuses the approval and records nothing
+AssertionError: expected true to be false // Object.is equality
+ FAIL  server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /approve-artifact applies the P12 review quorum > a quorum that cannot be read is not met: refused, nothing recorded
+AssertionError: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 passed (8)
+
+=== server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — lawful lifecycle steps are allowed > draft → review 2771ms
+ × server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — lawful lifecycle steps are allowed > review → approved 1965ms
+   → expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — lawful lifecycle steps are allowed > approved → locked 2243ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — lawful lifecycle steps are allowed > locked → draft (explicit unlock) 2168ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — illegal skips are blocked (Part 11) > draft → locked is refused and does not mutate the row 2057ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — illegal skips are blocked (Part 11) > review → locked is refused 1945ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — illegal skips are blocked (Part 11) > draft → approved is refused (must be reviewed first) 3000ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — illegal skips are blocked (Part 11) > locked → approved is refused (unlock to draft only) 2598ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — tenant isolation > another org cannot transition this org's artifact 2031ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — lawful lifecycle steps are allowed > review → approved
+AssertionError: expected false to be true // Object.is equality
+ FAIL  server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — lawful lifecycle steps are allowed > approved → locked
+AssertionError: expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+
+=== server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts (re-run after fixing a test-file splice error; same unchanged implementation)
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > review → approved succeeds but records no approved version, is not filable, and the message says so 2398ms
+   → expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > archived → approved records no approved version, is not filable, and the message says so 2001ms
+   → expected '"Drug Substance Spec" (section 3.2.S)…' to contain 'Filing requires approval through revi…'
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > superseded → approved records no approved version, is not filable, and the message says so 1855ms
+   → expected '"Drug Substance Spec" (section 3.2.S)…' to contain 'Filing requires approval through revi…'
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > rejected → approved records no approved version, is not filable, and the message says so 1707ms
+   → expected '"Drug Substance Spec" (section 3.2.S)…' to contain 'Filing requires approval through revi…'
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > an artifact the governed act approved stays filable through approved → approved, and the message claims nothing 1745ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > approved → approved does not re-stamp the approval over an unreviewed edit 1680ms
+   → expected '"Drug Substance Spec" (section 3.2.S)…' to contain 'Filing requires approval through revi…'
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved (governed, at v1) → locked succeeds, records no locked version, and says it cannot be filed yet 1760ms
+   → expected 1 to be null
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved → locked after an unreviewed edit is REFUSED, writes nothing, and asks for re-approval 1721ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved → locked when no approved version was ever recorded is refused (fail closed) 1733ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > review → approved succeeds but records no approved version, is not filable, and the message says so
+    104|   it('review → approved succeeds but records no approved version, is n…
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > archived → approved records no approved version, is not filable, and the message says so
+Received: ""Drug Substance Spec" (section 3.2.S) status changed: archived → approved. No approved version was recorded because it did not come from review, so it cannot be filed until it is approved through review (review → approved)."
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > superseded → approved records no approved version, is not filable, and the message says so
+Received: ""Drug Substance Spec" (section 3.2.S) status changed: superseded → approved. No approved version was recorded because it did not come from review, so it cannot be filed until it is approved through review (review → approved)."
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > rejected → approved records no approved version, is not filable, and the message says so
+Received: ""Drug Substance Spec" (section 3.2.S) status changed: rejected → approved. No approved version was recorded because it did not come from review, so it cannot be filed until it is approved through review (review → approved)."
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > approved → approved does not re-stamp the approval over an unreviewed edit
+Received: ""Drug Substance Spec" (section 3.2.S) status changed: approved → approved."
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved (governed, at v1) → locked succeeds, records no locked version, and says it cannot be filed yet
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed (9)
+
+############ Mutation checks: cases that already passed on the pre-change tree are shown failing when the behaviour they pin is broken (run after implementation; each mutation reverted)
+
+=== MUTATION (status route: an unreadable quorum counted as met) in server/routes/c2c/artifacts.ts — run tests/artifact-status-lock-covers-approval.test.ts
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a quorum that cannot be read is not met: the approval is refused and records no approved version 13ms
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a decisions read that fails after the assignments read is not met either 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 10 passed (12)
+
+=== MUTATION (status route: role table lets manager/super_admin/author approve) in server/routes/c2c/artifacts.ts — run tests/artifact-status-lock-covers-approval.test.ts
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a manager is refused review → approved (403) and nothing is written 15ms
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a super_admin is refused review → approved (403) and nothing is written 5ms
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: the role table decides who performs the approval act > a author is refused review → approved (403) and nothing is written 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 9 passed (12)
+
+=== MUTATION (AnA: filing note claimed on a filable approved row) in server/services/ana-ri/command-executor.ts — run server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > an artifact the governed act approved stays filable through approved → approved, and the message claims nothing 1888ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+
+=== MUTATION (AnA: lock-covers-approval guard removed) in server/services/ana-ri/command-executor.ts — run server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved → locked after an unreviewed edit is REFUSED, writes nothing, and asks for re-approval 1714ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved → locked when no approved version was ever recorded is refused (fail closed) 1726ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 7 passed (9)
+
+=== MUTATION (trigger: clears on 'locked' too) in migrations/20260923b_artifact_approval_follows_status.sql — run server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approve → lock at the same version keeps the approval: still filable 29ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 11 passed (12)
+
+=== MUTATION (trigger: case-sensitive comparison) in migrations/20260923b_artifact_approval_follows_status.sql — run server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > the status comparison is case-insensitive 28ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 11 passed (12)
+
+=== MUTATION (trigger: UPDATE only (no INSERT)) in migrations/20260923b_artifact_approval_follows_status.sql — run server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > an INSERT of a non-approved row carries no approval 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 11 passed (12)
+
+=== MUTATION (authoring-actions approve: quorum verdict ignored) in server/routes/authoring-actions.ts — run server/routes/__tests__/lockArtifactCoversApproval.test.ts
+ × server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /approve-artifact applies the P12 review quorum > a reviewer still pending refuses the approval and records nothing 9ms
+ × server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /approve-artifact applies the P12 review quorum > a reviewer who did not approve refuses the approval and records nothing 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 6 passed (8)
+
+=== MUTATION (promote: warning claimed on a filable row) in server/services/ai-actions/handlers/promote-artifact.ts — run server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting an artifact the governed act approved at its current version keeps it filable and claims nothing else 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 7 passed (8)

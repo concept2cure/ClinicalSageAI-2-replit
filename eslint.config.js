@@ -19,8 +19,8 @@ export default [
     // - dist/, build/, .replit/, public/assets/ are build artifacts.
     // - _archive/ and **/_deprecated/ are quarantine paths the
     //   dangerfile.js gate also bans new imports into.
-    // - tests/integration/api/vault.test.js, server/events/eventBus.js,
-    //   and server/routes/fda510k-routes.ts each carry pre-existing
+    // - tests/integration/api/vault.test.js and
+    //   server/routes/fda510k-routes.ts each carry pre-existing
     //   violations the team has chosen to defer; quarantine here
     //   rather than block CI on legacy debt. The fda510k-routes file
     //   header marks itself @deprecated with a 2026-06-30 sunset, at
@@ -54,7 +54,6 @@ export default [
       'client/src/components/_deprecated/**',
       'scripts/**',
       'tests/integration/api/vault.test.js',
-      'server/events/eventBus.js',
     ],
   },
   js.configs.recommended,

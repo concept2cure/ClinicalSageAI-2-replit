@@ -1,0 +1,15 @@
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts
+  159:3  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-var-requires')
+  228:7  warning  'setImmediate' is not defined                                                                          no-undef
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/as2-transport.ts
+  368:3  warning  Potential timing attack, left side: true  security/detect-possible-timing-attacks
+  371:3  warning  Potential timing attack, left side: true  security/detect-possible-timing-attacks
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/fda-esg.ts
+  841:1  warning  File has too many lines (549). Maximum allowed is 500  max-lines
+
+✖ 5 problems (0 errors, 5 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

@@ -409,6 +409,17 @@ async function seedArtifacts(client, org, admin, projectId) {
         'title', 'content', 'version', 'ctd_section', 'status', 'created_at', 'updated_at'];
       const params = [a.key, projectId, org.id, a.type, a.category, a.title, a.content, 1, a.section, a.status];
       if (hasCreatedBy) { fields.splice(fields.indexOf('created_at'), 0, 'created_by_id'); params.push(admin.id); }
+      // 2026-09-23 (W5/D7): an approved or locked artifact records the version
+      // it was approved (and locked) at, as the status route does. The package
+      // spine files an artifact only when its current version is that version
+      // (artifactApproval, package-content-fingerprint.ts).
+      const finalized = a.status === 'approved' || a.status === 'locked';
+      if (finalized && cols.has('approved_version_id')) {
+        fields.splice(fields.indexOf('created_at'), 0, 'approved_version_id'); params.push(1);
+      }
+      if (a.status === 'locked' && cols.has('published_version_id')) {
+        fields.splice(fields.indexOf('created_at'), 0, 'published_version_id'); params.push(1);
+      }
       const valueSql = [];
       let pi = 0;
       for (const f of fields) {

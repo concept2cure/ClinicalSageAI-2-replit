@@ -12,14 +12,17 @@
  *   • deviation   → POST /api/protocol-deviations/deviations   {protocolDocumentId,…}
  *   • objective   → POST /api/protocol-development/documents/:id/objectives
  *   • eligibility → POST /api/protocol-development/documents/:id/eligibility
- *   • finalize    → POST /api/protocol-development/documents/:id/finalize
  *
- * The last three were reached through a governed dialog whose `onConfirm` was
+ * The last two were reached through a governed dialog whose `onConfirm` was
  * `() => {}` — a user completed the reason-for-change ceremony, the dialog
  * closed, and nothing was written. Every endpoint they needed already existed
  * and had no caller. They are the same shape as the four registers (governed
  * form → POST → 201 with the hash-chained governance fields), so they belong to
  * the same module rather than to a fifth spelling of it.
+ *
+ * Finalize used to be a third, with only a reason. Finalizing is an electronic
+ * signature, so it moved to the shared EsignModal (ProtocolDevSigning.tsx →
+ * finalizeProtocol in ProtocolDevWrites.ts). No unsigned path to it remains.
  *
  * Every route records a hash-chained governed action server-side and returns
  * 201 with the created ids + governance fields. On success the caller refetches
@@ -33,7 +36,7 @@ import { apiRequest } from '@/lib/queryClient';
 
 export type RegisterKind =
   | 'risk' | 'milestone' | 'amendment' | 'deviation'
-  | 'objective' | 'eligibility' | 'finalize';
+  | 'objective' | 'eligibility';
 
 const REASON_FIELD = {
   key: 'reason', label: 'Reason for change (governed)', type: 'textarea' as const, required: true,
@@ -51,6 +54,14 @@ const DECLARATION_OPTIONS = [
 function declared(v: string | undefined): boolean | undefined {
   return v === 'yes' ? true : v === 'no' ? false : undefined;
 }
+
+/** '' (not assessed) is sent as absent; the deviation then reads "assessment required". */
+const SEVERITY_OPTIONS = [
+  { value: '', label: 'Not assessed' },
+  { value: 'minor', label: 'Minor' },
+  { value: 'major', label: 'Major' },
+  { value: 'critical', label: 'Critical' },
+];
 
 const FORMS: Record<RegisterKind, C2CFormConfig> = {
   risk: {
@@ -98,12 +109,16 @@ const FORMS: Record<RegisterKind, C2CFormConfig> = {
   },
   deviation: {
     eyebrow: 'Protocol · deviations', title: 'Report deviation',
-    sub: 'ICH E6(R2) §4.5 — protocol compliance. Recorded as a governed action.',
+    sub: 'Every deviation is documented and explained (ICH E6(R2) 4.5.3). Severity and safety impact are your assessment — leave them "Not assessed" if you have not made one. Recorded as a governed action.',
     governed: true, submitLabel: 'Report deviation',
     fields: [
       { key: 'description', label: 'What happened', type: 'textarea', required: true, placeholder: 'Describe the deviation from the protocol' },
       { key: 'category', label: 'Category', type: 'select', options: ['enrollment', 'consent', 'procedure', 'safety', 'data', 'other'], default: 'procedure', half: true },
-      { key: 'severity', label: 'Severity', type: 'seg', options: ['minor', 'major', 'critical'], default: 'minor', half: true },
+      /* No preselected severity: a preselected "minor" submitted an assessment
+         the reporter never made. "Not assessed" is sent as absent. */
+      { key: 'severity', label: 'Severity', type: 'seg', options: SEVERITY_OPTIONS, half: true },
+      { key: 'affectsSafety', label: 'Affected subject safety?', type: 'seg', options: DECLARATION_OPTIONS, half: true,
+        desc: 'Safety, rights or welfare. Leave "Not assessed" if you have not assessed it — it is not the same as No.' },
       { key: 'rootCause', label: 'Root cause (if known)', type: 'textarea' },
       REASON_FIELD,
     ],
@@ -129,12 +144,6 @@ const FORMS: Record<RegisterKind, C2CFormConfig> = {
       { key: 'kind', label: 'Arm', type: 'seg', options: ['inclusion', 'exclusion'], default: 'inclusion' },
       REASON_FIELD,
     ],
-  },
-  finalize: {
-    eyebrow: 'Protocol · finalization', title: 'Finalize protocol',
-    sub: 'The server re-runs the deterministic completeness gate and refuses if a required section is incomplete. Bumps the version and is recorded as a governed action.',
-    governed: true, submitLabel: 'Finalize protocol',
-    fields: [REASON_FIELD],
   },
 };
 
@@ -176,7 +185,11 @@ export async function submitProtocolRegister(
       break;
     case 'deviation':
       path = '/api/protocol-deviations/deviations';
-      body = { ...compact({ description: v.description, category: v.category, severity: v.severity, rootCause: v.rootCause, reason }), protocolDocumentId };
+      body = {
+        ...compact({ description: v.description, category: v.category, severity: v.severity, rootCause: v.rootCause, reason }),
+        protocolDocumentId,
+        ...(declared(v.affectsSafety) === undefined ? {} : { affectsSafety: declared(v.affectsSafety) }),
+      };
       break;
     case 'objective':
       path = `/api/protocol-development/documents/${protocolDocumentId}/objectives`;
@@ -186,10 +199,6 @@ export async function submitProtocolRegister(
       path = `/api/protocol-development/documents/${protocolDocumentId}/eligibility`;
       body = compact({ criterion: v.criterion, kind: v.kind, reason });
       break;
-    case 'finalize':
-      path = `/api/protocol-development/documents/${protocolDocumentId}/finalize`;
-      body = { reason };
-      break;
   }
   const res = await apiRequest('POST', path, body);
   const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
@@ -197,8 +206,7 @@ export async function submitProtocolRegister(
   if (!res.ok) {
     const detail =
       (json as any)?.error?.message ?? (json as any)?.error?.code ?? (json as any)?.error ?? `HTTP ${res.status}`;
-    const what = kind === 'finalize' ? 'finalize the protocol' : `record the ${kind}`;
-    throw new Error(`Couldn’t ${what} — ${typeof detail === 'string' ? detail : JSON.stringify(detail)}. Nothing was persisted.`);
+    throw new Error(`Couldn’t record the ${kind} — ${typeof detail === 'string' ? detail : JSON.stringify(detail)}. Nothing was persisted.`);
   }
   return json ?? {};
 }

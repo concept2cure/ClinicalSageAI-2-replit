@@ -2,8 +2,10 @@
  * OQ-003 — Operational Qualification: Authoring.
  * Protocol: docs/validation/OQ-003-AUTHORING.md. Requirements: docs/validation/URS-003-AUTHORING.md.
  */
-import { createRun, helpers } from '../../lib/harness.mjs';
+import { createRun, helpers, runCredential } from '../../lib/harness.mjs';
 import { createProgram } from '../../lib/fixtures.mjs';
+import { CREDENTIAL_NOT_SUPPLIED } from '../../lib/credentials.mjs';
+import { freshTotp } from '../../lib/totp.mjs';
 
 const run = await createRun({
   app: 'AUTHORING',
@@ -13,10 +15,15 @@ const run = await createRun({
 });
 const { step, state } = run;
 const stamp = helpers.stamp();
-const PIN = process.env.VALIDATION_SIGNING_PIN || '246813';
+/**
+ * The run identity's own credentials, for the e-signature steps: the platform's
+ * signing ceremony re-verifies the account password, and a current code when
+ * an authenticator is enrolled. Null on a dev-login run, which holds no password.
+ */
+const signerCredential = runCredential();
 
 await step(
-  { id: 'OQ-AUTH-00', urs: [], title: 'Prerequisite: a program', action: 'POST /api/c2c/projects', expected: '201' },
+  { id: 'OQ-AUTH-00', urs: [], kind: 'prerequisite', title: 'Prerequisite: a program', action: 'POST /api/c2c/projects', expected: '201' },
   async ({ api, expect }) => {
     const p = await createProgram(api, expect, `OQ-003 Authoring program ${stamp}`);
     state.programId = p.id;
@@ -385,24 +392,19 @@ await step(
   {
     id: 'OQ-AUTH-12',
     urs: ['URS-AUTH-010'],
-    title: 'Enrol the signing PIN for the authenticated actor',
-    action: 'POST /api/authoring/users/pin {pin}',
-    expected: 'HTTP 200/201 on first enrolment (identity from the JWT, never from the body); once a PIN exists, a change without the current PIN is refused (400) and succeeds only with old_pin',
-    note: 'On a database where this identity already holds a PIN (a previous run), the refusal-without-old_pin branch is exercised and the PIN is then rotated with the current value.',
+    title: 'A signing PIN signs nothing, and no route sets one',
+    action: 'POST /api/authoring/users/pin {pin}; POST /docs/:id/e-sign {pin, meaning:"REVIEWER", intent} with no password',
+    expected: '404 for the PIN route; 400 PASSWORD_REQUIRED for the PIN-only signature; no signature stored',
+    dependsOn: ['OQ-AUTH-11'],
   },
-  async ({ api, expect, deviation }) => {
-    const r = await api('POST', '/api/authoring/users/pin', { pin: PIN });
-    if (r.status < 300) return `first enrolment → HTTP ${r.status}`;
-    if (r.status === 400 && /current pin|old_pin/i.test(JSON.stringify(r.json))) {
-      const rot = await api('POST', '/api/authoring/users/pin', { pin: PIN, old_pin: PIN });
-      if (rot.status === 401) {
-        deviation('PIN already enrolled for this identity with a value the tester does not hold. Set VALIDATION_SIGNING_PIN to the enrolled PIN and re-run.', rot.json);
-      }
-      expect(rot.status < 300, `rotation with current PIN expected 2xx, got ${rot.status}`, rot.json);
-      return `PIN already enrolled: change without old_pin → 400 ("${r.json?.error}"); rotation with old_pin → HTTP ${rot.status}`;
-    }
-    expect(false, `expected 2xx or the old_pin refusal, got ${r.status}`, r.json);
-    return null;
+  async ({ api, expect }) => {
+    const route = await api('POST', '/api/authoring/users/pin', { pin: '246813' });
+    expect(route.status === 404, `the PIN route expected 404, got ${route.status}`, route.json);
+    const sign = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { pin: '246813', meaning: 'REVIEWER', intent: 'OQ PIN only' });
+    expect(sign.status === 400 && sign.json?.code === 'PASSWORD_REQUIRED', `a PIN-only signature expected 400 PASSWORD_REQUIRED, got ${sign.status}`, sign.json);
+    const s = await api('GET', `/api/authoring/docs/${state.docId}/signatures`);
+    expect((s.json?.signatures ?? []).length === 0, 'a signature was stored for a PIN', s.json);
+    return 'PIN route → 404; PIN-only signature → 400 PASSWORD_REQUIRED; no signature stored';
   },
 );
 
@@ -410,19 +412,26 @@ await step(
   {
     id: 'OQ-AUTH-13',
     urs: ['URS-AUTH-010'],
-    title: 'E-signature refuses a wrong PIN and an invalid meaning',
-    action: 'POST /docs/:id/e-sign with (a) wrong pin, (b) meaning "WHATEVER"',
-    expected: '(a) HTTP 401 Invalid PIN; (b) HTTP 400 Invalid signature meaning; no signature stored',
-    dependsOn: ['OQ-AUTH-12', 'OQ-AUTH-11'],
+    title: 'E-signature refuses a wrong password, a missing code and an invalid meaning',
+    action: 'POST /docs/:id/e-sign with (a) a wrong password, (b) the right password and no code (identity with an authenticator enrolled), (c) meaning "WHATEVER"',
+    expected: '(a) 401 PASSWORD_VERIFICATION_FAILED; (b) 400 MFA_TOKEN_REQUIRED; (c) 400 Invalid signature meaning; no signature stored',
+    dependsOn: ['OQ-AUTH-12'],
   },
-  async ({ api, expect }) => {
-    const a = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { pin: '000000', meaning: 'REVIEWER', intent: 'OQ wrong pin' });
-    const b = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { pin: PIN, meaning: 'WHATEVER', intent: 'OQ bad meaning' });
-    expect(a.status === 401, `wrong pin expected 401, got ${a.status}`, a.json);
-    expect(b.status === 400, `bad meaning expected 400, got ${b.status}`, b.json);
+  async ({ api, expect, deviation }) => {
+    if (!signerCredential) deviation(CREDENTIAL_NOT_SUPPLIED);
+    const a = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { password: 'not-the-password', meaning: 'REVIEWER', intent: 'OQ wrong password' });
+    expect(a.status === 401 && a.json?.code === 'PASSWORD_VERIFICATION_FAILED', `wrong password expected 401 PASSWORD_VERIFICATION_FAILED, got ${a.status}`, a.json);
+    let b = null;
+    if (signerCredential.totpSecret) {
+      b = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { password: signerCredential.password, meaning: 'REVIEWER', intent: 'OQ no code' });
+      expect(b.status === 400 && b.json?.code === 'MFA_TOKEN_REQUIRED', `password without the enrolled code expected 400 MFA_TOKEN_REQUIRED, got ${b.status}`, b.json);
+    }
+    // The meaning is refused before the credentials are checked, so no code is spent.
+    const c = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { password: signerCredential.password, meaning: 'WHATEVER', intent: 'OQ bad meaning' });
+    expect(c.status === 400, `bad meaning expected 400, got ${c.status}`, c.json);
     const s = await api('GET', `/api/authoring/docs/${state.docId}/signatures`);
     expect((s.json?.signatures ?? []).length === 0, 'a signature was stored despite refusal', s.json);
-    return 'wrong PIN → 401; bad meaning → 400; no signature stored';
+    return `wrong password → 401; ${b ? 'no code → 400 MFA_TOKEN_REQUIRED; ' : 'no authenticator enrolled for this identity, so (b) does not apply; '}bad meaning → 400; no signature stored`;
   },
 );
 
@@ -430,27 +439,37 @@ await step(
   {
     id: 'OQ-AUTH-14',
     urs: ['URS-AUTH-010', 'URS-AUTH-011'],
-    title: 'Apply a REVIEWER e-signature bound to the frozen snapshot',
-    action: 'POST /docs/:id/e-sign {pin, meaning:"REVIEWER", intent}; GET /docs/:id/signatures',
-    expected: 'HTTP 200; one signature with signer_email = actor, meaning REVIEWER, pin_verified true, signature_digest and covered_content_hash present',
+    title: 'Apply a REVIEWER e-signature, re-verified by the ceremony and bound to the frozen snapshot',
+    action: 'POST /docs/:id/e-sign {password, mfaToken (current code), meaning:"REVIEWER", intent}; GET /docs/:id/signatures',
+    expected: 'HTTP 200; one signature with signer_email = actor, meaning REVIEWER, method password+mfa (password for an identity with no authenticator), pin_verified false, signature_digest and covered_content_hash present',
     dependsOn: ['OQ-AUTH-13'],
   },
-  async ({ api, expect, auth }) => {
-    const r = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { pin: PIN, meaning: 'REVIEWER', intent: 'OQ-003 step 14: reviewed for validation' });
+  async ({ api, expect, auth, deviation }) => {
+    if (!signerCredential) deviation(CREDENTIAL_NOT_SUPPLIED);
+    const mfaToken = signerCredential.totpSecret ? await freshTotp(signerCredential.email, signerCredential.totpSecret) : undefined;
+    const r = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, {
+      password: signerCredential.password,
+      ...(mfaToken ? { mfaToken } : {}),
+      meaning: 'REVIEWER',
+      intent: 'OQ-003 step 14: reviewed for validation',
+    });
     expect(r.status === 200, `expected 200, got ${r.status}`, r.json);
     const s = await api('GET', `/api/authoring/docs/${state.docId}/signatures`);
     const sigs = s.json?.signatures ?? [];
     expect(sigs.length === 1, `expected 1 signature, got ${sigs.length}`, sigs);
     const sig = sigs[0];
-    expect(sig.signer_email === auth.user.email && sig.meaning === 'REVIEWER' && sig.pin_verified === true, 'signature attributes wrong', sig);
+    const method = mfaToken ? 'password+mfa' : 'password';
+    expect(sig.signer_email === auth.user.email && sig.meaning === 'REVIEWER', 'signature attributes wrong', sig);
+    expect(sig.method === method && sig.pin_verified === false, `the signature records method ${sig.method} (pin_verified ${sig.pin_verified}); expected ${method}, false`, sig);
     expect(sig.signature_digest && sig.covered_content_hash, 'signature not bound to a frozen snapshot', sig);
-    return `signature ${sig.id} by ${sig.signer_email}, meaning ${sig.meaning}, covers freeze v${sig.covered_freeze_version} (${String(sig.covered_content_hash).slice(0, 12)}…)`;
+    return `signature ${sig.id} by ${sig.signer_email}, meaning ${sig.meaning}, method ${sig.method}, covers freeze v${sig.covered_freeze_version} (${String(sig.covered_content_hash).slice(0, 12)}…)`;
   },
 );
 
 await step(
   {
     id: 'OQ-AUTH-18',
+    kind: 'ad-hoc',
     urs: ['URS-AUTH-014'],
     title: 'Template stores answer',
     action: 'GET /api/c2c/templates (organisation); GET /api/authoring/templates (global reference)',
@@ -468,6 +487,7 @@ await step(
 await step(
   {
     id: 'OQ-AUTH-19',
+    kind: 'unscripted',
     urs: ['URS-AUTH-015'],
     title: 'Document Authoring surface renders the document',
     action: 'Open /concept2cure/document-authoring with the program selected',
@@ -486,6 +506,7 @@ await step(
 await step(
   {
     id: 'OQ-AUTH-20',
+    kind: 'ad-hoc',
     urs: ['URS-AUTH-013', 'URS-AUTH-015'],
     title: 'Review surface renders',
     action: 'Open /concept2cure/review',

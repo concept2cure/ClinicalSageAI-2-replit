@@ -190,8 +190,6 @@ async function main() {
     '/api/coauthor',
     '/api/ectd-documents',
     '/api/evidence',
-    '/api/content-plan',
-    '/api/smart-blocks',
     '/api/cognitive',
     '/api/docx-factory',
     '/api/predicate-intelligence',

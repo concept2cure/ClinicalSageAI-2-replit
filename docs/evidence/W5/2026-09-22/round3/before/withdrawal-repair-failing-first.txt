@@ -1,0 +1,402 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-09-23T08:14:12.741Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > does not count a document referenced only by a delete toward unfinalized 83ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > keys every unresolved entry exactly as the ref it came from 4ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it 111ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its section when the derived file name changed since filing
+{
+  "timestamp": "2026-09-23T08:14:12.867Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-09-23T08:14:12.947Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its section when the derived file name changed since filing 122ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-09-23T08:14:13.042Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 8,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly 92ms
+   → expected 'withdrawal of 3-2-s-4-coauthor-docume…' to match /no filed leaf in m3\.2\.s\.4 is this …/
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section 81ms
+   → expected '<leaf operation="delete" modified-fil…' to be '' // Object.is equality
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-09-23T08:14:13.106Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-09-23T08:14:13.162Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 9999,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-09-23T08:14:13.163Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 1
+  }
+}
+
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal 62ms
+   → expected '<leaf operation="delete" modified-fil…' to be '' // Object.is equality
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-09-23T08:14:13.235Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 13,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-09-23T08:14:13.305Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 17,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf 59ms
+   → expected '<leaf operation="delete" modified-fil…' to be '' // Object.is equality
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section 76ms
+   → expected '' to contain 'modified-file="../0000/m3/3-2-s-6/3-2…'
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section 65ms
+stdout | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+{
+  "timestamp": "2026-09-23T08:14:17.828Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T08:14:17.829Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+{
+  "timestamp": "2026-09-23T08:14:17.829Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > does not require source_path, and offers modified_file 7ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > packages a delete declared by modified_file, shipping no bytes for it 1143ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete that still carries a source_path, naming the leaf 3ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a non-delete leaf with no source_path instead of reading an empty path 1ms
+ × server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete in sequence 0000, naming the leaf 25ms
+   → expected true to be undefined
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete that carries a sourcePath, naming the leaf (the AnA tool mapping) 11ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete in a follow-up sequence that names no modified-file 4ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > packages a backbone-only delete with a modified-file: no file, no checksum line, href at the filed copy 59ms
+ × server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses any delete in sequence 0000, where nothing is on file to withdraw 41ms
+   → promise resolved "{ …(9) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete in sequence 0000, naming the leaf
+AssertionError: expected true to be undefined
+
+- Expected:
+undefined
+
++ Received:
+true
+
+ ❯ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts:104:22
+    102|         { ctd_section: '1.2', operation: 'new', source_path: cover, fi…
+    103|       ]), sequence: '0000' });
+    104|       expect(out.ok).toBeUndefined();
+       |                      ^
+    105|       expect(out.error).toMatch(/ghost\.pdf/);
+    106|       expect(out.error).toMatch(/0000/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+AssertionError: expected 'withdrawal of 3-2-s-4-coauthor-docume…' to match /no filed leaf in m3\.2\.s\.4 is this …/
+
+- Expected:
+/no filed leaf in m3\.2\.s\.4 is this document/
+
++ Received:
+"withdrawal of 3-2-s-4-coauthor-documents-107.pdf matches no filed leaf by name, and is ambiguous: 2 prior leaves share section m3.2.s.4"
+
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:243:35
+    241|       // section fallback's "ambiguous" reason. A named withdrawal no …
+    242|       // binds by section at all; neither filed leaf carries document …
+    243|       expect(r.skipped[0].reason).toMatch(/no filed leaf in m3\.2\.s\.…
+       |                                   ^
+    244|       expect(assembledTransmitBlockers(r).length).toBeGreaterThan(0);
+    245|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+AssertionError: expected '<leaf operation="delete" modified-fil…' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ <leaf operation="delete" modified-file="../0000/m3/3-2-s-2/3-2-coauthor-documents-404.pdf" checksum="cccccccccccccccccccccccccccccccc" checksum-type="md5" xlink:href="../0000/m3/3-2-s-2/3-2-coauthor-documents-404.pdf" xlink:type="simple" ID="leaf-m3-2-s-2-3-2-coauthor-documents-404">
+
+ ❯ expectRefusedWithoutDelete server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:256:19
+    254|     try {
+    255|       const { files, del } = await zipOf(r.bundle.path);
+    256|       expect(del).toBe('');
+       |                   ^
+    257|       expect(files.some((f) => f.includes('coauthor-documents-301'))).…
+    258|       const mine = r.skipped.filter((s) => s.sectionCode === section);
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:268:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+AssertionError: expected '<leaf operation="delete" modified-fil…' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ <leaf operation="delete" modified-file="../0000/m3/3-2-s-5/3-2-coauthor-documents-409.pdf" checksum="11111111111111111111111111111111" checksum-type="md5" xlink:href="../0000/m3/3-2-s-5/3-2-coauthor-documents-409.pdf" xlink:type="simple" ID="leaf-m3-2-s-5-3-2-coauthor-documents-409">
+
+ ❯ expectRefusedWithoutDelete server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:256:19
+    254|     try {
+    255|       const { files, del } = await zipOf(r.bundle.path);
+    256|       expect(del).toBe('');
+       |                   ^
+    257|       expect(files.some((f) => f.includes('coauthor-documents-301'))).…
+    258|       const mine = r.skipped.filter((s) => s.sectionCode === section);
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:272:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+AssertionError: expected '<leaf operation="delete" modified-fil…' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ <leaf operation="delete" modified-file="../0000/m3/3-2-s-7/x-coauthor-documents-413.pdf" checksum="55555555555555555555555555555555" checksum-type="md5" xlink:href="../0000/m3/3-2-s-7/x-coauthor-documents-413.pdf" xlink:type="simple" ID="leaf-m3-2-s-7-x-coauthor-documents-413">
+
+ ❯ expectRefusedWithoutDelete server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:256:19
+    254|     try {
+    255|       const { files, del } = await zipOf(r.bundle.path);
+    256|       expect(del).toBe('');
+       |                   ^
+    257|       expect(files.some((f) => f.includes('coauthor-documents-301'))).…
+    258|       const mine = r.skipped.filter((s) => s.sectionCode === section);
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:276:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+AssertionError: expected '' to contain 'modified-file="../0000/m3/3-2-s-6/3-2…'
+
+- Expected
++ Received
+
+- modified-file="../0000/m3/3-2-s-6/3-2-coauthor-documents-411.pdf"
+
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:283:19
+    281|     try {
+    282|       const { del } = await zipOf(r.bundle.path);
+    283|       expect(del).toContain('modified-file="../0000/m3/3-2-s-6/3-2-coa…
+       |                   ^
+    284|       expect(r.skipped).toEqual([]);
+    285|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses any delete in sequence 0000, where nothing is on file to withdraw
+AssertionError: promise resolved "{ …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "displayName": "P · FDA original #0000",
++   "dtdStatus": {
++     "missing": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "missingStylesheets": [
++       "ectd-2-0.xsl",
++       "us-regional.xsl",
++     ],
++     "present": [],
++     "required": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "selfContained": false,
++   },
++   "format": "ectd",
++   "leafManifest": [
++     {
++       "ctdSection": "1.2",
++       "fileName": "cover.pdf",
++       "href": "m1/us/1-2/cover.pdf",
++       "md5": "99ddbaec3f2269782cc07ed2fdebd918",
++       "operation": "new",
++       "title": "Cover",
++     },
++     {
++       "ctdSection": "3.2.S.2",
++       "fileName": "ghost.pdf",
++       "href": "m3/3-2-s-2/ghost.pdf",
++       "md5": "",
++       "operation": "delete",
++       "title": "Ghost",
++     },
++   ],
++   "path": "/tmp/del-sink-1a1swT/out/123456-0000-fda.zip",
++   "regionalBackbone": {
++     "file": "m1/us/us-regional.xml",
++     "region": "fda",
++     "regionConformant": true,
++   },
++   "sha256": "eb9fac27010b9d65924515a1f00aac4354adf5ccebc9d807ad68eeec3976eab3",
++   "sizeBytes": 2077,
++   "submissionGrade": {
++     "agencyFormsAsIssued": [],
++     "allPdfA": false,
++     "notConverted": [
++       "cover.pdf",
++     ],
++     "pdfLeaves": 1,
++     "pdfaConverted": 0,
++     "total": 1,
++   },
+  }
+
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:119:25
+    117|           { ctdSection: '1.2', operation: 'new', sourcePath: cover, fi…
+    118|         ]);
+    119|         await expect(run).rejects.toThrow(/ghost\.pdf/);
+       |                         ^
+    120|         await expect(run).rejects.toMatchObject({
+    121|           findings: [expect.objectContaining({ ruleId: 'LEAF-DELETE-IN…
+ ❯ withWork server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:50:18
+ ❯ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  7 failed | 12 passed (19)
+   Start at  08:14:06
+   Duration  14.60s (transform 6.49s, setup 120ms, import 8.63s, tests 5.18s, environment 0ms)
+
+
+=== skeptic probes on the pre-fix tree ===
+[A] delete leaf: <leaf operation="delete" modified-file="../0000/m3/3-2-s-2/3-2-coauthor-documents-104.pdf" checksum="cccccccccccccccccccccccccccccccc" checksum-type="md5" xlink:href="../0000/m3/3-2-s-2/3-2-coauthor-documents-104.pdf" xlink:type="simple" ID="leaf-m3-2-s-2-3-2-coauthor-documents-104">
+[A] skipped: [] | blockers: []
+[B] delete leaf: <leaf operation="delete" modified-file="../0000/m3/3-2-s-2/3-2-coauthor-documents-104.pdf" checksum="cccccccccccccccccccccccccccccccc" checksum-type="md5" xlink:href="../0000/m3/3-2-s-2/3-2-coauthor-documents-104.pdf" xlink:type="simple" ID="leaf-m3-2-s-2-3-2-coauthor-documents-104">
+[B] skipped: [] | blockers: []
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/wrong-bind.probe.test.ts > named delete fallback > A: delete naming never-filed doc 107 must not withdraw doc 104 207ms
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/wrong-bind.probe.test.ts > named delete fallback > B: stale re-withdrawal of already-withdrawn doc 107 must not withdraw doc 104 110ms
+[database] Database connection successful
+[0000] result: {"ok":true}
+[0000] delete leaf: <leaf operation="delete" checksum="" checksum-type="md5" xlink:href="m3/3-2-s-2/ghost.pdf" xlink:type="simple" ID="leaf-3-2-S-2-ghost">
+[0000] href file in zip: false
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/seq0000-delete.probe.test.ts > AnA delete in 0000 with no modified_file 1066ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed (3)

@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/projects/d9bcbda0-3c11-4f6c-b50e-555be08bc961/activity",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 25,
+    "rateLimitRetries": 0,
+    "body": {
+      "activity": [
+        {
+          "id": "9e0e1f5d-1027-4db6-8a64-719baec7eb3a",
+          "action": "c2c.project.create",
+          "resource_type": "regulatory_programs",
+          "resource_id": "d9bcbda0-3c11-4f6c-b50e-555be08bc961",
+          "actor_id": 17,
+          "details": {
+            "project_id": "d9bcbda0-3c11-4f6c-b50e-555be08bc961",
+            "name": "OQ-001 IND program 20260923043330",
+            "code": "OIP2-YYC0",
+            "program_type": "ind",
+            "product_type": "biologic",
+            "primary_agency": "FDA",
+            "created_via": "v2-new-project-wizard",
+            "submission_id": 49,
+            "submission_created": true,
+            "submission_application_type": "ind",
+            "project_anchor_id": null,
+            "project_anchor_skipped": "NO_CLIENT_WORKSPACE"
+          },
+          "occurred_at": "2026-09-23T04:34:03.267Z",
+          "ip_address": null
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,135 @@
+# git: 923d1491b + working tree (test added; the lock route as committed)
+# npx vitest run server/routes/c2c/__tests__/document-lock-ceremony.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stdout | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+{
+  "timestamp": "2026-09-23T14:51:09.956Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T14:51:09.957Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+{
+  "timestamp": "2026-09-23T14:51:09.958Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+{
+  "timestamp": "2026-09-23T14:51:10.178Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written 2676ms
+   → a document was locked on the session alone: expected 200 to be 401 // Object.is equality
+ × server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a wrong password, counts it, and writes nothing 5ms
+   → expected 200 to be 401 // Object.is equality
+ × server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > requires the enrolled code 4ms
+   → expected 200 to be 401 // Object.is equality
+ × server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses the document's author (separation of duties), and nothing is written 4ms
+   → the author locked their own document: expected 200 to be 403 // Object.is equality
+ ✓ server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > locks, once, for a re-verified signer who is not the author 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+AssertionError: a document was locked on the session alone: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/routes/c2c/__tests__/document-lock-ceremony.test.ts:110:70
+    108|   it('refuses a lock without credentials, and nothing is written', asy…
+    109|     const res = await lock({});
+    110|     expect(res.status, 'a document was locked on the session alone').t…
+       |                                                                      ^
+    111|     expect(res.body.error).toBe('REAUTH_PASSWORD_REQUIRED');
+    112|     expect(h.writeMutation).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a wrong password, counts it, and writes nothing
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/routes/c2c/__tests__/document-lock-ceremony.test.ts:118:24
+    116|   it('refuses a wrong password, counts it, and writes nothing', async …
+    117|     const res = await lock({ reauth: { password: 'wrong' } });
+    118|     expect(res.status).toBe(401);
+       |                        ^
+    119|     expect(res.body.error).toBe('REAUTH_PASSWORD_INVALID');
+    120|     expect(h.failures).toHaveBeenCalledWith(SIGNER);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > requires the enrolled code
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/routes/c2c/__tests__/document-lock-ceremony.test.ts:127:24
+    125|     h.account.mfa = true;
+    126|     const res = await lock({ reauth: { password: '<fixture password>' } });
+    127|     expect(res.status).toBe(401);
+       |                        ^
+    128|     expect(res.body.error).toBe('REAUTH_TOTP_REQUIRED');
+    129|     expect(h.writeMutation).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses the document's author (separation of duties), and nothing is written
+AssertionError: the author locked their own document: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/c2c/__tests__/document-lock-ceremony.test.ts:135:64
+    133|     h.author = SIGNER;
+    134|     const res = await lock({ reauth: { password: '<fixture password>' } });
+    135|     expect(res.status, 'the author locked their own document').toBe(40…
+       |                                                                ^
+    136|     expect(res.body.error).toBe('SEPARATION_OF_DUTIES');
+    137|     expect(h.writeMutation).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  14:51:07
+   Duration  3.21s (transform 1.76s, setup 119ms, import 208ms, tests 2.70s, environment 0ms)
+

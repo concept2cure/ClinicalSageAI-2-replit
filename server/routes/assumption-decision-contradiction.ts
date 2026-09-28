@@ -39,9 +39,16 @@ import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { assumptionRegistryService } from '../services/assumption-registry-service';
 import { decisionRecordService } from '../services/decision-record-service';
-import { contradictionEngineService } from '../services/contradiction-engine-service';
+import {
+  contradictionEngineService,
+  ContradictionReviewOutcomeUnknown,
+  ContradictionReviewRefusal,
+  ContradictionScanScopeError,
+  type ReviewState,
+} from '../services/contradiction-engine-service';
 import { reactiveDependencyService } from '../services/reactive-dependency-service';
 import { requireUuidParams } from '../middleware/uuidParam';
+import { requireEditorAccess, governedActorId } from '../middleware/orgMembership';
 
 const router = Router();
 
@@ -351,23 +358,67 @@ router.post('/contradictions/scan/:projectId', async (req: Request, res: Respons
     );
     res.json(result);
   } catch (error) {
+    // A project the scan cannot read is refused, never answered as clean (F-25).
+    if (error instanceof ContradictionScanScopeError) {
+      return res.status(error.status).json({ error: error.message });
+    }
     handleError(res, error, 'scan project for contradictions');
   }
 });
 
-router.post('/contradictions/:id/review', async (req: Request, res: Response) => {
+/**
+ * POST /contradictions/:id/review — a governed decision.
+ *
+ * Resolving a finding takes it off the submission gate, so this is role-gated
+ * (requireEditorAccess — a viewer does not write). The service is the one place
+ * that checks the state and the reason (400 before any connection is opened)
+ * and runs the UPDATE and the ledger row in one transaction. The response carries the
+ * PERSISTED resolver and time and the governance ids, so the surface shows
+ * what was recorded rather than composing its own.
+ */
+router.post('/contradictions/:id/review', requireEditorAccess, async (req: Request, res: Response) => {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const actorId = governedActorId(req);
+  if (!actorId) {
+    return res.status(401).json({ error: 'AUTH_REQUIRED', message: 'A signed-in user is required to record a review decision.' });
+  }
+  // Set by requireEditorAccess from middleware-derived sources only.
+  const orgId = (req as Request & { resolvedOrganizationId: number }).resolvedOrganizationId;
+
   try {
-    const result = await contradictionEngineService.transitionReviewState(
+    const out = await contradictionEngineService.transitionReviewState(
       String(req.params.id),
-      getOrgId(req),
-      req.body.reviewState,
-      getUserId(req),
-      req.body.notes
+      orgId,
+      body.reviewState as ReviewState,
+      actorId,
+      typeof body.reason === 'string' ? body.reason : ''
     );
-    if (!result) return res.status(404).json({ error: 'Finding not found' });
-    res.json(result);
+    if (!out) return res.status(404).json({ error: 'NOT_FOUND', message: 'Finding not found.' });
+    return res.json(out);
   } catch (error) {
-    handleError(res, error, 'review contradiction');
+    if (error instanceof ContradictionReviewRefusal) {
+      // 409: the finding is already in the requested state — the caller's view
+      // of it is stale, and nothing was recorded.
+      const status =
+        error.code === 'ACTOR_REQUIRED' ? 401 : error.code === 'REVIEW_STATE_UNCHANGED' ? 409 : 400;
+      return res.status(status).json({ error: error.code, message: error.message });
+    }
+    if (error instanceof ContradictionReviewOutcomeUnknown) {
+      log.error('review transition outcome unknown', { error: error.message });
+      return res.status(500).json({
+        error: 'OUTCOME_UNKNOWN',
+        message: 'The review decision could not be confirmed. Re-read the board to see whether it was recorded before trying again.',
+      });
+    }
+    // Every other throw rolled the transaction back — the UPDATE with it.
+    log.error('review transition not recorded', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'REVIEW_NOT_RECORDED',
+      message:
+        'The review decision was not recorded and the finding was left unchanged — the update and its audit-trail entry commit together or not at all.',
+    });
   }
 });
 

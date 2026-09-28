@@ -45,6 +45,7 @@ import { getPool } from './db';
 import { runWithSystemTenantScope } from './db/tenantStore';
 
 import { validateEnvironment, resolveStartupFlags, createDebugLogger } from './startup/env';
+import { resolveTrustProxy } from './config/trust-proxy';
 import { registerShutdownHandlers } from './startup/shutdown';
 import { installConsoleBridge } from './utils/consoleBridge';
 import {
@@ -89,6 +90,10 @@ const debugLog = createDebugLogger(flags.debug);
 installConsoleBridge();
 
 const app = express();
+// Which proxies may report the client's address: set before any middleware
+// reads req.ip (the sign-in and MFA rate limits, every audit row). Production
+// sits behind a load balancer; see server/config/trust-proxy.ts.
+app.set('trust proxy', resolveTrustProxy().hops);
 const pool = getPool();
 
 // ── Shutdown wiring (must run before any async work that could crash) ──────

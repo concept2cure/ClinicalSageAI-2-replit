@@ -1,0 +1,6 @@
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > sections created in one transaction under a legacy seal are filed, not refused as altered 58ms
+   → {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was approved, so they cannot be filed as approved. Nothing was filed or changed."}: expected 409 to be 201 // Object.is equality
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > the same document with the two sections' texts exchanged after the seal is refused (409, nothing written) 20ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was approved, so they cannot be filed as approved. Nothing was filed or changed."}: expected 409 to be 201 // Object.is equality
+      Tests  1 failed | 1 passed | 43 skipped (45)

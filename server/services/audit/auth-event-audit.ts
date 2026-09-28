@@ -59,6 +59,7 @@ const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
   'user_login|success|dev_mfa_skipped': 'Signed in on a development server: second factor skipped',
   'user_login|failure|unknown_email': 'Sign-in refused: no account for this address',
   'user_login|failure|account_locked': 'Sign-in refused: account locked',
+  'user_login|failure|account_inactive': 'Sign-in refused: the account is not active (suspended or deprovisioned)',
   'user_login|failure|wrong_password': 'Sign-in refused: wrong password',
   'user_login|failure|wrong_password_threshold_exceeded': 'Sign-in refused: wrong password; the account is now locked',
   'user_login_mfa_challenge|success|mfa_challenge_totp': 'Password verified: authenticator code requested',
@@ -71,6 +72,12 @@ const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
   'user_password_reset_failed|failure|reset token matched no account': 'Password reset refused: the reset link matched no account',
   'user_password_reset_failed|failure|reset token had expired': 'Password reset refused: the reset link had expired',
   'user_password_changed|success|password reset via emailed token': 'Password changed through an emailed reset link',
+  'user_mfa_setup|success|secret_issued': 'Authenticator enrolment started: a new secret was issued',
+  'user_mfa_setup|failure|already_enrolled': 'Authenticator enrolment refused: two-step verification is already on',
+  'user_mfa_enable|success|': 'Two-step verification turned on',
+  'user_mfa_enable|failure|invalid_code': 'Two-step verification not turned on: wrong code',
+  'user_mfa_disable|success|': 'Two-step verification turned off',
+  'user_mfa_disable|failure|invalid_code': 'Two-step verification not turned off: wrong code',
 };
 
 /** The ledger sentence for an event: its own when listed, otherwise one that still states the outcome. */

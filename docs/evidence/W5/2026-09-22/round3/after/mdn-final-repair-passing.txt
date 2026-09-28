@@ -1,0 +1,254 @@
+# MDN final pass REPAIR — passing run, file by file, --no-file-parallelism (2026-09-23T09:36:52Z)
+# impl files sha256 (as2-transport, persistence, icsr-gateway-transport, fda-esg): 0c204c8576cb8db228c7d517c50a858b4eddd6d9acfed79fff4dbbed7da1262a  -
+# The one failure (ana-ri/mdx-esg-transmit-gateway) is out of scope: it pins HTTP 500 -> 'rejected', which the spec reverses (5xx -> in_transit).
+=== server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts ::  Tests 50 passed (50)
+=== server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts ::  Tests 86 passed (86)
+=== server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts ::  Tests 5 passed (5)
+=== server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts ::  Tests 4 passed (4)
+=== server/services/submission-gateways/__tests__/ectd-package-file-names.test.ts ::  Tests 3 passed (3)
+=== server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts ::  Tests 5 passed (5)
+=== server/services/submission-gateways/__tests__/fda-esg-ambiguous-delivery.test.ts ::  Tests 9 passed (9)
+=== server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts ::  Tests 33 passed (33)
+=== server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts ::  Tests 9 passed (9)
+=== server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts ::  Tests 2 passed (2)
+=== server/services/submission-gateways/__tests__/fda-filing-identity.test.ts ::  Tests 7 passed (7)
+=== server/services/submission-gateways/__tests__/governed-transmit-leaf-manifest.test.ts ::  Tests 3 passed (3)
+=== server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts ::  Tests 3 passed (3)
+=== server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts ::  Tests 3 passed (3)
+=== server/services/submission-gateways/__tests__/health-canada-gateway.test.ts ::  Tests 3 passed (3)
+=== server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts ::  Tests 7 passed (7)
+=== server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts ::  Tests 7 passed (7)
+=== server/services/submission-gateways/__tests__/pre-transmit-check.test.ts ::  Tests 18 passed (18)
+=== server/services/submission-gateways/__tests__/refused-before-wire.test.ts ::  Tests 13 passed (13)
+=== server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts ::  Tests 9 passed (9)
+=== server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts ::  Tests 5 passed (5)
+=== server/services/submission-gateways/__tests__/regional-packager.test.ts ::  Tests 18 passed (18)
+=== server/services/submission-gateways/__tests__/stf-packaging.test.ts ::  Tests 4 passed (4)
+=== server/services/submission-gateways/__tests__/transmit-authorization.test.ts ::  Tests 15 passed (15)
+=== server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts ::  Tests 2 passed (2)
+=== server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts ::  Tests 8 passed (8)
+=== server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts ::  Tests 20 passed (20)
+=== server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts ::  Tests 6 passed (6)
+=== server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts ::  Tests 41 passed (41)
+=== server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts ::  Tests 13 passed (13)
+=== server/services/ind-lifecycle/__tests__/e2b-icsr-composer.test.ts ::  Tests 20 passed (20)
+=== server/services/ind-lifecycle/__tests__/e2b-icsr-message.test.ts ::  Tests 11 passed (11)
+=== server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts ::  Tests 14 passed (14)
+=== server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts ::  Tests 89 passed (89)
+=== server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts ::  Tests 1 failed | 11 passed (12)
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency
+
+## Stability: the three real-socket suites, 4 more runs each
+run 1 as2-delivery-outcome.test.ts:  Tests 50 passed (50)
+run 1 icsr-delivery-outcome.test.ts:  Tests 20 passed (20)
+run 1 icsr-transmission-claim.pglite.integration.test.ts:  Tests 6 passed (6)
+run 2 as2-delivery-outcome.test.ts:  Tests 50 passed (50)
+run 2 icsr-delivery-outcome.test.ts:  Tests 20 passed (20)
+run 2 icsr-transmission-claim.pglite.integration.test.ts:  Tests 6 passed (6)
+run 3 as2-delivery-outcome.test.ts:  Tests 50 passed (50)
+run 3 icsr-delivery-outcome.test.ts:  Tests 20 passed (20)
+run 3 icsr-transmission-claim.pglite.integration.test.ts:  Tests 6 passed (6)
+run 4 as2-delivery-outcome.test.ts:  Tests 50 passed (50)
+run 4 icsr-delivery-outcome.test.ts:  Tests 20 passed (20)
+run 4 icsr-transmission-claim.pglite.integration.test.ts:  Tests 6 passed (6)
+
+## Mutations (each applied in place, run, restored; restore checked byte-identical)
+## M1 answered no longer proves receipt (skeptic #2 clause)
+   server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > once any response has been parsed, every failure is held — even a
+     Tests  1 failed | 49 passed (50)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   restored: identical
+## M2 old rule: any TLS-shaped failure is NOT_DELIVERED (skeptic #1)
+   server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.3: the agency read the whole bundle and answered; its answer fails decry
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.2: the agency read the whole bundle and answered; its answer fails decry
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write, a reset, a timeout or a local decry
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > a peer alert that refuses nothing ("internal error") after an aut
+     Tests  4 failed | 46 passed (50)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+   server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:
+     × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLSv1.3: whole ICSR read, the answer fails decryption — receipt-unproven 27ms
+     × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLSv1.2: whole ICSR read, the answer fails decryption — receipt-unproven 14ms
+     Tests  2 failed | 18 passed (20)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+   server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts:
+     × server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts > ICSR — the client-authentication gate (MDN final pass) > a local decryption failure after an authenticated write is receipt-unproven —
+     Tests  1 failed | 12 passed (13)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   restored: identical
+## M3 settle window default 5 ms (skeptic #4 m7)
+   server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLS 1.3: a client-certificate refusal 60 ms away (each way) — rejected, nothin
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > control: a trusted certificate 60 ms away (each way) is received — the session
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > the TLS 1.3 settle window is at least 1 s — longer than any realistic round tr
+     Tests  3 failed | 47 passed (50)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+   server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:
+     × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLS 1.3: a certificate refusal 60 ms away (each way) — transport, nothing reached 
+     Tests  1 failed | 19 passed (20)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   restored: identical
+## M4 settle window forced to 0 (skeptic #4 m5)
+   server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLS 1.3: a client-certificate refusal 60 ms away (each way) — rejected, nothin
+     Tests  1 failed | 49 passed (50)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:
+     × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLS 1.3: a certificate refusal 60 ms away (each way) — transport, nothing reached 
+     Tests  1 failed | 19 passed (20)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   restored: identical
+## M5 peer refusal alerts not recognised
+   server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_TLSV13_ALERT_CERTIFICATE_REQUIRED / x is the peer refusal alert "certifica
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_SSLV3_ALERT_BAD_CERTIFICATE / x is the peer refusal alert "bad certificate
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > EPROTO / write EPROTO C0:error:0A000418:SSL routines:ssl3_read_bytes:tlsv1 alert u
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "sslv
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "tlsv
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "tlsv
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "tlsv
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "ssl/
+     × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "sslv
+     Tests  9 failed | 41 passed (50)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+   server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts:
+     × server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts > ICSR — the client-authentication gate (MDN final pass) > a peer alert refusing our bytes after the write, with no response parsed, is 
+     Tests  1 failed | 12 passed (13)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   restored: identical
+## M6 no pre-send claim (skeptic #3)
+   server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts:
+     × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST 
+     Tests  1 failed | 5 passed (6)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   restored: identical
+## M7 claim not conditional on prepared
+   server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts:
+     × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST 
+     Tests  1 failed | 5 passed (6)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   restored: identical
+## M8 claim never released
+   server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts:
+     × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused
+     × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to pre
+     Tests  2 failed | 4 passed (6)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+   server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:
+     × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR persistence — a receipt-unproven outcome locks the row > a TLS certificate refusal returns the row to prepared (nothing reached the agency) 1
+     Tests  1 failed | 19 passed (20)
+     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   restored: identical
+
+## Skeptic probes re-run (full outputs in ev-r3/after/probes-repair/)
+--- corrupt.probe.out
+A. TLS1.3: full body read, 200 accepting MDN, response record corrupted
+   error: RequestSentTransportError: HTTPS POST failed: C05CAB2FCC7F0000:error:0A000119:SSL routines:tls_get_more_records:decryption failed or bad record mac:../deps/openssl/openssl/ssl/record/methods/tls_common.c:868:
+   outcome: DELIVERED_UNCONFIRMED
+   server app read 4000/4000 bytes, request ended: true, answered 200 accepting MDN
+B. TLS1.2: full body read, 200 accepting MDN, response record corrupted
+   error: RequestSentTransportError: HTTPS POST failed: C05CAB2FCC7F0000:error:1C800066:Provider routines:ossl_gcm_stream_update:cipher operation failed:../deps/openssl/openssl/providers/implementations/ciphers/ciphercom
+   outcome: DELIVERED_UNCONFIRMED
+   server app read 4000/4000 bytes, request ended: true, answered 200 accepting MDN
+--- midbox.probe.out
+TLSv1.3 fin
+   error: RequestSentTransportError [ECONNRESET]: HTTPS POST failed: socket hang up after the whole request was sent to an authenticated server; the recipient may hold it
+   outcome: DELIVERED_UNCONFIRMED   (server app read 4000/4000, ended true)
+TLSv1.3 rst
+   error: RequestSentTransportError [ECONNRESET]: HTTPS POST failed: read ECONNRESET after the whole request was sent to an authenticated server; the recipient may hold it
+   outcome: DELIVERED_UNCONFIRMED   (server app read 4000/4000, ended true)
+TLSv1.3 swallow
+   error: RequestSentTransportError [undefined]: HTTPS POST timeout after the whole request was sent to an authenticated server; the recipient may hold it
+   outcome: DELIVERED_UNCONFIRMED   (server app read 4000/4000, ended true)
+TLSv1.3 partial
+   error: RequestSentTransportError [ECONNRESET]: HTTPS POST failed: socket hang up after the whole request was sent to an authenticated server; the recipient may hold it
+   outcome: DELIVERED_UNCONFIRMED   (server app read 4000/4000, ended true)
+TLSv1.2 fin
+   error: RequestSentTransportError [ECONNRESET]: HTTPS POST failed: socket hang up after the whole request was sent to an authenticated server; the recipient may hold it
+   outcome: DELIVERED_UNCONFIRMED   (server app read 4000/4000, ended true)
+TLSv1.2 rst
+   error: RequestSentTransportError [ECONNRESET]: HTTPS POST failed: read ECONNRESET after the whole request was sent to an authenticated server; the recipient may hold it
+   outcome: DELIVERED_UNCONFIRMED   (server app read 4000/4000, ended true)
+TLSv1.2 swallow
+   error: RequestSentTransportError [undefined]: HTTPS POST timeout after the whole request was sent to an authenticated server; the recipient may hold it
+   outcome: DELIVERED_UNCONFIRMED   (server app read 4000/4000, ended true)
+TLSv1.2 partial
+   error: RequestSentTransportError [ECONNRESET]: HTTPS POST failed: socket hang up after the whole request was sent to an authenticated server; the recipient may hold it
+   outcome: DELIVERED_UNCONFIRMED   (server app read 4000/4000, ended true)
+--- latency.out
+A. TLS1.3 valid cert (control) [one-way 40ms]
+   -> RESOLVED http=200
+   app handler ran: true; body bytes at app: 2000; 283ms
+B. TLS1.3 client cert refused by server [one-way 40ms]
+   -> TransportError (NOT_DELIVERED): HTTPS POST failed: socket hang up
+   app handler ran: false; body bytes at app: 0; 172ms
+C. TLS1.2 client cert refused by server [one-way 40ms]
+   -> TransportError (NOT_DELIVERED): HTTPS POST failed: Client network socket disconnected before secure TLS connection was established
+   app handler ran: false; body bytes at app: 0; 170ms
+D. TLS1.3 valid cert, server reads body then resets [one-way 40ms]
+   -> RequestSentTransportError (DELIVERED_UNCONFIRMED): HTTPS POST failed: socket hang up after the whole request was sent to an authenticated server; the recipient may hold it
+   app handler ran: true; body bytes at app: 2000; 253ms
+--- corrupt-after-headers.out
+real TLSv1.3: RequestSentTransportError: HTTPS POST failed: C0ECAB89B57F0000:error:0A000119:SSL routines:tls_get_more_records:decryption failed or bad record mac:../deps/openssl/openssl/ssl/record/meth -> DELIVERED_UNCON
+real TLSv1.2: RequestSentTransportError: HTTPS POST failed: C0ECAB89B57F0000:error:1C800066:Provider routines:ossl_gcm_stream_update:cipher operation failed:../deps/openssl/openssl/providers/implementa -> DELIVERED_UNCON
+M1 TLSv1.3: TransportError: HTTPS POST failed: C0ECAB89B57F0000:error:0A000119:SSL routines:tls_get_more_records:decryption failed or bad record mac:../deps/openssl/openssl/ssl/record/meth -> NOT_DELIVERED
+M1 TLSv1.2: TransportError: HTTPS POST failed: C0ECAB89B57F0000:error:1C800066:Provider routines:ossl_gcm_stream_update:cipher operation failed:../deps/openssl/openssl/providers/implementa -> NOT_DELIVERED
+--- icsr-inflight.out
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+attempt1: TRANSMISSION_UNCONFIRMED; attempt2: INVALID_STATE
+POSTs to the agency: 1 (<6ad3f203-e82d-45b3-964c-60e2e2b1a40f@SPONSOR-AS2>)
+row status updates: transmitting, transmission_unconfirmed
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  09:36:50
+   Duration  1.49s (transform 447ms, setup 140ms, import 798ms, tests 364ms, environment 0ms)
+--- r3d-mtls.probe.mts.out
+1. TLS1.3, valid client cert (control)
+   -> RESOLVED http=200
+   server app handler ran: true; body bytes at app: 2000; server tlsClientError: -
+2. TLS1.3, client cert NOT trusted by server (mTLS refused)
+   -> REJECTED TransportError: HTTPS POST failed: socket hang up
+   server app handler ran: false; body bytes at app: 0; server tlsClientError: ECONNRESET
+3. TLS1.3, NO client cert (mTLS required)
+   -> REJECTED TransportError: HTTPS POST failed: C07CA8B6FF7E0000:error:0A00045C:SSL routines:ssl3_read_bytes:tlsv13 alert certificate required:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL alert number 116
+   server app handler ran: false; body bytes at app: 0; server tlsClientError: ERR_SSL_PEER_DID_NOT_RETURN_A_CERTIFICATE
+4. TLS1.2, client cert NOT trusted by server
+   -> REJECTED TransportError: HTTPS POST failed: Client network socket disconnected before secure TLS connection was established
+   server app handler ran: false; body bytes at app: 0; server tlsClientError: ECONNRESET
+5. TLS1.2, NO client cert
+   -> REJECTED TransportError: HTTPS POST failed: C07CA8B6FF7E0000:error:0A000410:SSL routines:ssl3_read_bytes:ssl/tls alert handshake failure:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL alert number 40
+   server app handler ran: false; body bytes at app: 0; server tlsClientError: ERR_SSL_PEER_DID_NOT_RETURN_A_CERTIFICATE
+6. TLS1.3, untrusted client cert, 200KB body
+   -> REJECTED TransportError: HTTPS POST failed: socket hang up
+   server app handler ran: false; body bytes at app: 0; server tlsClientError: ECONNRESET
+--- r3d-sserver.probe.mts.out
+s_server -tls1_3, untrusted client cert -> TransportError: HTTPS POST failed: C07CCAE30B7F0000:error:0A000418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL 
+   server log: verify depth is 1, must return a certificate Using default temp DH parameters ACCEPT depth=0 CN = rogue verify error:num=18:self-signed certificate 40F7B809017F0000:error:0A000086:SSL routines:tls_process_
+s_server -tls1_2, untrusted client cert -> TransportError: HTTPS POST failed: C07CCAE30B7F0000:error:0A000418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL 
+   server log: verify depth is 1, must return a certificate Using default temp DH parameters ACCEPT depth=0 CN = rogue verify error:num=18:self-signed certificate 4087ED24CD7F0000:error:0A000086:SSL routines:tls_process_
+--- r3d-hang.probe.mts.out
+200 headers + partial MDN body, then connection reset -> REJECTED RequestSentTransportError: HTTPS POST failed: the response was cut short after the whole request was sent to an authenticated server; the recipient may ho
+--- MDN-parsing probes (conformant2, m05, vendor, r3d r2issues, r3c unit, r3c r2issues): 0 diff lines vs ev-r3/after/probes/*.rerun.txt
+--- r3c/r3d icsr-resend: their db mock throws on ANY update; the pre-send claim is an update, so nothing is sent (0 POSTs) — fail closed. r3c fda-e2e: 4 fail, identical to the previous pass (asserts the old 5xx -> rejected).
+
+## eslint (12 changed files)
+  875:1  warning  File has too many lines (585). Maximum allowed is 500  max-lines
+
+✖ 1 problem (0 errors, 1 warning)
+
+
+## scoped tsc (/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/mdn-repair/tsconfig.json): errors by file
+      3 server/middleware/establishRequestTenantScope.ts
+      3 server/services/signature/kms-signer.ts
+      1 server/utils/jwtVerify.ts
+(none in a file this pass changed)
+
+## Re-run after the final message edit in ind-icsr-transmission-persistence.ts (simulated-receipt refusal states the row after the release) — 2026-09-23T09:41:26Z
+# impl files sha256: 6d6079a645aa3a200dc704fe81e1df017ca83d93f20d7559fc34542455dd1d5e  -
+=== server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts ::  Tests 20 passed (20)
+=== server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts ::  Tests 6 passed (6)
+=== server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts ::  Tests 41 passed (41)
+=== server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts ::  Tests 13 passed (13)
+=== server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts ::  Tests 89 passed (89)
+eslint persistence: 

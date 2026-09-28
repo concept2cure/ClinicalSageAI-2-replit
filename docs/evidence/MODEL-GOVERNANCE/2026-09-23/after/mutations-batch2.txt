@@ -1,0 +1,42 @@
+Mutations, batch two: each line is a deliberate defect applied to the source, the named test file run, and the source restored. CAUGHT means the tests failed on the defect.
+
+R1 judge always structured_output: CAUGHT — 1 failed | 20 passed (21)
+R2 governed unreadable -> 0.5: CAUGHT — 1 failed | 20 passed (21)
+R3 governed partial score filled: CAUGHT — 1 failed | 20 passed (21)
+R4 governed rerank failure keeps order: CAUGHT — 1 failed | 20 passed (21)
+R5 wrong count tolerated when governed: CAUGHT — 1 failed | 20 passed (21)
+R6 citation engine not governed: CAUGHT — 1 failed | 2 passed (3)
+R7 retrieval failure unflagged: CAUGHT — 1 failed | 2 passed (3)
+V1 router records config model: CAUGHT — 1 failed (1)
+E1 estimand pinned general: CAUGHT — 1 failed | 5 passed (6)
+E2 estimand shape unchecked: CAUGHT — 3 failed | 3 passed (6)
+E3 fabricated precedent restored: CAUGHT — 1 failed | 5 passed (6)
+E4 deterministic labelled model: CAUGHT — 4 failed | 2 passed (6)
+K1 blueprint pinned general: CAUGHT — 1 failed | 5 passed (6)
+K2 blueprint empty accepted: CAUGHT — 1 failed | 5 passed (6)
+L1 playbook failure completed: CAUGHT — 2 failed | 4 passed (6)
+L2 playbook pinned general: CAUGHT — 1 failed | 5 passed (6)
+L3 playbook empty accepted: CAUGHT — 1 failed | 5 passed (6)
+D2 DDC keyword confidence 0.6: CAUGHT — 1 failed | 2 passed (3)
+D3 DDC invented category: CAUGHT — 1 failed | 2 passed (3)
+D4 DDC fabricated ip: CAUGHT — 1 failed | 2 passed (3)
+G1 gcc literal model: CAUGHT — 1 failed (1)
+G2 gcc general task: CAUGHT — 1 failed (1)
+M1 empty embedding returned: CAUGHT — 1 failed | 2 passed (3)
+X1 media check removed: CAUGHT — 1 failed | 2 passed (3)
+X2 openai treated as carrying media: CAUGHT — 1 failed | 2 passed (3)
+X3 text blocks treated as media: CAUGHT — 1 failed | 2 passed (3)
+Q1 quick records literal: CAUGHT — 1 failed (1)
+
+Re-run after the ESLint-ratchet refactor moved their anchors (sendNotDrafted, taggingRecord):
+K3 blueprint failure -> 500 generic: CAUGHT — 2 failed | 4 passed (6)
+D1 DDC literal model: CAUGHT — 3 failed (3)
+
+Added with the predictive-suggestions and /summarize fixes:
+P1 predictive failure -> empty list: CAUGHT — 3 failed | 1 passed (4)
+P2 predictive missing list accepted: SURVIVED — 4 passed (4)
+S1 summarize failure stored: CAUGHT — 4 failed | 1 passed (5)
+S2 summarize unreadable accepted: CAUGHT — 3 failed | 2 passed (5)
+(P2 is an equivalent mutant. Without the explicit check, suggestions.map on the missing list throws into the same catch, so the behaviour is identical. The explicit check stays because relying on an accidental TypeError is worse code.)
+
+Q1's anchor was ambiguous (7 matches) on the first pass and was re-run with a unique anchor; the CAUGHT line above is that run.

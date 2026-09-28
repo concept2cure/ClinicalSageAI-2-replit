@@ -65,6 +65,10 @@ import { listClientDocuments } from '../../services/clinical-regulatory-evidence
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider } from '../../services/storage/index.js';
+/* The one translation from a CMC TEXT project id to the integer the
+   governed artifact registry FKs to. Its contract requires every caller to
+   branch on the resolution and keep an honest degraded path. */
+import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -777,7 +781,36 @@ export async function readVerifiedVaultBytes(
  * "vault" affordances pointed here — the data room now lists what the
  * pipeline files, organized by CTD section.
  */
-async function module3Branch(programId: string, orgId: number): Promise<VaultFolder | null> {
+/**
+ * What the Module 3 branch read found — three answers, not two.
+ *
+ * `null` used to carry both "this program is anchored and nothing has been
+ * filed yet" and "this program has no PM-spine anchor, so the artifact
+ * registry cannot be asked about it at all", and the surface rendered them
+ * identically: no Module 3 section. The second is a state the user has to be
+ * told about — the artifact query below joins through
+ * `projects.regulatory_program_id`, so with no anchor it CANNOT match however
+ * much has been compiled and approved. CLAUDE.md's working agreement: an error
+ * is never rendered as an empty result.
+ */
+type Module3BranchResult =
+  | { kind: 'branch'; folder: VaultFolder }
+  /** Addressable, and nothing filed. The honest empty state. */
+  | { kind: 'empty' }
+  /** The registry cannot be addressed for this program. Carries the reason. */
+  | { kind: 'unaddressable'; reason: string };
+
+async function module3Branch(programId: string, orgId: number): Promise<Module3BranchResult> {
+  /* Ask the spine resolver BEFORE the artifact query, through the one module
+     that owns the translation (services/cmc/resolve-cmc-artifact-project.ts).
+     Its own contract requires callers to "skip the registry query and say why,
+     never substitute the raw id, and never render the absence as a plain empty
+     result" — which is exactly what this branch was doing. */
+  const spine = await resolveCmcArtifactProject(orgId, programId);
+  if (spine.state !== 'linked') {
+    return { kind: 'unaddressable', reason: spine.detail };
+  }
+
   const artRes = await pool.query(
     `SELECT a.id, a.artifact_id, a.title, a.ctd_section, a.status, a.version, a.updated_at
        FROM concept2cure_artifacts a
@@ -791,7 +824,7 @@ async function module3Branch(programId: string, orgId: number): Promise<VaultFol
       ORDER BY a.ctd_section, a.version DESC`,
     [programId, orgId],
   );
-  if (artRes.rows.length === 0) return null;
+  if (artRes.rows.length === 0) return { kind: 'empty' };
   const children: VaultDoc[] = (artRes.rows as M3ArtifactRow[]).map((a) => ({
     id: `m3art-${a.id}`,
     num: a.ctd_section,
@@ -807,7 +840,7 @@ async function module3Branch(programId: string, orgId: number): Promise<VaultFol
     updated: relativeTime(a.updated_at),
     preview: `${a.title || a.ctd_section} · CTD §${a.ctd_section} · compiled from CMC canonical sources`,
   }));
-  return { id: 'm3-cmc', code: 'M3', label: 'Module 3 (CMC)', children };
+  return { kind: 'branch', folder: { id: 'm3-cmc', code: 'M3', label: 'Module 3 (CMC)', children } };
 }
 
 /* The Uploaded-files branch is the filing cabinet (uploadLeaf / filingCabinet
@@ -918,7 +951,14 @@ export default function createProjectVaultRoutes(): Router {
       const unavailable: Array<{ branch: string; reason: string }> = [];
       try {
         const m3 = await module3Branch(id, orgId);
-        if (m3) tree.push(m3);
+        if (m3.kind === 'branch') {
+          tree.push(m3.folder);
+        } else if (m3.kind === 'unaddressable') {
+          // Not an empty branch: the registry cannot be asked about this
+          // program at all, and the resolver's own sentence says why and what
+          // to do. Reported through the same contract a missing store uses.
+          unavailable.push({ branch: 'Module 3 (CMC)', reason: m3.reason });
+        }
       } catch (err) {
         if (!isMissingStore(err)) throw err;
         unavailable.push({

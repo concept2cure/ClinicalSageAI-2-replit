@@ -1,0 +1,90 @@
+# MDN close repair — passing run, file by file, --no-file-parallelism (2026-09-23T10:50:31Z)
+== exit=0 server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts ::  Tests 65 passed (65)
+== exit=0 server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts ::  Tests 86 passed (86)
+== exit=0 server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts ::  Tests 5 passed (5)
+== exit=0 server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts ::  Tests 4 passed (4)
+== exit=0 server/services/submission-gateways/__tests__/ectd-package-file-names.test.ts ::  Tests 3 passed (3)
+== exit=0 server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts ::  Tests 5 passed (5)
+== exit=0 server/services/submission-gateways/__tests__/fda-esg-ambiguous-delivery.test.ts ::  Tests 9 passed (9)
+== exit=0 server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts ::  Tests 33 passed (33)
+== exit=0 server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts ::  Tests 9 passed (9)
+== exit=0 server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts ::  Tests 2 passed (2)
+== exit=0 server/services/submission-gateways/__tests__/fda-filing-identity.test.ts ::  Tests 7 passed (7)
+== exit=0 server/services/submission-gateways/__tests__/governed-transmit-leaf-manifest.test.ts ::  Tests 3 passed (3)
+== exit=0 server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts ::  Tests 3 passed (3)
+== exit=0 server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts ::  Tests 3 passed (3)
+== exit=0 server/services/submission-gateways/__tests__/health-canada-gateway.test.ts ::  Tests 3 passed (3)
+== exit=0 server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts ::  Tests 7 passed (7)
+== exit=0 server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts ::  Tests 7 passed (7)
+== exit=0 server/services/submission-gateways/__tests__/pre-transmit-check.test.ts ::  Tests 18 passed (18)
+== exit=0 server/services/submission-gateways/__tests__/refused-before-wire.test.ts ::  Tests 13 passed (13)
+== exit=0 server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts ::  Tests 9 passed (9)
+== exit=0 server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts ::  Tests 5 passed (5)
+== exit=0 server/services/submission-gateways/__tests__/regional-packager.test.ts ::  Tests 18 passed (18)
+== exit=0 server/services/submission-gateways/__tests__/stf-packaging.test.ts ::  Tests 4 passed (4)
+== exit=0 server/services/submission-gateways/__tests__/transmit-authorization.test.ts ::  Tests 15 passed (15)
+== exit=0 server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts ::  Tests 2 passed (2)
+== exit=0 server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts ::  Tests 8 passed (8)
+== exit=0 server/services/ind-lifecycle/__tests__/e2b-icsr-composer.test.ts ::  Tests 20 passed (20)
+== exit=0 server/services/ind-lifecycle/__tests__/e2b-icsr-message.test.ts ::  Tests 11 passed (11)
+== exit=0 server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts ::  Tests 20 passed (20)
+== exit=0 server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts ::  Tests 13 passed (13)
+== exit=0 server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts ::  Tests 41 passed (41)
+== exit=0 server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts ::  Tests 10 passed (10)
+== exit=0 server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts ::  Tests 13 passed (13)
+== exit=0 server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts ::  Tests 11 passed (11)
+== exit=0 server/services/submission-service/__tests__/transmit-refusals.test.ts ::  Tests 13 passed (13)
+== exit=0 server/routes/ind-lifecycle/__tests__/openapi.test.ts ::  Tests 5 passed (5)
+== exit=0 server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts ::  Tests 89 passed (89)
+run 1 server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:  Tests 9 passed | 56 skipped (65)
+run 1 server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts:  Tests 2 passed | 9 skipped (11)
+run 1 server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts:  Tests 2 passed | 8 skipped (10)
+run 2 server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:  Tests 9 passed | 56 skipped (65)
+run 2 server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts:  Tests 2 passed | 9 skipped (11)
+run 2 server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts:  Tests 2 passed | 8 skipped (10)
+run 3 server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:  Tests 9 passed | 56 skipped (65)
+run 3 server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts:  Tests 2 passed | 9 skipped (11)
+run 3 server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts:  Tests 2 passed | 8 skipped (10)
+
+# Mutant MR1: failures classed by Node's 'finish' again (finished && requestReachedServer)
++    let finished = false;
+-      requestReachedServer({ authenticated, answered, cause })
++      finished && requestReachedServer({ authenticated, answered, cause })
++    req.on('finish', () => { finished = true; });
+MR1 server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts: × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > a reset right after the whole body: RequestSentTransportError (DELIVERED_UNCONFIRMED) on every attempt 824ms Tests  1 failed | 2 passed | 62 skipped (65) 
+MR1 server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts: × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — a reset from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting 2161ms Tests  1 failed | 1 passed | 9 skipped (11) 
+MR1 server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts: × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared 841ms Tests  1 failed | 1 passed | 8 skipped (10) 
+MR1 restored: cmp identical
+
+# Mutant MR2: the pre-repair as2-transport.ts (requestWrittenBeforeAnswer rule + 'finish' boundary) with every other repaired file
+MR2 server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:  Tests 15 failed | 50 passed (65)
+MR2 server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts:  Tests 2 failed | 9 passed (11)
+MR2 server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts:  Tests 2 failed | 8 passed (10)
+MR2 restored: cmp identical
+
+# Skeptic probe (verify-r5/mdn-claim/client4.mts, separate-process server) re-run on the repaired tree
+== mode=full DELAY_MS=10 LOAD_MS=30
+{
+ "size=2000 kind=DELIVERED_UNCONFIRMED flag=undefined serverGotWholeBody=true": 8,
+ "size=1000000 kind=DELIVERED_UNCONFIRMED flag=undefined serverGotWholeBody=true": 8
+}
+== mode=reset DELAY_MS=10 LOAD_MS=30
+{
+ "size=2000 kind=DELIVERED_UNCONFIRMED flag=err:RequestSentTransportError serverGotWholeBody=true": 8,
+ "size=1000000 kind=DELIVERED_UNCONFIRMED flag=err:RequestSentTransportError serverGotWholeBody=true": 8
+}
+== mode=full DELAY_MS=0 LOAD_MS=0
+{
+ "size=2000 kind=DELIVERED_UNCONFIRMED flag=undefined serverGotWholeBody=true": 8,
+ "size=1000000 kind=DELIVERED_UNCONFIRMED flag=undefined serverGotWholeBody=true": 8
+}
+== mode=full DELAY_MS=0 LOAD_MS=5
+{
+ "size=2000 kind=DELIVERED_UNCONFIRMED flag=undefined serverGotWholeBody=true": 8,
+ "size=1000000 kind=DELIVERED_UNCONFIRMED flag=undefined serverGotWholeBody=true": 8
+}
+== mode=reset DELAY_MS=0 LOAD_MS=0
+{
+ "size=2000 kind=DELIVERED_UNCONFIRMED flag=err:RequestSentTransportError serverGotWholeBody=true": 8,
+ "size=1000000 kind=DELIVERED_UNCONFIRMED flag=err:RequestSentTransportError serverGotWholeBody=true": 8
+}

@@ -1,0 +1,865 @@
+MDN close — failing first, 2026-09-23 (W5/D7). Tests written first and run on the tree BEFORE the implementation.
+Tree: concept2cure-v2 working tree with the uncommitted MDN + claim-release work; as2-transport.ts / fda-esg.ts / types.ts / openapi.ts unmodified by this pass.
+Command form: npx vitest run <file> --no-file-parallelism
+
+================ 1. as2-delivery-outcome.test.ts (item 1: 5xx/3xx before the whole request was written) ================
+Expected failures: the two real-socket early-answer cases (503, 302), the direct httpsPost case (no requestWrittenBeforeAnswer yet), the five pure classifier cases. The fixture assertions (server read 0 body bytes, IncomingMessage.complete false, socket bytes < 32 MiB) PASS before the failing line in the 503/302 cases.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — control over a real mTLS connection > a trusted client certificate and an accepting MDN for our message is received 28ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — the agency refuses our client certificate at the TLS handshake: NOT_DELIVERED > TLSv1.3: rejected (transport), nothing reached the application, never in transit 11ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — the agency refuses our client certificate at the TLS handshake: NOT_DELIVERED > TLSv1.2: rejected (transport), nothing reached the application, never in transit 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 500: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 12ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 502: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 503: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 504: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 9ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered before the whole bundle was sent: NOT_DELIVERED > HTTP 503 on the request head, body never read: rejected (transport), "Nothing reached FDA" 235ms
+   → expected GatewayError: The agency endpoint answere… { …(4) } to be an instance of TransportError
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered before the whole bundle was sent: NOT_DELIVERED > HTTP 302 on the request head, body never read: rejected (transport), "Nothing reached FDA" 248ms
+   → expected GatewayError: The agency endpoint answere… { …(4) } to be an instance of TransportError
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered before the whole bundle was sent: NOT_DELIVERED > httpsPost settles once with requestWrittenBeforeAnswer false; the request error that follows is neither unhandled nor a second settlement 105ms
+   → expected undefined to be false // Object.is equality
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered before the whole bundle was sent: NOT_DELIVERED > control: a 503 after the server read the whole 32 MiB body is still in transit 253ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 400: rejected (gateway), never in transit 16ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 401: rejected (gateway), never in transit 8ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 403: rejected (gateway), never in transit 8ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 404: rejected (gateway), never in transit 8ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 405: rejected (gateway), never in transit 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 409: rejected (gateway), never in transit 11ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 411: rejected (gateway), never in transit 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 413: rejected (gateway), never in transit 10ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 415: rejected (gateway), never in transit 11ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 422: rejected (gateway), never in transit 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > TLSv1.3: the server resets after reading the whole body — in transit, never rejected 11ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > TLSv1.2: the server resets after reading the whole body — in transit, never rejected 8ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > 200 headers and part of the MDN, then a reset: settles promptly as in transit (no hang) 29ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 301 neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 302 neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 307 neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 100 neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id 1ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 503 before the whole request was written is NOT_DELIVERED; after, or unknown, DELIVERED_UNCONFIRMED 3ms
+   → expected 'DELIVERED_UNCONFIRMED' to be 'NOT_DELIVERED' // Object.is equality
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 502 before the whole request was written is NOT_DELIVERED; after, or unknown, DELIVERED_UNCONFIRMED 2ms
+   → expected 'DELIVERED_UNCONFIRMED' to be 'NOT_DELIVERED' // Object.is equality
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 500 before the whole request was written is NOT_DELIVERED; after, or unknown, DELIVERED_UNCONFIRMED 1ms
+   → expected 'DELIVERED_UNCONFIRMED' to be 'NOT_DELIVERED' // Object.is equality
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 302 before the whole request was written is NOT_DELIVERED; after, or unknown, DELIVERED_UNCONFIRMED 1ms
+   → expected 'DELIVERED_UNCONFIRMED' to be 'NOT_DELIVERED' // Object.is equality
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 307 before the whole request was written is NOT_DELIVERED; after, or unknown, DELIVERED_UNCONFIRMED 1ms
+   → expected 'DELIVERED_UNCONFIRMED' to be 'NOT_DELIVERED' // Object.is equality
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > 2xx and 4xx are classed the same whether or not the whole request had been written 2ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > a RequestSentTransportError is DELIVERED_UNCONFIRMED; any other thrown error is NOT_DELIVERED 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_TLSV13_ALERT_CERTIFICATE_REQUIRED / x is the peer refusal alert "certificate required" 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_SSLV3_ALERT_BAD_CERTIFICATE / x is the peer refusal alert "bad certificate" 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > EPROTO / write EPROTO C0:error:0A000418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca:../ssl/record/rec_layer_s3.c:1605:SSL alert number 48 is the peer refusal alert "unknown ca" 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_DECRYPTION_FAILED_OR_BAD_RECORD_MAC (SSL routines:tls_get_more_records:decryption failed or bad record mac) is not a peer refusal alert 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR (tlsv1 alert internal error) is not a peer refusal alert 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ECONNRESET (socket hang up) is not a peer refusal alert 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ETIMEDOUT (read ETIMEDOUT) is not a peer refusal alert 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > CERT_HAS_EXPIRED (certificate has expired) is not a peer refusal alert 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.3: the agency read the whole bundle and answered; its answer fails decryption — in transit, never "Nothing reached FDA" 13ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.2: the agency read the whole bundle and answered; its answer fails decryption — in transit, never "Nothing reached FDA" 11ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.3: 200 headers arrive, then the MDN record fails decryption — in transit 164ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.2: 200 headers arrive, then the MDN record fails decryption — in transit 164ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLS 1.3: a client-certificate refusal 60 ms away (each way) — rejected, nothing written, never in transit 258ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > control: a trusted certificate 60 ms away (each way) is received — the session ticket, not the window, releases the request 376ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > the TLS 1.3 settle window is at least 1 s — longer than any realistic round trip to the agency 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > nothing before the whole request was handed over, or before the server accepted this client, is held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write, a reset, a timeout or a local decryption failure (the server sent bytes) is held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "sslv3 alert bad certificate" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "tlsv13 alert certificate required" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "tlsv1 alert unknown ca" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "tlsv1 alert access denied" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "ssl/tls alert handshake failure" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "sslv3 alert bad record mac" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > a peer alert that refuses nothing ("internal error") after an authenticated write is held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > once any response has been parsed, every failure is held — even a peer alert 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered before the whole bundle was sent: NOT_DELIVERED > HTTP 503 on the request head, body never read: rejected (transport), "Nothing reached FDA"
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered before the whole bundle was sent: NOT_DELIVERED > HTTP 302 on the request head, body never read: rejected (transport), "Nothing reached FDA"
+AssertionError: expected GatewayError: The agency endpoint answere… { …(4) } to be an instance of TransportError
+ ❯ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:210:17
+    208|     expect(server.answeredOnHead[0].completeAtClose).toBe(false);
+    209|     expect(server.answeredOnHead[0].socketBytesReadAtClose).toBeLessTh…
+    210|     expect(err).toBeInstanceOf(TransportError);
+       |                 ^
+    211|     expect(err).not.toBeInstanceOf(RequestSentTransportError);
+    212|     expect((err as Error).message).toMatch(new RegExp(`answered HTTP $…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered before the whole bundle was sent: NOT_DELIVERED > httpsPost settles once with requestWrittenBeforeAnswer false; the request error that follows is neither unhandled nor a second settlement
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:237:46
+    235|       const res = await p;
+    236|       expect(res.httpStatus).toBe(503);
+    237|       expect(res.requestWrittenBeforeAnswer).toBe(false);
+       |                                              ^
+    238|       await new Promise((r) => setTimeout(r, 300));
+    239|       expect(settlements).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 503 before the whole request was written is NOT_DELIVERED; after, or unknown, DELIVERED_UNCONFIRMED
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 502 before the whole request was written is NOT_DELIVERED; after, or unknown, DELIVERED_UNCONFIRMED
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 500 before the whole request was written is NOT_DELIVERED; after, or unknown, DELIVERED_UNCONFIRMED
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 302 before the whole request was written is NOT_DELIVERED; after, or unknown, DELIVERED_UNCONFIRMED
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 307 before the whole request was written is NOT_DELIVERED; after, or unknown, DELIVERED_UNCONFIRMED
+AssertionError: expected 'DELIVERED_UNCONFIRMED' to be 'NOT_DELIVERED' // Object.is equality
+
+Expected: "NOT_DELIVERED"
+Received: "DELIVERED_UNCONFIRMED"
+
+ ❯ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:315:24
+    313|       { ok: true, response: { httpStatus: code, headers: {}, body: Buf…
+    314|     const early = at(false);
+    315|     expect(early.kind).toBe('NOT_DELIVERED');
+       |                        ^
+    316|     expect(early.kind === 'NOT_DELIVERED' && early.reason).toMatch(new…
+    317|     expect(at(true).kind).toBe('DELIVERED_UNCONFIRMED');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 52 passed (60)
+   Start at  10:20:39
+   Duration  4.04s (transform 489ms, setup 116ms, import 487ms, tests 3.00s, environment 0ms)
+
+
+================ 2+3. transmit-guard-refusal-releases-claim.test.ts (items 2, 3) ================
+Expected failures: NOT_DELIVERED (TLS client-cert refusal, real mTLS) leaves dispatch 'transmitting'; SFTP module absent leaves 'transmitting'; the SFTP CredentialError says 'production' for a staging transmit. The NEGATIVE 502-after-full-body case passes (claim kept).
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent 1304ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError) 4ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the requiredAgencyMetadata refusal raised by the gateway 3ms
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError) 14ms
+   → expected 'production' to be 'staging' // Object.is equality
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when the SFTP credentials are set but the ssh2-sftp-client module is absent (MDN close) 15ms
+   → expected 'transmitting' to be 'pending' // Object.is equality
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NOT_DELIVERED (FDA refuses our client certificate at the TLS handshake): row rejected, claim released 27ms
+   → expected 'transmitting' to be 'pending' // Object.is equality
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — DELIVERED_UNCONFIRMED (HTTP 502 after the whole bundle): in transit, the claim stays transmitting 21ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError keeps the claim at transmitting 3ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError keeps the claim at transmitting 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError)
+AssertionError: expected 'production' to be 'staging' // Object.is equality
+
+Expected: "staging"
+Received: "production"
+
+ ❯ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts:256:30
+    254|     // resolved for, and its variable names — this used to say 'produc…
+    255|     // and FDA_ESG_SFTP_HOST for a staging transmit.
+    256|     expect(err?.environment).toBe('staging');
+       |                              ^
+    257|     expect(err?.missing).toEqual(['FDA_ESG_STAGING_SFTP_HOST', 'FDA_ES…
+    258|     expect(claimTaken()).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when the SFTP credentials are set but the ssh2-sftp-client module is absent (MDN close)
+AssertionError: expected 'transmitting' to be 'pending' // Object.is equality
+
+Expected: "pending"
+Received: "transmitting"
+
+ ❯ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts:283:36
+    281|       expect(claimTaken()).toBe(true);
+    282|       expect(poolCalls.some((c) => /UPDATE submission_transmittals/.te…
+    283|       expect(state.dispatchStatus).toBe('pending');
+       |                                    ^
+    284|       expect(resendRefusal(state.dispatchStatus)).toBeNull();
+    285|       expect(err?.transmitted).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NOT_DELIVERED (FDA refuses our client certificate at the TLS handshake): row rejected, claim released
+AssertionError: expected 'transmitting' to be 'pending' // Object.is equality
+
+Expected: "pending"
+Received: "transmitting"
+
+ ❯ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts:326:34
+    324|     expect(claimTaken()).toBe(true);
+    325|     expect(poolCalls.some((c) => /UPDATE submission_transmittals/.test…
+    326|     expect(state.dispatchStatus).toBe('pending');
+       |                                  ^
+    327|     expect(resendRefusal(state.dispatchStatus)).toBeNull();
+    328|     expect(err?.transmitted).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)
+   Start at  10:21:14
+   Duration  5.07s (transform 2.06s, setup 88ms, import 2.09s, tests 2.43s, environment 2ms)
+
+
+================ 4. icsr-transmission-claim.pglite.integration.test.ts (item 4) ================
+The code already holds the row; the new cases pass on the current tree and are shown failing on the two mutants below.
+--- current tree:
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST reaches the agency; the other is refused INVALID_STATE
+{
+  "timestamp": "2026-09-23T10:21:47.752Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "17bbab4e-5313-45b4-a70b-caca6591d2b7",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<a574c63c-53c1-4d9a-a70a-ac903e3d049b@SPONSOR-AS2>",
+    "httpStatus": 504,
+    "recordFailure": null
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a second transmit while the first awaits the agency reads "transmitting", sends nothing and says a send is in progress
+{
+  "timestamp": "2026-09-23T10:21:48.175Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "c61bb424-d504-4888-bb40-49cf3c72bdf1",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<002a7d86-7a07-4145-a4c0-e17b4b4d6e9c@SPONSOR-AS2>",
+    "httpStatus": 504,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST reaches the agency; the other is refused INVALID_STATE 356ms
+stdout | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a received transmit leaves the row transmitted with the MDN id
+{
+  "timestamp": "2026-09-23T10:21:48.197Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "978de23d-d0b0-4594-b3e8-2aa751f26437",
+    "gateway": "FDA_FAERS",
+    "receiptId": "<mdn-icsr@FDA>",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent
+{
+  "timestamp": "2026-09-23T10:21:48.214Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "06d1fa77-b01c-40d4-b38e-030b414d0c55",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: socket hang up. Nothing reached the agency: the message was never handed in full to an authenticated gateway.",
+    "status": "prepared"
+  }
+}
+
+stdout | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent
+{
+  "timestamp": "2026-09-23T10:21:48.231Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "06d1fa77-b01c-40d4-b38e-030b414d0c55",
+    "gateway": "FDA_FAERS",
+    "receiptId": "<mdn-icsr@FDA>",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to prepared
+{
+  "timestamp": "2026-09-23T10:21:48.253Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "a44e55cb-3f1a-4908-8425-60dc876b422b",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (gateway-rejected): The agency endpoint refused the message: HTTP 403: forbidden",
+    "status": "prepared"
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > DELIVERED_UNCONFIRMED (HTTP 502): transmission_unconfirmed, never back to prepared
+{
+  "timestamp": "2026-09-23T10:21:48.267Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "0ed4052a-b5a5-476f-b713-136d4675b614",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<c88b876a-dab0-4449-a511-d684e06dd2b1@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a second transmit while the first awaits the agency reads "transmitting", sends nothing and says a send is in progress 420ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a received transmit leaves the row transmitted with the MDN id 22ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent 35ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to prepared 20ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > DELIVERED_UNCONFIRMED (HTTP 502): transmission_unconfirmed, never back to prepared 14ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+{
+  "timestamp": "2026-09-23T10:21:48.298Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR receipt could not be recorded; row held transmitting",
+  "context": {
+    "id": "dd9e8db3-3fa0-4d5c-ade9-9c836fc14d49",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "receiptId": "<mdn-icsr@FDA>",
+    "simulated": false,
+    "reason": "Failed query: update \"ind_icsr_transmissions\" set \"status\" = $1, \"transmitted_at\" = $2, \"transport_receipt_id\" = $3, \"updated_at\" = $4 where (\"ind_icsr_transmissions\".\"id\" = $5 and \"ind_icsr_transmissions\".\"organization_id\" = $6) returning \"id\", \"organization_id\", \"submission_id\", \"adverse_event_id\", \"gateway\", \"message_number\", \"sender_id\", \"receiver_id\", \"status\", \"transmit_ready\", \"transmitted_at\", \"transport_receipt_id\", \"acknowledged_at\", \"ack_code\", \"acknowledged_message_number\", \"errors\", \"gaps\", \"message\", \"created_by\", \"created_at\", \"updated_at\"\nparams: transmitted,2026-09-23T10:21:48.286Z,<mdn-icsr@FDA>,2026-09-23T10:21:48.296Z,dd9e8db3-3fa0-4d5c-ade9-9c836fc14d49,7"
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+{
+  "timestamp": "2026-09-23T10:21:48.319Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "4e01a76c-8a7e-40ce-8f68-0bd67cee7e6a",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<f6a37ad2-beb5-4613-be93-d85a45db8aad@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": "Failed query: update \"ind_icsr_transmissions\" set \"status\" = $1, \"transport_receipt_id\" = $2, \"errors\" = $3, \"updated_at\" = $4 where (\"ind_icsr_transmissions\".\"id\" = $5 and \"ind_icsr_transmissions\".\"organization_id\" = $6) returning \"id\", \"organization_id\", \"submission_id\", \"adverse_event_id\", \"gateway\", \"message_number\", \"sender_id\", \"receiver_id\", \"status\", \"transmit_ready\", \"transmitted_at\", \"transport_receipt_id\", \"acknowledged_at\", \"ack_code\", \"acknowledged_message_number\", \"errors\", \"gaps\", \"message\", \"created_by\", \"created_at\", \"updated_at\"\nparams: transmission_unconfirmed,<f6a37ad2-beb5-4613-be93-d85a45db8aad@SPONSOR-AS2>,[{\"kind\":\"transmission_unconfirmed\",\"stage\":\"receipt-unproven\",\"reason\":\"ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): The agency endpoint answered HTTP 502, which neither accepts nor refuses the message (an intermediary or the agency's backend may hold it): Bad Gateway The gateway answered HTTP 502 to AS2 message <f6a37ad2-beb5-4613-be93-d85a45db8aad@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend.\",\"httpStatus\":502,\"agencyResponseRaw\":\"Bad Gateway\",\"transportMessageId\":\"<f6a37ad2-beb5-4613-be93-d85a45db8aad@SPONSOR-AS2>\",\"recordedAt\":\"2026-09-23T10:21:48.318Z\"}],2026-09-23T10:21:48.318Z,4e01a76c-8a7e-40ce-8f68-0bd67cee7e6a,7"
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing 35ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing 19ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  10:21:42
+   Duration  5.69s (transform 315ms, setup 88ms, import 706ms, tests 4.63s, environment 0ms)
+
+--- mutant PR (receiptNotRecorded always releases: 'const simulated = true'), then restored; cmp against the pre-mutation copy: identical
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST reaches the agency; the other is refused INVALID_STATE
+{
+  "timestamp": "2026-09-23T10:22:05.087Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "319fba9a-68d5-4984-b510-085ff845851e",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<0976ebe5-1bba-4351-bf89-fbcaedfb18c4@SPONSOR-AS2>",
+    "httpStatus": 504,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST reaches the agency; the other is refused INVALID_STATE 356ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a second transmit while the first awaits the agency reads "transmitting", sends nothing and says a send is in progress
+{
+  "timestamp": "2026-09-23T10:22:05.512Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "d483d82b-5eb0-4dae-ab68-1554358a3a2a",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<27890311-4ab1-44c3-9104-4d163d070766@SPONSOR-AS2>",
+    "httpStatus": 504,
+    "recordFailure": null
+  }
+}
+
+stdout | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a received transmit leaves the row transmitted with the MDN id
+{
+  "timestamp": "2026-09-23T10:22:05.533Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "159801ae-022e-4890-bdaf-0cb0e8d1a1a0",
+    "gateway": "FDA_FAERS",
+    "receiptId": "<mdn-icsr@FDA>",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent
+{
+  "timestamp": "2026-09-23T10:22:05.551Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "35971b12-107a-405e-a67a-22ccb1f7e9b8",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: socket hang up. Nothing reached the agency: the message was never handed in full to an authenticated gateway.",
+    "status": "prepared"
+  }
+}
+
+stdout | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent
+{
+  "timestamp": "2026-09-23T10:22:05.569Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "35971b12-107a-405e-a67a-22ccb1f7e9b8",
+    "gateway": "FDA_FAERS",
+    "receiptId": "<mdn-icsr@FDA>",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to prepared
+{
+  "timestamp": "2026-09-23T10:22:05.589Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "111d2bab-1035-4b48-b42c-f03bf05cae8a",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (gateway-rejected): The agency endpoint refused the message: HTTP 403: forbidden",
+    "status": "prepared"
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > DELIVERED_UNCONFIRMED (HTTP 502): transmission_unconfirmed, never back to prepared
+{
+  "timestamp": "2026-09-23T10:22:05.604Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "aac12b8c-26ca-48c2-af09-78c7518b0c4c",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<a986c338-ab10-4bc6-a690-38f254222c65@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a second transmit while the first awaits the agency reads "transmitting", sends nothing and says a send is in progress 421ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a received transmit leaves the row transmitted with the MDN id 22ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent 34ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to prepared 21ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > DELIVERED_UNCONFIRMED (HTTP 502): transmission_unconfirmed, never back to prepared 15ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+{
+  "timestamp": "2026-09-23T10:22:05.637Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR receipt could not be recorded; row held transmitting",
+  "context": {
+    "id": "3956ef32-83a8-4793-9c70-ab04d899577d",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "receiptId": "<mdn-icsr@FDA>",
+    "simulated": true,
+    "reason": "Failed query: update \"ind_icsr_transmissions\" set \"status\" = $1, \"transmitted_at\" = $2, \"transport_receipt_id\" = $3, \"updated_at\" = $4 where (\"ind_icsr_transmissions\".\"id\" = $5 and \"ind_icsr_transmissions\".\"organization_id\" = $6) returning \"id\", \"organization_id\", \"submission_id\", \"adverse_event_id\", \"gateway\", \"message_number\", \"sender_id\", \"receiver_id\", \"status\", \"transmit_ready\", \"transmitted_at\", \"transport_receipt_id\", \"acknowledged_at\", \"ack_code\", \"acknowledged_message_number\", \"errors\", \"gaps\", \"message\", \"created_by\", \"created_at\", \"updated_at\"\nparams: transmitted,2026-09-23T10:22:05.622Z,<mdn-icsr@FDA>,2026-09-23T10:22:05.632Z,3956ef32-83a8-4793-9c70-ab04d899577d,7"
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+{
+  "timestamp": "2026-09-23T10:22:05.665Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "6545bb67-5e12-40d0-b6d3-8ca3c8004027",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<20857a3d-e229-4b30-bd87-5ed566e26fe8@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": "Failed query: update \"ind_icsr_transmissions\" set \"status\" = $1, \"transport_receipt_id\" = $2, \"errors\" = $3, \"updated_at\" = $4 where (\"ind_icsr_transmissions\".\"id\" = $5 and \"ind_icsr_transmissions\".\"organization_id\" = $6) returning \"id\", \"organization_id\", \"submission_id\", \"adverse_event_id\", \"gateway\", \"message_number\", \"sender_id\", \"receiver_id\", \"status\", \"transmit_ready\", \"transmitted_at\", \"transport_receipt_id\", \"acknowledged_at\", \"ack_code\", \"acknowledged_message_number\", \"errors\", \"gaps\", \"message\", \"created_by\", \"created_at\", \"updated_at\"\nparams: transmission_unconfirmed,<20857a3d-e229-4b30-bd87-5ed566e26fe8@SPONSOR-AS2>,[{\"kind\":\"transmission_unconfirmed\",\"stage\":\"receipt-unproven\",\"reason\":\"ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): The agency endpoint answered HTTP 502, which neither accepts nor refuses the message (an intermediary or the agency's backend may hold it): Bad Gateway The gateway answered HTTP 502 to AS2 message <20857a3d-e229-4b30-bd87-5ed566e26fe8@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend.\",\"httpStatus\":502,\"agencyResponseRaw\":\"Bad Gateway\",\"transportMessageId\":\"<20857a3d-e229-4b30-bd87-5ed566e26fe8@SPONSOR-AS2>\",\"recordedAt\":\"2026-09-23T10:22:05.663Z\"}],2026-09-23T10:22:05.663Z,6545bb67-5e12-40d0-b6d3-8ca3c8004027,7"
+  }
+}
+
+ × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing 41ms
+   → expected 'prepared' to be 'transmitting' // Object.is equality
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing 22ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+AssertionError: expected 'prepared' to be 'transmitting' // Object.is equality
+
+Expected: "transmitting"
+Received: "prepared"
+
+ ❯ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts:184:39
+    182|     const cause = (first as Error & { cause?: unknown }).cause;
+    183|     expect(`${(first as Error).message} ${cause instanceof Error ? cau…
+    184|     expect((await statusOf()).status).toBe('transmitting');
+       |                                       ^
+    185|
+    186|     const second = await transmit(as2Config());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  10:21:59
+   Duration  6.31s (transform 438ms, setup 108ms, import 858ms, tests 4.99s, environment 0ms)
+
+--- mutant PU (recordTransmissionUnconfirmed's write-failure catch calls releaseClaim), then restored; cmp: identical
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST reaches the agency; the other is refused INVALID_STATE
+{
+  "timestamp": "2026-09-23T10:22:11.870Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "18582518-8316-4781-aaab-78238b6be57f",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<383d3375-97ab-46f3-91a8-3ed43acb956b@SPONSOR-AS2>",
+    "httpStatus": 504,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST reaches the agency; the other is refused INVALID_STATE 356ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a second transmit while the first awaits the agency reads "transmitting", sends nothing and says a send is in progress
+{
+  "timestamp": "2026-09-23T10:22:12.295Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "50b8f499-829e-4879-ae66-2af8e4453756",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<62bbaa59-cd5c-4ada-a870-f2cc9dcb4930@SPONSOR-AS2>",
+    "httpStatus": 504,
+    "recordFailure": null
+  }
+}
+
+stdout | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a received transmit leaves the row transmitted with the MDN id
+{
+  "timestamp": "2026-09-23T10:22:12.319Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "28f1a14d-49ab-4c13-81d4-eb6842c7ea2b",
+    "gateway": "FDA_FAERS",
+    "receiptId": "<mdn-icsr@FDA>",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent
+{
+  "timestamp": "2026-09-23T10:22:12.340Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "27be3169-67e9-4f48-9d6c-a33cfff1210b",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: socket hang up. Nothing reached the agency: the message was never handed in full to an authenticated gateway.",
+    "status": "prepared"
+  }
+}
+
+stdout | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent
+{
+  "timestamp": "2026-09-23T10:22:12.356Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "27be3169-67e9-4f48-9d6c-a33cfff1210b",
+    "gateway": "FDA_FAERS",
+    "receiptId": "<mdn-icsr@FDA>",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to prepared
+{
+  "timestamp": "2026-09-23T10:22:12.373Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "a17349e1-c1ed-409c-9131-b475b9855700",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (gateway-rejected): The agency endpoint refused the message: HTTP 403: forbidden",
+    "status": "prepared"
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > DELIVERED_UNCONFIRMED (HTTP 502): transmission_unconfirmed, never back to prepared
+{
+  "timestamp": "2026-09-23T10:22:12.387Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "04599992-7c56-4d3b-94b9-fc606d3896aa",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<f8420a22-e976-4ff0-8069-d09f8af1d880@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a second transmit while the first awaits the agency reads "transmitting", sends nothing and says a send is in progress 422ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a received transmit leaves the row transmitted with the MDN id 24ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent 36ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to prepared 17ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > DELIVERED_UNCONFIRMED (HTTP 502): transmission_unconfirmed, never back to prepared 14ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+{
+  "timestamp": "2026-09-23T10:22:12.418Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR receipt could not be recorded; row held transmitting",
+  "context": {
+    "id": "84f6b007-316e-405a-99e3-6ec5fcb1a1d6",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "receiptId": "<mdn-icsr@FDA>",
+    "simulated": false,
+    "reason": "Failed query: update \"ind_icsr_transmissions\" set \"status\" = $1, \"transmitted_at\" = $2, \"transport_receipt_id\" = $3, \"updated_at\" = $4 where (\"ind_icsr_transmissions\".\"id\" = $5 and \"ind_icsr_transmissions\".\"organization_id\" = $6) returning \"id\", \"organization_id\", \"submission_id\", \"adverse_event_id\", \"gateway\", \"message_number\", \"sender_id\", \"receiver_id\", \"status\", \"transmit_ready\", \"transmitted_at\", \"transport_receipt_id\", \"acknowledged_at\", \"ack_code\", \"acknowledged_message_number\", \"errors\", \"gaps\", \"message\", \"created_by\", \"created_at\", \"updated_at\"\nparams: transmitted,2026-09-23T10:22:12.404Z,<mdn-icsr@FDA>,2026-09-23T10:22:12.415Z,84f6b007-316e-405a-99e3-6ec5fcb1a1d6,7"
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+{
+  "timestamp": "2026-09-23T10:22:12.440Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "ee1915cc-7749-4f04-99f0-dbce26070c39",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<96d726fa-d993-43c7-a4ee-f33680e86f2c@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": "Failed query: update \"ind_icsr_transmissions\" set \"status\" = $1, \"transport_receipt_id\" = $2, \"errors\" = $3, \"updated_at\" = $4 where (\"ind_icsr_transmissions\".\"id\" = $5 and \"ind_icsr_transmissions\".\"organization_id\" = $6) returning \"id\", \"organization_id\", \"submission_id\", \"adverse_event_id\", \"gateway\", \"message_number\", \"sender_id\", \"receiver_id\", \"status\", \"transmit_ready\", \"transmitted_at\", \"transport_receipt_id\", \"acknowledged_at\", \"ack_code\", \"acknowledged_message_number\", \"errors\", \"gaps\", \"message\", \"created_by\", \"created_at\", \"updated_at\"\nparams: transmission_unconfirmed,<96d726fa-d993-43c7-a4ee-f33680e86f2c@SPONSOR-AS2>,[{\"kind\":\"transmission_unconfirmed\",\"stage\":\"receipt-unproven\",\"reason\":\"ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): The agency endpoint answered HTTP 502, which neither accepts nor refuses the message (an intermediary or the agency's backend may hold it): Bad Gateway The gateway answered HTTP 502 to AS2 message <96d726fa-d993-43c7-a4ee-f33680e86f2c@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend.\",\"httpStatus\":502,\"agencyResponseRaw\":\"Bad Gateway\",\"transportMessageId\":\"<96d726fa-d993-43c7-a4ee-f33680e86f2c@SPONSOR-AS2>\",\"recordedAt\":\"2026-09-23T10:22:12.437Z\"}],2026-09-23T10:22:12.437Z,ee1915cc-7749-4f04-99f0-dbce26070c39,7"
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing 35ms
+ × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing 25ms
+   → expected 'prepared' to be 'transmitting' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+AssertionError: expected 'prepared' to be 'transmitting' // Object.is equality
+
+Expected: "transmitting"
+Received: "prepared"
+
+ ❯ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts:199:39
+    197|     expect((first as IcsrTransmissionError).code).toBe('TRANSMISSION_U…
+    198|     expect((first as Error).message).toMatch(/stays 'transmitting'/);
+    199|     expect((await statusOf()).status).toBe('transmitting');
+       |                                       ^
+    200|
+    201|     const second = await transmit(as2Config());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  10:22:06
+   Duration  5.86s (transform 437ms, setup 123ms, import 863ms, tests 4.57s, environment 0ms)
+
+
+================ 5. mdx-esg-transmit-gateway.test.ts (item 5) ================
+--- the COMMITTED file (git show HEAD:…, run under a temporary name and deleted): its HTTP 500 case expects 'rejected' and fails against the delivery classifier, which records a 5xx after the whole bundle in transit
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 1238ms
+ ✓ server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 6ms
+ × server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 9ms
+   → expected undefined to be defined
+ ✓ server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing 5ms
+ ✓ server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates 2ms
+ ✓ server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier 2ms
+ ✓ server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables 6ms
+ ✓ server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package whose descriptor carries no structural-validation evidence 1ms
+ ✓ server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package with error-severity structural findings 1ms
+ ✓ server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a descriptor pointing outside the submission-bundle namespace 1ms
+ ✓ server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses when the package has never been assembled 1ms
+ ✓ server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error
+AssertionError: expected undefined to be defined
+ ❯ server/services/ana-ri/__tests__/zz-mdx-committed-probe.test.ts:343:22
+    341|       (q) => q.sql.includes('UPDATE submission_transmittals') && q.arg…
+    342|     );
+    343|     expect(rejected).toBeDefined();
+       |                      ^
+    344|     // Nothing anywhere claims a receipt.
+    345|     expect(poolQueries.some((q) => q.args.includes('ack3_received'))).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  10:22:20
+   Duration  3.57s (transform 2.13s, setup 99ms, import 1.93s, tests 1.37s, environment 0ms)
+
+--- the edited file on the current tree (403 → rejected; 500 after full body → in_transit): passes
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 1144ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 6ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 7ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 after the whole bundle 4ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing 4ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package whose descriptor carries no structural-validation evidence 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package with error-severity structural findings 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a descriptor pointing outside the submission-bundle namespace 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses when the package has never been assembled 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data 6ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  10:22:39
+   Duration  3.66s (transform 2.03s, setup 98ms, import 2.04s, tests 1.22s, environment 0ms)
+
+
+================ 6. openapi.ts ICSR transmit doc (item 6), scratchpad probe mdnclose/probe/openapi-icsr.probe.test.ts ================
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/mdnclose/probe/openapi-icsr.probe.test.ts > ICSR transmit OpenAPI doc > documents TRANSMISSION_UNCONFIRMED (502, row not prepared) and 409, and no longer says every 502 leaves the row prepared
+{
+ "summary": "Transmit a prepared ICSR to its agency gateway; only a real gateway receipt marks it transmitted (422 not-ready with gaps, 503 gateway not configured, 502 transport failure — row stays prepared)",
+ "responses": {
+  "200": {
+   "description": "Success"
+  },
+  "201": {
+   "description": "Created"
+  },
+  "400": {
+   "description": "Validation error"
+  },
+  "401": {
+   "description": "Authentication required"
+  },
+  "403": {
+   "description": "Insufficient role (regulatory-author)"
+  },
+  "500": {
+   "description": "Internal error"
+  }
+ }
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/mdnclose/probe/openapi-icsr.probe.test.ts
+{
+  "timestamp": "2026-09-23T10:22:58.193Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T10:22:58.195Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/mdnclose/probe/openapi-icsr.probe.test.ts
+{
+  "timestamp": "2026-09-23T10:22:58.195Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/mdnclose/probe/openapi-icsr.probe.test.ts
+[database] Database connection successful
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/mdnclose/probe/openapi-icsr.probe.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/mdnclose/probe/openapi-icsr.probe.test.ts
+{
+  "timestamp": "2026-09-23T10:22:59.133Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/mdnclose/probe/openapi-icsr.probe.test.ts (1 test | 1 failed) 15ms
+     × documents TRANSMISSION_UNCONFIRMED (502, row not prepared) and 409, and no longer says every 502 leaves the row prepared 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/mdnclose/probe/openapi-icsr.probe.test.ts > ICSR transmit OpenAPI doc > documents TRANSMISSION_UNCONFIRMED (502, row not prepared) and 409, and no longer says every 502 leaves the row prepared
+AssertionError: expected 'Transmit a prepared ICSR to its agenc…' not to match /502 transport failure — row stays pre…/
+
+- Expected:
+/502 transport failure — row stays prepared/
+
++ Received:
+"Transmit a prepared ICSR to its agency gateway; only a real gateway receipt marks it transmitted (422 not-ready with gaps, 503 gateway not configured, 502 transport failure — row stays prepared)"
+
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/mdnclose/probe/openapi-icsr.probe.test.ts:7:28
+      5|     const op = (buildIndLifecycleOpenApi() as any).paths['/api/ind-lif…
+      6|     console.log(JSON.stringify({ summary: op.summary, responses: op.re…
+      7|     expect(op.summary).not.toMatch(/502 transport failure — row stays …
+       |                            ^
+      8|     expect(op.responses['502'].description).toMatch(/TRANSMISSION_UNCO…
+      9|     expect(op.responses['502'].description).toMatch(/transmission_unco…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  10:22:56
+   Duration  3.85s (transform 2.30s, setup 121ms, import 3.54s, tests 15ms, environment 0ms)
+

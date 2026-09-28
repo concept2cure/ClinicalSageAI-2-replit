@@ -16,7 +16,11 @@
  *     A receipt says `transmitted` only when the agency endpoint answered 2xx
  *     AND its MDN accepted the very message that was sent (AS2), or answered
  *     2xx with a receipt identifier (HTTPS). Anything else throws a typed
- *     error — never a fabricated acknowledgement.
+ *     error — never a fabricated acknowledgement. Which error is decided by
+ *     the delivery classifier shared with FDA ESG (classifyDelivery in
+ *     as2-transport.ts; 2026-09-23 W5/D7, MDN final pass): NOT_DELIVERED →
+ *     stage 'transport', REFUSED_BY_AGENCY → 'gateway-rejected',
+ *     DELIVERED_UNCONFIRMED → 'receipt-unproven'.
  *   - In PRODUCTION with no real gateway configured, `transmitIcsr()` THROWS.
  *     Returning a synthetic acknowledgement would tell a user their ICSR reached
  *     FAERS / EudraVigilance when nothing was transmitted — the most dangerous
@@ -57,14 +61,16 @@ import { promises as fs } from 'fs';
 import { randomUUID } from 'crypto';
 import type { IcsrGateway, IcsrTransmissionResult } from './e2b-icsr-message';
 import {
+  attemptDelivery,
   buildAs2Headers,
+  classifyAs2Delivery,
+  classifyDelivery,
+  headerValue,
   httpsPost,
-  mdnRefusal,
-  parseMdn,
   postAs2,
   signAs2Body,
+  type DeliveryOutcome,
 } from '../submission-gateways/as2-transport';
-import { TransportError } from '../submission-gateways/types';
 
 /** Gateway transport configuration, resolved from the environment. */
 export interface IcsrGatewayConfig {
@@ -112,6 +118,20 @@ export interface IcsrTransmitAuditEvent {
   outcome: 'simulated' | 'transmitted' | 'refused';
   /** Why a transmit was refused, if applicable. */
   reason?: string;
+  /**
+   * The agency's response body, verbatim, on a refusal that got one (an MDN,
+   * a non-2xx body). 2026-09-23 (W5/D7, round-2 review): the audit row is the
+   * only durable record of a refused attempt, and it kept the reason but not
+   * what the agency said — so an MDN a human must confirm at the agency was
+   * lost with the thrown error.
+   */
+  agencyResponseRaw?: string;
+  /**
+   * The AS2 Message-ID (or HTTPS message id) this platform sent, on a refusal
+   * of a configured gateway — what an operator quotes to the agency to confirm
+   * an unconfirmed delivery. 2026-09-23 (W5/D7, MDN final pass).
+   */
+  transportMessageId?: string;
   timestamp: string;
 }
 
@@ -215,21 +235,59 @@ export class IcsrGatewayNotConfiguredError extends Error {
 
 /**
  * A configured gateway was reached (or the network call was attempted) and the
- * outcome is not an acceptance: TLS/DNS/timeout failure, a non-2xx, an MDN that
- * rejects or acknowledges another message, or a 2xx carrying no receipt
- * identifier. The message was NOT transmitted as far as this platform can prove.
+ * outcome is not an acceptance. `stage` is the shared delivery classification
+ * (classifyDelivery, as2-transport.ts):
+ *   'transport'        NOT_DELIVERED — nothing was provably handed to an
+ *                      authenticated gateway (DNS, connection refused, any TLS
+ *                      handshake / certificate refusal before the message was
+ *                      released, or the gateway's own TLS refusal alert).
+ *                      "NOT transmitted".
+ *   'gateway-rejected' REFUSED_BY_AGENCY — an HTTP 4xx, or an MDN that
+ *                      explicitly refuses this message. "NOT transmitted".
+ *   'receipt-unproven' DELIVERED_UNCONFIRMED — the agency may hold the
+ *                      message: a 2xx this platform cannot tie to a receipt, a
+ *                      5xx (or other non-2xx, non-4xx) status, or a failure
+ *                      after the message was released to an authenticated
+ *                      gateway. "Delivery unconfirmed"; `transmitted` is
+ *                      'unconfirmed', and the persistence layer locks the row
+ *                      ('transmission_unconfirmed').
+ *
+ * 2026-09-23 (W5/D7, round-3 review): stage 'receipt-unproven' said "ICSR was
+ * NOT transmitted", which is not known. 2026-09-23 (W5/D7, MDN final pass): a
+ * TLS 1.3 client-certificate refusal was 'receipt-unproven' (it fires after
+ * Node's 'finish'), every 5xx was 'gateway-rejected', and `transmitted` was
+ * `false` for 'receipt-unproven' too; each now follows the classifier, and
+ * `transportMessageId` carries the id this platform sent so the persisted row
+ * can be reconciled at the agency.
+ * 2026-09-23 (W5/D7, MDN close, repair): the classifier no longer reads
+ * Node's request 'finish'. A 502 or a reset after the gateway had read the
+ * whole report was 'transport' ("NOT transmitted", the row back to
+ * 'prepared') whenever 'finish' had not yet been delivered; it is
+ * 'receipt-unproven' now.
  */
 export class IcsrGatewayTransmitError extends Error {
-  readonly transmitted = false as const;
+  /** false: nothing reached the agency, or it refused; 'unconfirmed': it may hold the message. */
+  readonly transmitted: false | 'unconfirmed';
+  readonly httpStatus: number | null;
+  readonly agencyResponseRaw: string | null;
+  /** The AS2 Message-ID (or HTTPS message id) this platform sent, when known. */
+  readonly transportMessageId: string | null;
   constructor(
     gateway: IcsrGateway,
     public readonly stage: 'transport' | 'gateway-rejected' | 'receipt-unproven',
     detail: string,
-    public readonly httpStatus: number | null = null,
-    public readonly agencyResponseRaw: string | null = null,
+    wire: { httpStatus?: number | null; agencyResponseRaw?: string | null; transportMessageId?: string | null } = {},
   ) {
-    super(`ICSR was NOT transmitted to ${gateway} (${stage}): ${detail}`);
+    super(
+      stage === 'receipt-unproven'
+        ? `ICSR delivery to ${gateway} is unconfirmed (${stage}): ${detail}`
+        : `ICSR was NOT transmitted to ${gateway} (${stage}): ${detail}`,
+    );
     this.name = 'IcsrGatewayTransmitError';
+    this.transmitted = stage === 'receipt-unproven' ? 'unconfirmed' : false;
+    this.httpStatus = wire.httpStatus ?? null;
+    this.agencyResponseRaw = wire.agencyResponseRaw ?? null;
+    this.transportMessageId = wire.transportMessageId ?? null;
   }
 }
 
@@ -249,9 +307,55 @@ export function resolveProtocol(config: IcsrGatewayConfig): 'as2' | 'https' {
   return config.certPath ? 'as2' : 'https';
 }
 
-function headerString(v: string | string[] | undefined): string | null {
-  if (Array.isArray(v)) return v[0] ?? null;
-  return typeof v === 'string' && v.trim() !== '' ? v : null;
+/**
+ * The receipt of a RECEIVED outcome, or the typed error for any other — one
+ * mapping for the AS2 and HTTPS paths. `protocolLabel` and `ourId` name what
+ * was sent, for the operator.
+ * 2026-09-23 (W5/D7, MDN final pass): replaces transportRefusal and the two
+ * inline status checks, which classed every non-2xx as 'gateway-rejected' and
+ * every failure after Node's 'finish' as 'receipt-unproven'.
+ */
+function receiptOrRefusal(
+  gateway: IcsrGateway,
+  outcome: DeliveryOutcome,
+  protocolLabel: string,
+  ourId: string,
+): { receiptId: string; agencyResponseRaw: string } {
+  switch (outcome.kind) {
+    case 'RECEIVED':
+      return { receiptId: outcome.receiptId, agencyResponseRaw: outcome.responseRaw };
+    case 'NOT_DELIVERED':
+      throw new IcsrGatewayTransmitError(
+        gateway, 'transport',
+        `${outcome.reason}. Nothing reached the agency: the message was never released to an authenticated gateway, or its TLS layer refused it.`,
+        { transportMessageId: ourId },
+      );
+    case 'REFUSED_BY_AGENCY':
+      throw new IcsrGatewayTransmitError(gateway, 'gateway-rejected', outcome.reason, {
+        httpStatus: outcome.httpStatus, agencyResponseRaw: outcome.responseRaw, transportMessageId: ourId,
+      });
+    case 'DELIVERED_UNCONFIRMED': {
+      const delivered = outcome.httpStatus === null
+        ? `The ${protocolLabel} message ${ourId} was sent to an authenticated gateway before the connection failed`
+        : `The gateway answered HTTP ${outcome.httpStatus} to ${protocolLabel} message ${ourId}`;
+      throw new IcsrGatewayTransmitError(
+        gateway, 'receipt-unproven',
+        `${outcome.reason} ${delivered} and may hold it; confirm receipt at the agency before any resend.`,
+        { httpStatus: outcome.httpStatus, agencyResponseRaw: outcome.responseRaw, transportMessageId: ourId },
+      );
+    }
+  }
+}
+
+/** The refusal-specific fields of a transmit attempt's audit event. */
+function refusalAuditFields(err: unknown): Pick<IcsrTransmitAuditEvent, 'reason' | 'agencyResponseRaw' | 'transportMessageId'> {
+  if (err instanceof IcsrGatewayNotConfiguredError) return { reason: 'not-configured' };
+  if (!(err instanceof IcsrGatewayTransmitError)) return { reason: 'transport' };
+  return {
+    reason: err.stage,
+    ...(err.agencyResponseRaw !== null ? { agencyResponseRaw: err.agencyResponseRaw } : {}),
+    ...(err.transportMessageId !== null ? { transportMessageId: err.transportMessageId } : {}),
+  };
 }
 
 /* ─── Real transports ────────────────────────────────────────────── */
@@ -287,32 +391,17 @@ async function transmitViaAs2(
     userAgent: 'concept2cure-icsr/1.0',
   });
 
-  let response;
-  try {
-    response = await postAs2({
-      endpoint: config.url, headers, body,
-      clientCertPem, clientKeyPem, agencyCertPem,
-      errorPrefix: `ICSR AS2 POST (${built.gateway})`,
-    });
-  } catch (err) {
-    const detail = err instanceof TransportError ? err.message : err instanceof Error ? err.message : String(err);
-    throw new IcsrGatewayTransmitError(built.gateway, 'transport', detail);
-  }
-
-  const raw = response.body.toString('utf8');
-  if (response.httpStatus < 200 || response.httpStatus >= 300) {
-    throw new IcsrGatewayTransmitError(
-      built.gateway, 'gateway-rejected',
-      `HTTP ${response.httpStatus}: ${raw.slice(0, 500)}`,
-      response.httpStatus, raw,
-    );
-  }
-  const refusal = mdnRefusal(parseMdn(raw), as2MessageId);
-  if (refusal) {
-    throw new IcsrGatewayTransmitError(built.gateway, 'gateway-rejected', refusal, response.httpStatus, raw);
-  }
-  const receiptId = headerString(response.headers['message-id']) ?? as2MessageId;
-  return { receiptId, agencyResponseRaw: raw };
+  const outcome = classifyAs2Delivery(await attemptDelivery(() => postAs2({
+    endpoint: config.url, headers, body,
+    clientCertPem, clientKeyPem, agencyCertPem,
+    errorPrefix: `ICSR AS2 POST (${built.gateway})`,
+  })), as2MessageId);
+  /* 2026-09-23 (W5/D7, round-2 and round-3 review): an MDN that could not be
+     tied to this message (none named, another message, empty or `<>`, no
+     readable disposition) is 'receipt-unproven', not 'gateway-rejected'; only
+     an explicit refusal naming this message is. 2026-09-23 (W5/D7, MDN final
+     pass): the whole decision is classifyAs2Delivery's, shared with FDA ESG. */
+  return receiptOrRefusal(built.gateway, outcome, 'AS2', as2MessageId);
 }
 
 async function transmitViaHttps(
@@ -327,48 +416,34 @@ async function transmitViaHttps(
 
   const body = Buffer.from(built.message, 'utf8');
   const basic = Buffer.from(`${config.username}:${config.password}`, 'utf8').toString('base64');
-  let response;
-  try {
-    response = await httpsPost({
-      endpoint: config.url,
-      headers: {
-        'Authorization': `Basic ${basic}`,
-        'Content-Type': 'application/xml; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${messageId}.xml"`,
-        'Content-Length': String(body.length),
-        'User-Agent': 'concept2cure-icsr/1.0',
-      },
-      body,
-      errorPrefix: `ICSR HTTPS POST (${built.gateway})`,
-    });
-  } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
-    throw new IcsrGatewayTransmitError(built.gateway, 'transport', detail);
-  }
-
-  const raw = response.body.toString('utf8');
-  if (response.httpStatus < 200 || response.httpStatus >= 300) {
-    throw new IcsrGatewayTransmitError(
-      built.gateway, 'gateway-rejected',
-      `HTTP ${response.httpStatus}: ${raw.slice(0, 500)}`,
-      response.httpStatus, raw,
-    );
-  }
+  const attempt = await attemptDelivery(() => httpsPost({
+    endpoint: config.url,
+    headers: {
+      'Authorization': `Basic ${basic}`,
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${messageId}.xml"`,
+      'Content-Length': String(body.length),
+      'User-Agent': 'concept2cure-icsr/1.0',
+    },
+    body,
+    errorPrefix: `ICSR HTTPS POST (${built.gateway})`,
+  }));
   // A 2xx with nothing to cite is not proof of delivery. The gateway must hand
   // back an identifier this platform can later reconcile an ACK against.
-  const receiptId =
-    headerString(response.headers['x-receipt-id']) ??
-    headerString(response.headers['message-id']) ??
-    headerString(response.headers['location']);
-  if (!receiptId) {
-    throw new IcsrGatewayTransmitError(
-      built.gateway, 'receipt-unproven',
-      `gateway answered HTTP ${response.httpStatus} but returned no receipt identifier ` +
-        '(X-Receipt-Id, Message-ID or Location); refusing to record the message as transmitted.',
-      response.httpStatus, raw,
-    );
-  }
-  return { receiptId, agencyResponseRaw: raw };
+  const outcome = classifyDelivery(attempt, messageId, (response) => {
+    const receiptId =
+      headerValue(response.headers['x-receipt-id']) ??
+      headerValue(response.headers['message-id']) ??
+      headerValue(response.headers['location']);
+    return receiptId
+      ? { kind: 'RECEIVED', receiptId }
+      : {
+          kind: 'DELIVERED_UNCONFIRMED',
+          reason: `gateway answered HTTP ${response.httpStatus} but returned no receipt identifier ` +
+            '(X-Receipt-Id, Message-ID or Location); refusing to record the message as transmitted.',
+        };
+  });
+  return receiptOrRefusal(built.gateway, outcome, 'HTTPS', messageId);
 }
 
 /**
@@ -419,15 +494,11 @@ export async function transmitIcsr(
         ? await transmitViaAs2(built, config, messageId)
         : await transmitViaHttps(built, config, messageId);
     } catch (err) {
-      const reason =
-        err instanceof IcsrGatewayNotConfiguredError ? 'not-configured'
-        : err instanceof IcsrGatewayTransmitError ? err.stage
-        : 'transport';
       await audit({
         gateway: built.gateway,
         receiverId: built.receiverId,
         outcome: 'refused',
-        reason,
+        ...refusalAuditFields(err),
       });
       throw err;
     }

@@ -1,0 +1,23 @@
+{
+  "healthz": 200,
+  "readyz": {
+    "status": 503,
+    "body": {
+      "ready": false,
+      "failed": [
+        "ana"
+      ],
+      "dependencies": {
+        "database": "ok",
+        "schema": "ok",
+        "ana": "down",
+        "redis": "skipped",
+        "worker": "skipped"
+      },
+      "schemaState": "ready",
+      "anaState": "no_provider",
+      "capabilityRegistry": "pending",
+      "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY / KIMI_API_KEY) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE."
+    }
+  }
+}

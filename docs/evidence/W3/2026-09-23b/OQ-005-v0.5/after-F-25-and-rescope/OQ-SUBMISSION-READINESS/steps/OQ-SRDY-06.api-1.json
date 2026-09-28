@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/governed-intelligence/contradictions/scan/b4830405-04ea-483d-b385-5b2a62485258",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 19,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "projectId must be a positive integer (projects.id); nothing was scanned"
+    }
+  }
+}

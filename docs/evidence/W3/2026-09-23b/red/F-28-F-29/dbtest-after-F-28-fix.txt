@@ -1,0 +1,47 @@
+# git: 3aafaf809 + working tree (the ceremony fix, F-28; the sign-in and session cases are added with the F-29 fix)
+# node run-dbtest.mjs tests/db/account-standing.dbtest.ts   (vitest -c vitest.db.config.ts, validation database, owner connection; runtime role minted by the test)
+
+ RUN  v4.1.7 <repo>
+
+{"level":30,"time":"2026-09-23T11:15:40.555Z","pid":5469,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-23T11:15:40.556Z","pid":5469,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-23T11:15:40.556Z","pid":5469,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-23T11:15:40.904Z', poolSize: 1 }
+
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/account-standing.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 183
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 184
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 185
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 186
+
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 41ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 3ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 2ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  11:15:38
+   Duration  4.10s (transform 1.55s, setup 73ms, import 160ms, tests 3.57s, environment 0ms)
+
+stderr | tests/db/account-standing.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stderr | tests/db/account-standing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+

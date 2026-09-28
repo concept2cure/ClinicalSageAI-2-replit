@@ -1,0 +1,43 @@
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > writes the create and its lineage on ONE transaction, then commits 63ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > rolls the create back and answers 500 AUDIT_WRITE_FAILED when the ledger row fails 8ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > never commits a signed completion whose ledger row did not land 7ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > commits the signed completion with its manifestation in the ledger payload 7ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > a stale double-completion writes nothing and answers 409 CONFLICT_STALE 5ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > a late signature on a completed-but-unapproved task commits WITH its ledger row 4ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > rolls back a late signature whose ledger row did not land 4ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > a progress-only update in the same status is written with its ledger row 8ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > a same-status request that changes nothing is refused as stale, not re-written 7ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > DELETE /tasks/:id rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 5ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/dependencies rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 4ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/auto-assign rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 4ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/from-template/:id rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 5ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/bulk-create rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 4ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > a notification that was sent but not recorded is reported as a failure, not a success 4ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > refuses a write with no attributable actor before anything is written 5ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks is 403 for a viewer, and nothing is written 3ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > PATCH /tasks/:id is 403 for a viewer, and nothing is written 3ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > DELETE /tasks/:id is 403 for a viewer, and nothing is written 3ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks/dependencies is 403 for a viewer, and nothing is written 3ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks/auto-assign is 403 for a viewer, and nothing is written 2ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks/from-template/:id is 403 for a viewer, and nothing is written 2ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks/bulk-create is 403 for a viewer, and nothing is written 3ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /templates is 403 for a viewer, and nothing is written 3ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /automation is 403 for a viewer, and nothing is written 3ms
+✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > a member still creates a task 2ms
+✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > a viewer still reads 4ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > refuses no body with 400 and writes nothing 2ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > refuses no reason with 400 and writes nothing 8ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > refuses a blank reason with 400 and writes nothing 3ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > refuses a reason shorter than three characters once trimmed with 400 and writes nothing 3ms
+× server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > records the trimmed reason on the archive’s ledger row 3ms
+× client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > archive — a refusal is shown in the panel, and the task is not reported archived > says the session expired when the DELETE comes back 401 5571ms
+× client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > archive — a refusal is shown in the panel, and the task is not reported archived > shows a viewer the server’s refusal, in the panel they are looking at 5177ms
+× client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > archive — a refusal is shown in the panel, and the task is not reported archived > shows an unrecorded archive as a failure in the server’s words 5164ms
+✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > §11.50 signing — an expired session is not a silent reset > reports a 401 on the signed completion inside the ceremony 170ms
+✓ client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > stale board — a completion someone else already made is not reported as this user's > shows the server's CONFLICT_STALE sentence and re-reads the board 98ms
+× client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > new task — a refusal is not a "network error" > shows a viewer’s 403 in the server’s words 5142ms
+× client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > workflow auto-assign — an assignment that did not happen is not reported as done > surfaces a 401 on the auto-assign step after the tasks were created 5124ms
+× client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx > workflow auto-assign — an assignment that did not happen is not reported as done > keeps a thrown auto-assign refusal visible after the dialog closes 5110ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 36 ⎯⎯⎯⎯⎯⎯⎯
+Test Files  2 failed (2)
+Tests  36 failed | 4 passed (40)

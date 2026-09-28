@@ -1,0 +1,1616 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > freezes the document via the real endpoint and reports the server content hash 260ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > a 401 on freeze is reported as not sealed — never as "frozen and sealed" 83ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > re-asks, naming what is outstanding, instead of reporting a failure 32ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > never renders the server payload as [object Object] 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > sends the acknowledgement only when the user deliberately chooses to seal 29ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > sends nothing at all when the user chooses to go back and resolve 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > leaves a settled document with the ordinary dialog 19ms
+ × client/src/concept2cure/v2/__tests__/taskBoardSignature.test.tsx > TaskBoard — approval-gated completion > opens the shared signing dialog, and sends the password and meaning, never a PIN 336ms
+   → expected <input id="tb-sign-pin" …(4)></input> to be null
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > signs through the shared dialog: the password and meaning go to the real endpoint (approves + freezes) 5021ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > asks for the authenticator code when one is enrolled, and sends it with the signature 5015ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > offers only the meanings the authoring store takes 5021ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > a refused credential is shown in the dialog, and nothing is signed or claimed 5028ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > disables Freeze once the document is already frozen 16ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > signs through the shared dialog: the password and meaning go to the real endpoint (approves + freezes)
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:216:33
+    214|
+    215|     fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+    216|     const dialog = await screen.findByRole('dialog');
+       |                                 ^
+    217|     fireEvent.click(within(dialog).getByRole('radio', { name: /Approva…
+    218|     fireEvent.change(within(dialog).getByLabelText(/Reason for this ac…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > asks for the authenticator code when one is enrolled, and sends it with the signature
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:238:33
+    236|
+    237|     fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+    238|     const dialog = await screen.findByRole('dialog');
+       |                                 ^
+    239|     fireEvent.change(within(dialog).getByLabelText(/Reason for this ac…
+    240|     fireEvent.change(within(dialog).getByLabelText(/Password/), { targ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > offers only the meanings the authoring store takes
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:257:33
+    255|     renderBar('draft');
+    256|     fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+    257|     const dialog = await screen.findByRole('dialog');
+       |                                 ^
+    258|     const offered = within(dialog).getAllByRole('radio').map((r) => r.…
+    259|     expect(offered.map((t) => t.replace(/You .*/, '').trim())).toEqual…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > a refused credential is shown in the dialog, and nothing is signed or claimed
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mElectronically sign document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mApply a signature to “M2.3 QOS”. Your PIN is verified server-side; an Approval signature approves and freezes the document.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mmeaning,intent,pin[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mSign[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:270:33
+    268|
+    269|     fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+    270|     const dialog = await screen.findByRole('dialog');
+       |                                 ^
+    271|     fireEvent.change(within(dialog).getByLabelText(/Reason for this ac…
+    272|     fireEvent.change(within(dialog).getByLabelText(/Password/), { targ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskBoardSignature.test.tsx > TaskBoard — approval-gated completion > opens the shared signing dialog, and sends the password and meaning, never a PIN
+AssertionError: expected <input id="tb-sign-pin" …(4)></input> to be null
+
+- Expected:
+null
+
++ Received:
+<input
+  autocomplete="off"
+  id="tb-sign-pin"
+  placeholder="Your signing PIN"
+  type="password"
+  value=""
+/>
+
+ ❯ client/src/concept2cure/v2/__tests__/taskBoardSignature.test.tsx:86:53
+     84|     const dialog = await screen.findByRole('dialog');
+     85|     expect(patches).toHaveLength(1); // the unsigned attempt the serve…
+     86|     expect(within(dialog).queryByLabelText(/PIN/i)).toBeNull();
+       |                                                     ^
+     87|     const offered = within(dialog).getAllByRole('radio').map((r) => (r…
+     88|     expect(offered).toEqual(['Authorship', 'Review', 'Approval', 'Resp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 8 passed (13)
+   Start at  09:35:55
+   Duration  21.75s (transform 781ms, setup 314ms, import 1.07s, tests 20.91s, environment 1.10s)
+

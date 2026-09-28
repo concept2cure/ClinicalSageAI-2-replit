@@ -1,0 +1,246 @@
+# git: 3aafaf809 + working tree (tests added, no fix written)
+# node run-dbtest.mjs tests/db/account-standing.dbtest.ts   (vitest -c vitest.db.config.ts, validation database, owner connection; runtime role minted by the test)
+
+ RUN  v4.1.7 <repo>
+
+{"level":30,"time":"2026-09-23T10:43:34.492Z","pid":31043,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-23T10:43:34.493Z","pid":31043,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-23T10:43:34.493Z","pid":31043,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-23T10:43:34.943Z', poolSize: 1 }
+
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/account-standing.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 175
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 176
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 177
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 178
+
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 28ms
+ × tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 16ms
+   → a suspended account signed: expected { ok: true, …(2) } to match object { ok: false, status: 401, …(1) }
+(2 matching properties omitted from actual)
+ × tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 9ms
+   → expected { ok: false, status: 401, …(2) } to match object { ok: false, code: 'ACCOUNT_INACTIVE' }
+(2 matching properties omitted from actual)
+ × tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 11ms
+   → an account the identity provider deprovisioned signed: expected { ok: true, …(2) } to match object { ok: false, status: 401, …(1) }
+(2 matching properties omitted from actual)
+{"level":30,"time":"2026-09-23T10:45:05.000Z","pid":31043,"hostname":"vm","context":{"userId":175,"tenantId":92100,"resourceId":"175"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T10:45:05.000Z","pid":31043,"hostname":"vm","context":{"userId":175,"tenantId":"92100","resourceId":"175"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > an active account signs in 148ms
+{"level":30,"time":"2026-09-23T10:45:05.000Z","pid":31043,"hostname":"vm","context":{"userId":176,"tenantId":92100,"resourceId":"176"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T10:45:05.000Z","pid":31043,"hostname":"vm","context":{"userId":177,"tenantId":92100,"resourceId":"177"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T10:45:35.000Z","pid":31043,"hostname":"vm","context":{"userId":178,"tenantId":92100,"resourceId":"178"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T10:45:35.000Z","pid":31043,"hostname":"vm","context":{"userId":178,"tenantId":"92100","resourceId":"178"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-23T10:46:05.000Z","pid":31043,"hostname":"vm","context":{"userId":178,"tenantId":92100,"resourceId":"178"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T10:46:05.000Z","pid":31043,"hostname":"vm","context":{"userId":178,"tenantId":"92100","resourceId":"178"},"msg":"[audit-service] [AUDIT] user_login user"}
+ × tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 24ms
+   → a suspended account was issued a sign-in challenge: {"success":true,"mfaRequired":true,"challengeId":"<token>","mfaMethods":[{"type":"totp","isEnabled":true,"isPrimary":true}]}: expected 200 to be 403 // Object.is equality
+ × tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 26ms
+   → a deprovisioned account was issued a sign-in challenge: {"success":true,"mfaRequired":true,"challengeId":"<token>","mfaMethods":[{"type":"totp","isEnabled":true,"isPrimary":true}]}: expected 200 to be 403 // Object.is equality
+ × tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it 43ms
+   → the second factor issued a session to a suspended account: {"success":true,"accessToken":"<token>","refreshToken":"<token>","expiresIn":86400,"user":{"id":"178","email":"dbsas-held-31043_mudz64fj@example.invalid","firstName":"Lane","lastName":"Standing held","displayName":"Lane Standing held","roles":["admin","user"],"permissions":[],"organizationId":"92100","organizationName":"dbsas-92100-31043_mudz64fj","organizationUuid":"ea7a554d-1cf0-4e47-b493-91463b87a47e","mfaEnabled":true,"mfaMethods":[{"type":"totp","isEnabled":true,"isPrimary":true}],"mustChangePassword":false},"mfaRequired":false}: expected 200 to be 403 // Object.is equality
+{"level":30,"time":"2026-09-23T10:46:35.000Z","pid":31043,"hostname":"vm","context":{"userId":178,"tenantId":92100,"resourceId":"178"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T10:46:35.000Z","pid":31043,"hostname":"vm","context":{"userId":178,"tenantId":"92100","resourceId":"178"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-23T10:47:05.000Z","pid":31043,"hostname":"vm","context":{"userId":178,"tenantId":92100,"resourceId":"178"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T10:47:05.000Z","pid":31043,"hostname":"vm","context":{"userId":178,"tenantId":"92100","resourceId":"178"},"msg":"[audit-service] [AUDIT] user_login user"}
+ × tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 65ms
+   → a suspended account's session still opened the API: {"userId":178}: expected 200 to be 401 // Object.is equality
+ × tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account 42ms
+   → a deprovisioned account's session still opened the API: {"userId":178}: expected 200 to be 401 // Object.is equality
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated 46ms
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 5 passed (13)
+   Start at  10:43:32
+   Duration  4.92s (transform 1.73s, setup 85ms, import 201ms, tests 4.32s, environment 0ms)
+
+stderr | tests/db/account-standing.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stderr | tests/db/account-standing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code
+AssertionError: a suspended account signed: expected { ok: true, …(2) } to match object { ok: false, status: 401, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "ACCOUNT_INACTIVE",
+-   "ok": false,
+-   "status": 401,
++   "ok": true,
+  }
+
+ ❯ tests/db/account-standing.dbtest.ts:300:45
+    298|     const m = members.suspended;
+    299|     const r = await sign(m, { password: PASSWORD, mfaToken: codeFor(m,…
+    300|     expect(r, 'a suspended account signed').toMatchObject({ ok: false,…
+       |                                             ^
+    301|   });
+    302|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted
+AssertionError: expected { ok: false, status: 401, …(2) } to match object { ok: false, code: 'ACCOUNT_INACTIVE' }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "ACCOUNT_INACTIVE",
++   "code": "PASSWORD_VERIFICATION_FAILED",
+    "ok": false,
+  }
+
+ ❯ tests/db/account-standing.dbtest.ts:306:61
+    304|     at(2);
+    305|     const m = members.suspended;
+    306|     expect(await sign(m, { password: 'not-the-password' })).toMatchObj…
+       |                                                             ^
+    307|     expect(await failedAttempts(m), 'a suspended account was an oracle…
+    308|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign
+AssertionError: an account the identity provider deprovisioned signed: expected { ok: true, …(2) } to match object { ok: false, status: 401, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "ACCOUNT_INACTIVE",
+-   "ok": false,
+-   "status": 401,
++   "ok": true,
+  }
+
+ ❯ tests/db/account-standing.dbtest.ts:314:72
+    312|     const m = members.deprovisioned;
+    313|     const r = await sign(m, { password: PASSWORD, mfaToken: codeFor(m,…
+    314|     expect(r, 'an account the identity provider deprovisioned signed')…
+       |                                                                        ^
+    315|       ok: false,
+    316|       status: 401,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued
+AssertionError: a suspended account was issued a sign-in challenge: {"success":true,"mfaRequired":true,"challengeId":"<token>","mfaMethods":[{"type":"totp","isEnabled":true,"isPrimary":true}]}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/db/account-standing.dbtest.ts:334:98
+    332|     at(3);
+    333|     const res = await passwordStep(members.suspended);
+    334|     expect(res.status, `a suspended account was issued a sign-in chall…
+       |                                                                                                  ^
+    335|     expect(res.body.error?.code).toBe('AUTH_ACCOUNT_INACTIVE');
+    336|     expect(res.body.challengeId).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued
+AssertionError: a deprovisioned account was issued a sign-in challenge: {"success":true,"mfaRequired":true,"challengeId":"<token>","mfaMethods":[{"type":"totp","isEnabled":true,"isPrimary":true}]}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/db/account-standing.dbtest.ts:342:102
+    340|     at(3);
+    341|     const res = await passwordStep(members.deprovisioned);
+    342|     expect(res.status, `a deprovisioned account was issued a sign-in c…
+       |                                                                                                      ^
+    343|     expect(res.body.error?.code).toBe('AUTH_ACCOUNT_INACTIVE');
+    344|     expect(res.body.challengeId).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it
+AssertionError: the second factor issued a session to a suspended account: {"success":true,"accessToken":"<token>","refreshToken":"<token>","expiresIn":86400,"user":{"id":"178","email":"dbsas-held-31043_mudz64fj@example.invalid","firstName":"Lane","lastName":"Standing held","displayName":"Lane Standing held","roles":["admin","user"],"permissions":[],"organizationId":"92100","organizationName":"dbsas-92100-31043_mudz64fj","organizationUuid":"ea7a554d-1cf0-4e47-b493-91463b87a47e","mfaEnabled":true,"mfaMethods":[{"type":"totp","isEnabled":true,"isPrimary":true}],"mustChangePassword":false},"mfaRequired":false}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/db/account-standing.dbtest.ts:357:113
+    355|         .post('/api/auth/mfa/verify')
+    356|         .send({ challengeId: login.body.challengeId, code: codeFor(m, …
+    357|       expect(verify.status, `the second factor issued a session to a s…
+       |                                                                                                                 ^
+    358|       expect(verify.body.accessToken).toBeUndefined();
+    359|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why
+AssertionError: a suspended account's session still opened the API: {"userId":178}: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ tests/db/account-standing.dbtest.ts:375:104
+    373|     try {
+    374|       const after = await request(app).get('/api/dbsas/whoami').set(s.…
+    375|       expect(after.status, `a suspended account's session still opened…
+       |                                                                                                        ^
+    376|       expect(after.body.code).toBe('ACCOUNT_INACTIVE');
+    377|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account
+AssertionError: a deprovisioned account's session still opened the API: {"userId":178}: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ tests/db/account-standing.dbtest.ts:396:108
+    394|     try {
+    395|       const after = await request(app).get('/api/dbsas/whoami').set(s.…
+    396|       expect(after.status, `a deprovisioned account's session still op…
+       |                                                                                                            ^
+    397|       expect(after.body.code).toBe('ACCOUNT_INACTIVE');
+    398|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+

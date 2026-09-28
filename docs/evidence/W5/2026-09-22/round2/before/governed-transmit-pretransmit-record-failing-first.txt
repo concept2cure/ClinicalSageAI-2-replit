@@ -1,0 +1,178 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+{
+  "timestamp": "2026-09-23T05:00:01.516Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T05:00:01.517Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+{
+  "timestamp": "2026-09-23T05:00:01.517Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts
+{
+  "timestamp": "2026-09-23T05:00:01.524Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T05:00:01.525Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts
+{
+  "timestamp": "2026-09-23T05:00:01.526Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+[database] Database connection successful
+
+ × server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records a failed, non-blocking check and the guard warnings on the ledger payload, the signature manifest and the outcome 9ms
+   → expected undefined to deeply equal [ Array(1) ]
+ × server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records an empty list — not null — when the guard ran and every check passed 2ms
+   → expected undefined to deeply equal []
+ × server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records null — never "all passed" — when the guard reported nothing 2ms
+   → expected { meaning: 'release', …(9) } to have property "preTransmitFailedChecks" with value null
+ ✓ server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > returns a failed, non-blocking check and the leaf-security report with the gateway result 13ms
+ × server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > reduces to the failed checks and warnings a transmit record carries; null when the guard reported nothing 6ms
+   → preTransmitFindings is not a function
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 1286ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 6ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 4ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing 4ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package whose descriptor carries no structural-validation evidence 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package with error-severity structural findings 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a descriptor pointing outside the submission-bundle namespace 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses when the package has never been assembled 1ms
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data 10ms
+   → expected undefined to deeply equal ArrayContaining{…}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data
+AssertionError: expected undefined to deeply equal ArrayContaining{…}
+
+- Expected:
+ArrayContaining [
+  StringMatching /^dtd-self-contained: missing: ich-ectd-3-2\.dtd/,
+]
+
++ Received:
+undefined
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:498:47
+    496|
+    497|       // The returned data.
+    498|       expect(r.data?.preTransmitFailedChecks).toEqual(failed);
+       |                                               ^
+    499|       expect(r.data?.preTransmitWarnings).toEqual(warned);
+    500|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records a failed, non-blocking check and the guard warnings on the ledger payload, the signature manifest and the outcome
+AssertionError: expected undefined to deeply equal [ Array(1) ]
+
+- Expected:
+[
+  "dtd-self-contained: missing: ich-ectd-3-2.dtd, us-regional-v3-3.dtd",
+]
+
++ Received:
+undefined
+
+ ❯ server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts:105:44
+    103|     const failed = ['dtd-self-contained: missing: ich-ectd-3-2.dtd, us…
+    104|     // The governed `sign` ledger entry.
+    105|     expect(ledger.preTransmitFailedChecks).toEqual(failed);
+       |                                            ^
+    106|     expect(ledger.preTransmitWarnings).toEqual(GUARD_REPORT.warnings);
+    107|     // The electronic-signature manifest — the attributed record an au…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records an empty list — not null — when the guard ran and every check passed
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts:118:44
+    116|   it('records an empty list — not null — when the guard ran and every …
+    117|     const { out, ledger, manifest } = await run({ checks: [GUARD_REPOR…
+    118|     expect(ledger.preTransmitFailedChecks).toEqual([]);
+       |                                            ^
+    119|     expect(manifest.preTransmitFailedChecks).toEqual([]);
+    120|     expect(out.preTransmitFailedChecks).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records null — never "all passed" — when the guard reported nothing
+AssertionError: expected { meaning: 'release', …(9) } to have property "preTransmitFailedChecks" with value null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts:126:20
+    124|   it('records null — never "all passed" — when the guard reported noth…
+    125|     const { out, ledger, manifest } = await run(undefined);
+    126|     expect(ledger).toHaveProperty('preTransmitFailedChecks', null);
+       |                    ^
+    127|     expect(ledger).toHaveProperty('preTransmitWarnings', null);
+    128|     expect(manifest).toHaveProperty('preTransmitFailedChecks', null);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > reduces to the failed checks and warnings a transmit record carries; null when the guard reported nothing
+TypeError: preTransmitFindings is not a function
+ ❯ server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts:71:15
+     69|       authorization: { kind: 'governed-signature', signatureActionId: …
+     70|     });
+     71|     const f = preTransmitFindings(r);
+       |               ^
+     72|     expect(f.failedChecks).toEqual(
+     73|       expect.arrayContaining([expect.stringMatching(/^dtd-self-contain…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  5 failed | 12 passed (17)
+   Start at  04:59:59
+   Duration  2.78s (transform 3.23s, setup 236ms, import 5.05s, tests 1.39s, environment 0ms)
+

@@ -1,0 +1,678 @@
+{
+  "protocolId": "OQ-005",
+  "protocolTitle": "Operational Qualification — Submission Readiness",
+  "app": "SUBMISSION-READINESS",
+  "appLabel": "Submission Readiness",
+  "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
+  "executedBy": "automated runner tests/validation/oq/submission-readiness/run.mjs",
+  "executedAt": "2026-09-23T05:10:39.836Z",
+  "finishedAt": "2026-09-23T05:11:10.255Z",
+  "environment": {
+    "baseUrl": "http://localhost:5200",
+    "node": "v22.22.2",
+    "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+    "playwrightCore": "1.63.0",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "ec76f693cf5e2b68f4645f041aa8ce4562c6b0df"
+    },
+    "testUser": "oq-runner@validation.local",
+    "authentication": "password+totp",
+    "organizationId": "1",
+    "readyz": {
+      "status": 503,
+      "body": {
+        "ready": false,
+        "failed": [
+          "ana"
+        ],
+        "dependencies": {
+          "database": "ok",
+          "schema": "ok",
+          "ana": "down",
+          "redis": "skipped",
+          "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "pending",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY / KIMI_API_KEY) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE."
+      }
+    }
+  },
+  "counts": {
+    "pass": 8,
+    "fail": 1,
+    "deviation": 1,
+    "not-executed": 0
+  },
+  "steps": [
+    {
+      "id": "OQ-SRDY-00",
+      "title": "Prerequisite: program, vault document, submission, sequence with one leaf",
+      "urs": [],
+      "kind": "prerequisite",
+      "action": "POST projects / vault ingest / submissions / sequences / leaves",
+      "expected": "All created through the public API",
+      "status": "pass",
+      "observed": "program 555c5d96-ed3d-4de1-88b3-44a733efb63e; submission 56; sequence 13; leaf m5.3.5",
+      "startedAt": "2026-09-23T05:10:40.991Z",
+      "finishedAt": "2026-09-23T05:10:45.084Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-00.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/c2c/projects",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SRDY-00.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/vault/ingest",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SRDY-00.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/56",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SRDY-00.api-4.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/56/sequences",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SRDY-00.api-5.json",
+          "method": "PUT",
+          "url": "http://localhost:5200/api/submissions/sequences/13/leaves",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-01",
+      "title": "Anonymous access refused",
+      "urs": [
+        "URS-SRDY-001"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/submissions/sequences/:id/dispatch-readiness without Authorization",
+      "expected": "HTTP 401/403",
+      "status": "pass",
+      "observed": "HTTP 401",
+      "startedAt": "2026-09-23T05:10:45.084Z",
+      "finishedAt": "2026-09-23T05:10:45.341Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-01.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/13/dispatch-readiness",
+          "status": 401
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-02",
+      "title": "Deterministic dispatch-readiness assessment for a sequence",
+      "urs": [
+        "URS-SRDY-002"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/submissions/sequences/:id/dispatch-readiness",
+      "expected": "HTTP 200 with numeric validationErrors / unacknowledgedShadowCriticals and an explicit ready/blocked verdict with reasons",
+      "status": "pass",
+      "observed": "gate.cleared=false; validationErrors=0; shadowCriticals=0; releaseSignature=unsigned; blockers: No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting. | Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked ",
+      "startedAt": "2026-09-23T05:10:45.341Z",
+      "finishedAt": "2026-09-23T05:10:45.670Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-02.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/13/dispatch-readiness",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-03",
+      "title": "Dispatch QC returns the deterministic gate verdict; the model only narrates",
+      "urs": [
+        "URS-SRDY-003"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/submissions/:id/dispatch-qc {region, sequenceId, validationErrors:0, unresolvedShadowCriticals:0, leaves}; GET /sequences/:id/dispatch-readiness",
+      "expected": "HTTP 200 with { clearedToDispatch, blockers, warnings, checklist, verdictSource:\"assess-dispatch-readiness\", narrative, narrativeUnavailable }; clearedToDispatch and blockers EQUAL the GET dispatch-readiness gate (client-supplied zeros do not override it); with no provider narrative is null and narrativeUnavailable.code is PROVIDER_UNAVAILABLE — the verdict is a pass without a provider, the narrative is recorded as not executed",
+      "status": "pass",
+      "observed": "clearedToDispatch=false == gate.cleared; 2 blockers identical to the gate; verdictSource=assess-dispatch-readiness; checklist 7 items; narrative: not executed — no provider (narrativeUnavailable.code PROVIDER_UNAVAILABLE); the verdict did not need one",
+      "startedAt": "2026-09-23T05:10:45.670Z",
+      "finishedAt": "2026-09-23T05:10:46.261Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-03.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/56/dispatch-qc",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SRDY-03.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/13/dispatch-readiness",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "VSR-001 F-9 (fixed 2026-09-21, docs/evidence/WB/2026-09-21/): the QC verdict is computeDispatchQcVerdict over the server-side assessment — the same composed gate freeze/dispatch enforce — and the model's own verdict field is never read. A gateway error on this route is now a FAIL (the verdict must not depend on a model), not a deviation.",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-04",
+      "title": "Readiness review template is registered and execute validates inputs",
+      "urs": [
+        "URS-SRDY-004"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/orchestration/templates; POST /api/orchestration/execute {templateId} without projectId",
+      "expected": "submission_readiness_review listed with 5 steps; execute without projectId → 400",
+      "status": "pass",
+      "observed": "template present (5 steps); execute w/o projectId → 400",
+      "startedAt": "2026-09-23T05:10:46.261Z",
+      "finishedAt": "2026-09-23T05:10:46.798Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-04.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/orchestration/templates",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SRDY-04.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/orchestration/execute",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-05",
+      "title": "The readiness review never assesses a project it cannot read",
+      "urs": [
+        "URS-SRDY-005"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/orchestration/execute {templateId:\"submission_readiness_review\", projectId:<the program id>, module:\"ind\"}. The review reads the integer project spine (projects.id); a program id is a uuid",
+      "expected": "Refused with a 4xx and no run, or a run that ends failed and says why. Never a completed review of a project the engine did not read",
+      "status": "fail",
+      "observed": {
+        "executionId": "d804d629-849d-4ae8-b285-00cbbb363e7a",
+        "templateId": "submission_readiness_review",
+        "status": "completed",
+        "projectId": "555c5d96-ed3d-4de1-88b3-44a733efb63e",
+        "organizationId": 1,
+        "module": "ind",
+        "steps": [
+          {
+            "stepId": "inspect_project_state",
+            "name": "Inspect project state",
+            "status": "completed",
+            "startedAt": "2026-09-23T05:10:47.092Z",
+            "result": {
+              "projectName": "Project",
+              "projectStatus": "active",
+              "projectProgress": 0,
+              "documentCount": 0,
+              "artifactCount": 0,
+              "validationCount": 0,
+              "taskCount": 0,
+              "moduleCount": 0
+            },
+            "completedAt": "2026-09-23T05:10:47.094Z",
+            "durationMs": 2
+          },
+          {
+            "stepId": "inventory_documents",
+            "name": "Inventory documents and artifacts",
+            "status": "completed",
+            "startedAt": "2026-09-23T05:10:47.094Z",
+            "result": {
+              "total": 0,
+              "byStatus": {},
+              "unrouted": 0,
+              "unvalidated": 0
+            },
+            "completedAt": "2026-09-23T05:10:47.095Z",
+            "durationMs": 1
+          },
+          {
+            "stepId": "identify_gaps",
+            "name": "Identify gaps and weaknesses",
+            "status": "completed",
+            "startedAt": "2026-09-23T05:10:47.095Z",
+            "result": {
+              "overallScore": 0,
+              "status": "not_started",
+              "scores": {
+                "completeness": 0,
+                "quality": 0,
+                "compliance": null,
+                "routing": 0,
+                "consistency": null
+              },
+              "blockerCount": 0,
+              "blockers": [],
+              "moduleBreakdown": []
+            },
+            "completedAt": "2026-09-23T05:10:47.097Z",
+            "durationMs": 2
+          },
+          {
+            "stepId": "compute_readiness",
+            "name": "Compute readiness assessment",
+            "status": "completed",
+            "startedAt": "2026-09-23T05:10:47.097Z",
+            "result": {
+              "readiness": {
+                "projectId": "555c5d96-ed3d-4de1-88b3-44a733efb63e",
+                "organizationId": 1,
+                "module": "ind",
+                "overallScore": 0,
+                "status": "not_started",
+                "scores": {
+                  "completeness": 0,
+                  "quality": 0,
+                  "compliance": null,
+                  "routing": 0,
+                  "consistency": null
+                },
+                "unassessedDimensions": [
+                  {
+                    "dimension": "compliance",
+                    "reason": "no validation runs and no CMC signals on this project — nothing to score regulatory compliance against"
+                  },
+                  {
+                    "dimension": "consistency",
+                    "reason": "no routed documents and no promoted artifacts — no cross-reference check applied"
+                  }
+                ],
+                "moduleBreakdown": [],
+                "documentInventory": [],
+                "blockers": [],
+                "recommendations": [
+                  {
+                    "id": "a5835e2d-b660-4e82-a25b-5af9a0a19e70",
+                    "recommendationType": "next_best_action",
+                    "severity": "info",
+                    "targetObjectType": "project",
+                    "targetObjectId": "555c5d96-ed3d-4de1-88b3-44a733efb63e",
+                    "targetObjectTitle": "Project",
+                    "reason": "No critical issues found. Run a readiness review to confirm submission preparedness.",
+                    "evidence": [
+                      "All analyzers returned no critical or high findings"
+                    ],
+                    "suggestedAction": "Run submission readiness review workflow",
+                    "actionPayload": {
+                      "actionType": "submission_readiness_review",
+                      "payload": {
+                        "projectId": "555c5d96-ed3d-4de1-88b3-44a733efb63e"
+                      }
+                    },
+                    "sourceType": "rules_based",
+                    "confidence": null,
+                    "generatedAt": "2026-09-23T05:10:47.098Z"
+                  }
+                ],
+                "assessedAt": "2026-09-23T05:10:47.099Z"
+              }
+            },
+            "completedAt": "2026-09-23T05:10:47.099Z",
+            "durationMs": 2
+          },
+          {
+            "stepId": "generate_recommendations",
+            "name": "Generate recommendations",
+            "status": "completed",
+            "startedAt": "2026-09-23T05:10:47.099Z",
+            "result": {
+              "recommendations": [
+                {
+                  "id": "e8f8d2b1-29b8-491f-90f4-086f8de971b7",
+                  "recommendationType": "next_best_action",
+                  "severity": "info",
+                  "targetObjectType": "project",
+                  "targetObjectId": "555c5d96-ed3d-4de1-88b3-44a733efb63e",
+                  "targetObjectTitle": "Project",
+                  "reason": "No critical issues found. Run a readiness review to confirm submission preparedness.",
+                  "evidence": [
+                    "All analyzers returned no critical or high findings"
+                  ],
+                  "suggestedAction": "Run submission readiness review workflow",
+                  "actionPayload": {
+                    "actionType": "submission_readiness_review",
+                    "payload": {
+                      "projectId": "555c5d96-ed3d-4de1-88b3-44a733efb63e"
+                    }
+                  },
+                  "sourceType": "rules_based",
+                  "confidence": null,
+                  "generatedAt": "2026-09-23T05:10:47.099Z"
+                }
+              ],
+              "summary": {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "info": 1,
+                "total": 1
+              }
+            },
+            "completedAt": "2026-09-23T05:10:47.100Z",
+            "durationMs": 1
+          }
+        ],
+        "currentStepIndex": 4,
+        "progressPercent": 100,
+        "startedAt": "2026-09-23T05:10:47.063Z",
+        "requestedBy": {
+          "userId": 17,
+          "userName": "oq-runner@validation.local"
+        },
+        "auditTrail": [
+          {
+            "timestamp": "2026-09-23T05:10:47.063Z",
+            "action": "workflow_started",
+            "detail": "Started workflow: Submission Readiness Review",
+            "userId": 17
+          },
+          {
+            "timestamp": "2026-09-23T05:10:47.092Z",
+            "stepId": "inspect_project_state",
+            "action": "step_started",
+            "detail": "Step 1: Inspect project state",
+            "userId": 17
+          },
+          {
+            "timestamp": "2026-09-23T05:10:47.094Z",
+            "stepId": "inspect_project_state",
+            "action": "step_completed",
+            "detail": "Step completed: Inspect project state",
+            "userId": 17
+          },
+          {
+            "timestamp": "2026-09-23T05:10:47.094Z",
+            "stepId": "inventory_documents",
+            "action": "step_started",
+            "detail": "Step 2: Inventory documents and artifacts",
+            "userId": 17
+          },
+          {
+            "timestamp": "2026-09-23T05:10:47.095Z",
+            "stepId": "inventory_documents",
+            "action": "step_completed",
+            "detail": "Step completed: Inventory documents and artifacts",
+            "userId": 17
+          },
+          {
+            "timestamp": "2026-09-23T05:10:47.095Z",
+            "stepId": "identify_gaps",
+            "action": "step_started",
+            "detail": "Step 3: Identify gaps and weaknesses",
+            "userId": 17
+          },
+          {
+            "timestamp": "2026-09-23T05:10:47.097Z",
+            "stepId": "identify_gaps",
+            "action": "step_completed",
+            "detail": "Step completed: Identify gaps and weaknesses",
+            "userId": 17
+          },
+          {
+            "timestamp": "2026-09-23T05:10:47.097Z",
+            "stepId": "compute_readiness",
+            "action": "step_started",
+            "detail": "Step 4: Compute readiness assessment",
+            "userId": 17
+          },
+          {
+            "timestamp": "2026-09-23T05:10:47.099Z",
+            "stepId": "compute_readiness",
+            "action": "step_completed",
+            "detail": "Step completed: Compute readiness assessment",
+            "userId": 17
+          },
+          {
+            "timestamp": "2026-09-23T05:10:47.099Z",
+            "stepId": "generate_recommendations",
+            "action": "step_started",
+            "detail": "Step 5: Generate recommendations",
+            "userId": 17
+          },
+          {
+            "timestamp": "2026-09-23T05:10:47.100Z",
+            "stepId": "generate_recommendations",
+            "action": "step_completed",
+            "detail": "Step completed: Generate recommendations",
+            "userId": 17
+          },
+          {
+            "timestamp": "2026-09-23T05:10:47.100Z",
+            "action": "workflow_completed",
+            "detail": "Workflow completed: Workflow \"submission_readiness_review\" completed: 5/5 steps succeeded.",
+            "userId": 17
+          }
+        ],
+        "completedAt": "2026-09-23T05:10:47.100Z",
+        "totalDurationMs": 37,
+        "result": {
+          "summary": "Workflow \"submission_readiness_review\" completed: 5/5 steps succeeded.",
+          "blockers": [],
+          "recommendations": [
+            {
+              "id": "0de2018c-2dc1-4e20-b81f-ed152e6c3443",
+              "recommendationType": "next_best_action",
+              "severity": "info",
+              "targetObjectType": "project",
+              "targetObjectId": "555c5d96-ed3d-4de1-88b3-44a733efb63e",
+              "targetObjectTitle": "Project",
+              "reason": "No critical issues found. Run a readiness review to confirm submission preparedness.",
+              "evidence": [
+                "All analyzers returned no critical or high findings"
+              ],
+              "suggestedAction": "Run submission readiness review workflow",
+              "actionPayload": {
+                "actionType": "submission_readiness_review",
+                "payload": {
+                  "projectId": "555c5d96-ed3d-4de1-88b3-44a733efb63e"
+                }
+              },
+              "sourceType": "rules_based",
+              "confidence": null,
+              "generatedAt": "2026-09-23T05:10:47.100Z"
+            }
+          ],
+          "readiness": {
+            "overallScore": 0,
+            "status": "not_started",
+            "scores": {
+              "completeness": 0,
+              "quality": 0,
+              "compliance": null,
+              "routing": 0,
+              "consistency": null
+            },
+            "blockerCount": 0,
+            "blockers": [],
+            "moduleBreakdown": []
+          },
+          "createdObjects": [],
+          "updatedObjects": []
+        }
+      },
+      "startedAt": "2026-09-23T05:10:46.798Z",
+      "finishedAt": "2026-09-23T05:10:47.178Z",
+      "evidence": [
+        "steps/OQ-SRDY-05.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-05.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/orchestration/execute",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "VSR-001 F-23. Until v0.4 this step executed the review for the program and passed on any 2xx, and the protocol called it unscripted while the record called it a scripted pass. Every read behind the review failed on the program uuid, each failure was swallowed, and the review completed all five steps for \"Project\" with 0 documents, recommending \"No critical issues found\".",
+      "failure": "the review of program 555c5d96-ed3d-4de1-88b3-44a733efb63e ended \"completed\" for \"Project\" with 0 document(s): a project it could not read was assessed",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-05b",
+      "title": "The readiness review names the project it assessed",
+      "urs": [
+        "URS-SRDY-005"
+      ],
+      "kind": "scripted",
+      "action": "When intake anchored the program to a project (meta.projectAnchorId): POST /api/orchestration/execute {templateId:\"submission_readiness_review\", projectId:<the anchored project>, module:\"ind\"}; GET /api/orchestration/executions/:id",
+      "expected": "The run completes, its first step (inspect_project_state) names the program, and the execution is readable. A program intake did not anchor is a deviation naming the reason intake gave",
+      "status": "deviation",
+      "observed": null,
+      "startedAt": "2026-09-23T05:10:47.178Z",
+      "finishedAt": "2026-09-23T05:10:47.232Z",
+      "evidence": [
+        "steps/OQ-SRDY-05b.at-failure.png"
+      ],
+      "api": [],
+      "consoleErrors": [],
+      "note": "The review reads the integer project spine. A program reaches it only through the anchor intake writes (services/c2c/program-project-anchor.ts), and intake writes one only when the organisation has exactly one client workspace. Signup creates none.",
+      "deviationReason": "intake did not anchor program 555c5d96-ed3d-4de1-88b3-44a733efb63e to a project (NO_CLIENT_WORKSPACE: This organization has no client workspace, and projects.client_workspace_id is NOT NULL. The program was created; it carries no PM-spine anchor until a workspace exists.). The review reads projects, so there is no project it can assess for this program",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-06",
+      "title": "Contradiction (inconsistency) scan for a project",
+      "urs": [
+        "URS-SRDY-006"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/governed-intelligence/contradictions/scan/1",
+      "expected": "HTTP 200 with a deterministic scan result (possibly zero findings)",
+      "status": "pass",
+      "observed": "{\"findings\":[],\"summary\":{\"total\":0,\"bySeverity\":{},\"byType\":{}}}",
+      "startedAt": "2026-09-23T05:10:47.232Z",
+      "finishedAt": "2026-09-23T05:10:47.508Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-06.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/governed-intelligence/contradictions/scan/1",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-07",
+      "title": "Dispatch Readiness surface renders the sequence readiness",
+      "urs": [
+        "URS-SRDY-007"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/dispatch-readiness with the program selected",
+      "expected": "The surface shows the open program's sequence (number 0000) and its gate verdict",
+      "status": "pass",
+      "observed": "sequence 0000 visible",
+      "startedAt": "2026-09-23T05:10:47.508Z",
+      "finishedAt": "2026-09-23T05:10:57.924Z",
+      "evidence": [
+        "steps/OQ-SRDY-07.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-23T05:10:51.986Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": "VSR-001 F-8 (2026-09-20): DispatchReadiness.tsx took the FIRST submission in the organisation, not the open program's. Since 2026-09-21 the surface resolves the open program (shell id → GET /api/c2c/projects/:id), picks its submission by the platform's program↔submission identity convention, and gates that submission's latest sequence; OQ-SRDY-00 builds the sequence on the program's own submission so this step exercises exactly that. The surface prints the sequence NUMBER (0000) beside the row id.",
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-08",
+      "title": "Orchestration and Inconsistency surfaces render",
+      "urs": [
+        "URS-SRDY-008"
+      ],
+      "kind": "ad-hoc",
+      "action": "Open /concept2cure/orchestration and /concept2cure/inconsistency",
+      "expected": "Both render (screenshots); an unavailable store is shown as an error/empty state, never as data",
+      "status": "pass",
+      "observed": "rendered",
+      "startedAt": "2026-09-23T05:10:57.924Z",
+      "finishedAt": "2026-09-23T05:11:10.177Z",
+      "evidence": [
+        "steps/OQ-SRDY-08.orchestration.png",
+        "steps/OQ-SRDY-08.inconsistency.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-23T05:11:02.335Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        },
+        {
+          "at": "2026-09-23T05:11:03.563Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "at": "2026-09-23T05:11:03.593Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "at": "2026-09-23T05:11:08.517Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        },
+        {
+          "at": "2026-09-23T05:11:09.570Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+        },
+        {
+          "at": "2026-09-23T05:11:09.591Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+        }
+      ],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    }
+  ]
+}

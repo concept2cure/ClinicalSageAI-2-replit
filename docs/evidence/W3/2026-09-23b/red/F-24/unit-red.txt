@@ -1,0 +1,40 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > trusts the load balancer, and only it, in production 2ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > trusts no proxy outside production, where nothing sits in front of the server 1ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > takes an explicit hop count from the deployment 1ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > refuses to boot on "true", which is not a hop count 1ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > refuses to boot on "yes", which is not a hop count 0ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > refuses to boot on "-1", which is not a hop count 0ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > refuses to boot on "1.5", which is not a hop count 0ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > refuses to boot on "6", which is not a hop count 0ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > refuses to boot on "loopback", which is not a hop count 0ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > behind the load balancer > gives every client its own sign-in allowance 59ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > behind the load balancer > records the address the load balancer saw, never one the client wrote 4ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > behind the load balancer > cannot be escaped by claiming a new address on every attempt 24ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > behind the load balancer > was one allowance for everyone when no proxy was trusted (the defect) 21ms
+ × server/config/__tests__/trust-proxy.test.ts > the production server > applies the hop count before any middleware reads the client address 2ms
+   → expected -1 to be greater than 3754
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/config/__tests__/trust-proxy.test.ts > the production server > applies the hop count before any middleware reads the client address
+AssertionError: expected -1 to be greater than 3754
+ ❯ server/config/__tests__/trust-proxy.test.ts:95:21
+     93|     const firstMiddleware = src.indexOf('applyTelemetryMiddleware(app)…
+     94|     expect(created).toBeGreaterThan(-1);
+     95|     expect(applied).toBeGreaterThan(created);
+       |                     ^
+     96|     expect(applied).toBeLessThan(firstMiddleware);
+     97|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+   Start at  08:15:23
+   Duration  2.19s (transform 255ms, setup 182ms, import 1.48s, tests 118ms, environment 0ms)
+

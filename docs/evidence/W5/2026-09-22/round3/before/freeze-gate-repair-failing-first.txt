@@ -1,0 +1,239 @@
+=== (A) freeze-gate-binding.pglite.test.ts (13 cases: the 9 round-2 cases, the amended defect-pinning case A, and 4 new ones) run against the PRE-PASS submission-service.ts — the working tree as the round-2 fix left it (filingOrderRefusal restored from that diff; scratchpad/ev-r3b/prepass-fg), aliased in via vitest resolve.alias ===
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+  }
+
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is placed while the gate is assembling 197ms
+  }
+
+  }
+
+  }
+
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is removed while the gate is assembling 190ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > upsertLeaf re-checks the status under the sequence row lock, not only before it 7ms
+  }
+
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > removeLeaf re-checks the status under the sequence row lock, not only before it 5ms
+  }
+
+  }
+
+  }
+
+  }
+
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a dependent freeze while a lower sequence is dispatched but not sent — as an ordering refusal, not a package defect 158ms
+  }
+
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > does not refuse a sequence of only new leaves that shares no section with the unsent lower one 81ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a new leaf in a section the unsent lower sequence files (its operation derives from that filing) 14ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses dispatch on the same rule 10ms
+  }
+
+  }
+
+  }
+
+  }
+
+  }
+
+  }
+
+  }
+
+  }
+
+  }
+
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against 362ms
+   → 0001 froze after 0002 was filed, judged against an inventory without 0002: expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+  }
+
+  }
+
+  }
+
+  }
+
+  }
+
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses dispatch of a frozen lower sequence once a higher one in a shared section is already filed 131ms
+   → a lower sequence was dispatched after a higher one in its section was filed: expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+  }
+
+  }
+
+  }
+
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > a dispatched, unsent higher sequence refuses the lower one with the remedy that works, not "send it first" 160ms
+   → the remedy offered was one the gate then lets through wrongly: expected 'Refusing to freeze: sequence 0002 is …' not to match /Send 0002 first/
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a pre-existing pair of locked, unsent sequences in a shared section is not deadlocked > lets the lower one dispatch, and holds the higher one until it is sent 57ms
+   → neither sequence of the pair could ever move: expected SubmissionError: Refusing to dispatch: se… { code: '…' } to be null
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule spans the regions of a submission, as the prior-state loader does > names the region of the sequence it waits on 11ms
+   → a refusal on another region's sequence did not say which region: expected 'Refusing to freeze: sequence 0000 is …' to match /region 'ema'/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against
+AssertionError: 0001 froze after 0002 was filed, judged against an inventory without 0002: expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+
+- Expected:
+
++ Received:
+null
+
+ ❯ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts:372:100
+    370|     await file(23, 2, '0002');
+    371|     const afterSent = await outcome(freezeSequence(22, ctx, await sign…
+    372|     expect(afterSent, '0001 froze after 0002 was filed, judged against…
+       |                                                                                                    ^
+    373|       code: 'DISPATCH_BLOCKED',
+    374|       message: expect.stringMatching(/sequence 0002 is already filed/),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses dispatch of a frozen lower sequence once a higher one in a shared section is already filed
+AssertionError: a lower sequence was dispatched after a higher one in its section was filed: expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+
+- Expected:
+
++ Received:
+null
+
+ ❯ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts:416:96
+    414|     await file(73, 7, '0002');
+    415|     const err = await outcome(dispatchSequence(72, ctx, await sign(72,…
+    416|     expect(err, 'a lower sequence was dispatched after a higher one in…
+       |                                                                                                ^
+    417|       code: 'DISPATCH_BLOCKED',
+    418|       message: expect.stringMatching(/sequence 0002 is already filed/),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > a dispatched, unsent higher sequence refuses the lower one with the remedy that works, not "send it first"
+AssertionError: the remedy offered was one the gate then lets through wrongly: expected 'Refusing to freeze: sequence 0002 is …' not to match /Send 0002 first/
+
+- Expected:
+/Send 0002 first/
+
++ Received:
+
+ ❯ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts:441:94
+    439|     const err = await outcome(freezeSequence(92, ctx, await sign(92, '…
+    440|     expect(err).toMatchObject({ code: 'DISPATCH_BLOCKED', message: exp…
+    441|     expect(err.message, 'the remedy offered was one the gate then lets…
+       |                                                                                              ^
+    442|     expect(err.message).toMatch(/new sequence numbered after 0002/);
+    443|     expect((await statusOf(92)).status).toBe('validated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a pre-existing pair of locked, unsent sequences in a shared section is not deadlocked > lets the lower one dispatch, and holds the higher one until it is sent
+AssertionError: neither sequence of the pair could ever move: expected SubmissionError: Refusing to dispatch: se… { code: '…' } to be null
+
+- Expected:
+null
+
++ Received:
+SubmissionError {
+
+ ❯ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts:466:67
+    464|     expect(higher).toMatchObject({ code: 'DISPATCH_BLOCKED', message: …
+    465|     const lower = await outcome(dispatchSequence(62, ctx, await sign(6…
+    466|     expect(lower, 'neither sequence of the pair could ever move').toBe…
+       |                                                                   ^
+    467|     expect((await statusOf(62)).status).toBe('dispatched');
+    468|     // The higher one still waits for the lower one to reach the agenc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule spans the regions of a submission, as the prior-state loader does > names the region of the sequence it waits on
+AssertionError: a refusal on another region's sequence did not say which region: expected 'Refusing to freeze: sequence 0000 is …' to match /region 'ema'/
+
+- Expected:
+/region 'ema'/
+
++ Received:
+
+ ❯ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts:486:93
+    484|     const err = await outcome(freezeSequence(82, ctx, await sign(82, '…
+    485|     expect(err).toMatchObject({ code: 'DISPATCH_BLOCKED', message: exp…
+    486|     expect(err.message, 'a refusal on another region\'s sequence did n…
+       |                                                                                             ^
+    487|   }, 120_000);
+    488| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 8 passed (13)
+   Start at  08:30:29
+   Duration  6.99s (transform 1.51s, setup 103ms, import 2.45s, tests 4.10s, environment 0ms)
+
+
+=== (B) freeze-gate-row-lock.pg.test.ts (real Postgres 16, two connections; final text of the suite) against HEAD's submission-service.ts (no row locks; aliased via scratchpad/ev-r3b/head-fg) — the gate must fail on the case it exists to catch. On the working tree the same suite passes 2/2 (see after/freeze-gate-repair-passing.txt). ===
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+(node:10818) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ × server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > an upsertLeaf that starts while a freeze holds the row lock waits for it, then refuses the frozen sequence 46ms
+   → the leaf write did not wait for the freeze holding the sequence row: expected false to be true // Object.is equality
+  }
+
+  }
+
+ × server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > a freeze that reaches its row lock while a leaf write holds it waits, then refuses the leaf manifest it never judged 885ms
+   → a leaf committed while the freeze waited was frozen without being judged: expected null to match object { code: 'INVALID_STATE', …(1) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > an upsertLeaf that starts while a freeze holds the row lock waits for it, then refuses the frozen sequence
+AssertionError: the leaf write did not wait for the freeze holding the sequence row: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts:150:94
+    148|       const err = await write;
+    149|
+    150|       expect(blocked, 'the leaf write did not wait for the freeze hold…
+       |                                                                                              ^
+    151|       expect(err, 'a leaf was written into a sequence frozen while the…
+    152|         code: 'INVALID_STATE',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > a freeze that reaches its row lock while a leaf write holds it waits, then refuses the leaf manifest it never judged
+AssertionError: a leaf committed while the freeze waited was frozen without being judged: expected null to match object { code: 'INVALID_STATE', …(1) }
+
+- Expected:
+
++ Received:
+null
+
+ ❯ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts:186:95
+    184|
+    185|       expect(blocked, 'the freeze did not wait for the leaf write hold…
+    186|       expect(err, 'a leaf committed while the freeze waited was frozen…
+       |                                                                                               ^
+    187|         code: 'INVALID_STATE',
+    188|         message: expect.stringMatching(/leaves changed while this free…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  08:34:02
+   Duration  3.18s (transform 1.51s, setup 105ms, import 1.72s, tests 1.06s, environment 0ms)
+

@@ -13,7 +13,7 @@ import {
   QMS_DOCUMENT_BINDING_BASIS,
   type QmsDocumentRow,
 } from '../document-approval-signature';
-import { TASK_SIGNATURE_MEANINGS } from '../../part11/pin-verification';
+import { TASK_SIGNATURE_MEANINGS } from '../../part11/signature-meanings';
 
 const base: QmsDocumentRow = {
   id: 11, organization_id: 9, doc_number: 'SOP-001', title: 'Design control', doc_type: 'sop',

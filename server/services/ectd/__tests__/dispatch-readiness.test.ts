@@ -340,6 +340,21 @@ describe('resolver verdicts become findings', () => {
     expect(r.errors).toBe(1);
   });
 
+  // 2026-09-23 (W5/D7, residual repair): a withdrawal withdraws the copy on
+  // file and transmit no longer reads its source, so a changed source is not a
+  // readiness error on a delete — the two gates would otherwise disagree.
+  it('a delete whose source changed since it was pinned is not DOCUMENT_CONTENT_MISMATCH; the leaf that ships it still is', () => {
+    const changed = resolution({ status: 'content_changed', pin: 'mismatch', storedSha256: 'b'.repeat(64) });
+    const del = computeDispatchReadiness([
+      goodLeaf({ sectionCode: 'm1.2', title: 'Cover' }),
+      { ...vaultLeaf(changed), lifecycleOp: 'delete' },
+    ]);
+    expect(del.findings.some(x => x.code === 'DOCUMENT_CONTENT_MISMATCH')).toBe(false);
+    expect(del.errors).toBe(0);
+    const shipped = computeDispatchReadiness([{ ...vaultLeaf(changed), lifecycleOp: 'replace' }]);
+    expect(shipped.findings.some(x => x.code === 'DOCUMENT_CONTENT_MISMATCH')).toBe(true);
+  });
+
   it('a document the resolver could not find stays UNRESOLVED_DOCUMENT, naming the pointer', () => {
     const r = computeDispatchReadiness([vaultLeaf(resolution({ status: 'missing', pin: 'unpinned', pinnedSha256: null, storedSha256: null, reason: 'vault document not found in this organization' }))]);
     const f = r.findings.find(x => x.code === 'UNRESOLVED_DOCUMENT');

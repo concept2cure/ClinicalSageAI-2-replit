@@ -1,0 +1,8 @@
+=== callers do not pass the HTTP Content-Type
+server/services/submission-gateways/fda-esg.ts:556:      const refusal = mdnRefusal(parseMdn(mdnRaw), messageId);
+server/services/ind-lifecycle/icsr-gateway-transport.ts:330:  const refusal = mdnRefusal(parseMdn(raw), as2MessageId);
+ × server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 MDN dispositions and the message they name > reads the MIME boundary from the HTTP Content-Type of an unsigned multipart/report 15ms
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > reads the MIME boundary from the HTTP Content-Type of an unsigned multipart/report 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 72 passed (74)
+RESTORED

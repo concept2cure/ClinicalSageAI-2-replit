@@ -1,0 +1,40 @@
+{
+  "request": {
+    "method": "PATCH",
+    "url": "http://localhost:5200/api/authoring/sections/2ec3e8e3-775c-4ef5-85a1-86104026b67d",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "content": "<p>Revised 2.5 text — OQ-003 step 05.</p>",
+      "changeReason": "OQ-003 step 05: controlled edit"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 40,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "section": {
+        "id": "2ec3e8e3-775c-4ef5-85a1-86104026b67d",
+        "doc_id": "39ae0064-3fb9-4ea7-a3dd-507572beb02c",
+        "code": "2.5",
+        "title": "Clinical Overview",
+        "content": "<p>Revised 2.5 text — OQ-003 step 05.</p>",
+        "order_index": 0,
+        "track_changes": false,
+        "tenant_id": 1,
+        "created_at": "2026-09-23T05:19:46.766Z",
+        "updated_at": "2026-09-23T05:19:47.326Z"
+      },
+      "message": "Section updated successfully",
+      "revision_created": true,
+      "filing": {
+        "committed": true,
+        "documentId": "doc_a143788e5af5486ba565520ab392607b",
+        "sectionKey": "2.5"
+      }
+    }
+  }
+}

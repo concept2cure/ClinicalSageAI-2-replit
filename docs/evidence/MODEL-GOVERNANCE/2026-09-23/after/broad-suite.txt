@@ -1,0 +1,7 @@
+$ npx vitest run server/services/ana server/services/ai-gateway server/services/ai-governance server/eval server/routes/c2c server/routes/ana-ri server/routes/chat server/services/__tests__ server/services/concept2cure server/routes/__tests__
+ Test Files  1 failed | 664 passed | 2 skipped (667)
+      Tests  1 failed | 7257 passed | 10 skipped (7268)
+
+The one failure is governed-write-gate.test.ts > "a drafting request on Balanced is scored high-risk and routed to the flagship tier". It ran while mutation G6 (kernel router escalates a governed draft to 'medium' instead of 'high') was applied to the source by the mutation harness, concurrently. Re-run on the restored tree:
+ Test Files  1 passed (1)
+      Tests  39 passed (39)

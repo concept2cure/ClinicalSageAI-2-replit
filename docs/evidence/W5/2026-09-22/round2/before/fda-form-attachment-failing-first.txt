@@ -1,0 +1,4 @@
+ × server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form carrying an embedded file > accepts an eSTAR carrying a filled FDA form as FDA issued it — FDA asks for its forms with their own settings 425ms
+ × server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > accepts a filled FDA form as FDA issued it in a slot — FDA asks for its forms with their own settings 324ms
+ × server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > accepts a filled FDA form as FDA issued it in a slot — FDA asks for its forms with their own settings 325ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

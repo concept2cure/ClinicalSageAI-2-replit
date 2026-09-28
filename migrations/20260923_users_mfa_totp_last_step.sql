@@ -1,0 +1,41 @@
+-- A TOTP code is accepted once (RFC 6238 §5.2). Launch row D6; VSR-001 §13.3
+-- item 1. Added 2026-09-23.
+--
+-- mfaService.verifyTOTPToken accepts any code in the ±1-step window and, until
+-- this change, nothing recorded which step had been used. A code that had
+-- verified was therefore accepted again until its window closed: one code opened
+-- two sessions for one user inside one time step
+-- (docs/evidence/W3/2026-09-23/observations/totp-replay.json). RFC 6238 §5.2:
+-- "the verifier MUST NOT accept the second attempt of the OTP after the
+-- successful validation has been issued for the first OTP".
+--
+-- mfa_totp_last_step holds the time step (floor(unix seconds / 30)) of the last
+-- code accepted for the user. A code is accepted only if its step is GREATER
+-- than this value, compared-and-set in one UPDATE ... WHERE ... RETURNING, so two
+-- concurrent verifications of one code cannot both succeed, and a captured code
+-- from an earlier step cannot be used once a later one has been.
+--
+-- NULL means no code has been accepted since this column existed. No backfill:
+-- time steps only move forward, so the first code a user presents after the
+-- deploy is accepted normally and sets the value.
+--
+-- public.users carries no RLS policy and no tenant column (it is never swept),
+-- so this needs neither an organization_id nor a policy. Additive and
+-- idempotent: it re-runs on every deploy (CLAUDE.md Rule 1) as a no-op.
+--
+-- It must be applied before a server carrying shared/schema.ts's
+-- mfaTotpLastStep serves traffic: bare `select().from(users)` expands to every
+-- declared column (the C-20 failure mode, 20260725_users_signing_lockout_columns).
+--
+-- TWO creators, deliberately, as for every other mfa_* column: this file, and
+-- server/db/bootstrap/auth-schema.ts, which re-adds the users auth columns on
+-- the owner connection at every boot (server/db/bootstrap/index.ts). The boot
+-- copy means a server whose image is ahead of its migrations still starts.
+--
+-- Rollback: not a DROP appended to the set (CLAUDE.md Rule 1), and not a DROP
+-- alone: remove the column from BOTH creators and from shared/schema.ts in one
+-- change, then drop it once. ci:migration-drop-safety reads only the migration
+-- set, so it would not see the bootstrap re-create a column dropped here.
+
+ALTER TABLE IF EXISTS users
+  ADD COLUMN IF NOT EXISTS mfa_totp_last_step BIGINT;

@@ -21,6 +21,8 @@
 import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
 import { LEGACY_RATE_LIMITS, RATE_LIMIT_STORE } from '../config/platform-limits';
+import { ipKeyGenerator } from 'express-rate-limit';
+import { clientIpKey } from '../utils/client-ip';
 
 interface RateLimitRule {
   windowMs: number; // Time window in milliseconds
@@ -141,13 +143,11 @@ export function createRateLimiter(customRules?: Record<string, RateLimitRule>) {
       return next();
     }
 
-    // Get client IP. Trust req.ip first (Express resolves trust-proxy
-    // config), then take only the LEFTMOST X-Forwarded-For entry — the
-    // rightmost ones are attacker-controllable for any client that can
-    // set the header.
-    const forwardedHeader = req.headers['x-forwarded-for'];
-    const forwarded = Array.isArray(forwardedHeader) ? forwardedHeader[0] : forwardedHeader;
-    const clientIp = req.ip || forwarded?.split(',')[0]?.trim() || 'unknown';
+    // The client address trust proxy resolves (server/utils/client-ip.ts),
+    // IPv6 bucketed by /56 so one host cannot rotate through its own range.
+    // The fallback to the left-most X-Forwarded-For entry is gone: that entry
+    // is the one every client writes (D6).
+    const clientIp = ipKeyGenerator(clientIpKey(req));
 
     // Determine appropriate rate limit category based on request path
     const category = getRateLimitCategory(req.path);

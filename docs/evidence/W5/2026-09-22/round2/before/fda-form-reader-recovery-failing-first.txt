@@ -1,0 +1,740 @@
+# fda-form-reader-recovery — failing-first, against unfixed leaf-pdf-security.ts and estar-attachment-plan.ts (2026-09-23T04:31:19Z)
+# git HEAD 65cd7dd5f; product files unmodified: 0 diff lines
+
+$ npx vitest run server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts
+{
+  "timestamp": "2026-09-23T04:31:21.679Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T04:31:21.681Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts
+{
+  "timestamp": "2026-09-23T04:31:21.681Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts
+[database] Database connection successful
+
+stderr | server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts
+{
+  "timestamp": "2026-09-23T04:31:21.974Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined as "047 0 obj" 295ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined as "47 00 obj" 6ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined as "47 0%c\nobj" 6ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined inside an object stream 12ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when the appended trailer carries a different document ID (the R4 key changes) 10ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when the appended trailer drops the document ID 7ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > still accepts an update that keeps FDA's dictionary and document ID 13ms
+ × server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update carries a new document ID behind a type-3 entry 63ms
+   → expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+ × server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update drops /Encrypt behind a type-3 entry 52ms
+   → expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+ × server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the final startxref does not point at the section the update adds 50ms
+   → expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > still accepts a well-formed cross-reference stream that keeps FDA's /Encrypt and /ID 7ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > still accepts the platform-filled 1571 and 3674 153ms
+ × server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form carrying an embedded file > is refused when an embedded PDF is itself secured, and names the attachment 63ms
+   → expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+ ✓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form carrying an embedded file > still accepts an eSTAR whose embedded PDF has no security settings 31ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update carries a new document ID behind a type-3 entry
+AssertionError: expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+
+Expected: "secured"
+Received: "fda-form-as-issued"
+
+ ❯ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts:57:23
+     55|   it('is refused when the update carries a new document ID behind a ty…
+     56|     const v = await assessLeafPdfSecurity(kit.xrefStreamUpdate({ id: N…
+     57|     expect(v.verdict).toBe('secured');
+       |                       ^
+     58|     if (v.verdict === 'secured') expect(v.reason).toMatch(/document ID…
+     59|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update drops /Encrypt behind a type-3 entry
+AssertionError: expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+
+Expected: "secured"
+Received: "fda-form-as-issued"
+
+ ❯ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts:63:23
+     61|   it('is refused when the update drops /Encrypt behind a type-3 entry'…
+     62|     const v = await assessLeafPdfSecurity(kit.xrefStreamUpdate({ id: k…
+     63|     expect(v.verdict).toBe('secured');
+       |                       ^
+     64|     if (v.verdict === 'secured') expect(v.reason).toMatch(/\/Encrypt/);
+     65|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the final startxref does not point at the section the update adds
+AssertionError: expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+
+Expected: "secured"
+Received: "fda-form-as-issued"
+
+ ❯ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts:69:23
+     67|   it('is refused when the final startxref does not point at the sectio…
+     68|     const v = await assessLeafPdfSecurity(kit.xrefStreamUpdate({ id: k…
+     69|     expect(v.verdict).toBe('secured');
+       |                       ^
+     70|     if (v.verdict === 'secured') expect(v.reason).toMatch(/startxref/);
+     71|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form carrying an embedded file > is refused when an embedded PDF is itself secured, and names the attachment
+AssertionError: expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+
+Expected: "secured"
+Received: "fda-form-as-issued"
+
+ ❯ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts:98:23
+     96|     expect(filled, 'a verified vendored eSTAR template').not.toBeNull(…
+     97|     const v = await assessLeafPdfSecurity(filled!, 'fda');
+     98|     expect(v.verdict).toBe('secured');
+       |                       ^
+     99|     if (v.verdict === 'secured') expect(v.reason).toMatch(/biocompatib…
+    100|   }, 120_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 10 passed (14)
+   Start at  04:31:19
+   Duration  3.09s (transform 1.11s, setup 75ms, import 1.97s, tests 771ms, environment 0ms)
+
+
+$ npx vitest run server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts
+{
+  "timestamp": "2026-09-23T04:31:25.310Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T04:31:25.311Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts
+{
+  "timestamp": "2026-09-23T04:31:25.312Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts
+[database] Database connection successful
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts
+{
+  "timestamp": "2026-09-23T04:31:25.610Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > keeps a plain ASCII name as it is, plus the extension 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > folds the characters a section title actually carries into ASCII 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > truncates so that the extension survives the 124-character limit 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > never produces an empty stem 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > drops the characters a file name cannot carry 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > never emits a byte outside printable ASCII, whatever the script 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > honours the 124-character ceiling even when the extension is the long part 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > keeps a non-pdf extension from a vault file name 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > the plan reads the jurisdiction radio from the template, and may > is safe only because no field map writes a path a conditional slot routes by 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > manifestSeed > accepts exactly what both templates ship 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > manifestSeed > refuses a template whose manifest already carries tokens 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > manifestSeed > refuses a template with no manifest node at all 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > builds the manifest by appending to the template's own seed 262ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > carries FDA's own description for the slot 245ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > stamps a date-shaped, unique name-tree key per request 235ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > refuses a slot this template does not declare 232ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > refuses a second file into a slot the form holds one row for, in FDA's words 241ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > refuses a duplicate file name — the template deletes the second file 237ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > refuses a file type the eSTAR will not keep 226ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > reports the resolver's own reason when it cannot produce bytes 222ms
+ × server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > refuses a slot whose file is a secured PDF, by the canonical leaf rule 237ms
+   → expected [ { …(12) } ] to deeply equal []
+ × server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > judges the bytes, not the name: secured PDF bytes under another name are refused too 235ms
+   → expected [ { …(12) } ] to deeply equal []
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > resolves the User Fee Form from the template's OWN jurisdiction radio, not a guess 231ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > plans every slot the template declares without refusing one 235ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > builds the manifest by appending to the template's own seed 250ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > carries FDA's own description for the slot 254ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > stamps a date-shaped, unique name-tree key per request 251ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > refuses a slot this template does not declare 261ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > refuses a second file into a slot the form holds one row for, in FDA's words 254ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > refuses a duplicate file name — the template deletes the second file 266ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > refuses a file type the eSTAR will not keep 227ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > reports the resolver's own reason when it cannot produce bytes 249ms
+ × server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > refuses a slot whose file is a secured PDF, by the canonical leaf rule 251ms
+   → expected [ { …(12) } ] to deeply equal []
+ × server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > judges the bytes, not the name: secured PDF bytes under another name are refused too 253ms
+   → expected [ { …(12) } ] to deeply equal []
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > resolves the User Fee Form from the template's OWN jurisdiction radio, not a guess 255ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > plans every slot the template declares without refusing one 263ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > createDeviceAttachmentResolver > renders a finalized governed section to a real PDF 44ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > createDeviceAttachmentResolver > REFUSES a section that is authored but still a draft 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > createDeviceAttachmentResolver > refuses a section that has no authored content 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > createDeviceAttachmentResolver > loads the section set ONCE however many attachments ask for it 11ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > createDeviceAttachmentResolver > reads ONLY the export's own document class, never the newest device document 4ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > createDeviceAttachmentResolver > says plainly that a legacy project has no governed document or vault 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > refuses a slot whose file is a secured PDF, by the canonical leaf rule
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > refuses a slot whose file is a secured PDF, by the canonical leaf rule
+AssertionError: expected [ { …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "byteLength": 83,
++     "bytes": {
++       "data": [
++         37,
++         80,
++         68,
++         70,
++         45,
++         49,
++         46,
++         52,
++         10,
++         49,
++         32,
++         48,
++         32,
++         111,
++         98,
++         106,
++         60,
++         60,
++         47,
++         84,
++         121,
++         112,
++         101,
++         47,
++         67,
++         97,
++         116,
++         97,
++         108,
++         111,
++         103,
++         62,
++         62,
++         101,
++         110,
++         100,
++         111,
++         98,
++         106,
++         10,
++         116,
++         114,
++         97,
++         105,
++         108,
++         101,
++         114,
++         60,
++         60,
++         47,
++         82,
++         111,
++         111,
++         116,
++         32,
++         49,
++         32,
++         48,
++         32,
++         82,
++         47,
++         69,
++         110,
++         99,
++         114,
++         121,
++         112,
++         116,
++         32,
++         53,
++         32,
++         48,
++         32,
++         82,
++         62,
++         62,
++         10,
++         37,
++         37,
++         69,
++         79,
++         70,
++         10,
++       ],
++       "type": "Buffer",
++     },
++     "chapter": "/CHAPTER 1/CH1.01/",
++     "dataObjectName": "2026-09-08T12:00:00",
++     "description": "Administrative Documentation | Cover Letter",
++     "field": "CLAddAttachment110",
++     "fileName": "Cover Letter.pdf",
++     "mimeType": "application/pdf",
++     "sha256": "c40e1d697d311083ba89bf9eddfa734e93da71ae685899bd1a908e121d165a81",
++     "slot": "root.CoverLetter.CLAddAttachment110",
++     "source": {
++       "documentId": "d1",
++       "kind": "vault_document",
++     },
++     "token": "<<Cover Letter.pdf|/CHAPTER 1/CH1.01/>>",
++   },
++ ]
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts:307:32
+    305|         at: AT,
+    306|       });
+    307|       expect(plan.attachments).toEqual([]);
+       |                                ^
+    308|       expect(plan.manifest).toBeNull();
+    309|       expect(plan.refused).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > judges the bytes, not the name: secured PDF bytes under another name are refused too
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > judges the bytes, not the name: secured PDF bytes under another name are refused too
+AssertionError: expected [ { …(12) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "byteLength": 85,
++     "bytes": {
++       "data": [
++         37,
++         80,
++         68,
++         70,
++         45,
++         49,
++         46,
++         52,
++         10,
++         49,
++         32,
++         48,
++         32,
++         111,
++         98,
++         106,
++         60,
++         60,
++         47,
++         84,
++         121,
++         112,
++         101,
++         47,
++         67,
++         97,
++         116,
++         97,
++         108,
++         111,
++         103,
++         62,
++         62,
++         101,
++         110,
++         100,
++         111,
++         98,
++         106,
++         10,
++         116,
++         114,
++         97,
++         105,
++         108,
++         101,
++         114,
++         60,
++         60,
++         47,
++         82,
++         111,
++         111,
++         116,
++         32,
++         49,
++         32,
++         48,
++         32,
++         82,
++         47,
++         69,
++         110,
++         99,
++         114,
++         35,
++         55,
++         57,
++         112,
++         116,
++         32,
++         53,
++         32,
++         48,
++         32,
++         82,
++         62,
++         62,
++         10,
++         37,
++         37,
++         69,
++         79,
++         70,
++         10,
++       ],
++       "type": "Buffer",
++     },
++     "chapter": "/CHAPTER 1/CH1.01/",
++     "dataObjectName": "2026-09-08T12:00:00",
++     "description": "Administrative Documentation | Cover Letter",
++     "field": "CLAddAttachment110",
++     "fileName": "Cover Letter.docx",
++     "mimeType": "application/octet-stream",
++     "sha256": "50d2648dda27205763e7217f39c483c17ca24e619df7627cafa0bf207b5c8407",
++     "slot": "root.CoverLetter.CLAddAttachment110",
++     "source": {
++       "documentId": "d1",
++       "kind": "vault_document",
++     },
++     "token": "<<Cover Letter.docx|/CHAPTER 1/CH1.01/>>",
++   },
++ ]
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts:325:32
+    323|         at: AT,
+    324|       });
+    325|       expect(plan.attachments).toEqual([]);
+       |                                ^
+    326|       expect(plan.refused[0].reasons.join(' ')).toMatch(/security sett…
+    327|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 38 passed (42)
+   Start at  04:31:23
+   Duration  8.53s (transform 1.00s, setup 77ms, import 1.85s, tests 6.31s, environment 0ms)
+
+
+################################################################
+# Addendum (2026-09-23T04:41:43Z): the FINAL tamper test file (16 tests, including the combined
+# type-3 + object-stream case and the two-update /Prev-chain control added after the first run)
+# run against HEAD's leaf-pdf-security.ts (git show HEAD:server/services/ectd/leaf-pdf-security.ts,
+# imports rewritten to absolute paths; copy at /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/leaf-pdf-security.head.ts).
+# The repo copy of leaf-pdf-security.ts already carried the fix, so HEAD's is run from scratch.
+
+$ npx vitest run --config vitest.config.ts --dir /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun server/__tests__/leaf-pdf-security.tamper.head.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts
+{
+  "timestamp": "2026-09-23T04:41:45.909Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T04:41:45.910Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts
+{
+  "timestamp": "2026-09-23T04:41:45.911Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts
+[database] Database connection successful
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts
+{
+  "timestamp": "2026-09-23T04:41:46.256Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined as "047 0 obj" 350ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined as "47 00 obj" 6ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined as "47 0%c\nobj" 6ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined inside an object stream 12ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when the appended trailer carries a different document ID (the R4 key changes) 11ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when the appended trailer drops the document ID 7ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose encryption was redefined after FDA issued it > still accepts an update that keeps FDA's dictionary and document ID 11ms
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update carries a new document ID behind a type-3 entry 66ms
+   → expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update drops /Encrypt behind a type-3 entry 54ms
+   → expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the final startxref does not point at the section the update adds 62ms
+   → expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update moves object 47 into an object stream behind a type-3 entry 57ms
+   → expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > still accepts a well-formed cross-reference stream that keeps FDA's /Encrypt and /ID 11ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > still accepts the platform-filled 1571 and 3674 177ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > still accepts a later save on top of the platform's fill (a /Prev chain of two updates) 60ms
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form carrying an embedded file > is refused when an embedded PDF is itself secured, and names the attachment 49ms
+   → expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form carrying an embedded file > still accepts an eSTAR whose embedded PDF has no security settings 51ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update carries a new document ID behind a type-3 entry
+AssertionError: expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+
+Expected: "secured"
+Received: "fda-form-as-issued"
+
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts:57:23
+     55|   it('is refused when the update carries a new document ID behind a ty…
+     56|     const v = await assessLeafPdfSecurity(kit.xrefStreamUpdate({ id: N…
+     57|     expect(v.verdict).toBe('secured');
+       |                       ^
+     58|     if (v.verdict === 'secured') expect(v.reason).toMatch(/document ID…
+     59|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update drops /Encrypt behind a type-3 entry
+AssertionError: expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+
+Expected: "secured"
+Received: "fda-form-as-issued"
+
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts:63:23
+     61|   it('is refused when the update drops /Encrypt behind a type-3 entry'…
+     62|     const v = await assessLeafPdfSecurity(kit.xrefStreamUpdate({ id: k…
+     63|     expect(v.verdict).toBe('secured');
+       |                       ^
+     64|     if (v.verdict === 'secured') expect(v.reason).toMatch(/\/Encrypt/);
+     65|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the final startxref does not point at the section the update adds
+AssertionError: expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+
+Expected: "secured"
+Received: "fda-form-as-issued"
+
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts:69:23
+     67|   it('is refused when the final startxref does not point at the sectio…
+     68|     const v = await assessLeafPdfSecurity(kit.xrefStreamUpdate({ id: k…
+     69|     expect(v.verdict).toBe('secured');
+       |                       ^
+     70|     if (v.verdict === 'secured') expect(v.reason).toMatch(/startxref/);
+     71|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update moves object 47 into an object stream behind a type-3 entry
+AssertionError: expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+
+Expected: "secured"
+Received: "fda-form-as-issued"
+
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts:75:23
+     73|   it('is refused when the update moves object 47 into an object stream…
+     74|     const v = await assessLeafPdfSecurity(kit.redefinedInObjectStream(…
+     75|     expect(v.verdict).toBe('secured');
+       |                       ^
+     76|     if (v.verdict === 'secured') expect(v.reason).toMatch(/object 47, …
+     77|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts > FDA form carrying an embedded file > is refused when an embedded PDF is itself secured, and names the attachment
+AssertionError: expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+
+Expected: "secured"
+Received: "fda-form-as-issued"
+
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/fdafix/headrun/server/__tests__/leaf-pdf-security.tamper.head.test.ts:110:23
+    108|     expect(filled, 'a verified vendored eSTAR template').not.toBeNull(…
+    109|     const v = await assessLeafPdfSecurity(filled!, 'fda');
+    110|     expect(v.verdict).toBe('secured');
+       |                       ^
+    111|     if (v.verdict === 'secured') expect(v.reason).toMatch(/biocompatib…
+    112|   }, 120_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 11 passed (16)
+   Start at  04:41:43
+   Duration  3.42s (transform 1.18s, setup 86ms, import 2.07s, tests 994ms, environment 0ms)
+
+
+################################################################
+# Addendum 2 (2026-09-23T04:52:41Z): the startxref test extended with a final startxref pointed back at
+# FDA's own section. Run against the working-tree fix BEFORE the rule that the final startxref must point
+# at an appended section was added (the chain loop ended at once when offset == FDA's own):
+$ npx vitest run server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts -t "final startxref"
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts
+{
+  "timestamp": "2026-09-23T04:52:44.240Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T04:52:44.242Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts
+{
+  "timestamp": "2026-09-23T04:52:44.242Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts
+[database] Database connection successful
+
+stderr | server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts
+{
+  "timestamp": "2026-09-23T04:52:44.553Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined as "047 0 obj"
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined as "47 00 obj"
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined as "47 0%c\nobj"
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when object 47 is redefined inside an object stream
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when the appended trailer carries a different document ID (the R4 key changes)
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > is refused when the appended trailer drops the document ID
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose encryption was redefined after FDA issued it > still accepts an update that keeps FDA's dictionary and document ID
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update carries a new document ID behind a type-3 entry
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update drops /Encrypt behind a type-3 entry
+ × server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the final startxref does not point at the section the update adds 370ms
+   → expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the update moves object 47 into an object stream behind a type-3 entry
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > still accepts a well-formed cross-reference stream that keeps FDA's /Encrypt and /ID
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > still accepts the platform-filled 1571 and 3674
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > reads the document ID as bytes: FDA's /ID[0] spelled as a literal string is still FDA's
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > still accepts a later save on top of the platform's fill (a /Prev chain of two updates)
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form carrying an embedded file > is refused when an embedded PDF is itself secured, and names the attachment
+ ↓ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form carrying an embedded file > still accepts an eSTAR whose embedded PDF has no security settings
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts > FDA form whose appended cross-reference section a conformant reader follows and pdf.js does not > is refused when the final startxref does not point at the section the update adds
+AssertionError: expected 'fda-form-as-issued' to be 'secured' // Object.is equality
+
+Expected: "secured"
+Received: "fda-form-as-issued"
+
+ ❯ server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts:77:26
+     75|       'fda',
+     76|     );
+     77|     expect(back.verdict).toBe('secured');
+       |                          ^
+     78|   });
+     79|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 skipped (17)
+   Start at  04:52:42
+   Duration  2.93s (transform 1.27s, setup 76ms, import 2.22s, tests 373ms, environment 0ms)
+

@@ -1,0 +1,78 @@
+# RED: enterprise check-email case of tests/db/sign-in-posture.dbtest.ts, with server/routes/authEnterprise.ts at HEAD
+# (the fix reverse-applied to that one file for this run, then restored). 2026-09-23T08:58:13Z
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/db/sign-in-posture.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-23T08:58:03.569Z', poolSize: 1 }
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/sign-in-posture.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 185
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 187
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA disabled for user 187
+
+stdout | tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address
+[Enterprise Auth] Checking email: dbtsp-nobody-1173_mudvefhe@example.invalid
+
+stdout | tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address
+[Enterprise Auth] Checking email: dbtsp-email-1173_mudvefhe@example.invalid
+
+stdout | tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address
+[Enterprise Auth] Checking email: dbtsp-totp-1173_mudvefhe@example.invalid
+
+ ↓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing
+ ↓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > the three accounts are what their names say
+ ↓ tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so
+ ↓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree
+ ↓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree
+ ↓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false
+ × tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address 53ms
+   → check-email singled out the account with an authenticator: expected { authFlow: 'password', …(1) } to deeply equal { authFlow: 'password', …(1) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address
+AssertionError: check-email singled out the account with an authenticator: expected { authFlow: 'password', …(1) } to deeply equal { authFlow: 'password', …(1) }
+
+- Expected
++ Received
+
+  {
+    "authFlow": "password",
+-   "mfaRequired": false,
++   "mfaRequired": true,
+  }
+
+ ❯ tests/db/sign-in-posture.dbtest.ts:315:104
+    313|     const unknown = await ask(`${TAG}-nobody-${RUN}@example.invalid`);
+    314|     expect(await ask(members.email.email)).toEqual(unknown);
+    315|     expect(await ask(members.totp.email), 'check-email singled out the…
+       |                                                                                                        ^
+    316|     // And what it says is true of every sign-in: a second factor foll…
+    317|     expect(unknown).toEqual({ authFlow: 'password', mfaRequired: true …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  08:58:01
+   Duration  3.50s (transform 1.29s, setup 70ms, import 197ms, tests 2.96s, environment 0ms)
+

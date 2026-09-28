@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 /* regulatoryIR is DELETED, not moved: it was written against a reg_questions
  * shape this schema does not have (sub_id/q_id/final_md…), so every route it
  * served failed at the database; it carried no tenant scoping on any query;
@@ -10,6 +10,11 @@ import playbookRoutes from './playbookRoutes.js';
 import { pool } from '../../db.js';
 import crypto from 'crypto';
 import { ai } from '../../lib/unified-ai-client';
+import {
+  GATEWAY_ERROR_HTTP_STATUS,
+  classifyGatewayError,
+  isGatewayError,
+} from '../../services/ai-gateway/gateway-error-map';
 import { requireAuthedOrgId } from '../../utils/authedOrgId.js';
 import { authenticateToken } from '../../middleware/auth.js';
 
@@ -30,16 +35,9 @@ router.post('/generate-blueprint', async (req, res) => {
     // Tenant scope from the verified JWT, never the request body.
     const guard = requireAuthedOrgId(req, res);
     if (!guard.ok) return;
-    const {
-      drugName,
-      drugType,
-      dosageForm,
-      indication,
-      developmentStage,
-      regulatoryRegion,
-      manufacturingSite,
-      targetSubmissionDate,
-    } = req.body;
+    const { drugName, drugType, dosageForm, manufacturingSite, targetSubmissionDate } = req.body;
+    // Resolved once: the draft and the project row record the same values.
+    const { indication, developmentStage, regulatoryRegion } = withProjectDefaults(req.body);
 
     // Validate required fields
     if (!drugName || !drugType || !dosageForm) {
@@ -48,6 +46,18 @@ router.post('/generate-blueprint', async (req, res) => {
       });
     }
 
+    // Draft the strategy first: a draft that fails creates no project, so a
+    // retry does not leave an orphan cmc_projects row behind it.
+    const blueprintContent = await generateAIBlueprint({
+      drugName,
+      drugType,
+      dosageForm,
+      indication,
+      developmentStage,
+      regulatoryRegion,
+      organizationId: guard.orgId,
+    });
+
     // Create CMC project in database
     const projectData = {
       organizationId: guard.orgId,
@@ -55,9 +65,9 @@ router.post('/generate-blueprint', async (req, res) => {
       drugName,
       drugType,
       dosageForm,
-      indication: indication || 'To be defined',
-      developmentStage: developmentStage || 'Preclinical',
-      regulatoryRegion: regulatoryRegion || 'FDA (United States)',
+      indication,
+      developmentStage,
+      regulatoryRegion,
       manufacturingSite,
       targetSubmissionDate: targetSubmissionDate ? new Date(targetSubmissionDate) : null,
       projectManager: 'System Generated',
@@ -97,16 +107,6 @@ router.post('/generate-blueprint', async (req, res) => {
 
     const newProject = projectResult.rows[0];
 
-    // Generate AI-powered blueprint content
-    const blueprintContent = await generateAIBlueprint({
-      drugName,
-      drugType,
-      dosageForm,
-      indication,
-      developmentStage,
-      regulatoryRegion,
-    });
-
     // Create workflow templates based on blueprint
     const workflowTemplates = await createWorkflowTemplates(
       newProject.id,
@@ -140,6 +140,7 @@ router.post('/generate-blueprint', async (req, res) => {
 
     res.json({ success: true, data: response });
   } catch (error) {
+    if (error instanceof BlueprintNotDraftedError) return sendNotDrafted(res, error);
     console.error('Error generating CMC blueprint:', error);
     res.status(500).json({ error: 'Failed to generate CMC blueprint' });
   }
@@ -236,34 +237,69 @@ router.post('/templates', async (req, res) => {
 
 // ===== AI-POWERED HELPER FUNCTIONS =====
 
+/**
+ * The model produced no strategy draft. Until 2026-09-23 this path returned a
+ * placeholder blueprint ("Fallback blueprint content generated due to AI
+ * service unavailability", canned 3.2.S / 3.2.P lists) with HTTP 200 and
+ * success: true — and an empty reply was returned as an empty strategy.
+ */
+class BlueprintNotDraftedError extends Error {
+  constructor(readonly cause: unknown) {
+    super('CMC strategy was not drafted');
+    this.name = 'BlueprintNotDraftedError';
+  }
+}
+
+function withProjectDefaults(body: Record<string, unknown>) {
+  return {
+    indication: (body.indication as string) || 'To be defined',
+    developmentStage: (body.developmentStage as string) || 'Preclinical',
+    regulatoryRegion: (body.regulatoryRegion as string) || 'FDA (United States)',
+  };
+}
+
+/** The strategy was not drafted: answered as that, with the gateway's reason when it refused. */
+function sendNotDrafted(res: Response, error: BlueprintNotDraftedError) {
+  const refusal = isGatewayError(error.cause) ? classifyGatewayError(error.cause) : null;
+  return res.status(refusal ? GATEWAY_ERROR_HTTP_STATUS[refusal.code] : 503).json({
+    error: 'NO_DRAFT_PRODUCED',
+    message: `The CMC strategy could not be drafted, so no project was created. ${
+      refusal?.message ?? 'The drafting model was unavailable or returned nothing.'
+    }`,
+  });
+}
+
 async function generateAIBlueprint(params: any) {
-  try {
-    const {
-      drugName, drugType, dosageForm, indication, developmentStage, regulatoryRegion,
-      organizationId: paramOrgId, projectId: paramProjectId,
-    } = params;
+  const {
+    drugName,
+    drugType,
+    dosageForm,
+    indication,
+    developmentStage,
+    regulatoryRegion,
+    organizationId: paramOrgId,
+    projectId: paramProjectId,
+  } = params;
 
-    // If an existing project is supplied AND it has CMC source data, the
-    // QbD analyzer derives CQAs and CPPs from the actual records instead
-    // of the drug-type heuristics below. New-project blueprints still use
-    // the heuristics because no source data exists yet.
-    let qbdAnalysis: { cqas: Array<{ name: string }>; cpps: Array<{ name: string }> } | null = null;
-    if (paramOrgId && paramProjectId && typeof paramProjectId === 'string') {
-      try {
-        const { analyzeQbdFromSources } = await import(
-          '../../services/cmc/qbd-analyzer'
-        );
-        const result = await analyzeQbdFromSources(Number(paramOrgId), paramProjectId);
-        if (result.cqas.length > 0 || result.cpps.length > 0) {
-          qbdAnalysis = { cqas: result.cqas, cpps: result.cpps };
-        }
-      } catch {
-        // Analyzer failure falls through to the type-based heuristics.
+  // If an existing project is supplied AND it has CMC source data, the
+  // QbD analyzer derives CQAs and CPPs from the actual records instead
+  // of the drug-type heuristics below. New-project blueprints still use
+  // the heuristics because no source data exists yet.
+  let qbdAnalysis: { cqas: Array<{ name: string }>; cpps: Array<{ name: string }> } | null = null;
+  if (paramOrgId && paramProjectId && typeof paramProjectId === 'string') {
+    try {
+      const { analyzeQbdFromSources } = await import('../../services/cmc/qbd-analyzer');
+      const result = await analyzeQbdFromSources(Number(paramOrgId), paramProjectId);
+      if (result.cqas.length > 0 || result.cpps.length > 0) {
+        qbdAnalysis = { cqas: result.cqas, cpps: result.cpps };
       }
+    } catch {
+      // Analyzer failure falls through to the type-based heuristics.
     }
-    params.__qbdAnalysis = qbdAnalysis;
+  }
+  params.__qbdAnalysis = qbdAnalysis;
 
-    const prompt = `Generate a comprehensive CMC (Chemistry, Manufacturing, and Controls) blueprint for the following pharmaceutical product:
+  const prompt = `Generate a comprehensive CMC (Chemistry, Manufacturing, and Controls) blueprint for the following pharmaceutical product:
 
 Drug Name: ${drugName}
 Drug Type: ${drugType}
@@ -275,23 +311,23 @@ Regulatory Region: ${regulatoryRegion}
 Provide a detailed blueprint that includes:
 
 1. Drug Substance (3.2.S) requirements:
-   - General Information needs
-   - Manufacture process considerations
-   - Characterization requirements
-   - Control strategy
-   - Reference standards
-   - Container closure system
-   - Stability requirements
+ - General Information needs
+ - Manufacture process considerations
+ - Characterization requirements
+ - Control strategy
+ - Reference standards
+ - Container closure system
+ - Stability requirements
 
 2. Drug Product (3.2.P) requirements:
-   - Description and composition
-   - Pharmaceutical development strategy
-   - Manufacture process design
-   - Control of excipients
-   - Control of drug product
-   - Reference standards
-   - Container closure system
-   - Stability program
+ - Description and composition
+ - Pharmaceutical development strategy
+ - Manufacture process design
+ - Control of excipients
+ - Control of drug product
+ - Reference standards
+ - Container closure system
+ - Stability program
 
 3. Critical Quality Attributes (CQAs)
 4. Critical Process Parameters (CPPs)
@@ -304,8 +340,19 @@ Provide a detailed blueprint that includes:
 
 Structure the response as a comprehensive regulatory strategy document.`;
 
-    const aiResult = await ai.chat({
-      model: 'gpt-4',
+  // A Module 3 regulatory strategy draft: routed as document_drafting so only
+  // a model approved for high-risk regulatory drafting serves it. It pinned
+  // 'gpt-4' — which matches no configured model, so a 'general' request went
+  // to whatever the unfiltered fallback ladder reached — at temperature 0.7.
+  // Only the model call is a draft failure. A fault in the structuring below
+  // is ours, and is answered as one — until 2026-09-23 it too was caught and
+  // turned into the placeholder blueprint (a missing regulatoryRegion did it).
+  let aiResult: Awaited<ReturnType<typeof ai.chat>>;
+  try {
+    aiResult = await ai.chat({
+      taskType: 'document_drafting',
+      callerModule: 'cmc-blueprint.generate',
+      organizationId: paramOrgId,
       messages: [
         {
           role: 'system',
@@ -318,65 +365,67 @@ Structure the response as a comprehensive regulatory strategy document.`;
         },
       ],
       max_tokens: 4000,
-      temperature: 0.7,
+      temperature: 0.3,
     });
-
-    const blueprintText = aiResult.content || '';
-
-    // Parse the AI response into structured data
-    return {
-      id: crypto.randomUUID(),
-      summary: `Comprehensive CMC strategy for ${drugName}`,
-      content: blueprintText,
-      sections: {
-        drugSubstance: {
-          title: 'Drug Substance (3.2.S)',
-          requirements: extractSectionRequirements(blueprintText, 'Drug Substance'),
-          criticalItems: extractCriticalItems(blueprintText, 'drug substance'),
-          timeline: '8-12 weeks',
-        },
-        drugProduct: {
-          title: 'Drug Product (3.2.P)',
-          requirements: extractSectionRequirements(blueprintText, 'Drug Product'),
-          criticalItems: extractCriticalItems(blueprintText, 'drug product'),
-          timeline: '10-14 weeks',
-        },
-        qualityByDesign: {
-          title: 'Quality by Design',
-          cqas: extractCQAs(blueprintText, drugType, params.__qbdAnalysis),
-          cpps: extractCPPs(blueprintText, dosageForm, params.__qbdAnalysis),
-          designSpace: params.__qbdAnalysis
-            ? 'Derived from project source-object analysis (see /api/cmc/quality/qbd)'
-            : 'To be established during development',
-          source: params.__qbdAnalysis ? 'data_driven' : 'heuristic',
-        },
-        analyticalMethods: {
-          title: 'Analytical Methods',
-          required: generateAnalyticalMethods(drugType, dosageForm),
-          validationRequirements: 'ICH Q2(R1) compliance required',
-        },
-        stabilityStudies: {
-          title: 'Stability Studies',
-          studies: generateStabilityStudies(dosageForm, developmentStage),
-          conditions: getStabilityConditions(regulatoryRegion),
-        },
-      },
-      compliance: {
-        guidelines: getApplicableGuidelines(drugType, regulatoryRegion),
-        requirements: extractComplianceRequirements(blueprintText),
-      },
-      riskAssessment: {
-        technicalRisks: extractTechnicalRisks(blueprintText),
-        regulatoryRisks: extractRegulatoryRisks(regulatoryRegion, developmentStage),
-        mitigationStrategies: extractMitigationStrategies(blueprintText),
-      },
-    };
   } catch (error) {
     console.error('Error generating AI blueprint:', error);
-    // Return a structured fallback blueprint, explicitly labelled so the
-    // client/user can tell it is not AI-generated content.
-    return { ...generateFallbackBlueprint(params), generatedFrom: 'fallback' };
+    throw new BlueprintNotDraftedError(error);
   }
+
+  const blueprintText = aiResult.content || '';
+  if (!blueprintText.trim()) {
+    throw new BlueprintNotDraftedError(new Error('the drafting model returned an empty strategy'));
+  }
+
+  // Parse the AI response into structured data
+  return {
+    id: crypto.randomUUID(),
+    summary: `Comprehensive CMC strategy for ${drugName}`,
+    content: blueprintText,
+    generatedBy: { provider: aiResult.provider, model: aiResult.model },
+    sections: {
+      drugSubstance: {
+        title: 'Drug Substance (3.2.S)',
+        requirements: extractSectionRequirements(blueprintText, 'Drug Substance'),
+        criticalItems: extractCriticalItems(blueprintText, 'drug substance'),
+        timeline: '8-12 weeks',
+      },
+      drugProduct: {
+        title: 'Drug Product (3.2.P)',
+        requirements: extractSectionRequirements(blueprintText, 'Drug Product'),
+        criticalItems: extractCriticalItems(blueprintText, 'drug product'),
+        timeline: '10-14 weeks',
+      },
+      qualityByDesign: {
+        title: 'Quality by Design',
+        cqas: extractCQAs(blueprintText, drugType, params.__qbdAnalysis),
+        cpps: extractCPPs(blueprintText, dosageForm, params.__qbdAnalysis),
+        designSpace: params.__qbdAnalysis
+          ? 'Derived from project source-object analysis (see /api/cmc/quality/qbd)'
+          : 'To be established during development',
+        source: params.__qbdAnalysis ? 'data_driven' : 'heuristic',
+      },
+      analyticalMethods: {
+        title: 'Analytical Methods',
+        required: generateAnalyticalMethods(drugType, dosageForm),
+        validationRequirements: 'ICH Q2(R1) compliance required',
+      },
+      stabilityStudies: {
+        title: 'Stability Studies',
+        studies: generateStabilityStudies(dosageForm, developmentStage),
+        conditions: getStabilityConditions(regulatoryRegion),
+      },
+    },
+    compliance: {
+      guidelines: getApplicableGuidelines(drugType, regulatoryRegion),
+      requirements: extractComplianceRequirements(blueprintText),
+    },
+    riskAssessment: {
+      technicalRisks: extractTechnicalRisks(blueprintText),
+      regulatoryRisks: extractRegulatoryRisks(regulatoryRegion, developmentStage),
+      mitigationStrategies: extractMitigationStrategies(blueprintText),
+    },
+  };
 }
 
 async function createWorkflowTemplates(projectId: string, blueprint: any, organizationId: string) {
@@ -569,7 +618,7 @@ function extractCriticalItems(text: string, context: string): string[] {
 function extractCQAs(
   _text: string,
   drugType: string,
-  qbdAnalysis?: { cqas: Array<{ name: string }> } | null,
+  qbdAnalysis?: { cqas: Array<{ name: string }> } | null
 ): string[] {
   if (qbdAnalysis && qbdAnalysis.cqas.length > 0) {
     return Array.from(new Set(qbdAnalysis.cqas.map(c => c.name)));
@@ -590,7 +639,7 @@ function extractCQAs(
 function extractCPPs(
   _text: string,
   dosageForm: string,
-  qbdAnalysis?: { cpps: Array<{ name: string }> } | null,
+  qbdAnalysis?: { cpps: Array<{ name: string }> } | null
 ): string[] {
   if (qbdAnalysis && qbdAnalysis.cpps.length > 0) {
     return Array.from(new Set(qbdAnalysis.cpps.map(c => c.name)));
@@ -703,26 +752,6 @@ function generateProjectTimeline(developmentStage: string, targetDate: string | 
   }
 
   return baseTimeline;
-}
-
-function generateFallbackBlueprint(params: any): any {
-  return {
-    id: crypto.randomUUID(),
-    summary: `Basic CMC strategy for ${params.drugName}`,
-    content: 'Fallback blueprint content generated due to AI service unavailability.',
-    sections: {
-      drugSubstance: {
-        title: 'Drug Substance (3.2.S)',
-        requirements: ['General Information', 'Manufacture', 'Characterization'],
-        timeline: '8-12 weeks',
-      },
-      drugProduct: {
-        title: 'Drug Product (3.2.P)',
-        requirements: ['Description and Composition', 'Pharmaceutical Development'],
-        timeline: '10-14 weeks',
-      },
-    },
-  };
 }
 
 // Additional utility functions for text extraction

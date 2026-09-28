@@ -1,0 +1,18 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/routes/__tests__/orchestration-project-id.test.ts > POST /execute > refuses a program uuid before any run exists 28ms
+ ✓ server/routes/__tests__/orchestration-project-id.test.ts > POST /execute > runs the review for a project id 7ms
+ ✓ server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > GET /api/orchestration/projects/1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc/readiness never assesses project 1 for program 1d3c… 4ms
+ ✓ server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > GET /api/orchestration/readiness/freshness/1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc never assesses project 1 for program 1d3c… 3ms
+ ✓ server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > POST /api/orchestration/readiness never assesses project 1 for program 1d3c… 4ms
+ ✓ server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > POST /api/orchestration/recommendations never assesses project 1 for program 1d3c… 3ms
+ ✓ server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > POST /api/orchestration/continuity never assesses project 1 for program 1d3c… 3ms
+ ✓ server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > assesses the project a numeric id names 3ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  04:55:53
+   Duration  510ms (transform 137ms, setup 78ms, import 211ms, tests 57ms, environment 0ms)
+

@@ -419,6 +419,41 @@ export async function mapSentencesToSources(
   return links;
 }
 
+const LINK_TYPES: ReadonlySet<string> = new Set([
+  'supports',
+  'derives_from',
+  'references',
+  'validates',
+  'contradicts',
+]);
+
+/** The model's excerpt if it appears verbatim in the source text; else the source's own. */
+function verbatimExcerpt(
+  proposed: unknown,
+  sourceExcerpt: string,
+  fullText: string | undefined
+): string {
+  if (typeof proposed === 'string' && proposed.trim() && (fullText ?? sourceExcerpt).includes(proposed.trim())) {
+    return proposed.trim();
+  }
+  return sourceExcerpt;
+}
+
+function unmappedLink(sentence: SentenceSpan): SentenceTraceLink {
+  return {
+    id: crypto.randomUUID(),
+    sentenceSpan: sentence,
+    sources: [],
+    overallConfidence: 0,
+    claimType: 'general',
+    isSupported: false,
+    needsReview: true,
+    targetContentHash: sentence.contentHash,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 async function mapBatchToSources(
   sentences: SentenceSpan[],
   sources: ProjectSource[],
@@ -443,8 +478,13 @@ async function mapBatchToSources(
     .join('\n');
 
   try {
+    // Which source backs each sentence of a regulated document is a regulatory
+    // review verdict, persisted to evidence_links and summarised into the
+    // Part 11 audit chain: only a model approved for it may serve it. It
+    // defaulted to gpt-4o as a 'general' request (no approval check applies).
     const aiResult = await ai.chat({
-      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      taskType: 'regulatory_review',
+      callerModule: 'sentenceTraceability.mapBatchToSources',
       temperature: 0.1,
       response_format: { type: 'json_object' },
       messages: [
@@ -468,11 +508,14 @@ If a sentence has no matching source, return empty sources array.`,
       ],
     });
 
-    const parsed = JSON.parse(aiResult.content || '{"mappings":[]}');
+    const parsed = JSON.parse(aiResult.content ?? '');
+    if (!Array.isArray(parsed?.mappings)) throw new Error('mapping reply had no mappings list');
 
-    for (const mapping of parsed.mappings || []) {
+    const mapped = new Set<number>();
+    for (const mapping of parsed.mappings) {
       const sentence = sentences[mapping.sentenceIdx];
       if (!sentence) continue;
+      mapped.add(mapping.sentenceIdx);
 
       const sourceRefs: SourceReference[] = [];
       for (const srcMapping of mapping.sources || []) {
@@ -488,9 +531,14 @@ If a sentence has no matching source, return empty sources array.`,
           title: source.title,
           documentPath: fullSource?.documentPath,
           pageNumber: fullSource?.pageNumber,
-          excerpt: srcMapping.excerpt || source.excerpt,
+          // The model's "excerpt" is kept only when it is verbatim in the
+          // source: until 2026-09-23 a model-composed excerpt was preferred
+          // and persisted as the source's quotation.
+          excerpt: verbatimExcerpt(srcMapping.excerpt, source.excerpt, fullSource?.excerpt),
           relevanceScore: srcMapping.confidence,
-          linkType: srcMapping.linkType || 'supports',
+          // An unknown or missing link type is a reference, never support: it
+          // defaulted to 'supports', which counts the claim as backed.
+          linkType: LINK_TYPES.has(srcMapping.linkType) ? srcMapping.linkType : 'references',
           detectionMethod: 'semantic',
           isVerified: false,
         });
@@ -535,6 +583,13 @@ If a sentence has no matching source, return empty sources array.`,
         updatedAt: new Date().toISOString(),
       });
     }
+
+    // A sentence the reply skipped is unmapped, not absent: it was left out
+    // of unsupportedClaims, so a partial reply read as a clean report.
+    for (const [idx, sentence] of sentences.entries()) {
+      if (mapped.has(idx)) continue;
+      results.push(unmappedLink(sentence));
+    }
   } catch (error) {
     console.error('[SentenceTraceability] AI mapping failed:', error);
     // Fall back to keyword-only matching for this batch
@@ -549,7 +604,9 @@ If a sentence has no matching source, return empty sources array.`,
             ? keywordMatches.reduce((s, m) => s + m.relevanceScore, 0) / keywordMatches.length
             : 0,
         claimType: 'general',
-        isSupported: keywordMatches.length > 0,
+        // Keyword matches are references, not support — the model path counts
+        // only 'supports' links — so a failed mapping cannot mark a claim backed.
+        isSupported: false,
         needsReview: true,
         targetContentHash: sentence.contentHash,
         createdAt: new Date().toISOString(),

@@ -19,6 +19,7 @@ import {
   addCapaActionTx,
   setCapaStatusTx,
   closeDeviationTx,
+  assessDeviationTx,
   listDeviations,
   getDeviation,
 } from '../services/protocol-deviations/protocol-deviations-service';
@@ -99,8 +100,39 @@ router.post('/deviations', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   await governed(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
     const result = await createDeviationTx(client, orgId, userId, parsed.data);
-    recordDeviationReported(parsed.data.severity ?? 'minor');
-    return { target: `protocol-deviation:${result.id}`, payload: { reportable: result.reportable, severity: parsed.data.severity ?? 'minor' }, body: { id: result.id, reportable: result.reportable, timelinessDays: result.timelinessDays, basis: result.basis } };
+    // The ledger and the metric record what was ASSESSED — "not_assessed" when
+    // nobody assessed it. Both used to record a defaulted 'minor'.
+    recordDeviationReported(parsed.data.severity ?? 'not_assessed');
+    return {
+      target: `protocol-deviation:${result.id}`,
+      payload: { severity: parsed.data.severity ?? null, affectsSafety: parsed.data.affectsSafety ?? null, assessed: result.assessed, reportabilityStatus: result.status },
+      body: result as unknown as Record<string, unknown>,
+    };
+  });
+});
+
+// ─── Assessment ──────────────────────────────────────────────────────────────
+
+/* A person's assessment: severity, effect on subject safety, and why. The only
+   way an unassessed deviation (including every legacy row) becomes closable. */
+const assessmentSchema = z.object({
+  severity: z.enum(['minor', 'major', 'critical']),
+  affectsSafety: z.boolean(),
+  rationale: z.string().trim().min(8, 'Give the rationale for this assessment (at least 8 characters).').max(4000),
+  reason,
+});
+router.post('/deviations/:id/assessment', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = assessmentSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
+    const result = await assessDeviationTx(client, orgId, userId, id, parsed.data);
+    return {
+      target: `protocol-deviation:${id}`,
+      payload: { severity: parsed.data.severity, affectsSafety: parsed.data.affectsSafety, reportabilityStatus: result.status },
+      body: result as unknown as Record<string, unknown>,
+    };
   });
 });
 

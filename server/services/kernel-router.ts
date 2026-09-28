@@ -21,6 +21,12 @@ export interface KernelRoutingInput {
   contradictionCount?: number;
   criticalContradictionCount?: number;
   toolRequestCount?: number;
+  /**
+   * The message asks for something that will become a governed record
+   * (server/services/ana/governed-write-tools.ts requestsGovernedDraft). Scores
+   * the turn high-risk, so the model tier picks a model approved to write it.
+   */
+  requestsGovernedDraft?: boolean;
 }
 
 export interface KernelRoutingPlan {
@@ -76,6 +82,12 @@ export function planKernelExecution(input: KernelRoutingInput): KernelRoutingPla
     temperature = DEFAULT_REG_REVIEW_TEMPERATURE;
     riskTier = highRiskIntent ? 'high' : 'medium';
     rationale.push('Regulatory context detected');
+  }
+
+  if (input.requestsGovernedDraft) {
+    riskTier = 'high';
+    temperature = Math.min(temperature, DEFAULT_REG_REVIEW_TEMPERATURE);
+    rationale.push('Governed drafting requested -> approved model required');
   }
 
   if (input.hasEvidence) {

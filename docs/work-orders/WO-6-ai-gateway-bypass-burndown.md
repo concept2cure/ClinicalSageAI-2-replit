@@ -21,7 +21,7 @@
 > | `services/anthropic-files.ts` | **dead** | `uploadFileToAnthropic` / `deleteAnthropicFile` have ZERO call sites. All three importers take only `readLocalUploadBuffer`, which egresses nothing |
 > | `huggingface-service.ts` | **dead** | the embeddings half. Not one of five callers writes the vector to a pgvector column |
 > | `services/csr-extractor-service.ts` | **dead-ish** | ungoverned `gpt-4-turbo-preview` calls at `:378`/`:490`, reachable only through an unreferenced barrel — but a live test guards it, see below |
-> | `services/semanticSearch.js` | **dead** | both importers throw `ERR_MODULE_NOT_FOUND` at module load on an absent `docushare.js` |
+> | `services/semanticSearch.js` | **dead — deleted 2026-09-22** with both importers | both importers threw `ERR_MODULE_NOT_FOUND` at module load on an absent `docushare.js` |
 >
 > **So the live inference surface is two shared factories plus one image path.**
 > Five entries are dead code, and migrating a call nobody makes would be work

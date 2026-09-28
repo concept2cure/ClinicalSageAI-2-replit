@@ -1,0 +1,321 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stderr | server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > fails the payload and names every read it took with it
+{
+  "timestamp": "2026-09-23T04:54:10.003Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:54:10.004Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:54:10.004Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+
+stderr | server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > fails the payload and names every read it took with it
+{
+  "timestamp": "2026-09-23T04:54:10.004Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Failed to resolve project snapshot",
+  "context": {
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+
+stderr | server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > never lets a project nothing could be read from be assessed
+{
+  "timestamp": "2026-09-23T04:54:10.010Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Last-signal query failed",
+  "context": {
+    "error": "could not read the CMC tables"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:54:10.010Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] CMC signal query failed",
+  "context": {
+    "error": "could not read the CMC tables"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:54:10.010Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Failed to resolve project snapshot",
+  "context": {
+    "error": "could not read projects"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:54:10.011Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:54:10.011Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:54:10.011Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "error": "could not read regulatory_audit_logs"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:54:10.011Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "error": "could not read regulatory_audit_logs"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:54:10.011Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:54:10.011Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "error": "could not read regulatory_audit_logs"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:54:10.011Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "error": "could not read regulatory_audit_logs"
+  }
+}
+
+ × server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > fails the payload and names every read it took with it 9ms
+   → expected 'assembled' to be an instance of CrossObjectReadError
+ × server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > never lets a project nothing could be read from be assessed 8ms
+   → promise resolved "{ project: { id: 7, …(7) }, …(11) }" instead of rejecting
+ × server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a project the organisation does not hold > is refused, not assessed as "Unknown Project" 3ms
+   → promise resolved "{ project: { id: 7, …(7) }, …(11) }" instead of rejecting
+ ✓ server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a project with no records > is an empty payload that names the project it read 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > fails the payload and names every read it took with it
+AssertionError: expected 'assembled' to be an instance of CrossObjectReadError
+ ❯ server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts:82:21
+     80|     );
+     81|
+     82|     expect(outcome).toBeInstanceOf(CrossObjectReadError);
+       |                     ^
+     83|     expect((outcome as CrossObjectReadError).failedReads).toEqual(
+     84|       expect.arrayContaining(['project', 'documents', 'artifacts', 'mo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > never lets a project nothing could be read from be assessed
+AssertionError: promise resolved "{ project: { id: 7, …(7) }, …(11) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "artifacts": [],
++   "assembledAt": "2026-09-23T04:54:10.011Z",
++   "cmcSignals": {
++     "contradictionCounts": {
++       "critical": 0,
++       "high": 0,
++       "low": 0,
++       "medium": 0,
++       "open": 0,
++       "resolved": 0,
++     },
++     "contradictions": [],
++     "sectionCount": 0,
++     "sourceObjectCount": 0,
++     "sourceTypeBreakdown": {},
++     "staleSectionCount": 0,
++   },
++   "documents": [],
++   "evidence": [],
++   "lastSignalAt": null,
++   "moduleMap": [],
++   "project": {
++     "blockedTasks": 0,
++     "id": 7,
++     "name": "Project",
++     "overdueTasks": 0,
++     "progress": 0,
++     "status": "active",
++     "totalDocuments": 0,
++     "totalTasks": 0,
++   },
++   "recentActions": [],
++   "scope": {
++     "module": undefined,
++     "organizationId": 1,
++     "projectId": 7,
++   },
++   "tasks": [],
++   "validations": [],
+  }
+
+ ❯ server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts:95:51
+     93|     h.executeFails = true;
+     94|
+     95|     await expect(assembleCrossObjectPayload(SCOPE)).rejects.toMatchObj…
+       |                                                   ^
+     96|       name: 'CrossObjectReadError',
+     97|       failedReads: expect.arrayContaining([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a project the organisation does not hold > is refused, not assessed as "Unknown Project"
+AssertionError: promise resolved "{ project: { id: 7, …(7) }, …(11) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "artifacts": [],
++   "assembledAt": "2026-09-23T04:54:10.018Z",
++   "cmcSignals": {
++     "contradictionCounts": {
++       "critical": 0,
++       "high": 0,
++       "low": 0,
++       "medium": 0,
++       "open": 0,
++       "resolved": 0,
++     },
++     "contradictions": [],
++     "sectionCount": 0,
++     "sourceObjectCount": 0,
++     "sourceTypeBreakdown": {},
++     "staleSectionCount": 0,
++   },
++   "documents": [],
++   "evidence": [],
++   "lastSignalAt": null,
++   "moduleMap": [
++     {
++       "artifactCount": 0,
++       "completenessPercent": 0,
++       "documentCount": 0,
++       "hasValidation": false,
++       "missingItems": [
++         "No documents assigned to Module 1",
++       ],
++       "module": "Module 1",
++     },
++     {
++       "artifactCount": 0,
++       "completenessPercent": 0,
++       "documentCount": 0,
++       "hasValidation": false,
++       "missingItems": [
++         "No documents assigned to Module 2",
++       ],
++       "module": "Module 2",
++     },
++     {
++       "artifactCount": 0,
++       "completenessPercent": 0,
++       "documentCount": 0,
++       "hasValidation": false,
++       "missingItems": [
++         "No documents assigned to Module 3",
++       ],
++       "module": "Module 3",
++     },
++     {
++       "artifactCount": 0,
++       "completenessPercent": 0,
++       "documentCount": 0,
++       "hasValidation": false,
++       "missingItems": [
++         "No documents assigned to Module 4",
++       ],
++       "module": "Module 4",
++     },
++     {
++       "artifactCount": 0,
++       "completenessPercent": 0,
++       "documentCount": 0,
++       "hasValidation": false,
++       "missingItems": [
++         "No documents assigned to Module 5",
++       ],
++       "module": "Module 5",
++     },
++   ],
++   "project": {
++     "blockedTasks": 0,
++     "id": 7,
++     "name": "Unknown Project",
++     "overdueTasks": 0,
++     "progress": 0,
++     "status": "unknown",
++     "totalDocuments": 0,
++     "totalTasks": 0,
++   },
++   "recentActions": [],
++   "scope": {
++     "module": undefined,
++     "organizationId": 1,
++     "projectId": 7,
++   },
++   "tasks": [],
++   "validations": [],
+  }
+
+ ❯ server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts:109:51
+    107|     h.project = null;
+    108|
+    109|     await expect(assembleCrossObjectPayload(SCOPE)).rejects.toMatchObj…
+       |                                                   ^
+    110|       name: 'CrossObjectReadError',
+    111|       failedReads: ['project'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  04:54:08
+   Duration  1.64s (transform 779ms, setup 85ms, import 1.35s, tests 25ms, environment 0ms)
+

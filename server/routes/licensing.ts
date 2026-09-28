@@ -36,6 +36,7 @@ import {
 } from '../services/licensing/eula-service.js';
 import { getLicenseInfo } from '../services/license-manager.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { clientIpOf } from '../utils/client-ip';
 
 const logger = createScopedLogger('licensing');
 const router = Router();
@@ -115,7 +116,7 @@ router.post('/agreements/:id/accept', async (req: Request, res: Response) => {
       agreementId: String(req.params.id),
       userId,
       organizationId: orgIdOf(req) ?? null,
-      ipAddress: (req.headers['x-forwarded-for'] as string) || req.ip || null,
+      ipAddress: clientIpOf(req),
       userAgent: req.headers['user-agent'] || null,
       method: 'clickwrap',
     });

@@ -26,7 +26,7 @@
 import JSZip from 'jszip';
 import { readVerifiedBundle } from './bundle-integrity';
 import { ValidationError, type Region, type SubmissionBundle } from './types';
-import { hasPdfHeader } from '../ectd/pdfa-detect';
+import { isPdfLeaf } from '../ectd/pdfa-detect';
 import { assessLeafPdfSecurity } from '../ectd/leaf-pdf-security';
 
 export interface BundleLeafSecurityReport {
@@ -63,7 +63,9 @@ export async function assertBundleLeafSecurity(
   for (const entry of Object.values(zip.files)) {
     if (entry.dir) continue;
     const bytes = await entry.async('nodebuffer');
-    if (!entry.name.toLowerCase().endsWith('.pdf') && !hasPdfHeader(bytes)) continue;
+    // 2026-09-23 (W5/D7, round-2 review): the shared predicate (name .pdf OR
+    // %PDF- header), not an inline copy of it — pdfa-detect isPdfLeaf.
+    if (!isPdfLeaf(entry.name, bytes)) continue;
     pdfEntries += 1;
     const verdict = await assessLeafPdfSecurity(bytes, region);
     if (verdict.verdict === 'secured') refused.push({ path: entry.name, reason: verdict.reason });

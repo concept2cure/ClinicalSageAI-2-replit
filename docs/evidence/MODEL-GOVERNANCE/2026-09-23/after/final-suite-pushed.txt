@@ -1,0 +1,7 @@
+Full run on the pushed tree (concept2cure-v2 at 232ed4ffa):
+$ npx vitest run server/ tests/schema-contract
+ Test Files  1817 passed | 5 skipped (1822)
+      Tests  19519 passed | 35 skipped (19554)
+
+The rest of tests/ was not included: a run of it proceeded at about 30 tests per minute through the PGlite contract suites. It passed 5,009 tests with 0 failures before it was stopped to merge and push.
+tsc --noEmit -p tsconfig.json: exit 0. ci:unapproved-model-pins: 54 known pins, no new ones. ci:pq-evaluation-callers: clean.

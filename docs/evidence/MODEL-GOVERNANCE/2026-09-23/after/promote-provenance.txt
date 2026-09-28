@@ -1,0 +1,9 @@
+$ npx vitest run server/routes/c2c/__tests__/promote-generation-provenance.test.ts
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > promote routes the draft as governed drafting > asks for document_drafting and pins no model, on the first call and the retry
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the record names the model that actually served > provider and model come from the response, and the mode is ai_generated
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the record names the model that actually served > a retry that produced the stored text is the one recorded
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the record names the model that actually served > an empty retry keeps the first draft AND the first draft's model
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the conversation-export fallback is recorded as imported, with no model > when the gateway refuses, the stored text is the conversation and no model is named
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the conversation-export fallback is recorded as imported, with no model > no literal model name reaches the record on any path
+ Test Files  1 passed (1)
+      Tests  6 passed (6)

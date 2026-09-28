@@ -170,3 +170,63 @@ describe('LazyRequestDbClient', () => {
     expect(pool.connect).toHaveBeenCalledTimes(1);
   });
 });
+
+/* A client that models node-postgres's transaction status: every statement
+   leaves 'I' (idle), 'T' (inside a transaction) or 'E' (failed transaction),
+   read back through getTransactionStatus(), as pg 8 reports it from
+   ReadyForQuery. */
+function makeTxClient() {
+  let status: 'I' | 'T' | 'E' = 'I';
+  return {
+    query: vi.fn(async (sql: string) => {
+      const s = String(sql).trim().toUpperCase();
+      if (s === 'BEGIN') status = 'T';
+      else if (s === 'COMMIT' || s === 'ROLLBACK') status = 'I';
+      else if (s === 'FAIL') { status = 'E'; throw new Error('boom'); }
+      return { rows: [], rowCount: 0 };
+    }),
+    release: vi.fn(),
+    getTransactionStatus: () => status,
+  };
+}
+
+describe('LazyRequestDbClient: an open transaction never goes back to the pool', () => {
+  it('a connection released inside an open transaction is discarded, not returned to the pool', async () => {
+    /* The request closed between BEGIN and COMMIT (a client abort fires
+       res 'close'). Pooled, the connection would carry the open transaction to
+       the next request: its statements would join it, its COMMIT could commit
+       this request's unaudited half-write, and a rollback would revert the
+       session variables to THIS tenant's. Discarding it makes Postgres roll the
+       transaction back on disconnect. */
+    const client = makeTxClient();
+    const pool = makeFakePool(client as any);
+    const lazy = new LazyRequestDbClient(pool as any, async () => {});
+
+    await lazy.query('BEGIN');
+    await lazy.query("UPDATE quality_management_plans SET status = 'active'");
+    await lazy.release();
+
+    expect(client.release).toHaveBeenCalledTimes(1);
+    expect(client.release).toHaveBeenCalledWith(expect.any(Error));
+    expect((client.release.mock.calls[0][0] as Error).message).toMatch(/open transaction/);
+  });
+
+  it('a failed transaction is discarded too', async () => {
+    const client = makeTxClient();
+    const lazy = new LazyRequestDbClient(makeFakePool(client as any) as any, async () => {});
+    await lazy.query('BEGIN');
+    await expect(lazy.query('FAIL')).rejects.toThrow('boom');
+    await lazy.release();
+    expect(client.release).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  it('a committed transaction returns the connection to the pool', async () => {
+    const client = makeTxClient();
+    const lazy = new LazyRequestDbClient(makeFakePool(client as any) as any, async () => {});
+    await lazy.query('BEGIN');
+    await lazy.query('INSERT INTO t VALUES (1)');
+    await lazy.query('COMMIT');
+    await lazy.release();
+    expect(client.release).toHaveBeenCalledWith(undefined);
+  });
+});

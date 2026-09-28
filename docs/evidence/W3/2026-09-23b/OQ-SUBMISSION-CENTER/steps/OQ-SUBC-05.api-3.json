@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/submissions/62/sequences",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 20,
+    "rateLimitRetries": 0,
+    "body": [
+      {
+        "id": 15,
+        "submissionId": 62,
+        "region": "fda",
+        "sequenceNumber": "0000",
+        "type": "original",
+        "status": "assembling",
+        "validationStatus": null,
+        "dispatchStatus": null,
+        "frozenAt": null,
+        "organizationId": 1,
+        "createdBy": 17,
+        "createdAt": "2026-09-23T05:20:15.393Z",
+        "updatedAt": "2026-09-23T05:20:16.789Z",
+        "deletedAt": null
+      }
+    ]
+  }
+}

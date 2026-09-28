@@ -6,8 +6,11 @@
 execution and staging on the authentication side: the harness now works
 against a server that refuses dev-login and challenges every sign-in. The
 execution exposed two Part 11 defects. Both are fixed: F-18 before this set was
-filed, F-19 after it (VSR-001 §13.7). What is
-still owed is listed in VSR-001 §13.6 and at the end of this file.
+filed, F-19 after it (VSR-001 §13.7). A sweep of the other pre-auth mounts
+then found three more, F-20 to F-22, all fixed (VSR-001 §13.9). Two protocol
+steps were added so the set would catch them: OQ-PROJ-16 (§13.8) and
+OQ-PROJ-17 (§13.10). What is still owed is listed in VSR-001 §13.6 and at the
+end of this file.
 
 ## What was executed
 
@@ -55,6 +58,14 @@ still owed is listed in VSR-001 §13.6 and at the end of this file.
 | `red/F-19/unit-without-scope.txt`, `unit-after-fix.txt` | F-19. The scope rule, in the default CI job: 2 fail / 8 pass with the write unscoped; 10 / 10 with it |
 | `red/F-19/live-after-fix.json`, `live-logout-after-fix.json` | F-19. The fixed server, live: sign-in events recorded in org 1's chain, 0 refusals. On the final code, a forged-token logout is recorded as tenant 0, and the genuine logout as org 1 / user 17. The chain verifier reads `ok` (273 rows) |
 | `OQ-001-v0.4/before-F-19-fix/`, `after-F-19-fix/` | OQ-PROJ-16 (URS-PROJ-010), the step added after F-19, at `5a53d2db2`. On the pre-F-19 auth code: **fail**, 0 ledger entries added by 5 sign-in attempts. On the fixed code: 17 / 0 / 0 / 0. Its first draft passed on the unfixed code, because it read entries an earlier run had left (VSR-001 §13.8) |
+| `red/F-20/dbtest-before-fix.txt`, `dbtest-after-fix.txt` | F-20. `/api/users/login` and `/api/user/login` issued a session on the password alone, and `/api/users/register` created an account outside signup: 3 fail. After the fix (307 to the canonical routes): 3 / 3 |
+| `red/F-20/live-before-fix.json`, `live-after-fix.json` | F-20, live, for the TOTP-enrolled run identity. Before: both paths issued a token that read projects (200) and that the session check called signed in, with no code asked. After: no token; the second factor is asked |
+| `red/F-21/live-before-fix.json`, `live-after-fix.json` | F-21 (AUTH-03), live. Logout answered 200 "Tokens invalidated." Before the fix the same token still read projects (200), the ledger (200) and was signed in by the session check. After: 401, 401, signed out |
+| `red/F-21/dbtest-signed-out-before-fix.txt`, `…-after-fix.txt` | F-21. A signed-out token on real PostgreSQL under RLS: 1 fail / 7 pass before; 8 / 8 after |
+| `red/F-21/dbtest-other-instance-lookup-unscoped.txt`, `…-after-fix.txt` | F-21. A session signed out by another server instance, known only to the database. With the revocation lookup unscoped, RLS refused it silently and the token opened the API: fail. With the lookup tenant-less: pass |
+| `red/F-21/collab-before-fix.txt`, `collab-after-fix.txt` | F-21. A signed-out token opened a collaborative editing session on the unfixed Hocuspocus code (1 fail); after: 36 / 36, refused `session-ended` |
+| `red/F-22/dbtest-enterprise-before-fix.txt`, `dbtest-whole-file-after-fix.txt` | F-22. The enterprise sign-in wrote no audit event: 5 fail / 1 pass. After, the whole file: 20 / 20, and the organisation's rows verify as one chain |
+| `OQ-001-v0.5/before-AUTH-03-fix/`, `after-AUTH-03-fix/` | OQ-PROJ-17 (URS-PROJ-011), the sign-out step added after F-21, runner at `d3556910a`. With the F-21 fix reverse-applied to the server: **fail**, the signed-out token still read projects and was reported signed in. On HEAD: 18 / 0 / 0 / 0. Each folder's `server-code.txt` states the server's tree |
 | `red/login-limit.transcript.txt` | P-9. A re-run inside 15 minutes. OQ-PROJ-02's sign-in through the form never reaches the code step. Every protocol after it fails to open its session: 429 `RATE_LIMIT` |
 | `IQ-falsification/v0.3-dev-login-closed/` | P-10. The v0.3 runner (`c33e43d26`) on this server records IQ-10 as a deviation, "cannot be exercised on a development install", while observing the refusal. IQ-11: "no session (IQ-10)" |
 | `IQ-falsification/v0.3-dev-login-open/` | P-10. The same runner on a server with dev-login open, configured to refuse it, also records a deviation: the check cannot fail |
@@ -85,6 +96,11 @@ run was discarded rather than redacted by hand. The harness was fixed
 | `c33e43d26` | P-9. One sign-in per identity per run |
 | `0e2b3a971` | P-10. IQ-10 can pass and fail; IQ-11 signs in without dev-login |
 | the change that adds `red/F-19/` | F-19. Authentication events are written in the scope of the organisation they record (`server/services/audit/auth-event-audit.ts`). `/mfa/verify` records its outcome. `/logout` attributes only a token the server signed |
+| `5a53d2db2` | OQ-PROJ-16 counts only the ledger entries it adds (VSR-001 §13.8) |
+| `a7d5478ca` | F-20. The legacy `/api/users` and `/api/user` login, logout and register answer 307 to the canonical `/api/auth` routes |
+| `0d99ca0cf` | F-21 (AUTH-03). `verifyLiveToken` at every entry point that accepts a session token; the revocation lookup runs tenant-less |
+| `c62ec4961` | F-22. The enterprise sign-in records the canonical events |
+| `d3556910a` | OQ-PROJ-17 (URS-PROJ-011): signing out ends the session |
 
 ## Owed, and not closable by another local run
 
@@ -97,4 +113,4 @@ run was discarded rather than redacted by hand. The harness was fixed
 4. The qualified contractor's review. §11.5 item 5 now also covers the
    Authoring PIN signature (VSR-001 §13.3 item 3). Then signatures.
 5. **The F-15 decision** (VSR-001 §12.2).
-6. A full execution that includes OQ-PROJ-16. This set predates the step, so TM-001 shows URS-PROJ-010 uncovered.
+6. ~~A full execution that includes OQ-PROJ-16 and OQ-PROJ-17.~~ Done: `docs/evidence/W3/2026-09-23b/` (VSR-001 §14), at one commit carrying the fixes for F-19 to F-23. TM-001 is built from it: 0 requirements uncovered.

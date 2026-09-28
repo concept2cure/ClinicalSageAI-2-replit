@@ -205,7 +205,7 @@ Domains:
 - **RIM learning emitter** — `governed-document-evaluator.ts`(registerFabricDecisionEmitter) · 🟡 · Emit decisions to RIM learning · (background).
 
 ## 3.9 Part 11 / e-signature / freeze / lock / audit
-- **Part 11 engine** — `part11-compliance.ts`, `part11ComplianceService.ts`, `ana-ri/part11-governance.ts` · ✅ · §11.50 meaning, §11.100 manifest, §11.10(e) audit, §11.200 auth · data: signature meaning enum, auth (password+MFA) · ops: createElectronicSignature, verifyUserCredentials, verifyMfaToken, buildSignatureManifest · UI: e-sign dialog (password+MFA+meaning), manifest display, history.
+- **Part 11 engine** — `part11-compliance.ts`, `part11ComplianceService.ts`, `ana-ri/part11-governance.ts` · ✅ · §11.50 meaning, §11.100 manifest, §11.10(e) audit, §11.200 auth · data: signature meaning enum, auth (password+MFA) · ops: createElectronicSignature, reverifySigner (the one signing ceremony: account standing, lockout, password, enrolled second factor; replaced verifyUserCredentials 2026-09-23), buildSignatureManifest · UI: e-sign dialog (password+MFA+meaning), manifest display, history.
 - **E-signature route** — `esignature.ts` · ✅ · verify-password/verify-mfa/sign · ops: `POST /api/esignature/verify-password|verify-mfa|sign` (re-verify both factors at signing) · UI: signature verification.
 - **Signature meaning capture (§11.50)** — `part11-compliance.ts` · ✅ · meaning enum `authorship|review|approval|rejection|verification|authorization|acknowledgment|witnessing|responsibility|custom` · UI: meaning dropdown + custom text + signature block.
 - **Manifest & hash (§11.100)** — `part11-compliance.ts` · ✅ · printed name/title/org/time/meaning + SHA-256 · UI: signature-block preview.

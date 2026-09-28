@@ -1,0 +1,6 @@
+ × server/services/ana/__tests__/finalize-protocol-tool.test.ts > finalize_protocol_document never signs > a complete protocol is not finalized by AnA: nothing is written, and the user is told to sign it 58ms
+ × server/services/ana/__tests__/finalize-protocol-tool.test.ts > finalize_protocol_document never signs > an incomplete protocol reports what is missing 2ms
+ × server/services/ana/__tests__/finalize-protocol-tool.test.ts > finalize_protocol_document never signs > the tool description does not promise a finalization it cannot perform 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Finalize a protocol document. Gated o…' not to match /On success it snapshots/
+      Tests  3 failed (3)

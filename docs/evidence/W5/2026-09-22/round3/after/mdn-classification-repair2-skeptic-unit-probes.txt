@@ -1,0 +1,51 @@
+## r2pass/unit.probe.ts
+A1 processed:error (colon, no slash) => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; processed: error" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=false fail=false | expect: should NOT be accepted | Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): au
+A2 processed/x-no-errors => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; processed/x-no-errors" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=false fail=false | expect: extension modifier -> should be unconfirmed, not rejected | Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): au
+A3 processed/warning-unfailing => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; processed/x-failover-used" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=false fail=false | expect: extension -> unconfirmed | Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): au
+A4 processed/Warning with error text => ACCEPTED(received) | disp="automatic-action/MDN-sent-automatically; processed/Warning: an error was corrected" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=true fail=false | expect: accepted (warning)
+A5 mode missing, processed => UNCONFIRMED | disp="processed" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=false fail=false | expect: no ; -> unconfirmed | Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): pr
+A6 deleted => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; deleted" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=false fail=false | expect: unconfirmed | Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): au
+A7 denied => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; denied" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=false fail=false | expect: unconfirmed | Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): au
+A8 processed/ => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; processed/" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=false fail=false | expect: ? | Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): au
+A9 quoted modifier => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; processed/\"warning\"" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=false fail=false | expect: unconfirmed | Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): au
+A10 processed/warning;error => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; processed/warning; error" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=false fail=false | expect: unconfirmed or failed | Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): au
+A11 QP soft break before /error => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; processed=" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=false fail=false | expect: should not accept | Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): au
+B1 base64 DN part => UNCONFIRMED | disp=null oid=null acc=false fail=false | expect: text part must not decide -> unconfirmed | Agency returned success with no MDN disposition in the body.
+B2 DN part w/o closing delimiter + trailing text part fields => ACCEPTED(received) | disp="automatic-action/MDN-sent-automatically; processed" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=true fail=false | expect: accepted
+C1 OID uppercase ours => REJECTED | disp="automatic-action/MDN-sent-automatically; failed" oid="<3F1C0000-AAAA-BBBB-CCCC-000000000001@SPONSOR-AS2>" acc=false fail=true | expect: rejected? (case folding) | Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; failed
+C2 OID with display-name-like prefix => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; failed" oid="Message <3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=false fail=true | expect: unconfirmed | Agency MDN Original-Message-ID (Message <3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>
+C3 OID quoted string => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; processed" oid="\"<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>\"" acc=true fail=false | expect: unconfirmed | Agency MDN Original-Message-ID ("<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>") is n
+C4 OID prefix of ours (truncated) => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; processed" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR>" acc=true fail=false | expect: unconfirmed | Agency MDN answers a different message (<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR>).
+C5 OID with inner whitespace => UNCONFIRMED | disp="automatic-action/MDN-sent-automatically; failed" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001 @ SPONSOR-AS2>" acc=false fail=true | expect: unconfirmed | Agency MDN answers a different message (<3f1c0000-aaaa-bbbb-cccc-000000000001 @ SPONSOR-AS
+C6 OID bare, ours, failed => REJECTED | disp="automatic-action/MDN-sent-automatically; failed" oid="3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2" acc=false fail=true | expect: rejected | Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; failed
+D1 human text echoes failed; DN accepts => ACCEPTED(received) | disp="automatic-action/MDN-sent-automatically; processed" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=true fail=false | expect: accepted
+D2 human text echoes processed; DN fails => REJECTED | disp="automatic-action/MDN-sent-automatically; failed/Failure: unsupported" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=false fail=true | expect: rejected | Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; failed/Fai
+E1 HTTP CT array => ACCEPTED(received) | disp="automatic-action/MDN-sent-automatically; processed" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=true fail=false | expect: accepted (no http ct)
+F1 bare body, fields at top => ACCEPTED(received) | disp="automatic-action/MDN-sent-automatically; processed" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=true fail=false | expect: accepted (documented residual)
+F2 html page with fields => ACCEPTED(received) | disp="automatic-action/MDN-sent-automatically; processed" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=true fail=false | expect: accepted? bare
+G1 signed MDN => ACCEPTED(received) | disp="automatic-action/MDN-sent-automatically; processed" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=true fail=false | expect: accepted
+H1 preamble contains CT DN + failed fields; real DN accepts => ACCEPTED(received) | disp="automatic-action/MDN-sent-automatically; processed" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=true fail=false | expect: accepted (preamble ignored)
+H2 same, no HTTP CT => ACCEPTED(received) | disp="automatic-action/MDN-sent-automatically; processed" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=true fail=false | expect: ?
+H3 preamble DN failed, real DN base64, no HTTP CT => UNCONFIRMED | disp=null oid=null acc=false fail=false | expect: ? | Agency returned success with no MDN disposition in the body.
+## r3b/lowedge.probe.ts
+L1 warning text with unbalanced "(": HEAD=ACCEPT NEW=ACCEPT 
+L2 warning text with unbalanced quote: HEAD=ACCEPT NEW=ACCEPT 
+L3 bare DN body followed by a dashed footer line: HEAD=ACCEPT NEW=ACCEPT 
+L4 our AS2-From contains a quote: <uuid@ACME "US>: HEAD=ACCEPT NEW=UNCONFIRMED Agency MDN Original-Message-ID (<3f1c@ACME "US>) is not a single msg-id, so it cannot be tied to the message sent.
+L5 ICSR username is an email: bare echo of <uuid@user@host>: HEAD=ACCEPT NEW=ACCEPT 
+## r3b/conformant2.probe.ts
+B3 bare DN, HTTP CT multipart/report with boundary but body bare (no delimiters) [LF]  HEAD=ACCEPT  NEW=ACCEPT
+I1 id echoed bare, no brackets [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+I1 id echoed bare, no brackets [LF]  HEAD=ACCEPT  NEW=ACCEPT
+I2 id echoed with different case [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+I2 id echoed with different case [LF]  HEAD=ACCEPT  NEW=ACCEPT
+I3 id with whitespace inside brackets < id > [CRLF]  HEAD=REFUSED  NEW=ACCEPT
+I3 id with whitespace inside brackets < id > [LF]  HEAD=REFUSED  NEW=ACCEPT
+D1 mode-less Disposition "processed" [CRLF]  HEAD=REFUSED  NEW=UNCONFIRMED   <-- not accepted  (Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): processed)
+D1 mode-less Disposition "processed" [LF]  HEAD=REFUSED  NEW=UNCONFIRMED   <-- not accepted  (Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): processed)
+D2 processed/ (empty modifier) [CRLF]  HEAD=ACCEPT  NEW=UNCONFIRMED   <-- not accepted  (Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-s)
+D2 processed/ (empty modifier) [LF]  HEAD=ACCEPT  NEW=UNCONFIRMED   <-- not accepted  (Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-s)
+D3 Disposition with trailing ";" extension parameter? [CRLF]  HEAD=ACCEPT  NEW=UNCONFIRMED   <-- not accepted  (Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-s)
+D3 Disposition with trailing ";" extension parameter? [LF]  HEAD=ACCEPT  NEW=UNCONFIRMED   <-- not accepted  (Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-s)
+D4 manual-action mode [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+D4 manual-action mode [LF]  HEAD=ACCEPT  NEW=ACCEPT

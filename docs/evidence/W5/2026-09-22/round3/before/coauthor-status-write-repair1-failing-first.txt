@@ -1,0 +1,474 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+{
+  "timestamp": "2026-09-23T06:58:16.460Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+{
+  "timestamp": "2026-09-23T06:58:16.650Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands 421ms
+stderr | server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500
+{
+  "timestamp": "2026-09-23T06:58:16.813Z",
+  "level": "error",
+  "message": "[coauthor] Update document error",
+  "context": {
+    "err": "Failed query: select \"id\", \"organization_id\", \"title\", \"content\", \"sections\", \"status\", \"template_id\", \"created_by\", \"client_workspace\", \"completion_percentage\", \"regulatory_compliance_score\", \"metadata\", \"ectd_module_id\", \"module_number\", \"module_name\", \"embedding\", \"created_at\", \"updated_at\" from \"coauthor_documents\" where (\"coauthor_documents\".\"id\" = $1 and \"coauthor_documents\".\"organization_id\" = $2 and lower(btrim(\"coauthor_documents\".\"status\")) = $3) limit $4\nparams: 600,7,appro\u0000ved,1"
+  }
+}
+
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings 105ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done 24ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own 9ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict 13ms
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500 15ms
+   → "appro\u0000ved": expected 500 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule 4ms
+stdout | server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+{
+  "timestamp": "2026-09-23T06:58:16.940Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+{
+  "timestamp": "2026-09-23T06:58:17.030Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands 205ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings 62ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done 23ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own 9ms
+stderr | server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500
+{
+  "timestamp": "2026-09-23T06:58:17.147Z",
+  "level": "error",
+  "message": "[ectd-documents] Update error",
+  "context": {
+    "err": "Failed query: select \"id\", \"organization_id\", \"title\", \"content\", \"sections\", \"status\", \"template_id\", \"created_by\", \"client_workspace\", \"completion_percentage\", \"regulatory_compliance_score\", \"metadata\", \"ectd_module_id\", \"module_number\", \"module_name\", \"embedding\", \"created_at\", \"updated_at\" from \"coauthor_documents\" where (\"coauthor_documents\".\"id\" = $1 and \"coauthor_documents\".\"organization_id\" = $2 and lower(btrim(\"coauthor_documents\".\"status\")) = $3) limit $4\nparams: 600,7,appro\u0000ved,1"
+  }
+}
+
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict 17ms
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500 7ms
+   → "appro\u0000ved": expected 500 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule 14ms
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing 21ms
+   → expected 'This document is approved and read-on…' to match /placed into the filing again/i
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim 12ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change 11ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too 13ms
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > treats a verdict stored with trailing whitespace as a verdict — the guard and its normaliser agree 6ms
+   → expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion 5ms
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing 7ms
+   → expected 'This document is approved and read-on…' to match /placed into the filing again/i
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim 7ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change 21ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too 15ms
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats a verdict stored with trailing whitespace as a verdict — the guard and its normaliser agree 6ms
+   → expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion 8ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > saves a content-only PUT on a draft — the one client caller, EctdCoauthor.saveContent 5ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling 16ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > lets a verdict be withdrawn to a working state (the fail-safe direction) 4ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone 9ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > saves a content-only PUT on a draft — the one client caller, EctdCoauthor.saveContent 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling 20ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > lets a verdict be withdrawn to a working state (the fail-safe direction) 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone 10ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > refuses moving an approved document to another module (it would land its verdict on another section) 13ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a refused status write neither bumps the version nor logs an update (its own approved-list branch is gone) 8ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a no-op restate logs no lifecycle event either 6ms
+stderr | server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404
+{
+  "timestamp": "2026-09-23T06:58:22.456Z",
+  "level": "error",
+  "message": "[coauthor] Create document error",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'status')"
+  }
+}
+
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > an APPROVED source files its own saved text and title — a forged body is not what gets approved 57ms
+   → the request body became the approved text: expected '<p>FORGED 1571 text nobody approved</…' to be '## 1.2 — Cover\n\nThe approved cover …' // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > a FROZEN source likewise files its sealed text as finalized 17ms
+   → expected { id: 2, status: 'finalized', …(3) } to match object { status: 'finalized', …(1) }
+(3 matching properties omitted from actual)
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > refuses a source with no saved sections — there is nothing to file — and creates nothing 18ms
+   → expected 201 to be 422 // Object.is equality
+stderr | server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text
+{
+  "timestamp": "2026-09-23T06:58:22.521Z",
+  "level": "error",
+  "message": "[coauthor] Create document error",
+  "context": {
+    "err": "Failed query: INSERT INTO c2c_document_aliases (canonical_id, store, native_id, organization_id)\n       VALUES ($1, $2, $3, $4)\n       ON CONFLICT (store, native_id) DO NOTHING\n       RETURNING canonical_id\nparams: 0b000000-0000-4000-8000-000000000002,coauthor_documents,7,7"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again
+{
+  "timestamp": "2026-09-23T06:58:22.537Z",
+  "level": "error",
+  "message": "[coauthor] Create document error",
+  "context": {
+    "err": "Failed query: INSERT INTO c2c_document_aliases (canonical_id, store, native_id, organization_id)\n       VALUES ($1, $2, $3, $4)\n       ON CONFLICT (store, native_id) DO NOTHING\n       RETURNING canonical_id\nparams: 0b000000-0000-4000-8000-000000000003,coauthor_documents,9,7"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records
+{
+  "timestamp": "2026-09-23T06:58:22.556Z",
+  "level": "error",
+  "message": "[coauthor] Create document error",
+  "context": {
+    "err": "Failed query: INSERT INTO c2c_document_aliases (canonical_id, store, native_id, organization_id)\n       VALUES ($1, $2, $3, $4)\n       ON CONFLICT (store, native_id) DO NOTHING\n       RETURNING canonical_id\nparams: 0b000000-0000-4000-8000-000000000004,coauthor_documents,11,7"
+  }
+}
+
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404 10ms
+   → expected 500 to be 404 // Object.is equality
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > leaves an unsourced POST as it was: the body is the text, and it is a draft 21ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > follows FINALIZED_DOCUMENT_READ_ONLY end to end: place, refused edit, place again 19ms
+   → expected 'This document is approved and read-on…' to match /placed into the filing again/i
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text 20ms
+   → re-placement failed: {"error":"Failed to create document","message":"An unexpected error occurred"}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again 16ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records 19ms
+   → re-placement after delete failed: {"error":"Failed to create document","message":"An unexpected error occurred"}: expected 500 to be 201 // Object.is equality
+stderr | server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > placing an unchanged source again writes nothing
+{
+  "timestamp": "2026-09-23T06:58:22.579Z",
+  "level": "error",
+  "message": "[coauthor] Create document error",
+  "context": {
+    "err": "Failed query: INSERT INTO c2c_document_aliases (canonical_id, store, native_id, organization_id)\n       VALUES ($1, $2, $3, $4)\n       ON CONFLICT (store, native_id) DO NOTHING\n       RETURNING canonical_id\nparams: 0b000000-0000-4000-8000-000000000005,coauthor_documents,13,7"
+  }
+}
+
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > placing an unchanged source again writes nothing 25ms
+   → expected 500 to be 200 // Object.is equality
+ ✓ server/services/coauthor/__tests__/coauthor-status-write.test.ts > coauthor status vocabulary > splits the documented vocabulary into working states and verdicts 862ms
+ ✓ server/services/coauthor/__tests__/coauthor-status-write.test.ts > coauthor status vocabulary > plans a working state as a canonical set, and everything else as a restate 196ms
+ ✓ server/services/coauthor/__tests__/coauthor-status-write.test.ts > coauthor status vocabulary > treats verdicts as verdicts whatever their spelling 120ms
+ × server/services/coauthor/__tests__/coauthor-status-write.test.ts > coauthor status vocabulary > refuses a status carrying control characters as invalid, rather than letting Postgres fail on it 131ms
+   → expected { kind: 'restate', …(2) } to deeply equal { kind: 'invalid' }
+ ✓ server/services/coauthor/__tests__/coauthor-status-write.test.ts > coauthor status vocabulary > refuses to load if the resolver counts a working state as finalized 120ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500
+ FAIL  server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500
+AssertionError: "appro\u0000ved": expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/coauthorPutStatus.test.ts:283:50
+    281|     for (const status of ['appro\u0000ved', 'draft\u0007', 're\nview']…
+    282|       const res = await put(DRAFT, { status });
+    283|       expect(res.status, JSON.stringify(status)).toBe(400);
+       |                                                  ^
+    284|       expect(res.body.error).toBe('STATUS_NOT_SETTABLE');
+    285|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing
+ FAIL  server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing
+AssertionError: expected 'This document is approved and read-on…' to match /placed into the filing again/i
+
+- Expected:
+/placed into the filing again/i
+
++ Received:
+"This document is approved and read-only: it is the version that was signed off for a filing, and changing it here would file text nobody approved. Edit the source authoring document and place it into the filing again. Nothing was saved."
+
+ ❯ server/routes/__tests__/coauthorPutStatus.test.ts:312:30
+    310|     // failed (the alias map refused a second copy). It now names re-p…
+    311|     // which coauthorSnapshotFromSource.test.ts follows end to end.
+    312|     expect(res.body.message).toMatch(/placed into the filing again/i);
+       |                              ^
+    313|     const after = await row(APPROVED);
+    314|     expect(after).toMatchObject({ status: 'approved', content: '<p>for…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > treats a verdict stored with trailing whitespace as a verdict — the guard and its normaliser agree
+ FAIL  server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats a verdict stored with trailing whitespace as a verdict — the guard and its normaliser agree
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/coauthorPutStatus.test.ts:352:24
+    350|        stored 'approved\t' was a verdict to one and editable to the ot…
+    351|     const res = await put(TAB_APPROVED, { content: '<p>changed</p>' });
+    352|     expect(res.status).toBe(409);
+       |                        ^
+    353|     expect(await row(TAB_APPROVED)).toMatchObject({ content: '<p>t</p>…
+    354|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > an APPROVED source files its own saved text and title — a forged body is not what gets approved
+AssertionError: the request body became the approved text: expected '<p>FORGED 1571 text nobody approved</…' to be '## 1.2 — Cover\n\nThe approved cover …' // Object.is equality
+
+- Expected
++ Received
+
+- ## 1.2 — Cover
+-
+- The approved cover letter.
+-
+- ## 1.2.1 — Annex
+-
+- Approved annex.
++ <p>FORGED 1571 text nobody approved</p>
+
+ ❯ server/routes/__tests__/coauthorSnapshotFromSource.test.ts:178:74
+    176|     expect(res.body.document.status).toBe('approved');
+    177|     const stored = await row(res.body.document.id);
+    178|     expect(stored?.content, 'the request body became the approved text…
+       |                                                                          ^
+    179|     expect(stored?.title).toBe('Cover letter');
+    180|     const everything = (await h.pglite.query<{ content: string }>('SEL…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > a FROZEN source likewise files its sealed text as finalized
+AssertionError: expected { id: 2, status: 'finalized', …(3) } to match object { status: 'finalized', …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "content": "## 2.5 — Clinical Overview
+-
+- Sealed overview.",
++   "content": "something else",
+    "status": "finalized",
+  }
+
+ ❯ server/routes/__tests__/coauthorSnapshotFromSource.test.ts:191:45
+    189|
+    190|     expect(res.status).toBe(201);
+    191|     expect(await row(res.body.document.id)).toMatchObject({
+       |                                             ^
+    192|       status: 'finalized',
+    193|       content: '## 2.5 — Clinical Overview\n\nSealed overview.',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > refuses a source with no saved sections — there is nothing to file — and creates nothing
+AssertionError: expected 201 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 201
+
+ ❯ server/routes/__tests__/coauthorSnapshotFromSource.test.ts:203:24
+    201|     const res = await place(SRC, { content: '<p>body text</p>' });
+    202|
+    203|     expect(res.status).toBe(422);
+       |                        ^
+    204|     expect(res.body.error).toBe('SOURCE_HAS_NO_SAVED_CONTENT');
+    205|     expect(await rowsFor(SRC)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404
+AssertionError: expected 500 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 500
+
+ ❯ server/routes/__tests__/coauthorSnapshotFromSource.test.ts:212:24
+    210|     await source(SRC, 'APPROVED', [['1.1', 'Form', 'Theirs.']], { tena…
+    211|     const res = await place(SRC);
+    212|     expect(res.status).toBe(404);
+       |                        ^
+    213|     expect(await rowsFor(SRC)).toEqual([]);
+    214|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > follows FINALIZED_DOCUMENT_READ_ONLY end to end: place, refused edit, place again
+AssertionError: expected 'This document is approved and read-on…' to match /placed into the filing again/i
+
+- Expected:
+/placed into the filing again/i
+
++ Received:
+"This document is approved and read-only: it is the version that was signed off for a filing, and changing it here would file text nobody approved. Edit the source authoring document and place it into the filing again. Nothing was saved."
+
+ ❯ server/routes/__tests__/coauthorSnapshotFromSource.test.ts:239:31
+    237|     expect(edit.status).toBe(409);
+    238|     expect(edit.body.error).toBe('FINALIZED_DOCUMENT_READ_ONLY');
+    239|     expect(edit.body.message).toMatch(/placed into the filing again/i);
+       |                               ^
+    240|
+    241|     // Do what the message says.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text
+AssertionError: re-placement failed: {"error":"Failed to create document","message":"An unexpected error occurred"}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/coauthorSnapshotFromSource.test.ts:261:80
+    259|
+    260|     const again = await place(SRC);
+    261|     expect(again.status, `re-placement failed: ${JSON.stringify(again.…
+       |                                                                                ^
+    262|     expect(again.body.document.id).toBe(id);
+    263|     expect(await row(id)).toMatchObject({ status: 'approved', content:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/coauthorSnapshotFromSource.test.ts:274:26
+    272|
+    273|     const again = await place(SRC);
+    274|     expect(again.status).toBe(200);
+       |                          ^
+    275|     expect(await row(id)).toMatchObject({ status: 'approved', content:…
+    276|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records
+AssertionError: re-placement after delete failed: {"error":"Failed to create document","message":"An unexpected error occurred"}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/coauthorSnapshotFromSource.test.ts:286:93
+    284|
+    285|     const again = await place(SRC);
+    286|     expect(again.status, `re-placement after delete failed: ${JSON.str…
+       |                                                                                             ^
+    287|     expect(again.body.document.id, 'the copy was re-created under a ne…
+    288|     expect(await row(id)).toMatchObject({ status: 'approved', content:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > placing an unchanged source again writes nothing
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/coauthorSnapshotFromSource.test.ts:305:26
+    303|
+    304|     const again = await place(SRC);
+    305|     expect(again.status).toBe(200);
+       |                          ^
+    306|     const stamp = (
+    307|       await h.pglite.query<{ updated_at: Date }>('SELECT updated_at FR…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  server/services/coauthor/__tests__/coauthor-status-write.test.ts > coauthor status vocabulary > refuses a status carrying control characters as invalid, rather than letting Postgres fail on it
+AssertionError: expected { kind: 'restate', …(2) } to deeply equal { kind: 'invalid' }
+
+- Expected
++ Received
+
+  {
+-   "kind": "invalid",
++   "kind": "restate",
++   "normalized": "appro ved",
++   "requested": "appro ved",
+  }
+
+ ❯ server/services/coauthor/__tests__/coauthor-status-write.test.ts:53:55
+     51|     // 2026-09-23 (W5/D7, round-3 review): a NUL inside the value was …
+     52|     const { planCoauthorStatusWrite } = await import('../coauthor-stat…
+     53|     expect(planCoauthorStatusWrite('appro\u0000ved')).toEqual({ kind: …
+       |                                                       ^
+     54|     expect(planCoauthorStatusWrite('draft\u0007')).toEqual({ kind: 'in…
+     55|     // Surrounding whitespace is still just trimmed.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  16 failed | 36 passed (52)
+   Start at  06:58:06
+   Duration  18.00s (transform 2.73s, setup 168ms, import 5.35s, tests 11.61s, environment 0ms)
+

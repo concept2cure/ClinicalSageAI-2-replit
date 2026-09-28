@@ -643,7 +643,7 @@ router.get('/trial-design/suggest', requireApiScope('trial-design:read'), requir
         submissionType: resolvedSubmissionType,
         indication: indication as string,
         query: primaryEndpoint as string,
-      }),
+      }, req.apiOrganizationId ?? undefined),
       getEndpointRecommenderService().getComprehensiveEndpointRecommendations(
         (indication as string) || 'general',
         phase as string,

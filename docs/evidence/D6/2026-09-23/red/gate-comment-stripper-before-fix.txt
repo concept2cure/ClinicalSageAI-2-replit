@@ -1,0 +1,30 @@
+# RED: the gate's self-test with its ORIGINAL regex comment stripper (string-unaware), 2026-09-23T10:03:13Z
+# Of the three new cases, the first (a violation behind a string holding /*) is the one the old
+# stripper misses; the other two pin the new walker's own edge cases (// in a string, // in a regex).
+
+  ✓ control — the helper
+  ✓ control — req.ip and req.protocol
+  ✓ control — prose in a comment
+  ✗ a read after a string holding /* (a CSP source)  — NOT CAUGHT
+  ✓ a read on a line whose string holds //
+  ✓ a read after a regex with an escaped //
+  ✓ control — a test file
+  ✓ control — a hop count in server/index.ts
+  ✓ the left-most X-Forwarded-For entry
+  ✓ X-Forwarded-For through req.get
+  ✓ X-Real-IP
+  ✓ X-Forwarded-Host
+  ✓ X-Forwarded-Proto through req.header
+  ✓ control — the word forwarded as a value
+  ✓ the Forwarded header
+  ✓ the Forwarded header through req.get
+  ✓ a JavaScript file
+  ✓ trust proxy true
+  ✓ trust proxy enabled
+  ✓ trust proxy set on a second app
+
+✗ self-test: 1 case(s) wrong
+
+# and on the real tree: enterprise-security.ts with a read inserted at line 260, behind the CSP's 'https://*.neon.tech'
+old stripper: line 260 reads as '' (blanked: the CSP's 'https://*.neon.tech' opened a "comment") -> no violation
+new stripper: ["server/middleware/enterprise-security.ts:260 — reads a forwarding header; use clientIpOf / req.ip / req.protocol"]

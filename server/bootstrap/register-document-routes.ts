@@ -23,8 +23,6 @@ import charters from '../routes/charters.js';
 import ectdSubmissionAgent from '../routes/ectd-submission-agent.routes.js';
 import evidence from '../routes/evidence.js';
 import evidenceSearch from '../routes/evidence-search.js';
-import contentPlan from '../routes/content-plan.js';
-import smartBlocks from '../routes/smart-blocks.js';
 import evidenceManagement from '../routes/evidence-management.routes.js';
 import evidenceFabric from '../routes/evidence-fabric.js';
 import docxFactory from '../routes/docx-factory.js';
@@ -241,8 +239,16 @@ export async function registerDocumentRoutes({
     // slot when the handler was rebuilt against the canonical retrieval +
     // AI-gateway layer for Doc System Convergence Phase 4.
     { path: '/api/evidence-search', router: evidenceSearch, name: 'Evidence Search' },
-    { path: '/api/content-plan', router: contentPlan, name: 'Content Plan' },
-    { path: '/api/smart-blocks', router: smartBlocks, name: 'Smart Blocks' },
+    // Removed 2026-09-22: /api/content-plan and /api/smart-blocks. Mounted, no
+    // caller since their only client consumers (ContentPlan.jsx, SmartBlocks.jsx)
+    // were deleted in 7a144fd1e, and every data-backed handler queried tables no
+    // applier creates (content_plan_sections, section_evidence_links,
+    // custom_smart_blocks, device_data_center_files, predicate_devices,
+    // smart_block_usage — 500 on every call) or returned fabricated regulatory
+    // content with a 200. Section status/owner/deadline live in project_sections
+    // (/api/project-sections, read by /api/dossier-map → DossierMap.tsx);
+    // section evidence links in evidence_links (/api/evidence/links). Do not
+    // rebuild either store in parallel.
     // Retired (#844, Phase 0.2): cognitive-ecosystem was a placeholder — every
     // endpoint returned hardcoded mock data and its services were never
     // implemented (no client/server dependents). Unregistered to shrink the AI

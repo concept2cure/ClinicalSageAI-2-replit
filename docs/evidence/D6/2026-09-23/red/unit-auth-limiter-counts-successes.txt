@@ -1,0 +1,8 @@
+# RED: the successful-steps case with rateLimiters.auth counting every request (countFailuresOnly removed), 2026-09-23T10:14:12Z
+
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > a client that claims a new address on every attempt is still stopped at the limit 179ms
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > control: different clients keep their own allowances 119ms
+ × server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: counts failures, so successful sign-in steps do not use up a shared edge > many viewers behind one CloudFront edge complete SSO steps without a refusal 121ms
+   → successful sign-in steps used up the edge budget: expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)

@@ -45,10 +45,24 @@ import {
 } from '../services/protocol-development-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import {
+  ProtocolSignatureRefusal,
+  signerIpAddress,
+  signProtocolAct,
+} from '../services/protocol-development/protocol-signature';
+import { requireEditorAccess } from '../middleware/orgMembership';
+import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
+import {
   readDerivation,
   applyDerivationTx,
   DerivationError,
 } from '../services/protocol-development/design-derivation-service';
+
+// A viewer cannot sign (requireEditorAccess, 21 CFR 11.10(g)), and the password
+// behind a signature cannot be guessed without limit here any more than at
+// /api/esignature/verify-password (11.300(d)).
+const signingAttempts = signingAttemptLimiter('protocol-sign', {
+  error: { code: 'TOO_MANY_ATTEMPTS', message: 'Too many signing attempts. Wait a few minutes and try again. Nothing was signed.' },
+});
 
 const router = Router();
 
@@ -475,16 +489,43 @@ router.post('/documents/:id/versions', async (req, res) => {
   });
 });
 
-router.post('/documents/:id/finalize', async (req, res) => {
+// Finalizing is an electronic signature (21 CFR 11.50/11.200): the author
+// declares the protocol complete, or another person approves it. It runs the
+// full ceremony in protocol-signature.ts, never the plain governed() helper.
+const finalizeSchema = z.object({ reason, meaning: z.unknown().optional(), reauth: z.unknown().optional() });
+router.post('/documents/:id/finalize', requireEditorAccess, signingAttempts, async (req, res) => {
+  const userId = resolveUserId(req);
+  const orgId = resolveOrgId(req);
+  if (!userId || !orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = z.object({ reason }).safeParse(req.body ?? {});
+  const parsed = finalizeSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
-    const result = await finalizeProtocolTx(client, orgId, userId, id);
+  try {
+    const body = await signProtocolAct({
+      orgId,
+      userId,
+      target: `protocol-document:${id}`,
+      reason: parsed.data.reason,
+      meaning: parsed.data.meaning,
+      allowedMeanings: ['authorship', 'approval', 'responsibility'],
+      reauth: parsed.data.reauth,
+      ipAddress: signerIpAddress(req),
+      role: String((req as any).userRole ?? (req as any).user?.role ?? ''),
+      write: async (client) => {
+        const result = await finalizeProtocolTx(client, orgId, userId, id);
+        return { act: { finalized: true, protocolVersion: result.version }, body: { documentId: id, ...result } };
+      },
+    });
     recordProtocolFinalized();
-    return { target: `protocol-document:${id}`, payload: { version: result.version }, body: { documentId: id, ...result } };
-  });
+    res.status(201).json(body);
+  } catch (err) {
+    if (err instanceof ProtocolSignatureRefusal) {
+      res.status(err.status).json({ error: { code: err.code, message: err.message } });
+      return;
+    }
+    fail(res, err);
+  }
 });
 
 export default router;

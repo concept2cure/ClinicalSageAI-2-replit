@@ -56,6 +56,14 @@ CODE=$(req program POST /api/c2c/projects '{"name":"BX-701 IND","productName":"B
 PROGRAM=$(cat "$OUT/program.json" | JQ '.data.id // .id // empty')
 [ "$CODE" = 201 ] && [ -n "$PROGRAM" ] && ok "program $PROGRAM created" || { bad "program create failed ($CODE): $(head -c400 "$OUT/program.json")"; exit 1; }
 echo "   meta: $(cat "$OUT/program.json" | JQ '.meta // .data.meta // empty' | head -c 400)"
+# The PM-spine anchor, asserted HERE rather than discovered 700 lines later at
+# the artifact bridge. Without it the program carries no projects row, the
+# governed artifact registry cannot be addressed for it, and the run failed at
+# step 11 with "no artifacts bridged - unanchored" - the symptom, at the point
+# furthest from its cause. The creation step is the cause, so it fails here.
+ANCHOR=$(cat "$OUT/program.json" | JQ '.meta.projectAnchorId // .data.meta.projectAnchorId // empty')
+[ -n "$ANCHOR" ] && ok "program anchored to PM-spine project $ANCHOR" \
+  || bad "program created with NO PM-spine anchor: $(cat "$OUT/program.json" | JQ '.meta.projectAnchorSkipped // empty') - $(cat "$OUT/program.json" | JQ '.meta.projectAnchorDetail // empty' | head -c 220)"
 
 step "3. Process development registers the drug substance (feeds 3.2.S.1/S.2)"
 CODE=$(req ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-701\",\"inn\":\"belantezumab\",\"casNumber\":\"1234-56-7\",\"molecularFormula\":\"C6H8O6\",\"manufacturingProcess\":{\"manufacturer\":\"Acme Biologics\",\"route\":\"CHO cell culture\",\"site\":\"Basel\"},\"status\":\"development\",\"developmentPhase\":\"phase1\",\"projectId\":\"$PROGRAM\",\"modality\":\"biologic\",\"biologicalOrigin\":\"CHO cell culture, fed-batch\",\"cellLine\":\"CHO-K1; MCB lot MCB-2401, WCB lot WCB-2403\",\"sourceOrganism\":\"Cricetulus griseus (Chinese hamster ovary)\",\"viralSafetyEvaluation\":\"Two orthogonal clearance steps validated per ICH Q5A(R2): low-pH hold (>= 4.8 log10 X-MuLV) and 20 nm nanofiltration (>= 5.2 log10 MVM). In-process bioburden, mycoplasma and adventitious-agent testing at harvest.\",\"tseStatus\":\"Chemically defined, animal-component-free media throughout; no animal-derived raw material enters the process. EMA EMEA/410/01 rev. 3 risk assessment on file.\"}")
@@ -613,9 +621,14 @@ step "15. QA approves every COMPLETE compiled section (Part 11 re-auth each time
 # reads the section's own compiled record and refuses when the compiler says
 # the content is not there — the same rule the export gate applies — so QA
 # signs only what the compiler established, and the refusal names the gap.
-approve_section() { # approve_section SECTION_KEY -> writes approve-KEY.json, echoes HTTP code
+approve_section() { # approve_section SECTION_KEY [MEANING] -> writes approve-KEY.json, echoes HTTP code
+  # The meaning is one of the four 21 CFR 11.50(a)(3) names the signature form
+  # offers. This script used to send TECHNICAL_APPROVAL -- a GCC signature-ROLE
+  # token, not a 11.50(a)(3) meaning -- and the route silently recorded
+  # 'approval' instead, so every assertion below passed against a signed record
+  # that said something the caller never declared.
   req "approve-$1" POST "/api/cmc/module3-os/sections/$PROGRAM/$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$1")/approve" \
-    '{"reason":"Section content verified against source data","meaning":"TECHNICAL_APPROVAL","reauth":{"password":"pass-word"}}'
+    "{\"reason\":\"Section content verified against source data\",\"meaning\":\"${2:-approval}\",\"reauth\":{\"password\":\"pass-word\"}}"
 }
 complete_sections()   { jq -r '.sections[]? | select((.completeness == 100) and (((.missingInputs // []) | length) == 0)) | .sectionKey' "$1" 2>/dev/null; }
 incomplete_sections() { jq -r '.sections[]? | select((.completeness != 100) or (((.missingInputs // []) | length) > 0)) | .sectionKey' "$1" 2>/dev/null; }
@@ -633,6 +646,26 @@ if [ "$CODE" = 409 ] && echo "$S6REFUSAL" | grep -qi "complete"; then
 else
   bad "an approval landed on §3.2.S.6 with nothing established ($CODE): $(head -c200 "$OUT/approve-3.2.S.6.json")"
 fi
+
+step "15a. A signature meaning outside 21 CFR 11.50(a)(3) is refused, never substituted"
+# The route used to fall back to the constant 'approval' for any unrecognised
+# meaning, so a signer who declared TECHNICAL_APPROVAL had 'approval' written
+# into electronic_signatures and into the hash-chained ledger with nothing
+# saying so. Substituting the one field 11.50(a)(3) exists to preserve is
+# fabrication; the route refuses now. FIRSTSEC is a section already approved
+# above, so a 400 here proves the refusal happens before any write.
+FIRSTSEC=$(complete_sections "$OUT/compile.json" | head -1)
+CODE=$(approve_section "$FIRSTSEC" "TECHNICAL_APPROVAL")
+BADMEAN=$(cat "$OUT/approve-$FIRSTSEC.json" | JQ '.error // empty')
+[ "$CODE" = 400 ] && [ "$BADMEAN" = "INVALID_SIGNATURE_MEANING" ] \
+  && ok "a meaning outside 11.50(a)(3) is refused (400 INVALID_SIGNATURE_MEANING), not rewritten" \
+  || bad "an out-of-vocabulary signature meaning was accepted ($CODE, error=$BADMEAN)"
+# And the meaning that WAS declared is the meaning on the record.
+SIGMEAN=$(PGPASSWORD=c2c_local psql -h 127.0.0.1 -U c2c -d clinicalsage -tAc \
+  "SELECT DISTINCT payload->>'meaning' FROM c2c_ana_actions WHERE surface = 'cmc-module3-section-approve'" 2>/dev/null | tr -d ' ')
+[ "$SIGMEAN" = "approval" ] \
+  && ok "every Module 3 approval recorded the meaning its signer declared (approval)" \
+  || bad "the ledger records a meaning the signer did not declare: '$SIGMEAN'"
 
 step "15b. The staffer records what §3.2.S.6 was missing — the drug-substance container closure — and recompiles"
 CODE=$(req ccds POST /api/cmc/container-closures "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"systemName\":\"Double LDPE bag in HDPE drum\",\"componentType\":\"primary\",\"containerDescription\":\"Two low-density polyethylene liners, heat-sealed, in a 25 L high-density polyethylene drum\",\"closureDescription\":\"Cable-tie closed liners; tamper-evident drum lid\",\"supplier\":\"Greif\",\"compendialStandards\":[\"USP <661.1>\"],\"suitabilityJustification\":\"Protection from moisture and light demonstrated over 24 months at 25C/60%RH; LDPE compatibility with the drug substance shown in the 12-month primary studies.\",\"materialsOfConstruction\":[{\"component\":\"Liner\",\"material\":\"LDPE\",\"supplier\":\"Greif\",\"specification\":\"SPEC-LINER-02\",\"compendialReference\":\"USP <661.1>\"}]}")

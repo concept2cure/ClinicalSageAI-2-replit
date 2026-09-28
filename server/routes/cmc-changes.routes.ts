@@ -126,6 +126,13 @@ router.post('/', async (req: Request, res: Response) => {
           description: change.description,
           status: change.status,
           regulatory_impact: { dosageFormFamily: change.dosage_form_family, area: change.area },
+          /* The side the change touches. Module 3 staleness keys on it:
+             without it a drug-substance change staled the drug-PRODUCT
+             manufacture section and nothing else. The column is nullable and
+             the composer's rule treats an unrecorded scope as "stale both",
+             so passing it through narrows the sweep where it is known rather
+             than widening it where it is not. */
+          affects: change.affects,
         },
         userId != null ? String(userId) : undefined,
       );

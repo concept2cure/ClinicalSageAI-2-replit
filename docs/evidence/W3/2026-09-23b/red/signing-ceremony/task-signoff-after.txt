@@ -1,0 +1,62 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stdout | server/services/tasking/__tests__/task-signoff.test.ts
+{
+  "timestamp": "2026-09-23T09:39:17.507Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T09:39:17.508Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-signoff.test.ts
+{
+  "timestamp": "2026-09-23T09:39:17.509Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/tasking/__tests__/task-signoff.test.ts
+[database] Database connection successful
+
+stderr | server/services/tasking/__tests__/task-signoff.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/tasking/__tests__/task-signoff.test.ts
+{
+  "timestamp": "2026-09-23T09:39:17.890Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > not required for a non-completion transition 3ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > not required when the task carries no approval gate 0ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > not required while the gate still reads approved 0ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > required again after a reopen has retired the signature 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > 428 ESIGN_REQUIRED when completing the gate without a signature 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > rejects an unknown meaning before any credential is checked 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > requires a reason 0ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > requires a signer the server can re-verify (an account id) 0ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > a signing PIN signs nothing: the password is required 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > refuses a wrong password as the refusal of the act (403), not of the session, and counts it 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > requires the enrolled code, and refuses a wrong one 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > a locked account cannot sign 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > a verified signer yields the §11.50 manifestation, recording what was verified and never the credentials 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > records a password-only signature as such 0ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  09:39:15
+   Duration  2.65s (transform 1.39s, setup 130ms, import 2.28s, tests 16ms, environment 0ms)
+

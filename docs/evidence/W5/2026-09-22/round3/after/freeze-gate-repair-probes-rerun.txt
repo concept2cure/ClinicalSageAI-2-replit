@@ -1,0 +1,114 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+  }
+
+  }
+
+  }
+
+  }
+
+  }
+
+P1 freeze 0001 while 0002 dispatched -> DISPATCH_BLOCKED Refusing to freeze: sequence 0002 is dispatched and not yet filed (dispatched, dispatch status 'pending', region 'fda') and files leaves in m3.2.s.1, where this sequence's lifecycle operations bind. This sequence can no longer be filed ahead of it: it is judged only against the sequences numbered below it, and 0002's lifecycle operations were judged without this one on file, so whichever is sent second would transmit a lifecycle judged against the wrong inventory. Place these leaves in a new sequence numbered after 0002, where they are judged against what it files. This is a filing-order constraint, not a defect in this sequence's leaves.
+
+  }
+
+P1 0002 filed manifest: [{"ctdSection":"m3.2.s.1","fileName":"m3-2-s-1-coauthor-documents-300.pdf","href":"m3/3-2-s-1/m3-2-s-1-coauthor-documents-300.pdf","md5":"20c19c76c7d993ee6b1ef0291fe8c9e1","operation":"replace","modifiedFile":"../0000/m3/3-2-s-1/m3-2-s-1-coauthor-documents-300.pdf","title":"General Information"}]
+
+P1 freeze 0001 after 0002 sent -> DISPATCH_BLOCKED Refusing to freeze: sequence 0002 is already filed (dispatched, dispatch status 'sent', region 'fda') and files leaves in m3.2.s.1, where this sequence's lifecycle operations bind. This sequence can no longer be filed ahead of it: it is judged only against the sequences numbered below it, so its lifecycle operations would bind to what 0002 has already changed. Place these leaves in a new sequence numbered after 0002, where they are judged against what it files. This is a filing-order constraint, not a defect in this sequence's leaves. {"status":"validated","dispatch_status":null}
+
+P1 dispatch 0001 -> INVALID_STATE Cannot transition sequence from validated to dispatched. {"status":"validated","dispatch_status":null}
+
+  }
+
+P1 0001 package manifest: [{"ctdSection":"m1.2","fileName":"m1-2-coauthor-documents-310.pdf","href":"m1/us/1-2/m1-2-coauthor-documents-310.pdf","md5":"67219073a2d11efded4de28e639a1887","operation":"new","title":"Cover letter"},{"ctdSection":"m3.2.s.1","fileName":"m3-2-s-1-coauthor-documents-300.pdf","href":"../0000/m3/3-2-s-1/m3-2-s-1-coauthor-documents-300.pdf","md5":"09a4c978d14106aa5bce14b200fc1d02","operation":"delete","modifiedFile":"../0000/m3/3-2-s-1/m3-2-s-1-coauthor-documents-300.pdf","title":"General Information"}] blockers: []
+
+P1 transmit 0001 -> INVALID_STATE Sequence must be dispatched before transmit (current: validated). {"status":"validated","dispatch_status":null} gateway sends: 0
+
+  }
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/freeze-gate/order.probe.test.ts > r3b > P1: following "Send 0002 first" lets 0001 freeze+dispatch judged against {0000} only 469ms
+   → expected SubmissionError: Refusing to freeze: sequ… { code: '…' } to be null
+  }
+
+  }
+
+P2 dispatch 0001 -> undefined undefined
+P2 dispatch 0002 -> DISPATCH_BLOCKED Refusing to dispatch: sequence 0001 is not yet filed; dispatch this one after it is sent. It is dispatched, dispatch status 'pending', region 'fda', and it files leaves in m3.2.s.1, where this sequence's lifecycle operations are bound against what is on file — sending it changes that, so a verdict taken now would not hold at transmit. This is a filing-order constraint, not a defect in this sequence's leaves.
+
+P2 states: {"status":"dispatched","dispatch_status":"pending"} {"status":"frozen","dispatch_status":null}
+
+P3 freeze fda 0001 while ema 0000 pending -> DISPATCH_BLOCKED Refusing to freeze: sequence 0000 is not yet filed; freeze this one after it is sent. It is dispatched, dispatch status 'pending', region 'ema', and it files leaves in m3.2.s.1, where this sequence's lifecycle operations are bound against what is on file — sending it changes that, so a verdict taken now would not hold at transmit. This is a filing-order constraint, not a defect in this sequence's leaves.
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/freeze-gate/order.probe.test.ts > r3b > P2: a pre-existing pair of frozen unsent sequences sharing a section: both dispatches refused 165ms
+   → expected undefined to be 'DISPATCH_BLOCKED' // Object.is equality
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/freeze-gate/order.probe.test.ts > r3b > P3: sequences of another region of the same submission 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/freeze-gate/order.probe.test.ts > r3b > P1: following "Send 0002 first" lets 0001 freeze+dispatch judged against {0000} only
+AssertionError: expected SubmissionError: Refusing to freeze: sequ… { code: '…' } to be null
+
+- Expected:
+null
+
++ Received:
+SubmissionError {
+
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/freeze-gate/order.probe.test.ts:101:16
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/freeze-gate/order.probe.test.ts > r3b > P2: a pre-existing pair of frozen unsent sequences sharing a section: both dispatches refused
+AssertionError: expected undefined to be 'DISPATCH_BLOCKED' // Object.is equality
+
+- Expected:
+
++ Received:
+undefined
+
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/freeze-gate/order.probe.test.ts:120:22
+    118|     console.log('P2 dispatch 0002 ->', d2?.code, d2?.message);
+    119|     console.log('P2 states:', JSON.stringify(await st(32)), JSON.strin…
+    120|     expect(d1?.code).toBe('DISPATCH_BLOCKED'); expect(d2?.code).toBe('…
+       |                      ^
+    121|   }, 180_000);
+    122|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  08:30:45
+   Duration  6.45s (transform 1.56s, setup 141ms, import 2.49s, tests 3.65s, environment 0ms)
+
+
+=== ingestion.probe (P4) rerun on the working tree: still reproduces — classifyDocument is outside this group's scope; the fix is recorded as a deferred change ===
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+P4 upsertLeaf into frozen -> INVALID_STATE Sequence is frozen; its leaves are immutable.
+
+  }
+
+P4 classifyDocument into sequence 1 -> ok
+
+  }
+
+P4 classifyDocument into sequence 2 -> ok
+
+P4 leaves now: [{"sequence_id":1,"status":"frozen","section_code":"m2.4","document_id":201},{"sequence_id":2,"status":"dispatched","section_code":"m2.4","document_id":201}]
+
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/freeze-gate/ingestion.probe.test.ts > P4 > ingestion places a leaf into frozen and dispatched sequences 29ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  08:34:17
+   Duration  5.04s (transform 1.28s, setup 96ms, import 2.06s, tests 2.73s, environment 0ms)
+

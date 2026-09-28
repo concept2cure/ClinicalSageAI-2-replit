@@ -21,8 +21,9 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
 
   // Admin security-health endpoint. Lives under /api/admin so the
   // global /api auth gate runs first (auth + admin role enforced
-  // by the router itself). Returns the security self-test report
-  // on demand for ops dashboards and SOC tooling.
+  // on its one route, never router-wide: every /api/admin/* request
+  // enters this router first, VSR-001 F-31). Returns the security
+  // self-test report on demand for ops dashboards and SOC tooling.
   app.use('/api/admin', adminSecurityRouter);
 
   // /healthz and /readyz are NOT registered here.

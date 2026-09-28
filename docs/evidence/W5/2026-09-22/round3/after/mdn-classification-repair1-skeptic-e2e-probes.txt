@@ -1,0 +1,19 @@
+===== vitest.probe.config.ts
+P4 :: recorded status=received :: RETURNED status=received
+M1 :: recorded status=rejected :: THREW Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; processed/failed: signature check failed
+P5 :: recorded status=received :: RETURNED status=received
+M3 :: recorded status=rejected :: THREW Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; processed/decryption-failed
+P9 :: recorded status=received :: RETURNED status=received
+C1 :: recorded status=in_transit :: THREW Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-sent-automatically; processed (see note /error: decryption-failed The bundle was delivered (HTTP 200, AS2 Message-ID <bbf454e6-6772-4973-9b0c-7723617b7dd7@SPONSOR-AS2>) and FDA may hold it: transmittal 4242 is recorded in transit, not rejected. Confirm receipt at FDA before any resend.
+P1 :: recorded status=received :: RETURNED status=received
+F1 :: recorded status=in_transit :: THREW Agency MDN answers a different message (<someone-else@FDA>). The bundle was delivered (HTTP 200, AS2 Message-ID <947ea3a7-1550-4c4a-9105-1df3b2c49436@SPONSOR-AS2>) and FDA may hold it: transmittal 4242 is recorded in transit, not rejected. Confirm receipt at FDA before any resend.
+G  :: recorded status=in_transit :: THREW Agency MDN answers a different message (<someone-else@FDA>). The bundle was delivered (HTTP 200, AS2 Message-ID <37b7a553-34b9-4f9c-8e83-a9d0e8b348c0@SPONSOR-AS2>) and FDA may hold it: transmittal 4242 is recorded in transit, not rejected. Confirm receipt at FDA before any resend.
+R1 :: recorded status=received :: RETURNED status=received
+R2 :: recorded status=rejected :: THREW Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; processed/Error: decryption-failed
+      Tests  11 passed (11)
+===== regr-vitest.config.ts
+P4 :: recorded status=received :: RETURNED status=received
+P5 :: recorded status=received :: RETURNED status=received
+P9 :: recorded status=received :: RETURNED status=received
+P1 :: recorded status=received :: RETURNED status=received
+      Tests  4 passed (4)

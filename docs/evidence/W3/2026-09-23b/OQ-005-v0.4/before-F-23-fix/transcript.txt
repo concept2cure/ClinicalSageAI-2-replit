@@ -1,0 +1,12 @@
+  OQ-SRDY-00  pass
+  OQ-SRDY-01  pass
+  OQ-SRDY-02  pass
+  OQ-SRDY-03  pass
+  OQ-SRDY-04  pass
+  OQ-SRDY-05  FAIL  (the review of program 555c5d96-ed3d-4de1-88b3-44a733efb63e ended "completed" for "Project" with 0 document(s): a project it could not read was assessed)
+  OQ-SRDY-05b  deviation  (intake did not anchor program 555c5d96-ed3d-4de1-88b3-44a733efb63e to a project (NO_CLIENT_WORKSPACE: This organization has no client workspace, and projects.client_workspace_id is NOT NULL. The program was created; it carries no PM-spine anchor until a workspace exists.). The review reads projects, so there is no project it can assess for this program)
+  OQ-SRDY-06  pass
+  OQ-SRDY-07  pass
+  OQ-SRDY-08  pass
+
+OQ-005 Submission Readiness: 8 pass, 1 fail, 1 deviation, 0 not-executed → docs/evidence/W3/2026-09-23b/OQ-005-v0.4/before-F-23-fix/OQ-SUBMISSION-READINESS

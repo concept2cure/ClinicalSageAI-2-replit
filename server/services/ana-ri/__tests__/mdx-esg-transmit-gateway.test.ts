@@ -53,7 +53,7 @@ const { poolQueries, storedBundle, httpsRequests, mdnResponse, audit, recordGove
 /** The package's content as the transmit gate re-reads it; the stored
  *  descriptor carries its fingerprint, so the zip still reflects the package. */
 const CONTENT: PackageContentRow[] = [
-  { sectionDbId: 13, sectionKey: 'estar-summary', sectionLabel: '510(k) Summary', sortOrder: 0, artifactDbId: 1, title: '510(k) summary', version: 1, ctdSection: null, contentSha256: sha256Hex('510(k) summary') },
+  { sectionDbId: 13, sectionKey: 'estar-summary', sectionLabel: '510(k) Summary', sortOrder: 0, artifactDbId: 1, title: '510(k) summary', version: 1, ctdSection: null, contentSha256: sha256Hex('510(k) summary'), filable: true },
 ];
 const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
 
@@ -67,6 +67,10 @@ function queryImpl(sql: string, args: unknown[] = []) {
       rows: CONTENT.map((r) => ({
         section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, sort_order: r.sortOrder, artifact_db_id: r.artifactDbId,
         title: r.title, version: r.version, ctd_section: r.ctdSection, content_sha256: r.contentSha256,
+        // 2026-09-23 (W5/D7, round-2 skeptic): the approval facts the fingerprint
+        // now covers — a filable row is approved AT its version, as the status route writes it.
+        status: r.filable == null ? null : r.filable ? 'approved' : 'review',
+        approved_version_id: r.filable ? r.version : null, published_version_id: null,
       })),
       rowCount: CONTENT.length,
     });
@@ -325,8 +329,11 @@ describe('the 510(k) transmit affordance reaches the real FDA ESG AS2 transport'
 
   it('records a rejected transmittal — never an acknowledgement — on an agency HTTP error', async () => {
     configureEsgCredentials();
-    mdnResponse.statusCode = 500;
-    mdnResponse.body = 'gateway unavailable';
+    // 2026-09-23 (W5/D7, MDN close): a 4xx — the agency answered and refused.
+    // This sent HTTP 500, which the delivery classifier (as2-transport.ts)
+    // records in transit: a 5xx after the whole bundle may be held upstream.
+    mdnResponse.statusCode = 403;
+    mdnResponse.body = 'forbidden: unknown AS2-From';
 
     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
     expect(r.success).toBe(false);
@@ -339,6 +346,34 @@ describe('the 510(k) transmit affordance reaches the real FDA ESG AS2 transport'
     expect(rejected).toBeDefined();
     // Nothing anywhere claims a receipt.
     expect(poolQueries.some((q) => q.args.includes('ack3_received'))).toBe(false);
+  });
+
+  // 2026-09-23 (W5/D7, MDN close): an HTTP 500 after the whole bundle was sent
+  // neither accepts nor refuses it — the agency's backend may hold it. The
+  // transmittal is recorded in transit, inside the duplicate-send lock, with
+  // the HTTP status; never rejected (which frees a resend) and never an
+  // acknowledgement.
+  it('records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 after the whole bundle', async () => {
+    configureEsgCredentials();
+    mdnResponse.statusCode = 500;
+    mdnResponse.body = 'gateway unavailable';
+
+    const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    expect(r.success).toBe(false);
+    expect(r.error).toBe('TRANSMIT_FAILED');
+    expect(r.message).toMatch(/may hold it/);
+    expect(r.data).toBeUndefined();
+
+    expect(httpsRequests).toHaveLength(1);
+    const statusWrites = poolQueries.filter((q) => q.sql.includes('UPDATE submission_transmittals') && /status\s*=/.test(q.sql));
+    const last = statusWrites[statusWrites.length - 1];
+    expect(last.args).toContain('in_transit');
+    // Tracked under the response's Message-ID; the error names ours.
+    expect(last.args).toContain('<mdn-from-fda@esg.fda.gov>');
+    expect(r.message).toContain(httpsRequests[0].options.headers['Message-ID']);
+    expect(last.args).toContain(500);
+    expect(poolQueries.some((q) => q.sql.includes('UPDATE submission_transmittals') && q.args.includes('rejected'))).toBe(false);
+    expect(poolQueries.some((q) => q.args.includes('ack3_received') || q.args.includes('received'))).toBe(false);
   });
 });
 
@@ -467,5 +502,51 @@ describe('the package gate travels with the transmit, wherever it is invoked fro
     expect(r.success).toBe(false);
     expect(r.error).toBe('BUNDLE_NOT_ASSEMBLED');
     expect(httpsRequests).toHaveLength(0);
+  });
+});
+
+/* 2026-09-23 (W5/D7, round-2 review). The transmit guard reports the package
+   checks that FAILED without blocking (a flag-gated check not enforced here).
+   This handler dropped them from both its audit row and its returned data, and
+   the shared governed transmit kept them off its sign record, so a 510(k) that
+   went out failing a check left no transmit-time trace of it. */
+describe('a check that failed without blocking is recorded, not dropped', () => {
+  it('carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data', async () => {
+    configureEsgCredentials();
+    const savedDtd = process.env.ECTD_REQUIRE_DTD;
+    delete process.env.ECTD_REQUIRE_DTD; // report-only: the check fails, the send goes ahead
+    try {
+      storedBundle.value = {
+        ...(storedBundle.value as Record<string, unknown>),
+        dtdStatus: { selfContained: false, missing: ['ich-ectd-3-2.dtd'], missingStylesheets: [] },
+      };
+
+      const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+      expect(r.success, `handler refused: ${r.message}`).toBe(true);
+      expect(httpsRequests).toHaveLength(1);
+
+      const failed = expect.arrayContaining([expect.stringMatching(/^dtd-self-contained: missing: ich-ectd-3-2\.dtd/)]);
+      // This descriptor records no built region, which the guard warns about.
+      const warned = expect.arrayContaining([expect.stringMatching(/region it was built for/)]);
+
+      // The returned data.
+      expect(r.data?.preTransmitFailedChecks).toEqual(failed);
+      expect(r.data?.preTransmitWarnings).toEqual(warned);
+
+      // The agent.ana.* audit row.
+      expect(audit.logAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'agent.ana.k510_workflow.transmit',
+          details: expect.objectContaining({ preTransmitFailedChecks: failed, preTransmitWarnings: warned }),
+        }),
+      );
+
+      // The governed `sign` ledger entry the shared transmit wrote.
+      const ledger = recordGovernedAction.mock.calls[0]![1] as any;
+      expect(ledger.payload.preTransmitFailedChecks).toEqual(failed);
+      expect(ledger.payload.preTransmitWarnings).toEqual(warned);
+    } finally {
+      if (savedDtd === undefined) delete process.env.ECTD_REQUIRE_DTD; else process.env.ECTD_REQUIRE_DTD = savedDtd;
+    }
   });
 });

@@ -1,0 +1,52 @@
+# git: 923d1491b + working tree (the fix)
+# npx vitest run server/routes/c2c/__tests__/document-lock-ceremony.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stdout | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+{
+  "timestamp": "2026-09-23T14:57:20.909Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T14:57:20.910Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+{
+  "timestamp": "2026-09-23T14:57:20.912Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written
+{
+  "timestamp": "2026-09-23T14:57:21.142Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written 2492ms
+ ✓ server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a wrong password, counts it, and writes nothing 6ms
+ ✓ server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > requires the enrolled code 4ms
+ ✓ server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses the document's author (separation of duties), and nothing is written 4ms
+ ✓ server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > locks, once, for a re-verified signer who is not the author 4ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  14:57:18
+   Duration  3.05s (transform 1.63s, setup 156ms, import 177ms, tests 2.51s, environment 0ms)
+

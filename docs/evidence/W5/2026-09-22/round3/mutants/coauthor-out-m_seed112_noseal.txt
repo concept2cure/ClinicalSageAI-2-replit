@@ -1,0 +1,42 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112-ind-authoring-doc: the IND demo document is sealed and files as approved (201)
+   ✓ ind authoring doc: "Control of Drug Substance (CTD 3.2.S.4)" seeded for BX-512 (3 sections, incl. 3.2.S.4.2; approval sealed)
+
+stdout | server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 99-doc-journey: the doc-journey document is sealed in the router format and files as approved (201)
+   ✓ doc journey: 1 document + 3 sections, 1 revision, 1 comment, 1 freeze seeded into the real authoring store (doc 1de0ad7d-5135-4896-abd9-07f52d7b467d)
+
+ × server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112-ind-authoring-doc: the IND demo document is sealed and files as approved (201) 119ms
+   → expected [] to have a length of 1 but got +0
+ ✓ server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 99-doc-journey: the doc-journey document is sealed in the router format and files as approved (201) 89ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112-ind-authoring-doc: the IND demo document is sealed and files as approved (201)
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectRouterSeal server/routes/__tests__/coauthorSnapshotSeeds.test.ts:155:17
+    153|     )
+    154|   ).rows;
+    155|   expect(seals).toHaveLength(1);
+       |                 ^
+    156|   const [seal] = seals;
+    157|   expect(seal.tenant_id).toBe(ORG);
+ ❯ server/routes/__tests__/coauthorSnapshotSeeds.test.ts:186:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  09:12:33
+   Duration  9.29s (transform 2.03s, setup 180ms, import 3.50s, tests 5.01s, environment 0ms)
+

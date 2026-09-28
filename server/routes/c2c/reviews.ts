@@ -38,7 +38,6 @@ import {
 } from '../../../shared/schema';
 import {
   concept2cureRateLimiter,
-  getClientIp,
   getOrganizationId,
   getUserId,
   logConcept2cureError,
@@ -49,6 +48,7 @@ import {
 } from './shared';
 import { verifyProjectAccess } from './project-access';
 import { createNotification, upsertProjectWorkItem } from './notifications';
+import { clientIpKey } from '../../utils/client-ip';
 
 const logger = createScopedLogger('concept2cure-reviews');
 const router = Router();
@@ -368,7 +368,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/review-threads`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { threadId: threadIdStr, title: title.trim(), anchorType, anchorKey },
       });
 
@@ -390,7 +390,7 @@ router.post(
           assigneeName: resolvedAssigneeName,
           anchorLabel: anchorLabel || null,
         },
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         userAgent: req.headers['user-agent'] || undefined,
       });
 
@@ -598,7 +598,7 @@ router.post('/review-threads/:threadId/resolve', async (req: Request, res: Respo
       actorEmail: req.userEmail || 'unknown',
       backendRoute: `/review-threads/${req.params.threadId}/resolve`,
       backendService: 'concept2cure-api',
-      ipAddress: getClientIp(req),
+      ipAddress: clientIpKey(req),
       details: { threadId: thread.threadId },
     });
 
@@ -612,7 +612,7 @@ router.post('/review-threads/:threadId/resolve', async (req: Request, res: Respo
       entityId: thread.threadId,
       description: `Review thread resolved: "${thread.title}"`,
       details: { threadId: thread.threadId, artifactId: thread.artifactId },
-      ipAddress: getClientIp(req),
+      ipAddress: clientIpKey(req),
     });
 
     // ── PM work item: close linked item ──
@@ -726,7 +726,7 @@ router.post('/review-threads/:threadId/reopen', async (req: Request, res: Respon
       actorEmail: req.userEmail || 'unknown',
       backendRoute: `/review-threads/${req.params.threadId}/reopen`,
       backendService: 'concept2cure-api',
-      ipAddress: getClientIp(req),
+      ipAddress: clientIpKey(req),
       details: { threadId: thread.threadId },
     });
 
@@ -740,7 +740,7 @@ router.post('/review-threads/:threadId/reopen', async (req: Request, res: Respon
       entityId: thread.threadId,
       description: `Review thread reopened: "${thread.title}"`,
       details: { threadId: thread.threadId, artifactId: thread.artifactId },
-      ipAddress: getClientIp(req),
+      ipAddress: clientIpKey(req),
     });
 
     // ── PM work item: reopen linked item ──
@@ -928,7 +928,7 @@ router.post('/review-threads/:threadId/comments', async (req: Request, res: Resp
       actorEmail: req.userEmail || 'unknown',
       backendRoute: `/review-threads/${req.params.threadId}/comments`,
       backendService: 'concept2cure-api',
-      ipAddress: getClientIp(req),
+      ipAddress: clientIpKey(req),
       details: { threadId: thread.threadId, commentId: commentIdStr, kind: commentKind },
     });
 
@@ -1287,7 +1287,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/review-tasks`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { taskId: taskIdStr, title: title.trim(), taskType: resolvedType },
       });
 
@@ -1309,7 +1309,7 @@ router.post(
           assignedToId: assignedToId ? Number(assignedToId) : null,
           assignedToName: resolvedAssigneeName,
         },
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         userAgent: req.headers['user-agent'] || undefined,
       });
 
@@ -1524,7 +1524,7 @@ router.post('/review-tasks/:taskId/resolve', async (req: Request, res: Response)
       actorEmail: req.userEmail || 'unknown',
       backendRoute: `/review-tasks/${req.params.taskId}/resolve`,
       backendService: 'concept2cure-api',
-      ipAddress: getClientIp(req),
+      ipAddress: clientIpKey(req),
       details: { taskId: task.taskId },
     });
 
@@ -1538,7 +1538,7 @@ router.post('/review-tasks/:taskId/resolve', async (req: Request, res: Response)
       entityId: task.taskId,
       description: `Review task resolved: "${task.title}"`,
       details: { taskId: task.taskId, artifactId: task.artifactId },
-      ipAddress: getClientIp(req),
+      ipAddress: clientIpKey(req),
     });
 
     // ── PM work item: close linked item ──
@@ -1638,7 +1638,7 @@ router.post('/review-tasks/:taskId/reopen', async (req: Request, res: Response) 
       actorEmail: req.userEmail || 'unknown',
       backendRoute: `/review-tasks/${req.params.taskId}/reopen`,
       backendService: 'concept2cure-api',
-      ipAddress: getClientIp(req),
+      ipAddress: clientIpKey(req),
       details: { taskId: task.taskId },
     });
 

@@ -1,0 +1,15 @@
+Runner: tests/validation/oq/submission-readiness/run.mjs at 1b6dc0fab (OQ-005 v0.5).
+
+Server: the working tree at 1b6dc0fab with the four server and shared files
+that change set touched as they were at its parent, 7f41a3eba:
+
+  for f in server/services/contradiction-engine-service.ts \
+           server/routes/assumption-decision-contradiction.ts \
+           shared/constants/launch-scope.ts shared/navigation/index.ts; do
+    git show 7f41a3eba:$f > $f
+  done
+
+The server was started on that tree (fresh process), the runner executed,
+and the tree was restored with `git checkout HEAD -- server/ shared/` before
+the second run. The record's environment.git.commit names the runner's
+commit; this file states the server's tree.

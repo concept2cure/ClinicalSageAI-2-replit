@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/vault/ingest",
+    "anonymous": false,
+    "identity": null,
+    "body": "[multipart/form-data]"
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 2624,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "document": {
+        "id": "59751cea-3cae-4ead-a84a-80b2df18aef8",
+        "programId": "cb63576e-3516-4fd4-a504-fb7540fd0e0d",
+        "documentCode": "OQ-005 Protocol 20260923051133.pdf",
+        "documentTitle": "OQ-005 Protocol 20260923051133",
+        "documentType": "PROTOCOL",
+        "version": "1.0",
+        "fileName": "OQ-005-Protocol-20260923051133.pdf",
+        "fileSize": 611,
+        "mimeType": "application/pdf",
+        "contentHash": "5e0e7e2215fddabe1043f9a35e5db9d02a1415e9402fb2571f3d2709cfdb5aba",
+        "processingStatus": "PENDING",
+        "hasExtractedText": true,
+        "wordCount": 8,
+        "createdAt": "2026-09-23T05:11:36.443Z",
+        "updatedAt": "2026-09-23T05:11:36.443Z"
+      },
+      "filing": {
+        "view": "biotech",
+        "folderId": null,
+        "folderLabel": "",
+        "evidenceKind": null,
+        "ctdSection": null,
+        "placementStatus": "unfiled",
+        "confidence": "none",
+        "rationale": "No filing rule matched the name, title, or document text — needs a person to file it.",
+        "needsReview": true
+      }
+    }
+  }
+}

@@ -87,7 +87,8 @@ import { recordAuditRow } from '../services/audit/audit-write-outcome';
  * inside that transaction, so `meta.auditTrail` on a 200 is always
  * {persisted: true, chained: true} — a lost row rolls the approval back instead.
  */
-import { verifySignerCredentials, defaultSignoffDeps } from '../services/ana-ri/governed-action-signoff';
+import { reverifySigner } from '../services/part11/reverify-signer';
+import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
 import {
@@ -104,6 +105,7 @@ import {
   InvalidChangeTransitionError, SegregationOfDutiesError,
   type ChangeState,
 } from '../services/qms/changeControl.service';
+import { clientIpOf } from '../utils/client-ip';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -496,11 +498,7 @@ const approveBody = z.object({
 });
 
 function resolveIpAddress(req: Request): string | null {
-  return (
-    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-    req.socket?.remoteAddress ||
-    null
-  );
+  return clientIpOf(req);
 }
 
 /**
@@ -526,16 +524,15 @@ async function verifyApprovalSigner(
     );
     return null;
   }
-  const signoff = await verifySignerCredentials(defaultSignoffDeps, {
-    userId, password: body.password, mfaToken: body.mfaToken,
-  });
-  if (!signoff.verified) {
-    clientError(
-      res,
-      401,
-      signoff.error ?? 'Signer verification failed (21 CFR Part 11 §11.200).',
-      { code: signoff.code ?? 'REAUTH_FAILED' },
-    );
+  // The platform's one signing ceremony: password, enrolled second factor and
+  // the account's lockout (services/part11/reverify-signer.ts).
+  const signoff = await reverifySigner(
+    userId,
+    { password: body.password, mfaToken: body.mfaToken },
+    signerReverificationDeps(),
+  );
+  if (!signoff.ok) {
+    clientError(res, signoff.status, signoff.error, { code: signoff.code });
     return null;
   }
   // Attribution honesty: only the factors the verifier actually checked.

@@ -106,6 +106,11 @@ const PREREQ = `
     role TEXT NOT NULL DEFAULT 'member'
   );
   INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, 7, 'member');
+  -- The account's standing (services/account-standing.ts, VSR-001 F-29) is read
+  -- on every authenticated request as well, and one that cannot be read is
+  -- refused with 503, for the same reason. The caller's account is in use.
+  CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active');
+  INSERT INTO users (id) VALUES (7);
   CREATE TABLE fda_510k_projects (
     id SERIAL PRIMARY KEY,
     organization_id INTEGER NOT NULL,

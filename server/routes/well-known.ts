@@ -15,9 +15,9 @@ const SECURITY_CONTACT = process.env.SECURITY_CONTACT_EMAIL || 'security@concept
 
 function baseUrl(req: Request): string {
   if (process.env.APP_BASE_URL) return process.env.APP_BASE_URL.replace(/\/$/, '');
-  const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
-  const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
-  return `${proto}://${host}`;
+  // req.protocol honours X-Forwarded-Proto only from the trusted proxy; the raw
+  // forwarded headers this read were whatever the client sent.
+  return `${req.protocol}://${req.get('host') ?? 'localhost'}`;
 }
 
 router.get('/security.txt', (req: Request, res: Response) => {

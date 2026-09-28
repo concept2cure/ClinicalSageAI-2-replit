@@ -1,0 +1,30 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/mdx/qms/training/compliance",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 21,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": 26,
+          "doc_number": "SOP-OQ-B-20260923052105",
+          "title": "OQ-006 Second SOP 20260923052105",
+          "current": 1,
+          "of": 4,
+          "last_cycle": "2026-09-23T05:22:31.823Z"
+        }
+      ],
+      "meta": {
+        "count": 1
+      }
+    }
+  }
+}

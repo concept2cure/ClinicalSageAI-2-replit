@@ -1,0 +1,58 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the account password and the enrolled code, and records that
+{
+  "timestamp": "2026-09-23T09:39:13.708Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc D1 by signer@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > a signing PIN alone signs nothing 80ms
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the password when no authenticator is enrolled, and records that
+{
+  "timestamp": "2026-09-23T09:39:13.739Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc D1 by signer@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the account password and the enrolled code, and records that
+{
+  "timestamp": "2026-09-23T09:39:13.756Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by signer@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the password when no authenticator is enrolled, and records that
+{
+  "timestamp": "2026-09-23T09:39:13.796Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by signer@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the account password and the enrolled code, and records that 21ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses the password alone when an authenticator is enrolled 11ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses a wrong code, counts it against the account, and writes nothing 8ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the password when no authenticator is enrolled, and records that 5ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses a wrong password and writes nothing 3ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > a signing PIN alone signs nothing 4ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the account password and the enrolled code, and records that 33ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses the password alone when an authenticator is enrolled 7ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses a wrong code, counts it against the account, and writes nothing 4ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the password when no authenticator is enrolled, and records that 4ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses a wrong password and writes nothing 3ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > the PIN store > has no route that sets a PIN: POST /users/pin is gone 17ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  09:39:10
+   Duration  3.07s (transform 1.42s, setup 122ms, import 2.56s, tests 205ms, environment 0ms)
+

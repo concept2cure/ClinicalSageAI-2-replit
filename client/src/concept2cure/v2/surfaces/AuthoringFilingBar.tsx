@@ -7,25 +7,33 @@
  *     whole document into frozen_documents with a sha256 content hash and an
  *     audit-trail entry, flipping the document to FROZEN. The returned hash is
  *     shown so the signer/regulator can re-derive it.
- *   • E-sign — POST /api/authoring/docs/:docId/e-sign {pin, meaning, intent}:
- *     records a 21 CFR Part 11 electronic signature (PIN-verified server-side)
- *     against the document's content hash with an audit entry; an APPROVER
- *     signature flips the document to APPROVED and auto-freezes it.
+ *   • E-sign — POST /api/authoring/docs/:docId/e-sign
+ *     {password, mfaToken?, meaning, intent}: records a 21 CFR Part 11
+ *     electronic signature against the document's content hash with an audit
+ *     entry; an APPROVER signature flips the document to APPROVED and
+ *     auto-freezes it.
  *
- * This store is PIN-keyed and uuid-scoped, which is why it uses its own e-sign
- * endpoint rather than the numeric-store Part11SignModal (/api/esignature).
+ * The signature runs the product's one signing dialog, the shared EsignModal:
+ * meaning, reason, the account password, and the authenticator code when one
+ * is enrolled, re-verified server-side by the same ceremony every other
+ * signature uses (server/services/part11/reverify-signer.ts). This bar used to
+ * ask for a separate "signing PIN" (VSR-001 §13.3 item 3). The store is
+ * uuid-scoped, so the dialog posts to this store's own e-sign endpoint rather
+ * than to /api/esignature/sign.
  *
  * HONESTY: real awaited writes; a success toast fires only after the server
- * confirms and includes the server hash; a failed PIN (401) or any error is
- * surfaced honestly and nothing local is fabricated. onChanged() lets the host
- * refetch so the document's new status (FROZEN / APPROVED) comes from the
+ * confirms and includes the server hash; a refused credential or any error is
+ * shown in the dialog and nothing local is fabricated. onChanged() lets the
+ * host refetch so the document's new status (FROZEN / APPROVED) comes from the
  * server, not an optimistic guess.
  */
 import React, { useState } from 'react';
 import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { apiRequest, extractApiError, redactInternals, type ApiRequestError } from '@/lib/queryClient';
+import { apiRequest, extractApiError, redactInternals, serverMessage, type ApiRequestError } from '@/lib/queryClient';
+import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
+import type { EsigMeaning } from '../../hooks/useEsignature';
 
 export interface AuthoringFilingBarProps {
   docId: string;
@@ -36,12 +44,14 @@ export interface AuthoringFilingBarProps {
   /* BP-W0-6, and this is the sharpest instance of it. This component owns
      Freeze and the §11.50 electronic signature. Its prop type erased the tone
      the host's useToast accepts, so every call here defaulted to 'ok' — and a
-     REJECTED PIN rendered with the green success tick, aria-live="polite" and
+     REJECTED credential rendered with the green success tick, aria-live="polite" and
      the same 4.2s dwell as "Document signed". On the one action in the product
      that is a legally binding attestation, failure was indistinguishable from
      success. C2CForm is fire-and-forget and the dialog stays open on failure
      with no inline error, so the toast is the ONLY signal there is. */
   fireToast: (m: string, tone?: 'ok' | 'error') => void;
+  /** Who the signature dialog shows as signing (the host's signed-in user). */
+  signer?: EsignSigner;
 }
 
 type Dialog = 'freeze' | 'esign' | null;
@@ -101,25 +111,50 @@ const FREEZE_FORM = (title: string, unresolved: Unresolved | null): C2CFormConfi
   ],
 });
 
-const ESIGN_FORM = (title: string): C2CFormConfig => ({
-  eyebrow: 'Part 11 · §11.50 electronic signature',
-  title: 'Electronically sign document',
-  sub: `Apply a signature to “${title}”. Your PIN is verified server-side; an Approval signature approves and freezes the document.`,
-  governed: true,
-  submitLabel: 'Sign',
-  fields: [
-    { key: 'meaning', label: 'Meaning of signature (§11.50)', type: 'seg', options: [
-      { value: 'AUTHOR', label: 'Authorship' }, { value: 'REVIEWER', label: 'Review' }, { value: 'APPROVER', label: 'Approval' },
-    ], required: true, default: 'REVIEWER' },
-    { key: 'intent', label: 'Intent / declaration', type: 'textarea', required: true, placeholder: 'e.g. I have reviewed this document and confirm it is complete and accurate.' },
-    // First-time signers set the PIN in the Signatures rail (SigningPinPanel);
-    // until that shipped this field was unsatisfiable — required, verified
-    // server-side, and creatable nowhere in the product.
-    { key: 'pin', label: 'Signing PIN', type: 'password', required: true, placeholder: 'Your electronic-signature PIN — no PIN yet? Set it in the Signatures rail first' },
-  ],
-});
+/** The authoring store's §11.50 vocabulary (SIGNATURE_MEANINGS in
+ *  authoring.router.ts), as the shared dialog names the same three meanings. */
+const AUTHORING_MEANING: Partial<Record<EsigMeaning, 'AUTHOR' | 'REVIEWER' | 'APPROVER'>> = {
+  authorship: 'AUTHOR',
+  review: 'REVIEWER',
+  approval: 'APPROVER',
+};
+const AUTHORING_MEANINGS: ReadonlyArray<EsigMeaning> = ['authorship', 'review', 'approval'];
 
-export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast }: AuthoringFilingBarProps) {
+/** What the shared dialog hands over once the signer has re-authenticated. */
+interface SignInput {
+  meaning: EsigMeaning;
+  reason: string;
+  password: string;
+  totp?: string;
+}
+
+/**
+ * POST the signature to the authoring store. The same credentials the dialog
+ * checked go with it, and the server re-verifies them inside the transaction
+ * that writes the signature. A refusal is thrown as the sentence to show.
+ */
+async function postAuthoringSignature(
+  docId: string,
+  input: SignInput,
+): Promise<{ meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER'; hash?: string; signedAt?: string }> {
+  const meaning = AUTHORING_MEANING[input.meaning];
+  if (!meaning) throw new Error('This document cannot carry that meaning. Nothing was signed.');
+  const res = await apiRequest('POST', `/api/authoring/docs/${docId}/e-sign`, {
+    password: input.password,
+    ...(input.totp ? { mfaToken: input.totp } : {}),
+    meaning,
+    intent: input.reason,
+  });
+  const json = (await res.json().catch(() => null)) as { documentHash?: string; signedAt?: string } | null;
+  /* apiRequest RETURNS a 401 rather than throwing it. Here a 401 is the
+     signing ceremony refusing the password or code, not a lost session. */
+  if (res.status === 401) {
+    throw new Error((serverMessage(json) ?? 'Your password or code was not verified.') + ' Nothing was signed.');
+  }
+  return { meaning, hash: json?.documentHash, signedAt: json?.signedAt };
+}
+
+export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer }: AuthoringFilingBarProps) {
   const [dialog, setDialog] = useState<Dialog>(null);
   /** Set when the server refused the freeze because work is outstanding. */
   const [unresolved, setUnresolved] = useState<Unresolved | null>(null);
@@ -181,27 +216,19 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
     }
   };
 
-  const doSign = async (v: Record<string, string>) => {
-    try {
-      const res = await apiRequest('POST', `/api/authoring/docs/${docId}/e-sign`, {
-        pin: v.pin,
-        meaning: v.meaning,
-        intent: v.intent,
-      });
-      const json = await res.json().catch(() => null);
-      if (res.status === 401) { fireToast('Signature rejected — the PIN was not verified. Nothing was signed.', 'error'); return; }
-      if (!res.ok) {
-        fireToast('Couldn’t sign the document — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was signed.', 'error');
-        return;
-      }
-      const hash = (json as { documentHash?: string })?.documentHash;
-      const approved = v.meaning === 'APPROVER';
-      fireToast('Document signed (' + v.meaning.toLowerCase() + ')' + (approved ? ' — approved and frozen' : '') + (hash ? ' · ' + String(hash).slice(0, 12) + '…' : '') + '.');
-      setDialog(null);
-      onChanged();
-    } catch (e) {
-      fireToast('Couldn’t sign the document — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
-    }
+  /* Runs after the dialog has checked the password (and code) with the server.
+     A throw is shown in the dialog, which stays open; nothing is signed. */
+  const doSign = async (input: SignInput): Promise<EsigSignedManifest> => {
+    const signed = await postAuthoringSignature(docId, input);
+    const approved = signed.meaning === 'APPROVER';
+    fireToast('Document signed (' + signed.meaning.toLowerCase() + ')' + (approved ? ' — approved and frozen' : '') + (signed.hash ? ' · ' + String(signed.hash).slice(0, 12) + '…' : '') + '.');
+    onChanged();
+    return {
+      meaning: input.meaning,
+      reason: input.reason,
+      signedAt: signed.signedAt ?? new Date().toISOString(),
+      ...(signed.hash ? { hash: signed.hash } : {}),
+    };
   };
 
   return (
@@ -221,7 +248,19 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
           onSubmit={doFreeze}
         />
       )}
-      {dialog === 'esign' && <C2CForm config={ESIGN_FORM(docTitle)} onCancel={() => setDialog(null)} onSubmit={doSign} />}
+      {dialog === 'esign' && (
+        <EsignModal
+          open
+          action="Sign document"
+          target={docTitle}
+          targetMeta="An Approval signature approves and freezes the document."
+          defaultMeaning="review"
+          meanings={AUTHORING_MEANINGS}
+          signer={signer}
+          onClose={() => setDialog(null)}
+          onSign={doSign}
+        />
+      )}
     </>
   );
 }

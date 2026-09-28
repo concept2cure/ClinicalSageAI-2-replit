@@ -1,0 +1,159 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-23T09:12:13.867Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T09:12:13.868Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-23T09:12:13.868Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-23T09:12:14.100Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > records every clause of the accepted text as the acceptor's assertion, in the same transaction as the content and its audit row 101ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > refuses an accept with no identified user, and writes nothing 13ms
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 47ms
+   → {"success":true,"data":{"documentId":3,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 25ms
+   → {"success":true,"data":{"documentId":4,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 30ms
+   → {"success":true,"data":{"documentId":5,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 24ms
+   → {"success":true,"data":{"documentId":6,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 32ms
+   → {"success":true,"data":{"documentId":7,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > a working row is still accepted (the refusal is the verdict, not the route) 20ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched
+AssertionError: {"success":true,"data":{"documentId":3,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts:133:52
+    131|         .send({ content: 'Text nobody approved, written into an approv…
+    132|
+    133|       expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                    ^
+    134|       expect(res.body.error).toBe('FINALIZED_DOCUMENT_READ_ONLY');
+    135|       const after = (await pg.query('SELECT content, status, metadata:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched
+AssertionError: {"success":true,"data":{"documentId":4,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts:133:52
+    131|         .send({ content: 'Text nobody approved, written into an approv…
+    132|
+    133|       expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                    ^
+    134|       expect(res.body.error).toBe('FINALIZED_DOCUMENT_READ_ONLY');
+    135|       const after = (await pg.query('SELECT content, status, metadata:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched
+AssertionError: {"success":true,"data":{"documentId":5,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts:133:52
+    131|         .send({ content: 'Text nobody approved, written into an approv…
+    132|
+    133|       expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                    ^
+    134|       expect(res.body.error).toBe('FINALIZED_DOCUMENT_READ_ONLY');
+    135|       const after = (await pg.query('SELECT content, status, metadata:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched
+AssertionError: {"success":true,"data":{"documentId":6,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts:133:52
+    131|         .send({ content: 'Text nobody approved, written into an approv…
+    132|
+    133|       expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                    ^
+    134|       expect(res.body.error).toBe('FINALIZED_DOCUMENT_READ_ONLY');
+    135|       const after = (await pg.query('SELECT content, status, metadata:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched
+AssertionError: {"success":true,"data":{"documentId":7,"supersededVersion":1,"framework":null}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts:133:52
+    131|         .send({ content: 'Text nobody approved, written into an approv…
+    132|
+    133|       expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                    ^
+    134|       expect(res.body.error).toBe('FINALIZED_DOCUMENT_READ_ONLY');
+    135|       const after = (await pg.query('SELECT content, status, metadata:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 3 passed (8)
+   Start at  09:12:10
+   Duration  8.71s (transform 2.28s, setup 156ms, import 3.91s, tests 4.23s, environment 0ms)
+

@@ -1,0 +1,26 @@
+GitHub Actions run 35874278603 (CI, push, concept2cure-v2 @ aa80f8415), job "Lint" 107226037991.
+Failing steps, verbatim from the job log:
+
+  Guardrails — audit_logs fixtures accept the audit writer's columns   failure
+  Guardrails — real-database tests never inherit the pg mock           failure
+  Guardrails — ESLint warning ratchet (may only shrink)                failure
+  Guardrails — CI guard self-tests                                     failure
+Job "Security Scan" 107226037477:
+  Run lockfile audit and dependency-risk ledger gate                   failure
+
+ESLint warning ratchet:
+  [ci:eslint-warning-ratchet] 6474 warning(s) across 1818 file(s), 21 rule(s) (baseline 6464).
+  [ci:eslint-warning-ratchet] FAIL — 10 more warning(s) than the baseline allows (6474 > 6464). Rules that grew:
+    max-lines-per-function  1244 → 1252  (+8)
+    complexity  1716 → 1720  (+4)
+    max-lines  490 → 492  (+2)
+    max-params  148 → 149  (+1)
+
+CI guard self-tests (node --test scripts/ci/__tests__/*.test.mjs): 43 tests, 42 pass, 1 fail
+  not ok 30 - integration: committed ledger seals the committed package-lock.json
+    Dependency risk gate: ledger lockfileSha256 is stale
+    The committed ledger no longer seals the committed lockfile; run: npm run ci:dependency-risk:reseal
+
+Every downstream job (Production Boot Smoke, Blank DB Provisioning + Deploy
+Migration, Integration Tests, Coverage, AnA Readiness, AIOS Audit Assets)
+reported "skipped": they need the Lint job.

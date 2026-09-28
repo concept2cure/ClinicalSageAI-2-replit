@@ -1,0 +1,232 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ × server/routes/__tests__/orchestration-project-id.test.ts > POST /execute > refuses a program uuid before any run exists 31ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "context": undefined,
+        "module": undefined,
+        "organizationId": 1,
+        "projectId": "1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc",
+        "requestedBy": Object {
+          "organizationId": 1,
+          "userId": 17,
+          "userName": "runner@example.test",
+          "userRole": "admin",
+        },
+        "sourceSurface": "api",
+        "targetId": undefined,
+        "targetType": undefined,
+        "templateId": "submission_readiness_review",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ✓ server/routes/__tests__/orchestration-project-id.test.ts > POST /execute > runs the review for a project id 6ms
+ × server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > GET /api/orchestration/projects/1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc/readiness never assesses project 1 for program 1d3c… 5ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "module": undefined,
+        "organizationId": 1,
+        "projectId": 1,
+      },
+    ]
+
+
+Number of calls: 1
+
+ × server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > GET /api/orchestration/readiness/freshness/1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc never assesses project 1 for program 1d3c… 4ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "organizationId": 1,
+        "projectId": 1,
+      },
+    ]
+
+
+Number of calls: 1
+
+ × server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > POST /api/orchestration/readiness never assesses project 1 for program 1d3c… 4ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "module": undefined,
+        "organizationId": 1,
+        "projectId": 1,
+      },
+    ]
+
+
+Number of calls: 1
+
+ × server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > POST /api/orchestration/recommendations never assesses project 1 for program 1d3c… 4ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "module": undefined,
+        "organizationId": 1,
+        "projectId": 1,
+      },
+    ]
+
+
+Number of calls: 1
+
+ × server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > POST /api/orchestration/continuity never assesses project 1 for program 1d3c… 5ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > assesses the project a numeric id names 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/orchestration-project-id.test.ts > POST /execute > refuses a program uuid before any run exists
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "context": undefined,
+        "module": undefined,
+        "organizationId": 1,
+        "projectId": "1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc",
+        "requestedBy": Object {
+          "organizationId": 1,
+          "userId": 17,
+          "userName": "runner@example.test",
+          "userRole": "admin",
+        },
+        "sourceSurface": "api",
+        "targetId": undefined,
+        "targetType": undefined,
+        "templateId": "submission_readiness_review",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/orchestration-project-id.test.ts:72:35
+     70|       .send({ templateId: 'submission_readiness_review', projectId: PR…
+     71|
+     72|     expect(h.executeWorkflow).not.toHaveBeenCalled();
+       |                                   ^
+     73|     expect(r.status).toBe(400);
+     74|     expect(r.body.error).toMatch(/positive integer/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > GET /api/orchestration/projects/1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc/readiness never assesses project 1 for program 1d3c…
+ FAIL  server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > POST /api/orchestration/readiness never assesses project 1 for program 1d3c…
+ FAIL  server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > POST /api/orchestration/recommendations never assesses project 1 for program 1d3c…
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "module": undefined,
+        "organizationId": 1,
+        "projectId": 1,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/orchestration-project-id.test.ts:98:46
+     96|     const r = await call;
+     97|
+     98|     expect(h.assembleCrossObjectPayload).not.toHaveBeenCalled();
+       |                                              ^
+     99|     expect(r.status).toBe(400);
+    100|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > GET /api/orchestration/readiness/freshness/1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc never assesses project 1 for program 1d3c…
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "organizationId": 1,
+        "projectId": 1,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/orchestration-project-id.test.ts:98:46
+     96|     const r = await call;
+     97|
+     98|     expect(h.assembleCrossObjectPayload).not.toHaveBeenCalled();
+       |                                              ^
+     99|     expect(r.status).toBe(400);
+    100|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/routes/__tests__/orchestration-project-id.test.ts > the routes that assess a project > POST /api/orchestration/continuity never assesses project 1 for program 1d3c…
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/orchestration-project-id.test.ts:99:22
+     97|
+     98|     expect(h.assembleCrossObjectPayload).not.toHaveBeenCalled();
+     99|     expect(r.status).toBe(400);
+       |                      ^
+    100|   });
+    101|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+   Start at  04:54:45
+   Duration  541ms (transform 143ms, setup 84ms, import 206ms, tests 65ms, environment 0ms)
+

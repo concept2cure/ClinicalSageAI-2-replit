@@ -2592,6 +2592,9 @@ export const users = pgTable('users', {
   mfaBackupCodes: json('mfa_backup_codes'), // encrypted backup codes array
   mfaMethod: text('mfa_method').default('email'), // totp, sms, email
   mfaVerifiedAt: timestamp('mfa_verified_at'),
+  // Time step (floor(unix/30)) of the last TOTP code accepted; a code is accepted
+  // only for a greater step (RFC 6238 §5.2). migrations/20260923_users_mfa_totp_last_step.sql
+  mfaTotpLastStep: bigint('mfa_totp_last_step', { mode: 'number' }),
   // Email OTP fields (for email-based 2FA)
   emailOtpHash: text('email_otp_hash'),
   emailOtpExpiresAt: timestamp('email_otp_expires_at'),

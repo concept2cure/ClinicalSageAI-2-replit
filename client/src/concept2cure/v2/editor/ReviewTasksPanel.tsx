@@ -27,7 +27,7 @@
  * Completing is the tasking path's OWN transition, nothing invented here: a
  * PATCH to `completed`. When the server answers 428 ESIGN_REQUIRED (an
  * approval-gated task) the ceremony lives on the Task board, and the panel
- * says so and offers to go there rather than re-implementing a PIN dialog.
+ * says so and offers to go there rather than re-implementing a signing dialog.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { apiRequest, redactInternals, serverMessage, type ApiRequestError } from '@/lib/queryClient';
@@ -164,11 +164,30 @@ function refusalFromResponse(res: Response, json: unknown): string | null {
   return null;
 }
 
-/** A thrown PATCH failure, named: the §11.50 gate, a state-machine conflict, or a plain refusal. */
+/** A thrown PATCH failure, named: the §11.50 gate, a state-machine conflict, a
+ *  plain refusal, or an outcome nobody can confirm. */
 type TransitionFailure =
   | { kind: 'esign' }
   | { kind: 'conflict'; message: string }
-  | { kind: 'refused'; message: string };
+  | { kind: 'refused'; message: string }
+  | { kind: 'unknown'; message: string };
+
+/** Gateway statuses: usually a proxy's page, not the route's answer. */
+const GATEWAY_STATUSES = new Set([502, 503, 504]);
+
+/**
+ * A COMMIT the server could not confirm (OUTCOME_UNKNOWN), or a gateway's
+ * answer: the change may have landed, so it is never reported as unchanged.
+ */
+function unknownOutcome(err: Partial<ApiRequestError> & { message?: string }): TransitionFailure | null {
+  if (err?.code === 'OUTCOME_UNKNOWN') {
+    return { kind: 'unknown', message: (err.message || 'Whether this change was saved is unknown.') + ' Re-reading the task list.' };
+  }
+  if (err?.status !== undefined && GATEWAY_STATUSES.has(err.status)) {
+    return { kind: 'unknown', message: 'Couldn’t confirm the change: whether it was saved is unknown. Re-reading the task list.' };
+  }
+  return null;
+}
 
 /**
  * Which of the three failure shapes a thrown transition is. Exists because the
@@ -178,6 +197,8 @@ type TransitionFailure =
 function classifyTransitionError(e: unknown): TransitionFailure {
   const err = e as Partial<ApiRequestError> & { message?: string };
   if (err?.status === 428 || err?.code === 'ESIGN_REQUIRED') return { kind: 'esign' };
+  const unknown = unknownOutcome(err);
+  if (unknown) return unknown;
   if (err?.status === 409) {
     return {
       kind: 'conflict',
@@ -282,7 +303,7 @@ function ReviewTaskRow({ task, busy, needsSignature, onTransition, onNav }: Revi
       </div>
       {needsSignature && (
         <div className="scaf-note" role="status" style={{ marginTop: 6, fontSize: 12 }}>
-          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — PIN, meaning, reason — runs on the Task board.
+          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — your password, the meaning, a reason — runs on the Task board.
           {onNav && (
             <button type="button" className="nda-open" style={{ marginLeft: 8 }} onClick={() => onNav('task-board')}>
               Open Task board
@@ -334,7 +355,7 @@ export function ReviewTasksPanel({ docId, docTitle, refreshKey, onAssign, onNav,
         return;
       }
       fireToast(failure.message, 'error');
-      if (failure.kind === 'conflict') reload(docId);
+      if (failure.kind === 'conflict' || failure.kind === 'unknown') reload(docId);
     } finally {
       setBusy(null);
     }

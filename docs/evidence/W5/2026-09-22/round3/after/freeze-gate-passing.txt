@@ -1,0 +1,494 @@
+=== freeze-gate residual repair, after the fix (2026-09-23T09:55:58Z). TEST_DATABASE_URL = throwaway local Postgres 16 database freeze_gate_r3b (the .pg suite creates and drops its own schema). One vitest run per file, --no-file-parallelism. ===
+--- server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is placed while the gate is assembling 163ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is removed while the gate is assembling 191ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > upsertLeaf re-checks the status under the sequence row lock, not only before it 7ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > removeLeaf re-checks the status under the sequence row lock, not only before it 5ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a dependent freeze while a lower sequence is dispatched but not sent — as an ordering refusal, not a package defect 139ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > does not refuse a sequence of only new leaves that shares no section with the unsent lower one 72ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a new leaf in a section the unsent lower sequence files (its operation derives from that filing) 10ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses dispatch on the same rule 10ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the higher direction: a lower sequence is not filed behind a locked higher one it depends on > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against 453ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the higher direction: a lower sequence is not filed behind a locked higher one it depends on > refuses dispatch of a frozen lower sequence once a higher one acting on the same document is already filed 95ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the higher direction: a lower sequence is not filed behind a locked higher one it depends on > a dispatched, unsent higher sequence refuses the lower one with the remedy that works, not "send it first" 222ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a pre-existing pair of locked, unsent sequences in a shared section is not deadlocked > lets the lower one dispatch, and holds the higher one until it is sent 135ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule spans the regions of a submission, as the prior-state loader does > names the region of the sequence it waits on 9ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > IND sequences with their own 1571 and cover letter freeze and dispatch while the lower one is dispatched, not sent 527ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > a replace of the SAME document the unsent lower sequence files is still refused, with the filing-order message 266ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > a lower IND sequence still freezes and dispatches after a higher one with its own transmittal pair is filed 620ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a withdrawal that names no document still binds the ordering rule by section > a withdrawal naming no document binds by section: a dispatched, unsent one holds a higher sequence filing in that section 91ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a withdrawal that names no document still binds the ordering rule by section > a withdrawal naming no document is refused behind a dispatched higher sequence that files in its section 169ms
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+--- server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts
+ ✓ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > an upsertLeaf that starts while a freeze holds the row lock waits for it, then refuses the frozen sequence 40ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-row-lock.pg.test.ts > the sequence row lock serializes leaf writes with a governed freeze (real Postgres) > a freeze that reaches its row lock while a leaf write holds it waits, then refuses the leaf manifest it never judged 796ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+--- server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > refuses to freeze a sequence carrying an unapproved document, and changes nothing 698ms
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > reaches the state change when the package is transmittable 2ms
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > applies to dispatch as well 1ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+--- server/services/submission-service/__tests__/gateway-selection.test.ts
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes FDA (all client types) to ESG 2ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes Japan (all client types) to the PMDA gateway 1ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes EU drug/biologic (pharma|biotech) to CESP 1ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes EU device/IVD (mdx|ivd) to EUDAMED 1ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > returns null for an unknown region (caller raises VALIDATION) 0ms
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+--- server/services/submission-service/__tests__/governed-transition-cas.test.ts
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > governed freeze/dispatch — compare-and-set on the authorized state > both governed writes predicate on the status that was read 2ms
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > governed freeze/dispatch — compare-and-set on the authorized state > passes the read status as that predicate, not a constant 0ms
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > governed freeze/dispatch — compare-and-set on the authorized state > reports a lost race as INVALID_STATE, not "not found" 0ms
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > the generic transitionSequence twin carries the same guard > adds the read status to its where clause 0ms
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > the generic transitionSequence twin carries the same guard > refuses when the compare-and-set matched nothing 0ms
+ ✓ server/services/submission-service/__tests__/governed-transition-cas.test.ts > the transmit terminal write explains its own zero-row case > says the package already went to the gateway 0ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+--- server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (create) 4ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (update) 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > names the allowed tables in the refusal so the caller can correct it 3ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts coauthor_documents — a table the resolver branches on 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts unified_documents — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts ctd_onboarding_documents — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts rendered_leaf_files — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts c2c_document_sections — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts vault_documents — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf addressed by an integer — a uuid-keyed store has no integer to name 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf with no uuid at all — it would name no document 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a uuid on an integer-keyed table — that store has no uuids 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault document belonging to another organization, and pins nothing 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > pins the vault document content hash onto the leaf it writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > still accepts a leaf with no document pointer at all 0ms
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+--- server/services/submission-service/__tests__/leaf-parent-scoping.test.ts
+ ✓ server/services/submission-service/__tests__/leaf-parent-scoping.test.ts > upsertLeaf parentLeafId scoping > rejects a parentLeafId that is not a leaf in this sequence for this org 5ms
+ ✓ server/services/submission-service/__tests__/leaf-parent-scoping.test.ts > upsertLeaf parentLeafId scoping > allows a parentLeafId that resolves to a leaf in this sequence for this org 2ms
+ ✓ server/services/submission-service/__tests__/leaf-parent-scoping.test.ts > upsertLeaf parentLeafId scoping > does not run a parent lookup when no parentLeafId is given (new leaf) 1ms
+ ✓ server/services/submission-service/__tests__/leaf-parent-scoping.test.ts > SubmissionError > carries a code 0ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+--- server/services/submission-service/__tests__/leaf-section-code.test.ts
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses a value that is not a CTD code, and writes nothing 3ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > names the value it refused, and what one looks like 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '' 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '   ' 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses 'foo' 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '6.1' 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses 'm1/us/1.2' 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '1' 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses '3' 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > refuses on UPDATE too — a leaf cannot be edited into an unplaceable section 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > stores a precise section EXACTLY as given — 3.2.S.4.2 is not collapsed 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.1' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.2' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.5' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.7' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.9' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.12.4' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.13' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm1.1.1' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm5.3.5' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts 'm3.2.S.2' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '2.5' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '3.2.S' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '3.2.S.4.2' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '5.3.5.1' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the section code must name a CTD section > accepts '1.14.4.2' — a code this product actually writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > accepts an eSTAR device section on a 510(k), which the CTD gate refused outright 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > accepts an IRB package slot on an IRB submission 1ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > refuses that same eSTAR code on an IND, because an IND files on CTD headings 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > refuses a CTD code on an IRB submission, in the other direction 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > refuses a misspelled IRB slot by name, because that list is closed 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > refuses a path fragment on a 510(k) too — the folder-name defect is vocabulary-independent 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > falls back to the CTD gate for an application type it does not recognise 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > narrows to CTD when the submission row cannot be read at all 0ms
+ ✓ server/services/submission-service/__tests__/leaf-section-code.test.ts > upsertLeaf — the vocabulary follows the submission type > still accepts a CTD code when the submission row cannot be read 0ms
+ Test Files  1 passed (1)
+      Tests  35 passed (35)
+--- server/services/submission-service/__tests__/leaf-source-pin.test.ts
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins the SHA-256 of the document content it filed 3ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > the pin is re-derivable by an inspector from the document row 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > REGRESSION: a document edited after filing no longer matches its pin 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins NULL, not sha256 of empty, when the document has no content 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins nothing when the leaf carries no document pointer 0ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > re-pins on update, so a re-pointed leaf cannot keep an old attestation 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > still refuses a document that belongs to another organization 2ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+--- server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses another organization’s unified_documents id 11ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses another organization’s ctd_onboarding_documents id 4ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses a c2c_document_sections row whose PARENT document belongs to another organization 5ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > persists NO leaf row for any of those refusals 2ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — the caller’s own sources are accepted AND pinned > pins the sha256 of the latest workflow version for its own unified_documents leaf 12ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — the caller’s own sources are accepted AND pinned > pins the sha256 of the section body for its own c2c_document_sections leaf 6ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > drift guard > the tenancy dispatch covers every table the read-side resolver can materialize 1ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+--- server/services/submission-service/__tests__/lifecycle-rules.test.ts
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > canTransitionSequence > allows the forward path draft → assembling → validated → frozen → dispatched 2ms
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > canTransitionSequence > allows backward moves to rework (assembling → draft, validated → assembling) 0ms
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > canTransitionSequence > forbids skipping states and reviving a dispatched sequence 1ms
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > canTransitionSequence > forbids unknown states 0ms
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > isSequenceLocked > locks frozen and dispatched sequences 0ms
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > isSequenceLocked > leaves draft/assembling/validated mutable 0ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+--- server/services/submission-service/__tests__/remove-leaf.test.ts
+ ✓ server/services/submission-service/__tests__/remove-leaf.test.ts > removeLeaf > refuses on a frozen sequence before touching anything 4ms
+ ✓ server/services/submission-service/__tests__/remove-leaf.test.ts > removeLeaf > refuses to remove a leaf another leaf lifecycle-references 1ms
+ ✓ server/services/submission-service/__tests__/remove-leaf.test.ts > removeLeaf > soft-deletes a removable leaf and writes the audit event 3ms
+ ✓ server/services/submission-service/__tests__/remove-leaf.test.ts > removeLeaf > a scoped miss is NOT_FOUND, never a silent success 1ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+--- server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent 1267ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError) 4ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the requiredAgencyMetadata refusal raised by the gateway 3ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError) 9ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError keeps the claim at transmitting 2ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError keeps the claim at transmitting 2ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+--- server/services/submission-service/__tests__/transmit-refusals.test.ts
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no environment is named — it never defaults to production 3ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an environment outside staging|production 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no application number is recorded 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an UNASSIGNED placeholder application number 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a whitespace-only application number 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > resendRefusal — a transmitted sequence is not sent again > refuses sent and acknowledged, allows pending and rejected 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > refuses a resend while a transmit is in flight 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still allows the states that were always re-sendable 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still refuses the terminal states 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > claims the slot with a compare-and-set on the value it read 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > takes the claim BEFORE the package is assembled 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > resolves the attempt with a write predicated on that claim 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > never releases the claim after the bytes may have left 1ms
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+--- server/services/ingestion/__tests__/classify-placement.pglite.test.ts
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into a 1 sequence (frozen) places nothing and reports the refusal 38ms
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into a 2 sequence (dispatched) places nothing and reports the refusal 6ms
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into an open sequence places the leaf as before, and says so 15ms
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > reports another organization's sequence as a refusal, not as a silent skip 5ms
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > reports a section code the submission vocabulary refuses 7ms
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > never takes the placement outcome from the model 12ms
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > does not swallow an error that is not a placement refusal 5ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+--- server/services/ingestion/__tests__/document-text-bound.test.ts
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > reads a short document whole and reports no truncation 2ms
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > reads a document exactly at the bound whole 1ms
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > cuts an over-long document at the bound and reports the numbers 4ms
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > cuts at a paragraph boundary near the bound rather than mid-sentence 1ms
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > falls back to the hard bound when there is no boundary to cut on 0ms
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > treats empty and whitespace input as read-whole rather than truncated 0ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+--- server/services/ana/__tests__/submission-center-tools.test.ts
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > registers a handler for every submission-center tool 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > exposes every submission-center tool in ALL_ANA_TOOLS with a valid schema 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > diffs prior vs desired and assigns operations 20ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > forwards prior href + prior_sequence_prefix so a replace emits modified-file 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > refuses to auto-load a prior sequence without tenant context (org from ToolContext only) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > does NOT engage auto-load when explicit prior_leaves are supplied (org not required) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > maps v3 operations to RPS and emits one document + CoU per leaf 418ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > points relatedContextOfUse at the prior sequence for a lifecycle op 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > returns serialized RPS message XML when include_xml is set 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf.xml per study 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > check_ectd_cross_references (pure) > resolves present references and flags missing targets 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > validate_ectd_package (pure) > returns a verdict, score, and findings for a leaf set 62ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission refuses without org/user context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > explain_validation_findings refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > cross_region_gap_analysis validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > dispatch_qc_check refuses without org/user context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > trace_provenance refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence refuses without org/user context (upsertLeaf is tenant-scoped) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence validates required inputs before touching the core 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > check_consistency validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules returns the corpus without tenant context 17ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules validates the region enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec returns a single spec by id 23ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec filters by market without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec validates the family enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template returns a document spine by id 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template lists a family without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting enforces a spec and flags a bad name 12ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting errors on an unknown spec 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_submission_requirements returns and assesses a type 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility checks all-criteria-met 12ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility errors on an unknown designation 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change recommends a category from flags 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change lists the catalog without flags 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure gap-checks a CER 12ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device applies the MDR rules 11ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_reviewer_checklist returns the 510(k) reviewer questions 17ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device validates the framework 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_biocompatibility_endpoints returns endpoints for a permanent implant 11ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure now handles rmf 19ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint assembles the reverse-workflow view 52ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint validates the submission type 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer refuses without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer requires a report_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy maps device evidence across regions 15ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy validates the kind 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_regulatory_timeline returns the 510(k) RTA + decision goal 24ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint now includes a readiness scorecard 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_udi computes the GS1 check digit 15ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_electrical_standards adds collaterals from facts 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_sterilization_requirements resolves the method standard 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_regulatory_capabilities enumerates the layer 11ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product maps PMOA to the lead center 14ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product validates components 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_qms returns the clause structure and gap-checks 15ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_labeling adds sterile elements for a sterile device 16ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document requires a numeric document_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document validates required inputs 0ms
+ Test Files  1 passed (1)
+      Tests  66 passed (66)
+--- server/services/cmc/__tests__/place-module3-into-submission.test.ts
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses with the gate verdict and performs no write when the gate refuses 3ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses a submission that does not file on CTD headings, before any read or write 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses an eSTAR device submission for the same reason 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > places normally when the submission files on CTD headings 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > carries the section label into coauthor_documents.module_name 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > files a section already placed in an earlier sequence as replace of that leaf, not as new 2ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > snapshots approved sections into coauthor_documents and places m-prefixed leaves 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses a sequence that belongs to a different submission 2ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > skips (and says it skipped) an approved section with no compiled narrative 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > carries the composed tables the narrative cites into the placed snapshot 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > places the placeable sections and says which ones were skipped as pre-tables 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > refuses the whole placement — with no write — when every approved section is unplaceable 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > places a genuinely table-free section with no table block and no trailing blank tail 1ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > toLeafSectionCode > prefixes the eCTD spine's m onto CMC OS section keys 0ms
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > the governed artifact and the filed leaf are the same bytes > renders a narrative with a trailing space identically for both consumers 0ms
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+--- server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > treats unset / misspelled NODE_ENV as production (strict) 4ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > only relaxes for a recognized non-production value 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > blocks when zero Shadow Review runs have completed 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > clears once at least one completed run exists 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > names every composed gate by its corpus rule and carries its own blockers 2ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > the gates, taken together, are exactly the composed verdict — nothing shown that does not block, nothing blocking unshown 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > attaches each finding's rule, and says so when a code has none 0ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+--- server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > resolves a uuid-keyed vault leaf and an integer-keyed leaf; reports a changed pin and a missing document under their own codes 32ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > once every leaf resolves, the structural blocker leaves BOTH composed gates and what remains is real 21ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+--- server/services/ectd/__tests__/dispatch-readiness.test.ts
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > reports zero errors for a clean, resolvable sequence 3ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an empty sequence as an error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > treats a sequence of only deletes as empty (error) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags a non-delete leaf with no document as UNRESOLVED_DOCUMENT 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > does NOT flag a delete leaf with no document 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an invalid lifecycle operation 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > reports missing required sections as non-blocking warnings (not errors) 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > matches required sections across module-prefix/format differences 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > a true sub-section satisfies a required parent section 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > a numerically-adjacent section does NOT satisfy a required section 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > emits an info for duplicate "new" leaves in one section without erroring 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > warnings and infos never inflate the authoritative error count 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags replace/append/delete in an ORIGINAL sequence as errors 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > allows new leaves in an original sequence (no lifecycle error) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > does NOT apply the original-sequence rule to amendments 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > says a follow-up's declared acts were not bound here, rather than reading clean (2026-09-22 W5/D7) 2ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > accepts a valid 4-digit sequence number 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags a malformed sequence number as an error 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > flags a leaf whose document_table no resolver can materialize 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > does NOT flag the tables the assembler can resolve 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > has no external table today, and the vault leaf it used to flag now reads clear 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > flags an invented document_table on a DELETE leaf — the completeness exemption is not a pointer exemption 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > still exempts a delete leaf that carries NO pointer — that is the legitimate shape 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > does not double-report a delete leaf that points at a table the assembler CAN resolve 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > a uuid-keyed vault leaf (documentId null) is a complete pointer — no UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > an integer-keyed leaf still resolves 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > a vault leaf carrying only an integer names nothing — UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > an integer-keyed table carrying only a uuid names nothing — UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > hasCompleteDocumentPointer: uuid for the vault, integer elsewhere, either for an unknown table 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a resolved leaf whose pin matches carries no error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > an unpinned leaf says its content was not verified, rather than reading like a match (2026-09-22 W5/D7) 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a pinned hash that differs from the stored document is DOCUMENT_CONTENT_MISMATCH — its own code, never silently passed 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a delete whose source changed since it was pinned is not DOCUMENT_CONTENT_MISMATCH; the leaf that ships it still is 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a document the resolver could not find stays UNRESOLVED_DOCUMENT, naming the pointer 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a missing document on a DELETE leaf is not a completeness error (a delete ships no file) 0ms
+ Test Files  1 passed (1)
+      Tests  35 passed (35)
+--- server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > materializes the vault copy, staging the RAW bytes 13ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > fetches the bytes with the CALLER organization 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > gives two vault leaves DISTINCT keys 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a LEGACY vault leaf addressed by an integer says an integer cannot name one 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a leaf with NEITHER pointer is skipped here and reported by the dispatch gate 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a malformed uuid is refused rather than raising 22P02 across the whole assembly 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > another organization vault document is not found 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a row that predates the storage provider names the backfill that fixes it 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes the provider will not return for this org are refused 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes that do not match the recorded hash are REFUSED, not staged 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a vault document that is not a PDF is refused on its BYTES, not its mime 3ms
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+--- server/services/ectd/__tests__/prior-sequence-loader.test.ts
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > returns the prior sequence leaves as PriorLeaf[] 2ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > ALWAYS scopes the query by organization_id (never cross-tenant) 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > returns [] when no matching compilation exists (a first sequence has no prior) 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > returns [] without touching the DB when an identifier is missing 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > tolerates a NULL/garbage stored manifest without throwing 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > a sequence's own withdrawals > loadPriorSequenceManifest leaves a withdrawn leaf out 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > a sequence's own withdrawals > loadLatestPriorManifest leaves a withdrawn leaf out 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadLatestPriorManifest > finds the most recent sequence BEFORE the current one, org-scoped 2ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadLatestPriorManifest > returns an empty prior for a first sequence (no earlier compilation) 1ms
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+--- server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > a compiled-but-never-transmitted sequence is not on file 3ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > and sequence 0002 therefore SHIPS the documents rather than calling them unchanged 2ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > an acknowledged sequence is on file just as a sent one is 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > a QUEUED sequence is not on file — pending is not sent 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > nothing transmitted yet means an empty prior state, not a fabricated one 0ms
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+--- server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts
+ ✓ server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts > against the real schema > the query runs, and a dispatch-intent signature over the current leaves verifies 33ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts > against the real schema > a leaf added after signing drifts the manifest, and the signature stops verifying 16ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts > against the real schema > a FREEZE-intent signature does not release anything 7ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts > against the real schema > a sign action that never executed does not count 8ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts > against the real schema > a ledger-basis signature binds no content, so it is not a release signature 5ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts > against the real schema > a revoked signature is revoked, not signed 7ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts > against the real schema > does not see another organization’s signature on its own sequence 17ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts > against the real schema > survives the dispatch it authorized — advancing the workflow is not tampering 23ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts > against the real schema > re-signing after a change verifies again — the newest signature decides 25ms
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+--- server/services/ectd/__tests__/sequence-release-signature.test.ts
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that counts > is signed when the digest still binds the current leaf manifest 3ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that counts > re-derives the manifest for THIS target and organization 2ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that does not > is invalid when the sequence changed after signing 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that does not > never papers over a failing newest signature with an older passing one 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that does not > is revoked when the signature was superseded 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that does not > is revoked when verification_status says so 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that does not > is revoked when the row is no longer valid 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > a signature that does not > is unsigned when the sequence carries no dispatch-intent signature 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > what cannot be verified is never reported as verified > reports undetermined when the lookup fails 2ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > what cannot be verified is never reported as verified > reports undetermined when the manifest cannot be re-derived 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > what cannot be verified is never reported as verified > reports undetermined when the derivation falls back to the ledger basis 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > what cannot be verified is never reported as verified > refuses a leaf-manifest signature that carries no digest at all 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > what cannot be verified is never reported as verified > rejects a nonsense sequence id or organization without querying 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > the query is what makes the rules above true > is scoped to this organization and this sequence target 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > the query is what makes the rules above true > accepts only a leaf-manifest binding — a ledger-basis signature binds no content 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > the query is what makes the rules above true > accepts only a DISPATCH-intent signature — freeze is not release 0ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > the query is what makes the rules above true > requires an executed sign action, and excludes revocation rows 1ms
+ ✓ server/services/ectd/__tests__/sequence-release-signature.test.ts > the query is what makes the rules above true > takes the newest signature, not an arbitrary one 0ms
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+--- server/services/ind-lifecycle/__tests__/ind-filing-flow-pglite.integration.test.ts
+ ✓ server/services/ind-lifecycle/__tests__/ind-filing-flow-pglite.integration.test.ts > annual-report filing flow against PGlite > creates a submission, files an annual sequence, and persists the m1.13 leaf + checksum 46ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-filing-flow-pglite.integration.test.ts > safety-report filing flow against PGlite > files the 312.32 amendment leaves (m1.12.4 + m5.3.5) with the safety-report checksum 35ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-filing-flow-pglite.integration.test.ts > IND portfolio against PGlite > lists only IND submissions for the org, with per-submission sequence rollups 45ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+--- server/services/ind-lifecycle/__tests__/ind-lifecycle-persistence.test.ts
+ ✓ server/services/ind-lifecycle/__tests__/ind-lifecycle-persistence.test.ts > persistSafetyReportIntent > creates one amendment sequence and a leaf per intent leaf 8ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-lifecycle-persistence.test.ts > persistSafetyReportIntent > files a sequence that passes the platform’s own required-placement set 2ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-lifecycle-persistence.test.ts > persistSafetyReportIntent > names the required leaves it created with no document behind them 1ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-lifecycle-persistence.test.ts > persistAnnualReport > creates an "annual" sequence with a single m1.13 leaf 2ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-lifecycle-persistence.test.ts > persistAnnualReport > points the m1.13 leaf at the retained rendered document when one was stored 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-lifecycle-persistence.test.ts > persistAnnualReport > files the leaf as metadata when nothing was retained — never a checksum with no referent 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-lifecycle-persistence.test.ts > persistSafetyReportIntent — leaf-source pass-through > points the matching section leaf at the retained rendered document 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-lifecycle-persistence.test.ts > persistAmendmentPlan > creates an amendment sequence and persists each planned leaf 1ms
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+--- server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts
+ ✓ server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts > master-data service against PGlite > creates and reads back a sponsor (org-scoped) 17ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts > master-data service against PGlite > does not leak across organizations 4ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts > dispatch-snapshot service against PGlite > persists a verdict and lists it newest-first 10ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts > dispatch-snapshot service against PGlite > getLatestDispatchSnapshot returns null for a sequence with no snapshots 2ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+--- tests/regulatory/document-lifecycle-pipeline.pglite.test.ts
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > runs the spine authoring → approved with gates, signatures and a verified audit chain, and refuses to place while the filing bindings are unwired 114ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > scopes reads to the tenant — another org cannot see the document 14ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > instantiates the type's blueprint outline at creation (blueprints reach the document) 44ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+--- tests/ci/prompts-dir.test.ts
+ ✓ tests/ci/prompts-dir.test.ts > ai-gateway PROMPTS_DIR resolution > resolves to an absolute directory that exists 2ms
+ ✓ tests/ci/prompts-dir.test.ts > ai-gateway PROMPTS_DIR resolution > contains every prompt the services load at runtime 1ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+
+=== skeptic probes rerun on the working tree (each probe asserted the DEFECT, so a failing probe assertion = defect gone) ===
+P5 freeze 0002 -> ok {"status":"frozen","dispatch_status":null}
+P5 freeze 0001 while 0002 frozen -> ok
+P5 dispatch 0002 -> ok
+P5 freeze 0001 after 0002 sent -> INVALID_STATE Cannot transition sequence from frozen to frozen. {"status":"frozen","dispatch_status":null}
+P5 0001 package ops: [{"s":"m1.2","f":"m1-2-coauthor-documents-1010.pdf","op":"new","mod":null},{"s":"m2.4","f":"m2-4-coauthor-documents-1011.pdf","op":"new","mod":null}] blockers: []
+P5 0002 filed keys: ["m1.2/m1-2-coauthor-documents-1020.pdf","m2.3/m2-3-coauthor-documents-1021.pdf"]
+P6 update during assembly -> leaf 9000 doc 2001
+P6 freeze -> INVALID_STATE Sequence 20's leaves changed while this freeze was being checked (the leaf manifest no longer matches the one the package gate assembled and the signature binds). Nothing was changed; re-check the leaves and sign again. {"status":"validated","dispatch_status":null}
+   → expected 'INVALID_STATE' to be 'DISPATCH_BLOCKED' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed (2)
+P4 upsertLeaf into frozen -> INVALID_STATE Sequence is frozen; its leaves are immutable.
+P4 classifyDocument into sequence 1 -> ok
+P4 classifyDocument into sequence 2 -> ok
+P4 leaves now: []
+   → expected +0 to be 2 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed (1)
+FIN
+
+=== rerun after the last edit to ingestion-service.ts (model-supplied leafPlacement dropped before the metadata write) ===
+--- server/services/ingestion/__tests__/classify-placement.pglite.test.ts
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into a 1 sequence (frozen) places nothing and reports the refusal 22ms
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into a 2 sequence (dispatched) places nothing and reports the refusal 6ms
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into an open sequence places the leaf as before, and says so 14ms
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > reports another organization's sequence as a refusal, not as a silent skip 6ms
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > reports a section code the submission vocabulary refuses 7ms
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > never takes the placement outcome from the model 7ms
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > does not swallow an error that is not a placement refusal 5ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+--- server/services/ingestion/__tests__/document-text-bound.test.ts
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > reads a short document whole and reports no truncation 2ms
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > reads a document exactly at the bound whole 1ms
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > cuts an over-long document at the bound and reports the numbers 1ms
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > cuts at a paragraph boundary near the bound rather than mid-sentence 0ms
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > falls back to the hard bound when there is no boundary to cut on 1ms
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > treats empty and whitespace input as read-whole rather than truncated 0ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+=== eslint (changed files) ===
+  438:8  warning  Async function 'extractStructure' has too many lines (105). Maximum allowed is 100  max-lines-per-function
+  634:1  warning  File has too many lines (563). Maximum allowed is 500  max-lines
+   443:1  warning  Async function 'governedSignatureVerdict' has a complexity of 17. Maximum allowed is 15                complexity
+   840:1  warning  File has too many lines (1272). Maximum allowed is 500                                                 max-lines
+  1030:8  warning  Function 'selectGateway' has a complexity of 17. Maximum allowed is 15                                 complexity
+  1203:8  warning  Async function 'transmitSequence' has too many lines (183). Maximum allowed is 100                     max-lines-per-function
+  1203:8  warning  Async function 'transmitSequence' has a complexity of 27. Maximum allowed is 15                        complexity
+  1250:3  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  1822:8  warning  Async function 'upsertLeaf' has too many lines (133). Maximum allowed is 100                           max-lines-per-function
+  1822:8  warning  Async function 'upsertLeaf' has a complexity of 22. Maximum allowed is 15                              complexity
+✖ 10 problems (0 errors, 10 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+=== scoped tsc: errors in changed files ===
+none (13 errors total, all in unrelated files: establishRequestTenantScope, AnaToolExecutor TS7016 js imports, link-to-module3, document-text-extraction, mfaService, kms-signer, jwtVerify)

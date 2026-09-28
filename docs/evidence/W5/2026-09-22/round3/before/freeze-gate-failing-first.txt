@@ -1,0 +1,111 @@
+# freeze-gate failing-first, working tree BEFORE this pass's implementation (2026-09-23T09:35:20Z)
+## skeptic probes rerun
+P5 freeze 0002 -> ok {"status":"frozen","dispatch_status":null}
+P5 freeze 0001 while 0002 frozen -> DISPATCH_BLOCKED Refusing to freeze: sequence 0002 is frozen and not yet filed (frozen, dispatch status 'none', region 'fda') and files leaves in m1.2, where this sequence's lifecycle operations bind. This sequence can no longer be filed ahead of it: it is judged only against the sequences numbered below it, and 0002's lifecycle operations were judged without th
+P5 dispatch 0002 -> ok
+P5 freeze 0001 after 0002 sent -> DISPATCH_BLOCKED Refusing to freeze: sequence 0002 is already filed (dispatched, dispatch status 'sent', region 'fda') and files leaves in m1.2, where this sequence's lifecycle operations bind. This sequence can no longer be filed ahead of it: it is judged only against the sequences numbered below it, so its lifecycle operations would bind to what 0002 has already
+P5 0001 package ops: [{"s":"m1.2","f":"m1-2-coauthor-documents-1010.pdf","op":"new","mod":null},{"s":"m2.4","f":"m2-4-coauthor-documents-1011.pdf","op":"new","mod":null}] blockers: []
+P5 0002 filed keys: ["m1.2/m1-2-coauthor-documents-1020.pdf","m2.3/m2-3-coauthor-documents-1021.pdf"]
+P4 upsertLeaf into frozen -> INVALID_STATE Sequence is frozen; its leaves are immutable.
+P4 classifyDocument into sequence 1 -> ok
+P4 classifyDocument into sequence 2 -> ok
+P4 leaves now: [{"sequence_id":1,"status":"frozen","section_code":"m2.4","document_id":201},{"sequence_id":2,"status":"dispatched","section_code":"m2.4","document_id":201}]
+      Tests  1 passed (1)
+
+## freeze-gate-binding.pglite.test.ts
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is placed while the gate is assembling 269ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is removed while the gate is assembling 367ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > upsertLeaf re-checks the status under the sequence row lock, not only before it 8ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > removeLeaf re-checks the status under the sequence row lock, not only before it 7ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a dependent freeze while a lower sequence is dispatched but not sent — as an ordering refusal, not a package defect 276ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > does not refuse a sequence of only new leaves that shares no section with the unsent lower one 91ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a new leaf in a section the unsent lower sequence files (its operation derives from that filing) 13ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses dispatch on the same rule 14ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against 725ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses dispatch of a frozen lower sequence once a higher one acting on the same document is already filed 129ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > a dispatched, unsent higher sequence refuses the lower one with the remedy that works, not "send it first" 264ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a pre-existing pair of locked, unsent sequences in a shared section is not deadlocked > lets the lower one dispatch, and holds the higher one until it is sent 205ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule spans the regions of a submission, as the prior-state loader does > names the region of the sequence it waits on 9ms
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > IND sequences with their own 1571 and cover letter freeze and dispatch while the lower one is dispatched, not sent 517ms
+   → an IND sequence was held behind another one that files different documents in m1.1/m1.2: expected SubmissionError: Refusing to freeze: sequ… { code: '…' } to be null
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > a replace of the SAME document the unsent lower sequence files is still refused, with the filing-order message 12ms
+   → the refusal named a section where nothing binds: expected 'Refusing to freeze: sequence 0001 is …' not to match /m1\.1/
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > a lower IND sequence still freezes and dispatches after a higher one with its own transmittal pair is filed 262ms
+   → the lower IND sequence was refused behind a frozen higher one it shares no document with: expected SubmissionError: Refusing to freeze: sequ… { code: '…' } to be null
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > a withdrawal naming no document binds by section: a dispatched, unsent one holds a higher sequence filing in that section 172ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > a withdrawal naming no document is refused behind a dispatched higher sequence that files in its section 257ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 15 passed (18)
+
+## classify-placement.pglite.test.ts
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into a 1 sequence (frozen) places nothing and reports the refusal 36ms
+   → classify wrote a leaf into a frozen sequence: expected [ { section_code: 'm2.4', …(8) } ] to deeply equal []
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into a 2 sequence (dispatched) places nothing and reports the refusal 8ms
+   → classify wrote a leaf into a dispatched sequence: expected [ { section_code: 'm2.4', …(8) } ] to deeply equal []
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into an open sequence places the leaf as before, and says so 10ms
+   → expected undefined to deeply equal { placed: true, refusal: null }
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > reports another organization's sequence as a refusal, not as a silent skip 7ms
+   → expected undefined to match object { placed: false, …(1) }
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > reports a section code the submission vocabulary refuses 9ms
+   → expected undefined to match object { placed: false, …(1) }
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > never takes the placement outcome from the model 6ms
+   → expected { placed: true, refusal: null } to match object { placed: false }
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > does not swallow an error that is not a placement refusal 11ms
+   → promise resolved "{ sectionCode: 'm2.4', …(6) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+
+## MUTANTS of this pass's implementation: each keep-refusing / never-swallow case fails on the defect it exists to catch
+# keyonly = withdrawal naming no document gets no section-level binding; nodep = nothing is a dependency; swallow = classify reports every upsertLeaf error as a refusal
+### mutant 'keyonly' of submission-service.ts
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a withdrawal that names no document still binds the ordering rule by section > a withdrawal naming no document binds by section: a dispatched, unsent one holds a higher sequence filing in that section 214ms
+   → a leaf in the section an unsent section-bound withdrawal acts on was frozen ahead of it: expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a withdrawal that names no document still binds the ordering rule by section > a withdrawal naming no document is refused behind a dispatched higher sequence that files in its section 220ms
+   → a section-bound withdrawal froze ahead of a higher sequence filing in its section: expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 16 passed (18)
+### mutant 'nodep' of submission-service.ts
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a dependent freeze while a lower sequence is dispatched but not sent — as an ordering refusal, not a package defect 103ms
+   → expected SubmissionError: Refusing to freeze: 1 pl… { code: '…' } to match object { code: 'DISPATCH_BLOCKED', …(1) }
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a new leaf in a section the unsent lower sequence files (its operation derives from that filing) 84ms
+   → expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses dispatch on the same rule 68ms
+   → expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the higher direction: a lower sequence is not filed behind a locked higher one it depends on > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against 325ms
+   → 0001 froze under a dispatched 0002 whose lifecycle acts its filing would invalidate: expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the higher direction: a lower sequence is not filed behind a locked higher one it depends on > refuses dispatch of a frozen lower sequence once a higher one acting on the same document is already filed 154ms
+   → a lower sequence was dispatched after a higher one in its section was filed: expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the higher direction: a lower sequence is not filed behind a locked higher one it depends on > a dispatched, unsent higher sequence refuses the lower one with the remedy that works, not "send it first" 312ms
+   → expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a pre-existing pair of locked, unsent sequences in a shared section is not deadlocked > lets the lower one dispatch, and holds the higher one until it is sent 138ms
+   → expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule spans the regions of a submission, as the prior-state loader does > names the region of the sequence it waits on 96ms
+   → expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > a replace of the SAME document the unsent lower sequence files is still refused, with the filing-order message 73ms
+   → a replace of a leaf the unsent 0001 files was frozen before 0001 reached the agency: expected SubmissionError: Refusing to freeze: 1 pl… { code: '…' } to match object { code: 'DISPATCH_BLOCKED', …(1) }
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a withdrawal that names no document still binds the ordering rule by section > a withdrawal naming no document binds by section: a dispatched, unsent one holds a higher sequence filing in that section 185ms
+   → a leaf in the section an unsent section-bound withdrawal acts on was frozen ahead of it: expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+ × server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a withdrawal that names no document still binds the ordering rule by section > a withdrawal naming no document is refused behind a dispatched higher sequence that files in its section 238ms
+   → a section-bound withdrawal froze ahead of a higher sequence filing in its section: expected null to match object { code: 'DISPATCH_BLOCKED', …(1) }
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  11 failed | 7 passed (18)
+### mutant 'swallow' of ingestion-service.ts
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into a 1 sequence (frozen) places nothing and reports the refusal 28ms
+   → a refused placement was reported as nothing at all: expected { placed: false, …(1) } to deeply equal { placed: false, …(1) }
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into a 2 sequence (dispatched) places nothing and reports the refusal 8ms
+   → a refused placement was reported as nothing at all: expected { placed: false, …(1) } to deeply equal { placed: false, …(1) }
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into an open sequence places the leaf as before, and says so 15ms
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > reports another organization's sequence as a refusal, not as a silent skip 7ms
+   → expected { placed: false, …(1) } to match object { placed: false, …(1) }
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > reports a section code the submission vocabulary refuses 7ms
+   → expected { placed: false, …(1) } to match object { placed: false, …(1) }
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > never takes the placement outcome from the model 7ms
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > does not swallow an error that is not a placement refusal 6ms
+   → promise resolved "{ sectionCode: 'm2.4', …(7) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)

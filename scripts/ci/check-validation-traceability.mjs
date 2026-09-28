@@ -31,11 +31,22 @@
  * reviewer and is not traceability. Line numbers are stripped — they go stale
  * constantly and pinning them would make this gate noise rather than signal.
  *
+ * ── Second check: the record states the assurance activity the protocol set ──
+ * Each OQ protocol declares every step's kind: scripted (a pass criterion the
+ * runner checks), unscripted or ad-hoc (the runner records what it observed
+ * and a reviewer judges it), or prerequisite. The execution record prints the
+ * kind the RUNNER gave the step, and the harness defaults to scripted. No
+ * runner declared a kind, so every record presented unscripted and ad-hoc
+ * steps as scripted passes: 18 steps across the six protocols, among them
+ * OQ-SRDY-05, which passed on a readiness review built from reads that had
+ * all failed (VSR-001 F-23). So every step a runner executes must carry the
+ * kind its protocol declares, and neither may list a step the other lacks.
+ *
  * Usage:
  *   node scripts/ci/check-validation-traceability.mjs
  *   node scripts/ci/check-validation-traceability.mjs --self-test
  *
- * Exit 0 when every citation resolves; 1 otherwise.
+ * Exit 0 when every citation resolves and every step's kind matches; 1 otherwise.
  */
 
 import fs from 'node:fs';
@@ -168,13 +179,83 @@ export function collectFindings(root) {
   return findings;
 }
 
+/** A protocol's step kind, reduced to the four the harness records. */
+export function protocolKind(cell) {
+  const text = cell.replace(/\*/g, '').replace(/\([^)]*\)/g, ' ').trim().toLowerCase();
+  const word = text.split(/\s+/)[0] ?? '';
+  // A credentialed step is a scripted step that needs a second identity.
+  if (word === 'credentialed') return 'scripted';
+  return ['scripted', 'unscripted', 'ad-hoc', 'prerequisite'].includes(word) ? word : null;
+}
+
+/** The step definitions of a runner: id and declared kind (the harness default is scripted). */
+export function runnerSteps(source) {
+  const steps = new Map();
+  for (const chunk of source.split(/await step\(/).slice(1)) {
+    const definition = chunk.split(/\n\s*(?:async\s*)?\(\s*(?:\{|ctx\b|\))|\n\s*async\s+function/)[0];
+    const id = /\bid:\s*'(OQ-[A-Z]+-\d+[a-z]?)'/.exec(definition)?.[1];
+    if (!id) continue;
+    steps.set(id, /\bkind:\s*'([a-z-]+)'/.exec(definition)?.[1] ?? 'scripted');
+  }
+  return steps;
+}
+
+export function collectKindFindings(root) {
+  const findings = [];
+  const docsDir = path.join(root, 'docs', 'validation');
+  if (!fs.existsSync(docsDir)) return findings;
+  for (const file of fs.readdirSync(docsDir).filter((f) => /^OQ-\d{3}-.*\.md$/.test(f)).sort()) {
+    const text = fs.readFileSync(path.join(docsDir, file), 'utf8');
+    const runnerPath = /^\|\s*Runner[^|]*\|\s*`([^`]+\.mjs)`/m.exec(text)?.[1];
+    if (!runnerPath || !fs.existsSync(path.join(root, runnerPath))) {
+      findings.push({ rule: 'no-runner', id: file, detail: `names no runner that exists (${runnerPath ?? 'none'})` });
+      continue;
+    }
+    const declared = new Map();
+    for (const line of text.split('\n')) {
+      const m = /^\|\s*(OQ-[A-Z]+-\d+[a-z]?)\s*\|[^|]*\|([^|]*)\|/.exec(line);
+      if (m && !declared.has(m[1])) declared.set(m[1], protocolKind(m[2]));
+    }
+    const executed = runnerSteps(fs.readFileSync(path.join(root, runnerPath), 'utf8'));
+    for (const [id, kind] of executed) {
+      if (!declared.has(id)) {
+        findings.push({ rule: 'undescribed-step', id, detail: `${runnerPath} executes it; ${file} does not describe it` });
+      } else if (declared.get(id) === null) {
+        findings.push({ rule: 'unknown-kind', id, detail: `${file} gives it no kind the harness can record` });
+      } else if (declared.get(id) !== kind) {
+        findings.push({
+          rule: 'kind-mismatch',
+          id,
+          detail: `${file} declares it ${declared.get(id)}; ${runnerPath} records it ${kind}`,
+        });
+      }
+    }
+    for (const id of declared.keys()) {
+      if (!executed.has(id)) {
+        findings.push({ rule: 'unexecuted-step', id, detail: `${file} describes it; ${runnerPath} does not execute it` });
+      }
+    }
+  }
+  return findings;
+}
+
 function checkRepo() {
+  const kindFindings = collectKindFindings(REPO_ROOT);
+  if (kindFindings.length > 0) {
+    console.error(`✗ validation traceability: ${kindFindings.length} step(s) recorded differently from their protocol\n`);
+    for (const f of kindFindings) console.error(`  [${f.rule}] ${f.id}: ${f.detail}`);
+    console.error(
+      '\nA record that calls an unscripted step scripted overstates what was verified.\n' +
+        'Give the runner step the kind its protocol declares (kind: ...), or change the protocol.',
+    );
+    return 1;
+  }
   const findings = collectFindings(REPO_ROOT);
   if (findings.length === 0) {
     const n = fs
       .readdirSync(path.join(REPO_ROOT, 'docs', 'validation'))
       .filter((f) => /^URS-\d{3}-.*\.md$/.test(f)).length;
-    console.log(`✓ validation traceability: every file cited by ${n} URS document(s) resolves`);
+    console.log(`✓ validation traceability: every file cited by ${n} URS document(s) resolves; every OQ step carries its protocol's kind`);
     return 0;
   }
   console.error(`✗ validation traceability: ${findings.length} finding(s)\n`);
@@ -243,6 +324,38 @@ function selfTest() {
       );
     }
   }
+
+  /* The kind check: one protocol, one runner. Two controls first. */
+  fs.rmSync(path.join(docs, 'URS-001-VAULT.md'));
+  fs.mkdirSync(path.join(root, 'tests', 'oq'), { recursive: true });
+  const PROTOCOL_HEAD =
+    '| Runner (the executable protocol) | `tests/oq/run.mjs` |\n\n| Step | URS | Kind | Action | Expected |\n|---|---|---|---|---|\n';
+  const step = (id, kind) =>
+    `await step(\n  {\n    id: '${id}',\n    urs: [],${kind ? `\n    kind: '${kind}',` : ''}\n    title: 't',\n  },\n  async ({ api }) => 'ok',\n);\n`;
+  const kindCases = [
+    ['control — scripted by default, unscripted declared', '| OQ-X-01 | U | scripted | a | e |\n| OQ-X-02 | U | unscripted (browser) | a | e |\n', step('OQ-X-01') + step('OQ-X-02', 'unscripted'), 0],
+    ['control — a credentialed step is scripted', '| OQ-X-01 | U | **credentialed** (signer) | a | e |\n', step('OQ-X-01'), 0],
+    ['an unscripted step the runner records as scripted', '| OQ-X-01 | U | unscripted | a | e |\n', step('OQ-X-01'), 1],
+    ['an ad-hoc step the runner records as unscripted', '| OQ-X-01 | U | ad-hoc (browser) | a | e |\n', step('OQ-X-01', 'unscripted'), 1],
+    ['a step the protocol describes and the runner never executes', '| OQ-X-01 | U | scripted | a | e |\n| OQ-X-02 | U | scripted | a | e |\n', step('OQ-X-01'), 1],
+    ['a step the runner executes and the protocol does not describe', '| OQ-X-01 | U | scripted | a | e |\n', step('OQ-X-01') + step('OQ-X-03'), 1],
+  ];
+  for (const [name, table, runner, expect] of kindCases) {
+    fs.writeFileSync(path.join(docs, 'OQ-001-X.md'), PROTOCOL_HEAD + table);
+    fs.writeFileSync(path.join(root, 'tests', 'oq', 'run.mjs'), runner);
+    const findings = collectKindFindings(root);
+    const ok = (findings.length > 0 ? 1 : 0) === expect;
+    if (!ok) failures += 1;
+    console.log(`  ${ok ? '✓' : '✗'} ${name}`);
+    if (!ok) {
+      console.log(
+        expect === 1
+          ? '      NOT CAUGHT — this mutation survived the checker'
+          : `      false positive: ${findings.map((f) => `${f.rule}/${f.detail}`).join('; ')}`,
+      );
+    }
+  }
+  cases.push(...kindCases);
 
   fs.rmSync(root, { recursive: true, force: true });
   if (failures) {

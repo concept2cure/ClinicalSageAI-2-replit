@@ -24,6 +24,14 @@ const complianceLimiter = rateLimit({
   message: 'Too many compliance processing requests, please try again after a minute',
 });
 import { ai } from '../../lib/unified-ai-client';
+
+// Model governance (2026-09-23): every call here pinned `model: 'gpt-4o'` as a
+// 'general' request, which the gateway's high-risk approval check never sees —
+// so gpt-4o rewrote Module 3 content per region and assessed regional
+// requirements. Each call now declares its task: drafting and review go only to
+// a model approved for high-risk regulatory work. Four calls also read
+// `.choices[0].message.content`, a shape the unified client does not return, so
+// those paths threw on every request; they read `.content`.
 import { serverError } from '../../lib/api-response.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
@@ -141,7 +149,8 @@ router.post('/transform', checkForOpenAIKey, complianceLimiter, async (req, res)
       ];
 
       const aiResult = await ai.chat({
-        model: 'gpt-4o',
+        taskType: 'document_drafting',
+        callerModule: 'cmc/global-compliance.transform',
         messages: messages,
         temperature: 0.3,
         max_tokens: 4000,
@@ -167,7 +176,8 @@ router.post('/transform', checkForOpenAIKey, complianceLimiter, async (req, res)
       Format as a clear, itemized list of changes.`;
 
       const changeTrackingResponse = await ai.chat({
-        model: 'gpt-4o',
+        taskType: 'regulatory_review',
+        callerModule: 'cmc/global-compliance.change-log',
         messages: [
           {
             role: 'system',
@@ -183,7 +193,7 @@ router.post('/transform', checkForOpenAIKey, complianceLimiter, async (req, res)
       // Store the transformed content and change tracking log
       transformedContent[region] = {
         content: regionTransformedContent,
-        changeTrackingLog: changeTrackingResponse.choices[0].message.content,
+        changeTrackingLog: changeTrackingResponse.content,
       };
 
       // If including regional annexes is required, generate them
@@ -197,7 +207,8 @@ router.post('/transform', checkForOpenAIKey, complianceLimiter, async (req, res)
         Please provide only the annexes specific to ${region.toUpperCase()} that aren't part of the main document.`;
 
         const annexResponse = await ai.chat({
-          model: 'gpt-4o',
+          taskType: 'document_drafting',
+          callerModule: 'cmc/global-compliance.annexes',
           messages: [
             {
               role: 'system',
@@ -210,7 +221,7 @@ router.post('/transform', checkForOpenAIKey, complianceLimiter, async (req, res)
         });
 
         // Add annexes to the transformed content
-        transformedContent[region].annexes = annexResponse.choices[0].message.content;
+        transformedContent[region].annexes = annexResponse.content;
       }
     }
 
@@ -290,7 +301,8 @@ router.post('/upload', checkForOpenAIKey, upload.single('document'), async (req,
     File name: ${file.originalname}`;
 
     const extractionResponse = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'document_analysis',
+      callerModule: 'cmc/global-compliance.extract',
       messages: [
         {
           role: 'system',
@@ -311,7 +323,7 @@ router.post('/upload', checkForOpenAIKey, upload.single('document'), async (req,
       uploadId,
       fileInfo,
       documentMetadata: {
-        extractionResult: extractionResponse.choices[0].message.content,
+        extractionResult: extractionResponse.content,
         contentPreview: fileContent.substring(0, 1000) + (fileContent.length > 1000 ? '...' : ''),
       },
       uploadedAt: new Date().toISOString(),
@@ -380,7 +392,8 @@ router.post('/compatibility-matrix', checkForOpenAIKey, complianceLimiter, async
     ];
 
     const aiResult = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'regulatory_review',
+      callerModule: 'cmc/global-compliance.compatibility-matrix',
       messages: messages,
       temperature: 0.3,
       max_tokens: 2500,
@@ -403,7 +416,8 @@ router.post('/compatibility-matrix', checkForOpenAIKey, complianceLimiter, async
     Format as a clear, structured listing by region.`;
 
     const requirementsResponse = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'regulatory_review',
+      callerModule: 'cmc/global-compliance.requirements',
       messages: [
         {
           role: 'system',
@@ -417,7 +431,7 @@ router.post('/compatibility-matrix', checkForOpenAIKey, complianceLimiter, async
     });
 
     // Get the regulatory requirements
-    const regulatoryRequirements = requirementsResponse.choices[0].message.content;
+    const regulatoryRequirements = requirementsResponse.content;
 
     // Generate a unique analysis ID
     const analysisId = uuidv4();

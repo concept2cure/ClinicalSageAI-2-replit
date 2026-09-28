@@ -16,10 +16,8 @@
 
 import type { Request, Response } from 'express';
 
-import {
-  verifySignerCredentials,
-  defaultSignoffDeps,
-} from '../../services/ana-ri/governed-action-signoff.js';
+import { reverifySigner } from '../../services/part11/reverify-signer.js';
+import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
 import {
   sealVerifiedVersion,
   SealBlockedError,
@@ -28,6 +26,7 @@ import {
 import { sendError, sendSuccess, extractRequestContext } from './shared.js';
 import { isSigningAuthorized } from '../../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../../services/part11/resolve-signer-role.js';
+import { clientIpOf } from '../../utils/client-ip';
 
 /** Is E1 enabled? Mirrors the client ENABLE_ANA_DOCUMENT_STUDIO flag (off by
  * default) via an explicit env opt-in, so the route is inert until the studio
@@ -53,10 +52,7 @@ function buildSealInput(
           message: typeof body.verification.message === 'string' ? body.verification.message : undefined,
         }
       : { ok: false };
-  const ipAddress =
-    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-    req.socket?.remoteAddress ||
-    undefined;
+  const ipAddress = clientIpOf(req) ?? undefined;
 
   return {
     organizationId: numericOrgId,
@@ -109,9 +105,9 @@ export async function handleSealVerifiedVersion(req: Request, res: Response): Pr
   // a manifested electronic signature, so credentials are always required.
   const password = typeof body.password === 'string' ? body.password : '';
   const mfaToken = typeof body.mfaToken === 'string' ? body.mfaToken : undefined;
-  const credentials = await verifySignerCredentials(defaultSignoffDeps, { userId, password, mfaToken });
-  if (!credentials.verified) {
-    return sendError(res, 401, credentials.error || 'Signature verification failed', { code: credentials.code }, 'SIGNATURE_REJECTED');
+  const credentials = await reverifySigner(userId, { password, mfaToken }, signerReverificationDeps());
+  if (!credentials.ok) {
+    return sendError(res, credentials.status, credentials.error, { code: credentials.code }, 'SIGNATURE_REJECTED');
   }
 
   // §11.10(g): identity is not authority. Sealing a verified version applies a

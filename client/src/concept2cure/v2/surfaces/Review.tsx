@@ -21,7 +21,7 @@
  *
  * NOTE: this surface records review verdicts. It does NOT apply a 21 CFR §11.50
  * electronic signature — see DecisionModal below. Binding signatures are applied
- * from the authoring workspace (server/routes/authoring.router.ts), PIN-verified
+ * from the authoring workspace (server/routes/authoring.router.ts), re-verified
  * and sealed against a frozen document version.
  */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -155,7 +155,7 @@ function DecisionModal({ onClose, item, onRecorded }: {
    * A §11.50 signature manifestation has to record the signer's printed name,
    * the date and time of execution, and the meaning of the signing — bound to
    * the signed record. None of that happens here. The real implementation
-   * exists: server/routes/authoring.router.ts applies a PIN-verified signature
+   * exists: server/routes/authoring.router.ts applies a re-verified signature
    * bound to a frozen document version, from the authoring workspace.
    */
   const [decision, setDecision] = useState<Verdict>('approved');
@@ -259,7 +259,7 @@ function DecisionModal({ onClose, item, onRecorded }: {
             reviewers see it. It is <b>not</b> a 21 CFR §11.50 signature manifestation —
             no signer identity is re-verified here and nothing is sealed against a
             frozen document version. Apply a binding signature from the authoring
-            workspace, where it is PIN-verified and sealed.
+            workspace, where the signer's password is re-verified and the signature sealed.
           </div>
         </div>
         <div className="esign-f">
@@ -959,7 +959,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
           </div>
 
           <div className="esign-banner">
-            <span className="ico">{I.lock}</span> Decisions recorded on this surface are not electronic signatures. A binding 21 CFR §11.50 signature is applied from the authoring workspace, where it is PIN-verified and sealed against a frozen document version.
+            <span className="ico">{I.lock}</span> Decisions recorded on this surface are not electronic signatures. A binding 21 CFR §11.50 signature is applied from the authoring workspace, where the signer's password is re-verified and the signature is sealed against a frozen document version.
           </div>
 
           <div className="dr-seclbl" style={{ padding: '0 0 8px', display: 'flex', justifyContent: 'space-between' }}>

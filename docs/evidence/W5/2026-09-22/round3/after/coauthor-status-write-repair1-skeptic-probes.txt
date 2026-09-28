@@ -1,0 +1,140 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P1: POST snapshot mints an approved row with forged content filed as Form 1571
+{
+  "timestamp": "2026-09-23T07:08:08.793Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "LEAF_CREATED",
+    "resourceType": "submission_leaf",
+    "resourceId": 1
+  }
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P1: POST snapshot mints an approved row with forged content filed as Form 1571
+[P1] FDA_1571 done before: false
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P1: POST snapshot mints an approved row with forged content filed as Form 1571
+{
+  "timestamp": "2026-09-23T07:08:08.937Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P1: POST snapshot mints an approved row with forged content filed as Form 1571
+[P1] blockers before: ["1 leaf document(s) are not approved (m1.1.1: draft)"]
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P1: POST snapshot mints an approved row with forged content filed as Form 1571
+[P1] POST -> 201 approved ## 1.2 — Cover
+
+The approved cover letter. m1.1.1
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P1: POST snapshot mints an approved row with forged content filed as Form 1571
+[P1] FDA_1571 done after: false
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P1: POST snapshot mints an approved row with forged content filed as Form 1571
+{
+  "timestamp": "2026-09-23T07:08:08.999Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "LEAF_UPDATED",
+    "resourceType": "submission_leaf",
+    "resourceId": 1
+  }
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P1: POST snapshot mints an approved row with forged content filed as Form 1571
+{
+  "timestamp": "2026-09-23T07:08:09.077Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P1: POST snapshot mints an approved row with forged content filed as Form 1571
+[P1] blockers after: []
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P2: the 409 governed path (place again) is refused, even after deleting the snapshot
+[P2] edit approved snapshot -> 409 FINALIZED_DOCUMENT_READ_ONLY | This document is approved and read-only: it is the copy that was signed off for a filing, and changing it here would file text nobody approved. Its text comes from its source authoring document and changes only when that document is placed into the filing again, which re-takes this copy from the source's current text and status. Nothing was saved.
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P2: the 409 governed path (place again) is refused, even after deleting the snapshot
+[P2] place again -> 200 undefined | undefined
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P2: the 409 governed path (place again) is refused, even after deleting the snapshot
+[P2] delete snapshot -> 200 {"success":true,"deletedId":1}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P2: the 409 governed path (place again) is refused, even after deleting the snapshot
+[P2] place again after delete -> 201 undefined | undefined
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P2: the 409 governed path (place again) is refused, even after deleting the snapshot
+[P2] aliases after delete: [{"canonical_id":"11111111-1111-4111-8111-111111111111","store":"coauthor_documents","native_id":"1","organization_id":7,"created_at":"2026-09-23T07:08:08.967Z"}]
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P3: whitespace JS-trim vs SQL-btrim on restate / verdict guard
+[P3] content PUT on stored "approved\t" -> 409 {"status":"approved\t","content":"<p>x</p>"}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P3: whitespace JS-trim vs SQL-btrim on restate / verdict guard
+[P3] status " approved" +content -> 409 FINALIZED_DOCUMENT_READ_ONLY | status-only eCTD -> 200 undefined | row {"status":"approved","content":"<p>x</p>"}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P3: whitespace JS-trim vs SQL-btrim on restate / verdict guard
+[P3] status "approved\n" +content -> 409 FINALIZED_DOCUMENT_READ_ONLY | status-only eCTD -> 200 undefined | row {"status":"approved","content":"<p>x</p>"}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P3: whitespace JS-trim vs SQL-btrim on restate / verdict guard
+[P3] status "\tapproved" +content -> 409 FINALIZED_DOCUMENT_READ_ONLY | status-only eCTD -> 200 undefined | row {"status":"approved","content":"<p>x</p>"}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P3: whitespace JS-trim vs SQL-btrim on restate / verdict guard
+[P3] status "ＡＰＰＲＯＶＥＤ" +content -> 400 STATUS_NOT_SETTABLE | status-only eCTD -> 400 STATUS_NOT_SETTABLE | row {"status":"approved","content":"<p>x</p>"}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P3: whitespace JS-trim vs SQL-btrim on restate / verdict guard
+[P3] status "appro\u0000ved" +content -> 400 STATUS_NOT_SETTABLE | status-only eCTD -> 400 STATUS_NOT_SETTABLE | row {"status":"approved","content":"<p>x</p>"}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P3: whitespace JS-trim vs SQL-btrim on restate / verdict guard
+[P3] set "DRAFT " on draft -> 200 undefined | row {"status":"draft"}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P3: whitespace JS-trim vs SQL-btrim on restate / verdict guard
+[P3] set "review​" on draft -> 400 STATUS_NOT_SETTABLE | row {"status":"draft"}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P3: whitespace JS-trim vs SQL-btrim on restate / verdict guard
+[P3] set "ſigned" on draft -> 400 STATUS_NOT_SETTABLE | row {"status":"draft"}
+
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P1: POST snapshot mints an approved row with forged content filed as Form 1571 313ms
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P2: the 409 governed path (place again) is refused, even after deleting the snapshot 48ms
+   → expected 201 not to be 201 // Object.is equality
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P3: whitespace JS-trim vs SQL-btrim on restate / verdict guard 71ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts > round-3 fail-open probes > P2: the 409 governed path (place again) is refused, even after deleting the snapshot
+AssertionError: expected 201 not to be 201 // Object.is equality
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/repair1-probe/post-snapshot.probe.test.ts:121:31
+    119|     const al = await h.pglite.query<any>('SELECT * FROM c2c_document_a…
+    120|     expect(again.status).not.toBe(201);
+    121|     expect(again2.status).not.toBe(201);
+       |                               ^
+    122|   }, 90_000);
+    123|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  07:08:02
+   Duration  6.97s (transform 1.95s, setup 109ms, import 3.32s, tests 3.21s, environment 0ms)
+

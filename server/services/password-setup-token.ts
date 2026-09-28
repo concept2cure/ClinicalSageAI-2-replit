@@ -50,15 +50,49 @@ export function passwordSetupUrl(baseUrl: string, token: string): string {
   return `${baseUrl.replace(/\/+$/, '')}/concept2cure/password-reset?token=${encodeURIComponent(token)}`;
 }
 
+/** Production has no configured public origin to build an emailed link on. */
+export class PublicOriginNotConfiguredError extends Error {
+  readonly code = 'PUBLIC_ORIGIN_NOT_CONFIGURED';
+  constructor(reason: string) {
+    super(`Emailed links need APP_URL, the deployment's public https origin: ${reason}`);
+    this.name = 'PublicOriginNotConfiguredError';
+  }
+}
+
 /**
- * The origin links are built on. APP_URL is authoritative when set; otherwise
- * the request's own origin, which is what a single-host deployment wants.
+ * The origin emailed links are built on.
+ *
+ * APP_URL when set. Outside production, otherwise, the request's own origin,
+ * which is what a laptop or a single-host install wants.
+ *
+ * In production, APP_URL or nothing: the Host header is never used. It is
+ * written by whoever sends the request, and the load balancer accepts
+ * connections directly, so a POST /forgot-password naming a victim's address
+ * with `Host: attacker.example` emailed the victim a genuine reset token inside
+ * a link to the attacker's site (password-reset poisoning; D6, 2026-09-23). The
+ * same link carries an invitation's setup token. Without an https APP_URL this
+ * throws, and callers must resolve it BEFORE anything that depends on whether
+ * an account exists, so the refusal is the same for every address.
  */
-export function resolveAppBaseUrl(req: {
-  protocol: string;
-  get: (header: string) => string | undefined;
-}): string {
-  return process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+export function resolveAppBaseUrl(
+  req: { protocol: string; get: (header: string) => string | undefined },
+  env: Record<string, string | undefined> = process.env,
+): string {
+  const configured = env.APP_URL?.trim();
+  if (env.NODE_ENV === 'production') {
+    if (!configured) throw new PublicOriginNotConfiguredError('APP_URL is not set');
+    let parsed: URL;
+    try {
+      parsed = new URL(configured);
+    } catch {
+      throw new PublicOriginNotConfiguredError(`APP_URL is not a URL ("${configured}")`);
+    }
+    if (parsed.protocol !== 'https:') {
+      throw new PublicOriginNotConfiguredError(`APP_URL must be https ("${configured}")`);
+    }
+    return configured;
+  }
+  return configured || `${req.protocol}://${req.get('host')}`;
 }
 
 /** The password hash an invited, not-yet-activated account carries. */

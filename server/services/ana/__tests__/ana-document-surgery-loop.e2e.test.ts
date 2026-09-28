@@ -48,7 +48,17 @@ const RUNTIME = docxRuntimeAvailable();
 // broken document runtime can never masquerade as a green pass. Locally (flag
 // unset) it skips gracefully when python-docx is absent.
 const REQUIRED = process.env.ANA_DOCX_E2E_REQUIRED === '1';
-const ctx = { organizationId: 1 } as any;
+// The loop writes governed content (author_docx_native, build_from_template…),
+// which AnaToolExecutor refuses unless the turn was served by a model approved
+// for high-risk regulatory drafting (MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE).
+// The loop under test is document surgery, not that gate — it has its own suite
+// (governed-write-gate.test.ts) — so the turn is served by an approved model,
+// as it would be in production. Without it the first move was refused and the
+// loop never ran (CI run 12116, 2026-09-23).
+const ctx = {
+  organizationId: 1,
+  servingModel: { provider: 'anthropic', model: 'claude-opus-5' },
+} as any;
 const call = async (name: string, input: Record<string, unknown>) =>
   JSON.parse(await getToolHandler(name)!(input, ctx));
 

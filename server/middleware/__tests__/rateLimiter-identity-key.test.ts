@@ -16,7 +16,8 @@
  * (`LEGACY_RATE_LIMITS.api.maxRequestsAuthenticated`); a request with no
  * verified identity keeps the per-IP bucket and the per-IP ceiling.
  *
- * `trust proxy` is on so X-Forwarded-For selects the IP: the store is
+ * `trust proxy` is production's hop count, so X-Forwarded-For's last entry
+ * (the load balancer's) selects the IP: the store is
  * process-global with no reset API, so each case uses an IP of its own.
  */
 import { describe, it, expect } from 'vitest';
@@ -25,13 +26,14 @@ import request from 'supertest';
 
 import { createRateLimiter } from '../rateLimiter';
 import { LEGACY_RATE_LIMITS } from '../../config/platform-limits';
+import { resolveTrustProxy } from '../../config/trust-proxy';
 
 const PER_IP = LEGACY_RATE_LIMITS.api.maxRequests;
 const PER_USER = (LEGACY_RATE_LIMITS.api as { maxRequestsAuthenticated?: number }).maxRequestsAuthenticated;
 
 function app(identity?: (req: express.Request) => number | null) {
   const a = express();
-  a.set('trust proxy', true);
+  a.set('trust proxy', resolveTrustProxy({ NODE_ENV: 'production' }).hops);
   if (identity) {
     a.use((req, _res, next) => {
       const id = identity(req);

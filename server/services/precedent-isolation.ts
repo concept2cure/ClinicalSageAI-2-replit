@@ -19,6 +19,18 @@ export interface OrgIsolationFragment {
   nextParamIdx: number;
 }
 
+/**
+ * The integer organization id the corpus is keyed by, from whatever a caller
+ * holds: a number (req.user), or a numeric string (the tool registry's
+ * ToolContext). Anything else is "no org in context", which the fragment below
+ * turns into public-rows-only — never an equality on a malformed value.
+ */
+export function precedentOrgId(value: unknown): number | undefined {
+  const n =
+    typeof value === 'number' ? value : typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : NaN;
+  return Number.isInteger(n) && n > 0 ? n : undefined;
+}
+
 export function buildPrecedentOrgIsolation(
   organizationId: number | undefined,
   paramIdx: number

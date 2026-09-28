@@ -74,6 +74,7 @@ interface RawOutcome {
   questions_detail: unknown;
   deficiencies_detail: unknown;
   therapeutic_area: string | null;
+  organization_id: number | null;
   product_type: string | null;
   device_class: string | null;
   indication: string | null;
@@ -96,11 +97,13 @@ async function fetchUningestedOutcomes(limit: number): Promise<RawOutcome[]> {
             so.questions_detail,
             so.deficiencies_detail,
             p.therapeutic_area,
+            o.id                  AS organization_id,
             NULL::text AS product_type,
             NULL::text AS device_class,
             NULL::text AS indication
        FROM innovation.submission_outcomes so
        LEFT JOIN core.programs p ON p.id = so.program_id
+       LEFT JOIN organizations o ON o.uuid = p.org_id
       WHERE NOT EXISTS (
         SELECT 1 FROM intelligence.outcome_precedent_links opl
          WHERE opl.outcome_id = so.id
@@ -174,6 +177,15 @@ export async function ingestOutcomeAsPrecedent(opts: IngestOptions = {}): Promis
   let errors = 0;
 
   for (const outcome of rows) {
+    // A submission outcome is the sponsor's own regulatory history. It is minted
+    // PRIVATE to that sponsor's organization and never into the public corpus
+    // other tenants read; an outcome that cannot be attributed to an
+    // organization is not minted at all. Sharing outcomes across sponsors would
+    // be a deliberate, opt-in product decision, not a default.
+    if (!Number.isInteger(outcome.organization_id)) {
+      log.warn(`Outcome ${outcome.outcome_id} has no attributable organization; not minted as a precedent.`);
+      continue;
+    }
     try {
       const decision = mapOutcomeStatusToDecision(outcome.outcome_status, outcome.had_rtf);
       const fdaQuestions = summarizeQuestions(outcome.questions_detail);
@@ -204,11 +216,11 @@ export async function ingestOutcomeAsPrecedent(opts: IngestOptions = {}): Promis
            decision_date, decision_outcome,
            fda_questions, risk_factors,
            embedding,
-           source_type, confidence_score, created_by
+           source_type, confidence_score, created_by, organization_id
          ) VALUES ($1, $2, $3, $4, $5, $6::date, $7,
                    $8::jsonb, $9::jsonb,
                    $10,
-                   $11, $12, $13)
+                   $11, $12, $13, $14)
          RETURNING id`,
         [
           outcome.submission_type,
@@ -224,6 +236,7 @@ export async function ingestOutcomeAsPrecedent(opts: IngestOptions = {}): Promis
           'outcome_ingestor',
           confidenceScore,
           `outcome_ingestor@${INGESTOR_VERSION}`,
+          outcome.organization_id,
         ],
       );
 

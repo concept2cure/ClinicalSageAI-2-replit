@@ -156,6 +156,36 @@ const DEVICE_COMPONENTS = {
   },
 };
 
+
+const UPLOAD_MESSAGE: Record<DocumentTags['method'], string> = {
+  model: 'Document uploaded and tagged by the model.',
+  keyword:
+    'Document uploaded. The tagging model was unavailable, so it was tagged by keyword match — review the tags.',
+};
+
+/** What tagged a document, as stored in its metadata. */
+function taggingRecord(tags: DocumentTags) {
+  return {
+    method: tags.method,
+    provider: tags.generatedBy?.provider ?? null,
+    model: tags.generatedBy?.model ?? null,
+    confidence: tags.confidence,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+/** Tags for an uploaded document, and what produced them. */
+interface DocumentTags {
+  categories: string[];
+  testStandards: string[];
+  components: string[];
+  suggestedTags: string[];
+  /** The model's own confidence, when it gave one; null for keyword tags. */
+  confidence: number | null;
+  method: 'model' | 'keyword';
+  generatedBy: { provider: string; model: string } | null;
+}
+
 class DocumentDataCenterService {
   private storage: multer.Multer;
   private uploadDir: string = path.join(process.cwd(), 'uploads', 'device-data-center');
@@ -274,13 +304,7 @@ class DocumentDataCenterService {
     content: string,
     fileName: string,
     existingMetadata?: any
-  ): Promise<{
-    categories: string[];
-    testStandards: string[];
-    components: string[];
-    suggestedTags: string[];
-    confidence: number;
-  }> {
+  ): Promise<DocumentTags> {
     try {
       const prompt = `Analyze this medical device regulatory document and provide categorization:
       
@@ -335,7 +359,10 @@ class DocumentDataCenterService {
         testStandards: result.testStandards || [],
         components: result.components || [],
         suggestedTags: result.suggestedTags || [],
-        confidence: result.confidence || 0.5,
+        // The model's own figure when it gave one; never a default of ours.
+        confidence: typeof result.confidence === 'number' ? result.confidence : null,
+        method: 'model',
+        generatedBy: { provider: aiResult.provider, model: aiResult.model },
       };
     } catch (error) {
       console.error('Error generating intelligent tags:', error);
@@ -347,7 +374,7 @@ class DocumentDataCenterService {
   /**
    * Fallback keyword-based tagging when AI is unavailable
    */
-  private generateKeywordBasedTags(content: string, fileName: string) {
+  private generateKeywordBasedTags(content: string, fileName: string): DocumentTags {
     const lowerContent = content.toLowerCase();
     const lowerFileName = fileName.toLowerCase();
     const combined = lowerContent + ' ' + lowerFileName;
@@ -380,12 +407,18 @@ class DocumentDataCenterService {
       }
     }
 
+    // Until 2026-09-23 this returned confidence 0.6 and, when no keyword
+    // matched, the category 'bench_test' — and the upload recorded both as a
+    // gpt-4o tagging. A keyword match has no confidence, and no match is no
+    // category.
     return {
-      categories: categories.length > 0 ? categories : ['bench_test'],
+      categories,
       testStandards,
       components,
       suggestedTags: Array.from(new Set(suggestedTags)),
-      confidence: 0.6,
+      confidence: null,
+      method: 'keyword',
+      generatedBy: null,
     };
   }
 
@@ -422,7 +455,7 @@ class DocumentDataCenterService {
       const allTags = Array.from(new Set([
         ...(metadata.manualTags || []),
         ...aiTags.suggestedTags,
-        `confidence:${Math.round(aiTags.confidence * 100)}`,
+        ...(aiTags.confidence !== null ? [`confidence:${Math.round(aiTags.confidence * 100)}`] : []),
       ]));
 
       // Create document record
@@ -435,7 +468,7 @@ class DocumentDataCenterService {
         checksum,
         deviceName: metadata.deviceName || 'Unknown Device',
         deviceModel: metadata.deviceModel,
-        category: metadata.category || aiTags.categories[0] || 'bench_test',
+        category: metadata.category || aiTags.categories[0] || 'uncategorized',
         categories: aiTags.categories,
         testStandards: aiTags.testStandards,
         deviceComponents: aiTags.components,
@@ -448,11 +481,9 @@ class DocumentDataCenterService {
         tags: allTags,
         searchableContent: content.substring(0, 50000), // Limit to 50k chars for search
         metadata: {
-          aiTagging: {
-            confidence: aiTags.confidence,
-            timestamp: new Date().toISOString(),
-            model: 'gpt-4o',
-          },
+          // What tagged it: the model that served (read from the response) or
+          // the keyword fallback. Until 2026-09-23 always the literal 'gpt-4o'.
+          aiTagging: taggingRecord(aiTags),
           fileMetadata: {
             originalName: file.originalname,
             mimeType: file.mimetype,
@@ -476,9 +507,11 @@ class DocumentDataCenterService {
           checksum,
           categories: aiTags.categories,
           standards: aiTags.testStandards,
+          taggingMethod: aiTags.method,
+          taggingModel: taggingRecord(aiTags).model,
           aiConfidence: aiTags.confidence,
         },
-        ipAddress: '127.0.0.1', // Would come from request
+        // Not known here, so not recorded: it was the literal '127.0.0.1'.
         userAgent: 'DocumentDataCenterService',
       });
 
@@ -486,7 +519,7 @@ class DocumentDataCenterService {
         success: true,
         document: newDocument,
         aiTags,
-        message: `Document uploaded with ${Math.round(aiTags.confidence * 100)}% confidence tagging`,
+        message: UPLOAD_MESSAGE[aiTags.method],
       };
     } catch (error) {
       console.error('Error uploading document:', error);

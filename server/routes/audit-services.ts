@@ -56,6 +56,9 @@ router.post('/figures/generate', async (req: Request, res: Response) => {
       userId: user?.id || user?.userId || 0,
     });
 
+    // A figure that was not generated is answered as that. It was wrapped in
+    // success: true with the failure nested inside.
+    if (!result.success) return res.status(422).json({ success: false, error: result.error });
     res.json({ success: true, figure: result });
   } catch (error: any) {
     logger.error('Figure generation failed', { err: error instanceof Error ? error.message : String(error) });

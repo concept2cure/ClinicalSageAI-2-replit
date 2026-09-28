@@ -72,11 +72,9 @@ declare module '*services/ai/strategy.js' {
   export function aiDraftP34(data: any): Promise<any>;
 }
 
-declare module './services/auditService.js';
 declare module './services/roleBasedAccess.js';
 declare module './routes/cmc-dashboard.js';
 declare module './api/enterprise/routes.js';
-declare module './api/enterprise/rbac-routes.js';
 declare module './routes/multiAgencyValidation.js';
 declare module './routes/ind.js';
 declare module './routes/docs.js';
@@ -112,11 +110,3 @@ declare module '*.js' {
   export default content;
 }
 
-declare module '*enhancedFaersService.js' {
-  export class EnhancedFAERSClient {
-    resolveToUnii(brandName: string): Promise<string | null>;
-    resolveSubstanceName(brandName: string): Promise<string | null>;
-    getAtcCodesForProduct(brandName: string): Promise<string[]>;
-  }
-  export function fetchFaersAnalysis(...args: any[]): Promise<any>;
-}

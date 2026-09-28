@@ -41,6 +41,50 @@ export interface CoreLeaf {
   documentType?: string | null;
 }
 
+/**
+ * The submission_leaves columns a CoreLeaf is read from. Structural, so this
+ * module stays free of the Drizzle schema; a `submissionLeaves` select row
+ * satisfies it. Every column is required: a caller cannot leave one out.
+ */
+export interface SubmissionLeafRow {
+  sectionCode: string;
+  title: string;
+  lifecycleOp: string;
+  checksum: string | null;
+  documentTable: string | null;
+  documentId: number | null;
+  documentUuid: string | null;
+  granularity: string | null;
+  documentType: string | null;
+}
+
+/**
+ * THE projection of a submission_leaves row onto a CoreLeaf — the one every
+ * packager that reads submission_leaves uses (package-from-core, the device
+ * technical-file assembler).
+ *
+ * 2026-09-23 (W5/D7, round-2 review): each of those built CoreLeaf by hand.
+ * 6fed3840b added documentUuid to package-from-core's copy; the technical-file
+ * assembler's copy kept dropping it, so a vault leaf (document_id NULL,
+ * document_uuid set) was staged by uuid, resolved to nothing, and was left out
+ * of the MDR/IVDR ZIP. The result is typed Required<CoreLeaf>, so a field added
+ * to CoreLeaf does not compile here until it is carried.
+ */
+export function coreLeafFromSubmissionLeaf(row: SubmissionLeafRow): CoreLeaf {
+  const leaf: Required<CoreLeaf> = {
+    sectionCode: row.sectionCode,
+    title: row.title,
+    lifecycleOp: row.lifecycleOp,
+    checksum: row.checksum,
+    documentTable: row.documentTable,
+    documentId: row.documentId,
+    documentUuid: row.documentUuid,
+    granularity: row.granularity,
+    documentType: row.documentType,
+  };
+  return leaf;
+}
+
 /** The on-disk file a leaf's document resolves to. */
 /**
  * Where a materialized leaf's bytes came from, BY IDENTITY (the document alias
@@ -287,4 +331,10 @@ export function buildPackagerInputFromCore(args: BuildPackagerInputArgs): BuildP
   return { input, skipped };
 }
 
-export default { toPackagerRegion, mapCoreLeafToEctdLeaf, buildPackagerInputFromCore, fdaSubmissionTypeFor };
+export default {
+  toPackagerRegion,
+  mapCoreLeafToEctdLeaf,
+  buildPackagerInputFromCore,
+  fdaSubmissionTypeFor,
+  coreLeafFromSubmissionLeaf,
+};

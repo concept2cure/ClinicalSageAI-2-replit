@@ -1,0 +1,173 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses {status:'approved'} on a draft with 400, names the governed path, and writes nothing 44ms
+   → a caller stamped approved on a draft: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > writes none of a refused request, including the fields that were allowed on their own 7ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses 'finalized' and any spelling the resolver counts as finalized 6ms
+   → status 'finalized' was accepted: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > does not let an approved snapshot be relabelled as a different finalized status 5ms
+   → expected 200 to be 400 // Object.is equality
+stdout | server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > leaves the transmit refusal the PUT used to clear standing
+{
+  "timestamp": "2026-09-23T04:44:41.752Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > leaves the transmit refusal the PUT used to clear standing
+{
+  "timestamp": "2026-09-23T04:44:41.798Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > leaves the transmit refusal the PUT used to clear standing 153ms
+   → a bare status write cleared the transmit refusal: expected [] to deeply equal [ Array(1) ]
+ × server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses a status that is not a string, rather than failing inside the rule 5ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > saves a content-only PUT — the one client caller, EctdCoauthor.saveContent 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > moves a document to a non-finalized status ({status:'draft'}, 'review') 11ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > accepts a PUT that restates an existing finalized status unchanged 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses {status:'approved'} on a draft with 400, names the governed path, and writes nothing
+AssertionError: a caller stamped approved on a draft: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/coauthorPutStatus.test.ts:157:64
+    155|     const res = await put(DRAFT, { status: 'approved' });
+    156|
+    157|     expect(res.status, 'a caller stamped approved on a draft').toBe(40…
+       |                                                                ^
+    158|     expect(res.body.message).toMatch(/POST \/api\/coauthor\/documents/…
+    159|     expect(res.body.message).toMatch(/sourceAuthoringDocId/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > writes none of a refused request, including the fields that were allowed on their own
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/coauthorPutStatus.test.ts:171:24
+    169|     const res = await put(DRAFT, { status: 'approved', title: 'Retitle…
+    170|
+    171|     expect(res.status).toBe(400);
+       |                        ^
+    172|     const after = await row(DRAFT);
+    173|     expect(after).toMatchObject({ status: 'draft', title: 'Cover lette…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses 'finalized' and any spelling the resolver counts as finalized
+AssertionError: status 'finalized' was accepted: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/coauthorPutStatus.test.ts:182:61
+    180|     for (const status of ['finalized', 'APPROVED', 'Finalized']) {
+    181|       const res = await put(DRAFT, { status });
+    182|       expect(res.status, `status '${status}' was accepted`).toBe(400);
+       |                                                             ^
+    183|     }
+    184|     expect((await row(DRAFT)).status).toBe('draft');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > does not let an approved snapshot be relabelled as a different finalized status
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/coauthorPutStatus.test.ts:191:24
+    189|        are different claims; neither is the caller's to award. */
+    190|     const res = await put(APPROVED, { status: 'finalized' });
+    191|     expect(res.status).toBe(400);
+       |                        ^
+    192|     expect((await row(APPROVED)).status).toBe('approved');
+    193|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > leaves the transmit refusal the PUT used to clear standing
+AssertionError: a bare status write cleared the transmit refusal: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "1 leaf document(s) are not approved (m1.2: draft)",
+- ]
++ []
+
+ ❯ server/routes/__tests__/coauthorPutStatus.test.ts:201:82
+    199|     const res = await put(DRAFT, { status: 'approved' });
+    200|
+    201|     expect(await blockers(), 'a bare status write cleared the transmit…
+       |                                                                                  ^
+    202|     expect(res.status).toBe(400);
+    203|   }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses a status that is not a string, rather than failing inside the rule
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/coauthorPutStatus.test.ts:207:24
+    205|   it('refuses a status that is not a string, rather than failing insid…
+    206|     const res = await put(DRAFT, { status: { value: 'approved' } });
+    207|     expect(res.status).toBe(400);
+       |                        ^
+    208|     expect((await row(DRAFT)).status).toBe('draft');
+    209|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 4 passed (10)
+   Start at  04:44:37
+   Duration  4.72s (transform 1.05s, setup 71ms, import 1.99s, tests 2.41s, environment 0ms)
+

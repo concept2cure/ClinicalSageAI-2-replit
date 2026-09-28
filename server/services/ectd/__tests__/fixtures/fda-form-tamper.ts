@@ -7,10 +7,16 @@
  * FDA-issued bytes stay an exact prefix. Standard security handler maths
  * (ISO 32000-1 §7.6.3, R4) is inlined so a test builds a real user-password
  * dictionary rather than a string that merely looks like one.
+ *
+ * 2026-09-23 (W5/D7, round-2 review): plus an update whose cross-reference
+ * stream pdf.js cannot parse (it falls back to the template's own trailer), and
+ * a filled eSTAR carrying an embedded file.
  */
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { templatePathFor } from '../../../ind-forms/ind-form-fill-service';
+import { listVendoredTemplates } from '../../../pathway-engines/estar/estar-template-registry';
+import { attachPlannedFiles } from '../../../pathway-engines/estar/estar-fill';
 
 const L = (s: string) => Buffer.from(s, 'latin1');
 const PAD = Buffer.from('28BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE6453697A', 'hex');
@@ -77,8 +83,12 @@ export function tamperKit() {
     return Buffer.concat([template, L(parts.join(''))]);
   }
 
-  /** Object 47 redefined inside an object stream, re-pointed by an xref stream — no text header at all. */
-  function redefinedInObjectStream(): Buffer {
+  /**
+   * Object 47 redefined inside an object stream, re-pointed by an xref stream — no text header at all.
+   * `type3` (2026-09-23) also adds a type-3 entry, so pdf.js falls back to FDA's own section and
+   * opens it, while qpdf and pypdf follow the appended entry for object 47 and ask for a password.
+   */
+  function redefinedInObjectStream(opts: { type3?: boolean } = {}): Buffer {
     const chunks: Buffer[] = [template];
     let pos = template.length;
     const offs: Record<number, number> = {};
@@ -96,25 +106,97 @@ export function tamperKit() {
     const rows: Array<[number, number, number]> = [
       [2, 210, 0], [1, offs[200], 0], [1, offs[201], 0], [1, offs[202], 0], [1, offs[210], 0], [1, offs[211], 0],
     ];
+    if (opts.type3) rows.push([3, 0, 0]);
+    const tail = rows.length - 4; // objects 210 on
     const data = Buffer.alloc(rows.length * 7);
     rows.forEach(([t, f2, f3], i) => { data[i * 7] = t; data.writeUInt32BE(f2, i * 7 + 1); data.writeUInt16BE(f3, i * 7 + 5); });
     push(Buffer.concat([
-      L(`211 0 obj\n<</Type/XRef/W[1 4 2]/Index[47 1 200 3 210 2]/Size 212/Root 200 0 R/Encrypt 47 0 R/ID[<${idm[1]}><${idm[2]}>]/Prev ${prevXref}/Length ${data.length}>>stream\n`),
+      L(`211 0 obj\n<</Type/XRef/W[1 4 2]/Index[47 1 200 3 210 ${tail}]/Size ${210 + tail}/Root 200 0 R/Encrypt 47 0 R/ID[<${idm[1]}><${idm[2]}>]/Prev ${prevXref}/Length ${data.length}>>stream\n`),
       data,
       L(`\nendstream\nendobj\nstartxref\n${xrefOff}\n%%EOF\n`),
     ]));
     return Buffer.concat(chunks);
   }
 
-  /** FDA's dictionary untouched; the appended trailer carries `id` (or no /ID at all when null). */
-  function withTrailerId(id: string | null): Buffer {
+  /**
+   * FDA's dictionary untouched; the appended trailer carries `id` (or no /ID at all when null).
+   * `literal` (2026-09-23) writes the first /ID string as a literal string of octal escapes —
+   * the same bytes, spelled the other way ISO 32000-1 §7.3.4 allows.
+   */
+  function withTrailerId(id: string | null, opts: { literal?: boolean } = {}): Buffer {
     const xrefOff = template.length + 1;
-    const idPart = id === null ? '' : `/ID[<${id}><${idm[2]}>]`;
+    const first = opts.literal && id !== null ? `(${[...Buffer.from(id, 'hex')].map((c) => `\\${c.toString(8).padStart(3, '0')}`).join('')})` : `<${id}>`;
+    const idPart = id === null ? '' : `/ID[${first}<${idm[2]}>]`;
     return Buffer.concat([
       template,
       L(`\nxref\n0 1\n0000000000 65535 f\r\ntrailer\n<</Size 108/Root 48 0 R/Info 45 0 R/Encrypt 47 0 R${idPart}/Prev ${prevXref}>>\nstartxref\n${xrefOff}\n%%EOF\n`),
     ]);
   }
 
-  return { template, templateId0: idm[1], redefinedAs, redefinedInObjectStream, withTrailerId };
+  /**
+   * One incremental update whose cross-reference section is a STREAM — the
+   * shape FDA's own templates and the platform's fill both use (2026-09-23,
+   * W5/D7, round-2 review).
+   *
+   * `type3` adds an entry of type 3, which ISO 32000-1 Table 18 says "shall be
+   * interpreted as a reference to the null object". pdf.js 5 throws "Invalid
+   * XRef entry type", indexes the whole file, and lands on the template's own
+   * cross-reference stream; qpdf and pypdf follow this one, as the spec
+   * requires. `startxrefDelta` moves the final startxref off the section.
+   */
+  function xrefStreamUpdate(opts: { id: string | null; encrypt: boolean; type3?: boolean; startxrefDelta?: number; base?: Buffer }): Buffer {
+    // `base`: append to an already-updated form (a later save) rather than to the blank template.
+    const on = opts.base ?? template;
+    const ol = on.toString('latin1');
+    const prev = Number(/startxref\s+(\d+)\s+%%EOF\s*$/.exec(ol)![1]);
+    const xnum = Number(/\/Size (\d+)/.exec(ol.slice(prev))![1]); // the xref stream's own object number
+    const xrefOff = on.length + 1;
+    const rows: Array<[number, number, number]> = [[1, xrefOff, 0]];
+    if (opts.type3) rows.push([3, 0, 0]);
+    const data = Buffer.alloc(rows.length * 7);
+    rows.forEach(([t, f2, f3], i) => { data[i * 7] = t; data.writeUInt32BE(f2, i * 7 + 1); data.writeUInt16BE(f3, i * 7 + 5); });
+    const idPart = opts.id === null ? '' : `/ID[<${opts.id}><${idm[2]}>]`;
+    const enc = opts.encrypt ? '/Encrypt 47 0 R' : '';
+    const dict = `<</Type/XRef/W[1 4 2]/Index[${xnum} ${rows.length}]/Size ${xnum + rows.length}/Root 48 0 R/Info 45 0 R${enc}${idPart}/Prev ${prev}/Length ${data.length}>>`;
+    return Buffer.concat([
+      on,
+      L(`\n${xnum} 0 obj\n${dict}stream\n`), data, L(`\nendstream\nendobj\nstartxref\n${xrefOff + (opts.startxrefDelta ?? 0)}\n%%EOF\n`),
+    ]);
+  }
+
+  return { template, templateId0: idm[1], redefinedAs, redefinedInObjectStream, withTrailerId, xrefStreamUpdate };
+}
+
+/** A PDF with security settings: an /Encrypt entry in its trailer. */
+export const SECURED_PDF = L('%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R/Encrypt 5 0 R>>\n%%EOF\n');
+/** The same PDF with no security settings. */
+export const UNSECURED_PDF = L('%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n');
+
+/**
+ * A verified vendored eSTAR with `bytes` embedded the way the /official route
+ * embeds a slot's file (attachPlannedFiles: an EmbeddedFile stream enciphered
+ * with the eSTAR's own key, so the attachment's own /Encrypt is not in the
+ * raw bytes). Null when no verified eSTAR template is vendored.
+ */
+export async function estarWithAttachment(bytes: Buffer, fileName = 'biocompatibility-report.pdf'): Promise<Buffer | null> {
+  const t = (await listVendoredTemplates()).find((x) => x.integrity === 'verified');
+  if (!t) return null;
+  return Buffer.from(
+    attachPlannedFiles(Buffer.from(t.bytes), [
+      {
+        slot: 'root.CoverLetter.CLAddAttachment110',
+        field: 'CLAddAttachment110',
+        chapter: '/CHAPTER 1/CH1.01/',
+        fileName,
+        dataObjectName: '2026-09-23T10:00:00',
+        description: null,
+        mimeType: 'application/pdf',
+        bytes,
+        byteLength: bytes.length,
+        sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+        token: `<<${fileName}|/CHAPTER 1/CH1.01/>>`,
+        source: { kind: 'vault_document', documentId: '33333333-3333-4333-8333-333333333333' },
+      },
+    ]),
+  );
 }

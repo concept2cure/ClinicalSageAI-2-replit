@@ -69,7 +69,11 @@ describe('CapabilityBrowser — every module the home used to show is still reac
         );
         expect(onNav, `${segment}/${g.label}: click did not navigate to ${id}`).toHaveBeenCalledWith(id);
       }
-    });
+      /* One accessible-name role query per module: the cost grows with the
+         registry. At 57 modules a case takes ~4.5s alone and crossed vitest's
+         10s default under the full suite's parallel load in CI (run 12105,
+         2026-09-23). The budget is sized to the work; no assertion changes. */
+    }, 30_000);
   }
 });
 

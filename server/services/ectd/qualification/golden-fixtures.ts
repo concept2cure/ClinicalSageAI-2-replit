@@ -11,7 +11,8 @@
 
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import type { EctdLeaf, PackagerInput } from '../../submission-gateways/regional-packager';
+import { createHash } from 'crypto';
+import { leafPackagePath, type EctdLeaf, type PackagerInput } from '../../submission-gateways/regional-packager';
 import type { Region } from '../../submission-gateways/types';
 import type { RpsMessageInput } from '../ectd4';
 import { submissionUnitId, contextOfUseId, documentId } from '../ectd4';
@@ -110,10 +111,25 @@ export function v3GoldenInput(opts: {
       ctdSection: '2.2', operation: op('append'), sourcePath: paths.byName['intro.pdf'],
       fileName: 'intro.pdf', title: 'Introduction',
     },
-    {
-      ctdSection: '3.2.p.1', operation: op('delete'), sourcePath: paths.byName['description-composition.pdf'],
-      fileName: 'description-composition.pdf', title: 'Description and Composition',
-    },
+    // 2026-09-23 (W5/D7, round-2 skeptic): in the lifecycle sequence this leaf
+    // is a withdrawal, and a withdrawal ships no bytes. The fixture pinned the
+    // defect as golden — a delete carrying the document's bytes and no
+    // modified-file, which the packager shipped as a fresh in-sequence copy. It
+    // now refuses that shape, so the golden delete is backbone-only: no source,
+    // a modified-file pointer at the copy filed in the prior sequence, and that
+    // copy's published checksum (the golden bytes are byte-stable; the delete
+    // carries the checksum it was filed under, as computeLifecycleOperations does).
+    lifecycle && priorSequence
+      ? {
+          ctdSection: '3.2.p.1', operation: 'delete', sourcePath: '',
+          fileName: 'description-composition.pdf', title: 'Description and Composition',
+          md5: createHash('md5').update(goldenPdf('Description and Composition')).digest('hex'),
+          modifiedFile: `../${priorSequence}/${leafPackagePath({ ctdSection: '3.2.p.1', fileName: 'description-composition.pdf' }, region).relPath}`,
+        }
+      : {
+          ctdSection: '3.2.p.1', operation: op('delete'), sourcePath: paths.byName['description-composition.pdf'],
+          fileName: 'description-composition.pdf', title: 'Description and Composition',
+        },
     {
       // M5 study-report leaf → drives Study Tagging File generation + cross-linking.
       ctdSection: '5.3.5.1', operation: 'new', sourcePath: paths.byName['study-report.pdf'],

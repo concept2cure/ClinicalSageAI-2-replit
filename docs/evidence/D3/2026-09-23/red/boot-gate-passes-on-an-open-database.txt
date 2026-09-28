@@ -1,0 +1,10 @@
+$ assessRlsCatalogPosture(pool)   # server/db/rlsEnforcement.ts
+
+role                 : c2c
+role is superuser    : false
+role has BYPASSRLS   : false
+public tenant tables : 768 inspected
+owner-exempt tables  : (field does not exist in this version)
+failures             : 0
+
+VERDICT: GATE PASSES — production boot would proceed.

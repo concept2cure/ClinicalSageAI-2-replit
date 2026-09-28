@@ -1,0 +1,277 @@
+# MDN final pass — failing-first, run on the tree BEFORE the implementation (2026-09-23T08:44:47Z)
+# git diff hash of scoped sources:
+c5d61677db3833e61b1b52753b1fac41bdacdd2e58f8e5053c0ef9bd11b99279  -
+
+=== server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — control over a real mTLS connection > a trusted client certificate and an accepting MDN for our message is received 53ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — the agency refuses our client certificate at the TLS handshake: NOT_DELIVERED > TLSv1.3: rejected (transport), nothing reached the application, never in transit 22ms
+   → expected GatewayError: ESG AS2 POST failed: read E… { …(4) } to be an instance of TransportError
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — the agency refuses our client certificate at the TLS handshake: NOT_DELIVERED > TLSv1.2: rejected (transport), nothing reached the application, never in transit 11ms
+   → expected 'ESG AS2 POST failed: Client network s…' to match /Nothing reached FDA/
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 500: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 12ms
+   → expected 'FDA ESG AS2 returned HTTP 500' to match /may hold it/
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 502: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 7ms
+   → expected 'FDA ESG AS2 returned HTTP 502' to match /may hold it/
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 503: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 20ms
+   → expected 'FDA ESG AS2 returned HTTP 503' to match /may hold it/
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 504: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 11ms
+   → expected 'FDA ESG AS2 returned HTTP 504' to match /may hold it/
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 400: rejected (gateway), never in transit 14ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 401: rejected (gateway), never in transit 6ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 403: rejected (gateway), never in transit 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 404: rejected (gateway), never in transit 10ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 405: rejected (gateway), never in transit 10ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 409: rejected (gateway), never in transit 3ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 411: rejected (gateway), never in transit 9ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 413: rejected (gateway), never in transit 22ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 415: rejected (gateway), never in transit 4ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 422: rejected (gateway), never in transit 12ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > TLSv1.3: the server resets after reading the whole body — in transit, never rejected 5ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > TLSv1.2: the server resets after reading the whole body — in transit, never rejected 10ms
+ × server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > 200 headers and part of the MDN, then a reset: settles promptly as in transit (no hang) 15005ms
+   → Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — the agency refuses our client certificate at the TLS handshake: NOT_DELIVERED > TLSv1.3: rejected (transport), nothing reached the application, never in transit
+AssertionError: expected GatewayError: ESG AS2 POST failed: read E… { …(4) } to be an instance of TransportError
+ ❯ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:141:17
+    139|     const err = await transmit();
+    140|     expect(server.seen).toHaveLength(0);
+    141|     expect(err).toBeInstanceOf(TransportError);
+       |                 ^
+    142|     expect(err).not.toBeInstanceOf(RequestSentTransportError);
+    143|     expect((err as Error).message).not.toMatch(/may hold it/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — the agency refuses our client certificate at the TLS handshake: NOT_DELIVERED > TLSv1.2: rejected (transport), nothing reached the application, never in transit
+AssertionError: expected 'ESG AS2 POST failed: Client network s…' to match /Nothing reached FDA/
+
+- Expected:
+/Nothing reached FDA/
+
++ Received:
+"ESG AS2 POST failed: Client network socket disconnected before secure TLS connection was established"
+
+ ❯ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:144:36
+    142|     expect(err).not.toBeInstanceOf(RequestSentTransportError);
+    143|     expect((err as Error).message).not.toMatch(/may hold it/);
+    144|     expect((err as Error).message).toMatch(/Nothing reached FDA/);
+       |                                    ^
+    145|     const last = lastStatusWrite();
+    146|     expect(last.status).toBe('rejected');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 500: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend
+AssertionError: expected 'FDA ESG AS2 returned HTTP 500' to match /may hold it/
+
+- Expected:
+/may hold it/
+
++ Received:
+"FDA ESG AS2 returned HTTP 500"
+
+ ❯ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:159:36
+    157|     expect(server.seen[0].body.length).toBe(BUNDLE.length);
+    158|     expect(err).toBeInstanceOf(GatewayError);
+    159|     expect((err as Error).message).toMatch(/may hold it/);
+       |                                    ^
+    160|     expect((err as Error).message).toMatch(/before any resend/);
+    161|     const last = lastStatusWrite();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 502: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend
+AssertionError: expected 'FDA ESG AS2 returned HTTP 502' to match /may hold it/
+
+- Expected:
+/may hold it/
+
++ Received:
+"FDA ESG AS2 returned HTTP 502"
+
+ ❯ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:159:36
+    157|     expect(server.seen[0].body.length).toBe(BUNDLE.length);
+    158|     expect(err).toBeInstanceOf(GatewayError);
+    159|     expect((err as Error).message).toMatch(/may hold it/);
+       |                                    ^
+    160|     expect((err as Error).message).toMatch(/before any resend/);
+    161|     const last = lastStatusWrite();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 503: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend
+AssertionError: expected 'FDA ESG AS2 returned HTTP 503' to match /may hold it/
+
+- Expected:
+/may hold it/
+
++ Received:
+"FDA ESG AS2 returned HTTP 503"
+
+ ❯ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:159:36
+    157|     expect(server.seen[0].body.length).toBe(BUNDLE.length);
+    158|     expect(err).toBeInstanceOf(GatewayError);
+    159|     expect((err as Error).message).toMatch(/may hold it/);
+       |                                    ^
+    160|     expect((err as Error).message).toMatch(/before any resend/);
+    161|     const last = lastStatusWrite();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 504: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend
+AssertionError: expected 'FDA ESG AS2 returned HTTP 504' to match /may hold it/
+
+- Expected:
+/may hold it/
+
++ Received:
+"FDA ESG AS2 returned HTTP 504"
+
+ ❯ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:159:36
+    157|     expect(server.seen[0].body.length).toBe(BUNDLE.length);
+    158|     expect(err).toBeInstanceOf(GatewayError);
+    159|     expect((err as Error).message).toMatch(/may hold it/);
+       |                                    ^
+    160|     expect((err as Error).message).toMatch(/before any resend/);
+    161|     const last = lastStatusWrite();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > 200 headers and part of the MDN, then a reset: settles promptly as in transit (no hang)
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts:195:3
+    193|   });
+    194|
+    195|   it('200 headers and part of the MDN, then a reset: settles promptly …
+       |   ^
+    196|     server.respond = (_req, res) => {
+    197|       res.writeHead(200, { 'Content-Type': 'multipart/report; boundary…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 13 passed (20)
+   Start at  08:44:49
+   Duration  17.90s (transform 473ms, setup 203ms, import 404ms, tests 16.73s, environment 0ms)
+
+
+=== server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR persistence — a receipt-unproven outcome locks the row > records transmission_unconfirmed with the agency response and our AS2 Message-ID; a second transmit sends nothing; the ACK is accepted
+{
+  "timestamp": "2026-09-23T08:45:13.123Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "tx-1",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (gateway-rejected): HTTP 504: Gateway Timeout from the agency edge"
+  }
+}
+
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — the agency refuses our client certificate: NOT_DELIVERED, stage transport > TLSv1.3: transport, NOT transmitted, nothing reached the application 30ms
+   → expected 'receipt-unproven' to be 'transport' // Object.is equality
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — the agency refuses our client certificate: NOT_DELIVERED, stage transport > TLSv1.2: transport, NOT transmitted, nothing reached the application 10ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — the agency refuses our client certificate: NOT_DELIVERED, stage transport > control: a trusted certificate and an accepting MDN is transmitted 14ms
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 500 after the whole message: receipt-unproven, confirm before any resend 5ms
+   → expected 'gateway-rejected' to be 'receipt-unproven' // Object.is equality
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 502 after the whole message: receipt-unproven, confirm before any resend 5ms
+   → expected 'gateway-rejected' to be 'receipt-unproven' // Object.is equality
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 503 after the whole message: receipt-unproven, confirm before any resend 4ms
+   → expected 'gateway-rejected' to be 'receipt-unproven' // Object.is equality
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 504 after the whole message: receipt-unproven, confirm before any resend 6ms
+   → expected 'gateway-rejected' to be 'receipt-unproven' // Object.is equality
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 400: gateway-rejected 3ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 401: gateway-rejected 4ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 403: gateway-rejected 3ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 404: gateway-rejected 4ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 413: gateway-rejected 3ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 422: gateway-rejected 3ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR persistence — a receipt-unproven outcome locks the row > a TLS certificate refusal leaves the row prepared (nothing reached the agency)
+{
+  "timestamp": "2026-09-23T08:45:13.140Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "tx-1",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): ICSR AS2 POST (FDA_FAERS) failed: socket hang up after the whole request was sent; the recipient may hold it; confirm receipt at the agency before any resend."
+  }
+}
+
+ × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR persistence — a receipt-unproven outcome locks the row > records transmission_unconfirmed with the agency response and our AS2 Message-ID; a second transmit sends nothing; the ACK is accepted 8ms
+   → expected 'GATEWAY_TRANSMIT_FAILED' to be 'TRANSMISSION_UNCONFIRMED' // Object.is equality
+ ✓ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR persistence — a receipt-unproven outcome locks the row > a TLS certificate refusal leaves the row prepared (nothing reached the agency) 16ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — the agency refuses our client certificate: NOT_DELIVERED, stage transport > TLSv1.3: transport, NOT transmitted, nothing reached the application
+AssertionError: expected 'receipt-unproven' to be 'transport' // Object.is equality
+
+Expected: "transport"
+Received: "receipt-unproven"
+
+ ❯ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:114:53
+    112|     expect(server.seen).toHaveLength(0);
+    113|     expect(err).toBeInstanceOf(IcsrGatewayTransmitError);
+    114|     expect((err as IcsrGatewayTransmitError).stage).toBe('transport');
+       |                                                     ^
+    115|     expect((err as Error).message).toMatch(/NOT transmitted/);
+    116|     expect((err as Error).message).not.toMatch(/may hold it/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 500 after the whole message: receipt-unproven, confirm before any resend
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 502 after the whole message: receipt-unproven, confirm before any resend
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 503 after the whole message: receipt-unproven, confirm before any resend
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — HTTP status classes > HTTP 504 after the whole message: receipt-unproven, confirm before any resend
+AssertionError: expected 'gateway-rejected' to be 'receipt-unproven' // Object.is equality
+
+Expected: "receipt-unproven"
+Received: "gateway-rejected"
+
+ ❯ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:131:53
+    129|     const err = await attempt(as2Config());
+    130|     expect(server.seen).toHaveLength(1);
+    131|     expect((err as IcsrGatewayTransmitError).stage).toBe('receipt-unpr…
+       |                                                     ^
+    132|     expect((err as IcsrGatewayTransmitError).httpStatus).toBe(code);
+    133|     expect((err as IcsrGatewayTransmitError).transportMessageId).toBe(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR persistence — a receipt-unproven outcome locks the row > records transmission_unconfirmed with the agency response and our AS2 Message-ID; a second transmit sends nothing; the ACK is accepted
+AssertionError: expected 'GATEWAY_TRANSMIT_FAILED' to be 'TRANSMISSION_UNCONFIRMED' // Object.is equality
+
+Expected: "TRANSMISSION_UNCONFIRMED"
+Received: "GATEWAY_TRANSMIT_FAILED"
+
+ ❯ server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:156:21
+    154|     expect(first).toBeInstanceOf(IcsrTransmissionError);
+    155|     const e1 = first as IcsrTransmissionError;
+    156|     expect(e1.code).toBe('TRANSMISSION_UNCONFIRMED');
+       |                     ^
+    157|     expect(e1.message).not.toMatch(/NOT transmitted/);
+    158|     expect(e1.message).not.toMatch(/remains 'prepared'/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 9 passed (15)
+   Start at  08:45:09
+   Duration  3.46s (transform 672ms, setup 162ms, import 1.10s, tests 1.25s, environment 0ms)
+

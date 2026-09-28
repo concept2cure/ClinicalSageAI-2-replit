@@ -1,0 +1,107 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/package-spine-unapproved/assemble-edit-after-approval.probe.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/package-spine-unapproved/assemble-edit-after-approval.probe.test.ts
+{
+  "timestamp": "2026-09-23T07:10:46.747Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/package-spine-unapproved/assemble-edit-after-approval.probe.test.ts > PROBE: status is the only test; an approved artifact edited after approval ships > approved v1, edited to v2 (status still approved, approvedVersionId=1): no LEAF-UNAPPROVED, gateway reached
+HTTP 200 errorCount 1
+LEAF-UNAPPROVED findings: [{"severity":"error","ruleId":"LEAF-UNAPPROVED","message":"Artifact dp (artifact_dp v2) in Description and Composition (3.2.P.1): it was edited after approval — the current content is v2, the approved version is v1 — so the approved version was edited since approval and what would ship is unreviewed. Only an approved or locked artifact, at the version that was approved or locked, is filed with an agency; approve it (again), or remove it from the package, then assemble again.","filePath":"m3/3-2-P-1/3-2-p-1-dp.pdf"}]
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/package-spine-unapproved/assemble-edit-after-approval.probe.test.ts > PROBE: status is the only test; an approved artifact edited after approval ships > approved v1, edited to v2 (status still approved, approvedVersionId=1): no LEAF-UNAPPROVED, gateway reached
+transmit outcome: REFUSED BUNDLE_VALIDATION_ERRORS gateway calls: 0
+
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/package-spine-unapproved/assemble-edit-after-approval.probe.test.ts > PROBE: status is the only test; an approved artifact edited after approval ships > approved v1, edited to v2 (status still approved, approvedVersionId=1): no LEAF-UNAPPROVED, gateway reached 76ms
+   → expected [ { severity: 'error', …(3) } ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/package-spine-unapproved/assemble-edit-after-approval.probe.test.ts > PROBE: status is the only test; an approved artifact edited after approval ships > approved v1, edited to v2 (status still approved, approvedVersionId=1): no LEAF-UNAPPROVED, gateway reached
+AssertionError: expected [ { severity: 'error', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "filePath": "m3/3-2-P-1/3-2-p-1-dp.pdf",
++     "message": "Artifact dp (artifact_dp v2) in Description and Composition (3.2.P.1): it was edited after approval — the current content is v2, the approved version is v1 — so the approved version was edited since approval and what would ship is unreviewed. Only an approved or locked artifact, at the version that was approved or locked, is filed with an agency; approve it (again), or remove it from the package, then assemble again.",
++     "ruleId": "LEAF-UNAPPROVED",
++     "severity": "error",
++   },
++ ]
+
+ ❯ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/package-spine-unapproved/assemble-edit-after-approval.probe.test.ts:306:15
+    304|     const out: any = await transmitStored();
+    305|     console.log('transmit outcome:', out.err ? `REFUSED ${(out.err as …
+    306|     expect(f).toEqual([]);
+       |               ^
+    307|     expect(gatewayTransmitFn).toHaveBeenCalledTimes(1);
+    308|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  07:10:44
+   Duration  3.04s (transform 1.55s, setup 101ms, import 2.68s, tests 79ms, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/pretransmit-record/m3-manifest.probe.test.ts
+{
+  "timestamp": "2026-09-23T07:10:52.623Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T07:10:52.624Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/pretransmit-record/m3-manifest.probe.test.ts
+{
+  "timestamp": "2026-09-23T07:10:52.625Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/pretransmit-record/m3-manifest.probe.test.ts > probe: module3-regional-section on package-model vs sequence spine > governed transmit hands the guard no leafManifest, so a package WITH a 3.2.R leaf is recorded as failing
+guard saw leafManifest = [
+  {
+    ctdSection: '3.2.R',
+    fileName: 'r.pdf',
+    href: 'm3/32-body-data/32r-reg-info/r.pdf',
+    md5: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  }
+]
+outcome.preTransmitFailedChecks = []
+ledger payload failed = []
+same bundle WITH its manifest (sequence spine input) failed = []
+
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/pretransmit-record/m3-manifest.probe.test.ts > probe: module3-regional-section on package-model vs sequence spine > governed transmit hands the guard no leafManifest, so a package WITH a 3.2.R leaf is recorded as failing 7ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  07:10:49
+   Duration  4.37s (transform 2.46s, setup 117ms, import 4.05s, tests 10ms, environment 0ms)
+

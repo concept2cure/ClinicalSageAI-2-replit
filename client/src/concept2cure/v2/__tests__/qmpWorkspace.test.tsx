@@ -1,23 +1,23 @@
 // @vitest-environment jsdom
 /**
- * QmpWorkspace — proves the quality-management surface is wired to the real
- * /api/quality endpoints (raw JSON, not {data}-wrapped): loads plans + the
- * completeness/risk dashboard, activates a plan, and creates one. C2CForm is
- * stubbed so the test drives the backend wiring.
+ * QmpWorkspace — proves the quality-management surface reads the real
+ * /api/quality endpoints (raw JSON, not {data}-wrapped): the plan register and
+ * the completeness/risk dashboard.
+ *
+ * Its writes (activate, archive, create, delete) are governed changes (weekly
+ * review 2026-09-22, P2) and are proven against the real C2CForm in
+ * qmpWorkspaceGoverned.test.tsx. The two write cases that lived here asserted
+ * the old one-click, reasonless calls; once rewritten they duplicated that
+ * suite, so they were removed rather than kept twice.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
-}));
-vi.mock('../C2CForm', () => ({
-  C2CForm: ({ config, onSubmit }: any) => (
-    <button data-testid="form-submit" onClick={() => onSubmit({ name: 'New QP', version: '1.0', status: 'draft', description: '' })}>{config.submitLabel}</button>
-  ),
 }));
 
 import { QmpWorkspace } from '../surfaces/QmpWorkspace';
@@ -39,11 +39,9 @@ const DASH = {
 afterEach(() => cleanup());
 beforeEach(() => {
   apiRequest.mockReset();
-  apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
+  apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url === '/api/quality/plans') return raw(PLANS);
     if (method === 'GET' && url === '/api/quality/dashboard/1') return raw(DASH);
-    if (method === 'POST' && url === '/api/quality/plans') return raw({ id: 2, name: body.name, version: '1.0', status: 'draft' }, 201);
-    if (method === 'PATCH' && url === '/api/quality/plans/1') return raw({ id: 1, name: 'CER Quality Plan', status: 'active' });
     return raw({});
   });
 });
@@ -54,30 +52,5 @@ describe('QmpWorkspace — real quality backend', () => {
     expect(await screen.findByText('CER Quality Plan')).toBeTruthy();
     expect(await screen.findByText('75% complete')).toBeTruthy();
     expect(screen.getByText(/high 2/)).toBeTruthy();
-  });
-
-  it('activates a plan via PATCH', async () => {
-    render(<QmpWorkspace {...props()} />);
-    await screen.findByText('CER Quality Plan');
-    fireEvent.click(screen.getByRole('button', { name: /Activate/ }));
-    await waitFor(() => {
-      const call = apiRequest.mock.calls.find((c) => c[0] === 'PATCH' && c[1] === '/api/quality/plans/1');
-      expect(call).toBeTruthy();
-      expect(call![2]).toEqual({ status: 'active' });
-    });
-    expect(await screen.findByText(/Plan activated/)).toBeTruthy();
-  });
-
-  it('creates a plan via POST', async () => {
-    render(<QmpWorkspace {...props()} />);
-    await screen.findByText('CER Quality Plan');
-    fireEvent.click(screen.getByRole('button', { name: /New plan/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    await waitFor(() => {
-      const call = apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/quality/plans');
-      expect(call).toBeTruthy();
-      expect(call![2]).toMatchObject({ name: 'New QP', version: '1.0' });
-    });
-    expect(await screen.findByText(/plan created/i)).toBeTruthy();
   });
 });

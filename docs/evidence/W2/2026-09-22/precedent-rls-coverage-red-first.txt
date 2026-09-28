@@ -1,0 +1,5 @@
+# scripts/db/rls-coverage-check.sql on the reference DB, each case inside BEGIN/ROLLBACK
+## (a) column added WITHOUT the policy (the file as it was before this change)
+precedent.regulatory_precedents (organization_id)
+## (b) the amended file
+(no rows above = covered)

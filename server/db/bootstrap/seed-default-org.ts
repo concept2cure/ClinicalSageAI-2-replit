@@ -14,6 +14,10 @@ import type { PoolClient } from 'pg';
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import { createScopedLogger } from '../../utils/logger';
+import {
+  ensureOrganizationDefaultWorkspace,
+  poolClientWorkspaceStore,
+} from '../../services/c2c/organization-default-workspace';
 
 const logger = createScopedLogger('database');
 
@@ -44,6 +48,28 @@ export async function seedOrganizations(client: PoolClient): Promise<void> {
       industry_mode = COALESCE(NULLIF(organizations.industry_mode, ''), 'biotech'),
       tier = 'enterprise'
   `);
+
+  // Each seeded organisation gets its own client workspace — the NOT NULL
+  // parent `projects.client_workspace_id` needs before any program can anchor
+  // to the PM spine. These two orgs are created HERE, at boot, after the
+  // migration set has already run, so the migration's repair sweep cannot
+  // reach them on this deploy; without this call they would carry no workspace
+  // until the next one, and every program created in between would be
+  // unanchored. See services/c2c/organization-default-workspace.ts.
+  //
+  // `userId` is null on purpose: the platform wrote these rows, not a person.
+  const store = poolClientWorkspaceStore(client);
+  const seeded = await client.query<{ id: number | string; name: string; slug: string }>(
+    `SELECT id, name, slug FROM organizations WHERE slug IN ('default', 'concept2cure')`,
+  );
+  for (const org of seeded.rows) {
+    await ensureOrganizationDefaultWorkspace(store, {
+      orgId: Number(org.id),
+      orgName: org.name,
+      orgSlug: org.slug,
+      userId: null,
+    });
+  }
 }
 
 /**

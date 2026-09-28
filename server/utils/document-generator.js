@@ -36,10 +36,9 @@ export async function generateDocumentation(
   complianceRegion = 'ich'
 ) {
   try {
-    // Verify OpenAI API key
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OpenAI API key not configured');
-    }
+    // No provider-key check here: the gateway serves the draft with whichever
+    // approved model is configured, and refuses when none is. (It required an
+    // OpenAI key for a call the gateway routes to Claude.)
 
     // Ensure output directory exists
     const outputDir = path.join(process.cwd(), 'output');
@@ -63,9 +62,12 @@ export async function generateDocumentation(
     
     Format the document with proper headings, subheadings, tables, and sections according to ICH CTD guidelines.`;
 
-    // Call OpenAI API to generate document content
+    // A Module 3 CTD document: document_drafting, so only a model approved for
+    // high-risk regulatory drafting serves it. It pinned gpt-4o as a 'general'
+    // request, which the gateway's approval check never sees.
     const aiResult = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'document_drafting',
+      callerModule: 'cmc/document-generator',
       messages: [
         {
           role: 'system',
@@ -78,8 +80,11 @@ export async function generateDocumentation(
       max_tokens: 4000,
     });
 
-    // Extract the generated content
+    // Extract the generated content. Nothing is written for an empty draft.
     const generatedContent = aiResult.content;
+    if (!generatedContent || !generatedContent.trim()) {
+      throw new Error('The drafting model returned no document, so nothing was written.');
+    }
 
     // Generate a document name
     const documentName = `${documentType.replace(/\./g, '_')}_${moleculeData.moleculeName}_${new Date().toISOString().split('T')[0]}`;

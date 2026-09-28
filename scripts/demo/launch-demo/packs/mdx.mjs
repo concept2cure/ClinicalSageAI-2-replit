@@ -237,17 +237,6 @@ async function submitAndFreezeSummary({ api, run }, doc, reviewer) {
   return `review → ${reviewer.email} (${workflow}); ${how} (${String(f.contentHash).slice(0, 12)}…)`;
 }
 
-async function enrolSignerPin(signer) {
-  const PIN = process.env.DEMO_SIGNER_PIN || '246813';
-  let r = await signer.api('POST', '/api/authoring/users/pin', { pin: PIN });
-  if (r.status === 400 && /current pin|old_pin/i.test(r.text ?? '')) {
-    r = await signer.api('POST', '/api/authoring/users/pin', { pin: PIN, old_pin: PIN });
-    if (r.status === 401) return null;
-  }
-  must(r, [200, 201], 'enrol signer PIN');
-  return PIN;
-}
-
 async function signSummary({ api, run }, docId, signer) {
   const sigs = must(await api('GET', `/api/authoring/docs/${docId}/signatures`), 200, 'list signatures').signatures ?? [];
   const already = signer ? sigs.find((s) => s.signer_email === signer.email) : null;
@@ -258,20 +247,15 @@ async function signSummary({ api, run }, docId, signer) {
       : { executed: false, note: SIGNER_ABSENT, signaturesPresent: sigs.length });
     return signer ? `already signed by ${signer.email} (${already.meaning})` : SIGNER_ABSENT;
   }
-  const pin = await enrolSignerPin(signer);
-  if (!pin) {
-    const note = 'not executed — the signer already holds an authoring PIN this pack does not know (set DEMO_SIGNER_PIN)';
-    run.record('authoring.summarySignature', { executed: false, note });
-    run.note(`Authoring e-sign: ${note}`);
-    return note;
-  }
+  // The platform's signing ceremony: the signer's own password, re-verified by
+  // the server (the separate authoring PIN was retired 2026-09-23).
   must(await signer.api('POST', `/api/authoring/docs/${docId}/e-sign`, {
-    pin, meaning: 'APPROVER',
+    password: signer.password, meaning: 'APPROVER',
     intent: 'Approved: the 510(k) Summary v1.0 is accurate and complete per 21 CFR 807.92 and consistent with the dossier documents in the Vault.',
   }), 200, 'e-sign document');
   const sig = (must(await api('GET', `/api/authoring/docs/${docId}/signatures`), 200, 'list signatures').signatures ?? []).find((s) => s.signer_email === signer.email);
   if (!sig) throw new Error('signature not listed after e-sign');
-  run.record('authoring.summarySignature', { executed: true, existing: false, id: sig.id, meaning: sig.meaning, signer: sig.signer_email, pinVerified: sig.pin_verified, coveredFreezeVersion: sig.covered_freeze_version, coveredContentHash: sig.covered_content_hash });
+  run.record('authoring.summarySignature', { executed: true, existing: false, id: sig.id, meaning: sig.meaning, signer: sig.signer_email, method: sig.method, coveredFreezeVersion: sig.covered_freeze_version, coveredContentHash: sig.covered_content_hash });
   return `signed by ${sig.signer_email} as ${sig.meaning} over freeze v${sig.covered_freeze_version}`;
 }
 

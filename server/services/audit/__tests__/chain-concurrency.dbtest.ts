@@ -123,6 +123,23 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await pool?.end();
+  // pg-pool's end() resolves once it has ASKED each client to close — it does
+  // not await client.end() — so the backends can still be open here. A FORCE
+  // drop then terminates them mid-close, and each one surfaces as an uncaught
+  // 57P01 ("terminating connection due to administrator command") on a client
+  // nothing listens to any more: five unhandled errors that failed the
+  // real-database step with every test passing (CI run 12120, 2026-09-23).
+  // Wait for the server to see them gone; FORCE stays as the backstop.
+  if (admin && dbName) {
+    for (let i = 0; i < 100; i++) {
+      const { rows } = await admin.query(
+        'SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname = $1',
+        [dbName],
+      );
+      if (rows[0].n === 0) break;
+      await sleep(50);
+    }
+  }
   await admin?.query(`DROP DATABASE IF EXISTS "${dbName}" WITH (FORCE)`);
   await admin?.end();
 });

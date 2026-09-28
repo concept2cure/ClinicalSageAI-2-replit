@@ -1,0 +1,153 @@
+# RED: tests/db/sign-in-posture.dbtest.ts (item 4) against the routes BEFORE the fix
+# 2026-09-23T08:49:55Z  HEAD=bb2ad04fe; the routes are unmodified at this point (the test was written first)
+# Database: c2c_d6_repro
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/db/sign-in-posture.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-23T08:49:58.409Z', poolSize: 1 }
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/sign-in-posture.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 176
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 178
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA disabled for user 178
+
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > the three accounts are what their names say 2ms
+stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree
+{
+  "timestamp": "2026-09-23T08:50:05.000Z",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "dbtsp-email-782_mudv412c@example.invalid"
+  }
+}
+
+stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree
+{
+  "timestamp": "2026-09-23T08:50:05.000Z",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "dbtsp-disabled-782_mudv412c@example.invalid"
+  }
+}
+
+ × tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so 125ms
+   → the session denies the authenticator the user just signed in with: expected { mfaEnabled: false, …(2) } to deeply equal { mfaEnabled: true, …(2) }
+ × tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree 40ms
+   → /mfa/verify reported an authenticator the account does not have: expected { mfaEnabled: true, …(2) } to deeply equal { mfaEnabled: false, …(2) }
+stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false
+{
+  "timestamp": "2026-09-23T08:50:05.000Z",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "dbtsp-email-782_mudv412c@example.invalid"
+  }
+}
+
+ × tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree 52ms
+   → /mfa/verify reported an authenticator the account does not have: expected { mfaEnabled: true, …(2) } to deeply equal { mfaEnabled: false, …(2) }
+ × tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false 54ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so
+AssertionError: the session denies the authenticator the user just signed in with: expected { mfaEnabled: false, …(2) } to deeply equal { mfaEnabled: true, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "mfaEnabled": true,
+-   "mfaMethods": [
+-     {
+-       "isEnabled": true,
+-       "isPrimary": true,
+-       "type": "totp",
+-     },
+-   ],
++   "mfaEnabled": false,
++   "mfaMethods": [],
+    "mustChangePassword": false,
+  }
+
+ ❯ tests/db/sign-in-posture.dbtest.ts:267:109
+    265|     const session = await request(app).get('/api/auth/session').set(be…
+    266|     expect(session.status, JSON.stringify(session.body)).toBe(200);
+    267|     expect(stateOf(session.body.user), 'the session denies the authent…
+       |                                                                                                             ^
+    268|
+    269|     const v1 = await request(app).get('/api/v1/auth/session').set(bear…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree
+ FAIL  tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree
+AssertionError: /mfa/verify reported an authenticator the account does not have: expected { mfaEnabled: true, …(2) } to deeply equal { mfaEnabled: false, …(2) }
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "mfaEnabled": false,
++   "mfaEnabled": true,
+    "mfaMethods": [
+      {
+        "isEnabled": true,
+        "isPrimary": true,
+        "type": "email",
+
+ ❯ tests/db/sign-in-posture.dbtest.ts:286:103
+    284|     const s = await signIn(m, emailedCode(m), 'email');
+    285|     expect(s.login.mfaMethods).toEqual(EMAIL.mfaMethods);
+    286|     expect(stateOf(s.verify.user), '/mfa/verify reported an authentica…
+       |                                                                                                       ^
+    287|     expect(stateOf((await request(app).get('/api/auth/session').set(s.…
+    288|     expect(stateOf((await request(app).get('/api/users/me').set(s.bear…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/sign-in-posture.dbtest.ts:297:48
+    295|     try {
+    296|       const s = await signIn(m, emailedCode(m), 'email');
+    297|       expect(s.verify.user.mustChangePassword).toBe(true);
+       |                                                ^
+    298|       expect((await request(app).get('/api/auth/session').set(s.bearer…
+    299|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  08:49:56
+   Duration  3.80s (transform 1.26s, setup 72ms, import 183ms, tests 3.26s, environment 0ms)
+

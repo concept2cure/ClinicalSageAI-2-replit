@@ -1,0 +1,226 @@
+# git: 3aafaf809 — the route and part11ComplianceService as committed; the converted test from the working tree, with the deleted
+# verifyUserCredentials modelled as it behaved (account active, not locked, password compared; no second factor).
+# npx vitest run tests/unit/submission-sign-release-route.test.ts  (run as a temporary copy carrying that model)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stderr | tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > REGRESSION: a signature whose audit row cannot be written does not exist at all
+{
+  "timestamp": "2026-09-23T10:50:11.637Z",
+  "level": "error",
+  "message": "[submission-sign-release] createElectronicSignature failed",
+  "context": {
+    "organizationId": 100,
+    "runId": "run-123",
+    "signerId": 7,
+    "err": "relation \"audit_logs\" does not exist"
+  }
+}
+
+stderr | tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > surfaces 500 on a non-race createElectronicSignature failure
+{
+  "timestamp": "2026-09-23T10:50:11.663Z",
+  "level": "error",
+  "message": "[submission-sign-release] createElectronicSignature failed",
+  "context": {
+    "organizationId": 100,
+    "runId": "run-123",
+    "signerId": 7,
+    "err": "disk on fire"
+  }
+}
+
+stderr | tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on invalid signatureMeaning (closed enum, only "approval" allowed)
+{
+  "timestamp": "2026-09-23T10:50:11.671Z",
+  "level": "warn",
+  "message": "[submission-sign-release] Invalid sign-release body",
+  "context": {
+    "organizationId": 100,
+    "submissionId": "sub-1",
+    "issues": [
+      {
+        "path": [
+          "signatureMeaning"
+        ],
+        "code": "invalid_literal"
+      }
+    ]
+  }
+}
+
+stderr | tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on empty reason (§11.50 requires a meaning manifestation)
+{
+  "timestamp": "2026-09-23T10:50:11.674Z",
+  "level": "warn",
+  "message": "[submission-sign-release] Invalid sign-release body",
+  "context": {
+    "organizationId": 100,
+    "submissionId": "sub-1",
+    "issues": [
+      {
+        "path": [
+          "reason"
+        ],
+        "code": "too_small"
+      }
+    ]
+  }
+}
+
+ ✓ tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — auth gating > returns 401 when no JWT principal is present 27ms
+ ✓ tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — auth gating > returns 403 when JWT principal is present but org context is missing 4ms
+ ✓ tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 404 when getRun returns null (collapsed miss-or-cross-org) 5ms
+ ✓ tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 404 when URL submissionId does not match the run's submissionId 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 409 when run.status is not awaiting-signature 4ms
+ × tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns 401 when password verification fails (NEVER 200, no signature row) 12ms
+   → expected { error: 'invalid_credentials' } to deeply equal { error: 'invalid_credentials', …(1) }
+ × tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > creates a signature and persists bound_payload_digest on the happy path 5ms
+   → expected { Object (userId, organizationId, ...) } to not have property "password"
+ ✓ tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > REGRESSION: a signature whose audit row cannot be written does not exist at all 4ms
+ × tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses the password alone from a signer with an authenticator enrolled (400, no signature) 7ms
+   → a release was signed without the enrolled second factor: expected 200 to be 400 // Object.is equality
+ × tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > signs with the password and the enrolled code, and records both 4ms
+   → expected undefined to deeply equal { ok: true, …(2) }
+ × tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses an account that is not active (401), as the route always has, before comparing anything 4ms
+   → expected { error: 'invalid_credentials' } to deeply equal { error: 'invalid_credentials', …(1) }
+ × tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses a locked account (423) before its password is compared 3ms
+   → expected 401 to be 423 // Object.is equality
+ ✓ tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns the existing signatureId without creating a duplicate when one already exists (idempotent) 2ms
+ ✓ tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > resolves a concurrent-signing race idempotently on a 23505 unique violation 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > surfaces 500 on a non-race createElectronicSignature failure 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns 422 when no documentId anchor can be resolved (lineage unresolved) 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on invalid signatureMeaning (closed enum, only "approval" allowed) 6ms
+ ✓ tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on empty reason (§11.50 requires a meaning manifestation) 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns 401 when password verification fails (NEVER 200, no signature row)
+AssertionError: expected { error: 'invalid_credentials' } to deeply equal { error: 'invalid_credentials', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "code": "PASSWORD_VERIFICATION_FAILED",
+    "error": "invalid_credentials",
+  }
+
+ ❯ tests/unit/submission-sign-release-route.test.ts (before-fix model):401:22
+    399|
+    400|     expect(res.status).toBe(401);
+    401|     expect(res.body).toEqual({ error: 'invalid_credentials', code: 'PA…
+       |                      ^
+    402|     expect(hoisted.failures).toHaveBeenCalledWith(7);
+    403|     // CRITICAL: signature is NOT created on a credential failure.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > creates a signature and persists bound_payload_digest on the happy path
+AssertionError: expected { Object (userId, organizationId, ...) } to not have property "password"
+
+- Expected:
+undefined
+
++ Received:
+"right-password"
+
+ ❯ tests/unit/submission-sign-release-route.test.ts (before-fix model):457:26
+    455|     expect(callArgs.signerRole).toBe('approver');
+    456|     // What the ceremony verified, never a password to check again.
+    457|     expect(callArgs).not.toHaveProperty('password');
+       |                          ^
+    458|     expect((callArgs as unknown as { reverified: unknown }).reverified…
+    459|       ok: true,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses the password alone from a signer with an authenticator enrolled (400, no signature)
+AssertionError: a release was signed without the enrolled second factor: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/unit/submission-sign-release-route.test.ts (before-fix model):534:83
+    532|       .post('/api/submissions/sub-1/sign-release')
+    533|       .send({ runId: 'run-123', password: 'right-password', signatureM…
+    534|     expect(res.status, 'a release was signed without the enrolled seco…
+       |                                                                                   ^
+    535|     expect(res.body.code).toBe('MFA_TOKEN_REQUIRED');
+    536|     expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > signs with the password and the enrolled code, and records both
+AssertionError: expected undefined to deeply equal { ok: true, …(2) }
+
+- Expected:
+{
+  "authenticationMethod": "password+mfa",
+  "ok": true,
+  "secondFactorVerified": true,
+}
+
++ Received:
+undefined
+
+ ❯ tests/unit/submission-sign-release-route.test.ts (before-fix model):549:33
+    547|     expect(res.status).toBe(200);
+    548|     const callArgs = hoisted.createElectronicSignature.mock.calls[0][0…
+    549|     expect(callArgs.reverified).toEqual({ ok: true, authenticationMeth…
+       |                                 ^
+    550|   });
+    551|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses an account that is not active (401), as the route always has, before comparing anything
+AssertionError: expected { error: 'invalid_credentials' } to deeply equal { error: 'invalid_credentials', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "code": "ACCOUNT_INACTIVE",
+    "error": "invalid_credentials",
+  }
+
+ ❯ tests/unit/submission-sign-release-route.test.ts (before-fix model):560:22
+    558|       .send({ runId: 'run-123', password: 'right-password', signatureM…
+    559|     expect(res.status, 'a suspended account signed a release').toBe(40…
+    560|     expect(res.body).toEqual({ error: 'invalid_credentials', code: 'AC…
+       |                      ^
+    561|     expect(hoisted.compare).not.toHaveBeenCalled();
+    562|     expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/unit/submission-sign-release-route.test.ts (before-fix model) > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses a locked account (423) before its password is compared
+AssertionError: expected 401 to be 423 // Object.is equality
+
+- Expected
++ Received
+
+- 423
++ 401
+
+ ❯ tests/unit/submission-sign-release-route.test.ts (before-fix model):572:24
+    570|       .post('/api/submissions/sub-1/sign-release')
+    571|       .send({ runId: 'run-123', password: 'right-password', signatureM…
+    572|     expect(res.status).toBe(423);
+       |                        ^
+    573|     expect(res.body.code).toBe('ACCOUNT_LOCKED');
+    574|     expect(hoisted.compare).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 12 passed (18)
+   Start at  10:50:11
+   Duration  621ms (transform 149ms, setup 78ms, import 227ms, tests 104ms, environment 0ms)
+

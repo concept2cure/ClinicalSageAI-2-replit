@@ -1,0 +1,59 @@
+# git: 923d1491b + working tree (the F-29 fix)
+# Each fix point switched off in turn (one mutation applied, the dbtest run, the file restored),
+# tests/db/account-standing.dbtest.ts on real PostgreSQL as the NOBYPASSRLS runtime role.
+
+## M1 global /api gate ignores standing
+# mutation in server/auth.ts
+× a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 59ms
+× a session the account already holds (F-29) > ends once the identity provider deprovisions the account 51ms
+Tests  2 failed | 11 passed (13)
+# killed: yes
+
+## M2 router gate (authenticateToken) ignores standing
+# mutation in server/middleware/auth.ts
+× a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 58ms
+Tests  1 failed | 12 passed (13)
+# killed: yes
+
+## M3 verifyLiveToken ignores standing
+# mutation in server/services/token-revocation.ts
+× a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 78ms
+Tests  1 failed | 12 passed (13)
+# killed: yes
+
+## M4 /login ignores standing
+# mutation in server/routes/auth.ts
+× sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 22ms
+× sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 20ms
+Tests  2 failed | 11 passed (13)
+# killed: yes
+
+## M5 /mfa/verify ignores standing
+# mutation in server/routes/auth.ts
+× sign-in (F-29) > a challenge issued before the suspension does not become a session after it 44ms
+Tests  1 failed | 12 passed (13)
+# killed: yes
+
+## M6 /refresh ignores standing
+# mutation in server/routes/auth.ts
+× a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 119ms
+Tests  1 failed | 12 passed (13)
+# killed: yes
+
+## M7 signing ceremony ignores standing
+# mutation in server/services/part11/reverify-signer.ts
+× signing (F-28) > a suspended account cannot sign, with the right password and code 17ms
+× signing (F-28) > a guess against a suspended account is neither compared nor counted 11ms
+× signing (F-28) > a deprovisioned account cannot sign 13ms
+Tests  3 failed | 10 passed (13)
+# killed: yes
+
+## M8 the predicate lets a suspended account through
+# mutation in server/services/account-standing.ts
+× signing (F-28) > a suspended account cannot sign, with the right password and code 17ms
+× signing (F-28) > a guess against a suspended account is neither compared nor counted 10ms
+× sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 21ms
+× sign-in (F-29) > a challenge issued before the suspension does not become a session after it 41ms
+× a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 82ms
+Tests  5 failed | 8 passed (13)
+# killed: yes

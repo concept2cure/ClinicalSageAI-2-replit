@@ -65,7 +65,7 @@ vi.mock('../../../db', () => ({
   }),
 }));
 
-import { getToolHandler } from '../AnaToolExecutor';
+import { approvedToolHandler } from './support/approved-tool-handler';
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 
@@ -160,7 +160,7 @@ beforeEach(async () => {
 });
 
 async function call(name: string, input: Record<string, unknown>, ctx: unknown = CTX) {
-  const handler = getToolHandler(name);
+  const handler = approvedToolHandler(name);
   expect(handler, `${name} must be registered`).toBeTypeOf('function');
   return JSON.parse(await handler!(input, ctx as never));
 }

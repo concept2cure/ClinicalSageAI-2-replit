@@ -141,6 +141,10 @@ module "ecs" {
     { name = "OPENAI_API_KEY",  value_from = module.secrets.secret_arns["openai_api_key"] },
   ]
 
+  # The release signer — see release_signing.tf.
+  api_environment    = local.signer_environment
+  worker_environment = local.signer_environment
+
   tags = var.tags
 }
 

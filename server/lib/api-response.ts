@@ -66,6 +66,8 @@ export function noContent(res: Response): Response {
  *   - 404 Not Found             — resource id doesn't resolve in tenant
  *   - 409 Conflict              — uniqueness violation
  *   - 422 Unprocessable Entity  — validation failure (Zod, etc.)
+ *   - 423 Locked                — the signer's account is locked after
+ *                                 repeated failed attempts (the signing ceremony)
  *
  * `details` may carry structured field errors (e.g. Zod's
  * flatten().fieldErrors output) when the status is 422.
@@ -76,7 +78,7 @@ export function noContent(res: Response): Response {
  */
 export function clientError(
   res: Response,
-  status: 400 | 401 | 403 | 404 | 409 | 412 | 422 | 502,
+  status: 400 | 401 | 403 | 404 | 409 | 412 | 422 | 423 | 502,
   error: string,
   details?: Record<string, unknown>,
 ): Response {

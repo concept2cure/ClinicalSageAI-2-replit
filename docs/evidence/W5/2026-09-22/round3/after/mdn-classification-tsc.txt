@@ -1,0 +1,1 @@
+scoped tsc errors: 0 (total lines in full output: 38)

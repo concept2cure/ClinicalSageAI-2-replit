@@ -25,13 +25,23 @@ async function pkg(work: string, opts: {
   for (const n of ['summary.pdf', 'study.pdf']) await fs.writeFile(path.join(src, n), pdf(n));
   const leaves: EctdLeaf[] = [
     { ctdSection: '2.7.3', operation: 'new', sourcePath: path.join(src, 'summary.pdf'), fileName: 'summary.pdf', title: 'Clinical Summary' },
-    { ctdSection: '5.3.5.1', operation: opts.deleteTarget ? 'delete' : 'new', sourcePath: path.join(src, 'study.pdf'), fileName: 'study.pdf', title: 'Study Report' },
+    // 2026-09-23 (W5/D7, round-2 skeptic): the withdrawn target used to carry
+    // the study's bytes, which the packager shipped. A delete now ships none —
+    // the packager refuses one with a sourcePath — so the target is
+    // backbone-only here. 2026-09-23 (W5/D7, round-2 skeptic, second pass): it
+    // was also a delete in sequence 0000, where nothing is on file to withdraw —
+    // the packager now refuses that too — so the withdrawal is filed in 0001
+    // and names the filed copy through modified-file.
+    opts.deleteTarget
+      ? { ctdSection: '5.3.5.1', operation: 'delete', sourcePath: '', fileName: 'study.pdf', title: 'Study Report',
+          modifiedFile: '../0000/m5/53-clin-stud-rep/535-rep-effic-safety-stud/study.pdf' }
+      : { ctdSection: '5.3.5.1', operation: 'new', sourcePath: path.join(src, 'study.pdf'), fileName: 'study.pdf', title: 'Study Report' },
   ];
   const prevEnv: Record<string, string | undefined> = {};
   for (const [k, v] of Object.entries(opts.env ?? {})) { prevEnv[k] = process.env[k]; process.env[k] = v; }
   try {
     return await packageEctdSubmission({
-      region: 'fda', applicationId: '1', sequence: '0000', submissionType: 'original',
+      region: 'fda', applicationId: '1', sequence: opts.deleteTarget ? '0001' : '0000', submissionType: 'original',
       fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
       sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, 'out'),
       environment: 'production', leaves, crossReferences: opts.crossReferences,

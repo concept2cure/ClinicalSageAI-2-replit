@@ -338,6 +338,28 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
     expect(emailState.sent.length).toBe(0);
   });
 
+  it('POST / — in production with no public origin, nothing is created and the admin is told why (503)', async () => {
+    // A new member's activation link is built on APP_URL only in production,
+    // never the Host header (D6). Creating the account and then failing to
+    // link it left a member who could neither sign in, reset, nor be re-invited.
+    const saved = { NODE_ENV: process.env.NODE_ENV, APP_URL: process.env.APP_URL };
+    process.env.NODE_ENV = 'production';
+    delete process.env.APP_URL;
+    try {
+      authState.membershipRole = 'admin';
+      const res = await request(app)
+        .post('/api/tenant-users')
+        .send({ email: 'brand-new@example.com', name: 'Brand New', role: 'member', organizationId: 999 })
+        .expect(503);
+      expect(res.body.error).toBe('PUBLIC_ORIGIN_NOT_CONFIGURED');
+      expect(executedMatching(/INSERT INTO (users|organization_users|organization_invitations)/i)).toEqual([]);
+    } finally {
+      process.env.NODE_ENV = saved.NODE_ENV;
+      if (saved.APP_URL === undefined) delete process.env.APP_URL;
+      else process.env.APP_URL = saved.APP_URL;
+    }
+  });
+
   it('POST / — with SMTP configured the invitation is emailed and the link is NOT echoed back', async () => {
     authState.membershipRole = 'admin';
     emailState.configured = true;

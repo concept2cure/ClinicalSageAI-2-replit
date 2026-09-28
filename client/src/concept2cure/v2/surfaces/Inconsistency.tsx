@@ -71,6 +71,121 @@ interface GiBoard {
   checks: GiCheck[];
 }
 
+/* A board finding plus the ledger id of a review decision this screen saw
+   committed — present only then, so the audit-trail claim is never made for a
+   row read from the board. */
+type ReviewedFinding = GiFinding & { auditId?: string | null };
+
+/* POST /contradictions/:id/review response (assumption-decision-contradiction.ts). */
+interface ReviewResponse {
+  finding?: { reviewState?: string; resolvedBy?: string | null; resolvedAt?: string | null };
+  governance?: { auditId?: string };
+}
+
+const REVIEW_REASON_MIN = 8;
+
+/* Who the record says resolved it: resolved_by as stored (a user id is shown
+   as one — neither the board nor the review response carries a name). Null
+   when the row names nobody — never a stand-in. */
+function resolverLabel(f: ReviewedFinding): string | null {
+  const id = f.resolvedBy == null ? '' : String(f.resolvedBy).trim();
+  if (!id) return null;
+  return /^\d+$/.test(id) ? 'user ' + id : id;
+}
+
+/* Server messages arrive with or without a closing stop; join them as one. */
+function asSentence(s: string): string {
+  const t = s.trim();
+  return /[.!?]$/.test(t) ? t : t + '.';
+}
+
+function resolvedWhen(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+/* What a review POST's answer means for this screen, classified without side
+   effects so the transition handler only orchestrates. Only 'recorded' changes
+   the row, and only with what the server returned; 'stale', 'unreadable' and
+   'unknown' mean this screen's view may be wrong, so the confirmation closes
+   and the board is re-read. */
+type ReviewOutcome =
+  | { kind: 'recorded'; reviewState: string; resolvedBy: string | null; resolvedAt: string | null; auditId: string | null }
+  | { kind: 'refused'; status: number; detail: string }
+  | { kind: 'stale'; detail: string }
+  | { kind: 'unreadable' }
+  | { kind: 'unknown'; status: number };
+
+function refusedFallback(status: number): string {
+  return 'the service refused the update (HTTP ' + status + ')';
+}
+
+/* One wording for a refusal, whichever way it arrives — the reply and the
+   thrown error both route through here. A 409 means the finding is already in
+   that state — this form was opened from a stale board — so it closes and the
+   board is re-read rather than left open to be submitted again. */
+function refusal(status: number, detail: string): ReviewOutcome {
+  return status === 409 ? { kind: 'stale', detail } : { kind: 'refused', status, detail };
+}
+
+function reviewOutcomeFromReply(status: number, ok: boolean, json: ReviewResponse | null): ReviewOutcome {
+  if (!ok) {
+    // serverMessage takes the sentence and returns null for enum tokens and
+    // infrastructure text; a bare "HTTP 500" is not copy, so the fallback is
+    // a sentence that carries the status.
+    return refusal(status, serverMessage(json) ?? refusedFallback(status));
+  }
+  const recorded = json?.finding;
+  if (!recorded || typeof recorded.reviewState !== 'string') {
+    // A 2xx whose body cannot be read says nothing about what was recorded
+    // (it may not even be this route's). Claim nothing; re-read.
+    return { kind: 'unreadable' };
+  }
+  return {
+    kind: 'recorded',
+    reviewState: recorded.reviewState,
+    resolvedBy: recorded.resolvedBy ?? null,
+    resolvedAt: recorded.resolvedAt ?? null,
+    auditId: json?.governance?.auditId ?? null,
+  };
+}
+
+function reviewOutcomeFromError(e: unknown): ReviewOutcome {
+  // ApiRequestError carries a status: the server answered and refused, and
+  // its message has been through the envelope reduction. Anything else is
+  // the browser's own failure, where the outcome is unknown — so re-read.
+  const status = (e as { name?: unknown; status?: unknown })?.name === 'ApiRequestError'
+    ? Number((e as { status?: unknown }).status)
+    : 0;
+  // A gateway error (502/503/504, often a proxy's page, not this route's)
+  // or a COMMIT the server could not confirm is not a refusal: the change
+  // may have landed. Treated like no answer at all.
+  const unknown = status === 0 || status === 502 || status === 503 || status === 504
+    || (e as { code?: unknown })?.code === 'OUTCOME_UNKNOWN';
+  if (unknown) return { kind: 'unknown', status };
+  return refusal(status, (e as Error).message || refusedFallback(status));
+}
+
+/* The governed POST; every way it can end comes back as a classified outcome. */
+async function postReview(
+  id: string,
+  reviewState: 'approved_resolution' | 'unresolved',
+  reason: string,
+): Promise<ReviewOutcome> {
+  try {
+    const res = await apiRequest(
+      'POST',
+      '/api/governed-intelligence/contradictions/' + encodeURIComponent(id) + '/review',
+      { reviewState, reason },
+    );
+    const json = (await res.json().catch(() => null)) as ReviewResponse | null;
+    return reviewOutcomeFromReply(res.status, res.ok, json);
+  } catch (e) {
+    return reviewOutcomeFromError(e);
+  }
+}
+
 /* ── Inline shared helpers (same pattern as Nonclinical.tsx) ── */
 
 /* Current project id — the runtime channel set by Projects.tsx when a project is
@@ -103,10 +218,11 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   //  1. "Re-scan findings" button — WIRED. Runs the real detection scan (POST
   //     /api/governed-intelligence/contradictions/scan/:projectId,
   //     contradictionEngineService.scanProject) and then re-reads the board.
-  //  2. resolve(f) — WIRED. Real awaited POST /api/governed-intelligence/
-  //     contradictions/:id/review; the local row moves only after the server
-  //     confirms the transition.
-  //  3. reopen(f) — WIRED, same endpoint with reviewState 'unresolved'.
+  //  2. resolve(f) — WIRED. A governed confirmation captures the reason, then
+  //     POST /api/governed-intelligence/contradictions/:id/review writes the
+  //     state change and its audit-trail row in one transaction; the row shows
+  //     the resolver the server recorded.
+  //  3. reopen(f) — WIRED, same endpoint and ceremony with reviewState 'unresolved'.
   //  4. propagate(v) — "change value everywhere" across the dossier has no single
   //     persisted backing here; the trigger is also unreachable while findings
   //     carry a null factId. Kept guarded + flagged; copy softened.
@@ -124,11 +240,11 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const filingLabel = (prog && prog.filing) || 'submission';
 
   const [reg, setReg] = useState('FDA');
-  // Findings carry transient review-state edits from the (unwired) resolve/reopen
-  // actions, so they live in local state seeded from the live board. Seed once per
-  // board load (gated on a ref) to avoid the re-seed render loop; a refresh
-  // refetch produces a new array identity and re-seeds honestly from persistence.
-  const [findings, setFindings] = useState<GiFinding[]>([]);
+  // Findings take the server-confirmed result of a resolve/reopen without a
+  // board re-read, so they live in local state seeded from the live board. Seed
+  // once per board load (gated on a ref) to avoid the re-seed render loop; a
+  // refresh refetch produces a new array identity and re-seeds from persistence.
+  const [findings, setFindings] = useState<ReviewedFinding[]>([]);
   const liveFindings = boardData ? boardData.findings : null;
   const seedRef = useRef<GiFinding[] | null>(null);
   useEffect(() => {
@@ -142,73 +258,111 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const [propagating, setPropagating] = useState(false);
   const [toast, fireToast] = useToast();
 
-  /* Resolve one finding WITH AnA — optimistic local flip only (see flag #2). */
   /**
-   * Review-state transitions — REAL, awaited, org-scoped writes.
+   * Review-state transitions — governed, awaited, org-scoped writes.
    *
-   * Both of these used to be optimistic local flips: the row changed colour,
-   * the promotion gate recomputed off it, and nothing was recorded. Reload and
-   * a resolved contradiction was open again — on a surface whose whole purpose
-   * is to say whether the dossier is clean enough to promote.
+   * These were optimistic local flips, then a bare POST of `{ reviewState }`
+   * whose response was never read: the row was stamped `resolvedBy: 'AnA + you'`
+   * — a resolver nobody recorded — and the server wrote no audit row. Resolving
+   * a finding takes it off the submission gate, so that was a gate-clearing
+   * decision with no reason and no attribution.
    *
    * POST /api/governed-intelligence/contradictions/:id/review
-   * (server/routes/assumption-decision-contradiction.ts:247, mounted with
-   * authenticateToken at server/bootstrap/register-governance-routes.ts:38)
-   * calls contradictionEngineService.transitionReviewState(findingId, orgId,
-   * reviewState, userId, notes). The board these rows come from is served by the
-   * SAME service, so `f.id` is the id that endpoint expects — the two are not
-   * separate id spaces — and 'approved_resolution' / 'unresolved' are both
-   * members of its ReviewState union.
+   * (server/routes/assumption-decision-contradiction.ts) now requires a reason,
+   * writes the state change and its ledger row in one transaction, and returns
+   * the persisted row. The board is served by the SAME service, so `f.id` is the
+   * id that endpoint expects.
    *
-   * The local row is updated only after the server confirms, and a failure says
-   * so and leaves the finding where it was. A contradiction that silently
-   * appears resolved is exactly the failure this surface exists to prevent.
+   * The local row takes the server's reviewState / resolvedBy / resolvedAt and
+   * nothing composed here. A refusal says so, keeps the confirmation open with
+   * the reason intact, and leaves the finding where it was — except when this
+   * screen's view is stale (409, or an outcome it cannot confirm): then the
+   * confirmation closes and the board is re-read.
    */
   const [pendingId, setPendingId] = useState<string>('');
+  const [reviewing, setReviewing] = useState<{ f: ReviewedFinding; to: 'approved_resolution' | 'unresolved' } | null>(null);
 
-  const transition = async (
-    f: GiFinding,
-    reviewState: 'approved_resolution' | 'unresolved',
-    apply: (x: GiFinding) => GiFinding,
-    okMsg: string,
-  ) => {
-    if (pendingId) return;
-    setPendingId(f.id);
-    try {
-      const res = await apiRequest(
-        'POST',
-        '/api/governed-intelligence/contradictions/' + encodeURIComponent(f.id) + '/review',
-        { reviewState },
-      );
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        // This read `json.error` first, so a refusal shaped
-        // { error: 'REVIEW_STATE_INVALID', message: '<a real sentence>' } put the
-        // enum token into the toast. serverMessage takes the sentence and returns
-        // null for codes and infrastructure text; a bare "HTTP 500" is not copy
-        // either, so the fallback is a sentence that carries the status.
-        const detail =
-          serverMessage(json) ?? 'the service refused the update (HTTP ' + res.status + ')';
+  // Applies a classified outcome (reviewOutcomeFromReply / reviewOutcomeFromError).
+  const settleReview = (f: ReviewedFinding, reviewState: 'approved_resolution' | 'unresolved', o: ReviewOutcome) => {
+    const verb = reviewState === 'approved_resolution' ? 'resolved' : 're-opened';
+    const closeAndReread = (msg: string, tone?: 'error') => {
+      setReviewing(null);
+      setRefresh(n => n + 1);
+      fireToast(msg, tone);
+    };
+    switch (o.kind) {
+      case 'recorded':
+        setFindings(fs => fs.map(x => (x.id === f.id
+          ? { ...x, reviewState: o.reviewState, resolvedBy: o.resolvedBy, resolvedAt: o.resolvedAt, auditId: o.auditId }
+          : x)));
+        setReviewing(null);
+        fireToast('"' + f.title + '" was ' + verb + ' — recorded on the audit trail with your reason.');
+        return;
+      case 'refused':
         fireToast(
-          res.status === 404
+          o.status === 404
             ? 'That finding is no longer on the board — refresh to see the current state.'
-            : 'Couldn’t update "' + f.title + '" — ' + detail + '. Nothing was changed.',
+            : '"' + f.title + '" was not ' + verb + ' — ' + asSentence(o.detail) + ' Nothing was changed.',
           'error',
         );
         return;
-      }
-      setFindings(fs => fs.map(x => (x.id === f.id ? apply(x) : x)));
-      fireToast(okMsg);
-    } catch (e) {
-      // Only ApiRequestError has a message that has been through the envelope
-      // reduction; every other throw here is the browser's own "Failed to fetch".
-      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-      const detail = known && (e as Error).message ? (e as Error).message : 'request failed';
-      fireToast('Couldn’t reach the contradiction service — ' + detail + '. Nothing was changed.', 'error');
+      case 'stale':
+        closeAndReread('"' + f.title + '" was not ' + verb + ' — ' + asSentence(o.detail) + ' Re-reading the board to show what is recorded.', 'error');
+        return;
+      case 'unreadable':
+        closeAndReread('The service answered, but its reply could not be read, so this screen cannot confirm whether "' + f.title + '" was ' + verb + '. Re-reading the board to show what is recorded.');
+        return;
+      case 'unknown':
+        // The form closes too: the re-read may show the decision committed, and
+        // a form still open over it would record it a second time.
+        closeAndReread(
+          (o.status ? 'The contradiction service could not confirm the outcome' : 'Couldn’t reach the contradiction service') +
+            ', so this screen cannot confirm whether "' + f.title +
+            '" was ' + verb + '. Re-reading the board to show what is recorded.',
+          'error',
+        );
+    }
+  };
+
+  const transition = async (f: ReviewedFinding, reviewState: 'approved_resolution' | 'unresolved', reason: string) => {
+    if (pendingId) return;
+    setPendingId(f.id);
+    try {
+      settleReview(f, reviewState, await postReview(f.id, reviewState, reason));
     } finally {
       setPendingId('');
     }
   };
+
+  const submitReview = (v: Record<string, string>) => {
+    if (!reviewing) return;
+    const why = (v.reason || '').trim();
+    if (why.length < REVIEW_REASON_MIN) {
+      fireToast('Enter a reason of at least ' + REVIEW_REASON_MIN + ' characters — it is recorded with the decision.', 'error');
+      return;
+    }
+    void transition(reviewing.f, reviewing.to, why);
+  };
+
+  const REVIEW_FORM: C2CFormConfig | null = reviewing ? (reviewing.to === 'approved_resolution' ? {
+    eyebrow: 'Governed decision',
+    title: 'Resolve: ' + reviewing.f.title,
+    sub: 'Resolving takes this finding off the submission gate. The decision is attributed to you.',
+    governed: 'The review state and your reason are written to the audit trail in one transaction — both are recorded, or neither is.',
+    submitLabel: pendingId ? 'Recording…' : 'Record resolution',
+    fields: [
+      { key: 'reason', label: 'Reason for resolution', type: 'textarea', placeholder: 'e.g. IB §5.3 corrected to match the protocol-specified dose', required: true },
+    ],
+  } : {
+    eyebrow: 'Governed decision',
+    title: 'Re-open: ' + reviewing.f.title,
+    sub: 'Re-opening puts this finding back on the submission gate. The decision is attributed to you.',
+    governed: 'The review state and your reason are written to the audit trail in one transaction — both are recorded, or neither is.',
+    submitLabel: pendingId ? 'Recording…' : 'Record re-opening',
+    fields: [
+      { key: 'reason', label: 'Reason for re-opening', type: 'textarea', placeholder: 'e.g. the IB amendment was withdrawn', required: true },
+    ],
+  }) : null;
 
   /**
    * "Refresh findings" — a REAL detection scan, then a re-read.
@@ -262,21 +416,9 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
-  const resolve = (f: GiFinding) =>
-    transition(
-      f,
-      'approved_resolution',
-      x => ({ ...x, reviewState: 'approved_resolution', resolvedBy: 'AnA + you', resolvedAt: new Date().toISOString() }),
-      'Resolved "' + f.title + '" — recorded against the finding.',
-    );
-
-  const reopen = (f: GiFinding) =>
-    transition(
-      f,
-      'unresolved',
-      x => ({ ...x, reviewState: 'unresolved', resolvedBy: null }),
-      'Re-opened "' + f.title + '" — recorded against the finding.',
-    );
+  // Both open the governed confirmation; nothing is sent until it captures a reason.
+  const resolve = (f: ReviewedFinding) => setReviewing({ f, to: 'approved_resolution' });
+  const reopen = (f: ReviewedFinding) => setReviewing({ f, to: 'unresolved' });
 
   const gate: GiPromotionGate = giPromotionGate(findings, reg);
   const total = findings.length;
@@ -769,8 +911,8 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
                     <span>Consequence {I.dot} {String(f.consequenceType || '').replace(/_/g, ' ')}</span>
                   </div>
                   <div className="gi-find-actions">
-                    {!done && <button className="sp-primary gi-resolve" onClick={() => void resolve(f)} disabled={pendingId === f.id}>{I.check} {pendingId === f.id ? 'Recording…' : 'Resolve with AnA'}</button>}
-                    {done && <button className="sp-ask" onClick={() => void reopen(f)} disabled={pendingId === f.id}>{I.undo} {pendingId === f.id ? 'Recording…' : 'Re-open'}</button>}
+                    {!done && <button className="sp-primary gi-resolve" onClick={() => resolve(f)} disabled={pendingId === f.id}>{I.check} {pendingId === f.id ? 'Recording…' : 'Resolve'}</button>}
+                    {done && <button className="sp-ask" onClick={() => reopen(f)} disabled={pendingId === f.id}>{I.undo} {pendingId === f.id ? 'Recording…' : 'Re-open'}</button>}
                     {/* factId is a documented null on every live finding, so this
                         "change value everywhere" affordance stays hidden until the
                         findings table carries a real fact linkage. */}
@@ -781,7 +923,22 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
                     {!done && <button className="sp-ask" onClick={() => ask('For the ' + progCode + ' contradiction "' + f.title + '", draft the governed resolution and the decision record, and tell me which documents update.')}>{I.sparkles} Draft resolution</button>}
                     <button className="sp-go" title="Open the source record" aria-label="Open the source record" onClick={() => open(f.factId ? 'cmc' : 'document-authoring')}>{I.right}</button>
                   </div>
-                  {done && <div className="gi-done-line">{I.check} Marked resolved by {f.resolvedBy || 'AnA'} in this view — the governed audit-trail write + re-approval routing is not yet wired.</div>}
+                  {/* The resolver is the one the record names, and a row naming
+                      nobody says so. The audit-trail sentence is claimed
+                      only for a decision this screen saw committed (auditId); a
+                      row read from the board may predate the governed write.
+                      Re-approval routing is still not triggered from here. */}
+                  {done && (() => {
+                    const who = resolverLabel(f);
+                    const when = resolvedWhen(f.resolvedAt);
+                    return (
+                      <div className="gi-done-line">
+                        {I.check} {who ? 'Resolved by ' + who : 'Resolved — the record names no resolver'}{when ? ' · ' + when : ''}
+                        {f.auditId ? ' — recorded on the audit trail with the reason given.' : '.'}
+                        {' '}Documents this resolution touches are not routed for re-approval from this screen.
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}
@@ -847,6 +1004,14 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
       )}
 
       {form && PROP_FORM && <C2CForm config={PROP_FORM} onCancel={() => setForm(null)} onSubmit={propagate} />}
+      {reviewing && REVIEW_FORM && (
+        <C2CForm
+          key={reviewing.f.id + ':' + reviewing.to}
+          config={REVIEW_FORM}
+          onCancel={() => { if (!pendingId) setReviewing(null); }}
+          onSubmit={submitReview}
+        />
+      )}
       <C2CToast msg={toast} />
     </div>
   );

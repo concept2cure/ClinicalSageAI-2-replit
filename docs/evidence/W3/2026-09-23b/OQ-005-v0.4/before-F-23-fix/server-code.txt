@@ -1,0 +1,15 @@
+Runner: tests/validation/oq/submission-readiness/run.mjs at ec76f693c (OQ-005 v0.4).
+
+Server: the working tree at ec76f693c with F-23's two server files as they
+were before the fix (79217254f), taken from af798a862:
+
+  git show af798a862:server/services/orchestration/cross-object-resolver.ts \
+    > server/services/orchestration/cross-object-resolver.ts
+  git show af798a862:server/routes/orchestration.ts > server/routes/orchestration.ts
+
+The server was started on that tree (fresh process), the runner executed,
+and the tree was restored with `git checkout HEAD -- server/` before the
+second run.
+
+The record's environment.git.commit names the runner's commit; it cannot
+show that the server's tree differed. This file and VSR-001 §14 do.

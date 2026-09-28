@@ -1,0 +1,208 @@
+
+ RUN  v4.1.7 <repo>
+
+{"level":30,"time":"2026-09-23T09:05:49.958Z","pid":11255,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-23T09:05:49.959Z","pid":11255,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-23T09:05:49.959Z","pid":11255,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/second-factor-binding.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-23T09:05:50.262Z', poolSize: 1 }
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+[mfa] MFA enabled for user 75
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+[mfa] MFA enabled for user 76
+
+{"level":30,"time":"2026-09-23T09:06:05.000Z","pid":11255,"hostname":"vm","context":{"userId":75,"tenantId":91950,"resourceId":"75"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T09:06:05.000Z","pid":11255,"hostname":"vm","context":{"userId":75,"tenantId":"91950","resourceId":"75"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/second-factor-binding.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+{"level":30,"time":"2026-09-23T09:06:35.000Z","pid":11255,"hostname":"vm","context":{"userId":75,"tenantId":91950,"resourceId":"75"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T09:06:35.000Z","pid":11255,"hostname":"vm","context":{"userId":75,"tenantId":"91950","resourceId":"75"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+stdout | tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > a member without two-step verification can enrol, and the enrolment is recorded
+[mfa] MFA enabled for user 77
+
+ × tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > is refused, hands out no secret, and leaves the stored one as it was 132ms
+   → expected { status: 200, …(3) } to deeply equal { status: 409, …(3) }
+ × tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing them in 27ms
+   → the owner's authenticator no longer verified: expected 401 to be 200 // Object.is equality
+ × tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing for them 19ms
+   → expected { ok: false, status: 401, …(2) } to match object { ok: true, …(1) }
+(3 matching properties omitted from actual)
+ × tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > records the refused attempt against the account 2ms
+   → expected [] to include 'user_mfa_setup|failure|already_enroll…'
+ × tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > a member without two-step verification can enrol, and the enrolment is recorded 27ms
+   → expected [] to deeply equal [ …(2) ]
+ × tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > once enrolled, that member is refused a new secret too 15ms
+   → expected 200 to be 409 // Object.is equality
+stdout | tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > the owner rotates by turning it off with a current code, then enrolling again
+[mfa] MFA disabled for user 76
+
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > an enrolment not yet confirmed can be restarted: nothing is switched on until a code confirms it 26ms
+ × tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > the owner rotates by turning it off with a current code, then enrolling again 27ms
+   → expected [] to deeply equal [ …(3) ]
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed (9)
+   Start at  09:05:47
+   Duration  3.96s (transform 1.34s, setup 69ms, import 210ms, tests 3.40s, environment 0ms)
+
+stderr | tests/db/second-factor-binding.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stderr | tests/db/second-factor-binding.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > is refused, hands out no secret, and leaves the stored one as it was
+AssertionError: expected { status: 200, …(3) } to deeply equal { status: 409, …(3) }
+
+- Expected
++ Received
+
+  {
+-   "secretHandedOut": false,
+-   "signInWithHandedOutSecret": null,
+-   "status": 409,
+-   "storedSecretChanged": false,
++   "secretHandedOut": true,
++   "signInWithHandedOutSecret": 200,
++   "status": 200,
++   "storedSecretChanged": true,
+  }
+
+ ❯ tests/db/second-factor-binding.dbtest.ts:285:8
+    283|       storedSecretChanged: (await stored(m)).secret !== before.secret,
+    284|       signInWithHandedOutSecret: takeover?.status ?? null,
+    285|     }).toEqual({ status: 409, secretHandedOut: false, storedSecretChan…
+       |        ^
+    286|     expect(res.body.error?.code).toBe('MFA_ALREADY_ENABLED');
+    287|     expect((await stored(m)).enabled).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing them in
+AssertionError: the owner's authenticator no longer verified: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ tests/db/second-factor-binding.dbtest.ts:294:72
+    292|     const m = members.owner;
+    293|     const res = await signIn(m, codeFor(m.secret, 2));
+    294|     expect(res.status, "the owner's authenticator no longer verified")…
+       |                                                                        ^
+    295|   });
+    296|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing for them
+AssertionError: expected { ok: false, status: 401, …(2) } to match object { ok: true, …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "authenticationMethod": "password+mfa",
+-   "ok": true,
++   "ok": false,
+  }
+
+ ❯ tests/db/second-factor-binding.dbtest.ts:300:53
+    298|     at(3);
+    299|     const m = members.owner;
+    300|     expect(await signWith(m, codeFor(m.secret, 3))).toMatchObject({ ok…
+       |                                                     ^
+    301|   });
+    302|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > records the refused attempt against the account
+AssertionError: expected [] to include 'user_mfa_setup|failure|already_enroll…'
+ ❯ tests/db/second-factor-binding.dbtest.ts:304:43
+    302|
+    303|   it('records the refused attempt against the account', async () => {
+    304|     expect(await recorded(members.owner)).toContain('user_mfa_setup|fa…
+       |                                           ^
+    305|   });
+    306| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > a member without two-step verification can enrol, and the enrolment is recorded
+AssertionError: expected [] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+- [
+-   "user_mfa_setup|success|secret_issued",
+-   "user_mfa_enable|success|",
+- ]
++ []
+
+ ❯ tests/db/second-factor-binding.dbtest.ts:319:31
+    317|     expect(enable.status, JSON.stringify(enable.body)).toBe(200);
+    318|     expect((await stored(m)).enabled).toBe(true);
+    319|     expect(await recorded(m)).toEqual(['user_mfa_setup|success|secret_…
+       |                               ^
+    320|   });
+    321|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > once enrolled, that member is refused a new secret too
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ tests/db/second-factor-binding.dbtest.ts:325:24
+    323|     at(2);
+    324|     const res = await request(app).post('/api/auth/mfa/setup').set(awa…
+    325|     expect(res.status).toBe(409);
+       |                        ^
+    326|   });
+    327|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > the owner rotates by turning it off with a current code, then enrolling again
+AssertionError: expected [] to deeply equal [ …(3) ]
+
+- Expected
++ Received
+
+- [
+-   "user_mfa_disable|failure|invalid_code",
+-   "user_mfa_disable|success|",
+-   "user_mfa_setup|success|secret_issued",
+- ]
++ []
+
+ ❯ tests/db/second-factor-binding.dbtest.ts:349:31
+    347|     const setup = await request(app).post('/api/auth/mfa/setup').set(a…
+    348|     expect(setup.status, JSON.stringify(setup.body)).toBe(200);
+    349|     expect(await recorded(m)).toEqual([
+       |                               ^
+    350|       'user_mfa_disable|failure|invalid_code',
+    351|       'user_mfa_disable|success|',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+

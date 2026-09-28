@@ -1,0 +1,83 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+{
+  "timestamp": "2026-09-23T07:08:26.085Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T07:08:26.087Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+{
+  "timestamp": "2026-09-23T07:08:26.087Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > refuses an explicit descriptor pointing at an arbitrary server-readable file
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > refuses an explicit descriptor using ../ traversal
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > refuses an explicit descriptor even when a legitimate packageId is also supplied
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > fails closed when NODE_ENV is unset (no environment declared => enforce)
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor whose path escapes the bundle namespace
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor with NO validation metadata (UNKNOWN is blocking, not zero errors)
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor whose validation block has no numeric errorCount
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > still hard-blocks a stored descriptor reporting structural errors
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor whose durable-storage key escapes the bundle prefix
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > rejects a traversal path on a stored descriptor in ANY environment (guard is unconditional)
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — cross-tenant packages (C2C-SUB-003) > cannot transmit another tenant's package by id
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — cross-tenant packages (C2C-SUB-003) > cannot side-step tenant scoping by naming another tenant's bundle file directly
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — legitimate validated package (C2C-SUB-003) > transmits a tenant-owned, in-namespace, validated package under production
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > records the sequence it just filed, so the NEXT sequence has a baseline to diff against
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > a bundle that files no sequence records no history, and says so rather than reporting a failure
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > a sequence whose leaf inventory is UNREADABLE is a lost baseline, not a non-event
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > an eCTD sequence with no inventory at all is reported as a failure, not as "not applicable"
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > the Part 11 sign row records WHICH sequence the signature filed, and whether the history took it
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > a content change that lands WHILE the gateway is sending is recorded on the sign row and announced in the response — never silently a clean transmit
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > refuses a stored descriptor whose package CONTENT changed since assembly (an artifact edited after the zip was built), before the gateway is reached
+ × tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > refuses a stored descriptor with NO content fingerprint, or one from an older scheme (UNKNOWN is blocking, never a match) 45ms
+   → "v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": expected 'Bundle records no content fingerprint…' to match /fingerprinted under an older scheme/i
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > warnings alone do not block a validated package
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > forwards submissionGrade / dtdStatus / regionalBackbone from the stored descriptor to gw.transmit
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > forwards the region the bundle was BUILT for (descriptor.region) as a gateway region, so device bundles are region-checked too
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > DROPS malformed evidence blocks instead of forwarding them (`{}` as a PDF/A grade read as full compliance)
+ ↓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > and the gate REFUSES that exact forwarded shape when the operator opts in (production + ECTD_REQUIRE_DTD / _PDFA)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > refuses a stored descriptor with NO content fingerprint, or one from an older scheme (UNKNOWN is blocking, never a match)
+AssertionError: "v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": expected 'Bundle records no content fingerprint…' to match /fingerprinted under an older scheme/i
+
+- Expected:
+/fingerprinted under an older scheme/i
+
++ Received:
+"Bundle records no content fingerprint, so whether it still reflects the package is UNKNOWN; re-assemble the package before transmitting."
+
+ ❯ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts:711:37
+    709|       const label = JSON.stringify((bundle as { contentFingerprint?: u…
+    710|       expect(res.status, label).toBe(422);
+    711|       expect(res.body.error, label).toMatch(wording);
+       |                                     ^
+    712|       expect(res.body.error).toMatch(/UNKNOWN/);
+    713|       expect(res.body.error).toMatch(/re-assemble the package before t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 25 skipped (26)
+   Start at  07:08:23
+   Duration  3.60s (transform 1.93s, setup 102ms, import 3.11s, tests 56ms, environment 0ms)
+

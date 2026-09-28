@@ -28,6 +28,12 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+// The signed-in user. Null (no session context) unless a case sets one.
+const session = vi.hoisted(() => ({ user: null as Record<string, unknown> | null }));
+vi.mock('@/services/portal/authService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/portal/authService')>()),
+  useAuthUser: () => session.user,
+}));
 
 import { ProtocolWorkspace } from '../surfaces/ProtocolDev';
 import { clearNavParams } from '../navParams';
@@ -114,6 +120,7 @@ async function completeDrawer(values: Record<string, string>, submitLabel: RegEx
 
 beforeEach(() => {
   apiRequest.mockReset();
+  session.user = null;
   clearNavParams();
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = PROGRAM;
   route();
@@ -237,23 +244,135 @@ describe('reviews — request a review and record a disposition', () => {
   it('requests a review through the reviewers route', async () => {
     await openTab(/Reviews/);
     fireEvent.click(await screen.findByRole('button', { name: /Request a review/ }));
-    await completeDrawer({ Reviewer: 'Dr Okafor', 'Due date': '2026-10-15', 'Reason for change': REASON }, /Request review/);
+    await completeDrawer({ 'Reviewer name': 'Dr Okafor', 'Due date': '2026-10-15', 'Reason for change': REASON }, /Request review/);
     await waitFor(() => expect(lastWrite()).toBeTruthy());
     const [method, path, body] = lastWrite();
     expect(method).toBe('POST');
     expect(path).toBe('/api/protocol-reviews/documents/2/reviewers');
     expect(body).toMatchObject({ reviewerName: 'Dr Okafor', dueDate: '2026-10-15' });
+    expect(body).not.toHaveProperty('reviewerUserId');
   });
 
-  it('records a disposition against the assignment', async () => {
+  it('assigns the review to a member\'s account, so the reviewer signs their own review', async () => {
+    /* Without an account the review can only be recorded on the reviewer's
+       behalf, under `responsibility`. The picker is what lets the reviewer sign
+       it themselves, as `review` or `approval`. */
+    session.user = { id: '11', email: 'me@c2c.test', organizationId: '42', mfaEnabled: false };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/tenant-users/42') {
+        return ok([
+          { id: 21, name: 'Dr Amara Okafor', email: 'okafor@c2c.test', role: 'member' },
+          { id: 22, name: 'Read Only', email: 'viewer@c2c.test', role: 'viewer' },
+          { id: 23, name: '', email: 'lead@c2c.test', role: 'manager' },
+        ]);
+      }
+      if (method === 'GET' && url.startsWith('/api/protocol-dev')) return ok({ success: true, data: [DOC] });
+      if (method === 'GET') return ok({ data: [] });
+      return created({ id: 1, actionId: 'gov-1' });
+    });
     await openTab(/Reviews/);
-    fireEvent.click(await screen.findByRole('button', { name: /Record disposition for Dr Iyer/ }));
-    await completeDrawer({ Disposition: 'approve_with_changes', 'Reason for change': REASON }, /Record disposition/);
+    fireEvent.click(await screen.findByRole('button', { name: /Request a review/ }));
+    const dialog = await screen.findByRole('dialog');
+    const account = within(dialog).getByLabelText(/Reviewer account/) as HTMLSelectElement;
+    await waitFor(() => expect(within(account).getByRole('option', { name: /Dr Amara Okafor/ })).toBeTruthy());
+    // A viewer cannot sign, so they are not offered.
+    expect(within(account).queryByRole('option', { name: /Read Only/ })).toBeNull();
+    expect(within(account).getByRole('option', { name: /lead@c2c\.test/ })).toBeTruthy();
+
+    await completeDrawer({ 'Reviewer account': '21', 'Reason for change': REASON }, /Request review/);
     await waitFor(() => expect(lastWrite()).toBeTruthy());
-    const [method, path, body] = lastWrite();
-    expect(method).toBe('PATCH');
-    expect(path).toBe('/api/protocol-reviews/assignments/5/disposition');
-    expect(body).toMatchObject({ disposition: 'approve_with_changes', reason: REASON });
+    const [, path, body] = lastWrite();
+    expect(path).toBe('/api/protocol-reviews/documents/2/reviewers');
+    // The name defaults to the account's, and the account is what the server binds.
+    expect(body).toMatchObject({ reviewerUserId: 21, reviewerName: 'Dr Amara Okafor' });
+  });
+
+  it('when the member list cannot be read it says so, and a reviewer can still be named without an account', async () => {
+    session.user = { id: '11', email: 'me@c2c.test', organizationId: '42', mfaEnabled: false };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/tenant-users/42') return { ok: false, status: 503, json: async () => ({ error: 'unavailable' }) } as Response;
+      if (method === 'GET' && url.startsWith('/api/protocol-dev')) return ok({ success: true, data: [DOC] });
+      if (method === 'GET') return ok({ data: [] });
+      return created({ id: 1, actionId: 'gov-1' });
+    });
+    await openTab(/Reviews/);
+    fireEvent.click(await screen.findByRole('button', { name: /Request a review/ }));
+    const dialog = await screen.findByRole('dialog');
+    // An error is not an empty organization.
+    expect(await within(dialog).findByText(/members could not be loaded/i)).toBeTruthy();
+    await completeDrawer({ 'Reviewer name': 'Dr Okafor', 'Reason for change': REASON }, /Request review/);
+    await waitFor(() => expect(lastWrite()).toBeTruthy());
+    expect(lastWrite()[2]).toMatchObject({ reviewerName: 'Dr Okafor' });
+  });
+
+  it('neither an account nor a name: nothing is sent', async () => {
+    await openTab(/Reviews/);
+    fireEvent.click(await screen.findByRole('button', { name: /Request a review/ }));
+    await completeDrawer({ 'Reason for change': REASON }, /Request review/);
+    await waitFor(() => expect(screen.getAllByText(/Name the reviewer, or choose their account/).length).toBeGreaterThan(0));
+    expect(lastWrite()).toBeUndefined();
+  });
+
+  it('a disposition is signed, not submitted: nothing is sent until the signer re-authenticates', async () => {
+    /* It used to PATCH straight from a reason-only drawer, and the server wrote
+       a `sign` ledger row nobody had signed. Now the drawer picks the decision
+       and the shared EsignModal signs it (21 CFR 11.50 meaning, 11.200 password). */
+    const verify = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ valid: true }) }));
+    vi.stubGlobal('fetch', verify);
+    try {
+      await openTab(/Reviews/);
+      fireEvent.click(await screen.findByRole('button', { name: /Record disposition for Dr Iyer/ }));
+      await completeDrawer({ Disposition: 'approve_with_changes' }, /Continue to signature/);
+      expect(apiRequest.mock.calls.filter((c) => c[0] !== 'GET')).toHaveLength(0);
+
+      fireEvent.change(await screen.findByLabelText(/Reason for this action/), { target: { value: REASON } });
+      fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'correct horse' } });
+      fireEvent.click(screen.getByRole('button', { name: /Sign and commit/ }));
+
+      await waitFor(() => expect(lastWrite()).toBeTruthy());
+      expect(verify).toHaveBeenCalledWith('/api/esignature/verify-password', expect.anything());
+      const [method, path, body] = lastWrite();
+      expect(method).toBe('PATCH');
+      expect(path).toBe('/api/protocol-reviews/assignments/5/disposition');
+      // Dr Iyer has no account in this fixture, so the signer records the
+      // decision and takes responsibility for it; they do not claim the review.
+      expect(body).toEqual({
+        disposition: 'approve_with_changes',
+        reason: REASON,
+        meaning: 'responsibility',
+        reauth: { password: 'correct horse' },
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
+describe('finalize — the replacement for the deleted reason-only drawer is reachable', () => {
+  it('Finalize protocol opens the e-signature and posts the signed finalization', async () => {
+    /* The reason-only finalize drawer was removed 2026-09-23 (it wrote a `sign`
+       ledger row nobody had signed). Its replacement, ProtocolDevSigning, must
+       be reachable from the same control, and the request must carry the
+       signature: meaning, reason, and the credentials for the server. */
+    const verify = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ valid: true }) }));
+    vi.stubGlobal('fetch', verify);
+    try {
+      render(<Providers><ProtocolWorkspace {...props()} /></Providers>);
+      fireEvent.click(await screen.findByRole('button', { name: /Finalize protocol/ }));
+      expect(apiRequest.mock.calls.filter((c) => c[0] !== 'GET')).toHaveLength(0);
+
+      fireEvent.change(await screen.findByLabelText(/Reason for this action/), { target: { value: REASON } });
+      fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'correct horse' } });
+      fireEvent.click(screen.getByRole('button', { name: /Sign and commit/ }));
+
+      await waitFor(() => expect(lastWrite()).toBeTruthy());
+      const [method, path, body] = lastWrite();
+      expect(method).toBe('POST');
+      expect(path).toBe('/api/protocol-development/documents/2/finalize');
+      expect(body).toEqual({ reason: REASON, meaning: 'authorship', reauth: { password: 'correct horse' } });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 
