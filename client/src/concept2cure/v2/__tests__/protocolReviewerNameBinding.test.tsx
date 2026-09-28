@@ -85,6 +85,8 @@ describe('the request-a-review drawer', () => {
     await waitFor(() => expect(within(dialog).getByRole('option', { name: /Dr Amara Okafor/ })).toBeTruthy());
     expect(within(dialog).getByText(/listed under the account’s own name/)).toBeTruthy();
     const name = within(dialog).getByLabelText(/Reviewer name/) as HTMLInputElement;
-    expect(name.placeholder).toMatch(/Only for a reviewer with no account here/);
+    // No longer "leave blank for an account": a chosen account now fills this
+    // field and locks it (SEC-C-7 follow-on (b), protocolReviewerNameReadOnly.test.tsx).
+    expect(name.placeholder).toMatch(/Required when the reviewer has no account/);
   });
 });
