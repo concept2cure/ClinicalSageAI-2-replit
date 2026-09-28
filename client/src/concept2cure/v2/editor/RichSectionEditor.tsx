@@ -61,6 +61,8 @@ import Highlight from '@tiptap/extension-highlight';
 import { Collaboration } from '@tiptap/extension-collaboration';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { redactInternals } from '@/lib/queryClient';
+import { Mapping } from '@tiptap/pm/transform';
+import type { Transaction } from '@tiptap/pm/state';
 import * as Y from 'yjs';
 import { structuralSignatureFromDom, structuralSignatureFromDoc, signatureDrift, docToPlainText } from './roundTrip';
 
@@ -73,6 +75,7 @@ import {
 import {
   TrackChanges,
   collectSuggestions,
+  settleAcceptedContributions,
   type SuggestionAuthor,
   type AcceptedInsertion,
   type SuggestionDecision,
@@ -232,7 +235,10 @@ export interface RichSectionEditorProps {
     /** A click on annotated text — open the thread in the host's rail. */
     onOpen?: (commentId: string) => void;
     /** The anchor's fate: `saved` is whether the section save that carries the
-     *  anchor mark succeeded. A thread can exist while its highlight does not. */
+     *  anchor mark succeeded. A thread can exist while its highlight does not.
+     *  Not called when no anchor was applied at all (the quoted words changed
+     *  before the comment was posted): there is no highlight to save, and the
+     *  editor says so itself. */
     onAnchored?: (commentId: string, saved: boolean) => void;
   } | null;
   /** Image insertion. The host owns the upload (the governed image store is
@@ -840,6 +846,13 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
 
     /* ── Source mode state (raw stored string, same save path) ── */
     const [sourceText, setSourceText] = useState<string>(value ?? '');
+    /* What the textarea holds NOW, for the save path; written wherever
+       `sourceText` is. `doSave` is a callback over one render, and that
+       render's `sourceText` is the text before the keystroke that armed the
+       autosave, or before whatever was typed while the PATCH was in flight —
+       so it compared that copy with itself and called text it never sent
+       "saved". Periodic review 2026-09-28, editor family, V-2. */
+    const sourceTextRef = useRef<string>(value ?? '');
 
     /* The footer's word count comes from the TipTap editor, which in source
        mode is constructed EMPTY — so a 120-word section under the fidelity
@@ -1106,6 +1119,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const restoreCached = useCallback(() => {
       if (restoreOffer == null) return;
       if (boot.mode === 'source') {
+        sourceTextRef.current = restoreOffer;
         setSourceText(restoreOffer);
         setDirty(true);
         setSaveState('dirty');
@@ -1133,7 +1147,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     /* ── The one save path ── */
     const doSave = useCallback(async (systemReason?: string): Promise<boolean> => {
       const serialized =
-        boot.mode === 'source' ? sourceText : editor ? serialize(editor) : null;
+        boot.mode === 'source' ? sourceTextRef.current : editor ? serialize(editor) : null;
       if (serialized == null) return false;
       // Whatever a debounce was armed for, this write supersedes it.
       if (autosaveTimer.current) {
@@ -1152,19 +1166,18 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       try {
         await onSave(serialized, systemReason);
         lastSavedRef.current = serialized;
-        const nowSerialized = boot.mode === 'source' ? sourceText : editor ? serialize(editor) : serialized;
+        const nowSerialized =
+          boot.mode === 'source' ? sourceTextRef.current : editor ? serialize(editor) : serialized;
         const stillDirty = nowSerialized !== serialized;
         setDirty(stillDirty);
         onDirtyChange?.(stillDirty);
         setSaveState(stillDirty ? 'dirty' : 'saved');
         setSavedRevision((n) => n + 1);
-        if (storageKey) {
-          try {
-            localStorage.removeItem(cacheKeyFor(storageKey));
-          } catch {
-            /* ignore */
-          }
-        }
+        /* Removed only when nothing is outstanding. Text typed while the PATCH
+           was in flight is on screen and in no record, and this cache is its
+           only copy across a reload; it was removed here unconditionally, in
+           both modes (V-2). */
+        cacheDraft(nowSerialized);
         return true;
       } catch {
         // The host surface reports the server's reason; this footer reports
@@ -1172,7 +1185,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         setSaveState('error');
         return false;
       }
-    }, [boot.mode, sourceText, editor, serialize, onSave, onDirtyChange, storageKey]);
+    }, [boot.mode, editor, serialize, onSave, onDirtyChange, cacheDraft]);
 
     useEffect(() => {
       onDirtyChange?.(dirty);
@@ -1281,18 +1294,59 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         return;
       }
       const quote = editor.state.doc.textBetween(from, to, ' ');
-      let id: string | null = null;
+      /* The check above holds for the moment of the click, and the host
+         resolves only once the author has written and posted the comment in
+         the rail — minutes, on a canvas that stays editable. So the range is
+         carried through every transaction in that wait (the author's typing, a
+         co-editor's, the tracking plugin's appended ones), and the buffer is
+         compared with the record again after it. Both used to be skipped: the
+         anchor went onto the stale offsets, and prose typed during the wait
+         was saved as "Comment anchor applied". Periodic review 2026-09-28,
+         editor family, SEC-B-3. */
+      const moved = new Mapping();
+      const follow = ({
+        transaction,
+        appendedTransactions,
+      }: {
+        transaction: Transaction;
+        appendedTransactions: Transaction[];
+      }) => {
+        moved.appendMapping(transaction.mapping);
+        for (const appended of appendedTransactions) moved.appendMapping(appended.mapping);
+      };
+      editor.on('transaction', follow);
+      let id: string | null;
       try {
         id = await commentsApi.onCreate({ kind: 'text-range', quote, from, to });
       } catch (e) {
         setActionNotice('The comment was not created — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused it') + '. Nothing was anchored.');
         return;
+      } finally {
+        editor.off('transaction', follow);
       }
       if (!id) {
         setActionNotice('The comment was not created, so nothing was anchored.');
         return;
       }
-      editor.chain().focus().setTextSelection({ from, to }).setCommentAnchor(id).run();
+      const anchorFrom = moved.map(from, 1);
+      const anchorTo = moved.map(to, -1);
+      /* The anchor goes on the quoted words or nowhere. No onAnchored: there is
+         no highlight whose save could be reported. */
+      if (anchorTo <= anchorFrom || editor.state.doc.textBetween(anchorFrom, anchorTo, ' ') !== quote) {
+        setActionNotice('The comment was created, but the words it quotes changed while you were writing it, so they are not highlighted. The thread is in the comments rail.');
+        return;
+      }
+      /* Read before the mark goes on: any other difference from the record is
+         prose the author has not given a reason for, and a system reason must
+         not carry it. The author saving their own edits during the wait is
+         fine — the record moved with them. */
+      const editedDuringWait = serialize(editor) !== lastSavedRef.current;
+      editor.chain().focus().setTextSelection({ from: anchorFrom, to: anchorTo }).setCommentAnchor(id).run();
+      if (editedDuringWait) {
+        setActionNotice('The comment is highlighted, but the highlight is not saved yet: the section was edited while you wrote the comment, and those edits need your own reason for change. Save the section to record both.');
+        commentsApi.onAnchored?.(id, false);
+        return;
+      }
       /* The save is a consequence of leaving a comment, not an edit to the
          prose — so it states its own mechanism rather than borrowing whatever
          reason the author gave for their last content change. */
@@ -1301,7 +1355,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         setActionNotice('The comment thread exists, but its anchor could not be saved with the section — other readers will not see the highlight until the section is saved.');
       }
       commentsApi.onAnchored?.(id, saved);
-    }, [commentsApi, editor, doSave, dirty]);
+    }, [commentsApi, editor, doSave, dirty, serialize]);
 
     /* ── Ask the assistant for a source (parity with the retired DocCanvas) ──
        This asks a question in the AnA pane. It is NOT the citation control —
@@ -1347,6 +1401,31 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       editor?.commands.focus();
     }, [editor]);
 
+    /* ── Accepted contributions, settled against the document being saved ──
+       The host reads both lists inside its save; each entry must still be in
+       the content, unmarked, or the revision names a machine contributor for
+       words it does not hold (P11-B-4 — see settleAcceptedContributions).
+       Settled once per document state, so the two read-and-clear calls agree
+       in either order: settling again after one list was cleared would drop
+       every author from the other. */
+    const acceptedSettledForRef = useRef<PMNode | null>(null);
+    const acceptedStore = useCallback(() => {
+      /* TipTap types `storage` as a closed map of the extensions it ships
+         with, so a custom extension's slot is reached through the record
+         shape rather than by property access. */
+      const store = (editor?.storage as unknown as
+        | Record<
+            string,
+            { acceptedAuthors: SuggestionAuthor[]; acceptedInsertions: AcceptedInsertion[] } | undefined
+          >
+        | undefined)?.c2cTrackChanges;
+      if (store && editor && acceptedSettledForRef.current !== editor.state.doc) {
+        settleAcceptedContributions(store, editor.state.doc);
+        acceptedSettledForRef.current = editor.state.doc;
+      }
+      return store;
+    }, [editor]);
+
     /* ── Imperative handle ── */
     useImperativeHandle(
       ref,
@@ -1387,20 +1466,13 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         getContent: () =>
           boot.mode === 'source' ? sourceText : editor ? serialize(editor) : '',
         takeAcceptedAuthors: () => {
-          /* TipTap types `storage` as a closed map of the extensions it ships
-             with, so a custom extension's slot is reached through the record
-             shape rather than by property access. */
-          const store = (editor?.storage as unknown as
-            | Record<string, { acceptedAuthors?: SuggestionAuthor[] } | undefined>
-            | undefined)?.c2cTrackChanges;
+          const store = acceptedStore();
           const taken = store?.acceptedAuthors ?? [];
           if (store?.acceptedAuthors) store.acceptedAuthors = [];
           return taken;
         },
         takeAcceptedInsertions: () => {
-          const store = (editor?.storage as unknown as
-            | Record<string, { acceptedInsertions?: AcceptedInsertion[] } | undefined>
-            | undefined)?.c2cTrackChanges;
+          const store = acceptedStore();
           const taken = store?.acceptedInsertions ?? [];
           if (store?.acceptedInsertions) store.acceptedInsertions = [];
           return taken;
@@ -1434,10 +1506,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           if (boot.mode !== 'rich' || !editor.isEditable) return false;
           const clean = String(text ?? '').trim();
           if (!clean) return false;
-          return editor.chain().focus().insertContent(clean).run();
+          /* A text node, never a string: TipTap parses a string as HTML, and
+             this one carries a vault document's title, which whoever named
+             the document chose. `<ins data-author-id="ana">` in a title became
+             a pending suggestion attributed to AnA, `<a data-cite>` a citation.
+             Periodic review 2026-09-28, editor family, SEC-A-6. */
+          return editor.chain().focus().insertContent({ type: 'text', text: clean }).run();
         },
       }),
-      [doSave, editor, boot.mode, sourceText, serialize, openFind, citationsApi],
+      [doSave, editor, boot.mode, sourceText, serialize, openFind, citationsApi, acceptedStore],
     );
 
     /* Mirror the plugin's matches into the counter — on every transaction
@@ -2557,10 +2634,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               readOnly={readOnly}
               aria-label={ariaLabel ?? 'Section source'}
               onChange={(e) => {
+                sourceTextRef.current = e.target.value;
                 setSourceText(e.target.value);
                 const isDirty = e.target.value !== lastSavedRef.current;
                 setDirty(isDirty);
-                setSaveState(isDirty ? 'dirty' : 'saved');
+                /* The rich canvas's rule: a keystroke never leaves 'saving'.
+                   The write's own settle recomputes the state; until then the
+                   Save control stays disabled rather than offering a second
+                   PATCH over the first. */
+                setSaveState((s) => (s === 'saving' ? s : isDirty ? 'dirty' : 'saved'));
                 if (storageKey) {
                   try {
                     if (isDirty) localStorage.setItem(cacheKeyFor(storageKey), e.target.value);
