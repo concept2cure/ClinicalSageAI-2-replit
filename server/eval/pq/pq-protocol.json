@@ -31,7 +31,12 @@
     "rag": {
       "required": true,
       "executable": false,
-      "notExecutableReason": "server/services/ragRouter.ts ragQuery takes no model parameter — the answer is generated inside the RAG pipeline by whatever it selects — so a RAG run cannot be attributed to the model under qualification. It also needs a populated corpus (ENABLE_CORPUS_INGESTION is off; see ga-readiness-report 'Precedent corpus ingestion sweep'), and its faithfulness judge (server/eval/rag/run-eval.ts) is itself an unpinned model.",
+      "notExecutableReason": "Needs a populated corpus: ENABLE_CORPUS_INGESTION is not 'true', so the sweep is a no-op and retrieval scores 0 items (see ga-readiness-report 'Precedent corpus ingestion sweep'; unblock with `tsx scripts/ingest-corpus.ts`, verify with `node scripts/verify-rag-corpus.mjs`). This is the only remaining blocker and it is operational, not code: nothing further has to be built in this repository to make this component executable.",
+      "resolvedBlockers": [
+        "2026-09-28: 'ragQuery takes no model parameter, so a RAG run cannot be attributed to the model under qualification' — resolved. RagRetrievalParams.model -> RetrievalOptions.model -> the aiRouter.route call in queryWithGeneration now pins the generator, and run-eval.ts takes --model. Unset is unchanged behaviour, and the gateway still refuses an unapproved model on a high-risk task, so this is attribution and not an approval override (server/services/__tests__/aiProviderRouter-served-model.test.ts).",
+        "2026-09-28: 'its faithfulness judge is itself an unpinned model' — resolved. run-eval.ts takes --judge-model and refuses a run where --model and --judge-model name the same model, since a model cannot grade itself (server/eval/rag/__tests__/run-eval-attribution.test.ts)."
+      ],
+      "attributionGate": "server/eval/rag/run-eval.ts pqAttributionGaps: a run is citable as qualification of a named model only when --model and --judge-model are both set and differ. A run missing either prints 'NOT usable as PQ evidence' with the reason. It deliberately does not change the exit code — passing --min-hit-rate/--min-faithfulness is a separate question from being attributable, and conflating them would let a green regression run read as a PQ pass.",
       "criteria": {
         "minHitRate": 0.6,
         "minFaithfulness": 0.7

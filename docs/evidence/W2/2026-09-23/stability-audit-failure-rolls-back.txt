@@ -1,0 +1,11 @@
+# A failed audit insert must roll back the change it records. A temporary BEFORE INSERT trigger on stab_audit refuses rows attributed to audit-fails@example.test (dropped afterwards); everything else is the real database.
+== BEFORE (HEAD)
+  PATCH condition   -> 500; description now: CHANGED-WHILE-AUDIT-DOWN
+  POST result       -> 500; results stored: 1
+  POST CAPA         -> 500; CAPAs stored: 1
+  audit rows for the three: 0
+== AFTER
+  PATCH condition   -> 500; description now: LT storage condition
+  POST result       -> 500; results stored: 0
+  POST CAPA         -> 500; CAPAs stored: 0
+  audit rows for the three: 0
