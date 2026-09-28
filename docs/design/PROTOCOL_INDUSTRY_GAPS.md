@@ -172,10 +172,16 @@ most of that; wiring them is the order of work below.
 
 ### Tier 3 — not built, in order
 
-10. **Master-protocol gates.** `platform | basket | umbrella | mams` are in the
-    structural-design enum; no gate reads them. FDA's master-protocol guidance
-    (2022) expects sub-study independence, shared-control handling and
-    interim-adaptation rules to be stated.
+10. **Master-protocol check — built in this change.** `StudyDesign.masterProtocol`
+    records the sub-studies (population, biomarker and assay, arms, decision
+    rule) and the cross-sub-study rules (shared control — `null` states there
+    is none, non-concurrent controls, arm addition and dropping, type I error).
+    `study-design/master-protocol.ts` lists each element FDA's 2022 guidance
+    and 2023 draft expect as stated or not, checks that every named arm exists
+    and a shared control has two users, and calls out non-concurrent controls
+    used without a time-trend adjustment. Structural only: no statistic.
+    Reachable at `/api/study-design/:id/master-protocol`, in the pane, and as
+    AnA's `review_master_protocol`.
 11. **Rare-disease and small-population design pack.** Natural-history
     controls, Bayesian borrowing, enrichment and adaptive elements as a
     coherent gate set (FDA rare-disease guidances; EMA small-populations

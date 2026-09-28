@@ -1537,10 +1537,10 @@ router.post('/docs/from-draft', async (req: Request, res: Response) => {
                    grant, or a global admin role).
      esign         the same 'approve' decision, then assertSigningAuthority's
                    §11.10(g) check: resolveSignerOrgRole + isSigningAuthorized.
-     fileToVault   /file-to-vault falls through to 'edit' in
-                   authoringObjectAuthorization (including its refusal on an
-                   immutable status), then the vault ingest's
-                   vaultWriteRefusal() on the request's tenant-scope role.
+     fileToVault   authoringObjectAuthorization classifies /file-to-vault as
+                   'export' (any status; OWNER, AUTHOR or APPROVER), then the
+                   vault ingest's vaultWriteRefusal() on the request's
+                   tenant-scope role.
      assignReview  POST /api/tasks/tasks runs requireEditorAccess, whose role
                    rule is membership of GOVERNED_WRITE_ROLES on the request's
                    role — the same set, read the same way, here.
@@ -1611,8 +1611,8 @@ async function callerDocumentAccess(req: Request, tenantId: number, docId: strin
   const approve = await settle('approve', docId, () =>
     decideAuthoringPermission({ pool, principal, scope, action: 'approve' }),
   );
-  const edit = await settle('edit', docId, () =>
-    decideAuthoringPermission({ pool, principal, scope, action: 'edit' }),
+  const produce = await settle('export', docId, () =>
+    decideAuthoringPermission({ pool, principal, scope, action: 'export' }),
   );
   const approveGate = (act: string) =>
     approve ? objectGate(approve, act, 'an Owner or Approver grant') : null;
@@ -1660,7 +1660,7 @@ async function callerDocumentAccess(req: Request, tenantId: number, docId: strin
     freeze: approveGate('Freezing'),
     esign: bothGates(approveGate('Signing'), signingGate),
     fileToVault: bothGates(
-      edit ? objectGate(edit, 'Filing to the vault', 'an Owner or Author grant') : null,
+      produce ? objectGate(produce, 'Filing to the vault', 'an Owner, Author or Approver grant') : null,
       vaultGate ?? null,
     ),
     assignReview: assignGate ?? null,

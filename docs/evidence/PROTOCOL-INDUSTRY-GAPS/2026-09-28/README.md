@@ -1,4 +1,4 @@
-# Protocol build — industry gaps closed (Tier 1, six Tier 2 rows, one Tier 3 item)
+# Protocol build — industry gaps closed (Tier 1, six Tier 2 rows, two Tier 3 items)
 
 **Date:** 2026-09-28 · **Binding design:** `docs/design/PROTOCOL_INDUSTRY_GAPS.md`
 **Prompted by:** the founder — *"What is missing in our protocol build solutions
@@ -28,9 +28,10 @@ narrates.
 | External-control borrowing plan (Tier 2) | FDA draft guidance on externally controlled trials (2023); ICH E10 §2.5 | `study-design/external-control-plan.ts` over `stats/external-control.ts` + `StudyDesign.externalControlPlan?` | `…/:id/external-control` | `review_external_control_plan` |
 | Multiplicity control over the confirmatory family (Tier 2) | ICH E9 §5.6; FDA Multiple Endpoints guidance (2022) | `study-design/multiplicity-check.ts` over `stats/multiplicity.ts` | `…/:id/multiplicity` | `review_multiplicity_control` |
 | Specimens and blood volume (Tier 3) | OHRP expedited category (2) reference points; ICH E6(R3) | `study-design/biospecimen-profile.ts` + `SoaActivity.specimen?` | `…/:id/biospecimens` | `review_biospecimen_profile` |
+| Master-protocol structure (Tier 3) | FDA master-protocol guidance (2022; 2023 draft) | `study-design/master-protocol.ts` + `StudyDesign.masterProtocol?` | `…/:id/master-protocol` | `review_master_protocol` |
 
 Every design engine is also a `POST /api/study-design/<path>` for an unsaved
-design. All fifteen engines are in the Protocol Development surface's
+design. All sixteen engines are in the Protocol Development surface's
 **Projections of this design** pane (`ProtocolDevProjections.tsx` →
 `ProtocolDevIndustryProjections.ts`), and every one downloads its engine output
 as JSON byte for byte.
@@ -100,9 +101,10 @@ only), the CAPA join anchored on the scoped row, input bounds, route order
 | `study-design/__tests__/external-control-plan.test.ts` | 9 |
 | `study-design/__tests__/multiplicity-check.test.ts` | 10 |
 | `study-design/__tests__/biospecimen-profile.test.ts` | 9 |
+| `study-design/__tests__/master-protocol.test.ts` | 8 |
 | `protocol-development/__tests__/protocol-industry-service.pglite.integration.test.ts` | 17 |
 | `ana/__tests__/protocol-industry-tools.test.ts` | 8 |
-| `client/…/__tests__/protocolDevIndustryProjections.test.ts` | 19 |
+| `client/…/__tests__/protocolDevIndustryProjections.test.ts` | 20 |
 
 Regression: `server/services/study-design/__tests__` + `protocol-development/__tests__`
 + the study-design and protocol-development route suites — 44 files, 833 tests,
@@ -150,6 +152,8 @@ red, the file was restored byte for byte, and the suite re-ran green.
 | Multiplicity | a graphical procedure approximated by Holm | `a graphical procedure without weights and a transition matrix is not approximated` (`expected 'rendered' to be 'partial'`) |
 | Biospecimens | a missing blood volume defaulted to a "usual" 5 mL | `a draw with no volume makes totals lower bounds…` (`expected false to be true`) |
 | Biospecimens | conditional draws counted as scheduled | `sums recorded volumes per visit… conditional draws only in the upper bound` |
+| Master protocol | an absent shared control read as "none" | `absence of a shared control is not stated; null states there is none` |
+| Master protocol | the arm-existence check disabled | `an arm the design does not carry, a duplicate id and a one-user shared control are defects` |
 | Service | CAPA join without its org anchor | `excludes other organisations' … CAPA` (`expected 1 to be 0`) — after strengthening the test so the only open action is another org's |
 | Service | version lookup without its org filter | `a label not recorded for this org is NOT_FOUND — including one another org recorded` (`promise resolved … instead of rejecting`) |
 | AnA tools | one handler unregistered | `review_protocol_redline handler registered: expected undefined to be type of 'function'` |

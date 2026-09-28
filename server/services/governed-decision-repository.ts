@@ -128,7 +128,16 @@ export interface GovernedDecisionTransitionEvent {
   id: string;
   decisionId: string;
   organizationId: number;
-  projectId: number;
+  /**
+   * The project as the platform addresses it: a regulatory-program uuid, or a
+   * legacy numeric projects.id rendered as text.
+   *
+   * Was `projectId: number` against an INTEGER column with a foreign key to
+   * projects(id). A Module 3 project is a uuid, so the writer coerced with
+   * Number(...) || 0, every insert failed the foreign key with a 23503 that the
+   * catch below swallowed, and every project collapsed to bucket 0 on read.
+   */
+  projectRef: string;
   fromState: string;
   toState: string;
   action: string;
@@ -285,6 +294,12 @@ export async function recordGovernedDecision(
       decisionContext: {
         governedDecisionId: decisionId,
         kind: GOVERNED_FABRIC_KIND,
+        /* The artifact this decision governs, as the platform addresses it.
+           Without it the row is unlinkable: executed_artifact_id is NULL on
+           every governed-fabric row (412 of 412 on the reference database), so
+           the lineage dossier's artifact join matched nothing and reported
+           zero decisions for a document that had them. */
+        artifactId: evaluation.context.artifactId ?? null,
         // The addressable project reference. See the projectId note above.
         projectRef: String(evaluation.context.projectId ?? ''),
         intent: evaluation.context.intendedAction,
@@ -527,7 +542,7 @@ export async function transitionGovernedDecision(
     await recordTransitionEvent({
       decisionId: input.decisionId,
       organizationId: input.organizationId,
-      projectId: input.projectId,
+      projectRef: String(input.projectId ?? ''),
       fromState: currentState,
       toState: input.targetState,
       action: input.targetState,
@@ -580,13 +595,13 @@ export async function recordTransitionEvent(
     const { pool } = await import('../db.js');
     await pool.query(
       `INSERT INTO governed_decision_transitions
-       (id, decision_id, organization_id, project_id, from_state, to_state,
+       (id, decision_id, organization_id, project_ref, from_state, to_state,
         action, actor_id, actor_role, reason, notes,
         linked_artifact_id, linked_package_id, linked_workflow_run_id,
         superseded_by_decision_id, created_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
        ON CONFLICT (id) DO NOTHING`,
-      [record.id, record.decisionId, record.organizationId, record.projectId,
+      [record.id, record.decisionId, record.organizationId, record.projectRef,
        record.fromState, record.toState, record.action, record.actorId,
        record.actorRole || null, record.reason || null, record.notes || null,
        record.linkedArtifactId || null, record.linkedPackageId || null,
@@ -619,7 +634,7 @@ export async function getDecisionTimeline(
 }
 
 export async function getProjectReviewQueue(
-  projectId: number,
+  projectRef: string,
   organizationId: number
 ): Promise<{ pending: string[]; escalated: string[]; deferred: string[]; rejected: string[] }> {
   try {
@@ -628,12 +643,12 @@ export async function getProjectReviewQueue(
       `WITH latest AS (
         SELECT DISTINCT ON (decision_id) decision_id, to_state
         FROM governed_decision_transitions
-        WHERE project_id = $1 AND organization_id = $2
+        WHERE project_ref = $1 AND organization_id = $2
         ORDER BY decision_id, created_at DESC
       )
       SELECT decision_id, to_state FROM latest
       WHERE to_state IN ('under_review', 'escalated', 'deferred', 'rejected')`,
-      [projectId, organizationId]
+      [projectRef, organizationId]
     );
     const pending: string[] = [], escalated: string[] = [], deferred: string[] = [], rejected: string[] = [];
     for (const row of result.rows) {
@@ -656,10 +671,10 @@ export async function getProjectReviewQueue(
 }
 
 export async function hasUnresolvedGovernedDecisions(
-  projectId: number,
+  projectRef: string,
   organizationId: number
 ): Promise<{ hasUnresolved: boolean; unresolvedCount: number; escalatedCount: number; states: Record<string, number> }> {
-  const queue = await getProjectReviewQueue(projectId, organizationId);
+  const queue = await getProjectReviewQueue(projectRef, organizationId);
   const unresolvedCount = queue.pending.length + queue.escalated.length;
   return {
     hasUnresolved: unresolvedCount > 0,
@@ -678,7 +693,7 @@ function mapTransitionRow(row: Record<string, unknown>): GovernedDecisionTransit
     id: String(row.id),
     decisionId: String(row.decision_id),
     organizationId: Number(row.organization_id),
-    projectId: Number(row.project_id),
+    projectRef: String(row.project_ref ?? ''),
     fromState: String(row.from_state),
     toState: String(row.to_state),
     action: String(row.action),

@@ -4,19 +4,19 @@
  *
  * What this suite holds, beyond registration:
  *
- *  - **Every one of the fifteen is registered and has a handler.** A definition
+ *  - **Every one of the sixteen is registered and has a handler.** A definition
  *    the model can see with no handler behind it is offered and then fails;
  *    a handler with no definition is unreachable. Both halves, or neither.
  *  - **Every description names its engine as the source of its output**, and
  *    says the output is reported verbatim — asserted over the whole array, so
- *    a sixteenth tool cannot be added without it (CLAUDE.md Rule 2: a tool that
+ *    a seventeenth tool cannot be added without it (CLAUDE.md Rule 2: a tool that
  *    asks a model for a figure is a defect).
  *  - **The honesty phrases the design doc requires are in the prose**, because
  *    the description is the only thing that steers the model: `unverified`
  *    stays unverified on the USDM export; `unstated` is not `site` on the DCT
  *    profile; `not_assessable` is not `missing` on SPIRIT; a null share is not
  *    0% on deviation trends; the CtQ ratings are default seeds.
- *  - **None of the fifteen carries a reason-for-change property.** They are all
+ *  - **None of the sixteen carries a reason-for-change property.** They are all
  *    read-only; a reason field would imply a governed write that never happens.
  *
  * RED-FIRST EVIDENCE: written before the engines' handlers were registered,
@@ -46,6 +46,7 @@ const NAMES = [
   'review_external_control_plan',
   'review_multiplicity_control',
   'review_biospecimen_profile',
+  'review_master_protocol',
 ];
 
 const ENGINE_NAMES: Record<string, RegExp> = {
@@ -64,10 +65,11 @@ const ENGINE_NAMES: Record<string, RegExp> = {
   review_external_control_plan: /projectExternalControlPlan/,
   review_multiplicity_control: /checkMultiplicity/,
   review_biospecimen_profile: /profileBiospecimens/,
+  review_master_protocol: /checkMasterProtocol/,
 };
 
 describe('PROTOCOL_INDUSTRY_TOOLS — registration', () => {
-  it('exposes exactly the fifteen, once each, with unique names', () => {
+  it('exposes exactly the sixteen, once each, with unique names', () => {
     expect(PROTOCOL_INDUSTRY_TOOLS.map((t) => t.name)).toEqual(NAMES);
     expect(new Set(PROTOCOL_INDUSTRY_TOOLS.map((t) => t.name)).size).toBe(NAMES.length);
   });
@@ -122,9 +124,10 @@ describe('PROTOCOL_INDUSTRY_TOOLS — the description steers the model', () => {
     expect(by.review_external_control_plan).toMatch(/No posterior or treatment effect is computed at protocol stage/);
     expect(by.review_multiplicity_control).toMatch(/never present it as proof of control/);
     expect(by.review_biospecimen_profile).toMatch(/NOT safety limits/);
+    expect(by.review_master_protocol).toMatch(/never describe the design as sound or compliant/);
   });
 
-  it('none carries a reason-for-change: all fifteen are read-only', () => {
+  it('none carries a reason-for-change: all sixteen are read-only', () => {
     for (const t of PROTOCOL_INDUSTRY_TOOLS) {
       const props = Object.keys((t.input_schema as { properties: Record<string, unknown> }).properties);
       expect(props, `${t.name} properties`).not.toContain('reason');
