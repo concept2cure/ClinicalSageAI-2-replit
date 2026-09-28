@@ -14,7 +14,7 @@
  * @module server/services/ai-governance/approved-models
  */
 
-import type { ProviderName, TaskType } from '../ai-gateway/types';
+import type { ModelConfig, ProviderName, TaskType } from '../ai-gateway/types';
 
 export type ModelRole = 'primary' | 'fallback';
 
@@ -347,6 +347,79 @@ export function approvedEntryFor(
   return APPROVED_MODELS.find(
     (m) => m.provider === served.provider && (m.pinnedVersion === served.model || m.id === served.model),
   );
+}
+
+/**
+ * The approved-models entry a registry row IS, or undefined: the entry whose
+ * id, provider and pinned version are the row's id, provider and wire model.
+ * It is the one test of "this model may be selected" (CLAUDE.md Rule 2) for a
+ * caller's pin (effort.ts resolveModelOverride), the picker
+ * (projectModelsForPicker) and the cost-tier default (reasoning.ts
+ * resolveTierModel), the pin and the tier through {@link governedMatch}.
+ *
+ * Identity, not the served-model lookup ({@link approvedEntryFor}). That lookup
+ * takes the first entry for the provider whose pinned version OR id is the wire
+ * model, which is looser than a pin, and it depends on the order of
+ * APPROVED_MODELS:
+ *
+ *   - it accepts a wire model EQUAL TO an entry's alias id (e.g. wire
+ *     'claude-opus-4'), which names no pinned version at all;
+ *   - it keys on the wire model, where the gateway's high-risk check keys on the
+ *     registry id (`isApprovedForHighRisk(model.id)`), so a row carrying an
+ *     approved version under another id would pass here and be refused there;
+ *   - its first hit decides. Until 2026-09-28 (H1, row 74) this function was
+ *     that lookup followed by an identity check on the hit, so a row that IS an
+ *     entry was refused whenever an earlier entry for its provider had an id or
+ *     pinned version equal to the row's wire model. No entry does that today;
+ *     nothing forbids it.
+ *
+ * The drift gate (detectModelDrift) holds the registry to the same id and
+ * pinned version, so every model in today's registry is its own entry and this
+ * refuses none of them. `entries` is the governed list, a parameter so the
+ * order-independence is testable (governing-entry.test.ts).
+ */
+export function governingEntry(
+  m: Pick<ModelConfig, 'id' | 'provider' | 'model'>,
+  entries: readonly ApprovedModel[] = APPROVED_MODELS,
+): ApprovedModel | undefined {
+  return entries.find((e) => e.provider === m.provider && e.id === m.id && e.pinnedVersion === m.model);
+}
+
+/**
+ * The enabled registry row a named model selects under Rule 2. The one rule for
+ * every resolver that turns a name into a model: a caller's pin (effort.ts
+ * resolveModelOverride) and the cost-tier default, ANA_TIER_*_MODEL remaps
+ * included (reasoning.ts resolveTierModel). Until H1 (2026-09-28) each had its
+ * own copy, and the copies disagreed: one value against one registry was
+ * refused as a pin and served as a tier.
+ *
+ * The value is matched on registry id or wire model. The first enabled match
+ * that is its own approved-models entry ({@link governingEntry}) is `served`.
+ * Each match before it is `withheld`: passed over, the way a disabled row is,
+ * and the way the gateway's explicit path passes over a row not approved for
+ * the task. When no match is an entry, `served` is absent and every match is
+ * withheld. Pure: whether a withheld row is SAID is the caller's decision.
+ *
+ * What a caller hands the gateway is the served row's `{ provider, model }`,
+ * not the row. The gateway looks the row up again: the first enabled row with
+ * that provider whose wire model or id is that model (placement and health
+ * aside), and on normal-risk work it serves it whether or not it is an entry.
+ * So the row served is the row judged here only while that pair names one
+ * registry row. It does in today's registry (tier-model-approval.test.ts pins
+ * it); detectModelDrift does not require it.
+ */
+export function governedMatch<T extends Pick<ModelConfig, 'id' | 'provider' | 'model' | 'enabled'>>(
+  value: string,
+  rows: readonly T[],
+): { served?: { row: T; entry: ApprovedModel }; withheld: T[] } {
+  const withheld: T[] = [];
+  for (const row of rows) {
+    if (!row.enabled || (row.id !== value && row.model !== value)) continue;
+    const entry = governingEntry(row);
+    if (entry) return { served: { row, entry }, withheld };
+    withheld.push(row);
+  }
+  return { withheld };
 }
 
 /** Minimal fact about a model as it exists in the live gateway registry. */
