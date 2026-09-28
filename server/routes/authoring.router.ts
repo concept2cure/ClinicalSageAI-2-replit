@@ -31,6 +31,11 @@ import {
 // (interactive save AND section create) applies the identical rule.
 // See server/services/clinical-regulatory-evidence/lineage-gate.ts.
 import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
+// Types only: the service itself is imported where it is called.
+import type {
+  CitationChange,
+  CitationImage,
+} from '../services/clinical-regulatory-evidence/source-usage.service';
 import {
   authoringPrincipalFromRequest,
   decideAuthoringPermission,
@@ -750,6 +755,27 @@ const createAuditEvent = async (
     auditOpts
   );
 };
+
+/**
+ * Run `work` on one pooled client between BEGIN and COMMIT; ROLLBACK on any
+ * throw. A write and the audit row recording it are both issued on that
+ * client, so an audit write that fails takes the write with it. The caller
+ * answers the request only after this returns, i.e. after COMMIT.
+ */
+async function inTransaction<T>(work: (client: Queryable) => Promise<T>): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const out = await work(client);
+    await client.query('COMMIT');
+    return out;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
 // Helper function to ensure token table exists
 // authoring_tokens is now provisioned by db/migrations/20260730_authoring_runtime_ddl.sql.
@@ -2295,50 +2321,75 @@ router.post('/sections/:sectionId/comment', async (req: Request, res: Response) 
       });
     }
 
-    // The section must belong to this tenant before anything is attached to
-    // it. The comment row itself always carried the caller's tenant_id (reads
-    // stayed scoped), but without this check a comment could be pinned to a
-    // foreign section UUID — and 201-vs-500 confirmed foreign ids.
-    const sectionOwned = await pool.query(
-      'SELECT id FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
-      [sectionId, tenantId]
-    );
-    if (((sectionOwned.rowCount ?? 0) === 0)) {
-      return res.status(404).json({ success: false, error: 'Section not found' });
-    }
+    /* The comment belongs to the document its SECTION belongs to — the section
+       the guard authorised. doc_id and parent_comment_id came from the body
+       and were inserted as sent, so a grant on one document let a caller file
+       comments and audit rows under another, frozen ones included, and hold
+       up its freeze with a thread its own reviewers could not resolve
+       (periodic review 2026-09-28, editor family, SEC-A-2). A body doc_id
+       that disagrees is refused rather than overridden, so a client bug
+       surfaces; a parent must be a comment on this same section. The comment
+       and its audit row commit together. */
+    const outcome = await inTransaction(async (client) => {
+      // The section must belong to this tenant before anything is attached to
+      // it; without the check 201-vs-500 confirmed foreign section ids.
+      const section = await client.query(
+        'SELECT id, doc_id FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
+        [sectionId, tenantId]
+      );
+      if ((section.rowCount ?? 0) === 0) return { status: 404, error: 'Section not found' };
+      const docId = String(section.rows[0].doc_id);
+      if (doc_id != null && String(doc_id).toLowerCase() !== docId.toLowerCase()) {
+        return { status: 400, error: 'doc_id is not the document this section belongs to. Nothing was saved.' };
+      }
+      if (parent_comment_id) {
+        const parent = await client.query(
+          'SELECT 1 FROM authoring_comments WHERE id::text = $1 AND section_id = $2 AND tenant_id = $3',
+          [String(parent_comment_id), sectionId, tenantId]
+        );
+        if ((parent.rowCount ?? 0) === 0) {
+          return { status: 400, error: 'The comment being replied to is not on this section. Nothing was saved.' };
+        }
+      }
 
-    const result = await pool.query(
-      `INSERT INTO authoring_comments
-       (id, section_id, doc_id, body, anchor, status, created_by, user_name, user_email,
-        parent_comment_id, position_data, created_at, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, 'open', $6, $7, $8, $9, $10, NOW(), $11)
-       RETURNING *`,
-      [
-        commentId,
-        sectionId,
-        doc_id,
-        body,
-        anchor,
-        createdBy,
+      const inserted = await client.query(
+        `INSERT INTO authoring_comments
+         (id, section_id, doc_id, body, anchor, status, created_by, user_name, user_email,
+          parent_comment_id, position_data, created_at, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, 'open', $6, $7, $8, $9, $10, NOW(), $11)
+         RETURNING *`,
+        [
+          commentId,
+          sectionId,
+          docId,
+          body,
+          anchor,
+          createdBy,
+          userName,
+          userEmail,
+          parent_comment_id || null,
+          position_data ?? null,
+          tenantId,
+        ]
+      );
+
+      await createAuditEvent(
+        docId,
+        parent_comment_id ? 'reply_added' : 'comment_added',
         userName,
-        userEmail,
-        parent_comment_id ?? null,
-        position_data ?? null,
+        { comment_id: commentId, section_id: sectionId, anchor },
         tenantId,
-      ]
-    );
+        client
+      );
+      return { status: 201, comment: inserted.rows[0] };
+    });
 
-    await createAuditEvent(
-      doc_id,
-      parent_comment_id ? 'reply_added' : 'comment_added',
-      userName,
-      { comment_id: commentId, section_id: sectionId, anchor },
-      tenantId
-    );
-
+    if (!('comment' in outcome)) {
+      return res.status(outcome.status).json({ success: false, error: outcome.error });
+    }
     res.status(201).json({
       success: true,
-      comment: result.rows[0],
+      comment: outcome.comment,
       message: 'Comment added successfully',
     });
   } catch (error) {
@@ -2472,10 +2523,60 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
 
 // ============= Citations & Data Tokens =============
 
+/* ── Every citation write is on the document's trail, in its transaction ────
+   A citation records what a section was drafted from, and its payload_sha256
+   the source's checksum at the moment it was cited: the value the Sources rail
+   compares against today. No citation write (cite, cite-source, the uncite
+   DELETE, refresh-token, refresh-all) wrote an audit row, and the DELETE and
+   the overwrites destroyed the cite-time value with no before-image anywhere
+   (periodic review 2026-09-28, editor family, P11-A-1 / SEC-A-8). Each now
+   writes its row on the same client as the change, carrying the citation as it
+   stood before and after, so the prior value survives and an audit write that
+   fails takes the change with it. The document is read from the section row,
+   never from the URL or the body: the section the guard authorised is the one
+   the trail names. */
+type CitationAuditOperation = 'CITATION_ADDED' | 'CITATION_UPDATED' | 'CITATION_REMOVED' | 'CITATION_REFRESHED';
+
+const citationJson = (image: CitationImage | null): string | null => (image ? JSON.stringify(image) : null);
+
+async function auditCitationWrite(
+  req: Request,
+  client: Queryable,
+  entry: { sectionId: string; operation: CitationAuditOperation; change: CitationChange; reason: string },
+): Promise<void> {
+  const section = await client.query(
+    'SELECT doc_id FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
+    [entry.sectionId, getTenantId(req)]
+  );
+  const docId = section.rows[0]?.doc_id;
+  // Unreachable behind the section guard. Refused rather than written with no
+  // document, where no document's trail would ever show it.
+  if (docId == null) throw new Error('Citation audit: the section is not in this organization');
+  const { before, after } = entry.change;
+  const cited = (after ?? before) as CitationImage;
+  await createAuditTrail(
+    req,
+    String(docId),
+    entry.sectionId,
+    entry.operation,
+    citationJson(before),
+    citationJson(after),
+    entry.reason,
+    {
+      citation_id: cited.id,
+      source: cited.source,
+      reference_id: cited.reference_id,
+      previous_sha256: before ? before.payload_sha256 : null,
+      sha256: after ? after.payload_sha256 : null,
+    },
+    client
+  );
+}
+
 // POST /api/authoring/sections/:sectionId/cite - Add citation
 router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => {
   try {
-    const { sectionId } = req.params;
+    const sectionId = String(req.params.sectionId);
     const { source, anchor, citation_text, reference_id } = req.body;
     const tenantId = getTenantId(req);
     const citationId = crypto.randomUUID();
@@ -2491,17 +2592,26 @@ router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => 
       });
     }
 
-    const result = await pool.query(
-      `INSERT INTO authoring_citations
-       (id, section_id, source, anchor, citation_text, reference_id, created_by, created_at, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8)
-       RETURNING *`,
-      [citationId, sectionId, source, anchor, citation_text, reference_id, createdBy, tenantId]
-    );
+    const citation = await inTransaction(async (client) => {
+      const result = await client.query(
+        `INSERT INTO authoring_citations
+         (id, section_id, source, anchor, citation_text, reference_id, created_by, created_at, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8)
+         RETURNING *`,
+        [citationId, sectionId, source, anchor, citation_text, reference_id, createdBy, tenantId]
+      );
+      await auditCitationWrite(req, client, {
+        sectionId,
+        operation: 'CITATION_ADDED',
+        change: { before: null, after: result.rows[0] },
+        reason: 'Citation recorded',
+      });
+      return result.rows[0];
+    });
 
     res.status(201).json({
       success: true,
-      citation: result.rows[0],
+      citation,
       message: 'Citation added successfully',
     });
   } catch (error) {
@@ -2545,17 +2655,40 @@ router.post('/sections/:sectionId/cite-source', async (req: Request, res: Respon
     const { citeSource, SourceUsageError } = await import(
       '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
+    const sectionId = String(req.params.sectionId);
     try {
-      const result = await citeSource(tenantId, {
-        sectionId: String(req.params.sectionId),
-        sourceId: req.body?.source_id,
-        citationText: req.body?.citation_text ?? null,
-        anchor: req.body?.anchor ?? null,
-        createdBy,
+      const result = await inTransaction(async (client) => {
+        const cited = await citeSource(
+          tenantId,
+          {
+            sectionId,
+            sourceId: req.body?.source_id,
+            citationText: req.body?.citation_text ?? null,
+            anchor: req.body?.anchor ?? null,
+            createdBy,
+          },
+          client
+        );
+        // A second cite of the same source writes nothing unless it brings new
+        // citation text; it never re-reads the checksum (see citeSource).
+        if (cited.change) {
+          await auditCitationWrite(req, client, {
+            sectionId,
+            operation: cited.created ? 'CITATION_ADDED' : 'CITATION_UPDATED',
+            change: cited.change,
+            reason: cited.created ? 'Source cited' : 'Citation text changed',
+          });
+        }
+        return cited;
       });
-      // 201 on a new citation, 200 on re-resolve — the caller can tell whether it
-      // added a source or refreshed one the section already had.
-      return res.status(result.created ? 201 : 200).json({ success: true, ...result });
+      // 201 on a new citation, 200 when the section already cited it — the
+      // caller can tell whether it added a source or found one already there.
+      return res.status(result.created ? 201 : 200).json({
+        success: true,
+        citationId: result.citationId,
+        citedChecksum: result.citedChecksum,
+        created: result.created,
+      });
     } catch (e) {
       if (e instanceof SourceUsageError) {
         return res.status(400).json({ success: false, error: e.message });
@@ -2575,12 +2708,22 @@ router.delete('/sections/:sectionId/cite-source/:sourceId', async (req: Request,
     const { removeSourceCitation } = await import(
       '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
-    const removed = await removeSourceCitation(
-      tenantId,
-      String(req.params.sectionId),
-      String(req.params.sourceId),
-    );
-    if (!removed) {
+    const sectionId = String(req.params.sectionId);
+    const removed = await inTransaction(async (client) => {
+      const rows = await removeSourceCitation(tenantId, sectionId, String(req.params.sourceId), client);
+      // The deleted row is the before-image: the only record left of what the
+      // section cited, and against which checksum.
+      for (const row of rows) {
+        await auditCitationWrite(req, client, {
+          sectionId,
+          operation: 'CITATION_REMOVED',
+          change: { before: row, after: null },
+          reason: 'Citation removed',
+        });
+      }
+      return rows.length;
+    });
+    if (removed === 0) {
       return res.status(404).json({
         success: false,
         error: 'No removable citation of that source on this section (a frozen citation is immutable)',
@@ -4327,12 +4470,16 @@ router.get('/sections/:sectionId/tokens', async (req: Request, res: Response) =>
 // POST /api/authoring/sections/:sectionId/refresh-token - Refresh a specific token
 router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Response) => {
   try {
-    /* :sectionId is addressing only. A citation is identified by cite_id within
-       the caller's tenant, and refreshSourceCitation scopes on the tenant — the
-       section in the path is not a second scope and was never read as one, so
-       it is not bound here rather than bound and ignored. */
+    /* The citation re-read is the one the PATH section owns. The section guard
+       and the gateway both authorise :sectionId, so :sectionId is what binds
+       the write. This route used to treat it as addressing only and look
+       cite_id up by tenant, which let an editor of one section re-baseline a
+       citation on any document, frozen or signed ones included, with no audit
+       row (periodic review 2026-09-28, editor family, SEC-A-1). A cite_id from
+       another section is "not found", and nothing is written. */
     const { cite_id } = req.body;
     const tenantId = getTenantId(req);
+    const sectionId = String(req.params.sectionId);
 
     if (!cite_id) {
       return res.status(400).json({
@@ -4353,13 +4500,24 @@ router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Resp
     const { refreshSourceCitation } = await import(
       '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
-    const outcome = await refreshSourceCitation(tenantId, String(cite_id));
+    const outcome = await inTransaction(async (client) => {
+      const refreshed = await refreshSourceCitation(tenantId, { sectionId, citationId: String(cite_id) }, client);
+      if (refreshed.ok && refreshed.change) {
+        await auditCitationWrite(req, client, {
+          sectionId,
+          operation: 'CITATION_REFRESHED',
+          change: refreshed.change,
+          reason: 'Source re-read: its checksum changed since the citation was recorded',
+        });
+      }
+      return refreshed;
+    });
 
     if (!outcome.ok) {
       const status = outcome.reason === 'not_found' ? 404 : 409;
       const message =
         outcome.reason === 'not_found'
-          ? 'Citation not found'
+          ? 'Citation not found on this section. Nothing was changed.'
           : outcome.reason === 'frozen'
             ? 'This citation is frozen and cannot be re-resolved'
             : outcome.reason === 'not_a_source_citation'
@@ -4651,38 +4809,65 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
 //   3. It re-entered the API over HTTP against its own host with no Authorization
 //      header, so each inner call would have failed the JWT gate anyway.
 // Now: one tenant-scoped read, and a direct service call per citation.
+//
+// The whole batch is one transaction with an audit row per citation whose
+// checksum moved (P11-A-1), so a failure part-way re-reads nothing — which is
+// what the workbench tells the author ("Nothing was changed"). A sealed
+// document is refused here as well as at the gateway, as the section routes
+// refuse it in the router's own guard.
 router.post('/docs/:docId/refresh-all', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
+    const docId = String(req.params.docId);
     const { refreshSourceCitation } = await import(
       '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
 
-    const cites = await pool.query<{ cite_id: string }>(
-      `SELECT c.id AS cite_id
-         FROM authoring_citations c
-         JOIN authoring_sections s ON s.id = c.section_id AND s.tenant_id = c.tenant_id
-        WHERE s.doc_id = $1 AND c.tenant_id = $2 AND c.frozen_at IS NULL
-        ORDER BY c.created_at ASC`,
-      [req.params.docId, tenantId]
-    );
+    const result = await inTransaction(async (client) => {
+      const lock = await checkDocumentWritable(client, docId, tenantId);
+      if (!lock.writable) return { done: false as const, lock };
 
-    let refreshed = 0;
-    let changed = 0;
-    const skipped: Array<{ cite_id: string; reason: string }> = [];
-    for (const cite of cites.rows) {
-      const outcome = await refreshSourceCitation(tenantId, cite.cite_id);
-      if (outcome.ok) {
+      const cites = await client.query(
+        `SELECT c.id AS cite_id, c.section_id
+           FROM authoring_citations c
+           JOIN authoring_sections s ON s.id = c.section_id AND s.tenant_id = c.tenant_id
+          WHERE s.doc_id = $1 AND c.tenant_id = $2 AND c.frozen_at IS NULL
+          ORDER BY c.created_at ASC`,
+        [docId, tenantId]
+      );
+
+      let refreshed = 0;
+      let changed = 0;
+      const skipped: Array<{ cite_id: string; reason: string }> = [];
+      for (const cite of cites.rows as Array<{ cite_id: string; section_id: string }>) {
+        const sectionId = String(cite.section_id);
+        const outcome = await refreshSourceCitation(tenantId, { sectionId, citationId: String(cite.cite_id) }, client);
+        if (!outcome.ok) {
+          // Reported, not silently counted as refreshed. A citation with no source
+          // behind it is exactly what the caller needs to see.
+          skipped.push({ cite_id: cite.cite_id, reason: outcome.reason });
+          continue;
+        }
         refreshed++;
-        if (outcome.changed) changed++;
-      } else {
-        // Reported, not silently counted as refreshed. A citation with no source
-        // behind it is exactly what the caller needs to see.
-        skipped.push({ cite_id: cite.cite_id, reason: outcome.reason });
+        if (outcome.change) {
+          changed++;
+          await auditCitationWrite(req, client, {
+            sectionId,
+            operation: 'CITATION_REFRESHED',
+            change: outcome.change,
+            reason: 'Source re-read: its checksum changed since the citation was recorded',
+          });
+        }
       }
-    }
+      return { done: true as const, refreshed, changed, skipped };
+    });
 
-    res.json({ ok: true, refreshed, changed, skipped });
+    if (!result.done) {
+      return res
+        .status(result.lock.code === 'DOCUMENT_FROZEN' ? 403 : 404)
+        .json({ error: result.lock.code, message: result.lock.reason });
+    }
+    res.json({ ok: true, refreshed: result.refreshed, changed: result.changed, skipped: result.skipped });
   } catch (error) {
     console.error('POST /docs/:id/refresh-all', error);
     res.status(500).json({ error: 'Refresh-all failed' });
