@@ -1,0 +1,839 @@
+# RED — tests run against the UNFIXED code (production files untouched; only the test files placed)
+# 2026-09-28, HEAD d481f7b2
+
+$ npx vitest run --config vitest.config.ts server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+✅ Template tables initialized
+
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses, as not found, a citation on another document that is FROZEN and not granted to the caller; nothing is written 84ms
+   → {"success":true,"message":"Source content has changed since this citation was made; the citation now records the current checksum.","changed":true,"source_id":1,"previous_sha256":"sha-sealed-1","sha256":"sha-sealed-2"}: expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses a citation on another section of the same document 21ms
+   → expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction 25ms
+   → expected [] to have a length of 1 but got +0
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > a re-read that finds the content unchanged writes nothing 22ms
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction 25ms
+   → expected [] to have a length of 1 but got +0
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing 26ms
+   → expected { success: true, …(3) } to match object { created: false, …(2) }
+(1 matching property omitted from actual)
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone 27ms
+   → expected 'sha-text-2' to be 'sha-text-1' // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image 30ms
+   → expected [] to have a length of 1 but got +0
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction 21ms
+   → expected [] to have a length of 1 but got +0
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section 16ms
+   → expected [] to have a length of 1 but got +0
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a body doc_id naming another document, and writes nothing
+{
+  "timestamp": "2026-09-28T04:09:55.007Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 4b346aea-aca4-40af-ba19-921221dab068 by a***@canvas.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T04:09:55.007Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.comment_added authoring_document",
+  "context": {
+    "userId": "a***@canvas.example",
+    "tenantId": 1,
+    "resourceId": "4b346aea-aca4-40af-ba19-921221dab068"
+  }
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction
+{
+  "timestamp": "2026-09-28T04:09:55.051Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc undefined by a***@canvas.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T04:09:55.051Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.comment_added authoring_document",
+  "context": {
+    "userId": "a***@canvas.example",
+    "tenantId": 1,
+    "resourceId": "unknown"
+  }
+}
+
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > refresh-all refuses a FROZEN document and re-reads nothing 10ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source 13ms
+   → expected 201 to be 500 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite 12ms
+   → expected 200 to be 500 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token 17ms
+   → expected 200 to be 500 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure 15ms
+   → expected 200 to be 500 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a body doc_id naming another document, and writes nothing 31ms
+   → expected 201 to be 400 // Object.is equality
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing
+{
+  "timestamp": "2026-09-28T04:09:55.082Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 571fda72-2a64-4836-bf61-030a92e57952 by a***@canvas.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T04:09:55.083Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.comment_added authoring_document",
+  "context": {
+    "userId": "a***@canvas.example",
+    "tenantId": 1,
+    "resourceId": "571fda72-2a64-4836-bf61-030a92e57952"
+  }
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing
+{
+  "timestamp": "2026-09-28T04:09:55.099Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: reply_added on doc 571fda72-2a64-4836-bf61-030a92e57952 by a***@canvas.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T04:09:55.099Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.reply_added authoring_document",
+  "context": {
+    "userId": "a***@canvas.example",
+    "tenantId": 1,
+    "resourceId": "571fda72-2a64-4836-bf61-030a92e57952"
+  }
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section
+{
+  "timestamp": "2026-09-28T04:09:55.120Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 5f097809-4fb9-4311-bb11-1460d14288b6 by a***@canvas.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T04:09:55.120Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.comment_added authoring_document",
+  "context": {
+    "userId": "a***@canvas.example",
+    "tenantId": 1,
+    "resourceId": "5f097809-4fb9-4311-bb11-1460d14288b6"
+  }
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section
+{
+  "timestamp": "2026-09-28T04:09:55.141Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: reply_added on doc 5f097809-4fb9-4311-bb11-1460d14288b6 by a***@canvas.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T04:09:55.141Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.reply_added authoring_document",
+  "context": {
+    "userId": "a***@canvas.example",
+    "tenantId": 1,
+    "resourceId": "5f097809-4fb9-4311-bb11-1460d14288b6"
+  }
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved
+CRITICAL: Failed to create audit trail: error: test: audit row refused for comment_added
+    at pe.Le (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 158,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)',
+  params: [
+    '316578cd-e940-4f49-ab9d-aac61607af23',
+    null,
+    'comment_added',
+    'author@canvas.example',
+    'unknown',
+    null,
+    null,
+    null,
+    null,
+    'Legacy audit event',
+    {
+      comment_id: 'e40e41c6-3fc6-4ea5-affb-084238eedeb8',
+      section_id: '6a0d3977-3278-4c4d-b700-f1350229275a',
+      anchor: undefined
+    },
+    'legacy-call',
+    'unknown',
+    'fcc5fc62-bc2d-485e-aea6-9eea02a7946e',
+    1
+  ],
+  queryOptions: undefined
+}
+
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction 37ms
+   → expected null to be 'fb9cfc66-773f-44d5-ad9b-da5e5fd4b090' // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing 46ms
+   → expected 201 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section 49ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-9 — revert writes its audit row inside its transaction > records REVERT on the transaction client, before COMMIT
+{
+  "timestamp": "2026-09-28T04:09:55.213Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc 24acc3d5-4cf0-4f06-a441-ee8bef18119a by a***@canvas.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T04:09:55.213Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.REVERT authoring_section",
+  "context": {
+    "userId": "a***@canvas.example",
+    "tenantId": 1,
+    "resourceId": "57f42bca-f949-45f9-ac4f-65e25c6fe458"
+  }
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-9 — revert writes its audit row inside its transaction > fail closed: a revert whose audit row cannot be written leaves the section as it was
+CRITICAL: Failed to create audit trail: error: test: audit row refused for REVERT
+    at pe.Le (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 151,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)',
+  params: [
+    'bfba793f-483b-4337-95ce-f492f76d6fce',
+    'baacf732-b532-4abe-843e-996df22d9baa',
+    'REVERT',
+    'author@canvas.example',
+    'unknown',
+    '<p>Later text.</p>',
+    '<p>Earlier text.</p>',
+    '32a8a1194a38d0c926a5eaa41eeb5711ec963d804c9b000c272f184ce7bfb184',
+    'f0b399f0ac7318a60fb033f973c175187454517c39e609eb7e293539cb66c917',
+    'Reverted to revision b7995825-c13b-4bd5-97f0-406204c74c8e',
+    {
+      revisionId: 'b7995825-c13b-4bd5-97f0-406204c74c8e',
+      revisionCreatedAt: 2026-09-28T04:09:55.230Z
+    },
+    '127.0.0.1',
+    'unknown',
+    '4964c05c-8f8a-44b6-8ebe-ed7219ca51c6',
+    1
+  ],
+  queryOptions: undefined
+}
+
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved 21ms
+   → expected 201 to be 500 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-9 — revert writes its audit row inside its transaction > records REVERT on the transaction client, before COMMIT 47ms
+   → expected { onPool: 1, inTransaction: +0, …(1) } to deeply equal { onPool: +0, inTransaction: 1, …(1) }
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-9 — revert writes its audit row inside its transaction > fail closed: a revert whose audit row cannot be written leaves the section as it was 38ms
+   → expected 200 to be 500 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses, as not found, a citation on another document that is FROZEN and not granted to the caller; nothing is written
+AssertionError: {"success":true,"message":"Source content has changed since this citation was made; the citation now records the current checksum.","changed":true,"source_id":1,"previous_sha256":"sha-sealed-1","sha256":"sha-sealed-2"}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:256:50
+    254|     const res = await author(request(app).post(`/api/authoring/section…
+    255|
+    256|     expect(res.status, JSON.stringify(res.body)).toBe(404);
+       |                                                  ^
+    257|     // The sealed document's cite-time checksum is untouched.
+    258|     expect(await checksumOf(citeB)).toBe('sha-sealed-1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses a citation on another section of the same document
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:273:24
+    271|     const res = await author(request(app).post(`/api/authoring/section…
+    272|
+    273|     expect(res.status).toBe(404);
+       |                        ^
+    274|     expect(await checksumOf(citeTwo)).toBe('sha-sibling-1');
+    275|     expect(await trail(doc)).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:292:18
+    290|
+    291|     const rows = await trail(doc, 'CITATION_REFRESHED');
+    292|     expect(rows).toHaveLength(1);
+       |                  ^
+    293|     expect(rows[0].section_id).toBe(sec);
+    294|     expect(JSON.parse(String(rows[0].before_content))).toMatchObject({…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:326:18
+    324|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    325|     const rows = await trail(doc, 'CITATION_ADDED');
+    326|     expect(rows).toHaveLength(1);
+       |                  ^
+    327|     expect(rows[0].section_id).toBe(sec);
+    328|     expect(rows[0].before_content).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing
+AssertionError: expected { success: true, …(3) } to match object { created: false, …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "citationId": "730016a4-621e-420c-b544-9995ed42acb4",
+-   "citedChecksum": "sha-recite-1",
++   "citedChecksum": "sha-recite-2",
+    "created": false,
+  }
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:350:24
+    348|
+    349|     expect(again.status).toBe(200);
+    350|     expect(again.body).toMatchObject({ created: false, citationId: fir…
+       |                        ^
+    351|     // Still the evidence that the section was written against the ear…
+    352|     expect(await checksumOf(first.body.citationId)).toBe('sha-recite-1…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+AssertionError: expected 'sha-text-2' to be 'sha-text-1' // Object.is equality
+
+Expected: "sha-text-1"
+Received: "sha-text-2"
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:369:53
+    367|
+    368|     expect(again.status).toBe(200);
+    369|     expect(await checksumOf(first.body.citationId)).toBe('sha-text-1');
+       |                                                     ^
+    370|     const rows = await trail(doc, 'CITATION_UPDATED');
+    371|     expect(rows).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:389:18
+    387|     expect(await checksumOf(cited.body.citationId)).toBeNull(); // gon…
+    388|     const rows = await trail(doc, 'CITATION_REMOVED');
+    389|     expect(rows).toHaveLength(1);
+       |                  ^
+    390|     expect(rows[0].section_id).toBe(sec);
+    391|     expect(rows[0].after_content).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:411:18
+    409|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    410|     const rows = await trail(doc, 'CITATION_ADDED');
+    411|     expect(rows).toHaveLength(1);
+       |                  ^
+    412|     expect(JSON.parse(String(rows[0].after_content))).toMatchObject({ …
+    413|     expect(where(/INSERT INTO authoring_citations/i)).toEqual(once);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:432:18
+    430|     expect(res.body).toMatchObject({ ok: true, refreshed: 2, changed: …
+    431|     const rows = await trail(doc, 'CITATION_REFRESHED');
+    432|     expect(rows).toHaveLength(1);
+       |                  ^
+    433|     expect(rows[0].section_id).toBe(two);
+    434|     expect(JSON.parse(String(rows[0].before_content))).toMatchObject({…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > refresh-all refuses a FROZEN document and re-reads nothing
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:449:24
+    447|     const res = await author(request(app).post(`/api/authoring/docs/${…
+    448|
+    449|     expect(res.status).toBe(403);
+       |                        ^
+    450|     expect(res.body.error).toBe('DOCUMENT_FROZEN');
+    451|     expect(await checksumOf(cite)).toBe('sha-all-sealed-1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source
+AssertionError: expected 201 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 201
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:466:24
+    464|     );
+    465|
+    466|     expect(res.status).toBe(500);
+       |                        ^
+    467|     const left = await q(`SELECT 1 FROM authoring_citations WHERE sect…
+    468|     expect(left.rows).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:481:24
+    479|     );
+    480|
+    481|     expect(res.status).toBe(500);
+       |                        ^
+    482|     expect(await checksumOf(cite)).toBe('sha-fc-del');
+    483|   }, T);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:496:24
+    494|     );
+    495|
+    496|     expect(res.status).toBe(500);
+       |                        ^
+    497|     expect(await checksumOf(cite)).toBe('sha-fc-rr-1');
+    498|   }, T);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:515:24
+    513|     );
+    514|
+    515|     expect(res.status).toBe(500);
+       |                        ^
+    516|     expect(await checksumOf(citeA)).toBe('sha-fc-all-a1');
+    517|     expect(await checksumOf(citeB)).toBe('sha-fc-all-b1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a body doc_id naming another document, and writes nothing
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:530:24
+    528|       .send({ body: 'Planted on another document', doc_id: docB });
+    529|
+    530|     expect(res.status).toBe(400);
+       |                        ^
+    531|     const planted = await q(`SELECT 1 FROM authoring_comments WHERE do…
+    532|     expect(planted.rows).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction
+AssertionError: expected null to be 'fb9cfc66-773f-44d5-ad9b-da5e5fd4b090' // Object.is equality
+
+- Expected:
+"fb9cfc66-773f-44d5-ad9b-da5e5fd4b090"
+
++ Received:
+null
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:543:37
+    541|
+    542|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    543|     expect(res.body.comment.doc_id).toBe(doc);
+       |                                     ^
+    544|     expect(await trail(doc, 'comment_added')).toHaveLength(1);
+    545|     expect(where(/INSERT INTO authoring_comments/i)).toEqual(once);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:559:24
+    557|       .send({ body: 'Reply filed on one', doc_id: doc, parent_comment_…
+    558|
+    559|     expect(res.status).toBe(400);
+       |                        ^
+    560|     const replies = await q(`SELECT 1 FROM authoring_comments WHERE pa…
+    561|     expect(replies.rows).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved
+AssertionError: expected 201 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 201
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:586:24
+    584|     );
+    585|
+    586|     expect(res.status).toBe(500);
+       |                        ^
+    587|     const left = await q(`SELECT 1 FROM authoring_comments WHERE secti…
+    588|     expect(left.rows).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-9 — revert writes its audit row inside its transaction > records REVERT on the transaction client, before COMMIT
+AssertionError: expected { onPool: 1, inTransaction: +0, …(1) } to deeply equal { onPool: +0, inTransaction: 1, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "inTransaction": 1,
+-   "onPool": 0,
++   "inTransaction": 0,
++   "onPool": 1,
+    "outsideTransaction": 0,
+  }
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:619:57
+    617|     expect(await contentOf(sec)).toBe('<p>Earlier text.</p>');
+    618|     expect(await trail(doc, 'REVERT')).toHaveLength(1);
+    619|     expect(where(/INSERT INTO authoring_audit_trail/i)).toEqual(once);
+       |                                                         ^
+    620|   }, T);
+    621|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/20]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-9 — revert writes its audit row inside its transaction > fail closed: a revert whose audit row cannot be written leaves the section as it was
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:629:24
+    627|     );
+    628|
+    629|     expect(res.status).toBe(500);
+       |                        ^
+    630|     expect(await contentOf(sec)).toBe('<p>Later text.</p>');
+    631|   }, T);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/20]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  20 failed | 2 passed (22)
+   Start at  04:09:46
+   Duration  8.87s (transform 2.43s, setup 96ms, import 749ms, tests 7.83s, environment 0ms)
+
+
+
+$ npx vitest run --config vitest.config.ts server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
+# NOTE: of these 9 failures, only "citing it again does not re-baseline the checksum (SEC-A-8)" fails on the defect itself.
+# The other 8 are existing tests adapted to the new service signatures (refreshSourceCitation takes {sectionId, citationId};
+# removeSourceCitation returns the deleted rows) and fail on the old signatures (22P02 "[object Object]", boolean vs array).
+# The SEC-A-1 defect is pinned at the HTTP level in the route suite above.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the source-usage migration > creates the back-reference index the Data Room reads by 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the source-usage migration > is idempotent — applying it twice is a no-op 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > captures the source's checksum at the moment it is cited 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > citing the same source twice returns the existing citation rather than duplicating 11ms
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > citing it again does not re-baseline the checksum recorded at cite time (SEC-A-8) 22ms
+   → expected { …(3) } to match object { created: false, …(2) }
+(1 matching property omitted from actual)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > refuses to cite onto another tenant's section 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > refuses to cite another tenant's source 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > keeps the cited checksum and reports the citation as changed once the source moves 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > rejects a non-numeric source id instead of letting Postgres cast it 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > reports the affected section and document, scoped to the project 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > a citation whose checksum still matches is not reported as changed 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > does not leak another tenant's changed citations 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > counts the sections and documents a source is used in 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > counts only the sections whose citation is against superseded content 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > leaves an uncited source out of the map, so "not cited yet" is visible 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > does not count another tenant's citations of the same source id 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > drops non-numeric ids rather than casting them 0ms
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > reads the checksum from the source instead of manufacturing one 10ms
+   → invalid input syntax for type uuid: "[object Object]"
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > reports unchanged content as unchanged 6ms
+   → invalid input syntax for type uuid: "[object Object]"
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > refuses a citation that references no canonical source 5ms
+   → invalid input syntax for type uuid: "[object Object]"
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > refuses to touch a frozen citation 8ms
+   → invalid input syntax for type uuid: "[object Object]"
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > cannot re-resolve a citation through a section it does not belong to (SEC-A-1) 8ms
+   → invalid input syntax for type uuid: "[object Object]"
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > cannot re-resolve another tenant's citation 6ms
+   → invalid input syntax for type uuid: "[object Object]"
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > citations that no longer resolve > lists a deleted source as unresolved instead of dropping the row 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > citations that no longer resolve > reports a citation with no recorded checksum as unverified, never current 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > citations that no longer resolve > survives free-text reference_ids left by the data-token flow 7ms
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > removing a citation > removes an unfrozen citation and leaves frozen ones alone 11ms
+   → (intermediate value) is not iterable
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > removing a citation > cannot remove another tenant's citation 6ms
+   → expected false to deeply equal []
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > groups recorded citations per section with document context 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > surfaces a changed source as changed, per section 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > omits sections with no recorded citations — that is the surface contract 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > does not serve another tenant's citations 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > lists an unresolvable source rather than dropping the citation 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > citing it again does not re-baseline the checksum recorded at cite time (SEC-A-8)
+AssertionError: expected { …(3) } to match object { created: false, …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "change": null,
+-   "citedChecksum": "sha-recite-1",
++   "citedChecksum": "sha-recite-2",
+    "created": false,
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts:175:19
+    173|
+    174|     // Nothing was written, so there is nothing for an audit row to re…
+    175|     expect(again).toMatchObject({ created: false, citedChecksum: 'sha-…
+       |                   ^
+    176|     const listed = await usage.listSectionSources(ORG_A, sectionId);
+    177|     expect(listed[0].citedChecksum).toBe('sha-recite-1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > reads the checksum from the source instead of manufacturing one
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > reports unchanged content as unchanged
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > refuses a citation that references no canonical source
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > refuses to touch a frozen citation
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > cannot re-resolve a citation through a section it does not belong to (SEC-A-1)
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > cannot re-resolve another tenant's citation
+error: invalid input syntax for type uuid: "[object Object]"
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 147, severity: 'ERROR', code: '22P02', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'unnamed portal parameter $1 = \'...\'', schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'uuid.c', routine: 'string_to_uuid', query: 'SELECT id, source, reference_id, payload_sha256, frozen_at\n       FROM authoring_citations WHERE id = $1 AND tenant_id = $2 LIMIT 1', params: [ { sectionId: '8d06d8a5-dc72-4ef5-a162-08fefaaa295e', citationId: '298fcf75-c2bf-45ac-962c-12cfcfa0a973' }, 511 ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > removing a citation > removes an unfrozen citation and leaves frozen ones alone
+TypeError: (intermediate value) is not iterable
+ ❯ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts:477:23
+    475|     await pool.query(`UPDATE authoring_citations SET frozen_at = NOW()…
+    476|
+    477|     const [removed] = await usage.removeSourceCitation(ORG_A, open.sec…
+       |                       ^
+    478|     // The deleted row, whole: the before-image the caller's audit row…
+    479|     expect(removed).toMatchObject({ section_id: open.sectionId, refere…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > removing a citation > cannot remove another tenant's citation
+AssertionError: expected false to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+false
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts:490:72
+    488|     const { sectionId } = await makeSection(ORG_A, 'Mine', 'X.3');
+    489|     await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, creat…
+    490|     expect(await usage.removeSourceCitation(ORG_B, sectionId, src.id))…
+       |                                                                        ^
+    491|     expect(await usage.listSectionSources(ORG_A, sectionId)).toHaveLen…
+    492|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 24 passed (33)
+   Start at  04:10:07
+   Duration  3.27s (transform 198ms, setup 105ms, import 163ms, tests 2.68s, environment 0ms)
+
+
+
+# ANNOTATION (after red was recorded): the lead dropped SEC-A-9 from this lane (fixed on trunk by 59b0d8f9).
+# The two 'SEC-A-9 — revert…' tests above were removed from the route suite and the revert handler was put back to HEAD.
+# Remaining route-suite red: 18 failed | 2 passed of 20 (both passes are regression guards: an unchanged re-read writes nothing; a same-section reply threads).

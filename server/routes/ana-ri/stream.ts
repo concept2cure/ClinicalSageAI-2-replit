@@ -5,7 +5,8 @@
  *  - pre-token `status` events during orchestration / context assembly
  *  - `thread_id` + `orchestration` metadata before first token
  *  - `text` tokens during gateway generation
- *  - `warning` events when server-side degradation occurs
+ *  - `warning` events when server-side degradation occurs, or a model the
+ *    request pinned is refused (code MODEL_OVERRIDE_REFUSED)
  *  - `grounding_strip`, `done`, and `post_done` events after last token
  *
  * Background post-processing (guidance executor, command executor, persistence,
@@ -29,6 +30,7 @@ import {
   resolveStrategyWithPrecedence,
   resolveModelOverride,
 } from '../../services/ai-gateway/effort.js';
+import { isHighRiskRequest } from '../../services/ai-governance/approved-models.js';
 import {
   resolveThinkingConfig,
   isSubstantiveTurn,
@@ -102,8 +104,10 @@ import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import {
   buildTraceEntry,
   collectTracesFromHistory,
+  formatStoppedTurnNote,
   formatTraceForContext,
   refusalOf,
+  turnStopWarning,
   type ToolTraceEntry,
 } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
@@ -169,6 +173,7 @@ import {
   type RunHandle,
 } from '../../services/ana/run-control.js';
 import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-status.js';
+import { createRunHold, type RunHold } from '../../services/ana/run-hold.js';
 import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../../services/ana/governed-tool-gate.js';
 import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
 import {
@@ -276,6 +281,33 @@ function heldToolContext(
   };
 }
 
+/**
+ * The turn's round-boundary hold (services/ana/run-hold.ts), wired to its run
+ * row. The checkpoint's pause wait used to be a loop written inline in the
+ * checkpoint; it moved to run-hold.ts so everything that waits at a round
+ * boundary in one turn shares one pause clock and one paused/resumed pair.
+ * Expiry 'resume' is that loop's behaviour: a pause nobody answers within
+ * MAX_PAUSE_MS is resumed as abandoned (no control event, no user).
+ */
+function streamRunHold(run: {
+  runId: string;
+  handle: RunHandle;
+  runOrgId: number | null;
+  res: Response;
+  emit: (frame: Record<string, unknown>) => void;
+}): RunHold {
+  return createRunHold({
+    readStatus: () => readStatus(getPool(), run.runId),
+    wake: ms => run.handle.wake(ms),
+    emit: run.emit,
+    clientGone: () => run.res.writableEnded,
+    stopForDisconnect: () =>
+      stopRunInternally(getPool(), run.runId, 'client_disconnected', run.runOrgId ?? undefined),
+    expiry: 'resume',
+    resumeAbandoned: () => resumeAbandonedRun(getPool(), run.runId),
+  });
+}
+
 export function mountStreamRoute(router: Router): void {
   router.post('/stream', async (req: Request, res: Response) => {
     // Opaque id for this run, emitted to the client as `run_started` so it can
@@ -294,6 +326,10 @@ export function mountStreamRoute(router: Router): void {
     // whose first answer called no tools never enters the loop, and ends for
     // want of tools.
     let loopStoppedReason: StoppedReason = 'no_more_tools';
+    // How many tool rounds the loop ran (0 when it never entered). Carried with
+    // the reason on `done` and into the message metadata, so "stopped at the
+    // round limit" can say which limit.
+    let loopRounds = 0;
     // The run is closed exactly once, by whichever of the disconnect handler and
     // the finally block gets there first.
     let runSettled = false;
@@ -991,14 +1027,25 @@ export function mountStreamRoute(router: Router): void {
             // already ran in earlier turns (stored on each assistant message's
             // metadata) so she reuses prior findings instead of re-running them.
             const traceNote = formatTraceForContext(collectTracesFromHistory(previousMsgs));
-            if (traceNote) {
-              messages.push({ role: 'system', content: traceNote });
-            }
+            // …except the work of a turn that did not finish. The trace note
+            // says "reuse these findings"; when the last turn was cut short by
+            // the round limit or the repeat guard, this one says its findings
+            // are not complete, so she neither presents them as settled nor
+            // starts over when asked to continue. Each is sent only when it
+            // has something to say.
+            const stoppedNote = formatStoppedTurnNote(previousMsgs);
+            messages.push(
+              ...[traceNote, stoppedNote].filter(Boolean).map((content) => ({ role: 'system' as const, content })),
+            );
           }
         } catch {
           /* fall through to client history */
         }
       }
+      // Client history carries role and content, not the metadata a stop is
+      // stored in: a turn served from it gets neither the trace note nor the
+      // stopped-turn note, so a capped predecessor is not named here (a known
+      // limit, handed on with row 74 — the client does not send it).
       if (!streamHistoryLoaded && conversation_history && Array.isArray(conversation_history)) {
         const MAX_HISTORY_MSGS = 20;
         const MAX_MSG_LENGTH = 50000;
@@ -1315,16 +1362,52 @@ export function mountStreamRoute(router: Router): void {
         ? undefined
         : resolveApiEffort(effortUsed);
 
-      // Optional explicit model override. Validated against THIS tenant's enabled
-      // model set; an invalid / disabled / absent value is DROPPED SILENTLY and we
-      // fall back to the (effort-derived) strategy above. The override does not
-      // bypass governance — the gateway still enforces residency/ZDR placement.
-      // In deterministic mode (or any gateway substrate without a model registry)
-      // there is nothing to override against — pass an empty set so the override
-      // resolves to none and we fall back to the effort-derived strategy.
+      // Optional explicit model override, pinned only when it is governed:
+      // enabled in THIS tenant's model set, the registry row an approved-models
+      // entry (its id, provider and pinned version — CLAUDE.md Rule 2), and on
+      // high-risk work approved for high risk. `highRisk` is the gateway's own
+      // question (isHighRiskRequest), asked of the same taskType and riskTier
+      // this turn sends it below, and the approval is keyed to the row's
+      // registry id as the gateway's is, so a pin accepted here is not then
+      // refused by the gateway's high-risk check for the same row. A refused or
+      // absent value falls back to the (effort-derived) strategy or cost tier
+      // below — never a 4xx. That default is not itself checked against
+      // approved-models on normal-risk work (resolveTierModel matches enabled
+      // models only), which is why the warning does not call it governed.
+      //
+      // A refusal HERE is said: it used to be dropped silently, so a person who
+      // chose a model was answered by another under their choice. Two
+      // substitutions are still silent: the gateway drops a pin the tenant's
+      // placement (residency, ZDR, vendor allow-list) excludes and selects by
+      // strategy instead, and deterministic mode serves canned content whatever
+      // was pinned.
+      //
+      // The candidates are the registry's enabled models. In deterministic mode
+      // those are the models of whichever providers are configured (often none,
+      // so every override resolves to none); a substrate with no registry
+      // passes an empty set.
       const overrideCandidates =
         typeof gw.getModels === 'function' ? gw.getModels().filter(m => m.enabled) : [];
-      const resolvedOverride = resolveModelOverride(model_override, overrideCandidates);
+      const resolvedOverride = resolveModelOverride(model_override, overrideCandidates, {
+        highRisk: isHighRiskRequest(routingPlan.taskType, routingPlan.riskTier),
+      });
+      // Only when a model was named: most turns carry no override at all, and a
+      // non-string or blank value is not "the model you chose". Present tense:
+      // this is written before any model is called, and the default can fail.
+      if (
+        !resolvedOverride &&
+        typeof model_override === 'string' &&
+        model_override.trim() !== '' &&
+        !res.writableEnded
+      ) {
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'warning',
+            code: 'MODEL_OVERRIDE_REFUSED',
+            message: 'The model you chose is not available or approved for this work, so AnA is answering with the default model.',
+          })}\n\n`
+        );
+      }
 
       // Substantive-turn signal — drives BOTH the reasoning depth and the cost
       // tier below, computed once so they agree.
@@ -1657,6 +1740,10 @@ export function mountStreamRoute(router: Router): void {
         const emitControl = (obj: Record<string, unknown>) => {
           if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
         };
+
+        /** One hold per turn: the checkpoint's pause wait (run-hold.ts). None without a run row. */
+        const runHold =
+          runId && runHandle ? streamRunHold({ runId, handle: runHandle, runOrgId, res, emit: emitControl }) : null;
 
         /**
          * Settle every tool call in this round that a person has to authorise.
@@ -2527,7 +2614,6 @@ export function mountStreamRoute(router: Router): void {
         // by the control endpoint at the moment of acceptance, so a crash of
         // this process cannot lose a human decision; what happens below is only
         // telling the client what the server did.
-        let pauseAnnounced = false;
 
         /* Splice drained queue entries into the next model turn, and return the
            steers among them for the caller to announce once it knows the run
@@ -2608,7 +2694,7 @@ export function mountStreamRoute(router: Router): void {
         };
 
         const checkpoint = async (upcomingRound: number): Promise<'continue' | 'abort'> => {
-          if (!runId || !runHandle) return 'continue';
+          if (!runId || !runHandle || !runHold) return 'continue';
           if (runHandle.cancelSignal.aborted) {
             emitControl({ type: 'cancelled', round: upcomingRound });
             return 'abort';
@@ -2617,45 +2703,17 @@ export function mountStreamRoute(router: Router): void {
           void runHandle.heartbeat(upcomingRound);
 
           // Pause: hold at the round boundary until resumed / cancelled. The
-          // wait is woken by the control write (NOTIFY, or directly when the
-          // control landed on this instance) rather than by a 200ms poll; the
-          // timeout is only a ceiling on how long a missed wake can stall it.
-          const WAKE_CEILING_MS = 5_000;
-          const pauseStart = Date.now();
-          let status = await readStatus(getPool(), runId);
-          while (status === 'paused') {
-            if (!pauseAnnounced) {
-              emitControl({ type: 'paused', round: upcomingRound });
-              pauseAnnounced = true;
-            }
-            if (res.writableEnded) {
-              await stopRunInternally(getPool(), runId, 'client_disconnected', runOrgId ?? undefined);
-              break;
-            }
-            if (Date.now() - pauseStart > MAX_PAUSE_MS) {
-              // Nobody came back. Resuming is a server decision, so it is
-              // recorded as one — no control event, attributed to no user.
-              await resumeAbandonedRun(getPool(), runId);
-              // Take the new status with us. Breaking on the stale 'paused'
-              // skipped the `resumed` emit below, leaving the client showing
-              // Paused for a run that was already working again.
-              status = 'running';
-              break;
-            }
-            await runHandle.wake(WAKE_CEILING_MS);
-            status = await readStatus(getPool(), runId);
-          }
-          if (pauseAnnounced && status === 'running') {
-            emitControl({ type: 'resumed', round: upcomingRound });
-            pauseAnnounced = false;
-          }
+          // wait — woken by the control write, announced once as paused and
+          // once as resumed, resumed as abandoned past MAX_PAUSE_MS — is the
+          // turn's shared hold (services/ana/run-hold.ts), where it moved.
+          const held = await runHold.hold(upcomingRound);
 
           // Steers and screen reports: splice each into the next model turn.
           // The drain is atomic and covers both, so neither can be applied
           // twice.
           const drainedSteers = spliceQueued(await consumeInterjections(getPool(), runId));
 
-          if (runHandle.cancelSignal.aborted || status === 'cancelled') {
+          if (runHandle.cancelSignal.aborted || held === 'cancelled') {
             emitControl({ type: 'cancelled', round: upcomingRound });
             return 'abort';
           }
@@ -2709,6 +2767,7 @@ export function mountStreamRoute(router: Router): void {
           }
         );
         loopStoppedReason = loopResult.stoppedReason;
+        loopRounds = loopResult.rounds;
       }
 
       // RIM interception moved to the background post-processing block below,
@@ -2786,6 +2845,15 @@ export function mountStreamRoute(router: Router): void {
           latencyMs: gwResponse.latencyMs,
           response: fullContent || undefined,
           telemetry: streamTelemetry,
+          // Why the loop stopped and how many tool rounds it ran. Until these
+          // were sent, a turn the round cap or the repeat guard cut short was
+          // indistinguishable on the client from one she finished: the work
+          // panel said "Finished in" and the transcript showed an ordinary
+          // answer. `runPolicy` is reserved for the run-policy work (row 74)
+          // and is null until a turn can carry one. Additive fields.
+          stoppedReason: loopStoppedReason,
+          rounds: loopRounds,
+          runPolicy: null,
         })}\n\n`
       );
 
@@ -2806,6 +2874,13 @@ export function mountStreamRoute(router: Router): void {
       turnRecorder?.setModel({ provider: gwResponse.provider, model: gwResponse.model, effort: effortUsed });
       turnRecorder?.setReasoning(fullThinking);
       turnRecorder?.setAnswer({ streamed: fullContent });
+      // A turn whose loop did not end by her choice says so in its record. The
+      // answer the record holds was forced from the work so far (round limit,
+      // repeat guard) or the run was stopped between rounds; an inspector
+      // reading the record must not take it for a concluded analysis.
+      if (loopStoppedReason !== 'no_more_tools') {
+        turnRecorder?.warn(turnStopWarning(loopStoppedReason, loopRounds));
+      }
       void runStreamPostProcessing({
         res,
         fullContent,
@@ -2821,6 +2896,8 @@ export function mountStreamRoute(router: Router): void {
         reasoning: fullThinking,
         humanControls: await readControlEvents(),
         plan: lastPlan,
+        stoppedReason: loopStoppedReason,
+        rounds: loopRounds,
         toolEvidenceCorpus,
         collectedProvenance,
         // The moves Live Drive could not make lead, so they are the chips the

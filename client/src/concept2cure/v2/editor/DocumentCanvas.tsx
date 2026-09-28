@@ -52,7 +52,15 @@ import type { FireToast } from '../toast';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { setEditorTarget } from '../editorTarget';
 import { AuthoredHtml } from './AuthoredHtml';
-import { DocumentWorkbench, type AuthDoc } from './DocumentWorkbench';
+import {
+  DocumentWorkbench,
+  escapeBelongsToInner,
+  readDocumentAccess,
+  actRefusal,
+  UNKNOWN_DOCUMENT_ACCESS,
+  type AuthDoc,
+  type DocumentAccess,
+} from './DocumentWorkbench';
 import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { FileToVaultDialog } from './FileToVaultDialog';
 import { AssignReviewDialog } from './AssignReviewDialog';
@@ -98,14 +106,11 @@ export interface DocumentCanvasProps {
   liveDrive?: OwnedSurfaceViewProps['liveDrive'];
 }
 
-/** True when the keydown should NOT collapse the canvas: inside a dialog, the
- *  editor's own document, or a text control — each of those owns Escape. */
-export function escapeBelongsToInner(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return false;
-  return Boolean(
-    target.closest('[role="dialog"], [role="alertdialog"], .ProseMirror, input, textarea, select, [contenteditable="true"]'),
-  );
-}
+/* `escapeBelongsToInner` — true when the keydown should NOT collapse the
+   canvas (inside a dialog, the editor's own document, or a text control) —
+   moved to DocumentWorkbench.tsx on 2026-09-28 (GA-4) so the workbench's rails
+   ask the same question; re-exported here for existing importers. */
+export { escapeBelongsToInner };
 
 export function DocumentCanvas({
   docId,
@@ -123,6 +128,11 @@ export function DocumentCanvas({
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [doc, setDoc] = useState<DocRow | null>(null);
+  /* GE-P-3 (2026-09-28): what this caller may do to the document, from the
+     same read (`access`). Unknown until read, and unknown stays enabled. */
+  const [access, setAccess] = useState<DocumentAccess>(UNKNOWN_DOCUMENT_ACCESS);
+  const vaultRefusalId = useId();
+  const assignRefusalId = useId();
   const [sections, setSections] = useState<SectionRow[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [fileToVaultOpen, setFileToVaultOpen] = useState(false);
@@ -148,7 +158,7 @@ export function DocumentCanvas({
         apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}`),
         apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}/sections`),
       ]);
-      const dj = (await d.json().catch(() => null)) as { document?: DocRow } | null;
+      const dj = (await d.json().catch(() => null)) as { document?: DocRow; access?: unknown } | null;
       const sj = (await s.json().catch(() => null)) as { sections?: SectionRow[] } | null;
       if (!d.ok || !dj?.document) {
         setState('error');
@@ -156,6 +166,7 @@ export function DocumentCanvas({
         return;
       }
       setDoc(dj.document);
+      setAccess(readDocumentAccess(dj.access));
       if (!s.ok || !sj) {
         /* The document row is real; its sections did not read. Say that,
            rather than rendering a document with no sections. */
@@ -191,6 +202,15 @@ export function DocumentCanvas({
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented) return;
       if (escapeBelongsToInner(e.target)) return;
+      /* 2026-09-28 (GA-4): an open workbench rail other than AnA closes on
+         this Escape first (DocumentWorkbench's own listener); the canvas
+         collapses on the next one. Both listen on the document, so the order
+         they run in is not something to rely on — the canvas yields here,
+         for the Escapes the workbench takes: from inside it, or from the
+         body. One from the canvas's own bar is still the canvas's. */
+      const railOpen = rootRef.current?.querySelector('.ed[data-rail]:not([data-rail="ana"])');
+      const t = e.target;
+      if (railOpen && (t === document.body || (t instanceof Node && railOpen.contains(t)))) return;
       /* An open modal owns Escape wherever focus happens to be — closing the
          canvas underneath it would leave the dialog over a collapsed card. */
       if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
@@ -345,12 +365,37 @@ export function DocumentCanvas({
           >
             {I.maximize} Open full editor
           </button>
-          <button type="button" className="btn ghost" onClick={() => setFileToVaultOpen(true)} disabled={state !== 'ready'} data-testid="dc-file-to-vault">
+          {/* GE-P-3: a refused act is disabled with the server's reason beside it. */}
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => setFileToVaultOpen(true)}
+            disabled={state !== 'ready' || !!actRefusal(access.fileToVault)}
+            aria-describedby={actRefusal(access.fileToVault) ? vaultRefusalId : undefined}
+            data-testid="dc-file-to-vault"
+          >
             {I.vault} File to vault
           </button>
-          <button type="button" className="btn ghost" onClick={() => setAssignReviewOpen(true)} disabled={state !== 'ready'} data-testid="dc-assign-review">
+          {actRefusal(access.fileToVault) && (
+            <span id={vaultRefusalId} style={{ fontSize: 11.5, color: 'var(--text-400)' }}>
+              {actRefusal(access.fileToVault)}
+            </span>
+          )}
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => setAssignReviewOpen(true)}
+            disabled={state !== 'ready' || !!actRefusal(access.assignReview)}
+            aria-describedby={actRefusal(access.assignReview) ? assignRefusalId : undefined}
+            data-testid="dc-assign-review"
+          >
             {I.user} Assign review
           </button>
+          {actRefusal(access.assignReview) && (
+            <span id={assignRefusalId} style={{ fontSize: 11.5, color: 'var(--text-400)' }}>
+              {actRefusal(access.assignReview)}
+            </span>
+          )}
           {doc && (
             <AuthoringPlaceIntoFiling
               docId={doc.id}

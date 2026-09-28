@@ -1046,7 +1046,7 @@ export function V2App() {
 
   let body: React.ReactNode;
   if (activeId === 'home') {
-    body = <Home onNav={nav} onAsk={ask} segment={prefs.segment} />;
+    body = <Home onNav={nav} onAsk={ask} segment={prefs.segment} mode={prefs.anaMode} setMode={(m) => set('anaMode', m)} />;
   } else if (view?.ownsConversation) {
     /* Narrowed by the union: this component's props do not include `onAsk`, so
        there is no way to hand it a rail that is not being rendered. */

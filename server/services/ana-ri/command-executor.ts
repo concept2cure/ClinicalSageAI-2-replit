@@ -18,6 +18,7 @@ import { getPool } from '../../db';
 import type { StatisticalInput } from '../ana-biostats/types';
 import type { PoolClient } from 'pg';
 import type { AuditTaskActionParams } from '../tasking/task-audit.js';
+import type { TaskEventNotice } from '../tasking/task-side-effects.js';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
 import { executeGovernedAnaOperation } from '../governed-ana-execution.js';
 import { recordArtifactProvenanceBestEffort } from '../provenance/artifact-provenance';
@@ -989,20 +990,26 @@ export async function listArtifacts(
  */
 async function boardWriteWithLineage(
   label: string,
-  write: (client: PoolClient) => Promise<AuditTaskActionParams | null>,
+  write: (client: PoolClient) => Promise<AuditTaskActionParams | BoardWriteRecord | null>,
 ): Promise<boolean> {
   let client: PoolClient | undefined;
+  let notices: TaskEventNotice[] = [];
   try {
     client = (await pool.connect()) as PoolClient;
     await client.query('BEGIN');
-    const lineage = await write(client);
-    if (lineage) {
+    const written = await write(client);
+    const record: BoardWriteRecord | null =
+      written === null ? null : 'lineage' in written ? written : { lineage: [written] };
+    if (record) {
       const { auditTaskAction, TaskAuditNotRecordedError } = await import('../tasking/task-audit.js');
-      const outcome = await auditTaskAction(lineage, client);
-      if (!outcome.recorded) throw new TaskAuditNotRecordedError(outcome.reason);
+      // In order: the change's own row, then the rows of what it caused.
+      for (const row of record.lineage) {
+        const outcome = await auditTaskAction(row, client);
+        if (!outcome.recorded) throw new TaskAuditNotRecordedError(outcome.reason);
+      }
+      notices = record.notices ?? [];
     }
     await client.query('COMMIT');
-    return true;
   } catch (err) {
     await client?.query('ROLLBACK').catch(() => undefined);
     console.warn(`[ana-ri] ${label} failed (non-fatal):`, err instanceof Error ? err.message : err);
@@ -1010,6 +1017,20 @@ async function boardWriteWithLineage(
   } finally {
     client?.release();
   }
+  // Only for what committed.
+  if (notices.length > 0) {
+    const { notifyTaskEvent } = await import('../tasking/task-side-effects.js');
+    for (const notice of notices) notifyTaskEvent(notice);
+  }
+  return true;
+}
+
+/** What a board write records when it caused more than its own change: its own
+ *  row first, then one per record it moved (a completion's unblocked
+ *  dependents), and the notices to send once all of it has committed. */
+interface BoardWriteRecord {
+  lineage: AuditTaskActionParams[];
+  notices?: TaskEventNotice[];
 }
 
 /**
@@ -1353,7 +1374,7 @@ export async function updateTask(
           // Governed lineage only for a status change that actually landed.
           transitioned = Boolean(mirrored.rowCount) && Boolean(newStatus) && newStatus !== mirrorFrom;
           if (!transitioned) return null;
-          return {
+          const own: AuditTaskActionParams = {
             orgId: ctx.organizationId,
             userId: ctx.userId,
             command: 'task.transition',
@@ -1361,21 +1382,18 @@ export async function updateTask(
             payload: { from: mirrorFrom, to: newStatus },
             reason: 'Task status changed by AnA',
           };
+          if (newStatus !== 'completed') return own;
+          // Completing a task wakes its dependents on every write path — here
+          // on this transaction, locking them after the completed row and
+          // before any ledger row, so the completion, the dependents' moves and
+          // every row recording them commit together or not at all.
+          const { cascadeUnblockOnCompletionOnClient } = await import('../tasking/task-side-effects.js');
+          const cascade = await cascadeUnblockOnCompletionOnClient(ctx.organizationId, mirroredTaskId, {
+            client,
+            actorUserId: ctx.userId,
+          });
+          return { lineage: [own, ...cascade.ledger], notices: cascade.notices };
         });
-      }
-    }
-
-    // Completing a task wakes its dependents on every write path — once the
-    // completion has committed, so the cascade reads the state it acts on.
-    if (boardUpdated && transitioned && newStatus === 'completed') {
-      try {
-        const { cascadeUnblockOnCompletion } = await import('../tasking/task-side-effects.js');
-        await cascadeUnblockOnCompletion(ctx.organizationId, mirroredTaskId);
-      } catch (err) {
-        console.warn(
-          '[ana-ri] unblock cascade failed (non-fatal):',
-          err instanceof Error ? err.message : err
-        );
       }
     }
 

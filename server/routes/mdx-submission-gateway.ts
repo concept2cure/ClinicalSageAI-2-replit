@@ -38,8 +38,8 @@ import {
   GovernedTransmitRefusal,
   GovernedTransmitInternalError,
   BUNDLE_FORMAT_SET,
-  CONTENT_CHANGED_DURING_TRANSMIT,
 } from '../services/submission-gateways/governed-transmit';
+import { transmitOutcomeNotices } from '../services/submission-gateways/transmit-notices';
 import { recordGovernedAction, verifyReauth } from './c2c/actions';
 /* Re-authentication proves WHO is acting; it does not prove they MAY. Every
    mutating route below ran the §11.50 re-auth gate and then transmitted, with no
@@ -268,26 +268,9 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
       // the baseline the NEXT sequence diffs against, so it is said, not implied.
       filedSequenceRecorded: outcome.filedSequenceRecorded,
       filedSequenceReason: outcome.filedSequenceReason,
-      ...(outcome.filedSequenceRecorded === false
-        ? {
-            filedSequenceWarning:
-              'The transmission completed, but this sequence could not be added to the package filed history. ' +
-              (outcome.filedSequenceReason === 'no-usable-manifest'
-                // Said plainly, because the next assembly will otherwise refuse
-                // with "file sequence 0000 first" — which the operator did.
-                ? 'Its bundle descriptor carries no readable leaf inventory (it was assembled before the inventory was recorded, or the stored one is malformed), ' +
-                  'so there is nothing to add. Re-assemble the package before the next sequence so it has a baseline to diff against.'
-                : 'Record it manually before assembling the next sequence, which derives each leaf operation from that history.'),
-          }
-        : {}),
-      ...(outcome.contentAfterTransmit === 'drift' ? { contentWarning: CONTENT_CHANGED_DURING_TRANSMIT } : {}),
-      ...(outcome.ledgerWriteFailed
-        ? {
-            ledgerWriteFailed: true,
-            ledgerWarning:
-              'The transmission completed, but its governed-action ledger entry could not be written. Record this transmittal manually and raise it with your administrator before relying on the audit trail.',
-          }
-        : {}),
+      // filedSequenceWarning / contentWarning / ledgerWriteFailed + ledgerWarning,
+      // each only when it applies (shared with AnA's k510 transmit).
+      ...transmitOutcomeNotices(outcome),
     });
   } catch (err: unknown) {
     // Honest pre-transmit refusals: nothing left the platform, so there is no

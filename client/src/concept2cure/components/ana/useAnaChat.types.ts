@@ -171,6 +171,35 @@ export type AnaTurnRecordStatus =
    */
   | { status: 'unconfirmed' };
 
+/**
+ * Why a turn's work stopped, as the server's `done` frame (and, for a reopened
+ * thread, the assistant message's metadata) reports it — the loop's own reason
+ * (server/services/ana/run-status.ts `TurnStoppedReason`):
+ *
+ *   no_more_tools     she said she was done — the ordinary case
+ *   max_rounds        the round limit forced the answer
+ *   duplicate_thrash  she was repeating the same step, and was stopped
+ *   cancelled         the run was stopped between rounds
+ *
+ * RESERVED, produced by nothing yet: budget_exhausted, approval_timeout,
+ * hold_expired, hold_unavailable. Named so the run-policy work does not
+ * reshape this type; the hook does not accept them until a server writes them
+ * and a surface has words for them (`readTurnEnding`).
+ *
+ * Distinct from `stopped` (the person's Stop, seen by this client) and
+ * `interrupted` (the stream failed): a round-limit stop is neither, and must
+ * not borrow their flags.
+ */
+export type AnaStoppedReason =
+  | 'no_more_tools'
+  | 'max_rounds'
+  | 'duplicate_thrash'
+  | 'cancelled'
+  | 'budget_exhausted'
+  | 'approval_timeout'
+  | 'hold_expired'
+  | 'hold_unavailable';
+
 export interface AnaContextUsed {
   uploads: Array<{ fileId: string; fileName: string; mimeType: string; read: 'content' | 'name_only' }>;
   unresolvedUploads: number;
@@ -381,6 +410,14 @@ export interface AnaChatMessage {
   /** Whether this turn's retained record was filed. See {@link AnaTurnRecordStatus}. */
   turnRecord?: AnaTurnRecordStatus;
   /**
+   * Why the turn's work stopped, when the server said. A turn the round limit
+   * or the repeat guard cut short must never read as finished; see
+   * {@link AnaStoppedReason}.
+   */
+  stoppedReason?: AnaStoppedReason;
+  /** Tool rounds the turn ran, as the server counted them. */
+  rounds?: number;
+  /**
    * Draft produced by a document-generating tool this turn. The rail reads
    * `title` only; nothing routes `content` anywhere, so this is NOT
    * editor-openable despite what it used to claim. See ledger L88.
@@ -552,8 +589,10 @@ export interface UseAnaChatOptions {
   effortLevel?: 'fast' | 'balanced' | 'thorough' | null;
   /**
    * Explicit model override (gateway registry id) the user pinned in the
-   * advanced picker. Sent as `model_override` when set; the server validates it
-   * against the tenant's enabled models and drops it silently when invalid.
+   * advanced picker. Sent as `model_override` when set; the server pins it only
+   * when it is enabled for the tenant, is its approved-models entry and, on
+   * high-risk work, is approved for high risk. Otherwise it answers with the
+   * default model and says so in a `warning` frame (code MODEL_OVERRIDE_REFUSED).
    */
   modelOverride?: string | null;
   /**

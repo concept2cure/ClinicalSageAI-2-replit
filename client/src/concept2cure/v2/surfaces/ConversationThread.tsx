@@ -14,6 +14,7 @@ import { readShellProject, shellProgramName } from '../shellProject';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { useAgentActivity } from '../useAgentActivity';
 import { AnaActivity, activityPropsFor, hasReportableWork, type AnaActivityProps } from '../AnaActivity';
+import { CONTINUE_PROMPT, continueTurnIndex } from '../anaWorkModel';
 import { useProgressDock } from '../workDock';
 import { C2CToast, useToast, type FireToast } from '../toast';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
@@ -26,6 +27,22 @@ import {
 } from '../fixtures/conversation-thread-data';
 import type { CtTurn, CtArtifact } from '../fixtures/conversation-thread-data';
 
+
+/* The starters a new conversation opens on. They are the product speaking
+   before the person has said anything, and they are shown to every
+   organisation, so they presuppose nothing about its programs, documents or
+   dossier. They used to be demo copy — "File a 510(k) for our glucose
+   monitoring patch", "Is the section 2.5.4 efficacy claim defensible?", "What
+   blocks the Module 3 freeze?" — read aloud to a new Biotech & Pharma
+   workspace with no projects: a device claimed as "ours", and a 2.5.4 claim
+   and a Module 3 freeze that existed nowhere (2026-09-23, launch row D2).
+   Each of these is answerable from whatever the workspace really holds,
+   including nothing. Pinned by conversationThreadStarters.test.tsx. */
+const STARTER_ASKS = [
+  'What can you help me with in this workspace?',
+  'What does this workspace hold so far?',
+  'How does a regulatory submission come together here?',
+] as const;
 
 /* Adapt one real AnA turn (useAnaChat → /api/ana-ri/stream) into the CtTurn
    shape this surface renders — the model's answer, the record of how she got
@@ -143,6 +160,8 @@ interface AnaTurnProps {
   /** Starts a demonstration from a "Start demonstration" chip — on every turn,
    *  not only the ones that drafted a document (which is all `canvas` covers). */
   onStartDemo?: (demoId: string, title: string) => void;
+  /** Continue, offered on the latest settled turn only (anaWorkModel.continueTurnIndex). */
+  onContinue?: () => void;
   /** The document canvas beneath this turn, when the turn drafted a document. */
   canvas?: {
     conversationId: string | null;
@@ -154,7 +173,7 @@ interface AnaTurnProps {
   };
 }
 
-function AnaTurn({ turn, onRefine, onNav, onStartDemo, canvas }: AnaTurnProps) {
+function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas }: AnaTurnProps) {
   const a = turn.activity;
   return (
     <div className="ct-turn ct-ana">
@@ -184,7 +203,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, canvas }: AnaTurnProps) {
             reportable) or together with `streaming: false` — so the state
             "streaming with nothing to show" cannot occur, and a renderer for
             it would be the fifth dead one on this surface. */}
-        {a && <AnaActivity {...a} />}
+        {a && <AnaActivity {...a} onContinue={onContinue} />}
         {/* ── The proposal block was unreachable, and it advertised a
             workflow this surface does not have ───────────────────────────────
             It rendered a diff with Accept / Refine / Discard, and a chip for a
@@ -796,6 +815,10 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
 
   const turns: CtTurn[] = anaChat.messages.map(toTurn);
   const busy = anaChat.isStreaming;
+  /* The one turn Continue may be offered on: the latest, settled, with nothing
+     in flight. It sends a new turn on this conversation; the stopped run is
+     over, so there is nothing to resume. */
+  const continueAt = continueTurnIndex(anaChat.messages, busy);
   /* This was `const artifacts: CtArtifact[] = []` — a literal, so the panel
      below it, the whole `ArtifactCard` component and every control on it were
      unreachable code that nonetheless looked finished. The drafts were already
@@ -986,7 +1009,11 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
 
   return (
     <div className="ct-wrap" data-canvas-expanded={expandedDocId ? 'true' : undefined}>
-      <div className="ct-head">
+      {/* `ct-thread-head`, not `ct-head`: that name is the grid header row of
+          every `.ct-table` (surfaces-v2.css), and this header's flex rule for
+          it, loaded later, collapsed the audit trail's and six other tables'
+          column headers into the first 270px (launch sweep finding 47). */}
+      <div className="ct-thread-head">
         <button className="ct-back" onClick={() => onNav && onNav('project-home')}>{I.left} Project</button>
         <div className="ct-head-mid">
           <div className="ct-head-t">{title}</div>
@@ -1050,7 +1077,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                   <h2>Talk to AnA</h2>
                   <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.</p>
                   <div className="ct-empty-chips">
-                    {['File a 510(k) for our glucose monitoring patch', 'Is the section 2.5.4 efficacy claim defensible?', 'What blocks the Module 3 freeze?'].map((q, i) => (
+                    {STARTER_ASKS.map((q, i) => (
                       <button key={i} className="ct-empty-chip" onClick={() => { void anaChat.send(q); }}>{q}</button>
                     ))}
                   </div>
@@ -1065,6 +1092,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                     onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }}
                     onNav={onNav}
                     onStartDemo={liveDrive?.onStartDemo}
+                    onContinue={i === continueAt ? () => { void anaChat.send(CONTINUE_PROMPT); } : undefined}
                     canvas={t.authoringDoc ? {
                       conversationId: anaChat.threadId ?? (isNew || isCurrent ? null : sel.id),
                       expanded: expandedDocId === t.authoringDoc.docId,

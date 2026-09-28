@@ -1,0 +1,13 @@
+# ci:writerless-stores against the committed baseline (no ctqFactors / qmpSectionGating entry) — red since 65010f91b
+
+[ci:writerless-stores] FAIL
+
+  ctqFactors is READ by 4 file(s) and written by nothing.
+      server/routes/quality-management-api.ts
+      server/routes/tenant-ctq-factors.ts
+      server/routes/tenant-quality-validation.ts
+      server/routes/tenant-traceability.ts
+  qmpSectionGating is READ by 3 file(s) and written by nothing.
+      server/routes/quality-management-api.ts
+      server/routes/tenant-ctq-factors.ts
+      server/routes/tenant-quality-validation.ts

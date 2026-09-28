@@ -15,7 +15,7 @@
  * continuity note. The DB persistence and route wiring live elsewhere.
  */
 
-import type { HumanControlEvent } from './run-status.js';
+import type { HumanControlEvent, TurnStoppedReason } from './run-status.js';
 import type { TurnPlanStep } from './turn-plan.js';
 
 export interface ToolTraceEntry {
@@ -200,6 +200,22 @@ export interface AssistantMessageMetadata {
    * and its count; only the final list is kept, not when each step changed.
    */
   plan?: TurnPlanStep[];
+  /**
+   * Why the turn's work stopped, when it was NOT because she said she was done
+   * (`no_more_tools` is the ordinary case and is omitted). A turn the round cap
+   * or the repeat guard stopped reads as finished to anyone who cannot see
+   * this: the reopened thread's note and the next turn's continuity note
+   * (`formatStoppedTurnNote`) both read it from here.
+   */
+  stoppedReason?: TurnStoppedReason;
+  /** Tool rounds the turn ran. Kept only when there was at least one. */
+  rounds?: number;
+}
+
+/** How the turn's agentic loop ended, as the stream observed it. */
+export interface TurnEnding {
+  stoppedReason?: TurnStoppedReason | null;
+  rounds?: number | null;
 }
 
 /** Cap on persisted reasoning so a pathological turn can't bloat a message row. */
@@ -211,6 +227,7 @@ const MAX_PERSISTED_REASONING_CHARS = 24_000;
  * worth storing, so callers persist `null` rather than an empty object. The
  * grounding verdict is only stored when claims were actually checked
  * (`checked > 0`); reasoning is stored only when non-empty and is capped.
+ * How the loop ended is added by {@link withTurnEnding}.
  */
 export function buildAssistantMetadata(
   toolTrace: ToolTraceEntry[],
@@ -238,4 +255,122 @@ export function buildAssistantMetadata(
   if (humanControls && humanControls.length > 0) meta.humanControls = humanControls;
   if (plan && plan.length > 0) meta.plan = plan;
   return Object.keys(meta).length > 0 ? meta : undefined;
+}
+
+/**
+ * The assistant message's metadata with how the turn's loop ended: the stop
+ * reason unless she finished herself (`no_more_tools` is the ordinary case and
+ * stores nothing), and the rounds when there were any. Still undefined when
+ * the result has nothing worth storing.
+ *
+ * Its own step rather than more arguments to {@link buildAssistantMetadata}:
+ * the facts a turn's END carries (and, with the run-policy work, its policy
+ * and the steps a hold left unrun) belong together, and they compose onto
+ * whatever the turn's work produced.
+ */
+export function withTurnEnding(
+  meta: AssistantMessageMetadata | undefined,
+  ending: TurnEnding | null | undefined,
+): AssistantMessageMetadata | undefined {
+  const out: AssistantMessageMetadata = { ...meta };
+  const reason = ending?.stoppedReason;
+  if (reason && reason !== 'no_more_tools') out.stoppedReason = reason;
+  const rounds = ending?.rounds;
+  if (typeof rounds === 'number' && Number.isInteger(rounds) && rounds > 0) out.rounds = rounds;
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/**
+ * The turn record's warning for a loop that did not end by her choice. The
+ * record keeps the answer the person was given; this says what that answer
+ * is — written from the work done when the loop was stopped — so an inspector
+ * does not read it as a concluded analysis. '' for `no_more_tools`, which is
+ * not a stop anyone needs warning of.
+ */
+export function turnStopWarning(reason: TurnStoppedReason, rounds: number): string {
+  // The round limit and the repeat guard fire only after a round has run
+  // (agentic-loop: round++ precedes both). A cancel can land at the first
+  // checkpoint, before any round — so "after N rounds" is said only when
+  // there were some, and a stop before the first round claims no round.
+  const ran = rounds > 0 ? ` after ${rounds} ${rounds === 1 ? 'round' : 'rounds'}` : '';
+  switch (reason) {
+    case 'no_more_tools':
+      return '';
+    case 'max_rounds':
+      return `The turn stopped at the round limit${ran}, before AnA said she was done. The answer was written from the work done up to that point.`;
+    case 'duplicate_thrash':
+      return `The turn stopped${ran} because AnA was repeating the same step. The answer was written from the work done up to that point.`;
+    case 'cancelled':
+      return rounds > 0
+        ? `The run was stopped between rounds${ran}, before AnA said she was done.`
+        : 'The run was stopped before its first tool round.';
+    default:
+      // A reserved run-policy reason: nothing produces one yet. Said plainly
+      // rather than dropped, so a record can never be silent about a stop.
+      return `The turn stopped (${reason})${ran}, before AnA said she was done.`;
+  }
+}
+
+/**
+ * The stops that leave a turn's work unfinished, in the words the next turn is
+ * told. `no_more_tools` (she said she was done) and `cancelled` (the person
+ * stopped it, and asks again if they want more) are not here. The reserved
+ * run-policy reasons are not here either: nothing produces them yet, and each
+ * gets its words with the change that does.
+ *
+ * A Map, not an object literal: the reason is read back from a stored row, and
+ * a string naming an Object.prototype member (`constructor`, `toString`) would
+ * otherwise find a function here and reach the model as a stop.
+ */
+const UNFINISHED_STOP: ReadonlyMap<string, (rounds: number | null) => string> = new Map<
+  TurnStoppedReason,
+  (rounds: number | null) => string
+>([
+  ['max_rounds', (rounds) => `stopped at the round limit${rounds ? ` (${rounds} rounds)` : ''}`],
+  ['duplicate_thrash', () => 'was stopped because it was repeating the same step,'],
+]);
+
+/**
+ * The continuity note for a turn whose predecessor did not finish.
+ *
+ * The trace note (`formatTraceForContext`) tells her to reuse what earlier
+ * turns found. For a turn the round cap or the repeat guard cut short that is
+ * the wrong instruction: its answer was forced from the work so far, and its
+ * findings are what she had, not what she concluded. This says so, beside the
+ * trace note, so the next turn neither presents that work as complete nor
+ * repeats it blindly.
+ *
+ * Covers only the IMMEDIATELY PRECEDING assistant turn — the last assistant
+ * message, whatever it was. That is not the same as "every stop not yet
+ * followed up": if another exchange comes between a capped turn and a typed
+ * "continue" ("which study?" → a short reply), the capped turn's findings
+ * reach the model through the trace note again with no caveat. The one
+ * control that continues a stopped turn (Continue) is offered on the latest
+ * turn only, so the note is there when it is pressed; naming every unfinished
+ * turn since the last finished one is left to the run-policy work (row 74).
+ *
+ * Server history only: the client-history fallback in stream.ts carries role
+ * and content, not metadata, so a turn served from it gets no note.
+ * Returns '' when there is nothing to say.
+ */
+export function formatStoppedTurnNote(history: HistoryMessage[]): string {
+  let last: HistoryMessage | undefined;
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i]?.role === 'assistant') {
+      last = history[i];
+      break;
+    }
+  }
+  const meta = last?.metadata as { stoppedReason?: unknown; rounds?: unknown } | null | undefined;
+  const reason = typeof meta?.stoppedReason === 'string' ? meta.stoppedReason : null;
+  const words = reason ? UNFINISHED_STOP.get(reason) : undefined;
+  if (!words) return '';
+  const rounds = typeof meta?.rounds === 'number' && Number.isInteger(meta.rounds) && meta.rounds > 0 ? meta.rounds : null;
+  return (
+    `Your previous turn ${words(rounds)} before it was finished. Its answer was ` +
+    'written from the work done up to that point. Do not reuse that turn\'s ' +
+    'findings as complete or present its answer as a finished analysis: say ' +
+    'what it did not cover, and if the person asks you to continue, pick up ' +
+    'where it stopped rather than starting over.'
+  );
 }

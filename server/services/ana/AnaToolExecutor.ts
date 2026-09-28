@@ -183,7 +183,17 @@ import {
   type ToolResultEntry,
   type FailedToolCall,
   type LoopCheckpoint,
+  type AgenticLoopResult,
+  type LoopStopDirective,
 } from './agentic-loop.js';
+import {
+  dispatchLoopCall,
+  notifyObserver,
+  resolveToolConcurrency,
+  type AgenticToolEvent,
+  type LoopDispatchOptions,
+} from './agentic-tool-dispatch.js';
+import { modelCallRefusal } from '../ai-gateway/model-call-scope.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
@@ -216,6 +226,25 @@ export interface ToolContext {
    * Never read from tool input: that is the model's channel.
    */
   humanConfirmed?: boolean;
+  /**
+   * How far below the person's own turn this call runs: absent or 0 for AnA's
+   * turn, 1 for a sub-agent she started (row 74). At 1 or deeper the wrapper
+   * refuses every tool the register does not class `read` (rule 0 in
+   * preHandlerRefusal). Set only by the code that starts a sub-agent — never
+   * read from tool input, which is the model's channel. Nothing sets it yet.
+   */
+  agentDepth?: number;
+  /**
+   * 'refuse': this call runs where a model may not be called (a sub-agent's
+   * tool; see ai-gateway/model-call-scope.ts, which enforces it at the
+   * gateway). A tool that would otherwise spend a model call on an optional
+   * step takes its model-free path instead. Set only by the code that runs the
+   * sub-agent; never read from input. executeAgenticLoop keeps this and its
+   * own `toolModelCalls` together: either one set gives both the refusal
+   * scope and this flag, so a tool is never told one thing while the gateway
+   * enforces another.
+   */
+  modelCalls?: 'refuse';
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
@@ -323,6 +352,10 @@ function getRequiredInputKeys(tool: string): string[] {
  * directly. A refusal is a tool result the model reads and relays, not a throw,
  * so the turn continues honestly.
  *
+ *   0. Below the person's own turn (a sub-agent, ctx.agentDepth >= 1), only a
+ *      tool the register classes `read` runs; anything else is refused as
+ *      SUB_AGENT_READ_ONLY. First, so a child never gets as far as rule 3's
+ *      proposal: it has nobody to put one to (row 74). Inert at depth 0.
  *   1. Governed content is written only by an approved model.
  *   2. A person's own act — an approval, a vote, an attestation — is refused
  *      whoever asks and whatever they confirmed (tool-authorization.ts
@@ -340,6 +373,16 @@ function preHandlerRefusal(
   input: Record<string, any>,
   ctx: ToolContext | undefined,
 ): { code: string; result: string } | null {
+  if ((ctx?.agentDepth ?? 0) >= 1 && toolAuthorizationOf(name, input).class !== 'read') {
+    return {
+      code: 'SUB_AGENT_READ_ONLY',
+      result: JSON.stringify({
+        error: 'SUB_AGENT_READ_ONLY',
+        tool: name,
+        message: 'A sub-agent can only read; nothing was run.',
+      }),
+    };
+  }
   if (isGovernedContentWriteTool(name) && !isServedModelApprovedForHighRisk(ctx?.servingModel)) {
     return {
       code: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
@@ -359,20 +402,12 @@ function preHandlerRefusal(
   return null;
 }
 
-/** The refusal for a caller without an editor role in the organization, or null when they have one. */
+/** The refusal for a caller without an editor role in the organization, or null when they have one.
+ *  The decision itself is server/services/part11/editor-role.ts, shared with the MCP connector. */
 async function editorRoleRefusal(tool: string, act: string, ctx: ToolContext): Promise<string | null> {
-  let orgRole: string | null;
-  try {
-    const { resolveSignerOrgRole } = await import('../part11/resolve-signer-role');
-    orgRole = await resolveSignerOrgRole(Number(ctx.userId), Number(ctx.organizationId));
-  } catch (err) {
-    return JSON.stringify({ error: `${tool} could not confirm your role in this organization, so nothing was changed: ${err instanceof Error ? err.message : String(err)}` });
-  }
-  const { GOVERNED_WRITE_ROLES } = await import('../../middleware/orgMembership');
-  if (!orgRole || !GOVERNED_WRITE_ROLES.has(orgRole)) {
-    return JSON.stringify({ error: `Insufficient permissions: ${act} needs an editor role in this organization. Nothing was changed.` });
-  }
-  return null;
+  const { editorRoleDecision, editorRoleRefusalText } = await import('../part11/editor-role');
+  const decision = await editorRoleDecision(Number(ctx.userId), Number(ctx.organizationId));
+  return decision.allowed ? null : JSON.stringify({ error: editorRoleRefusalText(tool, act, decision) });
 }
 
 /**
@@ -613,7 +648,16 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
       intent: 'project_scoped',
       organizationUuid,
       artifactScope: { projectId, organizationUuid },
-      useReranking: true,
+      /* Where a model may not be called (a sub-agent's tool, row 74), ask
+         for what can actually run: 'basic' instead of the intent's
+         'advanced' (HyDE + multi-query, model calls before a row is read),
+         and no LLM-as-judge rerank — the choice search_document_passages
+         already makes for in-agent retrieval (vault/document-passage-search.ts).
+         The gateway would refuse those calls anyway; asking for them would
+         only degrade silently. */
+      ...(ctx?.modelCalls === 'refuse' || modelCallRefusal() !== null
+        ? { strategy: 'basic' as const, useReranking: false }
+        : { useReranking: true }),
       limit: maxResults,
     });
     const docs = (result?.documents ?? []).slice(0, maxResults);
@@ -5786,6 +5830,14 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
       draftCtdSection: ctdSection,
       excludeArtifactId,
     });
+    // The documents could not be read: nothing was compared, so there is no
+    // verdict to give. Its empty report says 'clean' (row 74, S3).
+    if (report.unavailable) {
+      return JSON.stringify({
+        error: 'The project documents could not be read, so nothing was compared.',
+        unavailable: true,
+      });
+    }
 
     // Summarize for AnA — keep the response compact. Full divergences
     // stay in the structured report; the summary gives AnA enough to
@@ -15288,6 +15340,73 @@ export interface AgenticOptions {
    * reach back into this function's message list anyway.
    */
   operatorTurns?: GatewayMessage[];
+  /*
+   * The options below exist for the sub-agent runner (row 74). No caller set
+   * them before it; absent, the adapter behaves exactly as it always did.
+   * See agentic-tool-dispatch.ts for the three dispatch options.
+   */
+  /** Only these tools may run; any other call is answered TOOL_NOT_OFFERED and nothing runs. */
+  allowedToolNames?: ReadonlySet<string>;
+  /** Each tool call's start and end, fired inside the worker that runs it. */
+  onToolEvent?: (event: AgenticToolEvent) => void;
+  /** Every gateway response the loop receives, with its round (0 for the first call). */
+  onModelResponse?: (response: AnaGatewayResponse, round: number) => void;
+  /** The caller's budget, asked after each round (agentic-loop.ts AgenticLoopOptions.stopWhen). */
+  stopWhen?: (round: number) => LoopStopDirective;
+  /** Tool calls run at once within a round (default 4). */
+  toolConcurrency?: number;
+  /** 'refuse': every tool dispatch runs where a model may not be called (ai-gateway/model-call-scope.ts). */
+  toolModelCalls?: 'refuse';
+}
+
+/**
+ * What executeAgenticLoop returns: the final gateway response, and how the
+ * loop ended. The non-SSE doors get the same fact the stream has — whether
+ * she stopped because she was done, or because a ceiling, a thrash, a budget
+ * or a stop cut her off. `stoppedReason` reads `cancelled` whenever the run's
+ * signal was aborted, because an aborted round returns no tool calls and would
+ * otherwise read as her having finished.
+ */
+export type AgenticLoopResponse = AnaGatewayResponse & { loop: AgenticLoopResult };
+
+/**
+ * The sub-agent options (see AgenticOptions) in the shapes the adapter hands
+ * on. With none set: no allowlist, no hooks, no scope, 4 lanes, no stopWhen —
+ * the adapter as it always was.
+ */
+function subAgentLoopOptions(request: GatewayRequest, options: AgenticOptions | undefined) {
+  const o = options ?? {};
+  // One fact, two readers: the gateway (the scope) and the tool (ctx.modelCalls).
+  const refuse = o.toolModelCalls === 'refuse' || o.toolContext?.modelCalls === 'refuse';
+  const dispatch: LoopDispatchOptions = {
+    allowedToolNames: o.allowedToolNames,
+    onToolEvent: o.onToolEvent,
+    toolModelCalls: refuse ? 'refuse' : undefined,
+    runId: request.runId,
+    parentRunId: request.parentRunId,
+  };
+  const onModelResponse = o.onModelResponse;
+  return {
+    dispatch,
+    toolConcurrency: resolveToolConcurrency(o.toolConcurrency),
+    /** Added to each dispatched ToolContext: nothing unless model calls are refused. */
+    toolCtx: refuse ? { modelCalls: 'refuse' as const } : {},
+    onModelResponse: (response: AnaGatewayResponse, round: number): void => {
+      if (onModelResponse) notifyObserver('onModelResponse', () => onModelResponse(response, round));
+    },
+    loop: o.stopWhen ? { stopWhen: o.stopWhen } : {},
+  };
+}
+
+/** The loop outcome of a turn whose first answer asked for no tool. */
+const NO_TOOL_ROUNDS: AgenticLoopResult = { rounds: 0, toolCallCount: 0, stoppedReason: 'no_more_tools', extendedRounds: 0 };
+
+function withLoopOutcome(
+  response: AnaGatewayResponse,
+  loop: AgenticLoopResult,
+  signal: AbortSignal | undefined,
+): AgenticLoopResponse {
+  return { ...response, loop: { ...loop, ...(signal?.aborted ? { stoppedReason: 'cancelled' as const } : {}) } };
 }
 
 /**
@@ -15330,7 +15449,7 @@ function withScopeOrganizationUuid(ctx: ToolContext | undefined): ToolContext | 
 export async function executeAgenticLoop(
   request: GatewayRequest,
   options?: AgenticOptions
-): Promise<AnaGatewayResponse> {
+): Promise<AgenticLoopResponse> {
   const gateway = getGateway();
   // Default to the effort-scaled Balanced ceiling (6) rather than a flat 5, so a
   // caller that doesn't pin maxRounds still gets the modernized agentic depth.
@@ -15356,11 +15475,13 @@ export async function executeAgenticLoop(
   // streaming route has passed it since stop started landing mid-step; this is
   // the same fix for the non-SSE callers.
   // tenant-binding: forwards the caller's GatewayRequest; every caller binds organizationId (send-message.ts, deep-investigation.ts, ana-realtime.ts, ana-intelligence.ts)
+  const subAgent = subAgentLoopOptions(request, options);
   let finalResponse = (await gateway.route({ ...request, signal })) as AnaGatewayResponse;
+  subAgent.onModelResponse(finalResponse, 0);
 
   // Fast path: the model answered without asking for any tool.
   if (!finalResponse.toolUses || finalResponse.toolUses.length === 0) {
-    return finalResponse;
+    return withLoopOutcome(finalResponse, NO_TOOL_ROUNDS, signal);
   }
 
   // Conversation grows across rounds: each round appends the assistant's
@@ -15370,7 +15491,7 @@ export async function executeAgenticLoop(
   // Run one round's tool calls in parallel (network-bound tools like PubMed /
   // ClinicalTrials no longer block each other), firing the per-tool hook in the
   // original call order so callers' telemetry/event streams stay deterministic.
-  const executeTools = async (calls: ToolCall[]): Promise<ToolResultEntry[]> => {
+  const executeTools = async (calls: ToolCall[], round: number): Promise<ToolResultEntry[]> => {
     // Barge-in: don't spend work running this round's tools once cancelled.
     //
     // This used to `return []` — ZERO entries for a round that had N calls.
@@ -15386,28 +15507,32 @@ export async function executeAgenticLoop(
     if (signal?.aborted) return cancelledRoundEntries(calls);
     const ran = await mapWithConcurrency(
       calls,
-      async (call): Promise<{ call: ToolCall; result: string; errorMessage?: string }> => {
-        const handler = toolHandlers.get(call.name);
-        if (!handler) {
-          return {
+      (call): Promise<{ call: ToolCall; result: string; errorMessage?: string }> =>
+        dispatchLoopCall(call, round, subAgent.dispatch, async () => {
+          const handler = toolHandlers.get(call.name);
+          if (!handler) {
+            return {
+              call,
+              result: JSON.stringify({
+                error: `No handler registered for tool: ${call.name}`,
+                // Narrowed to what this loop offers when it offers a subset.
+                availableTools: Array.from(toolHandlers.keys()).filter(
+                  n => !subAgent.dispatch.allowedToolNames || subAgent.dispatch.allowedToolNames.has(n),
+                ),
+              }),
+              errorMessage: 'no handler registered',
+            };
+          }
+          // The calls in this round came from finalResponse; the governed-write
+          // gate in registerToolHandler reads which model that was.
+          return runOneTool(
+            handler,
             call,
-            result: JSON.stringify({
-              error: `No handler registered for tool: ${call.name}`,
-              availableTools: Array.from(toolHandlers.keys()),
-            }),
-            errorMessage: 'no handler registered',
-          };
-        }
-        // The calls in this round came from finalResponse; the governed-write
-        // gate in registerToolHandler reads which model that was.
-        return runOneTool(
-          handler,
-          call,
-          { ...(toolContext ?? {}), servingModel: servedModelOf(finalResponse) },
-          signal,
-        );
-      },
-      4,
+            { ...(toolContext ?? {}), servingModel: servedModelOf(finalResponse), ...subAgent.toolCtx },
+            signal,
+          );
+        }),
+      subAgent.toolConcurrency,
     );
 
     const entries: ToolResultEntry[] = [];
@@ -15430,7 +15555,7 @@ export async function executeAgenticLoop(
   const callModel = async (
     results: ToolResultEntry[],
     priorText: string,
-    _round: number,
+    round: number,
     includeTools: boolean,
   ): Promise<ModelTurn> => {
     // Barge-in: when cancelled, stop before issuing the next round. Returning no
@@ -15468,17 +15593,18 @@ export async function executeAgenticLoop(
 
     // tenant-binding: roundRequest is built from the caller's request, which carries its organizationId
     finalResponse = (await gateway.route(roundRequest)) as AnaGatewayResponse;
+    subAgent.onModelResponse(finalResponse, round);
     const nextUses = finalResponse.toolUses ?? [];
     return { text: finalResponse.content || '', toolCalls: nextUses.map(toToolCall) };
   };
 
-  await runAgenticToolLoop(
+  const loop = await runAgenticToolLoop(
     { text: finalResponse.content || '', toolCalls: finalResponse.toolUses.map(toToolCall) },
     { executeTools, callModel, ...(options?.checkpoint ? { checkpoint: options.checkpoint } : {}) },
-    { maxRounds, progressExtension },
+    { maxRounds, progressExtension, ...subAgent.loop },
   );
 
-  return finalResponse;
+  return withLoopOutcome(finalResponse, loop, signal);
 }
 
 /**

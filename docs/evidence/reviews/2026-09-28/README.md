@@ -13,6 +13,21 @@ apps (Projects, Vault, Authoring, Submission Center, Submission Readiness, QMS c
 > unchanged apart from this note. The duplication was not coordinated and is
 > recorded in that directory's README.
 
+> **The editor family, read line by line: `editor-family/`.** This review, and
+> the one of 2026-09-24, record that `DocumentWorkbench.tsx`,
+> `RichSectionEditor.tsx` and the `ProtocolDev*` family were never read line by
+> line. A D4 pass (`…01TTTQ1h`) did that on 2026-09-28 at `7087f46e2`.
+> - **Method:** fourteen lens reports, and a refuting verifier for every
+>   blocker, high and medium.
+> - **Blockers found:** five. A viewer could change a regulated protocol; a
+>   signed protocol's schedule still changed; "Re-read source" rewrote any
+>   citation's checksum; a comment anchor saved unreasoned prose under a system
+>   reason; the co-author body saved with no reason or audit.
+> - **Fixed:** the first four, and most highs and mediums, failing first
+>   (`editor-family/fixes/`).
+> - **Handed on:** the rest, through the work-orders board.
+> This README is unchanged apart from this note.
+
 - **Head reviewed:** `aff7eae16` (`concept2cure-v2`, 2026-09-28 01:16 UTC).
 - **Lenses:** the repo's auditors invoked by name, read-only, no gate run with `write-baseline`:
   `part11-ux-auditor`, `honest-state-auditor`, `security-auditor`, `a11y-auditor`,

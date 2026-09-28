@@ -50,14 +50,14 @@ const baseHandlers = {
   }),
   apiKeys: () => ({
     rows: [
-      { id: 7, name: 'prod key', scopes: ['documents:read'], created_at: '2026-06-01T00:00:00Z', last_used_at: '2026-07-19T00:00:00Z', created_by: 1, status: 'active' },
-      { id: 8, name: 'revoked key', scopes: ['documents:read'], created_at: '2026-05-01T00:00:00Z', last_used_at: null, created_by: 1, status: 'revoked' },
+      { id: 7, name: 'prod key', key_prefix: 'c2c_ab12', scopes: ['documents:read'], created_at: '2026-06-01T00:00:00Z', last_used_at: '2026-07-19T00:00:00Z', created_by: 1, status: 'active', owner_name: 'JM Smith', owner_email: 'jm@c2c.io' },
+      { id: 8, name: 'revoked key', key_prefix: 'c2c_cd34', scopes: ['documents:read'], created_at: '2026-05-01T00:00:00Z', last_used_at: null, created_by: 1, status: 'revoked', owner_name: 'JM Smith', owner_email: 'jm@c2c.io' },
     ],
   }),
   audit: () => ({
     rows: [
-      { id: 'abcd1234ef', user_id: 1, action: 'data_modify', table_name: 'organizations', record_id: '2', created_at: '2026-07-20T00:00:00Z', sha256_chain: 'deadbeefcafebabe' },
-      { id: 'sys0001', user_id: null, action: 'sso.sync', table_name: null, record_id: null, created_at: '2026-07-19T00:00:00Z', sha256_chain: null },
+      { id: 'abcd1234ef', user_id: 1, action: 'data_modify', table_name: 'organizations', record_id: '2', created_at: '2026-07-20T00:00:00Z', sha256_chain: 'deadbeefcafebabe', description: null, actor_name: 'JM Smith', actor_email: 'jm@c2c.io', target_name: null, target_email: null },
+      { id: 'sys0001', user_id: null, action: 'sso.sync', table_name: null, record_id: null, created_at: '2026-07-19T00:00:00Z', sha256_chain: null, description: null, actor_name: null, actor_email: null, target_name: null, target_email: null },
     ],
   }),
   org: () => ({ rows: [{ name: 'Bright Biosciences', domain: 'brightbio.io', settings: { security: { mfaEnabled: true, ssoEnabled: false, sessionTimeout: 30 } } }] }),
@@ -73,7 +73,8 @@ describe('GET /api/mdx/admin — real facets', () => {
     expect(res.status).toBe(200);
     const keys = res.body.data.apiKeys;
     expect(keys).toHaveLength(1); // revoked one dropped
-    expect(keys[0]).toMatchObject({ id: 'key-7', name: 'prod key', owner: 'u-1', scopes: ['documents:read'] });
+    // Owner by name and the key by its public prefix — never `u-1` / a row id.
+    expect(keys[0]).toMatchObject({ id: 'key-7', keyId: 7, prefix: 'c2c_ab12', name: 'prod key', owner: 'JM Smith', scopes: ['documents:read'] });
     expect(keys[0].rotateIn).toBe(''); // never fabricated
   });
 
@@ -82,7 +83,9 @@ describe('GET /api/mdx/admin — real facets', () => {
     const res = await request(app).get('/api/mdx/admin');
     const audit = res.body.data.audit;
     expect(audit).toHaveLength(2);
-    expect(audit[0]).toMatchObject({ actor: 'u-1', action: 'data_modify', target: 'organizations · 2' });
+    // Named the way the Audit trail surface names the same rows: the account,
+    // the humanized action, and this organization by its name.
+    expect(audit[0]).toMatchObject({ actor: 'JM Smith', action: 'Data Modify', target: 'Bright Biosciences' });
     expect(audit[0].sha).toBe('dead…babe');
     expect(audit[1].actor).toBe('system'); // null user_id
     expect(audit[1].sha).toBe(''); // null chain → honest empty
@@ -92,7 +95,8 @@ describe('GET /api/mdx/admin — real facets', () => {
     dispatch(baseHandlers);
     const res = await request(app).get('/api/mdx/admin');
     const byId = Object.fromEntries(res.body.data.settings.map((s: any) => [s.id, s.value]));
-    expect(byId['mfa-required']).toBe('Yes (all roles)');
+    // What sign-in enforces (routes/auth.ts), not settings.security.mfaEnabled.
+    expect(byId['mfa-required']).toBe('Required for every member');
     expect(byId['session-ttl']).toBe('30 minutes');
     expect(byId['sso']).toBe('Disabled');
     expect(byId['branding']).toBe('Bright Biosciences');

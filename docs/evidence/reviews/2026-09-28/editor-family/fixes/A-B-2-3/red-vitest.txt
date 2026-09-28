@@ -1,0 +1,9 @@
+$ npx vitest run client/src/concept2cure/v2/editor/__tests__/anchorClickAndMarkerRoles.test.ts   (the three source files at HEAD, before the fix)
+ × a click on commented text opens its thread (A-B-2) > opens the thread the words carry 110ms
+   → expected false to be true // Object.is equality
+ ✓ a click on commented text opens its thread (A-B-2) > a click on a cross-reference inside the commented range opens it too 22ms
+ ✓ a click on commented text opens its thread (A-B-2) > a click on plain text opens nothing and is not swallowed 19ms
+ ✓ a click on commented text opens its thread (A-B-2) > with no host listener, the click is the editor’s own 11ms
+ × a marker that is not a link does not say it is one (A-B-3) > a cross-reference and a citation carry no link role 25ms
+   → expected 'link' to be null
+      Tests  2 failed | 3 passed (5)

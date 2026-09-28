@@ -1,0 +1,432 @@
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/ server/services/protocol-export/__tests__/ server/routes/__tests__/protocol-dev.routes.test.ts server/services/ana/__tests__/protocol-design-tools.test.ts tests/ci/export-governance-guard.test.ts client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx client/src/concept2cure/v2/__tests__/authoringSignatures.test.tsx client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx client/src/concept2cure/v2/__tests__/ectdCompileHistoryHonesty.test.tsx client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx
+# 2026-09-28T05:06:52Z at 26e0b3a8 (working tree)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-migration.pglite.integration.test.ts > 20260922_protocol_document_study_design.sql > is registered in C2C_MIGRATION_FILES above the final pair 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-migration.pglite.integration.test.ts > 20260922_protocol_document_study_design.sql > carries no DROP — RULE 1 forbids appending one to a replayed set 1ms
+stderr | server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T05:06:56.119Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-migration.pglite.integration.test.ts > 20260922_protocol_document_study_design.sql > applies twice against the same database and the second run is a no-op 3396ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds a visit through the governed visit route and re-reads the protocol 1854ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-migration.pglite.integration.test.ts > 20260922_protocol_document_study_design.sql > skips with a notice when protocol_documents does not exist 4097ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renames a visit through the visit PATCH, carrying the visit id 1468ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes a visit through the governed remove route 869ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a finalized protocol takes no new assessment, and no cell is set or cleared 37ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a superseded protocol takes no new assessment, and no cell is set or cleared 24ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a protocol still in development takes all three 21ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > another tenant cannot claim, block or overwrite a protocol’s budget parameters 24ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against another tenant’s protocol is refused, and nothing is written 14ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against another tenant’s protocol is refused, and nothing is written 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against another tenant’s protocol is refused, and nothing is written 5ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against another tenant’s protocol is refused, and nothing is written 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against another tenant’s protocol is refused, and nothing is written 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against another tenant’s protocol is refused, and nothing is written 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against a protocol that does not exist is refused 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against a protocol that does not exist is refused 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against a protocol that does not exist is refused 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against a protocol that does not exist is refused 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against a protocol that does not exist is refused 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against a protocol that does not exist is refused 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against the caller’s own protocol is written 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against the caller’s own protocol is written 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against the caller’s own protocol is written 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against the caller’s own protocol is written 10ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds an assessment through the SoA router 694ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against the caller’s own protocol is written 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against the caller’s own protocol is written 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes an assessment through the governed remove route 564ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renders the assembler’s findings rather than an empty list 387ms
+stderr | server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T05:07:04.201Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > risk register — residual rating, owner and mitigation > writes the residual rating through the risk PATCH 921ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > says plainly that no budget has been entered instead of printing a verdict 385ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > adds a line item through the budget router 1011ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > sets the feasibility parameters through the params PUT 519ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > requests a review through the reviewers route 573ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > maps a full real protocol into the PdevDoc contract 157ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > carries the assessment state: legacy and unassessed rows read as not assessed; reportability null when undetermined 86ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > returns [] for an org with no protocols, and never crosses tenants 35ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > excludes soft-deleted protocols 23ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > carries the regulatory rule findings, with not-assessed counted separately 61ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > assigns the review to a member's account, so the reviewer signs their own review 912ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > the one-document reader returns byte-identical rule findings to the page assembly 103ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > the one-document reader returns null for a protocol this organization does not have 27ms
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > leaves the vulnerable-population rules not-assessed, because no register records them 24ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > when the member list cannot be read it says so, and a reviewer can still be named without an account 576ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > neither an account nor a name: nothing is sent 555ms
+stderr | server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T05:07:09.186Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > the creator and everyone who edited it through the ledger, and no one else 50ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > whoever built the schedule of assessments or the objectives is an author; a commenting reviewer is not 16ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > reads on the client it is given 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > comments, budget, version snapshots and other modules' records are not authorship of the protocol 13ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a synopsis edit, which records no payload, counts 20ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a document-level edit counts 34ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a disposition is independent of the reviewed protocol's authors 18ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > another tenant's protocol has no authors here, so it cannot be shown independent 22ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization and a disposition bind the same content, re-derivably 59ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization does not move it: version and workflow status are not content 14ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an objective moves it 16ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an eligibility criterion moves it 21ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing a visit moves it 34ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the synopsis moves it 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the sponsor moves it 14ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > changing the content moves the digest 28ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > another tenant's protocol binds nothing of its content 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > the assigned reviewer, as review 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > not someone else, and nothing is recorded 5ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a reviewer with no account can only have their decision recorded under responsibility 26ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a signed disposition is final: a second signing is refused and the decision stands 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > another tenant's assignment is not found 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > someone independent of the authors finalizes it as approval: the version row finalize writes does not make them an author 24ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > a non-author cannot finalize as its author, and nothing is written 16ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author finalizes it as its author 28ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > whatever the act itself writes is not read as authorship of what is being signed 35ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author cannot approve their own protocol 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a member who can sign 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a named reviewer with no account 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a user of another organization: the review could never be signed 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a viewer, who cannot sign 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > the disposition reports the protocol version that was reviewed 7ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > a disposition is signed, not submitted: nothing is sent until the signer re-authenticates 811ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > finalize — the replacement for the deleted reason-only drawer is reachable > Finalize protocol opens the e-signature and posts the signed finalization 656ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > cover page — sponsor and principal investigator > writes both through the cover-page PATCH and re-reads 488ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > consent — the tab shows what the read model returns > reports the element the assembled consent form holds 500ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a governed write does not take the protocol off screen > stays on the register being edited while the record is re-read 893ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an empty object reads as a failed load 12ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an envelope around an object reads as a failed load 12ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an error carried on a 200 reads as a failed load 16ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > rows with no fields reads as a failed load 11ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row with an id and nothing else reads as a failed load 10ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row whose fields are present but null reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a store that is not provisioned says so, and offers no start 14ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > empty state > names the open project and offers both a start and an AnA draft 43ms
+ ✓ server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts > protocol prose lineage gate > updateSectionTx with content writes the content AND records author lineage 57ms
+ ✓ server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts > protocol prose lineage gate > updateSectionTx with sources records the verbatim clause against the source and the rest as the author (ledger L154) 42ms
+ ✓ server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts > protocol prose lineage gate > updateSectionTx status-only edit records NO lineage (gate no-ops on absent content) 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts > protocol prose lineage gate > updateSynopsisTx records author lineage for the document synopsis 31ms
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > inserts the section after Treatments and shifts what followed 4559ms
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > leaves a finalized protocol alone — an approved record is not rewritten to score better 45ms
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > touches neither another protocol kind nor a deleted document 31ms
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > is a no-op on replay, and does not disturb what an author wrote between deploys 37ms
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > stays a no-op across a third deploy 16ms
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > appends rather than guessing a position when the anchor section is absent 18ms
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > NOTICE-skips on a database that has no protocol tables at all 20ms
+stderr | server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T05:07:15.599Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T05:07:16.893Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > refuses a protocol with no design bound, rather than deriving against a blank one 78ms
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > does not read another organization’s protocol 32ms
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > does not read a design belonging to another tenant 38ms
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > refuses a design row whose metadata carries no design object 59ms
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > requires at least one accepted path 20ms
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — reading the live registers > derives eligibility and objectives from the rows as stored 64ms
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — reading the live registers > reports a soft-deleted register row as absent 47ms
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > writes an accepted path onto the PRM row and it survives a re-read 53ms
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > writes the value the LIVE rows evidence, not one the caller could supply 33ms
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > cannot clear a design field via a path the protocol does not evidence 50ms
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > refuses an incomplete proposal and writes nothing for it 53ms
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > updates the bound design in place rather than creating a second one 35ms
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > does not apply to another tenant’s design 25ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > binds a design and records who linked it and when 40ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > refuses another organization's protocol document (NOT_FOUND, nothing written) 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > refuses a design that does not exist for this tenant 5ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > unbinds, and refuses to unbind another organization's protocol 22ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > returns null for an unbound protocol — nothing is implied to have passed 68ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > returns the design identity and the DESIGN GATES' findings for a bound protocol 37ms
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > does not read another tenant's design through the link 29ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > loads module readiness from the real status endpoint 410ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > carries the printed name recorded at signing, the time, the meaning and the reason 221ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > compiles across the region and renders the server result with a backbone download 847ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows an honest empty state when no program is open (no fixture) 22ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today 125ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature 94ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > a program UUID ident is sent to the server (which resolves it) — the numeric-only dead-end is gone 140ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a finalized protocol with no signature row says none, never a signer 55ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature 68ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > names what is still missing instead of a bare negative 124ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so 68ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review 42ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > an unsigned review has no signature 26ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > warns that the downloadable backbone is not a sequence 134ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads 52ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row 68ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature 26ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it 56ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > reports the readiness number as content completeness, not readiness to submit 101ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > claims nothing extra in the compile toast 86ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 1. a failed audit read is not an empty audit trail > reports the audit trail as unreadable, never as zero events 410ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 1. a failed audit read is not an empty audit trail > tells the assistant the audit history is unknown, not absent 42ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 1. a failed audit read is not an empty audit trail > still distinguishes a genuine empty trail that READ successfully 115ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > opens both backbones as a navigable leaf hierarchy — Module 1 from the regional file 290ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 2. a skipped step is not a completed step > counts only completed steps as ran, excluding skipped 371ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > lists every file in the package and offers the regional backbone and the MD5 index 439ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 2. a skipped step is not a completed step > says explicitly that skipped steps never ran 273ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 2. a skipped step is not a completed step > reports skipped separately to the assistant, with its meaning 172ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > renders an integrity failure as a failure, not as "not signed yet" 114ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > distinguishes an unsigned run from a drifted one 74ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > states the PDF/A outcome and whether the compilation was recorded 288ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > surfaces a verified signature with its bound digest 111ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > names who signed, when, and with what meaning (§11.50) 89ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > names an FDA form shipped as FDA issued apart from the PDF/A count 276ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > says a printed name the record does not hold is not recorded 120ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > a failed run read is not a run without steps > reports the run as unreadable rather than rendering an empty pipeline 39ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > no run loaded is its own state > does not describe an unloaded pipeline as a clean one 20ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > an unrecorded compilation says it can anchor no lifecycle 260ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > the region is the sequence's: shown, not chosen, and not sent 198ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > readiness counted from placed documents says so, and never reads as approval 59ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > history names the sequence each compilation covered and whether it anchors the next 90ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > a follow-up sequence shows every act against the filed state, and what was left out 269ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSignatures.test.tsx > §11.50(a) — the three required items are displayed > shows the printed name, the meaning and the exact time 159ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSignatures.test.tsx > §11.50(a) — the three required items are displayed > shows the reason the signer typed, which the toast never did 57ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSignatures.test.tsx > §11.50(a) — the three required items are displayed > shows WHICH frozen version the signature covers (§11.70) 38ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSignatures.test.tsx > a missing printed name is shown as missing, never as the email > says so explicitly rather than putting the address in its place 28ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSignatures.test.tsx > a missing printed name is shown as missing, never as the email > does not present the email as if it satisfied (a)(1) 27ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSignatures.test.tsx > an unread record is not an unsigned document > reports a failed read as a failed read 11ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSignatures.test.tsx > an unread record is not an unsigned document > distinguishes that from a document genuinely never signed 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > a follow-up with no filed sequence on record says there is nothing on file to act on 222ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > an original sequence has no lifecycle to show 220ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > shows an imported report with its compilation, and says this product did not run it 121ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > names who imported it by account, and lists every report it replaced 68ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > replacing a report asks first, naming the report it replaces; cancelling opens nothing 458ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > imports a report against the compilation whose package it covered 221ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > a refused report is shown in the server's words, and nothing is shown as imported 136ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > who signed, as what, and when, from the signature row 139ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for 9ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a revoked signature says it is revoked 11ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a recorded disposition with no signature on record says so 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a signature record that could not be read is said, not left blank 9ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > an open review, with nothing signed, says nothing about a signature 10ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a finalized protocol with no live signature says so, never nothing 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a protocol that is not finalized, with no signature, renders nothing 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a read model without the facet is treated as unreadable, not as unsigned 3ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > the meaning is printed in words 5ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule pack — red-first > an objective with no endpoint is unmet under ICH M11 objectives/endpoints 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule pack — red-first > a null vulnerable-population flag is not-assessed, never met 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule pack — red-first > an IACUC protocol gets no 21 CFR 50.25 findings but an IRB one does 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > the reachability table names every rule exactly once 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-protocol-summary reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-objectives-endpoints reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-trial-design reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-population-eligibility reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-intervention-concomitant reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-discontinuation-withdrawal reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-assessment-schedule reaches exactly its declared statuses 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-statistical-considerations reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-oversight-quality reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-treatment-condition reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-population reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-variable reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-intercurrent-events reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-population-level-summary reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9-sample-size-justification reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9-multiplicity reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e8r1-critical-to-quality-factors reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e8r1-risk-proportionate-approach reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e6r3-safety-reporting reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e6r3-monitoring-approach reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e6r3-data-integrity reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-objectives-purpose reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-investigator-site-information reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-selection-exclusion-criteria reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-study-design-control reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-dosing reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-observations-measurements reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-safety-monitoring-procedures reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-consent-basic-elements reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-consent-additional-elements reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-risks-minimized reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-risks-reasonable reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-equitable-selection reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-consent-sought-and-documented reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-data-monitoring-for-safety reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-privacy-confidentiality reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-subpart-b-pregnant-women reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-subpart-c-prisoners reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-subpart-d-children-risk-category reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-subpart-d-children-assent-permission reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-additional-safeguards-vulnerable reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > eu-ctr-protocol-content reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > eu-ctr-eligibility-criteria reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > eu-ctr-endpoints reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fdora-3601-diversity-action-plan reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-3rs-replacement reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-3rs-reduction reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-3rs-refinement reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-pain-distress-category reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-humane-endpoints reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-euthanasia-avma reaches exactly its declared statuses 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ibc-risk-group-classification reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ibc-containment-level reaches exactly its declared statuses 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > every rule reaches at least one non-met state — nothing is green by construction 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > a section marked complete with content is attention, never met, and says why 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > a section marked complete but holding no content is unmet, not attention 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > every null vulnerable-population flag is not-assessed and says absence is not a record 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > a recorded-false flag is reported as not applicable, not as a passed safeguard 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > every keyword scan declares itself, and a scan that finds nothing is never unmet 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > no finding fabricates a percentage and none falls through to the unreached fallback 94ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > counts add up and not-assessed is never counted as assessed 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > kind scoping > a clinical protocol gets no 3Rs findings but an IACUC one does 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > kind scoping > findings are exactly the rules in scope for the kind, in catalogue order 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > kind scoping > listProtocolRules returns every rule when no kind is given 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule catalogue > ids are unique kebab-case and every rule carries a standard, clause and rationale 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule catalogue > listProtocolRules hands back copies, so a caller cannot mutate the catalogue 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule catalogue > covers each standard the section templates claim as their basis 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > one primary endpoint is met for multiplicity, two is attention, none is not-assessed 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > the intercurrent-event strategy is met only when a named strategy is present 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > the population-level summary is always not-assessed because nothing records it 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > IND rules gate on isIndTrial: true evaluates, false is not applicable, null is not-assessed 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > EU CTR gates on a recorded EU/EEA region 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > FDORA applies to a US pivotal/phase 3 trial only 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > ICH M11 Section 7 is what put the discontinuation section in the template 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > determinism and totality > the same input twice gives byte-identical output 26ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > determinism and totality > section order does not change the output 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > determinism and totality > is total: malformed input is reported, never thrown on 1ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileHistoryHonesty.test.tsx > EctdCompile — compilation history honesty > a failed history read is reported as not loaded, never as "No compilations yet" 106ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileHistoryHonesty.test.tsx > EctdCompile — compilation history honesty > a successful empty read is the only path to "No compilations yet" 51ms
+ ✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > 403 without organization context 31ms
+ ✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > returns the real-store protocols for the acting org, source = protocol_documents 6ms
+ ✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > honest empty list when the org has no protocols — no fallback data 4ms
+ ✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > fails closed to an empty list when the store is not provisioned (42P01) 3ms
+ ✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > 500s on a non-42P01 assembler failure 4ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — silence is not a value > reports an empty protocol register as unevidenced, never as an empty value to write 19ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — silence is not a value > cannot clear a design field even when the caller asks for the unevidenced path 2ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — silence is not a value > reports an unreadable phase with the value it could not read, and derives nothing 1ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — conflict is not resolution > reports a disagreement as a conflict carrying BOTH values, not as a proposal 1ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — conflict is not resolution > treats an unset design field as a proposal, because there is nothing to disagree with 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — conflict is not resolution > applies a conflict only when the human accepts that exact path 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — conflict is not resolution > reports an identical value as unchanged rather than proposing a no-op write 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — provenance per field > names the protocol rows behind every proposal, conflict and incomplete proposal 18ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — provenance per field > marks the visit timepoint parse as a text scan, not as a structured read 1ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > will not invent an endpoint measurement type the protocol never records 1ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > refuses to apply an incomplete proposal and says why 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > refuses objectives that would leave a dangling endpoint reference in the spine 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > proposes those same objectives once the design carries the endpoint 1ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > will not assign a trial epoch a visit register does not record 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > refuses an eligibility list it would have to drop rows from 3ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — what the protocol structurally cannot say > enumerates every unevidenced design path by name, each with a reason 1ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — what the protocol structurally cannot say > never derives a governed statistical number from the protocol 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — what the protocol structurally cannot say > does not read a structural design out of the protocol study type 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > applyDerivation > never mutates the design it was given 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > applyDerivation > rejects a path that is not a derivable design path 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > applyDerivation > applies each accepted path once, even when the caller repeats it 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > normalizers > maps only the phase spellings on the list 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > normalizers > maps only the three objective levels 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > normalizers > reads a timepoint only in the shapes it can read, and returns nothing otherwise 0ms
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > determinism > produces byte-identical output for the same input 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > templateFor > provides cited templates per kind 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > templateFor > returns empty for an unknown kind 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > is ready when all required sections complete + objectives + eligibility + visits (clinical) 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > blocks finalize when a required section is incomplete 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > requires objectives and (clinical) a schedule of assessments 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > does not require eligibility/visits for IACUC 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > nextVersion > bumps minor by default and major on release 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness — an unsectioned protocol is not a finished one > publishes no percentage and does not finalize 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness — an unsectioned protocol is not a finished one > a fully complete protocol still finalizes 0ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > cerv2-export-routes.ts must import or call a governed export function 6ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > 510k-estar-routes.ts must import or call a governed export function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > ectd-export.ts must import or call a governed export function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > rtm-export.ts must import or call a governed export function 0ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > docx-factory.ts must import or call a governed export function 0ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > ivdr-routes.ts must import or call a governed export function 10ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > all export route files exist in the inventory 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > exempted files have documented reasons 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signed finalization prints the printed name, the meaning in words, the UTC time and the reason 7ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > comes before the content, so no page of the protocol reads unsigned above its signature 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a revoked signature says so first, and still names who signed 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a finalized protocol with no signature on record says so, never a signer 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a protocol that is not finalized says no signature applies 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signature record that could not be read is said, not printed as unsigned 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a meaning outside the protocol vocabulary is printed as stored, not mapped to a guess 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a decision recorded on someone’s behalf names them 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-logic.test.ts > assembleProtocolExport + renderProtocolMarkdown > assembles ordered parts and renders markdown with all sections 7ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-logic.test.ts > buildCtGovRegistrationDraft > maps to PRS elements and is ready when primary outcome + eligibility + synopsis present 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-logic.test.ts > buildCtGovRegistrationDraft > flags missing primary outcome 2ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-logic.test.ts > buildCtGovRegistrationDraft > marks observational study type 0ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design AnA tools — registration > bind_protocol_to_study_design is registered and defined 2ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design AnA tools — registration > apply_protocol_design_derivation is registered and defined 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design AnA tools — registration > review_protocol_design_derivation is registered and defined 0ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design AnA tools — registration > review_protocol_regulatory_rules is registered and defined 0ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design AnA tools — registration > review_protocol_design_gates is registered and defined 0ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design AnA tools — registration > exports exactly the five loop tools 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design tool descriptions > every description names the engine as the source of its numbers 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design tool descriptions > no description claims a submission or transmission to an authority 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design tool descriptions > apply_protocol_design_derivation explains conflicts and refuses incomplete paths 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design tool descriptions > the review tools tell the model to report not-assessed rather than a pass 0ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design tools — context guards > bind_protocol_to_study_design refuses without tenant + user context 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design tools — context guards > apply_protocol_design_derivation refuses without tenant + user context 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design tools — context guards > bind_protocol_to_study_design refuses a viewer before opening a transaction 12ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design tools — context guards > apply_protocol_design_derivation refuses a viewer before opening a transaction 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design tools — context guards > review_protocol_design_derivation refuses without tenant context 3ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design tools — context guards > review_protocol_regulatory_rules refuses without tenant context 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > protocol ⇄ design tools — context guards > review_protocol_design_gates refuses without tenant context 0ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > bind_protocol_to_study_design > binds on one transaction and records the governed action 5ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > bind_protocol_to_study_design > rolls back and returns an error when the bind throws 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > bind_protocol_to_study_design > requires document_id and study_design_id 0ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > review_protocol_design_derivation > returns the five buckets and records NO governed action 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > review_protocol_design_derivation > returns an explanatory error — not an empty derivation — when no design is bound 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > apply_protocol_design_derivation > passes accepted_paths through unchanged and sends no value 6ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > apply_protocol_design_derivation > records one governed action on the same transaction 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > apply_protocol_design_derivation > rolls back and returns an error when the apply throws 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > apply_protocol_design_derivation > refuses an empty or non-array accepted_paths before opening a transaction 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > apply_protocol_design_derivation > reports "nothing applied" honestly rather than as a success 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > review_protocol_regulatory_rules > returns the rule pack findings and the three counts verbatim 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > review_protocol_regulatory_rules > says the protocol was not found rather than returning zero findings 0ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > review_protocol_design_gates > returns the design gate findings and counts from the validation engine 1ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > review_protocol_design_gates > says no design is bound rather than reporting a clean gate run 0ms
+ ✓ server/services/ana/__tests__/protocol-design-tools.test.ts > review_protocol_design_gates > says the link is unresolved rather than reporting a clean gate run 0ms
+
+ Test Files  23 passed (23)
+      Tests  364 passed (364)
+   Start at  05:06:53
+   Duration  44.48s (transform 10.62s, setup 2.38s, import 25.16s, tests 81.62s, environment 7.61s)
+
+# exit=0

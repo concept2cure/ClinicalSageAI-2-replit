@@ -12,7 +12,7 @@
  * Nothing on this screen is appended locally, so no pane can show a row the
  * record does not hold.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as PG from './ProtocolGov';
 import { apiRequest } from '@/lib/queryClient';
 import { C2CForm } from '../C2CForm';
@@ -26,7 +26,7 @@ import { ProtocolSectionPane } from './ProtocolDevSection';
 import { AmendmentsTab, DeviationsTab, EligibilityTab, MilestonesTab, ObjectivesTab, Outline } from './ProtocolDevPanes';
 import { SoaTab } from './ProtocolDevSoa';
 import { BudgetTab, RiskTab } from './ProtocolDevRegisters';
-import { ConsentTab, ReviewsTab } from './ProtocolDevReviews';
+import { ConsentTab, ReviewsTab, SignatureLine } from './ProtocolDevReviews';
 import { StudyDesignStatisticsTab } from './biostatBridge';
 import { StudyDesignTab } from './ProtocolDevDesign';
 import { DerivationTab } from './ProtocolDevDerivation';
@@ -83,6 +83,10 @@ export interface WorkspaceDocProps {
    *  saying nothing would present stale rows as current. */
   reloadError?: string;
   onChanged?: () => void;
+  /** The section open on screen, reported up so the surface context can name
+   *  it: "Draft with AnA" asks about "the section open on screen" and sends no
+   *  stored title (periodic review 2026-09-28, SEC-C-4). */
+  onOpenSection?: (sectionId: string | null) => void;
 }
 
 /* ── Cover page ────────────────────────────────────────────────────────── */
@@ -128,6 +132,10 @@ function ProtocolHeader({ doc, canWrite, exporting, refreshing, onAsk, onExport,
           <span>{pi ? 'PI ' + pi : 'Principal investigator not recorded'}</span>
           <span className="pd-dot" />
           <PG.StatusBadge status={str(doc.status)} />
+          {/* 21 CFR 11.50: who finalized it, as the signature row records it,
+              or that no signature is on record (periodic review 2026-09-28,
+              editor family, P11-C-2). */}
+          <SignatureLine facet={doc.finalization} expected={str(doc.status) === 'finalized' || str(doc.status) === 'superseded'} />
           {canWrite && (
             <button type="button" className="pde-rowbtn" onClick={onEditCover}>
               Edit sponsor and principal investigator
@@ -138,8 +146,13 @@ function ProtocolHeader({ doc, canWrite, exporting, refreshing, onAsk, onExport,
       <div className="pd-head-r">
         <span className="pd-autosave">{'v' + (str(doc.version) || '—') + updatedSuffix(doc.updated)}</span>
         {refreshing && <span className="pd-autosave" role="status">Re-reading the record…</span>}
+        {/* The protocol number is stored text any member can set, and this turn
+            is sent as the person's own words; spliced in, an instruction planted
+            there went around the server's fence on screen context. AnA reads
+            which protocol from that fenced context (periodic review 2026-09-28,
+            editor family, SEC-C-4). */}
         <PG.Btn icon="sparkles" variant="outline"
-          onClick={() => onAsk('Review ' + str(doc.shortTitle) + ' for completeness and list what blocks finalization.')}>
+          onClick={() => onAsk('Review the protocol open on screen for completeness and list what blocks finalization.')}>
           Ask AnA
         </PG.Btn>
         <PG.Btn icon="fileText" variant="outline" onClick={onExport}>{exporting ? 'Exporting…' : 'Export'}</PG.Btn>
@@ -292,10 +305,35 @@ function StaleNotice() {
   );
 }
 
+/* 2026-09-28 · GA-2 (coverage-gap sweep): these sixteen tabs were plain
+   buttons and the open one was a CSS class only, so assistive technology heard
+   sixteen identical buttons and never which was selected (WCAG 4.1.2, 1.4.1).
+   Now the WAI-ARIA tabs pattern, as in quality/App.tsx: a named tablist, one
+   tab stop (roving tabindex) on the selected tab, Left/Right/Home/End move and
+   select, and each tab controls the one panel, which is labelled by it. */
+const PD_TABPANEL_ID = 'pd-tabpanel';
+const pdTabId = (id: string) => 'pd-tab-' + id;
+
 function TabStrip({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
+  const onKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    const idx = TABS.findIndex((t) => t.id === tab);
+    let next = -1;
+    if (e.key === 'ArrowRight') next = (idx + 1) % TABS.length;
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + TABS.length) % TABS.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = TABS.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    onTab(TABS[next].id);
+    (e.currentTarget.parentElement?.children[next] as HTMLElement | undefined)?.focus();
+  };
   return (
-    <div className="pd-tabs">{TABS.map((t) => (
-      <button key={t.id} className={'pd-tab' + (tab === t.id ? ' on' : '')} onClick={() => onTab(t.id)}>
+    <div className="pd-tabs" role="tablist" aria-label="Protocol sections">{TABS.map((t) => (
+      <button
+        key={t.id} type="button" role="tab" id={pdTabId(t.id)}
+        aria-selected={tab === t.id} aria-controls={PD_TABPANEL_ID} tabIndex={tab === t.id ? 0 : -1}
+        className={'pd-tab' + (tab === t.id ? ' on' : '')} onClick={() => onTab(t.id)} onKeyDown={onKey}
+      >
         <Ic n={t.icon} s={14} />{t.label}</button>))}</div>
   );
 }
@@ -303,7 +341,7 @@ function TabStrip({ tab, onTab }: { tab: string; onTab: (id: string) => void }) 
 /** The open edit/parameter drawer and the row it addresses. */
 type FormState = { kind: PdevFormKind; target?: PdevFormTarget };
 
-export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadError, onChanged }: WorkspaceDocProps) {
+export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadError, onChanged, onOpenSection }: WorkspaceDocProps) {
   const [tab, setTab] = useState('document');
   const [activeSec, setActiveSec] = useState(str(doc.openSection));
   const [exporting, setExporting] = useState(false);
@@ -319,6 +357,8 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
   const sections = asRows(doc.sections);
   const sec = sections.find((s) => s.id === activeSec) ?? sections[0];
   const onSec = (s: Row) => { setActiveSec(str(s.id)); setTab(str(s.tab) || 'document'); };
+  const openSectionId = sec ? str(sec.id) : null;
+  useEffect(() => { onOpenSection?.(openSectionId); }, [openSectionId, onOpenSection]);
 
   const openReg = (kind: RegisterKind) => {
     if (!canWrite) { fireToast('This protocol row has no numeric document id — governed writes need the governed store.', 'error'); return; }
@@ -366,7 +406,7 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
       <TabStrip tab={tab} onTab={setTab} />
       <div className="pd-grid">
         <Outline doc={doc} activeSec={activeSec} onSec={onSec} onFinalize={openFinalize} />
-        <div className="pd-work">
+        <div className="pd-work" role="tabpanel" id={PD_TABPANEL_ID} aria-labelledby={pdTabId(tab)}>
           <TabBody
             tab={tab} doc={doc} sec={sec} canWrite={canWrite} onAsk={onAsk} onNav={onNav}
             onReg={openReg} onEdit={openForm}

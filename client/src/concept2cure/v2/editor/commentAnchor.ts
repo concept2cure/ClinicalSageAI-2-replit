@@ -112,9 +112,26 @@ export const CommentAnchor = Mark.create<CommentAnchorOptions>({
       new Plugin({
         key: clickKey,
         props: {
+          /* An inline node inside a commented range (a cross-reference, a
+             citation) is handed here itself, with its marks. */
           handleClickOn(_view, _pos, node, _nodePos, _event, direct) {
             if (!direct || !opts.onAnchorClick) return false;
             const mark = node.marks?.find((m) => m.type.name === 'commentAnchor');
+            const id = mark?.attrs.commentId;
+            if (typeof id === 'string' && id) {
+              opts.onAnchorClick(id);
+              return true;
+            }
+            return false;
+          },
+          /* Text is not: for a click on words `handleClickOn` gets the
+             enclosing paragraph (a mark is not a node in the view tree), which
+             carries no inline marks, so a click on commented text opened
+             nothing, for anyone. The marks at the position are read here
+             instead (periodic review 2026-09-28, editor family, A-B-2). */
+          handleClick(view, pos) {
+            if (!opts.onAnchorClick) return false;
+            const mark = view.state.doc.resolve(pos).marks().find((m) => m.type.name === 'commentAnchor');
             const id = mark?.attrs.commentId;
             if (typeof id === 'string' && id) {
               opts.onAnchorClick(id);

@@ -106,7 +106,8 @@ const lastWrite = () => apiRequest.mock.calls.filter((c) => c[0] !== 'GET').slic
 
 async function openTab(name: RegExp) {
   render(<Providers><ProtocolWorkspace {...props()} /></Providers>);
-  fireEvent.click(await screen.findByRole('button', { name }));
+  // 2026-09-28 · GA-2: the protocol strip's entries are tabs (role="tab"), not plain buttons.
+  fireEvent.click(await screen.findByRole('tab', { name }));
 }
 
 /** Complete the open governed drawer: fill `values` by field label, submit. */
@@ -492,8 +493,108 @@ describe('empty state', () => {
     expect(await screen.findByText(/C2C-101/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Ask AnA to draft the synopsis/ }));
     expect(p.onAsk).toHaveBeenCalled();
-    expect(String(p.onAsk.mock.calls[0][0])).toContain('C2C-101');
+    // The screen names the programme; the request does not carry its stored
+    // name as the person's words (periodic review 2026-09-28, SEC-C-4).
+    expect(String(p.onAsk.mock.calls[0][0])).toMatch(/programme open in this workspace/);
+    expect(String(p.onAsk.mock.calls[0][0])).not.toContain('C2C-101');
     fireEvent.click(screen.getByRole('button', { name: /Start a protocol/ }));
     expect(await screen.findByRole('dialog')).toBeTruthy();
+  });
+});
+
+/* 2026-09-28 · GA-2 (coverage-gap sweep). The sixteen-tab strip was sixteen
+   plain buttons; the current tab was a CSS class and nothing else, so a
+   screen-reader user heard sixteen identical buttons and never which one was
+   open (WCAG 4.1.2, 1.4.1). These cases pin the WAI-ARIA tabs pattern. */
+describe('the protocol tab strip is a tablist (GA-2)', () => {
+  const strip = () => screen.getByRole('tablist', { name: 'Protocol sections' });
+  const selected = () => within(strip()).getAllByRole('tab').filter((t) => t.getAttribute('aria-selected') === 'true');
+
+  it('exposes every tab, which one is selected, and the panel it controls', async () => {
+    render(<Providers><ProtocolWorkspace {...props()} /></Providers>);
+    await screen.findByRole('tablist', { name: 'Protocol sections' });
+    const tabs = within(strip()).getAllByRole('tab');
+    expect(tabs).toHaveLength(16);
+    expect(selected().map((t) => t.textContent)).toEqual(['Document']);
+    // Roving tabindex: the strip is one tab stop, on the selected tab.
+    expect(tabs.map((t) => t.getAttribute('tabindex'))).toEqual(['0', ...Array(15).fill('-1')]);
+    for (const t of tabs) {
+      expect(t.getAttribute('aria-selected')).toMatch(/^(true|false)$/);
+      expect(t.id).toBeTruthy();
+    }
+    const panel = screen.getByRole('tabpanel');
+    expect(selected()[0].getAttribute('aria-controls')).toBe(panel.id);
+    expect(panel.getAttribute('aria-labelledby')).toBe(selected()[0].id);
+    expect(screen.getByRole('tabpanel', { name: 'Document' })).toBe(panel);
+
+    fireEvent.click(within(strip()).getByRole('tab', { name: /Budget/ }));
+    expect(selected().map((t) => t.textContent)).toEqual(['Budget']);
+    expect(screen.getByRole('tabpanel', { name: 'Budget' })).toBeTruthy();
+  });
+
+  it('Left, Right, Home and End move focus and selection, and wrap', async () => {
+    render(<Providers><ProtocolWorkspace {...props()} /></Providers>);
+    await screen.findByRole('tablist', { name: 'Protocol sections' });
+    const tab = (name: string) => within(strip()).getByRole('tab', { name });
+    const press = (key: string) => fireEvent.keyDown(document.activeElement as Element, { key });
+
+    tab('Document').focus();
+    press('ArrowRight');
+    expect(document.activeElement).toBe(tab('Objectives'));
+    expect(selected().map((t) => t.textContent)).toEqual(['Objectives']);
+    expect(tab('Objectives').getAttribute('tabindex')).toBe('0');
+    expect(tab('Document').getAttribute('tabindex')).toBe('-1');
+
+    press('End');
+    expect(document.activeElement).toBe(tab('Consent'));
+    expect(selected().map((t) => t.textContent)).toEqual(['Consent']);
+    press('ArrowRight');
+    expect(document.activeElement).toBe(tab('Document'));
+    press('ArrowLeft');
+    expect(document.activeElement).toBe(tab('Consent'));
+    press('Home');
+    expect(document.activeElement).toBe(tab('Document'));
+    expect(selected().map((t) => t.textContent)).toEqual(['Document']);
+  });
+});
+
+/* 2026-09-28 · GA-7 (coverage-gap sweep). A review assigned to another account
+   disabled "Record disposition" and gave the reason only in the disabled
+   button's `title` — which a keyboard user cannot reach (a disabled button
+   takes no focus) and most screen readers do not announce. */
+describe('a review assigned to someone else says why it cannot be signed (GA-7)', () => {
+  const assignedTo = (reviewerUserId: number) => apiRequest.mockImplementation(async (method: string, url: string) => {
+    if (method === 'GET' && url.startsWith('/api/protocol-dev')) {
+      return ok({ success: true, data: [{ ...DOC, reviews: [{ ...DOC.reviews[0], reviewerUserId }] }] });
+    }
+    if (method === 'GET') return ok({ data: [] });
+    return created({ id: 1, actionId: 'gov-1' });
+  });
+  const REASON_TEXT = /Assigned to another user\. Only they can sign this disposition\./;
+
+  it('states the reason as visible text on the row, and the disabled button is described by it', async () => {
+    session.user = { id: '11', email: 'me@c2c.test', organizationId: '42', mfaEnabled: false };
+    assignedTo(99);
+    await openTab(/Reviews/);
+    const btn = await screen.findByRole('button', { name: /Record disposition for Dr Iyer/ });
+    expect(btn.hasAttribute('disabled')).toBe(true);
+    // Visible: rendered text on the row, not an attribute.
+    const note = screen.getByText(REASON_TEXT);
+    expect(note.closest('.pde-review-row')).toBe(btn.closest('.pde-review-row'));
+    // Programmatic: the button's accessible description is that same text.
+    const describedBy = btn.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(describedBy as string)).toBe(note);
+    expect(screen.getByRole('button', { name: /Record disposition for Dr Iyer/, description: REASON_TEXT })).toBe(btn);
+  });
+
+  it('the assigned reviewer sees no such note and an enabled button', async () => {
+    session.user = { id: '11', email: 'me@c2c.test', organizationId: '42', mfaEnabled: false };
+    assignedTo(11);
+    await openTab(/Reviews/);
+    const btn = await screen.findByRole('button', { name: /Record disposition for Dr Iyer/ });
+    expect(btn.hasAttribute('disabled')).toBe(false);
+    expect(btn.getAttribute('aria-describedby')).toBeNull();
+    expect(screen.queryByText(REASON_TEXT)).toBeNull();
   });
 });

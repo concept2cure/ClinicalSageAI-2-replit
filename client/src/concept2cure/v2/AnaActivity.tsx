@@ -41,10 +41,10 @@ import { serverMessage } from '@/lib/queryClient';
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
 import type { AnaChatMessage, AnaToolCall } from '../components/ana/useAnaChat';
-import type { AnaPlanChange, AnaPlanStep, AnaTurnRecordStatus } from '../components/ana/useAnaChat.types';
+import type { AnaPlanChange, AnaPlanStep, AnaStoppedReason, AnaTurnRecordStatus } from '../components/ana/useAnaChat.types';
 import { formatElapsed, LENS_PHRASE, PLAN_TOOL } from '../components/ana/anaProgress';
 import { statusGlyph } from './AnaWorkSections';
-import { stepDuration } from './anaWorkModel';
+import { isContinuable, stepDuration } from './anaWorkModel';
 import { useNow } from './useNow';
 
 export interface AnaActivityProps {
@@ -86,6 +86,20 @@ export interface AnaActivityProps {
    * visible, whatever else the turn did.
    */
   turnRecord?: AnaTurnRecordStatus;
+  /**
+   * Why the turn's work stopped, as the server reported it, and how many tool
+   * rounds it ran. A stop that left the work unfinished (the round limit, a
+   * repeated step) is said under the turn, always visible, like an unrecorded
+   * turn: the answer above it is what she had when she was stopped.
+   */
+  stoppedReason?: AnaStoppedReason;
+  rounds?: number;
+  /**
+   * Offered by the host on the LATEST settled turn only; sends the continue
+   * sentence as a new turn. Absent everywhere else, so an earlier stopped turn
+   * keeps its note and has no button.
+   */
+  onContinue?: () => void;
 }
 
 /** The one mapping from a turn to its record. Every host uses it. */
@@ -104,7 +118,29 @@ export function activityPropsFor(m: AnaChatMessage): AnaActivityProps {
     startedAt: m.sentAt,
     completedAt: m.completedAt,
     turnRecord: m.turnRecord,
+    stoppedReason: m.stoppedReason,
+    rounds: m.rounds,
   };
+}
+
+/**
+ * What the transcript says under a turn the loop stopped before she was done,
+ * or null when there is nothing to say: she finished (`no_more_tools`), or the
+ * person pressed Stop (`cancelled`) — they know. Only the stops the server
+ * produces today have words; each reserved run-policy reason gets its sentence
+ * with the change that produces it.
+ */
+export function stoppedNoteText(reason: AnaStoppedReason | undefined, rounds?: number): string | null {
+  switch (reason) {
+    case 'max_rounds':
+      return typeof rounds === 'number' && rounds > 0
+        ? `AnA reached this turn's round limit (${rounds} ${rounds === 1 ? 'round' : 'rounds'}) before she said she was done.`
+        : "AnA reached this turn's round limit before she said she was done.";
+    case 'duplicate_thrash':
+      return 'AnA stopped because she was repeating the same step. Tell her what to change.';
+    default:
+      return null;
+  }
 }
 
 /** True when the record has something real to show for a settled turn. */
@@ -116,7 +152,10 @@ export function hasReportableWork(a: AnaActivityProps): boolean {
       (a.lens && LENS_PHRASE[a.lens]) ||
       a.documentType ||
       a.thinking ||
-      a.draftTitle,
+      a.draftTitle ||
+      // A turn stopped short has something to say even with nothing else:
+      // no host may drop it as a plain answer.
+      stoppedNoteText(a.stoppedReason, a.rounds),
   );
 }
 
@@ -394,6 +433,9 @@ export function AnaActivity({
   startedAt,
   completedAt,
   turnRecord,
+  stoppedReason,
+  rounds,
+  onContinue,
 }: AnaActivityProps) {
   const calls = toolCalls ?? [];
   const changes = planChanges ?? [];
@@ -419,6 +461,10 @@ export function AnaActivity({
   // component legitimately renders nothing for a turn with nothing to report.
   const [open, setOpen] = React.useState(false);
   const bodyId = React.useId();
+  // The stop sentence describes Continue, and the note keeps keyboard focus
+  // when Continue unmounts itself (see the note below).
+  const stoppedTextId = React.useId();
+  const stoppedRef = React.useRef<HTMLParagraphElement>(null);
 
   const lensPhrase = lens && LENS_PHRASE[lens] ? LENS_PHRASE[lens] : null;
   const hasDecision = Boolean(lensPhrase) || Boolean(documentType);
@@ -439,7 +485,51 @@ export function AnaActivity({
         <span>{unrecordedText}</span>
       </p>
     ) : null;
-  if (!streaming && !hasBody) return unrecorded ? <div className="ana-activity">{unrecorded}</div> : null;
+  /* A turn the loop stopped before she was done says so under the turn, never
+     folded: the answer is what she had when the round limit or the repeat
+     guard stopped her, and a reader must not have to open the record to learn
+     that. Continue is offered only where the host offers it (the latest
+     settled turn) and only for a stop that picking up again can help. */
+  const stoppedText = streaming ? null : stoppedNoteText(stoppedReason, rounds);
+  /* Continue unmounts in the render after its own click: the host's send makes
+     a new turn the latest, and this one stops being offered it. Focus on a
+     removed button falls to <body>, so it moves first to the note the button
+     sat in (focusable by script only, never a tab stop) and the person keeps
+     their place. The button is described by the sentence it answers, so it is
+     not a bare "Continue" to a screen reader moving through buttons. */
+  const stopped = stoppedText ? (
+    <p className="ana-activity-stopped" role="note" tabIndex={-1} ref={stoppedRef}>
+      <span className="ana-activity-glyph" aria-hidden="true">{I.alertTriangle}</span>
+      <span id={stoppedTextId}>{stoppedText}</span>
+      {onContinue && isContinuable(stoppedReason) ? (
+        <button
+          type="button"
+          className="ana-activity-continue"
+          aria-describedby={stoppedTextId}
+          onClick={() => {
+            stoppedRef.current?.focus({ preventScroll: true });
+            onContinue();
+          }}
+        >
+          Continue
+        </button>
+      ) : null}
+    </p>
+  ) : null;
+  if (!streaming && !hasBody) {
+    /* The short branch keeps the polite region in the same place as the full
+       one, so a turn that streamed a phase with no rows and then settled
+       speaks its stop from the region that was already mounted. A role=note
+       paragraph is not announced; a region created in the same paint as its
+       first content is the case AT misses. */
+    return unrecorded || stopped ? (
+      <div className="ana-activity">
+        <span aria-live="polite" style={SR_ONLY_STYLE}>{stoppedText ?? ''}</span>
+        {stopped}
+        {unrecorded}
+      </div>
+    ) : null;
+  }
   if (streaming && !hasBody && !phase) return null;
 
   const expanded = Boolean(streaming) || open;
@@ -462,6 +552,7 @@ export function AnaActivity({
     streaming && phase ? phase : null,
     failed > 0 ? `${failed} ${failed === 1 ? 'step' : 'steps'} did not complete` : null,
     draftTitle ? `Drafted ${draftTitle}` : null,
+    stoppedText,
   ]
     .filter(Boolean)
     .join('. ');
@@ -482,6 +573,7 @@ export function AnaActivity({
           {open ? I.chevDown : I.chevRight}
         </button>
       )}
+      {stopped}
       {unrecorded}
 
       <div className="ana-activity-body" id={bodyId} hidden={!expanded}>

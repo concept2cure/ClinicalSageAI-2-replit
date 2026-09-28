@@ -125,8 +125,10 @@ function metaString(meta: unknown, keys: string[]): string | null {
   return null;
 }
 
-/** Turn a dotted/underscored event_type token into a Title Case label. */
-function humanizeEventType(eventType: unknown): string {
+/** Turn a dotted/underscored event_type token into a Title Case label.
+ *  Exported for the admin console's audit band (mdx-admin.ts), which shows the
+ *  same audit_logs rows and must name them the same way. */
+export function humanizeEventType(eventType: unknown): string {
   const raw = typeof eventType === 'string' ? eventType.trim() : '';
   if (!raw) return 'Event';
   const words = raw

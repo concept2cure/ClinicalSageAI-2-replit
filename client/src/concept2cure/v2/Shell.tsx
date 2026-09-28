@@ -31,6 +31,7 @@ import { AppMentionMenu, useAppMentions } from './appMentions';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
+import { CONTINUE_PROMPT, continueTurnIndex } from './anaWorkModel';
 import { AnaProgressChip, AnaWorkPanel } from './AnaWorkPanel';
 import { AnaOutputCards, type AnaOutput } from './AnaOutputs';
 import { useAgentActivity } from './useAgentActivity';
@@ -57,7 +58,6 @@ import {
   RAIL_SPECIALIST,
   SEGMENTS,
   getAnaContext,
-  getCoauthor,
   getSegment,
   type AnaContext,
 } from './registryModel';
@@ -129,7 +129,7 @@ export interface AnaMessage {
  * Does this viewer hold an organization-administrator role?
  *
  * One implementation, because two entry points now consume it. It began inline
- * in `Rail` — the account menu offers Admin and Licensing only to admins — and
+ * in `Rail` — the account menu offers Admin and Access requests only to admins — and
  * ⌘K needs the same answer: both open {@link NavUnlockPanel} for a locked
  * destination, and that panel's copy branches on it (an admin is offered the
  * Apps catalog or workspace setup; a member is told to ask an administrator).
@@ -169,7 +169,7 @@ export function Rail({
      the rail renders exactly as it did before: a lock badge is a claim about a
      customer's contract, and inventing one from a failed fetch is the failure
      mode worth avoiding here, not an unlocked rail. */
-  const { verdictFor } = useNavEntitlements();
+  const { verdictFor, platformAdmin } = useNavEntitlements();
   /** The locked destination the human just activated, if any. */
   const [lockedFor, setLockedFor] = React.useState<NavSurfaceEntitlement | null>(null);
   const name = user?.displayName || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Signed in';
@@ -187,10 +187,13 @@ export function Rail({
     // itself renders a non-leaky denied state, but we hide the entry entirely
     // for non-admins to mirror Claude exactly.
     ...(isOrgAdmin ? [{ label: 'Admin', ic: 'shieldCheck', to: 'admin-console' }] : []),
-    // Licensing control sits beside Admin, same gate. The surface itself
-    // re-checks platform-admin server-side on every read and write; this only
-    // decides whether the entry is offered.
-    ...(isOrgAdmin ? [{ label: 'Licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
+    // Licensing is the PLATFORM operator's console, not the customer's plan
+    // page (that is "View all plans" below). It is offered only when the server
+    // says its guard admits this viewer — `platformAdmin` is that guard's own
+    // function (resolvePlatformAdmin). It used to be offered on `isOrgAdmin`, so
+    // every customer org admin opened seven tabs that each refused them. The
+    // guard still re-checks every read and write; this only decides the offer.
+    ...(platformAdmin ? [{ label: 'Licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
     /* Where a member's request for a locked module lands. Without this entry the
        lock panel's one instruction — "ask an administrator" — points at nobody:
        the request is recorded, and the person who can approve it has no way to
@@ -222,9 +225,9 @@ export function Rail({
   const navItem = (s: { id: string; label: string; icon: string; badge?: string; count?: number; target?: string }) => {
     const target = s.target ?? s.id;
     /* Entitlement is keyed on the DESTINATION, not the rail entry: "Recent
-       Documents" and "Starred Items" are shortcuts onto document-authoring and
-       projects, so they inherit those modules' verdicts rather than looking up
-       ids the catalog has never heard of. */
+       Documents" is a shortcut onto document-authoring, so it inherits that
+       module's verdict rather than looking up an id the catalog has never
+       heard of. */
     const verdict = verdictFor(target);
     const locked = isLocked(verdict);
     return (
@@ -441,8 +444,15 @@ export function TopBar({
       <div className="crumbs">
         <span>Concept2Cure.RI</span>
         <span className="sep" aria-hidden="true">›</span>
-        <span>{tier ? tier.label : ''}</span>
-        <span className="sep" aria-hidden="true">›</span>
+        {/* A surface in both client categories has no tier crumb; this drew an
+            empty one between two separators ("Concept2Cure.RI › › Quality"),
+            launch sweep finding 129. */}
+        {tier && (
+          <>
+            <span>{tier.label}</span>
+            <span className="sep" aria-hidden="true">›</span>
+          </>
+        )}
         <span className="here">{surface.label}</span>
       </div>
       <div className="tb-spacer" />
@@ -723,7 +733,6 @@ export function AnaRail({
   const uploadingAttachments = attachments.filter((a) => a.status === 'uploading');
   const failedAttachments = attachments.filter((a) => a.status === 'error');
   const model = ANA_MODES.find((m) => m.id === mode)?.model ?? 'Balanced';
-  const co = getCoauthor(segment);
   /* AnA's per-surface context is local, and no longer claims otherwise.
    *
    * This used to fetch `GET /api/coauthor?surface=…&segment=…` under a comment
@@ -769,6 +778,10 @@ export function AnaRail({
     setDraft('');
     clearAttachments();
   };
+
+  /* Continue is offered on the latest settled turn only, through the rail's
+     own send path, as a new turn (anaWorkModel.continueTurnIndex). */
+  const continueAt = continueTurnIndex(messages.map((t) => ({ role: t.role, streaming: t.activity?.streaming })), streaming);
 
   if (!open) {
     return (
@@ -997,7 +1010,7 @@ export function AnaRail({
                   plain: it is never parsed as markup. */}
               {/* Her work first, then the answer it produced, then the output —
                   the order every host renders a turn in, and the reference's. */}
-              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
+              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} onContinue={i === continueAt ? () => onSend(CONTINUE_PROMPT) : undefined} />}
               {m.role === 'ana' ? (
                 <div className="ana-msg-bd ana-md" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(m.body ?? '') }} />
               ) : (

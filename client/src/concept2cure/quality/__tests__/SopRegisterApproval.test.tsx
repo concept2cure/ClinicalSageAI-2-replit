@@ -242,7 +242,9 @@ describe('SopRegister — a failed read is not an empty register', () => {
     H.docs = [];
     renderRegister();
     expect(screen.getByText('No controlled documents in the register yet.')).toBeTruthy();
-    expect(screen.getByText('All current')).toBeTruthy();
+    // Empty, and said as empty: not "All current", which an empty register is
+    // only vacuously (finding 112; sopRegisterReadHonesty.test.tsx).
+    expect(screen.getByText('Nothing in the register to review')).toBeTruthy();
     expect(screen.queryByTestId('sop-register-failed')).toBeNull();
   });
 

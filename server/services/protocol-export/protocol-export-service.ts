@@ -13,12 +13,14 @@ import {
   assembleProtocolExport,
   renderProtocolMarkdown,
   buildCtGovRegistrationDraft,
+  isFinalizedStatus,
   type AssembledProtocol,
   type CtGovDraft,
 } from './protocol-export-logic';
+import { finalizationTarget, readSignatureFacets } from '../protocol-development/protocol-signature-manifestation';
 
 export class ProtocolExportError extends Error {
-  constructor(public code: 'NOT_FOUND', message: string) {
+  constructor(public code: 'NOT_FOUND' | 'SIGNATURE_UNREADABLE', message: string) {
     super(message);
     this.name = 'ProtocolExportError';
   }
@@ -26,20 +28,25 @@ export class ProtocolExportError extends Error {
 
 async function loadAssembled(orgId: number, documentId: number): Promise<AssembledProtocol> {
   const d = await pool.query(
-    `SELECT title, protocol_number, protocol_kind, design_type, phase, version, synopsis
+    `SELECT title, protocol_number, protocol_kind, design_type, phase, version, synopsis, status
        FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
     [documentId, orgId],
   );
   if (d.rows.length === 0) throw new ProtocolExportError('NOT_FOUND', 'Protocol document not found for this organization.');
-  const [sections, objectives, eligibility, visits] = await Promise.all([
+  const [sections, objectives, eligibility, visits, signatureOf] = await Promise.all([
     pool.query(`SELECT section_key, title, content, order_index FROM protocol_sections WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index`, [documentId, orgId]),
     pool.query(`SELECT objective_type, objective, endpoint, timepoint FROM protocol_objectives WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`, [documentId, orgId]),
     pool.query(`SELECT kind, criterion FROM protocol_eligibility_criteria WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY kind, order_index, id`, [documentId, orgId]),
     pool.query(`SELECT visit_name, timepoint, procedures FROM protocol_schedule_visits WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`, [documentId, orgId]),
+    // The same read the workspace makes (P11-C-2), so screen and printout agree.
+    readSignatureFacets(orgId, [finalizationTarget(documentId)]),
   ]);
   const r = d.rows[0];
   return assembleProtocolExport(
-    { title: r.title, protocolNumber: r.protocol_number, protocolKind: r.protocol_kind, designType: r.design_type, phase: r.phase, version: r.version, synopsis: r.synopsis },
+    {
+      title: r.title, protocolNumber: r.protocol_number, protocolKind: r.protocol_kind, designType: r.design_type, phase: r.phase, version: r.version, synopsis: r.synopsis,
+      status: r.status, finalization: signatureOf(finalizationTarget(documentId)),
+    },
     sections.rows.map((s) => ({ sectionKey: s.section_key, title: s.title, content: s.content, orderIndex: s.order_index })),
     objectives.rows.map((o) => ({ objectiveType: o.objective_type, objective: o.objective, endpoint: o.endpoint, timepoint: o.timepoint })),
     eligibility.rows.map((e) => ({ kind: e.kind, criterion: e.criterion })),
@@ -49,6 +56,10 @@ async function loadAssembled(orgId: number, documentId: number): Promise<Assembl
 
 export async function getProtocolExport(orgId: number, documentId: number): Promise<{ document: AssembledProtocol; markdown: string }> {
   const document = await loadAssembled(orgId, documentId);
+  // A finalized protocol is not printed without its signature: fail closed.
+  if (document.finalization.state === 'unavailable' && isFinalizedStatus(document.status)) {
+    throw new ProtocolExportError('SIGNATURE_UNREADABLE', 'The signature record could not be read, so the finalized protocol was not exported without its signature.');
+  }
   return { document, markdown: renderProtocolMarkdown(document) };
 }
 

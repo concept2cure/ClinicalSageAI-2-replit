@@ -89,6 +89,21 @@ function assertEditable(status: string): void {
   if (status === 'finalized' || status === 'superseded') throw new ProtocolDevError('INVALID_STATE', `Protocol is ${status}; create a new version to edit.`);
 }
 
+/**
+ * For the registers that live outside this file (schedule of assessments,
+ * budget, risks, milestones, reviews): the protocol a write names must be this
+ * organisation's, and a write to content the finalization signs
+ * (signature-persistence.ts, the protocol-document digest) must find it still
+ * editable. Before this, those writers inserted against any document id they
+ * were given, and the schedule's three never read the status, so a signed
+ * protocol's schedule still changed (periodic review 2026-09-28, editor family,
+ * SEC-C-2, SEC-C-3, SEC-C-8).
+ */
+export async function requireProtocolForWriteTx(client: Queryable, orgId: number, docId: number, opts: { signedContent: boolean }): Promise<void> {
+  const doc = await loadDoc(client, orgId, docId);
+  if (opts.signedContent) assertEditable(doc.status);
+}
+
 export async function updateSynopsisTx(client: Queryable, orgId: number, docId: number, synopsis: string, actorUserId: number): Promise<void> {
   const doc = await loadDoc(client, orgId, docId);
   assertEditable(doc.status);

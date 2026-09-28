@@ -75,6 +75,7 @@ import {
 } from './providers/org-placement';
 import { governServerTools } from './server-tool-policy';
 import { isTerminalGatewayError } from './gateway-outcome';
+import { modelCallRefusal, type ModelCallRefusalScope } from './model-call-scope.js';
 import {
   decideSensitivePlacement,
   readProviderPlacementApprovals,
@@ -1323,6 +1324,17 @@ export class AIGateway {
     // between agentic rounds. Spend nothing: no classification, no policy
     // pass, no provider call, no audit row for work that was never done.
     if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+
+    // A sub-agent's tool may not call a model (model-call-scope.ts). Refused
+    // here, before anything is spent: no placement lookup, no classification,
+    // no policy pass or rate bucket, no dispatch — so no ledger row either.
+    const refusal = modelCallRefusal();
+    if (refusal) {
+      log.warn(
+        `[ai-gateway] refused a model call from a sub-agent's tool (${refusal.tool}, run ${refusal.runId}, parent ${refusal.parentRunId}); nothing was sent`,
+      );
+      throw new SubAgentToolModelCallError(refusal);
+    }
 
     // Apply the org's default placement policy (residency / zero-retention) when
     // the request doesn't specify it. Explicit request values always win; if no
@@ -4103,6 +4115,21 @@ export class ModelNotApprovedError extends GatewayPolicyError {
         `(${reason === 'explicit' ? 'named by the caller' : 'the only models remaining'}). ` +
         'See approvedForHighRisk in server/services/ai-governance/approved-models.ts.',
     );
+  }
+}
+
+/**
+ * A sub-agent's tool tried to call a model (see model-call-scope.ts).
+ *
+ * A {@link GatewayPolicyError} whose name is not overridden, so it is terminal
+ * on every path (isTerminalGatewayError matches by name): never retried, never
+ * walked down the fallback ladder, never counted against a provider's health.
+ * Thrown before anything is sent.
+ */
+export class SubAgentToolModelCallError extends GatewayPolicyError {
+  readonly code = 'SUB_AGENT_TOOL_MODEL_CALL' as const;
+  constructor(readonly scope: ModelCallRefusalScope) {
+    super(`A sub-agent's tool (${scope.tool}) may not call a model; nothing was sent.`);
   }
 }
 
