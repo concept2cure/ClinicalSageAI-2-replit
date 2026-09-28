@@ -13,6 +13,13 @@
  * pattern registry, which catches REGULATORY pattern matches; this service
  * catches INTRA-PROJECT factual drift.
  *
+ * 2026-09-28 (row 74, slice S3): a failed read of the project's artifacts no
+ * longer returns the empty report as-is. That report's verdict is 'clean', so
+ * a database error reached the model as "No consistency issues detected"
+ * when nothing had been compared — an error rendered as a pass. The report is
+ * now marked `unavailable: 'artifacts_unreadable'`, and check_dossier_consistency
+ * answers with an error instead of a verdict.
+ *
  * @module server/services/intelligence/cross-artifact-consistency
  */
 
@@ -65,6 +72,12 @@ export interface ConsistencyReport {
   readonly divergences: readonly ConsistencyDivergence[];
   readonly verdict: 'clean' | 'minor_issues' | 'needs_review' | 'blocker';
   readonly generatedAt: string;
+  /**
+   * Set when the project's artifacts could not be read, so nothing was
+   * compared. The verdict of such a report means nothing and must not be
+   * shown as one.
+   */
+  readonly unavailable?: 'artifacts_unreadable';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -286,7 +299,8 @@ export async function checkDossierConsistency(params: {
     logger.warn(
       `[cross-artifact] Failed to load related artifacts: ${err instanceof Error ? err.message : 'unknown'}`,
     );
-    return emptyReport;
+    // Not the empty report: its verdict is 'clean', and nothing was compared.
+    return { ...emptyReport, unavailable: 'artifacts_unreadable' };
   }
 
   const divergences: ConsistencyDivergence[] = [];
