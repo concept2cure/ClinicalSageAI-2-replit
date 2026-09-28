@@ -114,5 +114,12 @@ Checks on the whole batch:
    organisation with `signInMembership`, so that the token, the challenge event and `verify-mfa` agree
    for a membership-only account. As it stands, such an account is refused `NO_ORGANIZATION` at that
    door, and nothing is recorded.
+   **Fixed 2026-09-28.** verify-password selects the organisation with `signInMembership` (as
+   `routes/auth.ts` does); the partial token, the challenge event and the response name that one; no
+   membership is refused `NO_ORGANIZATION` with a recorded `no_organization` event. verify-mfa and
+   `/refresh-token` read the role strictly (`membershipRoleOf`): no membership refuses (recorded as
+   `no_membership` at verify-mfa) instead of issuing a session or successor with an invented `user` role, and
+   a failed read is an error, not a role. The hard-coded `organizationName: 'Concept2Cure'` in the
+   verify-password response is gone. 5 enterprise auth tests failed on the unfixed route; 36/36 pass.
 
 - **Performed by:** session `session_01KiDof7JE6LiaZhRvh2hJrb`, on `concept2cure-v2` directly per Rule 0.

@@ -14,12 +14,15 @@ vi.hoisted(() => {
 
 const state = vi.hoisted(() => ({
   passwordChangedAtSeconds: null as string | number | null,
+  /** The account's role in the token's organisation; null = no membership. */
+  membershipRole: 'member' as string | null,
 }));
 const revokeToken = vi.hoisted(() => vi.fn(async (_token: string, _reason?: string) => undefined));
 
 // The live-token check reads the revocation list and the account's standing
-// through the pool; the account the tokens name is in use. `db` (drizzle) is
-// empty so lookupOrgRole falls back to 'user', as it does for any read failure.
+// through the pool; the account the tokens name is in use. `db` (drizzle)
+// answers the one read the route makes of it: the membership in the token's
+// organisation (state.membershipRole).
 const dbDouble = vi.hoisted(() => {
   const pool = {
     query: async (sql: string) => {
@@ -30,7 +33,12 @@ const dbDouble = vi.hoisted(() => {
       return { rows: [], rowCount: 0 };
     },
   };
-  return { db: {}, pool, getPool: () => pool, getDb: () => ({}) };
+  const chain: Record<string, unknown> = {};
+  chain.select = () => chain;
+  chain.from = () => chain;
+  chain.where = () => chain;
+  chain.limit = async () => (state.membershipRole ? [{ role: state.membershipRole }] : []);
+  return { db: chain, pool, getPool: () => pool, getDb: () => chain };
 });
 vi.mock('../../db', () => dbDouble);
 vi.mock('../../db.js', () => dbDouble);
@@ -98,6 +106,30 @@ const refresh = (token: string) =>
 beforeEach(() => {
   revokeToken.mockClear();
   state.passwordChangedAtSeconds = null;
+  state.membershipRole = 'member';
+});
+
+/* 2026-09-28: the role was looked up with a fallback to 'user' for no
+   membership and for a failed read, so a member removed from the organisation
+   renewed their token a day at a time. */
+describe('POST /refresh-token and the organisation the token names', () => {
+  const orgToken = () => sign({ ...base, type: 'access', organizationId: '2' });
+
+  it('carries the membership role into the successor', async () => {
+    state.membershipRole = 'reviewer';
+    const res = await refresh(orgToken());
+    expect(res.status).toBe(200);
+    expect((jwt.decode(res.body.token) as { role: string }).role).toBe('reviewer');
+  });
+
+  it('mints nothing and revokes nothing once the account no longer belongs to it', async () => {
+    state.membershipRole = null;
+    const res = await refresh(orgToken());
+    expect(res.status).toBe(403);
+    expect(res.body).toMatchObject({ error: 'NO_ORGANIZATION' });
+    expect(res.body.token).toBeUndefined();
+    expect(revokeToken).not.toHaveBeenCalled();
+  });
 });
 
 describe('POST /refresh-token rotates', () => {

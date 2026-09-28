@@ -41,7 +41,7 @@ import { sendLoginOtpEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
 import { mfaEnrolmentOf } from '../services/mfa-enrolment';
 import { padUnknownEmailTiming } from '../services/login-timing-pad';
-import { auditOrganizationOf } from '../services/sign-in-organisation';
+import { auditOrganizationOf, membershipsOf, signInMembership } from '../services/sign-in-organisation';
 
 const router = Router();
 // SECURITY FIX: isDev variable and devUser removed — no more dev-mode auth bypasses.
@@ -167,23 +167,23 @@ async function extractJwtUser(
 }
 
 /** Helper: look up user's actual role in an organization */
-async function lookupOrgRole(userId: number, organizationId?: number): Promise<string> {
-  if (!organizationId) return 'user';
-  try {
-    const [membership] = await db
-      .select({ role: organizationUsers.role })
-      .from(organizationUsers)
-      .where(
-        and(
-          eq(organizationUsers.userId, userId),
-          eq(organizationUsers.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-    return membership?.role || 'user';
-  } catch {
-    return 'user';
-  }
+/**
+ * The account's role in this organisation, from its membership; null when it
+ * holds none. A failed read throws (the route answers 500) — it is not a role.
+ *
+ * 2026-09-28: this was `lookupOrgRole`, which answered 'user' for no
+ * membership AND for a failed read, so verify-mfa issued a session, and
+ * /refresh a fresh 24-hour token, in an organisation the account did not
+ * belong to (the per-request membership gate still refused its reads — the
+ * door should not have issued the token).
+ */
+async function membershipRoleOf(userId: number, organizationId: number): Promise<string | null> {
+  const [membership] = await db
+    .select({ role: organizationUsers.role })
+    .from(organizationUsers)
+    .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, organizationId)))
+    .limit(1);
+  return membership ? membership.role || 'member' : null;
 }
 
 /**
@@ -390,20 +390,40 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     // Check if password has expired
     const passwordExpired = await isPasswordExpired(user.id);
 
-    // Always require 2FA — email OTP for all users, TOTP for those who set it up
-    if (!user.defaultOrganizationId) {
+    // Always require 2FA — email OTP for all users, TOTP for those who set it up.
+    //
+    // The organisation this sign-in lands in: the account's membership in its
+    // default organisation when it holds one, otherwise its first membership —
+    // the rule the main login applies (routes/auth.ts). 2026-09-28: this read
+    // users.default_organization_id alone, so an account added through user
+    // administration (a membership, no default) was refused NO_ORGANIZATION
+    // here and nothing was recorded, and an account whose default was not a
+    // membership was issued a partial token naming it.
+    const membership = signInMembership(await membershipsOf(user.id), user.defaultOrganizationId);
+    if (!membership) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: await auditOrganizationOf(user),
+        email: user.email,
+        outcome: 'failure',
+        reason: 'no_organization',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(403).json({
         error: 'NO_ORGANIZATION',
         message: 'No organization assigned to this account',
       });
     }
+    const organizationId = membership.organizationId;
 
     // Issue partial token for MFA step
     const partialToken = jwt.sign(
       {
         userId: user.id.toString(),
         email: user.email,
-        organizationId: user.defaultOrganizationId.toString(),
+        organizationId: organizationId.toString(),
         role: 'pending_mfa',
         mfaPending: true,
       },
@@ -416,16 +436,12 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     let maskedEmail: string | undefined;
 
     // Password verified, second factor requested: the same event /api/auth/login records.
-    // 2026-09-28 (SEC-0928-2): deliberately not auditOrganizationOf. Past the
-    // NO_ORGANIZATION guard this sign-in lands in the default organisation (the
-    // partial token names it, and verify-mfa records its events against the
-    // token's organisation), so the challenge names the same one. Where the
-    // default is not a membership, auditOrganizationOf would name the first
-    // membership and split one sign-in across two ledgers.
+    // Against the organisation the partial token names, which verify-mfa
+    // records its events against too: one sign-in, one ledger.
     await recordAuthEvent({
       action: 'user_login_mfa_challenge',
       userId: user.id,
-      tenantId: user.defaultOrganizationId,
+      tenantId: organizationId,
       email: user.email,
       outcome: 'success',
       reason: hasTotpSetup ? 'mfa_challenge_totp' : 'mfa_challenge_email',
@@ -458,8 +474,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         displayName: user.name || user.email,
         role: 'user',
-        organizationId: user.defaultOrganizationId.toString(),
-        organizationName: 'Concept2Cure',
+        organizationId: organizationId.toString(),
       },
     });
   } catch (error: any) {
@@ -593,8 +608,8 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     const mfaOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
 
     // Parallel: fetch role and org name concurrently (the user row was read above).
-    const [mfaActualRole, mfaOrgResult] = await Promise.all([
-      mfaOrgId ? lookupOrgRole(userId, mfaOrgId) : Promise.resolve('user'),
+    const [mfaMembershipRole, mfaOrgResult] = await Promise.all([
+      mfaOrgId ? membershipRoleOf(userId, mfaOrgId) : Promise.resolve(null),
       mfaOrgId
         ? db
             .select({ name: organizations.name, settings: organizations.settings })
@@ -603,6 +618,22 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
             .limit(1)
         : Promise.resolve([]),
     ]);
+    // A session only in an organisation the account belongs to — by now, not
+    // only when the partial token was minted (2026-09-28; see membershipRoleOf).
+    if (!mfaMembershipRole) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId,
+        tenantId: decoded.organizationId,
+        email: decoded.email,
+        outcome: 'failure',
+        reason: 'no_membership',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({ error: 'NO_ORGANIZATION', message: 'No organization assigned to this account' });
+    }
+    const mfaActualRole = mfaMembershipRole;
     const mfaVerifyOrgName = mfaOrgResult[0]?.name || 'Organization';
 
     // The session's id, start and idle window, registered against the
@@ -1056,9 +1087,11 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
 
     // Re-query actual role from DB instead of trusting stale JWT claim
     const refreshOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
-    const refreshRole = refreshOrgId
-      ? await lookupOrgRole(parseInt(decoded.userId), refreshOrgId)
-      : 'user';
+    const refreshRole = refreshOrgId ? await membershipRoleOf(parseInt(decoded.userId), refreshOrgId) : 'user';
+    // No membership any more: no successor token (2026-09-28; see membershipRoleOf).
+    if (!refreshRole) {
+      return res.status(403).json({ error: 'NO_ORGANIZATION', message: 'No organization assigned to this account' });
+    }
 
     const newToken = jwt.sign(
       {
