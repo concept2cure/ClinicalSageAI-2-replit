@@ -1009,7 +1009,11 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
 
   return (
     <div className="ct-wrap" data-canvas-expanded={expandedDocId ? 'true' : undefined}>
-      <div className="ct-head">
+      {/* `ct-thread-head`, not `ct-head`: that name is the grid header row of
+          every `.ct-table` (surfaces-v2.css), and this header's flex rule for
+          it, loaded later, collapsed the audit trail's and six other tables'
+          column headers into the first 270px (launch sweep finding 47). */}
+      <div className="ct-thread-head">
         <button className="ct-back" onClick={() => onNav && onNav('project-home')}>{I.left} Project</button>
         <div className="ct-head-mid">
           <div className="ct-head-t">{title}</div>

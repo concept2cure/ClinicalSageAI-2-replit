@@ -444,8 +444,15 @@ export function TopBar({
       <div className="crumbs">
         <span>Concept2Cure.RI</span>
         <span className="sep" aria-hidden="true">›</span>
-        <span>{tier ? tier.label : ''}</span>
-        <span className="sep" aria-hidden="true">›</span>
+        {/* A surface in both client categories has no tier crumb; this drew an
+            empty one between two separators ("Concept2Cure.RI › › Quality"),
+            launch sweep finding 129. */}
+        {tier && (
+          <>
+            <span>{tier.label}</span>
+            <span className="sep" aria-hidden="true">›</span>
+          </>
+        )}
         <span className="here">{surface.label}</span>
       </div>
       <div className="tb-spacer" />

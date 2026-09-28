@@ -950,14 +950,14 @@ function chainSummary(v: ChainVerdictView): string {
   if (v.verdict === 'unverified') {
     return 'The server returned no chain verdict on this read, so the chain is not verified here';
   }
-  const span = `${v.rowsChecked} chained entry(ies) verified server-side (${v.sequencedRows} sequenced, ${v.legacyRows} legacy)`;
+  const span = `${v.rowsChecked} chained ${v.rowsChecked === 1 ? 'entry' : 'entries'} verified server-side (${v.sequencedRows} sequenced, ${v.legacyRows} legacy)`;
   if (v.verdict === 'intact') return `Hash chain verifies intact over ${span}`;
   return `Hash chain breaks at entry ${v.brokenAt?.id ?? 'unknown'} (${v.brokenAt?.segment ?? 'unknown'} segment, ${
     v.brokenAt?.commitsTo ? `commits to ${v.brokenAt.commitsTo}` : 'content does not derive from any predecessor'
   }) over ${span}`;
 }
 
-/* ════════════ Audit trail — immutable hash-chain viewer (ss11.10(e)) ════════════
+/* ════════════ Audit trail — immutable hash-chain viewer (§11.10(e)) ════════════
    Live-anchored to GET /api/audit-trail/ledger (mounted in
    server/bootstrap/register-regulatory-routes.ts, router
    server/routes/audit-trail-ledger.routes.ts). REAL: an org-scoped, newest-first
@@ -1104,7 +1104,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
     const filtered = kind !== 'all' || term.length > 0;
     return {
       summary:
-        `Audit trail: ${entries.length} hash-chained entry(ies)` +
+        `Audit trail: ${entries.length} hash-chained ${entries.length === 1 ? 'entry' : 'entries'}` +
         (filtered ? `, filtered to ${log.length} by kind "${kind}"${term ? ` and the search "${q}"` : ''}` : '') +
         `. ${chainSummary(chainStatus)}` +
         (entry ? ` Entry ${entry.id} is open.` : ''),
@@ -1154,7 +1154,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       <AdminHeader
         eyebrow="Admin — compliance"
         title="Audit trail"
-        sub={`${entries.length} entries — hash-chained — append-only — 21 CFR Part 11 ss11.10(e)`}
+        sub={`${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} — hash-chained — append-only — 21 CFR Part 11 §11.10(e)`}
         actions={
           <React.Fragment>
             <button
@@ -1999,7 +1999,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   return (
     <div className="page-inner">
       <AdminHeader
-        eyebrow="Workspace — /api/module-subscriptions"
+        eyebrow="Workspace — apps"
         title="Apps catalog"
         sub="Every application — the destinations you open and work in — entitlement-aware. Active apps launch; anything you cannot open states which of the reasons applies and the step that resolves it, never a dead button. Platform services (below) are the capabilities that run inside these apps."
         actions={
