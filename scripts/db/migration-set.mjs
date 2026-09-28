@@ -2647,6 +2647,16 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D3/2026-09-28-users-rls/.
   'migrations/20260928_users_membership_rls.sql',
 
+  // ── public.platform_role_grants: platform-scope writes only (D3) ─────────
+  // One active row makes a user a platform operator (requirePlatformAdmin,
+  // requireBusinessAdmin, master-admin). No RLS, runtime role may write it: a
+  // plain member's tenant scope wrote itself super_admin and the Access
+  // Management console admitted it. SELECT stays open (the check runs in the
+  // caller's tenant scope); INSERT/UPDATE/DELETE need app_super_admin — the
+  // console runs in the system scope. No tenant column: the sweep skips it.
+  // Evidence docs/evidence/D3/2026-09-28-platform-role-grants/.
+  'migrations/20260928_platform_role_grants_platform_writes.sql',
+
   // ── submissions.program_id: a submission carries its project (LX-22) ─────
   // The project → submission link was guessed from product names; two projects
   // for one product shared a filing spine. Additive column, a composite
