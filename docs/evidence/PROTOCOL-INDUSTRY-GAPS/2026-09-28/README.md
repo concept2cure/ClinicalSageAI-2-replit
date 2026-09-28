@@ -1,4 +1,4 @@
-# Protocol build — industry gaps closed (Tier 1 and the first four Tier 2 rows)
+# Protocol build — industry gaps closed (Tier 1 and the first five Tier 2 rows)
 
 **Date:** 2026-09-28 · **Binding design:** `docs/design/PROTOCOL_INDUSTRY_GAPS.md`
 **Prompted by:** the founder — *"What is missing in our protocol build solutions
@@ -25,9 +25,10 @@ narrates.
 | Enrollment forecast from the site plan (Tier 2) | Anisimov & Fedorov 2007 | `study-design/enrollment-projection.ts` over `stats/enrollment-forecast.ts` + `StudyDesign.accrualPlan?` | `…/:id/enrollment` | `review_enrollment_forecast` |
 | Interim-analysis operating characteristics (Tier 2) | ICH E9 §4.5; FDA adaptive guidance (2019) | `study-design/interim-oc.ts` over `stats/group-sequential-oc.ts` | `…/:id/interim-oc` | `review_interim_operating_characteristics` |
 | MMRM sample size from sponsor assumptions (Tier 2) | ICH E9(R1) | `study-design/mmrm-sizing.ts` over `stats/mmrm-design.ts` + `StatisticalPlan.mmrmAssumptions?` | `…/:id/mmrm` | `review_mmrm_sizing` |
+| External-control borrowing plan (Tier 2) | FDA draft guidance on externally controlled trials (2023); ICH E10 §2.5 | `study-design/external-control-plan.ts` over `stats/external-control.ts` + `StudyDesign.externalControlPlan?` | `…/:id/external-control` | `review_external_control_plan` |
 
 Every design engine is also a `POST /api/study-design/<path>` for an unsaved
-design. All twelve engines are in the Protocol Development surface's
+design. All thirteen engines are in the Protocol Development surface's
 **Projections of this design** pane (`ProtocolDevProjections.tsx` →
 `ProtocolDevIndustryProjections.ts`), and every one downloads its engine output
 as JSON byte for byte.
@@ -94,9 +95,10 @@ only), the CAPA join anchored on the scoped row, input bounds, route order
 | `study-design/__tests__/enrollment-projection.test.ts` | 8 |
 | `study-design/__tests__/interim-oc.test.ts` | 14 |
 | `study-design/__tests__/mmrm-sizing.test.ts` | 11 |
+| `study-design/__tests__/external-control-plan.test.ts` | 9 |
 | `protocol-development/__tests__/protocol-industry-service.pglite.integration.test.ts` | 17 |
 | `ana/__tests__/protocol-industry-tools.test.ts` | 8 |
-| `client/…/__tests__/protocolDevIndustryProjections.test.ts` | 16 |
+| `client/…/__tests__/protocolDevIndustryProjections.test.ts` | 17 |
 
 Regression: `server/services/study-design/__tests__` + `protocol-development/__tests__`
 + the study-design and protocol-development route suites — 44 files, 833 tests,
@@ -138,6 +140,8 @@ red, the file was restored byte for byte, and the suite re-ran green.
 | Interim OC | unrecorded sidedness taken as one-sided without a gap | `unrecorded sidedness is solved at alpha/2 and said to be an assumption` (`expected 0.05 to be 0.025`) |
 | MMRM | the engine's 0.90 power default allowed to stand in for an unrecorded power | `no target power: nothing is sized` (`expected { nPerArm: 179, … } to be null`) |
 | MMRM | a planned-N shortfall reported as covered | `a planned N below the requirement is reported with the shortfall` (`expected 'rendered' to be 'partial'`) |
+| External control | a fixed power-prior discount scored as a conflict plan | `a fixed power-prior discount is not a conflict plan` (`expected 'rendered' to be 'partial'`) |
+| External control | a borrowing ratio approximated for a fully external control | `a fully external control has no ratio to compute` (`expected 'hybrid' to be 'fully_external'`) |
 | Service | CAPA join without its org anchor | `excludes other organisations' … CAPA` (`expected 1 to be 0`) — after strengthening the test so the only open action is another org's |
 | Service | version lookup without its org filter | `a label not recorded for this org is NOT_FOUND — including one another org recorded` (`promise resolved … instead of rejecting`) |
 | AnA tools | one handler unregistered | `review_protocol_redline handler registered: expected undefined to be type of 'function'` |
@@ -159,8 +163,7 @@ red, the file was restored byte for byte, and the suite re-ran green.
   one as `unstated`.
 - **WHO item 9 (public title)** stays `missing` until the design carries a
   distinct public title (`publicTitle?` on the spine).
-- **Tier 2 remaining:** external-control borrowing, multiplicity procedures,
-  win ratio / RMST. **Tier 3** as listed in the design document.
+- **Tier 2 remaining:** multiplicity procedures, win ratio / RMST. **Tier 3** as listed in the design document.
 - **The legacy `/api/protocol` optimizer** (model-generated figures outside the
   governed gateway) is entangled with `analytics-routes.ts`; its retirement is
   its own reviewed change under the deletion rule.

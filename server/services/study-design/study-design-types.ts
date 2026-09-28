@@ -532,6 +532,33 @@ export interface AccrualPlan {
   seed?: number;
 }
 
+/**
+ * A pre-specified plan to borrow from an external (historical / real-world)
+ * control. Every value is the sponsor's; see external-control-plan.ts.
+ */
+export interface ExternalControlPlan {
+  /** Where the external control comes from (named study, registry, RWD source). */
+  source: string;
+  /** The design endpoint the borrowing is for. */
+  endpointName: string;
+  /** Summary of the external control on that endpoint. */
+  historical: { n: number; mean: number; se: number };
+  /** How strength is borrowed. */
+  method: 'power_prior' | 'commensurate';
+  /** Power-prior discount, 0 ≤ a0 ≤ 1 (power_prior only). */
+  a0?: number;
+  /** Commensurability variance τ² ≥ 0 (commensurate only). */
+  tau2?: number;
+  /** Planned concurrent (randomised) control size; 0 for a fully external control. */
+  plannedConcurrentControlN: number;
+  /** Assumed SD of the endpoint, to express the planned concurrent control's precision. */
+  assumedSd?: number;
+  /** A tipping-point sensitivity analysis is pre-specified. */
+  tippingPointAnalysisPlanned?: boolean;
+  /** Covariate balance between the populations is pre-specified (e.g. SMDs, weighting). */
+  covariateBalancePlanned?: boolean;
+}
+
 export interface StudyDesign {
   /** Stable id (set once persisted; optional for an in-memory/proposed design). */
   id?: string;
@@ -560,6 +587,8 @@ export interface StudyDesign {
   safety?: SafetyDesign;
   /** The planned site accrual an enrollment forecast runs on. See enrollment-projection.ts. */
   accrualPlan?: AccrualPlan;
+  /** A pre-specified external-control borrowing plan. See external-control-plan.ts. */
+  externalControlPlan?: ExternalControlPlan;
 
   /**
    * Regulatory-strategy attributes the regional rules read. Absent fields are
