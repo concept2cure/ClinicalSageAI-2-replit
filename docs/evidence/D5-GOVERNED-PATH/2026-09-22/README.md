@@ -646,7 +646,10 @@ builds the table exactly as the migration set does:
 
 **Still open.**
 - The AnA command executor calls the cascade with no transaction, so the
-  dependents it unblocks there have no ledger row.
+  dependents it unblocks there have no ledger row. Its own board write and
+  `task.transition` row became one transaction on 2026-09-24, in another lane
+  (`boardWriteWithLineage`). The cascade still runs after that COMMIT, on the
+  pool (`command-executor.ts`, `cascadeUnblockOnCompletion`).
 - A dependency link racing a completion of the same pair can deadlock.
   Postgres aborts one side (40P01), which rolls back and is answered as a
   failure.
