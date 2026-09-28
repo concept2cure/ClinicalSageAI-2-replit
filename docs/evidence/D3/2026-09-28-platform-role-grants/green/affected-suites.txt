@@ -1,0 +1,661 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-28T17:15:51.543Z","pid":14941,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T17:15:51.544Z","pid":14941,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T17:15:51.544Z","pid":14941,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/entitlement-grants-resolution.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-28T17:15:51.650Z', poolSize: 1 }
+
+stdout | tests/db/entitlement-grants-resolution.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/entitlement-grants-resolution.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-09-28T17:15:51.832Z","pid":14941,"hostname":"vm","context":{"op":"pool.query","caller":"/home/user/ClinicalSageAI-2-replit/tests/db/entitlement-grants-resolution.dbtest.ts:401:26","queryPreview":"SELECT 1 FROM module_subscriptions LIMIT 1","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+{"level":50,"time":"2026-09-28T17:15:51.833Z","pid":14941,"hostname":"vm","context":{"error":"[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on","query":"SELECT 1 FROM module_subscriptions LIMIT 1","params":[]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:51.913Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91124,"dbta-matrix",true,null,null]},"msg":"[database] Database query error"}
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > posture — the connection these tests run on is the production one > server/db talks to Postgres as the non-superuser runtime role, RLS enforcing, scope applied 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > posture — the connection these tests run on is the production one > the db handles the modules under test import (server/db.js `pool` and `query`) are that same runtime pool 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > posture — the connection these tests run on is the production one > module_subscriptions is RLS-enabled and FORCED — the scope is load-bearing, not decorative 1ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > posture — the connection these tests run on is the production one > an unscoped server/db query fails closed (the instrumented pool refuses it) 9ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='null' actorEmail=null (per-user scope) 8ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='null' actorEmail='dbta-actor@example.invalid' (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='date' actorEmail=null (per-user scope) 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='date' actorEmail='dbta-actor@example.invalid' (per-user scope) 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='iso' actorEmail=null (per-user scope) 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='iso' actorEmail='dbta-actor@example.invalid' (per-user scope) 7ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='null' actorEmail=null (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='null' actorEmail='dbta-actor@example.invalid' (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='date' actorEmail=null (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='date' actorEmail='dbta-actor@example.invalid' (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='iso' actorEmail=null (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='iso' actorEmail='dbta-actor@example.invalid' (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > ON CONFLICT update path, per-user scope (customer toggle / access-request approval) 13ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > ON CONFLICT update path, system scope (master-admin toggle, trials, billing webhook, setup) 12ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > a per-user scope cannot write another tenant's grant — RLS refuses it 6ms
+stdout | tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > getLicenseInfo: the plan, and only the LIVE grants as enabled modules
+[database] Database connection successful { timestamp: '2026-09-28T17:15:51.934Z', poolSize: 2 }
+
+stdout | tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > the rail agrees: live grant subscribed, lapse falls to plan, revocation locked as disabled
+[database] Database connection successful { timestamp: '2026-09-28T17:15:52.008Z', poolSize: 3 }
+
+stdout | tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > the rail agrees: live grant subscribed, lapse falls to plan, revocation locked as disabled
+[database] Database connection successful { timestamp: '2026-09-28T17:15:52.008Z', poolSize: 4 }
+
+stderr | tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > the rail reports NO verdict (resolved:false) when the organization row cannot be read
+{
+  "timestamp": "2026-09-28T17:15:52.021Z",
+  "level": "warn",
+  "message": "[navigation-entitlements] module catalog empty — reporting no verdict",
+  "context": {
+    "organizationId": 91149
+  }
+}
+
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > getLicenseInfo: the plan, and only the LIVE grants as enabled modules 7ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > getModuleCatalog: each grant shape reads as what it is 10ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: perpetual grant and live trial are allowed above the plan 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a lapsed trial ABOVE the plan is refused, naming the calendar date, never the instant 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a lapsed trial the plan COVERS is allowed — a lapse removes the override, not the entitlement 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a disabled row with a past expires_at is a revocation, never read as a lapse 7ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a REVOKED module the plan covers is refused, agreeing with the rail 9ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule { ignoreRevocation }: the admin toggle still gets the PLAN answer, so a switched-off module can be switched back on 7ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: no row above the plan is the plain tier refusal 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a revocation as the grant writer produces it (no date) is refused, as a revocation 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a module offered to another industry is refused, and a lapsed trial on one says so 6ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule fails closed on a missing organization and on an unknown module 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > the rail agrees: live grant subscribed, lapse falls to plan, revocation locked as disabled 16ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > the rail reports NO verdict (resolved:false) when the organization row cannot be read 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > a per-user scope sees none of another org's grants (the licence cannot leak across tenants) 2ms
+{"level":40,"time":"2026-09-28T17:15:52.045Z","pid":14941,"hostname":"vm","context":{"op":"pool.query","caller":"server/services/license-manager.ts:765:12","queryPreview":"SELECT max_projects FROM organizations WHERE id = $1","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+stderr | tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > fails CLOSED: a read the pool refuses, and a missing organization row, both deny
+{
+  "timestamp": "2026-09-28T17:15:52.046Z",
+  "level": "error",
+  "message": "[license-manager] Program quota check failed — denying create (fail-closed)",
+  "context": {
+    "organizationId": 91106,
+    "error": "[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on"
+  }
+}
+
+{"level":40,"time":"2026-09-28T17:15:52.046Z","pid":14941,"hostname":"vm","context":{"op":"pool.query","caller":"server/services/license-manager.ts:766:12","queryPreview":"SELECT COUNT(*)::int AS cnt FROM regulatory_programs WHERE organization_id = $1 AND deleted_at IS NULL AND status <> 'archived'","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+stderr | tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > fails CLOSED: a read the pool refuses, and a missing organization row, both deny
+{
+  "timestamp": "2026-09-28T17:15:52.048Z",
+  "level": "error",
+  "message": "[license-manager] Program quota check found no organization row — denying create",
+  "context": {
+    "organizationId": 91149
+  }
+}
+
+{"level":40,"time":"2026-09-28T17:15:52.070Z","pid":14941,"hostname":"vm","context":{"op":"pool.query","caller":"server/middleware/requirePlatformAdmin.ts:85:26","queryPreview":"SELECT 1 FROM platform_role_grants WHERE user_id = $1 AND revoked_at IS NULL AND LOWER(role) = ANY($2) LIMIT 1","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+{"level":50,"time":"2026-09-28T17:15:52.070Z","pid":14941,"hostname":"vm","context":{"error":"[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on","query":"SELECT 1 FROM platform_role_grants\n        WHERE user_id = $1 AND revoked_at IS NULL AND LOWER(role) = ANY($2)\n        LIMIT 1","params":[468,["super_admin","platform_admin","support"]]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.071Z","pid":14941,"hostname":"vm","context":{"error":"[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on","stack":"Error: [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on\n    at missingTenantScopeError (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:178:10)\n    at BoundPool.instrumentedQuery [as query] (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:372:21)\n    at query (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:158:31)\n    at hasActivePlatformGrant (/home/user/ClinicalSageAI-2-replit/server/middleware/requirePlatformAdmin.ts:85:26)\n    at resolvePlatformAdmin (/home/user/ClinicalSageAI-2-replit/server/middleware/requirePlatformAdmin.ts:116:10)\n    at resolveAdminStanding (/home/user/ClinicalSageAI-2-replit/server/services/entitlements/master-admin.ts:261:31)\n    at Module.resolveMasterAdmin (/home/user/ClinicalSageAI-2-replit/server/services/entitlements/master-admin.ts:271:17)\n    at /home/user/ClinicalSageAI-2-replit/tests/db/entitlement-grants-resolution.dbtest.ts:916:30\n    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26"},"msg":"[platform-admin-guard] Platform grant lookup failed — denying"}
+stdout | tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on
+{
+  "timestamp": "2026-09-28T17:15:52.114Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 91103,
+    "granted": 19
+  }
+}
+
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > archived and soft-deleted programs hold no seat 2ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > at the limit it refuses 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > a negative entitlement is unlimited; zero is zero seats; NULL is the default of 10 7ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > fails CLOSED: a read the pool refuses, and a missing organization row, both deny 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProjectQuota / checkUserQuota — the usage-panel statements, per-user scope, real rows > checkProjectQuota counts this org's legacy projects only, against the recorded limit 2ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProjectQuota / checkUserQuota — the usage-panel statements, per-user scope, real rows > checkUserQuota counts this org's members only, against the recorded limit 2ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > platform_role_grants is readable by the runtime role from any scope, and written by the platform only 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > the designation row is visible to the lookup's exact statement under a per-user scope 2ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > none of these identities is the owner by the synchronous signals — the DB decides 0ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > an active super_admin designation → owner 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > a revoked super_admin designation → not the owner 1ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > a 'support' designation → not the owner (console access is not a commercial unlock) 1ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > no designation → not the owner 1ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > a FAILED lookup answers "not the owner" and is not cached — the next scoped read recognises the owner 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > the designation cache is per user: the owner's cached "yes" is never served to anyone else 7ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > the designated owner sees every catalog module unlocked on the rail, under the per-user scope 7ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > every launch module id has a catalog row (the grant FK would refuse one that did not) 1ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > the setup path (system scope) grants exactly the launch catalog, perpetual, with no failures 2ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > the rail: launch apps resolve available, non-launch modules resolve locked by launch scope 8ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > a bought module outside the launch scope stays locked; with enforcement off it is subscribed 13ms
+{"level":50,"time":"2026-09-28T17:15:52.143Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"projects",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.144Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"program-journey",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.146Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"filings-catalog",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.147Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"tasks",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.149Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"vault",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.150Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"artifacts-center",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.151Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"document-authoring",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.152Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"template-library",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.154Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"review",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.155Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"protocol-dev",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.156Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"submission-center",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.158Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"dossier-map",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.159Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"ectd-compile",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.161Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"ectd-coauthor",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.163Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"ectd-publishing",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.164Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"gateway-transmittals",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.165Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"dispatch-readiness",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.167Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"quality",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:15:52.168Z","pid":14941,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91104,"qmp",true,null,null]},"msg":"[database] Database query error"}
+stderr | tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > the pre-auth scope cannot write a tenant's launch grants — RLS refuses every one
+{
+  "timestamp": "2026-09-28T17:15:52.169Z",
+  "level": "error",
+  "message": "[launch-scope] launch catalog NOT provisioned for organisation 91104: 19 of 19 launch modules were not granted",
+  "context": {
+    "organizationId": 91104,
+    "attempted": 19,
+    "granted": 0,
+    "failed": 19,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp"
+    ],
+    "errors": [
+      "new row violates row-level security policy for table \"module_subscriptions\""
+    ],
+    "scope": {
+      "tenantId": "0",
+      "role": null,
+      "source": "request",
+      "caller": "auth:POST /signup"
+    },
+    "remediation": "npm run ops:provision-launch-modules -- --org 91104"
+  }
+}
+
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > no launch module is deprecated in the replayed catalog 0ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > the pre-auth scope cannot write a tenant's launch grants — RLS refuses every one 34ms
+{"level":30,"time":"2026-09-28T17:15:54.118Z","pid":14963,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T17:15:54.119Z","pid":14963,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T17:15:54.119Z","pid":14963,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/two-tenant-application-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/two-tenant-application-rls.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-28T17:15:54.291Z', poolSize: 1 }
+
+stdout | tests/db/two-tenant-application-rls.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > catalog and live session prove RLS is active for the runtime role 14ms
+stdout | tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows
+[database] Database connection successful { timestamp: '2026-09-28T17:15:54.704Z', poolSize: 2 }
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A 116ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows 86ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: list/filter, direct read and existence probe hide tenant B from A 31ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: update and delete of tenant B are indistinguishable not-found 15ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: WITH CHECK rejects planting a row into tenant B without leaking details 10ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: list/filter, direct read and existence probe hide tenant B from A 22ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: update and delete of tenant B are indistinguishable not-found 15ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: list/filter, direct read and existence probe hide tenant B from A 22ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: update and delete of tenant B are indistinguishable not-found 15ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: list/filter, direct read and existence probe hide tenant B from A 20ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: update and delete of tenant B are indistinguishable not-found 14ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: list/filter, direct read and existence probe hide tenant B from A 27ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: update and delete of tenant B are indistinguishable not-found 15ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: list/filter, direct read and existence probe hide tenant B from A 23ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: update and delete of tenant B are indistinguishable not-found 16ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: WITH CHECK rejects planting a row into tenant B without leaking details 5ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: list/filter, direct read and existence probe hide tenant B from A 21ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: update and delete of tenant B are indistinguishable not-found 17ms
+{"level":30,"time":"2026-09-28T17:15:55.137Z","pid":14963,"hostname":"vm","context":{"code":"governed-fabric:0f4e7288-6905-4046-abb6-67c8553f45aa","project":903010},"msg":"[decision-record] Creating decision record"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: WITH CHECK rejects planting a row into tenant B without leaking details 5ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > pooled session context is reset and the wrong-context negative control is observable 11ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the recording evaluator persists the caller's own decision through the app role 1506ms
+{"level":30,"time":"2026-09-28T17:15:56.627Z","pid":14963,"hostname":"vm","context":{"code":"governed-fabric:775282e8-321f-48dd-8bbd-58b9eb375eee","project":903010},"msg":"[decision-record] Creating decision record"}
+{"level":40,"time":"2026-09-28T17:15:56.630Z","pid":14963,"hostname":"vm","context":{"operation":"recordGovernedDecision","error":"new row violates row-level security policy for table \"decision_records\""},"msg":"[governance-observability] Governance persistence failure"}
+{"level":40,"time":"2026-09-28T17:15:56.630Z","pid":14963,"hostname":"vm","context":{"decisionId":"775282e8-321f-48dd-8bbd-58b9eb375eee","error":"new row violates row-level security policy for table \"decision_records\""},"msg":"[governed-decision-ledger] Governed decision durable write failed"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > WITH CHECK refuses a decision the recorder files for another tenant 1505ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the simulate route records nothing, for any tenant 1513ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the reads show tenant A its decision and tenant B nothing of it 38ms
+{"level":30,"time":"2026-09-28T17:16:01.210Z","pid":14980,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T17:16:01.213Z","pid":14980,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T17:16:01.213Z","pid":14980,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/module-access-requests.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-28T17:16:01.310Z', poolSize: 1 }
+
+stdout | tests/db/module-access-requests.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/module-access-requests.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/module-access-requests.dbtest.ts > posture > a member request runs as the non-superuser runtime role, RLS on, scoped to their org
+[database] Database connection successful { timestamp: '2026-09-28T17:16:01.488Z', poolSize: 2 }
+
+ ✓ tests/db/module-access-requests.dbtest.ts > posture > a member request runs as the non-superuser runtime role, RLS on, scoped to their org 66ms
+ ✓ tests/db/module-access-requests.dbtest.ts > posture > the platform owner on this prefix is scoped to the owner's own org, not the system scope 14ms
+ ✓ tests/db/module-access-requests.dbtest.ts > posture > the platform owner on the Master Administration prefix runs under the system scope, still as the runtime role 10ms
+ ✓ tests/db/module-access-requests.dbtest.ts > posture > the table is RLS enabled + FORCED with the tenant policy, and the partial unique index is deployed 6ms
+{"level":30,"time":"2026-09-28T17:16:01.564Z","pid":14980,"hostname":"vm","context":{"userId":478,"tenantId":91400,"resourceId":"477"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:01.588Z","pid":14980,"hostname":"vm","context":{"userId":478,"tenantId":91400,"resourceId":"477"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+stdout | tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > five concurrent asks for one module leave exactly one open row, exactly one reported as new
+[database] Database connection successful { timestamp: '2026-09-28T17:16:01.617Z', poolSize: 3 }
+
+stdout | tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > five concurrent asks for one module leave exactly one open row, exactly one reported as new
+[database] Database connection successful { timestamp: '2026-09-28T17:16:01.618Z', poolSize: 4 }
+
+stdout | tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > five concurrent asks for one module leave exactly one open row, exactly one reported as new
+[database] Database connection successful { timestamp: '2026-09-28T17:16:01.619Z', poolSize: 5 }
+
+stdout | tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > five concurrent asks for one module leave exactly one open row, exactly one reported as new
+[database] Database connection successful { timestamp: '2026-09-28T17:16:01.619Z', poolSize: 6 }
+
+stdout | tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > five concurrent asks for one module leave exactly one open row, exactly one reported as new
+[database] Database connection successful { timestamp: '2026-09-28T17:16:01.619Z', poolSize: 7 }
+
+stdout | tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > five concurrent asks for one module leave exactly one open row, exactly one reported as new
+[database] Database connection successful { timestamp: '2026-09-28T17:16:01.621Z', poolSize: 8 }
+
+stdout | tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > five concurrent asks for one module leave exactly one open row, exactly one reported as new
+[database] Database connection successful { timestamp: '2026-09-28T17:16:01.622Z', poolSize: 9 }
+
+stdout | tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > five concurrent asks for one module leave exactly one open row, exactly one reported as new
+[database] Database connection successful { timestamp: '2026-09-28T17:16:01.626Z', poolSize: 10 }
+
+{"level":30,"time":"2026-09-28T17:16:01.655Z","pid":14980,"hostname":"vm","context":{"userId":478,"tenantId":91400,"resourceId":"479"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:01.663Z","pid":14980,"hostname":"vm","context":{"userId":478,"tenantId":91400,"resourceId":"479"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:01.668Z","pid":14980,"hostname":"vm","context":{"userId":478,"tenantId":91400,"resourceId":"479"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:01.669Z","pid":14980,"hostname":"vm","context":{"userId":478,"tenantId":91400,"resourceId":"479"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:01.674Z","pid":14980,"hostname":"vm","context":{"userId":478,"tenantId":91400,"resourceId":"479"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > first ask inserts one row; a repeat updates the SAME open row via the partial unique index 55ms
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > five concurrent asks for one module leave exactly one open row, exactly one reported as new 98ms
+{"level":30,"time":"2026-09-28T17:16:01.707Z","pid":14980,"hostname":"vm","context":{"userId":479,"tenantId":91400,"resourceId":"484"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:01.721Z","pid":14980,"hostname":"vm","context":{"userId":478,"tenantId":91400,"resourceId":"485"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:01.736Z","pid":14980,"hostname":"vm","context":{"userId":480,"tenantId":91400,"resourceId":"485"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:01.750Z","pid":14980,"hostname":"vm","context":{"userId":478,"tenantId":91400,"resourceId":"486"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:01.764Z","pid":14980,"hostname":"vm","context":{"userId":478,"tenantId":91400,"resourceId":"487"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:01.797Z","pid":14980,"hostname":"vm","context":{"userId":482,"tenantId":91401,"resourceId":"488"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > a different member of the same org asking for the same module is a separate request 18ms
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > once answered, a fresh ask creates a NEW open row beside the answered one 42ms
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > the organization comes from the caller, never from the body 16ms
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > an unknown module is refused and writes nothing 6ms
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > /mine returns the caller's own requests in their workspace only 7ms
+{"level":30,"time":"2026-09-28T17:16:01.857Z","pid":14980,"hostname":"vm","context":{"userId":480,"tenantId":91400,"resourceId":"477"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:01.879Z","pid":14980,"hostname":"vm","context":{"userId":480,"tenantId":91400,"resourceId":"489"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:01.894Z","pid":14980,"hostname":"vm","context":{"userId":480,"tenantId":91400,"resourceId":"487"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > org admin A's queue holds org A's requests and none of org B's 7ms
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > org admin A cannot decide org B's request, and nothing is granted to B 8ms
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > org admin B sees org B's request and none of A's 9ms
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > a member cannot read the queue or answer a request 13ms
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > an unauthenticated call is refused before any read 2ms
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > approve writes an enabled, unbounded module_subscriptions row for org A, records the decision and audits it 25ms
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > approve clears a lapsed trial date instead of re-enabling an already-expired grant 20ms
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > decline records the reason, grants nothing, and audits it 17ms
+{"level":30,"time":"2026-09-28T17:16:01.963Z","pid":14980,"hostname":"vm","context":{"userId":480,"tenantId":91400,"resourceId":"491"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > an answered request cannot be answered again, and a reason under the floor is refused 16ms
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > two administrators answering at once produce one decision; the loser is told so 54ms
+{"level":30,"time":"2026-09-28T17:16:02.039Z","pid":14980,"hostname":"vm","context":{"userId":481,"tenantId":91400,"resourceId":"492"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:02.090Z","pid":14980,"hostname":"vm","context":{"userId":484,"tenantId":91401,"resourceId":"493"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":30,"time":"2026-09-28T17:16:02.105Z","pid":14980,"hostname":"vm","context":{"userId":484,"tenantId":91401,"resourceId":"494"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > a decline that wins a race against an approval leaves no grant behind 75ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > H1: the owner's queue holds every workspace's open requests, not only the owner's own 11ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > the per-user route refuses the every-workspace read outright instead of narrowing it 16ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > H2: the owner approving org B's request writes org B's grant, records it and audits it under org B 18ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > the owner declining org B's request records the reason and grants nothing 14ms
+{"level":30,"time":"2026-09-28T17:16:02.164Z","pid":14980,"hostname":"vm","context":{"userId":486,"tenantId":91400,"resourceId":"497"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":40,"time":"2026-09-28T17:16:02.178Z","pid":14980,"hostname":"vm","context":{"userId":480,"role":"admin","email":"d***@example.invalid","path":"/api/admin/master/access-requests"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-28T17:16:02.184Z","pid":14980,"hostname":"vm","context":{"userId":483,"role":"admin","email":"d***@example.invalid","path":"/api/admin/master/access-requests/495/decision"},"msg":"[platform-admin-guard] Master Administration access denied"}
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > the per-user route still cannot reach org B's request for the owner — members stay scoped 5ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > platform staff without the owner grant are admitted to the console but refused the queue and the decision 15ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > an org admin who is also platform staff may answer only their own workspace on the console mount 40ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > an org administrator cannot reach the console mount at all 13ms
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > status=approved and status=declined return exactly the workspace's rows in that state 12ms
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > a queue longer than one page keeps every open request on the page, first, and says it was cut short 23ms
+{"level":30,"time":"2026-09-28T17:16:02.233Z","pid":14980,"hostname":"vm","context":{"userId":482,"tenantId":91401,"resourceId":"704"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+{"level":40,"time":"2026-09-28T17:16:02.247Z","pid":14980,"hostname":"vm","context":{"op":"pool.query","caller":"server/middleware/requirePlatformAdmin.ts:85:26","queryPreview":"SELECT 1 FROM platform_role_grants WHERE user_id = $1 AND revoked_at IS NULL AND LOWER(role) = ANY($2) LIMIT 1","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+{"level":50,"time":"2026-09-28T17:16:02.248Z","pid":14980,"hostname":"vm","context":{"error":"[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on","query":"SELECT 1 FROM platform_role_grants\n        WHERE user_id = $1 AND revoked_at IS NULL AND LOWER(role) = ANY($2)\n        LIMIT 1","params":[482,["super_admin","platform_admin","support"]]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:16:02.248Z","pid":14980,"hostname":"vm","context":{"error":"[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on","stack":"Error: [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on\n    at missingTenantScopeError (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:178:10)\n    at BoundPool.instrumentedQuery [as query] (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:372:21)\n    at query (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:158:31)\n    at hasActivePlatformGrant (/home/user/ClinicalSageAI-2-replit/server/middleware/requirePlatformAdmin.ts:85:26)\n    at resolvePlatformAdmin (/home/user/ClinicalSageAI-2-replit/server/middleware/requirePlatformAdmin.ts:116:10)\n    at resolveAdminStanding (/home/user/ClinicalSageAI-2-replit/server/services/entitlements/master-admin.ts:261:31)\n    at resolveMasterAdmin (/home/user/ClinicalSageAI-2-replit/server/services/entitlements/master-admin.ts:271:17)\n    at resolveActor (/home/user/ClinicalSageAI-2-replit/server/routes/module-access-requests.ts:120:26)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/module-access-requests.ts:163:25\n    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)"},"msg":"[platform-admin-guard] Platform grant lookup failed — denying"}
+{"level":50,"time":"2026-09-28T17:16:02.253Z","pid":14980,"hostname":"vm","context":{"error":"[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on","query":"SELECT 1 FROM platform_role_grants\n        WHERE user_id = $1 AND revoked_at IS NULL AND LOWER(role) = ANY($2)\n        LIMIT 1","params":[482,["super_admin","platform_admin","support"]]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:16:02.253Z","pid":14980,"hostname":"vm","context":{"error":"[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on","stack":"Error: [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on\n    at missingTenantScopeError (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:178:10)\n    at BoundPool.instrumentedQuery [as query] (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:372:21)\n    at query (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:158:31)\n    at hasActivePlatformGrant (/home/user/ClinicalSageAI-2-replit/server/middleware/requirePlatformAdmin.ts:85:26)\n    at resolvePlatformAdmin (/home/user/ClinicalSageAI-2-replit/server/middleware/requirePlatformAdmin.ts:116:10)\n    at resolveAdminStanding (/home/user/ClinicalSageAI-2-replit/server/services/entitlements/master-admin.ts:261:31)\n    at resolveMasterAdmin (/home/user/ClinicalSageAI-2-replit/server/services/entitlements/master-admin.ts:271:17)\n    at resolveActor (/home/user/ClinicalSageAI-2-replit/server/routes/module-access-requests.ts:120:26)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/module-access-requests.ts:244:25\n    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)"},"msg":"[platform-admin-guard] Platform grant lookup failed — denying"}
+{"level":30,"time":"2026-09-28T17:16:02.263Z","pid":14980,"hostname":"vm","context":{"userId":484,"tenantId":91402,"resourceId":"705"},"msg":"[audit-service] [AUDIT] data_modify module_access_request"}
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > a note over 2000 characters is refused and records nothing; one at the limit is kept whole 17ms
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > a real token with no workspace is refused with 401 and records nothing 16ms
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > the owner answering their own workspace's request is not audited as a cross-workspace decision 15ms
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > the migration replays onto the deployed table as a no-op (Rule 1), and the status CHECK holds 6ms
+{"level":30,"time":"2026-09-28T17:16:04.029Z","pid":15006,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T17:16:04.030Z","pid":15006,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T17:16:04.030Z","pid":15006,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-28T17:16:04.190Z', poolSize: 1 }
+
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/account-standing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/account-standing.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/account-standing.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 487
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 488
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 489
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 490
+
+{"level":30,"time":"2026-09-28T17:17:35.000Z","pid":15006,"hostname":"vm","context":{"userId":487,"tenantId":92100,"resourceId":"487"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 26ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 3ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 2ms
+{"level":30,"time":"2026-09-28T17:17:35.000Z","pid":15006,"hostname":"vm","context":{"userId":487,"tenantId":"92100","resourceId":"487"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T17:17:35.000Z","pid":15006,"hostname":"vm","context":{"userId":488,"tenantId":92100,"resourceId":"488"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T17:17:35.000Z","pid":15006,"hostname":"vm","context":{"userId":489,"tenantId":92100,"resourceId":"489"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T17:18:05.000Z","pid":15006,"hostname":"vm","context":{"userId":490,"tenantId":92100,"resourceId":"490"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T17:18:05.000Z","pid":15006,"hostname":"vm","context":{"userId":490,"tenantId":"92100","resourceId":"490"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > an active account signs in 123ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 18ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 14ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it 35ms
+{"level":30,"time":"2026-09-28T17:18:35.000Z","pid":15006,"hostname":"vm","context":{"userId":490,"tenantId":92100,"resourceId":"490"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T17:18:35.000Z","pid":15006,"hostname":"vm","context":{"userId":490,"tenantId":"92100","resourceId":"490"},"msg":"[audit-service] [AUDIT] user_login user"}
+stdout | tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why
+[database] Database connection successful { timestamp: '2026-09-28T17:18:35.000Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-28T17:19:05.000Z","pid":15006,"hostname":"vm","context":{"userId":490,"tenantId":92100,"resourceId":"490"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T17:19:05.000Z","pid":15006,"hostname":"vm","context":{"userId":490,"tenantId":"92100","resourceId":"490"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 90ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account 52ms
+{"level":30,"time":"2026-09-28T17:19:35.000Z","pid":15006,"hostname":"vm","context":{"userId":490,"tenantId":92100,"resourceId":"490"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T17:19:35.000Z","pid":15006,"hostname":"vm","context":{"userId":490,"tenantId":"92100","resourceId":"490"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated 51ms
+{"level":30,"time":"2026-09-28T17:16:07.391Z","pid":15023,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T17:16:07.394Z","pid":15023,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T17:16:07.394Z","pid":15023,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/master-licensing-console.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-28T17:16:07.437Z', poolSize: 1 }
+
+stdout | tests/db/master-licensing-console.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/master-licensing-console.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/master-licensing-console.dbtest.ts > posture > the console runs as the non-superuser runtime role, RLS enforcing, under the SYSTEM scope
+[database] Database connection successful { timestamp: '2026-09-28T17:16:07.478Z', poolSize: 2 }
+
+ ✓ tests/db/master-licensing-console.dbtest.ts > posture > the console runs as the non-superuser runtime role, RLS enforcing, under the SYSTEM scope 24ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > posture > the same router on a non-system path gets the caller-org scope instead 6ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > owned migrations: the file on disk is the deployed object > 20260823: public.provision_org_modules and module_tier_level are byte-identical to the file 2ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > owned migrations: the file on disk is the deployed object > 20260824: the file builds exactly the platform_settings shape the deployed table has 12ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing > under the system scope sees every lane tenant and module, with cross-tenant grant counts 18ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing > under a PER-USER scope the same read narrows to the caller org — why the system prefix is required 8ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing/tenants/:id > reports enabled-grant, disabled-grant, tier-only and industry verdicts for a tenant 9ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing/tenants/:id > a subscription row of ANOTHER tenant never leaks into this tenant’s verdict 7ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing/tenants/:id > 404s an unknown tenant 5ms
+{"level":30,"time":"2026-09-28T17:16:07.580Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"resourceId":"dbtb_mod_repack"},"msg":"[audit-service] [AUDIT] data_modify module_packaging"}
+{"level":30,"time":"2026-09-28T17:16:07.607Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"resourceId":"dbtb_mod_repack"},"msg":"[audit-service] [AUDIT] data_modify module_packaging"}
+{"level":30,"time":"2026-09-28T17:16:07.618Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"resourceId":"dbtb_mod_disabled"},"msg":"[audit-service] [AUDIT] data_modify module_packaging"}
+{"level":30,"time":"2026-09-28T17:16:07.628Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"resourceId":"dbtb_mod_disabled"},"msg":"[audit-service] [AUDIT] data_modify module_packaging"}
+{"level":30,"time":"2026-09-28T17:16:07.650Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"tenantId":91202,"resourceId":"91202"},"msg":"[audit-service] [AUDIT] data_modify organization"}
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > refuses without a reason and changes nothing 10ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > refuses an invalid tier, and 404s an unknown module 8ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > re-tiers the module, preserves other metadata, keeps existing grants, and audits 28ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > minTier null makes the module unrestricted 11ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > unaffectedGrants counts ENABLED grants only: a revocation is not a grant the change leaves in place 20ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > refuses a bad tier, a missing reason, and an unknown tenant 10ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > upgrades the plan, audits it under the tenant id, and writes no subscription rows by itself 16ms
+{"level":30,"time":"2026-09-28T17:16:07.678Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"tenantId":91202,"resourceId":"91202"},"msg":"[audit-service] [AUDIT] data_modify organization"}
+{"level":30,"time":"2026-09-28T17:16:07.697Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"tenantId":91202,"resourceId":"91202"},"msg":"[audit-service] [AUDIT] data_modify organization"}
+{"level":30,"time":"2026-09-28T17:16:07.711Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"tenantId":91202,"resourceId":"91202"},"msg":"[audit-service] [AUDIT] data_modify organization"}
+{"level":30,"time":"2026-09-28T17:16:07.733Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"tenantId":91203,"resourceId":"91203"},"msg":"[audit-service] [AUDIT] data_modify organization"}
+{"level":30,"time":"2026-09-28T17:16:07.781Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"tenantId":91207,"resourceId":"91207"},"msg":"[audit-service] [AUDIT] data_modify organization"}
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > provisions what the plan includes, revokes nothing, re-enables nothing, and reports counts that match the table 32ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > a downgrade provisions nothing, revokes nothing, and names every grant now above the plan 27ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > provisioning a tenant whose tier the ladder does not name > never reports a grant this very run made as "retained above tier" 30ms
+{"level":30,"time":"2026-09-28T17:16:07.817Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"resourceId":"module-enforcement-mode"},"msg":"[audit-service] [AUDIT] data_modify platform_config"}
+{"level":30,"time":"2026-09-28T17:16:07.829Z","pid":15023,"hostname":"vm","context":{"userId":91200002,"resourceId":"module-enforcement-mode"},"msg":"[audit-service] [AUDIT] data_modify platform_config"}
+{"level":30,"time":"2026-09-28T17:16:07.855Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"resourceId":"module-enforcement-mode"},"msg":"[audit-service] [AUDIT] data_modify platform_config"}
+{"level":30,"time":"2026-09-28T17:16:07.868Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"resourceId":"module-enforcement-observations"},"msg":"[audit-service] [AUDIT] data_modify platform_config"}
+{"level":30,"time":"2026-09-28T17:16:07.877Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"resourceId":"module-enforcement-observations"},"msg":"[audit-service] [AUDIT] data_modify platform_config"}
+{"level":50,"time":"2026-09-28T17:16:07.884Z","pid":15023,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at recordAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:151:14)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/master-licensing.ts:740:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":40,"time":"2026-09-28T17:16:07.886Z","pid":15023,"hostname":"vm","context":{"action":"data_modify","resourceType":"platform_config","resourceId":"module-enforcement-observations"},"msg":"[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist"}
+{"level":30,"time":"2026-09-28T17:16:07.895Z","pid":15023,"hostname":"vm","context":{"userId":91200001,"resourceId":"module-enforcement-mode"},"msg":"[audit-service] [AUDIT] data_modify platform_config"}
+ ✓ tests/db/master-licensing-console.dbtest.ts > provisioning a tenant whose industry_mode is NULL > is provisioned as biotech: biotech-listed modules granted, medtech-only not 38ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > malformed tenant ids > 1.5 is a 404 on every tenant route, never a 500 6ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > malformed tenant ids > 99999999999 is a 404 on every tenant route, never a 500 5ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > with nothing stored, the deployment decides and the cache starts cold 4ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > PATCH refuses a missing or short reason and an unknown mode, writing nothing 6ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > PATCH upserts platform_settings, re-reads it, reports source "stored", and audits 24ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > a cold GET reads the stored value from the database, and it outranks the deployment 3ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > the mode-change audit row records the impact the operator could see when deciding 23ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > GET /licensing/enforcement reports the buffer under the mode in force; DELETE needs a reason, clears it, and audits 13ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > under a PER-USER scope a platform-level audit row cannot land — why the system prefix is required 14ms
+stderr | tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > when the stored mode cannot be read, a cold process never escalates past report
+{
+  "timestamp": "2026-09-28T17:16:07.909Z",
+  "level": "error",
+  "message": "[enforcement-mode] could not read the stored enforcement mode — serving a fail-safe value",
+  "context": {
+    "servingMode": "report",
+    "deploymentMode": "enforce",
+    "usedPreviousResolution": false,
+    "err": "permission denied for table platform_settings"
+  }
+}
+
+stderr | tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > when the stored mode cannot be read, a cold process never escalates past report
+{
+  "timestamp": "2026-09-28T17:16:07.913Z",
+  "level": "error",
+  "message": "[enforcement-mode] could not read the stored enforcement mode — serving a fail-safe value",
+  "context": {
+    "servingMode": "report",
+    "deploymentMode": "enforce",
+    "usedPreviousResolution": true,
+    "err": "permission denied for table platform_settings"
+  }
+}
+
+{"level":50,"time":"2026-09-28T17:16:07.915Z","pid":15023,"hostname":"vm","context":{"error":"there is no unique or exclusion constraint matching the ON CONFLICT specification","stack":"error: there is no unique or exclusion constraint matching the ON CONFLICT specification\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at runQueryScoped (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:198:21)\n    at writeEnforcementMode (/home/user/ClinicalSageAI-2-replit/server/services/entitlements/enforcement-mode.ts:395:3)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/master-licensing.ts:863:22"},"msg":"[admin-master-licensing] enforcement mode change failed"}
+stdout | tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_A (standard, grant + disable): the same answer, module for module, across the whole catalog
+[database] Database connection successful { timestamp: '2026-09-28T17:16:07.946Z', poolSize: 3 }
+
+stdout | tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_A (standard, grant + disable): the same answer, module for module, across the whole catalog
+[database] Database connection successful { timestamp: '2026-09-28T17:16:07.947Z', poolSize: 4 }
+
+stdout | tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_E (lapsed trial grant): measured against the rail
+[console-vs-rail] ORG_E (lapsed trial grant): 0 of 96 modules differ []
+
+stdout | tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_F (unrecognised tier): measured against the rail
+[console-vs-rail] ORG_F (unrecognised tier): 0 of 96 modules differ []
+
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > the audit row records the mode actually REPLACED, not a stale per-process cache 13ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > reset: with the stored row gone and the cache dropped, the deployment decides again 4ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > when the stored mode cannot be read, a cold process never escalates past report 18ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_A (standard, grant + disable): the same answer, module for module, across the whole catalog 33ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_B (professional, grants): the same answer, module for module, across the whole catalog 9ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_C (free after the downgrade, provisioned): the same answer, module for module, across the whole catalog 11ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_E (lapsed trial grant): measured against the rail 12ms
+stdout | tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_G (NULL industry_mode): measured against the rail
+[console-vs-rail] ORG_G (NULL industry_mode): 0 of 96 modules differ []
+
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_F (unrecognised tier): measured against the rail 9ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_G (NULL industry_mode): measured against the rail 11ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > an expired grant reads as no override on the console, as on the rail 0ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > an unrecognised tier ranks as standard on the console and the rail, and a tier lock is named "tier" 0ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > a NULL industry_mode reads as biotech on the console, as on the rail 0ms
+{"level":30,"time":"2026-09-28T17:16:09.532Z","pid":15043,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T17:16:09.533Z","pid":15043,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T17:16:09.533Z","pid":15043,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/memberships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/memberships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/memberships.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/memberships.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization
+[database] Database connection successful { timestamp: '2026-09-28T17:16:10.045Z', poolSize: 1 }
+
+{"level":40,"time":"2026-09-28T17:16:10.090Z","pid":15043,"hostname":"vm","context":{"userId":491,"organizationId":90302},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":40,"time":"2026-09-28T17:16:10.091Z","pid":15043,"hostname":"vm","context":{"method":"GET","path":"/api/organizations/90302","statusCode":403},"msg":"[auth-boundary] Unauthenticated request passed through auth boundary (mode=warn). This route would be rejected in enforce mode."}
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 76ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 20ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 5ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 11ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 7ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 5ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin
+{
+  "timestamp": "2026-09-28T17:16:10.564Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 76,
+    "granted": 19
+  }
+}
+
+{"level":30,"time":"2026-09-28T17:16:10.569Z","pid":15043,"hostname":"vm","context":{"userId":497,"tenantId":76,"resourceId":"497"},"msg":"[audit-service] [AUDIT] user_signup user"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 692ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+[database] Database connection successful { timestamp: '2026-09-28T17:16:10.867Z', poolSize: 2 }
+
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-09-28T17:16:10.894Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — invitation email not sent",
+  "context": {
+    "to": "w***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-09-28T17:16:10.895Z","pid":15043,"hostname":"vm","context":{"userId":496,"tenantId":90302,"resourceId":"498"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-09-28T17:16:10.901Z","pid":15043,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:462:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 14ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 196ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 15ms
+{"level":30,"time":"2026-09-28T17:16:12.256Z","pid":15064,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T17:16:12.257Z","pid":15064,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T17:16:12.258Z","pid":15064,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/users-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > reads none of B's user rows, by id, by email, or by scanning 9ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > cannot rewrite B's password hash, MFA secret or reset token, nor delete B's user 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > reads its own organization's members, the caller included 2ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > updates its own member's profile 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > INSERT … RETURNING of a non-member is refused, so tenant-users takes the id first 5ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > user_id_for_email answers an existing account’s id, and nothing else 3ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > pre-auth: the sign-in lookup by email finds any tenant’s user, and writes it 4ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > system: SCIM and platform administration read and write every tenant’s users 3ms
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-28T17:16:12.552Z', poolSize: 1 }
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-28T17:16:12.553Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-28T17:16:12.593Z","pid":15064,"hostname":"vm","context":{"userId":504,"tenantId":90301,"resourceId":"506"},"msg":"[audit-service] [AUDIT] user_invited user"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account 222ms
+{"level":30,"time":"2026-09-28T17:16:12.777Z","pid":15064,"hostname":"vm","context":{"userId":504,"tenantId":90302,"resourceId":"507"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-09-28T17:16:12.786Z","pid":15064,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:462:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of failing or duplicating it 19ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into 172ms
+{"level":30,"time":"2026-09-28T17:16:14.110Z","pid":15083,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T17:16:14.112Z","pid":15083,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T17:16:14.112Z","pid":15083,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log
+[database] Database connection successful { timestamp: '2026-09-28T17:16:14.307Z', poolSize: 1 }
+
+stdout | tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log
+[database] Database connection successful
+
+stdout | tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log
+[database] Database connection successful { timestamp: '2026-09-28T17:16:14.320Z', poolSize: 2 }
+
+{"level":40,"time":"2026-09-28T17:16:14.339Z","pid":15083,"hostname":"vm","context":{"userId":512,"role":"admin","path":"/api/control-plane/kernel/recent?limit=500"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-28T17:16:14.357Z","pid":15083,"hostname":"vm","context":{"userId":513,"role":"research_admin","path":"/api/control-plane/kernel/recent?limit=500"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-28T17:16:14.364Z","pid":15083,"hostname":"vm","context":{"userId":512,"role":"admin","path":"/api/control-plane/kernel/recent/clear"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-28T17:16:14.372Z","pid":15083,"hostname":"vm","context":{"userId":508,"role":"member","path":"/api/control-plane/kernel/recent?limit=500"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-28T17:16:14.412Z","pid":15083,"hostname":"vm","context":{"userId":508,"role":"member","path":"/api/control-plane/kernel/recent?limit=500"},"msg":"[platform-admin-guard] Master Administration access denied"}
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log 89ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a role that merely contains "admin" is not a platform role 12ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot clear the platform's kernel log 7ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > outside production, a member is not let in by default 8ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a member cannot read the organization's governed decisions 5ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the organization's administrator can 12ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a platform operator reads the kernel log 10ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > monitoring that presents the ops token reads the kernel log 5ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a wrong ops token is refused 9ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the non-production bypass still opens the control plane when it is asked for 5ms
+{"level":30,"time":"2026-09-28T17:16:15.577Z","pid":15100,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T17:16:15.579Z","pid":15100,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T17:16:15.579Z","pid":15100,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/platform-role-grants.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > positive control: the console refuses a plain member
+[database] Database connection successful
+
+stdout | tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > positive control: the console refuses a plain member
+[database] Database connection successful { timestamp: '2026-09-28T17:16:15.833Z', poolSize: 1 }
+
+{"level":40,"time":"2026-09-28T17:16:15.861Z","pid":15100,"hostname":"vm","context":{"userId":515,"role":"member","path":"/api/admin/access/grants"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-28T17:16:15.880Z","pid":15100,"hostname":"vm","context":{"userId":515,"role":"member","path":"/api/admin/access/grants"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":30,"time":"2026-09-28T17:16:15.923Z","pid":15100,"hostname":"vm","context":{"userId":519,"tenantId":0,"resourceId":"515:support"},"msg":"[audit-service] [AUDIT] data_modify platform_role_grant"}
+{"level":30,"time":"2026-09-28T17:16:15.949Z","pid":15100,"hostname":"vm","context":{"userId":519,"tenantId":0,"resourceId":"515:support"},"msg":"[audit-service] [AUDIT] data_modify platform_role_grant"}
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > positive control: the console refuses a plain member 75ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > cannot write its member a platform role, so the console never admits them 16ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > cannot reinstate, re-role or delete a grant 8ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > a tenant scope reads grants: the platform-admin check runs in the caller's own scope 2ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > the platform scope grants and revokes 5ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > a platform operator grants and revokes through the Access Management console 59ms
+
+ Test Files  9 passed (9)
+      Tests  212 passed (212)
+   Start at  17:15:49
+   Duration  26.70s (transform 2.38s, setup 319ms, import 5.74s, tests 19.14s, environment 1ms)
+
