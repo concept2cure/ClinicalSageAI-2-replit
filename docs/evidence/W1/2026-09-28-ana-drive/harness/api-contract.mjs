@@ -6,16 +6,16 @@
 
 // ── The Messages API contract, as documented (fetched 2026-09-28) ─────────────
 // Sources: claude-api skill shared/models.md, shared/error-codes.md,
-// shared/prompt-caching.md; live docs api/messages, build-with-claude/effort,
+// shared/prompt-caching.md, shared/model-migration.md; live docs api/messages, build-with-claude/effort,
 // build-with-claude/mid-conversation-system-messages, prompt-caching.
 // A rule is here only when one of those says the API refuses it.
 const EFFORT_ALL = ['low', 'medium', 'high', 'xhigh', 'max'];
 const EFFORT_NO_XHIGH = ['low', 'medium', 'high', 'max'];
 const OLD = { inline: false, effort: null, noAdaptive: true, maxOut: 64000 };
 const MODELS = {
-  'claude-fable-5-1': { inline: true, adaptiveOnly: true, noDisable: true, noSampling: true, noForcedTool: true, noPrefill: true, effort: EFFORT_ALL, maxOut: 128000, thinksByDefault: true },
-  'claude-fable-5': { inline: true, adaptiveOnly: true, noDisable: true, noSampling: true, noPrefill: true, effort: EFFORT_ALL, maxOut: 128000, thinksByDefault: true },
-  'claude-opus-5-5': { inline: true, adaptiveOnly: true, noDisable: true, noSampling: true, noForcedTool: true, effort: EFFORT_ALL, maxOut: 128000, thinksByDefault: true },
+  'claude-fable-5-1': { inline: true, progressInThinking: true, adaptiveOnly: true, noDisable: true, noSampling: true, noForcedTool: true, noPrefill: true, effort: EFFORT_ALL, maxOut: 128000, thinksByDefault: true },
+  'claude-fable-5': { inline: true, progressInThinking: true, adaptiveOnly: true, noDisable: true, noSampling: true, noPrefill: true, effort: EFFORT_ALL, maxOut: 128000, thinksByDefault: true },
+  'claude-opus-5-5': { inline: true, progressInThinking: true, adaptiveOnly: true, noDisable: true, noSampling: true, noForcedTool: true, effort: EFFORT_ALL, maxOut: 128000, thinksByDefault: true },
   'claude-opus-5': { inline: true, adaptiveOnly: true, disableOnlyUpToHigh: true, noSampling: true, effort: EFFORT_ALL, maxOut: 128000, thinksByDefault: true },
   'claude-opus-4-8': { inline: true, adaptiveOnly: true, noSampling: true, effort: EFFORT_ALL, maxOut: 128000 },
   'claude-opus-4-7': { inline: false, adaptiveOnly: true, noSampling: true, effort: EFFORT_ALL, maxOut: 128000 },
@@ -228,11 +228,20 @@ function checkThinkingOff(body, M) {
   return null;
 }
 
-function checkThinking(body, M) {
+// model-migration.md: without its beta, "updates" is rejected as an unknown
+// display value. The docs quote no wording for it, so this wording is the
+// stand-in's own.
+const UPDATES_BETA = 'thinking-display-updates-2026-08-18';
+function checkDisplay(th, betas) {
+  const known = ['summarized', 'omitted', ...(betas.includes(UPDATES_BETA) ? ['updates'] : [])];
+  return th.display === undefined || known.includes(th.display) ? null : refuse(`thinking.display: '${th.display}' is not a known display value`);
+}
+
+function checkThinking(body, M, betas) {
   const th = body.thinking;
   if (th === undefined) return null;
   if (!th || !['enabled', 'disabled', 'adaptive'].includes(th.type)) return refuse("thinking.type: Input should be 'enabled', 'disabled' or 'adaptive'");
-  const extra = extraKey(th, ['type', 'budget_tokens', 'display'], 'thinking.');
+  const extra = extraKey(th, ['type', 'budget_tokens', 'display'], 'thinking.') ?? checkDisplay(th, betas);
   if (extra) return extra;
   if (th.type === 'enabled') return checkBudgetThinking(body, M);
   if (th.type === 'disabled') return checkThinkingOff(body, M);
@@ -264,7 +273,7 @@ export function validate(body, headers = {}) {
     () => checkToolChoice(body, M, toolNames),
     () => checkSampling(body, M),
     () => extraKey(body.output_config ?? {}, ['effort', 'format', 'task_budget'], 'output_config.'),
-    () => checkThinking(body, M),
+    () => checkThinking(body, M, betas),
     () => checkEffort(body, M),
   ]);
 }
@@ -275,4 +284,17 @@ export function thinks(body) {
   const t = body.thinking?.type;
   if (t === 'disabled') return false;
   return t === 'adaptive' || t === 'enabled' || !!M.thinksByDefault;
+}
+
+/**
+ * How this request gets back the notes the model writes between tool calls,
+ * or null on a model that writes them as text. On Opus 5.5 and Fable 5.x a
+ * note longer than a sentence or two comes back as a progress-update thinking
+ * block (model-migration.md, "Text between tool calls comes back in thinking
+ * blocks"): empty under the default display "omitted", a short summary under
+ * "updates", and that summary mixed with the reasoning under "summarized".
+ */
+export function progressDisplay(body) {
+  if (!MODELS[body.model]?.progressInThinking) return null;
+  return body.thinking?.display ?? 'omitted';
 }

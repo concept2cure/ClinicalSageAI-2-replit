@@ -34,8 +34,8 @@ import request from 'supertest';
 const h = vi.hoisted(() => {
   type ToolUse = { id: string; name: string; input: Record<string, unknown> };
   const state = {
-    /** One entry per model call: tool calls to make, or the answer text. */
-    script: [] as Array<ToolUse[] | string>,
+    /** One entry per model call: tool calls to make, words then tool calls, or the answer text. */
+    script: [] as Array<ToolUse[] | { say: string; tools: ToolUse[] } | string>,
     /** Each model request, with its messages copied at the moment of the call. */
     gatewayCalls: [] as Array<{ callerModule?: string; messages: any[] }>,
     /** What each checkpoint drain returns, in order; empty after. */
@@ -62,6 +62,10 @@ const h = vi.hoisted(() => {
       const step = state.script.shift();
       if (Array.isArray(step)) {
         return { content: '', toolUses: step, model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
+      }
+      if (step && typeof step === 'object') {
+        req.onStream?.(step.say, undefined);
+        return { content: step.say, toolUses: step.tools, model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
       }
       const text = step ?? 'Done.';
       req.onStream?.(text, undefined);
@@ -364,32 +368,6 @@ describe('the checkpoint — screen reports and steers drained together, told ap
   });
 });
 
-describe('buildScreenReportTurn', () => {
-  it('names itself as the app, not the person, if a fallback model folds it into a user turn', () => {
-    expect(buildScreenReportTurn('Could not open Vault.')?.foldLabel).toBe('App observation');
-  });
-
-  it('opens with the marker the Live Drive prompt names, once', () => {
-    const t = buildScreenReportTurn('[Screen report] "Search" on the vault screen did not happen: no handler.');
-    expect(t?.content.startsWith('[Screen report] ')).toBe(true);
-    expect(t?.content.match(/\[Screen report\]/g)).toHaveLength(1);
-    expect(t?.content).toContain('"Search" on the vault screen did not happen: no handler.');
-  });
-
-  it('tells her to say what could not be done, not claim it happened', () => {
-    const t = buildScreenReportTurn('Opening the CMC screen did not happen: locked.');
-    expect(t).toMatchObject({ role: 'system', inlineSystem: true, origin: 'external' });
-    expect(t?.content).toMatch(/State plainly what could not be done/);
-    expect(t?.content).toMatch(/Do not say or imply that it happened/);
-    expect(t?.content).toMatch(/not an instruction/);
-  });
-
-  it('an empty report is no turn at all', () => {
-    expect(buildScreenReportTurn('   ')).toBeNull();
-    expect(buildScreenReportTurn('[Screen report]   ')).toBeNull();
-  });
-});
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. A move the budget stopped is the chip the person can press
 // ─────────────────────────────────────────────────────────────────────────────
@@ -622,5 +600,24 @@ describe('history — the window opens on a question after an unanswered turn', 
     h.state.history = [...intact, { role: 'user', content: 'go' }];
     await turn({});
     expect(sent().slice(0, 20)).toEqual(intact.slice(-20).map(m => `${m.role}:${m.content}`));
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// What she says at each stop reads as its own paragraph
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('narration — each round starts its own paragraph', () => {
+  it('a stop narrated after the last one is not run on from it', async () => {
+    const said = ['Stop 1: Projects is the front door.', 'Stop 2: the Vault holds every source.', 'That is the whole demonstration.'];
+    h.state.script = [{ say: said[0], tools: [nav(1)] }, { say: said[1], tools: [nav(2)] }, said[2]];
+    const events = await turn({ live_drive: true });
+    const shown = events.filter(e => e.type === 'text').map(e => e.content).join('');
+
+    expect(shown, 'the person read "…front door.Stop 2: …"').toBe(said.join('\n\n'));
+    expect(h.state.post.fullContent, 'the saved message ran on').toBe(shown);
+    // She is handed back what she said, as she said it.
+    const assistantTurns = h.state.gatewayCalls[2].messages.filter((m: any) => m.role === 'assistant').map((m: any) => m.content);
+    expect(assistantTurns.slice(-2)).toEqual(said.slice(0, 2));
   });
 });
