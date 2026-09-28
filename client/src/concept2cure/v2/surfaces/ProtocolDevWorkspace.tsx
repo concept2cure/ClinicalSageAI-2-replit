@@ -26,7 +26,7 @@ import { ProtocolSectionPane } from './ProtocolDevSection';
 import { AmendmentsTab, DeviationsTab, EligibilityTab, MilestonesTab, ObjectivesTab, Outline } from './ProtocolDevPanes';
 import { SoaTab } from './ProtocolDevSoa';
 import { BudgetTab, RiskTab } from './ProtocolDevRegisters';
-import { ConsentTab, ReviewsTab } from './ProtocolDevReviews';
+import { ConsentTab, ReviewsTab, SignatureLine } from './ProtocolDevReviews';
 import { StudyDesignStatisticsTab } from './biostatBridge';
 import { StudyDesignTab } from './ProtocolDevDesign';
 import { DerivationTab } from './ProtocolDevDerivation';
@@ -132,6 +132,10 @@ function ProtocolHeader({ doc, canWrite, exporting, refreshing, onAsk, onExport,
           <span>{pi ? 'PI ' + pi : 'Principal investigator not recorded'}</span>
           <span className="pd-dot" />
           <PG.StatusBadge status={str(doc.status)} />
+          {/* 21 CFR 11.50: who finalized it, as the signature row records it,
+              or that no signature is on record (periodic review 2026-09-28,
+              editor family, P11-C-2). */}
+          <SignatureLine facet={doc.finalization} expected={str(doc.status) === 'finalized' || str(doc.status) === 'superseded'} />
           {canWrite && (
             <button type="button" className="pde-rowbtn" onClick={onEditCover}>
               Edit sponsor and principal investigator

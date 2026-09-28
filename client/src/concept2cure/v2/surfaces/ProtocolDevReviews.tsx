@@ -23,6 +23,9 @@
  */
 import React from 'react';
 import { useAuthUser } from '@/services/portal/authService';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
+import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
+import type { PdevSignatureFacet } from '../fixtures/protocol-data';
 import * as PG from './ProtocolGov';
 import { PaneHead, type PaneAction } from './ProtocolDevShared';
 import type { PdevFormKind, PdevFormTarget } from './ProtocolDevForms';
@@ -34,6 +37,44 @@ const str = (v: unknown): string => (v == null ? '' : String(v));
 export interface ReviewPaneProps {
   doc: Record<string, unknown>;
   onEdit?: (kind: PdevFormKind, target?: PdevFormTarget) => void;
+}
+
+/** The read model's facet, or null when it is missing or not one: a facet this
+ *  client cannot read is reported as unreadable, never as unsigned. */
+function facetOf(v: unknown): PdevSignatureFacet | null {
+  const f = v as { state?: unknown; signature?: unknown } | null | undefined;
+  if (f?.state === 'none' || f?.state === 'unavailable') return f as PdevSignatureFacet;
+  if ((f?.state === 'signed' || f?.state === 'revoked') && f.signature && typeof f.signature === 'object') return f as PdevSignatureFacet;
+  return null;
+}
+
+/**
+ * The §11.50 manifestation of one signed act, as its signature row records it:
+ * the printed name at signing, the meaning, the UTC time (periodic review
+ * 2026-09-28, editor family, P11-C-2). It was shown once, in the signing
+ * dialog, and then nowhere. `expected` is true when the record says the act
+ * happened (a recorded disposition, a finalized protocol), so a missing or
+ * unreadable signature is said rather than left silent. The protocol header
+ * uses the same line for the finalization.
+ */
+export function SignatureLine({ facet, expected, style }: { facet: unknown; expected: boolean; style?: React.CSSProperties }) {
+  const f = facetOf(facet);
+  if (!f || f.state === 'unavailable') {
+    return expected ? <span className="pde-review-meta" style={style}>The signature record could not be read.</span> : null;
+  }
+  if (f.state === 'none') {
+    return expected ? <span className="pde-review-meta" style={style}>No electronic signature is on record.</span> : null;
+  }
+  const s = f.signature;
+  return (
+    <span className="pde-review-meta" style={style}>
+      {f.state === 'revoked' ? 'Signature revoked · signed by ' : 'Signed by '}
+      <strong>{s.signerName || 'a signer with no printed name on record'}</strong>
+      {' as ' + signatureMeaningLabel(s.meaning) + ' · '}
+      <GovernedTimestamp value={s.signedAt} layout="inline" />
+      {s.recordedOnBehalfOf ? ' · recorded on behalf of ' + s.recordedOnBehalfOf : ''}
+    </span>
+  );
 }
 
 /** The disposition control: the signature on offer, or the signed state. */
@@ -88,6 +129,8 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
           onSign={() => onEdit('review-disposition', { id: Number(r.id), label: name, reviewerUserId: assignedTo })}
         />
       )}
+      {/* Its own line under the row: who signed, not who was assigned. */}
+      <SignatureLine facet={r.signature} expected={signed} style={{ flexBasis: '100%' }} />
     </div>
   );
 }
