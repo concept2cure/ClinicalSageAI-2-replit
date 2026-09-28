@@ -174,6 +174,8 @@ screenshots).
 
 ## Evidence
 
+- `batched-moves.txt`, `batched-moves.png`: two moves in one round, as a real
+  model batches them, reach the screen in order. Checked, no defect.
 - `answer-cut-off.txt`, `answer-cut-off-before.png`,
   `answer-cut-off-after.png`: a cut-off answer, before and after.
 - `harness/`: the stand-in model, its self-test and the browser battery that

@@ -170,9 +170,13 @@ function planDemo(t) {
 function planVaultSearch(t) {
   const asked = /search the vault for (\w+)/.exec(t.ask);
   if (!asked) return null;
-  const { last, results } = t;
   const search = say => t.tool('act_on_screen', { action: 'vault.search', params: { query: asked[1] } }, say);
-  if (!last) return search('Searching the Vault.');
+  if (!t.last) return process.env.FAKE_PARALLEL ? openAndSearch(t, search) : search('Searching the Vault.');
+  return vaultSearchFollowUp(t, search);
+}
+
+function vaultSearchFollowUp(t, search) {
+  const { last, results } = t;
   // Asked which program: open one on the Vault, as the refusal says, then search again.
   const programs = last.json?.programs ?? [];
   if (last.name === 'act_on_screen' && last.json?.status === 'needs_project' && programs.length && results.length < 3) {
@@ -180,6 +184,15 @@ function planVaultSearch(t) {
   }
   if (last.name === 'navigate_to' && last.json?.status === 'navigation_ready' && results.length < 4) return search('Now searching it.');
   return { text: `Vault search result: ${outcomeOf(last)}.` };
+}
+
+// FAKE_PARALLEL: both moves in one response, as a real model batches
+// independent calls — the program's Vault, and the search on it.
+function openAndSearch(t, search) {
+  const program = process.env.FAKE_DEMO_PROGRAM || '';
+  const open = t.tool('navigate_to', { target: 'vault', ...(program ? { program } : {}) }, 'Opening the Vault and searching it.');
+  const find = search('');
+  return open.tool && find.tool ? { ...open, more: [find.tool] } : open;
 }
 
 function planOpenProgram(t) {
@@ -248,11 +261,14 @@ function saveRequest(n, headers, verdict, body) {
   }
 }
 
+const toolCallsOf = p => (p.tool ? [p.tool, ...(p.more || [])] : []);
+const toolUseId = (n, k) => (k === 0 ? `toolu_fake_${n}` : `toolu_fake_${n}_${k}`);
+
 function logReceived(body, p, n) {
   const lastText = (body.messages || []).slice(-2).map(m => textOf(m.content)).join('\n');
   const report = /\[Screen report\][^\n]*\n?\n?([^\n]{0,200})/.exec(lastText);
   if (report) log(`#${n} received screen report: ${report[1]}`);
-  const what = p.tool ? `${p.tool.name} ${JSON.stringify(p.tool.input)}` : `text "${p.text.slice(0, 80)}"`;
+  const what = p.tool ? toolCallsOf(p).map(c => `${c.name} ${JSON.stringify(c.input)}`).join(' + ') : `text "${p.text.slice(0, 80)}"`;
   log(`#${n} stream=${!!body.stream} tools=${(body.tools || []).length} msgs=${(body.messages || []).length} ->`, what);
 }
 
@@ -302,8 +318,8 @@ async function streamText(res, text, index) {
   return index + 1;
 }
 
-function streamToolCall(res, tool, n, index) {
-  sse(res, 'content_block_start', { type: 'content_block_start', index, content_block: { type: 'tool_use', id: `toolu_fake_${n}`, name: tool.name, input: {} } });
+function streamToolCall(res, tool, id, index) {
+  sse(res, 'content_block_start', { type: 'content_block_start', index, content_block: { type: 'tool_use', id, name: tool.name, input: {} } });
   sse(res, 'content_block_delta', { type: 'content_block_delta', index, delta: { type: 'input_json_delta', partial_json: JSON.stringify(tool.input) } });
   sse(res, 'content_block_stop', { type: 'content_block_stop', index });
 }
@@ -316,7 +332,7 @@ async function streamReply(res, body, p, n) {
   let index = 0;
   if (thinks(body)) index = await streamThinking(res, body, n, index);
   if (p.text) index = await streamText(res, p.text, index);
-  if (p.tool) streamToolCall(res, p.tool, n, index);
+  toolCallsOf(p).forEach((call, k) => streamToolCall(res, call, toolUseId(n, k), index + k));
   sse(res, 'message_delta', { type: 'message_delta', delta: { stop_reason: stop, stop_sequence: null }, usage: { output_tokens: 20 } });
   sse(res, 'message_stop', { type: 'message_stop' });
   res.end();
@@ -326,7 +342,7 @@ function replyContent(body, p, n) {
   const content = [];
   if (thinks(body)) content.push({ type: 'thinking', thinking: '', signature: `sig_fake_${n}` });
   if (p.text) content.push({ type: 'text', text: p.text });
-  if (p.tool) content.push({ type: 'tool_use', id: `toolu_fake_${n}`, name: p.tool.name, input: p.tool.input });
+  toolCallsOf(p).forEach((call, k) => content.push({ type: 'tool_use', id: toolUseId(n, k), name: call.name, input: call.input }));
   return content;
 }
 
