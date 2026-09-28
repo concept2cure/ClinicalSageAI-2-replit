@@ -88,6 +88,23 @@ router.get('/industry-profile', async (req: Request, res: Response) => {
   }
 });
 
+/** Partial update: only fields present in the request body are written, so a
+ *  single-field PATCH cannot null out the rest. primaryIndustry is required. */
+function profileFields(body: Record<string, unknown>, p: z.infer<typeof orgPatch>): Record<string, unknown> {
+  const fields: Record<string, unknown> = { primaryIndustry: p.primaryIndustry };
+  if ('mdxSpecialization' in body) fields.mdxSpecialization = p.mdxSpecialization ?? null;
+  if ('defaultMarkets' in body) fields.defaultMarkets = p.defaultMarkets ?? [];
+  if ('defaultPathways' in body) fields.defaultPathways = p.defaultPathways ?? [];
+  if ('defaultApprovalRigor' in body) fields.defaultApprovalRigor = p.defaultApprovalRigor ?? null;
+  return fields;
+}
+
+/** The trimmed reason for change, or null when it is missing or under 3 characters. */
+function reasonForChange(body: Record<string, unknown>): string | null {
+  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+  return reason.length >= 3 ? reason : null;
+}
+
 router.patch('/industry-profile', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -100,21 +117,15 @@ router.patch('/industry-profile', async (req: Request, res: Response) => {
      client-type chips saved the org's industry on one click, with no reason
      and no confirmation, under a page promising every change is saved "and
      written to the audit trail" with a reason (launch sweep finding 122). */
-  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
-  if (reason.length < 3) {
+  const reason = reasonForChange(body);
+  if (!reason) {
     return clientError(res, 422, 'A reason for change of at least 3 characters is required — it is written to the audit record.', {
       reason: ['required, at least 3 characters'],
     });
   }
   const userId = getUserId(req);
   try {
-    // Partial update: only fields present in the request body are written, so a
-    // single-field PATCH cannot null out the rest. primaryIndustry is required.
-    const fields: Record<string, unknown> = { primaryIndustry: p.primaryIndustry };
-    if ('mdxSpecialization' in body) fields.mdxSpecialization = p.mdxSpecialization ?? null;
-    if ('defaultMarkets' in body) fields.defaultMarkets = p.defaultMarkets ?? [];
-    if ('defaultPathways' in body) fields.defaultPathways = p.defaultPathways ?? [];
-    if ('defaultApprovalRigor' in body) fields.defaultApprovalRigor = p.defaultApprovalRigor ?? null;
+    const fields = profileFields(body, p);
     const now = new Date();
     const db = requestDb(req);
     const [row] = await db
