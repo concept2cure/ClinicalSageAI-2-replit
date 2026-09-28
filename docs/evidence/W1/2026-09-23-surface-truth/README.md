@@ -77,7 +77,7 @@ identically on the upstream source and is not this change's.
 | 100, 103, 107, 115, 124 | eCTD co-author, editor, Submission Center, Publishing, Gateways | Fixed, `af7067b96` — 10/12 fail → 12/12 pass |
 | 48, 49, 55, 69 | Access requests, AnA memory, conversation | Fixed, `aafe9de7f` — 10/14 fail → 14/14 pass |
 | 22, 127 (high), 133, 138, 140 | Shell (account menu, AnA rail, tray) | Fixed, `b9cabbf5a` — 25/31 fail → 31/31 pass |
-| 112 (high), 113 (high) | QMS SOP register | Fixed upstream by `12e12240c` (HS-1) before this landed; this session's parallel fix was discarded rather than duplicated |
+| 112 (high), 113 (high) | QMS SOP register | Fixed upstream by `12e12240c` (HS-1) before this landed; this session's parallel fix was discarded rather than duplicated. The clause HS-1 left ("All current" / "None in review" over an empty register) fixed in `fc8435287` — 2/2 fail → pass |
 | 119 | Vault header count | Fixed upstream (count renders only over a read vault) |
 | 18 (high), 110 (high), 114, 20 | Identity console | Fixed, `c541ff5b0` — a refused SCIM read is a refusal, never "the allowlist is not enforced"; 4/4 fail → pass |
 | 42 (high), 6, 7, 9 | AnA command | Fixed, `cac23587b` — zero programs is `200 { data: null }` and the empty state; failures say what the server answered; 4 fail → 9/9 pass |
