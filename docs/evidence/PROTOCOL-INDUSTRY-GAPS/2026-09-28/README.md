@@ -271,6 +271,19 @@ AnA's `review_protocol_redline` note said "a section carrying a note has no
 diff"; a tie note sits beside a diff, so that was false. It now says what a note
 can mean and to report `positionsFromRowOrder` beside any moved verdict.
 
+## Adversarial review of the Tier 2/3 wirings and the planning-inputs path
+
+Workflow `protocol-tier23-review`: five units, one reviewer each applying both
+lenses (honesty/determinism/duplication; domain correctness, maths and test
+strength — and security for the write path), then a fixer per unit for every
+blocking and major finding. Defects the reviewers found inside the canonical
+`server/services/stats/` engines were held for a separate fix-and-verify pass,
+because those engines have other consumers.
+
+| Unit | Blocking/major | Notable | Tests after | Mutants caught |
+|---|---|---|---|---|
+| Enrollment + MMRM | 14 (2 blocking) | **a site with no rate CV or activation time was forecast as the most favourable case** (no between-site variability, every site open on day 0) and called rendered — now a gap, no forecast; **an unrecorded allocation was sized at the engine's 1:1** — a 2:1 trial was reported covered at 358 when it needs 404; non-inferiority and equivalence frames were sized as two-sided superiority; a one-sided alpha ≥ 0.5 was clamped to 0.999; when some simulations never reached the target, conditional medians of 7.9e56 were shown as rendered; a 20,000-patient, 150-site plan blocked the event loop for 28 s (now a stated work budget) | 55 | 37 of 38 (the survivor differs only for one-sided alpha in (0.4995, 0.5); removing the guard is caught) |
+
 ## What is not done, and why
 
 - **Adversarial review is complete** for all eight Tier 1 engines (workflow

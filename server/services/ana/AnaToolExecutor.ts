@@ -20930,7 +20930,7 @@ registerIndustryDesignTool(
 registerIndustryDesignTool(
   'review_enrollment_forecast',
   'enrollment',
-  'Projected by projectEnrollment over the Poisson–Gamma accrual engine. Report every figure with its time unit, verbatim. Rates are sponsor inputs: missing means no accrual plan is recorded — never assume a rate. Null times mean the target is not reached; the interval is among simulations that reached it.',
+  'Projected by projectEnrollment over the Poisson–Gamma accrual engine. Report every figure with its time unit, verbatim. Rates are sponsor inputs: missing means no accrual plan is recorded — never assume a rate. A site with no rate variability or activation time recorded is a gap, never zero. The median and interval are reported only when every simulation reached the target: null times with probReached above 0 mean the times are not reported (never quote one); probReached 0 means the target is not reached. Say whether the seed was recorded or derived (forecast.seedSource).',
 );
 
 registerIndustryDesignTool(
@@ -20942,7 +20942,7 @@ registerIndustryDesignTool(
 registerIndustryDesignTool(
   'review_mmrm_sizing',
   'mmrm',
-  'Sized by projectMmrmSizing over the MMRM planning engine. Report every figure and gap verbatim. The assumptions are the sponsor\'s: where one is missing nothing is sized — name the missing assumption, never supply one or assume complete data.',
+  'Sized by projectMmrmSizing over the MMRM planning engine. Report every figure and gap verbatim. The assumptions are the sponsor\'s: where one is missing nothing is sized — name the missing assumption, never supply one or assume complete data. The allocation is the design\'s (sizing.allocationRatio, allocationSource), never an assumed 1:1; nPerArm is the first arm\'s n and nSecondArm the second\'s. A non-inferiority, equivalence or unrecorded frame is not sized — report the gap.',
 );
 
 registerIndustryDesignTool(

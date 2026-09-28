@@ -215,8 +215,10 @@ export const REVIEW_ENROLLMENT_FORECAST: AnaTool = {
     'engine, the probability of reaching the target at all, the closed-form expectation, and the sites by country. ' +
     DESIGN_REQUIRED + ' ' +
     'Report every figure VERBATIM with its time unit. Site recruitment rates are SPONSOR INPUTS: with no accrual plan the engine returns missing — say ' +
-    'the forecast needs site feasibility rates, and never supply or assume a rate. The interval is among simulations that reached the target; when ' +
-    'none did the times are null — say the target is not reached, never quote a time.',
+    'the forecast needs site feasibility rates, and never supply or assume a rate. A site with no rate variability or activation time recorded is a ' +
+    'gap, never read as zero. The median and 80% interval are reported only when every simulation reached the target: null times with ' +
+    'probReached above 0 mean some simulations never reached it — say the times are not reported, never quote one; probReached 0 means the target ' +
+    'is not reached. Report forecast.seedSource: a seed derived from the inputs is not the sponsor\'s.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
@@ -243,7 +245,9 @@ export const REVIEW_MMRM_SIZING: AnaTool = {
     'engine (stats/mmrm-design.ts). ' +
     DESIGN_REQUIRED + ' ' +
     'Report every figure and gap VERBATIM. The assumptions (covariance, correlation, SD, effect, per-visit retention, power) are the SPONSOR\'S: when ' +
-    'one is not recorded nothing is sized — say which assumption is missing, and never supply one or fall back to complete data.',
+    'one is not recorded nothing is sized — say which assumption is missing, and never supply one or fall back to complete data. The allocation ' +
+    '(sizing.allocationRatio, sizing.allocationSource) is the design\'s, never an assumed 1:1: nPerArm is the first arm\'s n and nSecondArm the ' +
+    'second\'s. A non-inferiority, equivalence or unrecorded inferential frame is not sized as a superiority test — report the gap.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
