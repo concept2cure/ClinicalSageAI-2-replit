@@ -1,0 +1,60 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > refuses the create at the organization ceiling, and rolls back 34ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > creates under the ceiling and records the creator on the row 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > a NULL ceiling means the schema default (10), not unlimited and not 20 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > an unknown organization is ORGANIZATION_NOT_FOUND, never NO_LICENSE 0ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > never consults the licence tables 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > a driver failure is DATABASE_ERROR with the driver message kept out of the result 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateUser — the ceiling is organizations.max_users > refuses a new member at the organization ceiling 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateUser — the ceiling is organizations.max_users > creates the user and the membership under the ceiling — no licence row required 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateUser — the ceiling is organizations.max_users > an unknown organization is ORGANIZATION_NOT_FOUND 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicAcceptInvitation — re-checks the same organization ceiling at accept time > refuses acceptance when the organization is full 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicAcceptInvitation — re-checks the same organization ceiling at accept time > accepts under the ceiling: membership + accepted status, no licence tables 1ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > GET /:tenantId — non-member of the target org is denied (403) 249ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > GET /:tenantId — a member of the target org may list (200) 6ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > GET /:tenantId — super_admin may list any org (200) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > POST / — non-admin of the target org cannot create users (403) 13ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > DELETE /:org/:userId — non-admin of the target org cannot remove users (403) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > PATCH /:org/:userId — non-member of the target org cannot re-role (403) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — inviting an EXISTING user from another org creates a PENDING invitation, not a membership (202) 29ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — inviting a NEW (unregistered) email keeps the current flow: user + membership created (201) 5ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — a body with no organizationId targets the caller’s session organization 8ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — with no session organization and no body organizationId, 400 (never a guessed tenant) 4ms
+stderr | server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — when the activation link cannot be issued, the 201 says so instead of claiming a 500
+{
+  "timestamp": "2026-09-28T18:21:21.271Z",
+  "level": "error",
+  "message": "[tenant-users] Invitation could not be issued for the new member",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — in production with no public origin, nothing is created and the admin is told why (503)
+{
+  "timestamp": "2026-09-28T18:21:21.276Z",
+  "level": "error",
+  "message": "[tenant-users] Member creation refused: no public origin configured",
+  "context": {
+    "code": "PUBLIC_ORIGIN_NOT_CONFIGURED",
+    "name": "PublicOriginNotConfiguredError"
+  }
+}
+
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — a NEW account cannot sign in until it redeems the setup link; without SMTP the admin gets the link 5ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — when the activation link cannot be issued, the 201 says so instead of claiming a 500 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — in production with no public origin, nothing is created and the admin is told why (503) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — with SMTP configured the invitation is emailed and the link is NOT echoed back 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > GET /invitations/mine — lists only the caller-scoped pending invitations (200) 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST /invitations/:id/accept — the invited user accepting creates the membership and marks accepted (200) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST /invitations/:id/decline — declining marks declined and does NOT create a membership (200) 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST /invitations/:id/accept — a stranger cannot accept someone else's invitation (404) 2ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST /invitations/:id/decline — a stranger cannot decline someone else's invitation (404) 5ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST /invitations/:id/accept — already-responded invitation is rejected (409) 2ms
+
+ Test Files  2 passed (2)
+      Tests  31 passed (31)
+   Start at  18:21:20
+   Duration  916ms (transform 442ms, setup 158ms, import 272ms, tests 412ms, environment 0ms)
+
