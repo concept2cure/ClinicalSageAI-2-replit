@@ -8,11 +8,13 @@ import crypto from 'crypto';
 // Lazy load docx to prevent startup failures
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
-import { enforceOrgMembership } from '../middleware/orgMembership';
+import { enforceOrgMembership, GOVERNED_WRITE_ROLES } from '../middleware/orgMembership';
+import { getTenantScope } from '../db/tenantStore';
+import { vaultWriteRefusal } from '../services/vault/vault-write-authority';
 import { getPool } from '../db';
 import { currentTenantOrgUuid, TenantKeyRequiredError } from '../db/currentTenant';
 import auditService, { writeChainedAuditRow } from '../services/auditService';
-import { isSigningAuthorized } from '../services/part11/signing-authority.js';
+import { isSigningAuthorized, signingAuthorityRoles } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
@@ -39,7 +41,9 @@ import type {
 import {
   authoringPrincipalFromRequest,
   decideAuthoringPermission,
+  resolveAuthoringDocumentScope,
   resolveAuthoringSectionScope,
+  type AuthoringPermissionDecision,
 } from '../services/authoring/authoring-permissions';
 import { sectionStructureIssues } from '../../shared/regulatory/section-code';
 import { serverError } from '../lib/api-response';
@@ -1520,6 +1524,149 @@ router.post('/docs/from-draft', async (req: Request, res: Response) => {
   }
 });
 
+/* ── What the caller may do to this document, as the server will decide it ──
+   2026-09-28, coverage-gap sweep GE-P-3. Freeze, E-sign, Assign review and
+   File to vault were offered to every member who could open a document; a
+   member without the grant filled in the governed dialog (a freeze reason, a
+   password) and only then met the refusal. This reports, per act, the SAME
+   decision the write will meet, computed by the same code — never a second
+   permission model:
+
+     freeze        authoringObjectAuthorization classifies /freeze as
+                   'approve' → decideAuthoringPermission (OWNER or APPROVER
+                   grant, or a global admin role).
+     esign         the same 'approve' decision, then assertSigningAuthority's
+                   §11.10(g) check: resolveSignerOrgRole + isSigningAuthorized.
+     fileToVault   /file-to-vault falls through to 'edit' in
+                   authoringObjectAuthorization (including its refusal on an
+                   immutable status), then the vault ingest's
+                   vaultWriteRefusal() on the request's tenant-scope role.
+     assignReview  POST /api/tasks/tasks runs requireEditorAccess, whose role
+                   rule is membership of GOVERNED_WRITE_ROLES on the request's
+                   role — the same set, read the same way, here.
+
+   Each entry is `{ allowed, reason }`, or null when this read could not
+   determine it (a lookup failed, no tenant scope): the client treats null as
+   unknown and leaves the control to the server. The write routes still
+   enforce; this only tells the user before they start. */
+type DocumentActGate = { allowed: boolean; reason: string | null } | null;
+
+function titleCaseRoles(roles: readonly string[] | undefined): string {
+  const names = (roles ?? []).map(r => r.charAt(0) + r.slice(1).toLowerCase());
+  return names.length ? names.join(', ') : 'none';
+}
+
+function objectGate(
+  decision: AuthoringPermissionDecision,
+  act: string,
+  needs: string,
+): DocumentActGate {
+  if (decision.allowed) return { allowed: true, reason: null };
+  if (decision.reason === 'document-immutable') {
+    return {
+      allowed: false,
+      reason: `${act} is refused while the document's status is ${decision.scope?.documentStatus ?? 'unknown'}.`,
+    };
+  }
+  if (decision.reason === 'permission-denied') {
+    return {
+      allowed: false,
+      reason: `${act} needs ${needs} on this document. Your grants on it: ${titleCaseRoles(decision.matchedRoles)}.`,
+    };
+  }
+  return null; // principal-missing / object-not-found: not a decision about this user
+}
+
+/** A refusal is certain when either step refuses; otherwise unknown if either is unknown. */
+function bothGates(first: DocumentActGate, second: DocumentActGate): DocumentActGate {
+  if (first && !first.allowed) return first;
+  if (second && !second.allowed) return second;
+  if (!first || !second) return null;
+  return { allowed: true, reason: null };
+}
+
+async function settle<T>(what: string, docId: string, fn: () => Promise<T> | T): Promise<T | null> {
+  try {
+    return await fn();
+  } catch (error) {
+    logger.warn('Document access could not be determined; reported as unknown', {
+      what,
+      docId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
+async function callerDocumentAccess(req: Request, tenantId: number, docId: string) {
+  const unknown = { freeze: null, esign: null, fileToVault: null, assignReview: null } as Record<
+    'freeze' | 'esign' | 'fileToVault' | 'assignReview',
+    DocumentActGate
+  >;
+  const principal = authoringPrincipalFromRequest(req);
+  if (!principal) return unknown;
+  const scope = await settle('scope', docId, () => resolveAuthoringDocumentScope(pool, tenantId, docId));
+  if (!scope) return unknown;
+
+  const approve = await settle('approve', docId, () =>
+    decideAuthoringPermission({ pool, principal, scope, action: 'approve' }),
+  );
+  const edit = await settle('edit', docId, () =>
+    decideAuthoringPermission({ pool, principal, scope, action: 'edit' }),
+  );
+  const approveGate = (act: string) =>
+    approve ? objectGate(approve, act, 'an Owner or Approver grant') : null;
+
+  /* resolveSignerOrgRole answers null for "no membership row" (the e-sign
+     route refuses that) and throws when the lookup fails (unknown here). */
+  const signing = await settle('signing-role', docId, async () => ({
+    role: await resolveSignerOrgRole(Number(getActorId(req)), tenantId),
+  }));
+  const signingGate: DocumentActGate = !signing
+    ? null
+    : isSigningAuthorized(signing.role)
+      ? { allowed: true, reason: null }
+      : {
+          allowed: false,
+          reason:
+            'Applying an electronic signature needs a signing role in this organization ' +
+            `(${signingAuthorityRoles().join(', ')}). Your role: ${signing.role ?? 'none recorded'}.`,
+        };
+
+  /* An org role ABSENT from this request is not evidence the write request
+     will lack one (it is attached upstream, by the global /api gate), so both
+     role checks below report unknown rather than a refusal in that case. */
+  const vaultGate = await settle('vault-role', docId, (): DocumentActGate => {
+    const role = String(getTenantScope()?.role ?? '').toLowerCase();
+    if (!role) return null;
+    if (!vaultWriteRefusal()) return { allowed: true, reason: null };
+    return {
+      allowed: false,
+      reason: `Filing into the vault needs an editing role in this organization. Your role: ${role}.`,
+    };
+  });
+
+  const assignGate = await settle('editor-access', docId, (): DocumentActGate => {
+    const role = String((req as Request & { userRole?: string }).userRole || req.user?.role || '').toLowerCase();
+    if (!role) return null;
+    if (GOVERNED_WRITE_ROLES.has(role)) return { allowed: true, reason: null };
+    return {
+      allowed: false,
+      reason: `Assigning a review needs an editing role in this organization. Your role: ${role}.`,
+    };
+  });
+
+  return {
+    freeze: approveGate('Freezing'),
+    esign: bothGates(approveGate('Signing'), signingGate),
+    fileToVault: bothGates(
+      edit ? objectGate(edit, 'Filing to the vault', 'an Owner or Author grant') : null,
+      vaultGate ?? null,
+    ),
+    assignReview: assignGate ?? null,
+  };
+}
+
 // GET /api/authoring/docs/:docId - Get document details
 router.get('/docs/:docId', async (req: Request, res: Response) => {
   try {
@@ -1556,9 +1703,12 @@ router.get('/docs/:docId', async (req: Request, res: Response) => {
        through the service so a deployment without the 20260921 column reports
        `provenanceStore` honestly instead of a null that reads as "a person". */
     const prov = await readDocumentProvenance(pool, String(docId), tenantId);
+    /* GE-P-3 (2026-09-28): what this caller may do here — see callerDocumentAccess. */
+    const access = await callerDocumentAccess(req, tenantId, String(docId));
     res.json({
       success: true,
       document: { ...docResult.rows[0], provenance: prov.provenance },
+      access,
       ...(prov.provenanceStore !== 'present' ? { provenanceStore: prov.provenanceStore } : {}),
     });
   } catch (error) {
