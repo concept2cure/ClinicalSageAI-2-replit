@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T04:44:23.034Z",
+  "generatedAt": "2026-09-28T04:55:32.263Z",
   "git": {
-    "sha": "8b8f6598383cb158b91448bba16d21acb3f480fe",
+    "sha": "e585f40c7c589d5cb03f946849d03382ff6cf780",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2005,7 +2005,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 211701
+        "bytes": 212810
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2183,7 +2183,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5392
+        "lines": 5410
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
