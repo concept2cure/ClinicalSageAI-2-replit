@@ -89,8 +89,51 @@ as "AnA is unreachable — the network or the AI gateway did not respond".
 - The self-drive tools are pinned for the routes that can move a screen, and
   no longer forced onto voice and background investigations.
 
+## Against the real API's contract (the same day, second pass)
+
+The stand-in model had enforced one rule of the Messages API. A request the
+real API refuses would have passed every check above and failed the first real
+turn. So the stand-in now refuses what the API documents it refuses:
+- retired model ids;
+- mid-conversation system messages on models that do not take them, or out
+  of place;
+- unpaired tool calls;
+- malformed tool definitions;
+- more than four cache breakpoints;
+- sampling, thinking and effort settings a model rejects;
+- forced tool choice.
+
+It also streams a thinking block first, as a real adaptive model does. Each
+rule was first made to fail on a request built to break it.
+
+- **The requests AnA sends conform.** None of 135 was refused, across both
+  shapes the gateway produces:
+  - Sonnet 5, which the default model tiering picks for drive rounds, with
+    AnA's operator turns folded into the user turn;
+  - Opus 5.5, with tiering off. There 34 operator turns went through as
+    mid-conversation system messages, all placed as the API requires.
+
+  The battery passed 19/19 both ways.
+- **History.** A question is saved when its turn starts, and the answer only
+  if the turn produced one. So a failed or stopped turn left the saved
+  conversation offset by one, and the last-20 window AnA is given could open
+  on an answer. The API's error reference lists that as a 400, and it would
+  have recurred on every later turn of the conversation. The window now opens
+  on a question (`server/services/ana/history-window.ts`, both of the stream
+  route's history sources).
+- **Programs past the Projects screen's first page.** The screen lists the 50
+  most recent programs and matched only those, so a program the server had
+  found was refused there as unknown.
+  - `act_on_screen` now hands the screen the program it resolved, beside the
+    directive as `navigate_to` does, never as a param: params are what the
+    model writes, and the registry keeps only declared ones.
+  - The client carries it through its one validator, the bus passes it to the
+    screen's handler, and a chip carries it when Live Drive is off.
+
 ## Evidence
 
+- `contract-audit.txt`: the rules, their sources, the stand-in failing each
+  one on purpose, what AnA sent in both configurations, and both battery runs.
 - `browser-battery.txt`: **19/19** in headless Chromium against the real app,
   run on the merged tree. It used local PostgreSQL provisioned with
   `install-fresh`, the migration set and the GA demo seed. The merged run
@@ -131,16 +174,14 @@ document to open.
 
 ## Not yet shown
 
-- **A real model.** The instructions AnA reads are tested as text. A run with a
-  key (`docs/LOCAL_TESTING.md`, "AnA operates the app") is the remaining
-  evidence for this row.
+- **A real model.** The requests are now checked against the API's
+  documented contract, but a stand-in cannot show how a real model follows
+  the instructions it is given. A run with a key (`docs/LOCAL_TESTING.md`,
+  "AnA operates the app") is the remaining evidence for this row.
 - **Staging.** It is owed with D1.
 - **Decision for the founder.** With `ENTITLEMENTS_ENFORCE=on`, Live Drive
   requires the `professional` tier (`ana_live_drive`). A standard-tier
   organisation gets the moves as buttons only.
-- **Programs past the Projects screen's first page.** A program beyond the
-  first 50 is found by the server but cannot be opened by name on the Projects
-  screen. AnA is told to open it with `navigate_to` project-home, which works.
 - **The run-queue migration comment.** `db/migrations/20260917_ana_runs.sql`
   still describes queue entries without `kind` / `moveId`. Rule 1 makes an
   in-place amendment a registered drift, and the code reads old entries as
