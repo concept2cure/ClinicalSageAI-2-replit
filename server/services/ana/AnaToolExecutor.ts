@@ -20948,7 +20948,7 @@ registerIndustryDesignTool(
 registerIndustryDesignTool(
   'review_external_control_plan',
   'external-control',
-  'Reviewed by projectExternalControlPlan over the external-control engine. Report each pre-specification element and the borrowing strength verbatim. No posterior or treatment effect exists at protocol stage — never quote one. A fixed power-prior discount is not a prior-data conflict plan.',
+  'Reviewed by projectExternalControlPlan over the external-control engine. Report each pre-specification element and the borrowing strength verbatim. No posterior or treatment effect exists at protocol stage — never quote one. A fixed power-prior discount, or a fixed commensurate τ², is not a prior-data conflict plan; elements the design cannot yet record are reported as such.',
 );
 
 registerIndustryDesignTool(

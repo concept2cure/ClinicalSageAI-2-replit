@@ -233,7 +233,11 @@ export interface MultiplicityStrategy {
     | 'graphical'
     | 'alpha_spending'
     | 'none';
-  /** Explicit alpha-allocation trace across the hierarchy. */
+  /**
+   * Each confirmatory hypothesis's initial significance level (Bretz et al.
+   * 2009: weight × alpha), 0 ≤ level ≤ alpha, totalling at most alpha. Listed
+   * in testing order for a fixed sequence. multiplicity-check.ts simulates it.
+   */
   alphaAllocation?: Array<{ endpointName: string; alpha: number }>;
 }
 

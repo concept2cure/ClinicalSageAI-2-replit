@@ -257,13 +257,15 @@ export const REVIEW_EXTERNAL_CONTROL_PLAN: AnaTool = {
   name: 'review_external_control_plan',
   description:
     'READ-ONLY. Review the external-control borrowing plan of the study design bound to a protocol document (projectExternalControlPlan; FDA draft ' +
-    'guidance on externally controlled trials, 2023; ICH E10 §2.5): each element the protocol is expected to pre-specify — source, borrowing method ' +
-    'and strength, prior-data conflict handling, covariate comparability, tipping-point sensitivity — stated or not, and the borrowing strength at the ' +
+    'guidance on externally controlled trials, 2023; ICH E10 §2.5): ten elements the guidance discusses (not its full list) — among them the source ' +
+    'and its fitness, the borrowing method and strength, prior-data conflict handling, covariate comparability and tipping-point sensitivity — each ' +
+    'stated or not (several have no field on the design yet and say so), and the borrowing strength at the ' +
     'planned concurrent-control size (effective historical N, share of control precision borrowed) from the platform\'s engine ' +
     '(stats/external-control.ts). ' +
     DESIGN_REQUIRED + ' ' +
     'Report every element and figure VERBATIM. No posterior or treatment effect is computed at protocol stage — never quote one. A fixed power-prior ' +
-    'discount does not handle prior-data conflict; say so rather than calling the plan conflict-robust.',
+    'discount does not handle prior-data conflict, and neither does a FIXED commensurate τ² (it equals a power prior with a0 = seH²/(seH²+τ²)); ' +
+    'say so rather than calling the plan conflict-robust. A plan is at best partial until every element can be stated.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
@@ -276,7 +278,10 @@ export const REVIEW_MULTIPLICITY_CONTROL: AnaTool = {
     'engine (stats/multiplicity.ts). ' +
     DESIGN_REQUIRED + ' ' +
     'Report every rate, verdict, note and gap VERBATIM. The simulation assumes independent p-values: say so, and never present it as proof of control ' +
-    'under the trial\'s actual dependence. A procedure the engine cannot check (graphical without weights, gatekeeping) is a gap — never substitute another.',
+    'under the trial\'s actual dependence. The alpha allocation is each hypothesis\'s initial significance level (Bretz et al. 2009), totalling at ' +
+    'most alpha, and the RECORDED allocation is what is simulated (procedure.simulated says whether a textbook split was used instead); Hochberg is ' +
+    'valid only under positive dependence. A procedure the engine cannot check (graphical without weights, gatekeeping, weighted Hochberg) is a gap — ' +
+    'never substitute another.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
