@@ -47,6 +47,7 @@ import type {
 } from '../fixtures/admin-data';
 import { useIndustryProfile } from '../../mdx/hooks/useIndustryProfile';
 import {
+  CLIENT_TYPE_LABEL,
   CLIENT_TYPE_OPTIONS,
   buildOrgProfilePatch,
   governedToPicker,
@@ -335,7 +336,6 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
 
   const nameDirty = orgLoaded && name.trim() !== savedName;
   const txwDirty = settingsLoaded && JSON.stringify(txw) !== JSON.stringify(savedTxw);
-  const dirty = nameDirty || txwDirty;
   const editable = !loading && !loadError;
 
   const setTxwField = <K extends keyof TranslationPolicy>(k: K, v: TranslationPolicy[K]) =>
@@ -373,6 +373,12 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
       );
       if (r.error) failures.push(`Organization name — ${saveFailure(r.error, r.status)}`);
       else setSavedName(r.data?.organization?.name ?? name.trim());
+    }
+
+    if (clientTypeDirty) {
+      const patch = buildOrgProfilePatch(clientType, govSpec);
+      const saved = patch ? await saveProfile(patch, why) : false;
+      if (!saved) failures.push('Client type — not saved to the governed industry profile.');
     }
 
     if (txwDirty) {
@@ -419,14 +425,21 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
     );
   }, [govPrimary, govSpec]);
 
-  const chooseClientType = (t: string) => {
-    setClientType(t);
-    const patch = buildOrgProfilePatch(t, govSpec);
-    if (patch) void saveProfile(patch);
-  };
+  /* A chip is a pending change, saved by "Save to organization" under the
+     page's one reason for change like every other field here. It used to
+     PATCH the governed profile on click, with no reason and no confirmation
+     (launch sweep finding 122). */
+  const chooseClientType = (t: string) => setClientType(t);
+  const clientTypeDirty =
+    profile.status === 'ready' || profile.status === 'empty'
+      ? Boolean(clientType) && (govPrimary == null || !pickerMatchesProfile(clientType, govPrimary, govSpec))
+      : false;
+  const dirty = nameDirty || txwDirty || clientTypeDirty;
 
   const clientTypeStatus: string =
-    profile.status === 'error'
+    clientTypeDirty && saveState.status !== 'saving'
+      ? 'Not saved yet — give a reason above and save to the organization.'
+      : profile.status === 'error'
       ? 'Governed profile unreachable — the client type could not be read and cannot be changed.'
       : saveState.status === 'saving'
         ? 'Saving to governed org profile…'
@@ -656,7 +669,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                       disabled={profile.status === 'loading' || saveState.status === 'saving'}
                       onClick={() => chooseClientType(t)}
                     >
-                      {t}
+                      {CLIENT_TYPE_LABEL[t]}
                     </button>
                   ))}
                 </div>

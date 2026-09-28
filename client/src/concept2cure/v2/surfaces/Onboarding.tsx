@@ -457,6 +457,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
         credentials: 'include',
         body: JSON.stringify({
           primaryIndustry: archetypeToPrimaryIndustry(org.archetype),
+          reason: 'Organization industry set during workspace activation.',
         }),
       });
       probeAuditRowOutcome('PATCH', '/api/mdx/industry-profile', res);

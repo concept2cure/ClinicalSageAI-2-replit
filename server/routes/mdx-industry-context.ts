@@ -95,6 +95,17 @@ router.patch('/industry-profile', async (req: Request, res: Response) => {
   const parsed = orgPatch.safeParse(body);
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
+  /* A governed change carries its reason for change into the audit row, as
+     PATCH /api/organizations/:id/profile does. This route took none: Setup's
+     client-type chips saved the org's industry on one click, with no reason
+     and no confirmation, under a page promising every change is saved "and
+     written to the audit trail" with a reason (launch sweep finding 122). */
+  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+  if (reason.length < 3) {
+    return clientError(res, 422, 'A reason for change of at least 3 characters is required — it is written to the audit record.', {
+      reason: ['required, at least 3 characters'],
+    });
+  }
   const userId = getUserId(req);
   try {
     // Partial update: only fields present in the request body are written, so a
@@ -124,7 +135,7 @@ router.patch('/industry-profile', async (req: Request, res: Response) => {
       action: 'update',
       resourceType: 'organization_industry_profile',
       resourceId: orgId,
-      details: { primaryIndustry: p.primaryIndustry, mdxSpecialization: p.mdxSpecialization ?? null },
+      details: { primaryIndustry: p.primaryIndustry, mdxSpecialization: p.mdxSpecialization ?? null, reason },
     });
     return ok(res, row, { auditTrail });
   } catch (err) {
