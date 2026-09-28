@@ -84,7 +84,16 @@ to one line; edit only your own row to limit merge conflicts.
 - SEC-C-4 (`e8f448d1`); HS-C-3 (`146a6382`); A-C-2 (`88ef5f87`); A-C-5 (`8691cfe8`); A-C-8 (`a0bdfbf0`);
 - P11-C-4 (`8e72b9bf`, `d848acf3`); SEC-C-7 (`6b442012`); P11-C-2 (`fb69b716`).
 
-`…01KiDof7`'s same-day coverage-gap sweep fixed SEC-A-9 (`59b0d8f9`), part of HS-B-1 (`59b0d8f9`), and the protocol tab strip half of A-C-2 (`780a0639`). Its lane has no row here, and it works in this lane's files, so any further work in the editor family should be claimed first. Handed on: items 5–7 of this lane's list below. |
+`…01KiDof7`'s same-day coverage-gap sweep fixed SEC-A-9 (`59b0d8f9`), part of HS-B-1 (`59b0d8f9`), and the protocol tab strip half of A-C-2 (`780a0639`). Its lane has no row here, and it works in this lane's files, so any further work in the editor family should be claimed first. Handed on: items 5–7 of this lane's list below. **Second round, claimed 2026-09-28 18:00 (cold files only, none changed by another lane in 24 h):**
+  - SEC-A-10/B-5 server half: `server/services/collab/collab-authorization.ts`, `server/services/hocuspocus-server.ts`;
+  - SEC-C-4 (a) server half: `server/services/ana-ri/surface-context-block.ts`; the SEC-C-4 class in `client/src/concept2cure/v2/editor/askAnaToDraft.ts`;
+  - the SEC-C-7 follow-on: `C2CForm.tsx`, `ProtocolDevForms.tsx`;
+  - the P11-B-4 undo floor: `client/src/concept2cure/v2/editor/suggestions.ts`;
+  - the SEC-B-1/2 figure rule on the remaining writers: `server/export/authoring-images.ts`, `server/services/authoring/authoring-documents.ts`, `server/services/authoring/section-generation-service.ts`, `server/routes/batch-draft-routes.ts` (with the AI-authorship door there);
+  - NEW-P11-B-1a: `server/services/ingestion/ingestion-service.ts`;
+  - P11-C-3-SNAP server half: `server/services/part11/signature-persistence.ts`, `server/services/protocol-development/{protocol-development-service,pdev-view-assembler}.ts`.
+
+  Work in held files is handed on, or waits for the hold to lapse. |
 | **D7 / D5 — P11-28b: the Dispatch button is gated on a signature its own click creates.** From `docs/evidence/reviews/2026-09-28/ectd-lane-second-pass/part11-ux.md`. For IND / NDA / BLA / MAA the Submission Center's Dispatch button reads `gate`, which requires a release signature to already exist, and the signature it would accept is the one the click records — so no such sequence can be dispatched through the product's own screen, which D7's test sequence needs. Fix: the server states whether signing now clears the dispatch gate (the resolver's spine precedence lives there, and re-deriving it in the client is how P11-28a happened); the client reads that. `server/services/ectd/{assess-dispatch-readiness,release-signature-status}.ts` (the resolver's return and the assessment's verdicts only), `SubmissionSeqWorkspaces.tsx` (`DispatchWorkspace` only), their tests | `…session_01VB8JEGfy93uohAfBxSwmYx` | **released** 2026-09-28 — row **D7**. Done: server reports `dispatchGateOnSigning` (`composeStepVerdicts`, `signingNowResolvesRelease`), Dispatch reads it; 12 probes red-then-green (`docs/evidence/D7/2026-09-28-dispatch-reachable/`). Owed: a pglite sign→dispatch case for an IND |
 | **D5 — a quality-gating verdict is never chosen by an empty collection.** `server/services/qms/quality-gating-verdict.ts` (new: `assessSection`, `batchVerdict`, the one assessment both routes run), `server/routes/{tenant-quality-validation,quality-management-api}.ts` (validate-section, batch-validate, the plan dashboard, `GET /plans/:id` only), `client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx`, the two QMS entries in `scripts/ci/writerless-stores-baseline.json`, both quality API references. Closes the fail-open `7983d7299` handed to the QMS lane ("report 'not assessed'") and the three `= ANY(($1, …))` routes that always answered 500 | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done `da00b021a`: red 28/28 against HEAD and 20/28 against the first version (adversarially reviewed), green 28/28; client red 3/5, green 18/18. Evidence: `docs/evidence/D5-GOVERNED-PATH/2026-09-22/` (README "CI, 2026-09-23") |
 | **D5 — AnA's completion cascade commits its ledger rows with the completion.** `server/services/ana-ri/command-executor.ts` `updateTask`'s board block and `boardWriteWithLineage` only; `server/services/tasking/task-side-effects.ts` if a pool-client entry point is needed. The cascade AnA runs after `boardWriteWithLineage` COMMITs is on the pool with no ledger row for the dependents it unblocks; the HTTP routes already run it in the completion's transaction (`cascadeUnblockOnCompletionInTx`) | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: the cascade runs on the completion's transaction (`cascadeUnblockOnCompletionOnClient`), its rows after the completion's; red 2/2 on HEAD, green; the two older AnA task suites moved onto one pool fixture (`__tests__/pglite-pool.fixture.ts`). Evidence: `docs/evidence/D5/2026-09-28-ana-cascade-ledger/` |
@@ -758,6 +767,43 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      code, and only if it still holds, refresh the digest with
      `npm run ci:tenant-entry-points:write-baseline`. That judgement is the
      lane's that changed the router.
+   - Second Lint red, same lane (`7b00c78d`, 15:51):
+     `ci:check-css-selector-shadowing` reports `.c2c-v2 .crumbs .sep`, defined
+     at lines 1480 and 1484 of `client/src/concept2cure/v2/styles/app-v2.css`.
+     The later rule silently wins. The fix is to merge the two declarations into
+     one rule.
+10. **→ `…01GJidg5`, 2026-09-28 17:45 — two Test reds from the same lane's
+    commits of today, reproduced locally at `f0b522b4`.**
+    - `tests/governed-decision-db-integration.test.ts`, 2 tests, fails with
+      *"decisionRecordService.getByDecisionCode is not a function"*.
+      - `resolveGovernedDecisionRow` (`governed-decision-ledger.ts:94`) now
+        looks a decision up by its code first.
+      - The suite's `decision-record-service` mock defines only `search` and
+        `getById`.
+      - Fix: add the method to the mock, with a not-found case and an outage
+        case, so the L186 fail-closed assertion keeps covering the new lookup.
+    - `client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx`, 2 tests in
+      "CmQcTesting — recording and second-person review": the recorded rows
+      (`S-1`, `S-2`) are no longer rendered.
+      - Since `288411a4` (16:21), a CMC register lists the open program's rows
+        only.
+      - The fixture's rows need the program the test opens.
+11. **→ `…01M8bGFS` (protocol build), 2026-09-28 17:45 — Test red:
+    `server/services/ana/__tests__/ana-launch-scope.test.ts` › "classifies every
+    enabled tool".**
+    - 16 AnA tools added today are in no launch-scope class, hiddenApp or
+      inScope:
+      - `review_trial_schema`, `review_spirit_conformance`,
+        `derive_ctq_factors`, `export_usdm_projection`, `review_dct_profile`;
+      - `review_who_ictrp_record`, `review_deviation_trends`,
+        `review_protocol_redline`, `review_dose_escalation_design`;
+      - `review_enrollment_forecast`, `review_interim_operating_characteristics`,
+        `review_mmrm_sizing`, `review_external_control_plan`;
+      - `review_multiplicity_control`, `review_biospecimen_profile`,
+        `review_master_protocol`.
+    - Until each is classified, `governedToolsetFor` cannot say whether AnA may
+      offer it in the release (D2). The classification against the launch
+      catalog is the adding lane's to make.
 
 ### Found by the D5 lane's CI check (`…01P6GWSv`, 2026-09-28) — handed on
 
