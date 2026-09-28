@@ -49,6 +49,7 @@
     "submission.SC_TRANSITIONS": "SC_TRANSITIONS: application type, region, sequence status and transition maps mirroring shared/types/submission-constants \u2014 reference configuration, not sample data",
     "task-board-data.TB_COLS": "TB_COLS: board column, module colour, task type and source label maps \u2014 configuration; the three invented programmes were removed, the board reads GET /api/projects",
     "task-board-data.TB_MOD": "TB_MOD: board column, module colour, task type and source label maps \u2014 configuration; the three invented programmes were removed, the board reads GET /api/projects",
+    "task-board-data.MODULE_COLOR_UNKNOWN": "MODULE_COLOR_UNKNOWN: the colour token (var(--text-300)) of a module the TB_MOD map does not name — configuration beside TB_MOD, not sample data (design-system G2, 2026-09-28)",
     "task-board-data.TB_SRC": "TB_SRC: board column, module colour, task type and source label maps \u2014 configuration; the three invented programmes were removed, the board reads GET /api/projects",
     "task-board-data.TB_TYPE": "TB_TYPE: board column, module colour, task type and source label maps \u2014 configuration; the three invented programmes were removed, the board reads GET /api/projects",
     "vault-data.flattenDocs": "flattenDocs: pure helpers over VaultDoc trees (flatten, status, icon key, type guard) \u2014 functions, no documents",

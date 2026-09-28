@@ -135,6 +135,37 @@ export function columnsAddedIn(sql) {
   return out;
 }
 
+const RETYPE_ACTION_RE =
+  /^\s*ALTER\s+(?:COLUMN\s+)?(?:"([^"]+)"|([a-z_][a-z0-9_]*))\s+(?:SET\s+DATA\s+)?TYPE\s+(?:pg_catalog\s*\.\s*)?"?([a-z_][a-z0-9_]*)"?/i;
+
+/**
+ * Every column a statically-named `ALTER TABLE` changes the type of, with the
+ * new type — every action of the statement, as `columnsAddedIn` reads them:
+ *
+ *   ALTER TABLE [IF EXISTS] [ONLY] [schema.]t
+ *     ALTER [COLUMN] c [SET DATA] TYPE <type> [USING …], …
+ *
+ * Read by ci:json-operator-types: a column Drizzle declares `json` that a
+ * migration later retypes to `jsonb` accepts `||` and `jsonb_set`, and flagging
+ * it would be the guard crying wolf. A dynamic target inside `format()` does not
+ * match, as for `columnsAddedIn`.
+ *
+ * @param {string} sql comment-stripped SQL
+ * @returns {{table: string, column: string, type: string}[]}
+ */
+export function columnsRetypedIn(sql) {
+  const out = [];
+  ALTER_RE.lastIndex = 0;
+  for (const m of joinLiteralConcats(sql).matchAll(ALTER_RE)) {
+    const table = qualify(m[1], m[2]);
+    for (const action of splitTopLevel(m[3])) {
+      const a = RETYPE_ACTION_RE.exec(action);
+      if (a) out.push({ table, column: (a[1] || a[2]).toLowerCase(), type: a[3].toLowerCase() });
+    }
+  }
+  return out;
+}
+
 // ── CREATE TABLE ────────────────────────────────────────────────────────────
 
 const CREATE_HEAD_RE = new RegExp(
@@ -149,8 +180,12 @@ const CREATE_HEAD_RE = new RegExp(
  * and invented 21 columns, and not line-by-line, which dropped the second of two
  * columns declared on one line. TEMP tables are excluded: they are not schema.
  *
+ * Each column carries `type`, the first word of its definition (`jsonb`,
+ * `text`, …) — read by ci:json-operator-types for tables only a migration
+ * creates.
+ *
  * @param {string} sql comment-stripped SQL
- * @returns {{table: string, column: string}[]}
+ * @returns {{table: string, column: string, type: string}[]}
  */
 export function columnsCreatedIn(sql) {
   const out = [];
@@ -174,8 +209,10 @@ export function columnsCreatedIn(sql) {
       else if (c === ')' && --depth === 0) break;
     }
     for (const el of splitTopLevel(sql.slice(m.index + m[0].length, j))) {
-      const c = /^\s*(?:"([^"]+)"|([a-z_][a-z0-9_]*))/i.exec(el);
-      if (c && (c[1] || !NOT_A_COLUMN.test(c[2]))) out.push({ table, column: (c[1] || c[2]).toLowerCase() });
+      const c = /^\s*(?:"([^"]+)"|([a-z_][a-z0-9_]*))(?:\s+(?:pg_catalog\s*\.\s*)?"?([a-z_][a-z0-9_]*))?/i.exec(el);
+      if (c && (c[1] || !NOT_A_COLUMN.test(c[2]))) {
+        out.push({ table, column: (c[1] || c[2]).toLowerCase(), type: (c[3] || '').toLowerCase() });
+      }
     }
   }
   return out;
@@ -330,13 +367,21 @@ function blankTsComments(src) {
  * lost the rest of the table), and a column read only in PROPERTY position —
  * `key: builder('sql_name'` — so `.default('draft')` is never a column.
  *
+ * Each column also carries `type`, the builder that declared it (`json`,
+ * `jsonb`, `text`, …), and `key`, the TypeScript property name; `bindings`
+ * maps the exported variable (`export const programs = pgTable('regulatory_programs'`)
+ * to its table. ci:json-operator-types needs all three: a `json` column and a
+ * `jsonb` column accept different operators, and a Drizzle `.set({ key: sql\`…\` })`
+ * names the column by its property, not its SQL name.
+ *
  * @param {string} raw TypeScript source
- * @returns {{tables: string[], columns: {table: string, column: string}[]}}
+ * @returns {{tables: string[], columns: {table: string, column: string, type: string, key: string}[], bindings: {variable: string, table: string}[]}}
  */
 export function drizzleColumns(raw) {
   const src = blankTsComments(raw);
   const tables = [];
   const columns = [];
+  const bindings = [];
   const schemaVars = new Map();
   for (const m of src.matchAll(/(?:const|let)\s+(\w+)\s*=\s*pgSchema\(\s*['"]([a-z0-9_]+)['"]\s*\)/g)) {
     schemaVars.set(m[1], m[2]);
@@ -346,6 +391,8 @@ export function drizzleColumns(raw) {
     if (m[1] && !schemaVars.has(m[1])) continue;
     const table = qualify(m[1] ? schemaVars.get(m[1]) : null, m[2]);
     tables.push(table);
+    const bound = /(?:const|let)\s+(\w+)\s*(?::[^=]*)?=\s*$/.exec(src.slice(Math.max(0, m.index - 200), m.index));
+    if (bound) bindings.push({ variable: bound[1], table });
     let depth = 0;
     let q = null;
     let expectKey = true;
@@ -379,12 +426,12 @@ export function drizzleColumns(raw) {
       }
       if (depth === 1 && expectKey && /\S/.test(c)) {
         expectKey = false;
-        const p = /^['"]?\w+['"]?\s*:\s*[a-zA-Z_]\w*\(\s*['"]([a-zA-Z0-9_]+)['"]/.exec(src.slice(j, j + 200));
-        if (p) columns.push({ table, column: p[1].toLowerCase() });
+        const p = /^['"]?(\w+)['"]?\s*:\s*([a-zA-Z_]\w*)\(\s*['"]([a-zA-Z0-9_]+)['"]/.exec(src.slice(j, j + 200));
+        if (p) columns.push({ table, column: p[3].toLowerCase(), type: p[2], key: p[1] });
       }
     }
   }
-  return { tables, columns };
+  return { tables, columns, bindings };
 }
 
 // ── References: which (relation, column) pairs does a statement name? ───────

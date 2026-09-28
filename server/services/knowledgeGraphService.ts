@@ -229,7 +229,7 @@ export class KnowledgeGraphService {
     // Get the atom
     const atomResult = await this.pool.query(
       `
-      SELECT id, title, content, atom_type, source_type, metadata
+      SELECT id, title, content, atom_type, source_type, structured_data
       FROM lumen_data_atoms WHERE id = $1
     `,
       [atomId]
@@ -342,7 +342,7 @@ export class KnowledgeGraphService {
   async discoverEdgesByMetadata(atomId: string): Promise<Edge[]> {
     const atomResult = await this.pool.query(
       `
-      SELECT id, atom_type, source_type, metadata, tags
+      SELECT id, atom_type, source_type, structured_data, tags
       FROM lumen_data_atoms WHERE id = $1
     `,
       [atomId]

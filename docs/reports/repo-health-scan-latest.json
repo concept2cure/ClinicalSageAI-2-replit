@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T17:39:52.762Z",
+  "generatedAt": "2026-09-28T19:35:27.378Z",
   "git": {
-    "sha": "a7848edf871d0cab3eaf15b8de46dd33f72fda3c",
+    "sha": "f61a8e6cb69d283e0fc1b065f833b60f47fd5c65",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1091459
+        "bytes": 1092404
       },
       {
         "file": "shared/schema.ts",
@@ -2009,7 +2009,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 192487
+        "bytes": 194189
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2024,12 +2024,12 @@
         "bytes": 175247
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 160814
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 166186
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 159625
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 160814
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2037,7 +2037,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 154653
+        "bytes": 155033
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2124,16 +2124,16 @@
         "bytes": 114269
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 109730
-      },
-      {
         "file": "server/services/submission-service/submission-service.ts",
         "bytes": 109701
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 109447
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 109305
       },
       {
         "file": "shared/regulatory/project-bootstrap.ts",
@@ -2190,12 +2190,12 @@
         "lines": 5384
       },
       {
-        "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4491
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 4513
       },
       {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 4482
+        "file": "server/routes/c2c/artifacts.ts",
+        "lines": 4491
       },
       {
         "file": "server/storage.ts",
@@ -2203,7 +2203,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3685
+        "lines": 3786
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2247,7 +2247,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3089
+        "lines": 3094
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2255,7 +2255,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 3007
+        "lines": 2999
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2446,12 +2446,12 @@
         "lines": 1857
       },
       {
-        "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
-        "lines": 1849
+        "file": "server/services/ana/citation-engine.ts",
+        "lines": 1853
       },
       {
-        "file": "server/services/ana/citation-engine.ts",
-        "lines": 1844
+        "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
+        "lines": 1849
       },
       {
         "file": "server/services/vaccine/vaccine-knowledge.ts",

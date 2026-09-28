@@ -40,10 +40,12 @@ const cases = [
   ['forced tool_choice on opus-5-5', 400, base({ tools: [tool], tool_choice: { type: 'any' } })],
   ['tool_use with no tool_result', 400, base({ messages: [U('q'), { role: 'assistant', content: [{ type: 'tool_use', id: 't1', name: 'navigate_to', input: {} }] }, U('r')] })],
   ['max_tokens over the model limit', 400, base({ model: 'claude-haiku-4-5', max_tokens: 100000 })],
+  ['display "updates" without its beta', 400, base({ tools: [tool], thinking: { type: 'adaptive', display: 'updates' } })],
+  ['valid: display "updates" with its beta', 200, base({ tools: [tool], thinking: { type: 'adaptive', display: 'updates' } }), { 'anthropic-beta': 'thinking-display-updates-2026-08-18' }],
 ];
 let fail = 0;
-for (const [name, want, body] of cases) {
-  const r = await fetch('http://127.0.0.1:8799/v1/messages', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+for (const [name, want, body, headers = {}] of cases) {
+  const r = await fetch('http://127.0.0.1:8799/v1/messages', { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
   const txt = await r.text();
   const ok = r.status === want;
   if (!ok) fail++;

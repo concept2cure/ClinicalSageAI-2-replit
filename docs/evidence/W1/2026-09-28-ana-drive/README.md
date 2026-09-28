@@ -172,13 +172,50 @@ Shown failing and then passing in the browser, with the stand-in ending an
 answer at `max_tokens` (`answer-cut-off.txt` and the before/after
 screenshots).
 
+## What she says at each stop reaches the person (fifth pass)
+
+A demonstration is narrated between moves: AnA says a stop's talking point,
+then makes the move. Two things kept those words from the person.
+
+- **On every model, the stops ran together.** Each round's words were
+  appended to the answer with nothing between rounds. A model ends a note
+  without a line break, so the rail read "…Here it is on screen.Stop 5:
+  Authoring is…" as one block (`narration-before-default.png`). Each round's
+  words now start a new paragraph (`stream.ts`). The model is still handed
+  back its own words unchanged.
+- **On Opus 5.5, long talking points were never said.** The API documents
+  it: on Opus 5.5 (and Fable 5.1, Mythos 5.1, Fable 5), a note longer than a
+  sentence or two between tool calls comes back as a progress-update thinking
+  block. Under the default display that block is empty. With every round on
+  Opus 5.5, stops 1, 2 and 12 of the training demonstration were never
+  narrated. The screen moved to Projects and opened a program in silence
+  (`narration-before-opus.png`).
+  - Opus 5.5 serves AnA's rounds with tiering off, on a Thorough or
+    high-risk turn, and when a person picks it.
+  - The gateway now asks such a model for display "updates", the documented
+    fix, with its beta. It returns each note as her words, in its own
+    paragraph (`server/services/ai-gateway/progress-updates.ts`).
+  - A turn that asked for visible reasoning keeps its reasoning panel.
+
+The stand-in now plays that documented behaviour and refuses "updates"
+without its beta. The battery gained two checks. It passed 21/21 with every
+round on Opus 5.5 and 21/21 on the default tiering, with nothing refused
+(`narration.txt`).
+
 ## Evidence
 
+- `narration.txt` and four screenshots (`narration-before-default.png`,
+  `narration-before-opus.png`, `narration-after-opus.png`,
+  `narration-after-default.png`): the demonstration's narration, before and
+  after, on both configurations.
+- `batched-moves.txt`, `batched-moves.png`: two moves in one round, as a real
+  model batches them, reach the screen in order. Checked, no defect.
 - `answer-cut-off.txt`, `answer-cut-off-before.png`,
   `answer-cut-off-after.png`: a cut-off answer, before and after.
 - `harness/`: the stand-in model, its self-test and the browser battery that
   produced every run below, with how to repeat them. Run from this folder on
-  the current tree, it passed 19/19, with the stand-in refusing nothing.
+  the current tree, it passed 21/21 on both configurations, with the stand-in
+  refusing nothing.
 - `silent-thinking.txt`, `silent-thinking-before.png`,
   `silent-thinking-after.png`: the silent-thinking cut-off, before and after.
 - `contract-audit.txt`: the rules, their sources, the stand-in failing each
@@ -227,6 +264,11 @@ document to open.
   documented contract, but a stand-in cannot show how a real model follows
   the instructions it is given. A run with a key (`docs/LOCAL_TESTING.md`,
   "AnA operates the app") is the remaining evidence for this row.
+- **On Opus 5.5, notes on a turn that asked for visible reasoning.** Such a
+  turn (Thorough effort, or high risk) keeps display "summarized", so its
+  reasoning panel stays. Its notes between moves appear in that panel, not as
+  her words. Asking for "updates" there too would empty the panel. That is a
+  choice for the founder.
 - **Staging.** It is owed with D1.
 - **Decision for the founder.** With `ENTITLEMENTS_ENFORCE=on`, Live Drive
   requires the `professional` tier (`ana_live_drive`). A standard-tier

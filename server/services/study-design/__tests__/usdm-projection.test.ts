@@ -415,7 +415,7 @@ describe('projectUsdm: the honesty ledgers are complete', () => {
   it('carries the always-unfilled entities, checked against a literal list', () => {
     expect(ALWAYS_UNFILLED.map(l => l.split(': ')[0])).toEqual([
       'Organization', 'StudyVersion.studyIdentifiers / StudyIdentifier', 'StudyVersion.dateValues / GovernanceDate', 'StudyVersion.rationale', 'StudyDefinitionDocument',
-      'StudyTitle.type', 'StudyDesign.studyType', 'StudyDesign.rationale', 'StudyDesign.therapeuticAreas', 'StudyDesignPopulation.includesHealthySubjects']);
+      'StudyDesign.studyType', 'StudyDesign.rationale', 'StudyDesign.therapeuticAreas', 'StudyDesignPopulation.includesHealthySubjects']);
     const p = projectUsdm(usdmDesign());
     expect(p.unfilledUsdmEntities).toEqual(expect.arrayContaining([...ALWAYS_UNFILLED]));
     const g = sd(p);

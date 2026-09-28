@@ -133,6 +133,17 @@ jobs:
         # a written reason; the selftest shows each failure branch firing.
         run: npm run ci:runtime-ddl && npm run ci:runtime-ddl:selftest
 
+      - name: Guardrails — no jsonb operator on a json column
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Most JSON columns in this schema are `json`, not `jsonb`. json has no
+        # `||`, jsonb_set/jsonb_strip_nulls refuse it, and COALESCE(json_col,
+        # '{}'::jsonb) cannot convert — so each such statement fails on every
+        # execution. Twelve shipped, each behind unit tests that mocked the pool.
+        # Types from the Drizzle model (and migration retypes); no database.
+        # Baseline entries need a written reason; the selftest shows each
+        # failure branch firing and each safe form passing.
+        run: npm run ci:json-operator-types && npm run ci:json-operator-types:selftest
+
       - name: Guardrails — server SQL references a table nothing creates
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit

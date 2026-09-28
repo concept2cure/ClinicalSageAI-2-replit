@@ -57,6 +57,27 @@ could only ever report "not recorded".
 The panel re-reads the design after every write, so a block shows as recorded
 only once the server has confirmed it.
 
+### Registration titles: the official title is no longer used as the lay one
+
+The ClinicalTrials.gov projection filled the required **Brief title** — which
+the PRS data element definitions describe as "a short title … written in
+language intended for the lay public" (at most 300 characters) — with the
+protocol's official title, and called it rendered. WHO TRDS item 9 (Public
+Title, "intended for the lay public in easily understood language") could only
+ever be missing. The design now carries `publicTitle?` and `acronym?`
+(`study-design-types.ts`), recorded by a person and never derived from `title`:
+
+| Consumer | Now |
+|---|---|
+| ClinicalTrials.gov | Brief title from `publicTitle`, else missing with the reason (the official title is not reused); Official title from `title`; Acronym (optional); each checked against the PRS limits (300 / 600 / 14) — longer is `partial` with its length, never truncated |
+| EU CTIS | Public title (optional, so `registrable` keeps its meaning — see `ctisPopulationFields`) |
+| WHO TRDS | item 9 renders `publicTitle`; item 10 appends a recorded acronym ("include trial acronym if available") and stays rendered without one |
+| USDM | one StudyTitle per recorded title, typed official / public / acronym with C2C-INTERNAL codes (not CDISC terms); the `StudyTitle.type` always-unfilled line is retired |
+| SPIRIT 1 | a recorded acronym must appear in the title; without one the gap says the design does not record whether the trial has one |
+
+A design with no public title is now **not registrable** on ClinicalTrials.gov
+where it used to look complete: the brief title was never there.
+
 ### Withdrawn, not shipped: a second protocol DOCX renderer
 
 A structured `GET /api/protocol-export/:id/docx` was built early in this session
@@ -179,6 +200,13 @@ red, the file was restored byte for byte, and the suite re-ran green.
 | Deviation vocabulary | a severity admitted that the union does not have | `category "Consent" and severity "high" count as uncategorised / unassessed` and `an unassessed deviation is counted … never as minor` |
 | Snapshot | `snapshotVersionTx` without the `section_key` tie-break | `sections tied on order_index are ordered the same way…` (`expected [ 'b_rationale', 'a_background' ] to deeply equal [ 'a_background', 'b_rationale' ]`) |
 | Service | the working-copy read back on an `id` tie-break | same test (`reordered`/`moved` non-zero) — **survived at first**, when the fixture's id order matched key order; caught after writing the sections in the opposite order |
+| Titles | CT.gov brief title from the official title again | `never shows the official title as the lay brief title…` and the length test |
+| Titles | PRS length limits not applied | `a title longer than ClinicalTrials.gov accepts is partial with its length, never truncated` |
+| Titles | WHO item 9 back to always missing; item 10 drops the acronym | `item 9 renders a recorded public title; item 10 carries a recorded acronym…` |
+| Titles | USDM public title typed as official; an official title invented from the public one | `emits a recorded public title and acronym as their own typed titles…`, `no official title: no official StudyTitle is invented from the public one` |
+| Titles | SPIRIT 1 ignores a recorded acronym | `checks a recorded acronym appears in the title…` |
+| Titles block | an empty block accepted; an omitted acronym kept; an empty block read as recorded; the public title prefilled from the official one | one test each in `planning-inputs.test.ts` and `planningInputForms.test.ts` |
+| Master protocol | the schema refusing `biomarker: null`; the schema dropping the justification; the form ignoring the not-biomarker list | `a sub-study stated as not biomarker-defined … are recorded and read as stated` and the form round-trip |
 | Service | CAPA join without its org anchor | `excludes other organisations' … CAPA` (`expected 1 to be 0`) — after strengthening the test so the only open action is another org's |
 | Service | version lookup without its org filter | `a label not recorded for this org is NOT_FOUND — including one another org recorded` (`promise resolved … instead of rejecting`) |
 | AnA tools | one handler unregistered | `review_protocol_redline handler registered: expected undefined to be type of 'function'` |
@@ -245,6 +273,23 @@ AnA's `review_protocol_redline` note said "a section carrying a note has no
 diff"; a tie note sits beside a diff, so that was false. It now says what a note
 can mean and to report `positionsFromRowOrder` beside any moved verdict.
 
+## Adversarial review of the Tier 2/3 wirings and the planning-inputs path
+
+Workflow `protocol-tier23-review`: five units, one reviewer each applying both
+lenses (honesty/determinism/duplication; domain correctness, maths and test
+strength — and security for the write path), then a fixer per unit for every
+blocking and major finding. Defects the reviewers found inside the canonical
+`server/services/stats/` engines were held for a separate fix-and-verify pass,
+because those engines have other consumers.
+
+| Unit | Blocking/major | Notable | Tests after | Mutants caught |
+|---|---|---|---|---|
+| Enrollment + MMRM | 14 (2 blocking) | **a site with no rate CV or activation time was forecast as the most favourable case** (no between-site variability, every site open on day 0) and called rendered — now a gap, no forecast; **an unrecorded allocation was sized at the engine's 1:1** — a 2:1 trial was reported covered at 358 when it needs 404; non-inferiority and equivalence frames were sized as two-sided superiority; a one-sided alpha ≥ 0.5 was clamped to 0.999; when some simulations never reached the target, conditional medians of 7.9e56 were shown as rendered; a 20,000-patient, 150-site plan blocked the event loop for 28 s (now a stated work budget) | 55 | 37 of 38 (the survivor differs only for one-sided alpha in (0.4995, 0.5); removing the guard is caught) |
+| Dose escalation + interim OC | 15 (1 blocking) | **a spending-function name such as `constructor` resolved to a JavaScript built-in and produced fabricated "solved" boundaries near 0** — now a Map of own entries; the type I error was never compared with alpha; **recorded futility was always treated as binding**, crediting it to type I error control (FDA 2019 treats futility as typically non-binding) — the type I error is now non-binding, the binding figure separate; power silently assumed no group-sequential inflation (now stated); a futility bound above the efficacy bound was evaluated; the escalate/de-escalate columns re-derived the canonical BOIN table (now read from it); a per-dose stop below one cohort rendered an empty table as complete; both computations were unbounded (now capped, with gaps) | 64 | 44 |
+| External control + multiplicity | 10 (1 blocking) | **a commensurate prior with a FIXED τ² was scored as handling prior-data conflict** — with τ² fixed it equals a power prior with a0 = seH²/(seH²+τ²) and does not attenuate when the controls disagree (probe: control means −25 and +500 borrow identically); the checklist claimed to be every element FDA's 2023 draft discusses with five (now ten, several honestly unrecordable, so a plan is at best partial); an invalid concurrent-control size was classified "fully external"; a missing control type was asserted to be "no external control"; **a multiplicity method named `constructor` resolved to a JavaScript built-in and reported a fabricated FWER of 1**; the recorded alpha allocation was never simulated (textbook Holm/Hochberg regardless of what the sponsor recorded) — now the allocation is the initial weights of a graphical procedure; an allocation of 0 (legitimate in a fixed sequence) was reported as a defect | 49 | 27 (one survivor — textbook Hochberg swapped for fixed sequence, indistinguishable by FWER under the global null — killed after pinning each textbook rule to the engine's exact rate) |
+| Biospecimens + master protocol | 13 (2 blocking) | **a blood volume recorded as a string was summed by concatenation** — "10" gave a total of `0010010` mL and both reference points "exceeded"; **draws at unscheduled and early-termination visits were summed into the scheduled total**, and one undated unscheduled column nulled every window; the 8-week windows treated a day 0 that the design model does not have, one day short across screening→treatment; the 50 mL / 3 mL/kg reference read "not exceeded" with no weight; duplicated cells doubled volumes; the one-collection-per-cell rule is now stated. Master protocol: a shared control was judged by counting sub-studies, not arms; a biomarker was demanded of every basket sub-study (FDA 2022 also allows histology, stage, prior therapies); adjusted non-concurrent controls were rendered clean (FDA's 2023 draft expects concurrent controls for primary comparisons) | 41 | 36 |
+| Planning-inputs write path | 12 (1 blocking) | **free text containing `\|` was silently cut, and the form's prefill turned every recorded `\|` into `/`** — recorded governed text was not what the sponsor entered; `\|`, `;` and line breaks are now reserved and refused; a server refusal's field-level details were swallowed by the client; φ1/φ2 could not be recorded and were deleted on the next edit; the activity drawer carried one activity's values onto another; duplicate dose labels re-parsed a start dose as another level; MMRM visits unbounded (800 visits: 5.5 s per viewer GET, now capped); **a write now carries the block as it was read (`expected`) and a block changed since is refused 409 STALE_BLOCK**; numbers like `0x9` or `Infinity` refused; required choices are not pre-selected; every Edit button names its target | 68 | 37 |
+
 ## What is not done, and why
 
 - **Adversarial review is complete** for all eight Tier 1 engines (workflow
@@ -262,8 +307,11 @@ can mean and to report `positionsFromRowOrder` beside any moved verdict.
   (the planning-inputs panel); the SoA grid itself is still edited through the
   design API and AnA drafting. The DCT profile reports every activity without
   a location as `unstated`.
-- **WHO item 9 (public title)** stays `missing` until the design carries a
-  distinct public title (`publicTitle?` on the spine).
+- **The public title and acronym are entered in the planning-inputs panel**
+  (a `registrationTitles` block: both titles are one block, so a title left
+  out is removed, and null clears both). Registry length limits are not refused
+  at entry; the ClinicalTrials.gov projection reports a longer title with its
+  length.
 - **Win ratio / RMST are deliberately not wired**: analysis-on-data engines have
   nothing to compute before data exist; see the design document's Tier 2 table. **Tier 3** as listed in the design document.
 - **The legacy `/api/protocol` optimizer** (model-generated figures outside the

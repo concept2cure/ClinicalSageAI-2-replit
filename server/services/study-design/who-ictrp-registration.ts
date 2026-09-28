@@ -24,9 +24,13 @@
  *     of a study design. They are ALWAYS `missing` with the gap
  *     {@link NOT_CARRIED_BY_DESIGN}. Nothing on the design — its id, its programme
  *     id, an NCT number cited as evidence — is read into them.
- *   - Item 9 Public Title: `StudyDesign` records one title. It is the scientific
- *     title (item 10) and is never reused as the public one, so item 9 is missing
- *     and names the field that would settle it.
+ *   - Item 9 Public Title renders `StudyDesign.publicTitle`, the lay-language title
+ *     a person recorded. `title` is the scientific title (item 10) and is never
+ *     reused as the public one: without a public title, item 9 is missing and
+ *     names the field that would settle it.
+ *   - Item 10 asks for the trial acronym "if available": a recorded
+ *     `StudyDesign.acronym` is appended to the scientific title. An absent acronym
+ *     leaves item 10 rendered — the study may have none.
  *   - An item is `rendered` only when the design carries everything the TRDS item
  *     asks for. `partial` names what is absent (sex under item 14, purpose under
  *     item 15, a stated timepoint under 19/20, intervention detail under 13).
@@ -160,9 +164,12 @@ function distinctTrimmed(list: readonly unknown[] | undefined): string[] {
 // ─── Items 9–12: titles, countries, condition ────────────────────────────────
 
 const PUBLIC_TITLE_GAP =
-  'StudyDesign records a single title, which is rendered as the scientific title (item 10); it declares no ' +
-  'public (lay) title, and the scientific title is not reused as the public one. A public title recorded on ' +
-  'the study design would settle this item.';
+  'StudyDesign.publicTitle is empty: the design records no public (lay-language) title, and the scientific ' +
+  'title is not reused as the public one (it is item 10). A public title recorded on the study design would settle this item.';
+
+function publicTitle(d: StudyDesign): Rendering {
+  return present(d.publicTitle) ? rendered(d.publicTitle.trim(), 'StudyDesign.publicTitle') : missing(PUBLIC_TITLE_GAP);
+}
 
 const COUNTRIES_GAP =
   'Rendered verbatim from StudyDesign.targetRegions, which records planned target regions. The design does not ' +
@@ -170,9 +177,10 @@ const COUNTRIES_GAP =
   'country nor expands a region (e.g. "EU") into its countries.';
 
 function scientificTitle(d: StudyDesign): Rendering {
-  return present(d.title)
-    ? rendered(d.title, 'StudyDesign.title')
-    : missing('StudyDesign.title is empty; the design records no scientific title.');
+  if (!present(d.title)) return missing('StudyDesign.title is empty; the design records no scientific title.');
+  return present(d.acronym)
+    ? rendered(`${d.title} (${d.acronym.trim()})`, 'StudyDesign.title; StudyDesign.acronym')
+    : rendered(d.title, 'StudyDesign.title');
 }
 
 /** The planned recruiting sites' countries; target regions only when no site records a country. */
@@ -423,7 +431,7 @@ type Renderer = (d: StudyDesign) => Rendering;
 
 /** The items a study design can contribute to. Every other item is registration-only. */
 const DESIGN_RENDERERS: Readonly<Record<number, Renderer>> = Object.freeze({
-  9: () => missing(PUBLIC_TITLE_GAP),
+  9: publicTitle,
   10: scientificTitle,
   11: countries,
   12: condition,

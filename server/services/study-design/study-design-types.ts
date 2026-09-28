@@ -233,7 +233,11 @@ export interface MultiplicityStrategy {
     | 'graphical'
     | 'alpha_spending'
     | 'none';
-  /** Explicit alpha-allocation trace across the hierarchy. */
+  /**
+   * Each confirmatory hypothesis's initial significance level (Bretz et al.
+   * 2009: weight × alpha), 0 ≤ level ≤ alpha, totalling at most alpha. Listed
+   * in testing order for a fixed sequence. multiplicity-check.ts simulates it.
+   */
   alphaAllocation?: Array<{ endpointName: string; alpha: number }>;
 }
 
@@ -590,8 +594,12 @@ export interface MasterProtocolPlan {
     name: string;
     /** The population or disease the sub-study enrols. */
     population: string;
-    /** The biomarker that assigns participants to it (basket / umbrella). */
-    biomarker?: string;
+    /**
+     * The biomarker that assigns participants to it (basket / umbrella). `null`
+     * states the sub-study's population is not biomarker-defined (histology,
+     * disease stage, prior therapy — FDA 2022); absent means the plan does not say.
+     */
+    biomarker?: string | null;
     /** The assay that measures the biomarker, and its validation status. */
     biomarkerAssay?: string;
     /** Arm names (design `arms`) this sub-study randomises between. */
@@ -606,6 +614,8 @@ export interface MasterProtocolPlan {
   sharedControlArm?: string | null;
   /** Whether comparisons use controls enrolled before a treatment arm opened. */
   nonConcurrentControls?: 'not_used' | 'used_with_time_adjustment' | 'used';
+  /** Why non-concurrent control data are used, and how time-trend bias is addressed (FDA 2023 draft). */
+  nonConcurrentControlsJustification?: string;
   /** How a new arm or sub-study is added (amendment, IRB, randomisation update). */
   armAdditionProcedure?: string;
   /** When an arm is dropped for futility or efficacy. */
@@ -620,7 +630,17 @@ export interface StudyDesign {
   programId?: string;
   organizationId?: number;
 
+  /** The official (scientific) title — the title of the protocol. */
   title: string;
+  /**
+   * The lay-language title registries publish for the public: the
+   * ClinicalTrials.gov Brief Title, WHO TRDS item 9 Public Title, the EU CTIS
+   * public title. Recorded by a person; never derived from `title`, and a
+   * projection never shows `title` in its place as if it were one.
+   */
+  publicTitle?: string;
+  /** The acronym the study is publicly known by, if it has one (ClinicalTrials.gov Acronym; WHO TRDS item 10). */
+  acronym?: string;
   phase: StudyPhase;
   indication: string;
   /** Product type — drug/biologic/device/ivd drive domain-specific rules. */
@@ -660,9 +680,35 @@ export interface StudyDesign {
 }
 
 /** Endpoint roles that require a complete estimand before the design can advance. */
+/**
+ * Study day → zero-based day index under the design model's day-1 convention
+ * with no day 0 (`SoaVisit.studyDay`: day 1 → 0, day −1 → −1), so the days
+ * between two visits is a difference of indices. null when the value is not a
+ * usable study day: absent, not an integer, or day 0 (which the convention does
+ * not define). The one implementation of the rule.
+ */
+export function studyDayIndex(studyDay: unknown): number | null {
+  if (typeof studyDay !== 'number' || !Number.isInteger(studyDay) || studyDay === 0) return null;
+  return studyDay > 0 ? studyDay - 1 : studyDay;
+}
+
 export const ESTIMAND_REQUIRED_ROLES: readonly EndpointRole[] = ['primary', 'key_secondary'] as const;
 
 /** Convenience: the primary endpoint(s) of a design. */
 export function primaryEndpoints(design: StudyDesign): Endpoint[] {
   return (design.endpoints ?? []).filter(e => e.role === 'primary');
+}
+
+/**
+ * The confirmatory family: every primary and key-secondary endpoint
+ * (ESTIMAND_REQUIRED_ROLES) in design order — the hypotheses a family-wise
+ * type I error covers. Total over a persisted design whose endpoints are not a
+ * list or hold non-records. The one implementation; the design gates, the SAP
+ * projection and the multiplicity check all read it.
+ */
+export function confirmatoryEndpoints(design: StudyDesign): Endpoint[] {
+  const endpoints: unknown = design.endpoints;
+  if (!Array.isArray(endpoints)) return [];
+  return endpoints.filter((e): e is Endpoint =>
+    typeof e === 'object' && e !== null && (ESTIMAND_REQUIRED_ROLES as readonly unknown[]).includes((e as { role?: unknown }).role));
 }
