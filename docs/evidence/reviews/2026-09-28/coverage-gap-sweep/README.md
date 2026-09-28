@@ -39,12 +39,12 @@ The weekly review (`../README.md`) filed, per lens, what it did not cover. This 
 | GS-S-2 DP-02 writers | medium | refuted 0/3 | — (accurately accounted for in the register) |
 | GS-S-3 connector bearer verification | low | refuted | — (IAM-02 residual already on the register) |
 | GA-1 Reason-for-change requirement on save has no accessible indication | blocker | 3/3 | fix in progress (this session) |
-| GA-2 Protocol tab strip has no ARIA tab semantics | high | 3/3 | fix in progress (this session) |
+| GA-2 Protocol tab strip has no ARIA tab semantics | high | 3/3 | **Fixed.** `ProtocolDevWorkspace.tsx` `TabStrip` is the WAI-ARIA tabs pattern (as `quality/App.tsx`): named tablist, `aria-selected`, roving tabindex, Left/Right/Home/End with wrap, one `tabpanel` labelled by the selected tab. `protocolDevSurfaceWrites.test.tsx` GA-2 block red (no tablist) then green; six helpers now query `role="tab"` (stricter). Residual: ~12 surfaces hand-write tablists; a shared primitive is a separate change. |
 | GA-3 `aria-pressed` on one-shot ribbon commands | high | 3/3 | fix in progress (this session) |
 | GA-4 Escape and close controls on the editor's right rail | medium | 2/3 | fix in progress (this session) |
 | GA-5 Ledger-integrity verdict not announced | medium | 3/3 | fix in progress (this session) |
 | GA-6 Section rename does not return focus | medium | 3/3 | fix in progress (this session) |
-| GA-7 Disabled "Record disposition" reason only in a `title` | medium | 3/3 | fix in progress (this session) |
+| GA-7 Disabled "Record disposition" reason only in a `title` | medium | 3/3 | **Fixed.** `ProtocolDevReviews.tsx` states the reason as visible text on the row; the disabled button is `aria-describedby` it; the `title` is removed. GA-7 block red then green, with the assigned-reviewer converse. |
 | GB Boot-time auth-schema repair omits `email_otp_resends` | blocker (as reported) | refuted 0/3 | **Not a product defect.** The column deliberately has one creator, the migration, which deploy runs before the image serves (`migrations/20260923_users_mfa_totp_last_step.sql`, 2026-09-26 amendment). The local reference DB was behind, so **the real-browser pass did not run**. It is owed once that DB is current. |
 
 ## Also closed this session, outside the sweep
