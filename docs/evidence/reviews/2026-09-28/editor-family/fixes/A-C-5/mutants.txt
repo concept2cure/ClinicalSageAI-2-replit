@@ -1,0 +1,64 @@
+## M1: checkbox loses its aria-label (a ticked cell is named by its glyph again)
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevSoa.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > is inert until a governed reason for change is entered 412ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > sets a cell through POST /api/protocol-soa/cells, carrying the numeric ids and the reason 213ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > clearing an already-set cell goes to /cells/clear, not back to /cells 175ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > reverts the tick when the server refuses — the grid never shows a cell the record lacks 151ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > names a ticked cell by its assessment and visit, not by its glyph 145ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > names an unticked cell the same way 134ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > still takes a click anywhere in the cell, and Space on the focused checkbox 149ms
+   Test Files  1 failed (1)
+   Tests  7 failed | 3 passed (10)
+
+## M2: the <td> takes role="checkbox" again
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevSoa.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > is inert until a governed reason for change is entered 228ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > sets a cell through POST /api/protocol-soa/cells, carrying the numeric ids and the reason 59ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > clearing an already-set cell goes to /cells/clear, not back to /cells 45ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > reverts the tick when the server refuses — the grid never shows a cell the record lacks 37ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > names a ticked cell by its assessment and visit, not by its glyph 27ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > names an unticked cell the same way 30ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > keeps every grid cell a table cell, with the checkbox inside it 11ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > still takes a click anywhere in the cell, and Space on the focused checkbox 35ms
+   Test Files  1 failed (1)
+   Tests  8 failed | 2 passed (10)
+
+## M3: the click moves off the cell (only the inner control is clickable)
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevSoa.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > sets a cell through POST /api/protocol-soa/cells, carrying the numeric ids and the reason 5058ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > clearing an already-set cell goes to /cells/clear, not back to /cells 5040ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > reverts the tick when the server refuses — the grid never shows a cell the record lacks 5030ms
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > still takes a click anywhere in the cell, and Space on the focused checkbox 5037ms
+   Test Files  1 failed (1)
+   Tests  4 failed | 6 passed (10)
+
+## M4: the glyph is no longer aria-hidden
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevSoa.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > names a ticked cell by its assessment and visit, not by its glyph 29ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 9 passed (10)
+
+## M5: the checkbox loses its keyboard handler
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevSoa.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > still takes a click anywhere in the cell, and Space on the focused checkbox 5058ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 9 passed (10)
+
+## M6: the checkbox's focus ring rule is dropped
+   file: client/src/concept2cure/v2/styles/protocol-dev-editing.css
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > gives the checkbox the whole cell and the focus ring the cell had 4ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 9 passed (10)
+

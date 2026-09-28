@@ -109,6 +109,12 @@
   .pd-soa .pd-soa-rh > .pde-soa-rh{margin-left:auto;flex-shrink:0;}
   .pde-soa-label{min-width:0;}
   .pde-soa-rh{display:inline-flex;align-items:center;gap:1px;}
+  /* Each tick is a checkbox inside its cell rather than the cell itself
+     (A-C-5). It covers the cell, so the pointer target and the inset focus
+     ring are the cell's, as they were when the <td> took focus. */
+  .pd-soa .pd-soa-cell{position:relative;}
+  .pde-soa-tick{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+  .pde-soa-tick:focus-visible{outline:2px solid var(--accent-200);outline-offset:-2px;}
 
   /* ── risk register ──────────────────────────────────────────────── */
 
