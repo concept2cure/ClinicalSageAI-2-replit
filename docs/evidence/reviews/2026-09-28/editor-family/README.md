@@ -67,7 +67,7 @@ is one defect:
 |---|---|---|---|
 | P11-C-1 / SEC-C-1 | A viewer could make every ProtocolDev governed write except the two signatures | confirmed | **fixed** `10ad41a2` (`fixes/P11-C-1/`). AnA's door is closed by `41e7c539` (another lane) |
 | SEC-C-2 | A finalized, signed protocol's schedule of assessments could still change | confirmed | **fixed** `29d80fe9` (`fixes/SEC-C-2-3-8/`) |
-| SEC-A-1 | "Re-read source" re-baselined any citation in the tenant, sealed documents included, unaudited | confirmed | _in progress_ |
+| SEC-A-1 | "Re-read source" re-baselined any citation in the tenant, sealed documents included, unaudited | confirmed | **fixed** `63b43274` (`fixes/SEC-A-1_P11-A-1_SEC-A-2/`) |
 | SEC-B-3 | A comment anchor saved unrelated prose under a system reason, and could anchor the wrong words | confirmed | **fixed** `b43ec3af` (`fixes/SEC-B-3_V-2_P11-B-4_SEC-A-6/`); a server-side anchor-only check is a follow-on |
 | P11-B-1 | The co-author body is overwritten with no reason, no audit entry and no copy of the old text | partly confirmed; blocker per its verifier | handed on, board item 5 |
 
@@ -75,13 +75,13 @@ is one defect:
 
 | ID | What | Verdict | Status |
 |---|---|---|---|
-| P11-A-1 / SEC-A-8 | No citation act reaches the document's audit trail; overwrites and deletes keep no before-image | partly confirmed / confirmed | _in progress_ |
-| SEC-A-2 | A comment and its audit row were filed against the document named in the body | confirmed | _in progress_ |
+| P11-A-1 / SEC-A-8 | No citation act reaches the document's audit trail; overwrites and deletes keep no before-image | partly confirmed / confirmed | **fixed** `63b43274` (`fixes/SEC-A-1_P11-A-1_SEC-A-2/`); the rail's labels are handed on, board item 6 |
+| SEC-A-2 | A comment and its audit row were filed against the document named in the body | confirmed | **fixed** `63b43274` (`fixes/SEC-A-1_P11-A-1_SEC-A-2/`) |
 | SEC-A-3 | The project files viewer framed server-typed HTML as a PDF, in the app's origin | confirmed | **fixed** `49f5ad82` (`fixes/SEC-A-3/`) |
 | SEC-A-6 / SEC-B-4 | "Insert reference" parsed a vault title as markup | confirmed; raised from medium | **fixed** `b43ec3af` (`fixes/SEC-B-3_V-2_P11-B-4_SEC-A-6/`) |
 | SEC-A-7 / SEC-B-7 | AI authorship is a client claim the ledger records as fact | confirmed; raised from medium | open: needs a server record of AnA's outputs to verify against |
-| SEC-B-1 | An image reference with `..` segments got an authenticated GET to any API route from every viewer | confirmed | _in progress_ |
-| SEC-B-2 / SEC-A-11 | External images fetched from third parties by every viewer; a figure could change after approval | confirmed | _in progress_ |
+| SEC-B-1 | An image reference with `..` segments got an authenticated GET to any API route from every viewer | confirmed | **fixed** `ce56754d` (`fixes/SEC-B-1-2/`) |
+| SEC-B-2 / SEC-A-11 | External images fetched from third parties by every viewer; a figure could change after approval | confirmed | **fixed** `ce56754d` (`fixes/SEC-B-1-2/`); export, section create, co-author PUT and batch accept should use the same rule |
 | SEC-C-3 | The budget-parameter upsert let one tenant claim, block or overwrite another's | confirmed | **fixed** `29d80fe9` |
 | SEC-C-4 | Stored text spliced into the chat turn as the user's own words | confirmed; raised from medium | _in progress_ |
 | SEC-C-7 | A signed disposition is shown under a free-text label, not the signer | confirmed; raised from medium | _in progress_ |
@@ -104,7 +104,7 @@ is one defect:
 | HS-C-1 | An unreadable protocol was shown as "no protocol" or "ready to finalize" | confirmed | **fixed** `670865e9` (`fixes/HS-C-1/`) |
 | HS-C-3 | A malformed derivation read is shown as "everything reconciled" | confirmed | _in progress_ |
 | SEC-A-4 | Stored text could write itself into AnA's system prompt | confirmed | **fixed** `44a48357` (`fixes/SEC-A-4/`) |
-| SEC-A-5 / SEC-B-6 / SEC-C-6 | The device draft cache outlives sign-out and is keyed by section, not user | confirmed | open. Host half handed on (board item 6) |
+| SEC-A-5 / SEC-B-6 / SEC-C-6 | The device draft cache outlives sign-out and is keyed by section, not user | confirmed | **fixed** `de430222` (`fixes/SEC-A-5/`): keyed by account, purged at sign-out, no offer on a read-only canvas |
 | SEC-A-9 | Revert commits before its audit row | confirmed | **fixed** by another lane's sweep of the same day, `59b0d8f9` (GE-P-1) |
 | SEC-A-10 / SEC-B-5 | The co-editing room authorises by tenant only | confirmed; dark in every configuration found | open. It must be fixed before co-editing is switched on |
 | SEC-C-5 | The AnA protocol-section write records a reason nobody gave | confirmed | handed on, board item 7 |

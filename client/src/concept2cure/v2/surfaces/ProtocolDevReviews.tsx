@@ -44,6 +44,11 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
   const me = Number(useAuthUser()?.id);
   // The server refuses anyone but the assigned user; say so before the click.
   const someoneElses = assignedTo !== null && Number.isFinite(me) && assignedTo !== me;
+  /* 2026-09-28 · GA-7 (coverage-gap sweep): the reason lived only in the
+     disabled button's `title`, which a keyboard user cannot reach (a disabled
+     button takes no focus) and most screen readers do not announce. It is now
+     visible text on the row, and the button is described by it. */
+  const whyId = React.useId();
   return (
     <div className="pde-review-row">
       <span className="pde-review-name">{name || 'Unnamed reviewer'}</span>
@@ -52,6 +57,7 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
         {str(r.role) ? PG.labelize(str(r.role)) : 'No review role recorded'}
         {due ? ' · due ' + due : ' · no due date'}
         {disposition ? ' · ' + PG.labelize(disposition) : ' · no disposition recorded'}
+        {someoneElses && <>{' · '}<span id={whyId}>Assigned to another user. Only they can sign this disposition.</span></>}
       </span>
       {onEdit && (
         <span className="pde-review-act">
@@ -63,7 +69,7 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
             className="pg-btn outline"
             aria-label={'Record disposition for ' + (name || 'this reviewer')}
             disabled={someoneElses}
-            title={someoneElses ? 'Assigned to another user. Only they can sign this disposition.' : undefined}
+            aria-describedby={someoneElses ? whyId : undefined}
             onClick={() => onEdit('review-disposition', {
               id: Number(r.id), label: name,
               defaults: disposition ? { disposition } : undefined,
