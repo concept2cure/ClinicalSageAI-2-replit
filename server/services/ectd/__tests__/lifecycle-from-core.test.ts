@@ -40,12 +40,14 @@ beforeAll(async () => {
   holder.db = harness.db;
   holder.pglite = harness.pglite;
 
-  // Minimal ectd_compilations for the prior-manifest read (cols the loader uses).
+  // Minimal ectd_compilations for the prior-manifest read (cols the loader uses;
+  // compilation_type since 2026-09-23 — the filed state excludes rehearsals).
   await harness.pglite.exec(`
     CREATE TABLE IF NOT EXISTS ectd_compilations (
       id SERIAL PRIMARY KEY,
       organization_id INTEGER,
       submission_id INTEGER,
+      compilation_type TEXT,
       sequence_number TEXT,
       leaf_manifest JSONB,
       compiled_at TIMESTAMP DEFAULT NOW()

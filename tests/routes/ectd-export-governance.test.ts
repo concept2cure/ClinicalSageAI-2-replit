@@ -151,3 +151,68 @@ describe('eCTD export governance gate', () => {
     expect(res.send).toHaveBeenCalled();
   });
 });
+
+/**
+ * A rehearsal export (2026-09-23, W5/D7; WO-9 Click 6). A follow-up sequence
+ * bound against earlier sequences that were never filed — for an agency
+ * validator to check the lifecycle before anything is sent. The download, its
+ * headers and its governance record say so; an export without the flag binds
+ * against filed sequences only, as transmit does.
+ */
+describe('eCTD export — a rehearsal says it is one', () => {
+  const BASE = {
+    buffer: Buffer.from('zip-bytes'), sequenceId: 2, region: 'fda', sha256: 'b'.repeat(64), materialized: 2,
+    unresolvedLeaves: [], skipped: [],
+    stats: { totalModules: 3, totalFiles: 6, totalGranules: 2, generatedAt: '2026-09-23T00:00:00.000Z' },
+  };
+  function exportReq(body: Record<string, unknown>) {
+    const req = createMockRequest({ params: { submissionId: '123' }, body }) as any;
+    req.user = { id: 7, organizationId: 1, name: 'Test User' };
+    req.tenantContext = { organizationId: 1 };
+    return req;
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW = 'false';
+  });
+
+  it('asks for the rehearsal state, and the download, headers and record name it', async () => {
+    mockGenerate.mockImplementationOnce(async () => ({
+      ...BASE, filename: 'BX-512-0001-fda-rehearsal.zip', sequenceNumber: '0001',
+      priorState: 'rehearsal', unfiledPriorSequences: ['0000'],
+    }) as any);
+    const res = createMockResponse();
+    await getHandler('/:submissionId')(exportReq({ sequenceNumber: '0001', rehearsal: true }), res);
+
+    expect(mockGenerate).toHaveBeenCalledWith(expect.objectContaining({ sequenceNumber: '0001', priorState: 'rehearsal' }));
+    expect(res.setHeader).toHaveBeenCalledWith('X-ECTD-Prior-State', 'rehearsal');
+    expect(res.setHeader).toHaveBeenCalledWith('X-ECTD-Unfiled-Prior', '0000');
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', 'attachment; filename="BX-512-0001-fda-rehearsal.zip"');
+    expect(mockGovernance).toHaveBeenCalledWith(expect.objectContaining({ title: expect.stringMatching(/rehearsal — prior not filed/) }));
+    expect(res.send).toHaveBeenCalled();
+  });
+
+  it('without the flag, an export binds against filed sequences and says so', async () => {
+    mockGenerate.mockImplementationOnce(async () => ({
+      ...BASE, filename: 'BX-512-0001-fda.zip', sequenceNumber: '0001', priorState: 'filed', unfiledPriorSequences: [],
+    }) as any);
+    const res = createMockResponse();
+    await getHandler('/:submissionId')(exportReq({ sequenceNumber: '0001' }), res);
+
+    expect(mockGenerate).toHaveBeenCalledWith(expect.objectContaining({ priorState: 'filed' }));
+    expect(res.setHeader).toHaveBeenCalledWith('X-ECTD-Prior-State', 'filed');
+    expect(res.setHeader).not.toHaveBeenCalledWith('X-ECTD-Unfiled-Prior', expect.anything());
+  });
+
+  it('a rehearsal of an original sequence is refused as a request error, not a server failure', async () => {
+    mockGenerate.mockImplementationOnce(async () => {
+      throw new Error('A rehearsal binds a follow-up sequence against earlier ones; sequence 0000 has none.');
+    });
+    const res = createMockResponse();
+    await getHandler('/:submissionId')(exportReq({ sequenceNumber: '0000', rehearsal: true }), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'REHEARSAL_NOT_APPLICABLE' }));
+  });
+});
