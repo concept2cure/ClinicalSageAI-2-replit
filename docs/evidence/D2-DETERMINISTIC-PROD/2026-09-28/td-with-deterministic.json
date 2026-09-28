@@ -1,0 +1,147 @@
+{
+  "family": "c2c-production-api",
+  "containerDefinitions": [
+    {
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PORT",
+          "value": "5000"
+        },
+        {
+          "name": "TRUST_PROXY_HOPS",
+          "value": "1"
+        },
+        {
+          "name": "CONCEPT2CURE_SIGNER_MODE",
+          "value": "kms"
+        },
+        {
+          "name": "CONCEPT2CURE_SIGNER_KMS_KEY_ID",
+          "value": "alias/fda-signing-key-2026"
+        },
+        {
+          "name": "CONCEPT2CURE_SIGNER_KMS_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "RLS_ENFORCE",
+          "value": "on"
+        },
+        {
+          "name": "AI_SENSITIVE_DATA_POLICY_MODE",
+          "value": "enforce"
+        },
+        {
+          "name": "STORAGE_PROVIDER",
+          "value": "s3"
+        },
+        {
+          "name": "AWS_S3_BUCKET",
+          "value": "c2c-production-vault"
+        },
+        {
+          "name": "SMTP_HOST",
+          "value": "smtp.example.com"
+        },
+        {
+          "name": "AUDIT_TRAIL_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "AUDIT_REQUIRE_ENFORCE",
+          "value": "true"
+        },
+        {
+          "name": "APP_URL",
+          "value": "https://app.example.com"
+        },
+        {
+          "name": "AI_GATEWAY_DETERMINISTIC",
+          "value": "true"
+        }
+      ],
+      "essential": true,
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:5000/api/health || exit 1"
+        ],
+        "interval": 30,
+        "retries": 3,
+        "startPeriod": 60,
+        "timeout": 10
+      },
+      "image": "x9qpchjl:probe-0000",
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/c2c-production/api",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "api"
+        }
+      },
+      "name": "api",
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:rds-master-mock"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "8enjmo64"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "valueFrom": "b70ypvqx"
+        },
+        {
+          "name": "APP_DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:000000000000:secret:c2c/production/APP_DATABASE_URL"
+        },
+        {
+          "name": "REFRESH_TOKEN_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:000000000000:secret:c2c/production/REFRESH_TOKEN_SECRET"
+        },
+        {
+          "name": "MFA_ENCRYPTION_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:000000000000:secret:c2c/production/MFA_ENCRYPTION_KEY"
+        },
+        {
+          "name": "AUDIT_HMAC_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:000000000000:secret:c2c/production/AUDIT_HMAC_KEY"
+        },
+        {
+          "name": "AUDIT_HMAC_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:000000000000:secret:c2c/production/AUDIT_HMAC_SECRET"
+        },
+        {
+          "name": "CONNECTOR_ENCRYPTION_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:000000000000:secret:c2c/production/CONNECTOR_ENCRYPTION_KEY"
+        },
+        {
+          "name": "AI_PROVIDER_PLACEMENT_APPROVALS",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:000000000000:secret:c2c/production/AI_PROVIDER_PLACEMENT_APPROVALS"
+        },
+        {
+          "name": "SMTP_USER",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:000000000000:secret:c2c/production/SMTP_USER"
+        },
+        {
+          "name": "SMTP_PASS",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:000000000000:secret:c2c/production/SMTP_PASS"
+        }
+      ]
+    }
+  ],
+  "taskDefinitionArn": "arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-api:1"
+}

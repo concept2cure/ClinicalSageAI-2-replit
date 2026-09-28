@@ -138,6 +138,8 @@ export function stoppedNoteText(reason: AnaStoppedReason | undefined, rounds?: n
         : "AnA reached this turn's round limit before she said she was done.";
     case 'duplicate_thrash':
       return 'AnA stopped because she was repeating the same step. Tell her what to change.';
+    case 'answer_cut_off':
+      return "AnA's answer was cut off before she finished it. It ends where it stopped.";
     default:
       return null;
   }

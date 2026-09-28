@@ -1,0 +1,9 @@
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the gateway at request time (defence in depth) > refuses to serve a fixed response in production without the acceptance 10ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the gateway at request time (defence in depth) > serves it in production only when AI_GATEWAY_ACCEPT_DETERMINISTIC=true 4ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the gateway at request time (defence in depth) > does not treat the permissive-governance acceptance as accepting fixed responses 1ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the gateway at request time (defence in depth) > is unchanged outside production (tests and development rely on it) 1ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the shared predicates > reads the flag exactly as the gateway config does, legacy alias included 0ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the shared predicates > accepts only the literal "true" 0ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the shared predicates > assertDeterministicServingAllowed throws only in unaccepted production 1ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)

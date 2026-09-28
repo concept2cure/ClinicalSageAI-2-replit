@@ -13,7 +13,10 @@ import {
   assertAuditSealPostureForProduction,
   assertAuditChainSecretForProduction,
 } from '../services/audit/auditSealPosture';
-import { assertAiGovernancePostureForProduction } from '../startup/ai-governance-posture';
+import {
+  assertAiGovernancePostureForProduction,
+  assertDeterministicModePostureForProduction,
+} from '../startup/ai-governance-posture';
 import { assertSensitivePlacementConfiguration } from '../services/ai-gateway/sensitive-placement-policy';
 import { assertPlacementRegistryConsistency } from '../services/ai-gateway/providers/placement';
 import { assertDurableStorageForProduction } from '../services/storage/storage-posture';
@@ -313,6 +316,12 @@ assertAuditChainSecretForProduction();
 // import (same contract as the asserts above). No-op outside production. See
 // server/startup/ai-governance-posture.ts.
 assertAiGovernancePostureForProduction();
+// Deterministic mode (2026-09-28, launch row D2): AI_GATEWAY_DETERMINISTIC in
+// production makes AnA answer with fixed responses that can enter a governed
+// draft. It refuses to boot unless AI_GATEWAY_ACCEPT_DETERMINISTIC=true records
+// that risk, and AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses it regardless. The
+// gateway enforces the same rule per request. No-op outside production.
+assertDeterministicModePostureForProduction();
 assertSensitivePlacementConfiguration();
 // Private-cloud residency (D6, 2026-09-25): a declared AI_BEDROCK_RESIDENCY /
 // AI_VERTEX_RESIDENCY that the region the client calls does not serve refuses

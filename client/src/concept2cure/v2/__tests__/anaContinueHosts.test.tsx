@@ -83,6 +83,8 @@ describe('which turn, and which stops', () => {
 
   it('isContinuable follows the table, and Continue sends one fixed sentence', () => {
     expect(isContinuable('max_rounds')).toBe(true);
+    // A cut-off answer stopped mid-sentence: picking it up is what the person wants.
+    expect(isContinuable('answer_cut_off')).toBe(true);
     expect(isContinuable('duplicate_thrash')).toBe(false);
     expect(isContinuable('cancelled')).toBe(false);
     expect(isContinuable('no_more_tools')).toBe(false);
