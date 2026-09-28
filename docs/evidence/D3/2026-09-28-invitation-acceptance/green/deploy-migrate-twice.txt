@@ -1,0 +1,6 @@
+run 1: 570:      [NOTICE] [invitations-for-member] an invitee finds their own invitations from their own organization
+run 1: 571:  ✓ applied: migrations/20260928_invitations_for_member.sql
+run 1: 606:✅ Schema migration complete — safe to roll services.
+run 2: 570:      [NOTICE] [invitations-for-member] an invitee finds their own invitations from their own organization
+run 2: 571:  ✓ applied: migrations/20260928_invitations_for_member.sql
+run 2: 606:✅ Schema migration complete — safe to roll services.

@@ -190,6 +190,25 @@ if ! npm run --silent ci:runtime-ddl 2>&1; then
 fi
 echo "   ✅ No runtime DDL."
 
+# Most JSON columns here are `json`, not `jsonb`, and json has no `||`, no
+# jsonb_set, and will not COALESCE with a jsonb default — so
+# `metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb` fails on every
+# execution. Twelve such writes shipped (artifact tagger x2, two GDPR erasures,
+# the submission-chat rewrite, contradiction resolution x3, AnA's program
+# metadata, CER report metadata x3), each behind unit tests that mocked the pool. Reads files only,
+# no database (~1.5s).
+echo "   Validating jsonb operators are not applied to json columns..."
+if ! npm run --silent ci:json-operator-types 2>&1; then
+  echo ""
+  echo "🚫 ERROR: json/jsonb operator check FAILED."
+  echo "   A statement applies a jsonb operator to a json column; PostgreSQL refuses"
+  echo "   it on every execution. Cast the column first:"
+  echo "   COALESCE(col::jsonb, '{}'::jsonb) || \$1::jsonb — the assignment back is implicit."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No jsonb operator on a json column."
+
 # The third migration invariant, and the only one nothing was enforcing: every
 # .sql file in db/migrations must appear in migrations_manifest.json, which is
 # what orders them for the appliers that read it. `db:sync-manifest:check`

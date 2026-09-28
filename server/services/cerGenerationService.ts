@@ -787,7 +787,7 @@ class CerGenerationService {
     await db
       .update(cerReports)
       .set({
-        metadata: sql`COALESCE(metadata, '{}'::jsonb) || ${sql.raw(
+        metadata: sql`COALESCE(metadata::jsonb, '{}'::jsonb) || ${sql.raw(
           `'${JSON.stringify({
             totalStudiesReviewed: Number(evidenceCount[0].count) || 0,
             totalPatientsIncluded: Number(patientSum[0].total) || 0,
