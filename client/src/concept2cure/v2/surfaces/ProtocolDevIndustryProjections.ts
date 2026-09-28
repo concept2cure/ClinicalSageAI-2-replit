@@ -22,12 +22,12 @@
  * @module client/src/concept2cure/v2/surfaces/ProtocolDevIndustryProjections
  */
 import type { ProjectionSpec, ProjectionView } from './ProtocolDevProjections';
+import { num, rows, str, strings, type Obj } from './projectionFormat';
+import { PLANNING_PROJECTIONS } from './ProtocolDevPlanningProjections';
 
-type Obj = Record<string, unknown>;
-const str = (v: unknown): string => (v == null ? '' : String(v));
-const rows = (v: unknown): Obj[] => (Array.isArray(v) ? (v as Obj[]) : []);
-const strings = (v: unknown): string[] => (Array.isArray(v) ? v.map(str) : []);
-const num = (v: unknown): string => (typeof v === 'number' && Number.isFinite(v) ? String(v) : 'not recorded');
+export {
+  biospecimenView, doseEscalationView, enrollmentView, externalControlView, interimOcView, masterProtocolView, mmrmView, multiplicityView,
+} from './ProtocolDevPlanningProjections';
 
 /* ── ICH M11 §1.2 trial schema ──────────────────────────────────────────── */
 
@@ -228,175 +228,7 @@ export function dctView(payload: Obj): ProjectionView {
   };
 }
 
-/* ── BOIN dose escalation (Tier 2) ───────────────────────────────────────── */
-
-/** "φ1 0.18 (engine default)" — the source is always printed beside the value. */
-function sourced(name: string, v: unknown): string {
-  const o = (v ?? {}) as Obj;
-  return `${name} ${num(o.value)} (${str(o.source) || 'source not stated'})`;
-}
-
-export function doseEscalationView(payload: Obj): ProjectionView {
-  const d = (payload.doseEscalation ?? {}) as Obj;
-  const p = (d.parameters ?? null) as Obj | null;
-  const b = (d.boundaries ?? null) as Obj | null;
-  const applicability = (d.applicability ?? {}) as Obj;
-  const params = p
-    ? [
-      `Target toxicity ${num(p.targetToxicity)}; cohorts of ${num(p.cohortSize)}; at most ${num(p.maxSampleSize)} patients` +
-        (typeof p.stopWhenAtDoseN === 'number' ? `; stop at ${p.stopWhenAtDoseN} at one dose` : '') + '.',
-      [sourced('φ1', p.phi1), sourced('φ2', p.phi2), sourced('elimination threshold', p.eliminationThreshold)].join('; ') + '.',
-      p.startingDose ? `Starting dose: ${str((p.startingDose as Obj).label)}.` : '',
-    ].filter(Boolean).join(' ')
-    : '';
-  return {
-    standard: str(d.basis),
-    percent: null,
-    status: str(d.status),
-    gaps: strings(d.gaps),
-    note: [
-      strings(applicability.reasons).join('; '),
-      params,
-      b ? `Escalate when the observed DLT rate ≤ λe = ${num(b.lambdaE)}; de-escalate when ≥ λd = ${num(b.lambdaD)}.` : '',
-      str(d.mtdSelection),
-    ].filter(Boolean).join(' '),
-    entries: rows(d.decisionTable).map((r) => ({
-      key: 'boin:' + str(r.n),
-      label: `${str(r.n)} patients at the current dose`,
-      status: '',
-      text:
-        `Escalate if DLTs ≤ ${num(r.escalateIfAtMost)} · de-escalate if ≥ ${num(r.deescalateIfAtLeast)} · ` +
-        (typeof r.eliminateIfAtLeast === 'number' ? `eliminate if ≥ ${r.eliminateIfAtLeast}` : 'no DLT count eliminates at this n'),
-      gaps: [],
-    })),
-  };
-}
-
-/* ── Enrollment forecast (Tier 2) ────────────────────────────────────────── */
-
-const timeOrNotReached = (v: unknown, unit: string): string =>
-  typeof v === 'number' && Number.isFinite(v) ? `${v} ${unit}s` : 'not reached';
-
-export function enrollmentView(payload: Obj): ProjectionView {
-  const e = (payload.enrollment ?? {}) as Obj;
-  const f = (e.forecast ?? null) as Obj | null;
-  const sites = (e.sites ?? null) as Obj | null;
-  const unit = f ? str(f.timeUnit) : '';
-  return {
-    standard: str(e.basis),
-    percent: null,
-    status: str(e.status),
-    gaps: strings(e.gaps),
-    note: f
-      ? [
-        `Target ${num(f.targetN)} patients. Median ${timeOrNotReached(f.median, unit)}; 80% interval ${timeOrNotReached(f.p10, unit)} to ${timeOrNotReached(f.p90, unit)}.`,
-        `Probability of reaching the target: ${num(f.probReached)} (${num(f.nSim)} simulations, seed ${num(f.seed)}).`,
-        `Closed-form expectation at the mean rates: ${timeOrNotReached(f.closedFormExpectedTime, unit)}.`,
-        str(e.note),
-      ].join(' ')
-      : str(e.note),
-    entries: rows(sites?.byCountry).map((c) => ({
-      key: 'country:' + str(c.country),
-      label: str(c.country),
-      status: '',
-      text: `${num(c.sites)} site(s); combined mean rate ${num(c.meanRatePerUnit)} per ${unit || 'time unit'}.`,
-      gaps: [],
-    })),
-  };
-}
-
-/* ── Interim-analysis operating characteristics (Tier 2) ─────────────────── */
-
-export function interimOcView(payload: Obj): ProjectionView {
-  const i = (payload.interimOc ?? {}) as Obj;
-  const c = (i.characteristics ?? null) as Obj | null;
-  const eif = (c?.expectedInformationFraction ?? {}) as Obj;
-  const ess = (c?.expectedSampleSize ?? null) as Obj | null;
-  const discrepancies = rows(i.discrepancies);
-  return {
-    standard: str(i.basis),
-    percent: null,
-    status: str(i.status),
-    gaps: strings(i.gaps),
-    note: [
-      Array.isArray(i.schedule) ? `Analyses at information fractions ${strings(i.schedule).join(', ')}.` : '',
-      c ? `Characteristics of the ${str(c.boundariesEvaluated)} boundaries: type I error ${num(c.typeIError)}; power ${c.power === null ? 'not computed (alpha or power not recorded)' : num(c.power)}.` : '',
-      c ? `Expected information fraction ${num(eif.underNull)} under H0, ${eif.underAlternative === null ? 'not computed' : num(eif.underAlternative)} under the alternative.` : '',
-      ess ? `Expected sample size ${num(ess.underNull)} under H0, ${ess.underAlternative === null ? 'not computed' : num(ess.underAlternative)} under the alternative.` : '',
-      ...strings(i.notes),
-    ].filter(Boolean).join(' '),
-    entries: [
-      ...discrepancies.map((x) => ({
-        key: 'discrepancy:' + str(x.look),
-        label: `Look ${str(x.look)}: recorded boundary differs from the spending function`,
-        status: 'discrepancy',
-        text: `Recorded ${num(x.recorded)} · solved ${num(x.solved)} · difference ${num(x.difference)}`,
-        gaps: [],
-      })),
-      ...rows(c?.perLook).map((l) => ({
-        key: 'look:' + str(l.look),
-        label: `Look ${str(l.look)} at information ${num(l.informationFraction)}`,
-        status: '',
-        text:
-          `Efficacy boundary z ${num(l.efficacyBoundary)}` + (typeof l.futilityBoundary === 'number' ? ` · futility z ${l.futilityBoundary}` : '') +
-          `\nP(stop for efficacy) ${num(l.efficacyStopUnderNull)} under H0` +
-          (l.efficacyStopUnderAlternative === null ? '' : `, ${num(l.efficacyStopUnderAlternative)} under the alternative`),
-        gaps: [],
-      })),
-    ],
-  };
-}
-
-/* ── MMRM sizing (Tier 2) ────────────────────────────────────────────────── */
-
-export function mmrmView(payload: Obj): ProjectionView {
-  const m = (payload.mmrm ?? {}) as Obj;
-  const z = (m.sizing ?? null) as Obj | null;
-  const pvr = (m.plannedVsRequired ?? null) as Obj | null;
-  return {
-    standard: str(m.basis),
-    percent: null,
-    status: str(m.status),
-    gaps: strings(m.gaps),
-    note: [
-      m.endpointName ? `Endpoint: ${str(m.endpointName)}.` : '',
-      z ? `Required: ${num(z.nPerArm)} per arm, ${num(z.nTotal)} in total (two-sided alpha ${num(z.alphaTwoSided)}); achieved power ${num(z.achievedPower)}.` : '',
-      z ? `Variance factor ${num(z.varianceFactor)}; efficiency over a completers-only analysis ${num(z.efficiencyVsCompleters)}.` : '',
-      pvr ? (pvr.covered ? `The planned ${num(pvr.planned)} covers the requirement.` : `The planned ${num(pvr.planned)} is ${num(pvr.shortfall)} below the requirement.`) : '',
-      typeof m.soaVisitCount === 'number' ? `The Schedule of Activities schedules the endpoint at ${m.soaVisitCount} post-baseline visit(s).` : '',
-    ].filter(Boolean).join(' '),
-    entries: [],
-  };
-}
-
-/* ── External-control plan (Tier 2) ──────────────────────────────────────── */
-
-export function externalControlView(payload: Obj): ProjectionView {
-  const e = (payload.externalControl ?? {}) as Obj;
-  const b = (e.borrowing ?? null) as Obj | null;
-  const param = (b?.parameter ?? {}) as Obj;
-  return {
-    standard: str(e.basis),
-    percent: null,
-    status: str(e.status),
-    gaps: strings(e.gaps),
-    note: [
-      e.kind === 'fully_external' ? 'Fully external control: no concurrent control arm.' : e.kind === 'hybrid' ? 'Hybrid: a concurrent control augmented by external data.' : '',
-      b ? `${str(b.method)} (${str(param.name)} = ${num(param.value)}): effective historical N ${num(b.effectiveHistoricalN)}; ` +
-        `share of the control's precision borrowed ${num(b.borrowedPrecisionFraction)} at the planned concurrent SE ${num(b.plannedConcurrentSe)}.` : '',
-      'No posterior or treatment effect is computed at protocol stage.',
-    ].filter(Boolean).join(' '),
-    entries: rows(e.elements).map((x) => ({
-      key: 'ec:' + str(x.element),
-      label: str(x.element),
-      status: x.stated ? 'stated' : 'not stated',
-      text: str(x.detail),
-      gaps: [],
-    })),
-  };
-}
-
-/** In the order the design document names them. */
+/** In the order the design document names them; the planning (Tier 2/3) views follow. */
 export const INDUSTRY_PROJECTIONS: ProjectionSpec[] = [
   {
     id: 'trial-schema', label: 'Trial schema', path: 'trial-schema',
@@ -428,29 +260,5 @@ export const INDUSTRY_PROJECTIONS: ProjectionSpec[] = [
     of: 'The study design object as the WHO Trial Registration Data Set (24 items). Sponsor, contacts, dates, ethics and results are supplied at registration, not by the design.',
     normalize: whoIctrpView,
   },
-  {
-    id: 'dose-escalation', label: 'Dose escalation (BOIN)', path: 'dose-escalation',
-    of: 'The study design object’s dose-escalation rules, computed by the BOIN engine (Liu & Yuan 2015). A value marked engine default was not chosen by the sponsor.',
-    normalize: doseEscalationView,
-  },
-  {
-    id: 'enrollment', label: 'Enrollment forecast', path: 'enrollment',
-    of: 'Time to the planned sample size from the sponsor’s site accrual plan, by the Poisson–Gamma engine. Site rates are sponsor inputs; none is assumed.',
-    normalize: enrollmentView,
-  },
-  {
-    id: 'interim-oc', label: 'Interim analysis characteristics', path: 'interim-oc',
-    of: 'Type I error, power and expected sample size of the study design object’s interim plan, computed exactly. A recorded boundary that departs from the spending function is shown as a discrepancy.',
-    normalize: interimOcView,
-  },
-  {
-    id: 'mmrm', label: 'MMRM sample size', path: 'mmrm',
-    of: 'The sample size the MMRM-analysed endpoint needs under the sponsor’s recorded assumptions, checked against the planned N. No assumption is supplied when one is missing.',
-    normalize: mmrmView,
-  },
-  {
-    id: 'external-control', label: 'External-control plan', path: 'external-control',
-    of: 'What the study design object pre-specifies about borrowing from an external control, and how strongly it borrows (FDA 2023 draft guidance).',
-    normalize: externalControlView,
-  },
+  ...PLANNING_PROJECTIONS,
 ];

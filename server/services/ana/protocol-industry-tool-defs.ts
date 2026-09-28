@@ -22,6 +22,9 @@
  *   • `projectInterimOperatingCharacteristics` — exact group-sequential OC (Tier 2)
  *   • `projectMmrmSizing`           — MMRM sample size from sponsor assumptions (Tier 2)
  *   • `projectExternalControlPlan`  — external-control borrowing plan (Tier 2)
+ *   • `checkMultiplicity`           — family-wise error control over the confirmatory family (Tier 2)
+ *   • `profileBiospecimens`         — specimens and blood volume from the SoA (Tier 3)
+ *   • `checkMasterProtocol`         — platform / basket / umbrella / MAMS structure (Tier 3)
  *
  * Word export is not here: the Protocol Development surface already renders
  * MD, DOCX and PDF from the one assembled Markdown, signature block included
@@ -38,7 +41,7 @@
  *  4. No prose, no filing: nothing here writes into `protocol_sections`,
  *     generates protocol text, or claims a registration or transmission.
  *
- * All thirteen are READ-ONLY, so none carries a reason-for-change: nothing is
+ * All sixteen are READ-ONLY, so none carries a reason-for-change: nothing is
  * mutated and no governed-action row is written.
  *
  * @module server/services/ana/protocol-industry-tool-defs
@@ -248,6 +251,45 @@ export const REVIEW_EXTERNAL_CONTROL_PLAN: AnaTool = {
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
+export const REVIEW_MULTIPLICITY_CONTROL: AnaTool = {
+  name: 'review_multiplicity_control',
+  description:
+    'READ-ONLY. Check whether the multiplicity procedure of the study design bound to a protocol document holds the family-wise type I error at alpha over ' +
+    'its confirmatory endpoints (checkMultiplicity; ICH E9 §5.6; FDA Multiple Endpoints guidance, 2022): the procedure\'s simulated family-wise error ' +
+    'and its Monte Carlo SE, the unadjusted rate for contrast, and whether the alpha allocation covers the family — every rate from the platform\'s ' +
+    'engine (stats/multiplicity.ts). ' +
+    DESIGN_REQUIRED + ' ' +
+    'Report every rate, verdict, note and gap VERBATIM. The simulation assumes independent p-values: say so, and never present it as proof of control ' +
+    'under the trial\'s actual dependence. A procedure the engine cannot check (graphical without weights, gatekeeping) is a gap — never substitute another.',
+  input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
+};
+
+export const REVIEW_BIOSPECIMEN_PROFILE: AnaTool = {
+  name: 'review_biospecimen_profile',
+  description:
+    'READ-ONLY. Profile what the Schedule of Activities bound to a protocol document collects (profileBiospecimens): each specimen with what the lab ' +
+    'manual still needs (type, volume, processing, storage), and the blood a participant gives — per visit, in total, over the worst 8-week window and ' +
+    'the busiest week — summed from the recorded volumes. ' +
+    DESIGN_REQUIRED + ' ' +
+    'Report every figure and gap VERBATIM. A draw with no volume makes totals LOWER BOUNDS: say so. The OHRP expedited-review figures (550 mL; 50 mL) ' +
+    'are reference points for minimal-risk research, NOT safety limits and not a bar a drug trial must clear — never call a protocol unsafe or ' +
+    'non-compliant for exceeding them, and never assume a volume for a sampling activity with no specimen recorded.',
+  input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
+};
+
+export const REVIEW_MASTER_PROTOCOL: AnaTool = {
+  name: 'review_master_protocol',
+  description:
+    'READ-ONLY. Check the master-protocol plan of a platform, basket, umbrella or MAMS study design bound to a protocol document (checkMasterProtocol; FDA ' +
+    'master-protocol guidances, 2022 and 2023 draft): per sub-study the population, arms, decision rule and — for basket and umbrella — the biomarker ' +
+    'and its assay; across sub-studies the shared control, use of non-concurrent controls, arm addition and dropping, type I error handling and the DMC; ' +
+    'and whether every arm a sub-study names exists. ' +
+    DESIGN_REQUIRED + ' ' +
+    'Report each element as stated or not stated and each integrity defect VERBATIM. This is a structural check; it computes no statistic and does not ' +
+    'judge whether a stated rule is adequate — never describe the design as sound or compliant on the strength of it.',
+  input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
+};
+
 /** In the order a human would reach for them: draw it, check it, derive from it, export it, compare it. */
 export const PROTOCOL_INDUSTRY_TOOLS: AnaTool[] = [
   REVIEW_TRIAL_SCHEMA,
@@ -263,4 +305,7 @@ export const PROTOCOL_INDUSTRY_TOOLS: AnaTool[] = [
   REVIEW_INTERIM_OPERATING_CHARACTERISTICS,
   REVIEW_MMRM_SIZING,
   REVIEW_EXTERNAL_CONTROL_PLAN,
+  REVIEW_MULTIPLICITY_CONTROL,
+  REVIEW_BIOSPECIMEN_PROFILE,
+  REVIEW_MASTER_PROTOCOL,
 ];

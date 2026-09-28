@@ -408,12 +408,32 @@ export interface SoaActivity {
   /** Row order within the grid. */
   order: number;
   /**
+   * The specimen this activity collects, when it collects one. Optional and
+   * additive: absent means the design does not say; the biospecimen profile
+   * reports a sampling activity without one as unspecified. See
+   * biospecimen-profile.ts.
+   */
+  specimen?: SoaSpecimen;
+  /**
    * Where the activity is performed (FDA decentralized-elements guidance, 2024).
    * Optional and additive: ABSENT means the design does not say — the DCT
    * profile reports it `unstated`, never `site` — so every design persisted
    * before this field existed reads exactly as it did. See dct-profile.ts.
    */
   location?: SoaActivityLocation;
+}
+
+/** A specimen an SoA activity collects: what the lab manual and the consent are written from. */
+export interface SoaSpecimen {
+  type: 'blood' | 'urine' | 'tissue' | 'csf' | 'saliva' | 'stool' | 'swab' | 'other';
+  /** Volume per collection in mL (required for blood to total draw volumes). */
+  volumeMl?: number;
+  /** Processing (e.g. "centrifuge within 30 min, aliquot 2 × 1 mL plasma"). */
+  processing?: string;
+  /** Storage and shipping (e.g. "−80 °C, batch-shipped on dry ice"). */
+  storage?: string;
+  /** How long it is kept and for what; future research use needs consent. */
+  retention?: string;
 }
 
 /** One filled intersection of the (activity × visit) grid. The grid is sparse. */
@@ -559,6 +579,41 @@ export interface ExternalControlPlan {
   covariateBalancePlanned?: boolean;
 }
 
+/**
+ * The structure of a master protocol (platform, basket, umbrella, MAMS): its
+ * sub-studies and the rules that govern them. Every value is the sponsor's;
+ * see master-protocol.ts.
+ */
+export interface MasterProtocolPlan {
+  subStudies: Array<{
+    id: string;
+    name: string;
+    /** The population or disease the sub-study enrols. */
+    population: string;
+    /** The biomarker that assigns participants to it (basket / umbrella). */
+    biomarker?: string;
+    /** The assay that measures the biomarker, and its validation status. */
+    biomarkerAssay?: string;
+    /** Arm names (design `arms`) this sub-study randomises between. */
+    arms: string[];
+    /** Its own statistical hypothesis and decision rule, stated. */
+    decisionRule?: string;
+  }>;
+  /**
+   * The arm several sub-studies share as control. `null` states there is none;
+   * absent means the plan does not say.
+   */
+  sharedControlArm?: string | null;
+  /** Whether comparisons use controls enrolled before a treatment arm opened. */
+  nonConcurrentControls?: 'not_used' | 'used_with_time_adjustment' | 'used';
+  /** How a new arm or sub-study is added (amendment, IRB, randomisation update). */
+  armAdditionProcedure?: string;
+  /** When an arm is dropped for futility or efficacy. */
+  armDroppingRules?: string;
+  /** How type I error is handled across sub-studies. */
+  multiplicityAcrossSubStudies?: string;
+}
+
 export interface StudyDesign {
   /** Stable id (set once persisted; optional for an in-memory/proposed design). */
   id?: string;
@@ -589,6 +644,8 @@ export interface StudyDesign {
   accrualPlan?: AccrualPlan;
   /** A pre-specified external-control borrowing plan. See external-control-plan.ts. */
   externalControlPlan?: ExternalControlPlan;
+  /** The sub-studies and governing rules of a master protocol. See master-protocol.ts. */
+  masterProtocol?: MasterProtocolPlan;
 
   /**
    * Regulatory-strategy attributes the regional rules read. Absent fields are
