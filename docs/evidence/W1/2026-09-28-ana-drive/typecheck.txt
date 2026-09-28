@@ -5,3 +5,7 @@ npm run typecheck — the merged tree (concept2cure-v2 at 0abf4467 + this change
 error TS lines: 0
 
 Second pass, 2026-09-28: npm run typecheck — exit 0, 0 errors.
+
+Fifth pass, 2026-09-28: npm run typecheck on this change, exit 0, 0 errors.
+On the merged head, the pre-push hook's ci:pushed-typecheck: "errors found: 0
+(tsc exit 0) ... OK — error count 0 matches baseline."
