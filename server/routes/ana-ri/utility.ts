@@ -26,8 +26,7 @@ import {
 } from '../../services/ana-ri/part11-governance.js';
 import { isProposeOnlyCommand } from '../../services/ana-ri/command-rbac.js';
 import { TOOL_REGISTER, toolAuthorizationOf } from '../../services/ana/tool-authorization.js';
-import { reverifySigner } from '../../services/part11/reverify-signer.js';
-import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
+import { verifyGovernedESignature } from './governed-esignature.js';
 import {
   readPendingApproval,
   recordApprovalDecision,
@@ -570,8 +569,6 @@ export function mountUtilityRoutes(router: Router): void {
       return sendError(res, authorised.status, authorised.error, null, authorised.code);
     }
     const { pendingForRun, runId, toolUseId, command, params } = authorised;
-    const password = typeof body.password === 'string' ? body.password : '';
-    const mfaToken = typeof body.mfaToken === 'string' ? body.mfaToken : undefined;
 
     // A person's no to an action AnA is holding a turn on. Checked before any
     // tier rule: declining asks for nothing, whatever the tier.
@@ -609,20 +606,13 @@ export function mountUtilityRoutes(router: Router): void {
     // e-signature; the rest require only the reason-for-change. §11.200:
     // re-verify the signer server-side for the e-sign tier (never a client flag).
     const eSignRequired = tier === 'esignature';
-    let secondFactorVerified = false;
-    // The instant the server actually verified the signer, captured here rather
-    // than synthesised downstream. Handlers that hand the human gate to an
-    // external gateway (FDA ESG transmit) pass this through as the
-    // transmission's `reauthVerifiedAt`, so it must be a real observation.
-    let signatureVerifiedAt: Date | undefined;
-    if (eSignRequired) {
-      const verification = await reverifySigner(userId, { password, mfaToken }, signerReverificationDeps());
-      if (!verification.ok) {
-        return sendError(res, verification.status, verification.error, { code: verification.code }, 'SIGNATURE_REJECTED');
-      }
-      secondFactorVerified = verification.secondFactorVerified;
-      signatureVerifiedAt = new Date();
-    }
+
+    // The signer's declared §11.50 meaning, then re-verification (§11.200), in
+    // that order and before the audit row — see governed-esignature.ts.
+    const esign = eSignRequired ? await verifyGovernedESignature(userId, body) : undefined;
+    if (esign && !esign.ok) return sendError(res, esign.status, esign.error, esign.details, esign.code);
+    const signatureMeaning = esign?.meaning;
+    const secondFactorVerified = esign?.secondFactorVerified ?? false;
 
     // §11.10(e): record the sign-off to the audit trail before executing.
     // No governed mutation without a durable audit record.
@@ -645,7 +635,8 @@ export function mountUtilityRoutes(router: Router): void {
       resourceId: command,
       ipAddress: clientIpOf(req) ?? undefined,
       userAgent: req.headers['user-agent'] as string | undefined,
-      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified },
+      // With the declared §11.50 meaning on the e-signature tier; absent otherwise.
+      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified, ...(signatureMeaning && { signatureMeaning }) },
     });
     if (!signoffAudit.persisted) {
       log.error('Governed action aborted: sign-off audit row was not persisted', {
@@ -688,8 +679,13 @@ export function mountUtilityRoutes(router: Router): void {
               // For the reason-only tier there is no e-signature; the gate does not
               // require one for these commands (validateSignoff requireSignature=false).
               signatureVerified: eSignRequired,
-              signaturePurpose: 'approval' as const,
-              verifiedAt: signatureVerifiedAt,
+              // The e-signature tier carries the meaning the signer declared
+              // (resolved above; the route refuses without one). The reason
+              // tier is unchanged: it keeps the value it always carried, which
+              // no handler reads for that tier — there is no signature there to
+              // mean anything.
+              signaturePurpose: signatureMeaning ?? 'approval',
+              verifiedAt: esign?.verifiedAt,
             },
           }),
     };

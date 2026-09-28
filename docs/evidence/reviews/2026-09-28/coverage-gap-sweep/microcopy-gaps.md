@@ -1,0 +1,36 @@
+## Microcopy lens — assigned gap (AuthoringCollab / AuthoringRevisionDiff / AuthoringExports / AuthoringAiDraft / AuthoringCreateExport / ReviewThreads / editor/* / Vault / ArtifactsCenter / Projects / ProjectHome / BiopharmaJourney / FilingsCatalog), 2026-09-28\n\nHead reviewed: `232ecae9c` (`concept2cure-v2`). Read-only; no git writes; no gate run with `write-baseline`.\n\n### Result: no new findings\n\nEvery file named in this gap was read in full (not spot-checked), including the 2716-line `RichSectionEditor.tsx` and the ~1550-line `ProjectHome.tsx`. This set of files is, at head, already at the standard the skill describes — much of it carries in-line code comments that cite exactly this skill's own rules (e.g. `AuthoringCreateExport.tsx`'s `fireToast` comment: *\"BP-W0-6: a failure must not arrive wearing the success tick\"*; `AuthoringExports.tsx`'s honesty-rules header on `content_changed_since_last_export`; `ProjectHome.tsx`'s `Anchored` component distinguishing a failed read from an empty one on every one of its ~10 call sites). No exclamation marks, no cheerleading, no hedging ('might'/'may want to'/'possibly'), no apology theatre, no anthropomorphising, and no bare/generic errors were found anywhere in this set.\n\nSpecific things checked and found already correct, worth naming so the next reviewer does not re-walk them:\n\n- **Error-message redaction.** Traced `apiRequest`'s throw behavior in `client/src/lib/queryClient.ts:362-423`: every non-2xx status except 401 is thrown as `ApiRequestError` with an already-clean message (`extractApiError`/`fallbackMessage`); 401 is returned, not thrown, and every dialog in this set (`FileToVaultDialog.tsx`, `AssignReviewDialog.tsx`, `AuthoringCreateExport.tsx`, `ReviewTasksPanel.tsx`, `ProjectFilesPanel.tsx`) handles the 401 case by name and wraps genuine network exceptions in `redactInternals`. Two files (`AuthoringExports.tsx:190`, `AdminSurfaces.tsx:2435` inside `ArtifactsCenter`'s `downloadArtifact`) show `e.message` reaching a UI string without a `redactInternals` wrapper — but per the independent verification already recorded in `docs/evidence/reviews/2026-09-28/microcopy.md` (M-0928-2, refuted), the only strings that can actually reach that branch are already-clean thrown messages or native `TypeError`s like \"Failed to fetch\", and `redactInternals` is a byte-identical no-op on those strings. Not re-reported as a new finding for the same reason M-0928-2 was refuted.\n- **Destructive/governed-action confirmations** (`AuthoringCollab.tsx`'s lock takeover, `FileToVaultDialog.tsx`'s file-to-vault, `AssignReviewDialog.tsx`'s task creation) name the specific object and the specific consequence, never \"Are you sure?\".\n- **Empty states** throughout `ProjectHome.tsx`, `Vault.tsx`, `Projects.tsx`, `ReviewThreads.tsx`, `ReviewTasksPanel.tsx` and `ProjectFilesPanel.tsx` consistently distinguish a failed read from a genuine empty, and state what unblocks the empty state.\n- **Toasts** are short, factual, and specific (e.g. `ReviewThreads.tsx`: \"Thread resolved — the linked task is closed.\"; `AssignReviewDialog.tsx`: \"Review task {id} assigned to {name} — linked to \"{title}\" on the task ledger.\").\n- **Vocabulary consistency**: \"project\"/\"program\" usage in `Projects.tsx` and `ProjectHome.tsx` matches the schema it is drawn from in each case (UI label \"program\" for `regulatory_programs`, internal comments correctly note the id-space split rather than conflating the two silently).\n\nNo findings are filed for this lens this week.\n
+
+---
+
+**Covered.** Read at head 232ecae9c on concept2cure-v2, read-only, no gates run, no git writes. Full line-by-line read of every file named in the assignment:
+- client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx
+- client/src/concept2cure/v2/surfaces/AuthoringRevisionDiff.tsx
+- client/src/concept2cure/v2/surfaces/AuthoringExports.tsx
+- client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx
+- client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx
+- client/src/concept2cure/v2/surfaces/ReviewThreads.tsx
+- client/src/concept2cure/v2/editor/FileToVaultDialog.tsx
+- client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx
+- client/src/concept2cure/v2/editor/ReviewTasksPanel.tsx
+- client/src/concept2cure/v2/editor/RichSectionEditor.tsx (2716 lines — read in full, plus targeted grep sweeps for '!', 'successfully', 'Oops', hedging words, confirm())
+- client/src/concept2cure/v2/editor/DocumentCanvas.tsx
+- client/src/concept2cure/v2/editor/AssignReviewDialog.tsx
+- client/src/concept2cure/v2/surfaces/Vault.tsx (all user-facing strings: history, data room, search, filing, download error paths)
+- client/src/concept2cure/v2/surfaces/Projects.tsx (new-project wizard, portfolio list, all EmptyState/ErrorState branches)
+- client/src/concept2cure/v2/surfaces/ProjectHome.tsx (full file — header/facts, data room, schedule panel, conversation composer, author workspace, all Anchored/EmptyState branches)
+- client/src/concept2cure/v2/surfaces/BiopharmaJourney.tsx
+- client/src/concept2cure/v2/surfaces/FilingsCatalog.tsx
+
+`ArtifactsCenter.tsx` does not exist as a separate file; the surface is `ArtifactsCenter()` inside client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx (lines 2296–2611) — read in full, since that is where the launch-scope `artifacts-center` registry id actually resolves (confirmed via shared/constants/ui-surface-registry.ts and surfaceViews.ts).
+
+For every file: read every fireToast/onNotice/window.alert call, every EmptyState/ErrorState title+hint, every confirm/destructive-action button, every disabled-button title, every catch-block error string and its redaction path (traced apiRequest's throw behavior in client/src/lib/queryClient.ts:362-423 to confirm which catch blocks can actually receive an unredacted string), and ran targeted greps across the whole set for exclamation marks, 'successfully', hedging words ('might', 'may want', 'possibly'), 'Oops'/'Whoops', 'Are you sure', and generic-error patterns.
+
+Cross-checked against docs/evidence/reviews/2026-09-28/microcopy.md (this week's own report, including its independent-verification section) and 2026-09-24/microcopy.md to avoid re-reporting M1, M2, M-0928-1/2/3.
+
+**Not covered.** No browser/AT pass (read-only static review, as instructed). AnA chat-response phrasing beyond the strings that happen to appear in these files' surface-context summaries was not separately audited. DocumentWorkbench.tsx, TemplateLibrary.tsx, ProtocolDev* family, GatewayTransmittals.tsx, EctdCompile.tsx and the other Authoring/Submission-Center files already swept by this week's own microcopy.md were intentionally not re-read here (out of this gap's scope, and already reported). No gate (check:microcopy, ci:internals-in-copy) was run — read-only per the harness instruction. No Postgres access was needed for this lens (pure client-string review), so none was used.
+
+## Independent verification
+
+Each finding went to three agents, each told to refute it through one lens: reachability, reproduction or intent. A finding is confirmed when two of the three could not. Low findings had one reproduction verifier.
+
+No finding was reported by this sweep.

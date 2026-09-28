@@ -21,6 +21,7 @@
  */
 
 import { COMMAND_AUTHORIZATION } from './command-rbac';
+import type { GovernedSignMeaning } from '../part11/signature-meanings';
 
 /** AnA command names whose effect alters the regulatory record and therefore
  * require, at minimum, a Part 11 reason-for-change. Scoped deliberately to
@@ -165,6 +166,55 @@ export function governedTierOf(command: string): GovernedTier {
  * (re-authentication), not just a reason-for-change? */
 export function requiresEsignature(command: string): boolean {
   return PART11_ESIGN_COMMANDS.has(command);
+}
+
+/**
+ * The §11.50(a)(3) meanings a signer may declare on an e-signature-tier AnA
+ * action, as GovernedActionSignoff offers them (AUTHOR / REVIEWER / APPROVER),
+ * mapped onto the platform's canonical spelling (GOVERNED_SIGN_MEANINGS) — the
+ * value the shared signature writer accepts and readers compare against.
+ *
+ * Closed: nothing outside these three keys is a declaration this route takes.
+ * The dialog's tokens are mapped rather than stored raw because the one
+ * handler that writes a signature from this path (the FDA ESG transmit,
+ * persistGovernedActionSignature) refuses 'AUTHOR' as an unknown meaning — and
+ * it does so after the bytes have left.
+ *
+ * 2026-09-28 (coverage-gap sweep GP-P-2): until this, the route stamped
+ * `signaturePurpose: 'approval'` whatever the signer declared.
+ */
+export const GOVERNED_ACTION_DECLARED_MEANINGS: Readonly<Record<'AUTHOR' | 'REVIEWER' | 'APPROVER', GovernedSignMeaning>> =
+  Object.freeze({
+    AUTHOR: 'authorship',
+    REVIEWER: 'review',
+    APPROVER: 'approval',
+  });
+
+export type DeclaredMeaningResolution =
+  | { ok: true; meaning: GovernedSignMeaning }
+  | { ok: false; code: 'SIGNATURE_MEANING_REQUIRED' | 'SIGNATURE_MEANING_UNKNOWN'; error: string };
+
+/**
+ * Pure: resolve what the signer declared into the canonical meaning, or refuse.
+ * Case-sensitive and exact; the declared value is not echoed back.
+ */
+export function resolveDeclaredSignatureMeaning(declared: unknown): DeclaredMeaningResolution {
+  const accepted = Object.keys(GOVERNED_ACTION_DECLARED_MEANINGS).join(', ');
+  if (declared === undefined || declared === null || declared === '') {
+    return {
+      ok: false,
+      code: 'SIGNATURE_MEANING_REQUIRED',
+      error: `An electronic signature must declare its meaning (§11.50), one of: ${accepted}. Nothing was run.`,
+    };
+  }
+  if (typeof declared === 'string' && Object.prototype.hasOwnProperty.call(GOVERNED_ACTION_DECLARED_MEANINGS, declared)) {
+    return { ok: true, meaning: GOVERNED_ACTION_DECLARED_MEANINGS[declared as keyof typeof GOVERNED_ACTION_DECLARED_MEANINGS] };
+  }
+  return {
+    ok: false,
+    code: 'SIGNATURE_MEANING_UNKNOWN',
+    error: `The declared signature meaning is not one this action accepts; use one of: ${accepted}. Nothing was run.`,
+  };
 }
 
 export interface SignoffValidation {
