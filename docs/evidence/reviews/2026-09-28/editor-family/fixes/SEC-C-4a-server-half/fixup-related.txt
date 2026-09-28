@@ -1,0 +1,349 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ server/services/ana-ri/__tests__/context-blocks.test.ts > the authoring context block cannot carry instructions (SEC-A-4) > a section title cannot close its own tag or start a line 5ms
+ ✓ server/services/ana-ri/__tests__/context-blocks.test.ts > the authoring context block cannot carry instructions (SEC-A-4) > says what the block is: screen state to reason about, not instructions 0ms
+ ✓ server/services/ana-ri/__tests__/context-blocks.test.ts > the authoring context block cannot carry instructions (SEC-A-4) > every other field is held to the same rule 1ms
+ ✓ server/services/ana-ri/__tests__/context-blocks.test.ts > the authoring context block cannot carry instructions (SEC-A-4) > a flood is capped 1ms
+ ✓ server/services/ana-ri/__tests__/context-blocks.test.ts > the authoring context block cannot carry instructions (SEC-A-4) > an ordinary section reads as it did 0ms
+ ✓ server/services/ana-ri/__tests__/context-blocks.test.ts > the authoring context block cannot carry instructions (SEC-A-4) > nothing known is nothing sent 0ms
+ ✓ server/services/ana-ri/__tests__/context-blocks.test.ts > the route context block is held to the same rule (SEC-A-4) > a screen name, project, role or section code cannot close its tag or start a line 1ms
+ ✓ server/services/ana-ri/__tests__/context-blocks.test.ts > the route context block is held to the same rule (SEC-A-4) > an ordinary route reads as it did 0ms
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+[database] Database connection successful
+
+stdout | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+{
+  "timestamp": "2026-09-28T19:14:11.906Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:14:11.909Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+{
+  "timestamp": "2026-09-28T19:14:11.909Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+{
+  "timestamp": "2026-09-28T19:14:13.800Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+{
+  "timestamp": "2026-09-28T19:14:15.691Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+{
+  "timestamp": "2026-09-28T19:14:15.961Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:14:15.961Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+{
+  "timestamp": "2026-09-28T19:14:15.961Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > open findings render into contradictionWatchBlock, org-scoped 4ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > no open findings → empty block (quiet orgs pay no tokens) 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > no org context → the query is never made 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the orchestrator injects _contradictionWatchBlock into the system prompt 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the live route hands the prefetched block to the orchestrator 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the chat-context-builder orchestrator input carries it too 1ms
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+[database] Database connection test failed { error: 'Database connection not available' }
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+[database] Initial connection test failed: Database connection not available
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+{
+  "timestamp": "2026-09-28T19:14:16.731Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+{
+  "timestamp": "2026-09-28T19:14:16.739Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:14:16.739Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+{
+  "timestamp": "2026-09-28T19:14:16.740Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available 6236ms
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+[database] Database connection test failed { error: 'Database ping failed' }
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+[database] Initial connection test failed: Database ping failed
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+{
+  "timestamp": "2026-09-28T19:14:16.967Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+{
+  "timestamp": "2026-09-28T19:14:16.973Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:14:16.973Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+{
+  "timestamp": "2026-09-28T19:14:16.973Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable 260ms
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+[database] Database connection successful
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+{
+  "timestamp": "2026-09-28T19:14:17.216Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+{
+  "timestamp": "2026-09-28T19:14:17.222Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:14:17.222Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+{
+  "timestamp": "2026-09-28T19:14:17.222Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists 238ms
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+[database] Database connection successful
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+{
+  "timestamp": "2026-09-28T19:14:17.404Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+{
+  "timestamp": "2026-09-28T19:14:17.409Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:14:17.409Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+{
+  "timestamp": "2026-09-28T19:14:17.409Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled 242ms
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+[database] Database connection successful
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+{
+  "timestamp": "2026-09-28T19:14:17.589Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+{
+  "timestamp": "2026-09-28T19:14:17.595Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:14:17.595Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+{
+  "timestamp": "2026-09-28T19:14:17.595Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers 183ms
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+[database] Database connection successful
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+{
+  "timestamp": "2026-09-28T19:14:17.779Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+{
+  "timestamp": "2026-09-28T19:14:17.785Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:14:17.785Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+{
+  "timestamp": "2026-09-28T19:14:17.785Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available 188ms
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers 256ms
+
+ Test Files  3 passed (3)
+      Tests  21 passed (21)
+   Start at  19:14:09
+   Duration  8.02s (transform 8.93s, setup 226ms, import 6.67s, tests 7.63s, environment 0ms)
+
