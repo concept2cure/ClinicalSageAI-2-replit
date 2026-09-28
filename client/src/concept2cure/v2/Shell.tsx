@@ -49,14 +49,13 @@ import {
   AI_ACTIONS,
   ANA_MODES,
   CLIENT_CATEGORIES,
-  NAV_TIERS_V2,
-  NAV_GROUP_OF,
   PRIMARY_SEGMENTS,
   RAIL_CORE,
   RAIL_EXPLORE,
   RAIL_QUICK,
   RAIL_SPECIALIST,
   SEGMENTS,
+  breadcrumbTierOf,
   getAnaContext,
   getSegment,
   type AnaContext,
@@ -146,7 +145,12 @@ function isOrgAdminRole(roles: readonly string[] | undefined): boolean {
   );
 }
 
+/** Where "Get help" goes, from the account menu and the header alike: AnA, which answers
+ *  questions about the product in the governed conversation. */
+const HELP_SURFACE = 'conversation-thread';
+
 /* ── Left rail ─────────────────────────────────────────────────────────── */
+
 export function Rail({
   activeId,
   onNav,
@@ -206,7 +210,7 @@ export function Rail({
     { label: 'View all plans', ic: 'checkSquare', to: 'licensing' },
     { label: 'Set up a workspace', ic: 'rocket', to: 'onboarding' },
     { label: 'Codebase coverage', ic: 'grid', to: 'coverage' },
-    { label: 'Get help', ic: 'help', to: 'conversation-thread' },
+    { label: 'Get help', ic: 'help', to: HELP_SURFACE },
     { sep: true },
     { label: 'Log out', ic: 'logOut', action: 'logout' },
   ];
@@ -266,6 +270,20 @@ export function Rail({
       </button>
     );
   };
+  /* The collapsed rail is 56px: the 24px brand mark and this 26px toggle side
+     by side inside its padding left the mark 5px wide — a sliver, and a 5px
+     click target for the Document workspace (launch sweep finding 135). So
+     collapsed, the mark keeps the top and the toggle moves to the foot. */
+  const collapseToggle = (
+    <button
+      type="button"
+      className="rail-collapse"
+      onClick={() => setCollapsed(!collapsed)}
+      title={collapsed ? 'Expand' : 'Collapse'} aria-label={collapsed ? 'Expand' : 'Collapse'}
+    >
+      {I.panelLeft}
+    </button>
+  );
   return (
     <nav className="rail" aria-label="Primary">
       <div className="rail-top">
@@ -282,14 +300,7 @@ export function Rail({
             Concept2Cure<span>.RI</span>
           </div>
         </button>
-        <button
-          type="button"
-          className="rail-collapse"
-          onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? 'Expand' : 'Collapse'} aria-label={collapsed ? 'Expand' : 'Collapse'}
-        >
-          {I.panelLeft}
-        </button>
+        {!collapsed && collapseToggle}
       </div>
       <div className="rail-scroll">
         <div className="rail-section">Client categories</div>
@@ -300,7 +311,12 @@ export function Rail({
               type="button"
               className="nav-item"
               data-on={segment === c.id || undefined}
-              aria-current={segment === c.id ? 'true' : undefined}
+              /* A chosen client category is a setting, not where the user is.
+                 It said aria-current="true", which the stylesheet drew as the
+                 current page — while the surface actually open carried
+                 aria-current="page", which nothing drew. So the category was
+                 the only thing ever highlighted (launch sweep finding 130). */
+              aria-pressed={segment === c.id}
               onClick={() => setSegment(c.id)}
               title={c.label}
             >
@@ -321,6 +337,7 @@ export function Rail({
         <div className="rail-nav">{RAIL_QUICK.filter(railVisible).map(navItem)}</div>
       </div>
       <div className="rail-foot">
+        {collapsed && collapseToggle}
         <button
           type="button"
           className="rail-account"
@@ -409,7 +426,7 @@ export function TopBar({
     .join('')
     .slice(0, 2)
     .toUpperCase();
-  const tier = NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[surface.id] ?? 'biopharma'));
+  const tier = breadcrumbTierOf(surface);
   const [segOpen, setSegOpen] = React.useState(false);
   /* The segment the label shows follows the OPEN PROGRAM's product type (or
      the workstream it was opened from) and falls back to the stored preference
@@ -442,14 +459,14 @@ export function TopBar({
   return (
     <header className="topbar">
       <div className="crumbs">
-        <span>Concept2Cure.RI</span>
-        <span className="sep" aria-hidden="true">›</span>
+        <span className="crumb-root">Concept2Cure.RI</span>
+        <span className="sep crumb-root-sep" aria-hidden="true">›</span>
         {/* A surface in both client categories has no tier crumb; this drew an
             empty one between two separators ("Concept2Cure.RI › › Quality"),
             launch sweep finding 129. */}
         {tier && (
           <>
-            <span>{tier.label}</span>
+            <span className="crumb-tier">{tier.label}</span>
             <span className="sep" aria-hidden="true">›</span>
           </>
         )}
@@ -486,12 +503,16 @@ export function TopBar({
           )}
         </div>
       )}
-      <button type="button" className="tb-org" title="Organization (switcher lands with the auth flow phase)">
-        <span className="tb-org-mark">{orgMark}</span>
+      {/* The organisation this session is scoped to — a label, not a control.
+          It was a button with a dropdown chevron, no handler and the tooltip
+          "switcher lands with the auth flow phase" (launch sweep finding 131).
+          A session's token carries one organisation; there is no switch to
+          offer until the server has one. */}
+      <div className="tb-org" title={orgName}>
+        <span className="tb-org-mark" aria-hidden="true">{orgMark}</span>
         <span className="tb-org-name">{orgName}</span>
-        <span className="tb-org-chev">{I.down}</span>
-      </button>
-      <button type="button" className="tb-cmdk" onClick={onPalette}>
+      </div>
+      <button type="button" className="tb-cmdk" onClick={onPalette} aria-label="Search, jump, or run a command" title="Search, jump, or run a command (⌘K)">
         <span className="ico">{I.search}</span>
         <span className="lbl">Search, jump, or run a command</span>
         <span className="kbd">⌘K</span>
@@ -517,7 +538,15 @@ export function TopBar({
         {I.messageSquare}
       </button>
       <TaskTray onNav={onNav} onAsk={onAsk} />
-      <button type="button" className="tb-btn" title="Help" aria-label="Help">
+      {/* Where the account menu's "Get help" goes. It had no handler at all
+          (launch sweep finding 132). */}
+      <button
+        type="button"
+        className="tb-btn"
+        title="Get help"
+        aria-label="Get help"
+        onClick={() => onNav?.(HELP_SURFACE)}
+      >
         {I.help}
       </button>
     </header>
@@ -1709,7 +1738,7 @@ export function CmdK({
            or one outside the workspace's industry mode (no plan fixes it). */
         hint: lock
           ? lockShortReason(lock)
-          : NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
+          : breadcrumbTierOf(s)?.label,
         icon: s.icon,
         lock,
       };
