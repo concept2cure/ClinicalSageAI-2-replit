@@ -1176,7 +1176,11 @@ export function DocumentWorkbench({
   useEffect(() => {
     if (rail !== 'ana') return;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
+      /* An Escape something inside already handled — the section rename, the
+         governed sign-off dialog in this rail — is not also a request to close
+         AnA (2026-09-28; it closed both). The composer does not handle Escape,
+         so Escape there still closes the rail. */
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
       event.preventDefault();
       closeAna();
     };

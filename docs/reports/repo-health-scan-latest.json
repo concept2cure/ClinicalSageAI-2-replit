@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T06:48:14.400Z",
+  "generatedAt": "2026-09-28T11:29:00.904Z",
   "git": {
-    "sha": "b4cd68746a925a6c0d36f9f0ac2d3f562ea2cf72",
+    "sha": "8a74ed559d6e19d45ec86ff05e77ca12f934555c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1997,7 +1997,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 251819
+        "bytes": 252138
       },
       {
         "file": "server/statistics-service.ts",
@@ -2187,7 +2187,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5375
+        "lines": 5379
       },
       {
         "file": "server/routes/c2c/artifacts.ts",

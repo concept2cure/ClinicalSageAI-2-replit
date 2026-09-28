@@ -619,6 +619,82 @@ describe('k510_workflow.transmit', () => {
     );
   });
 
+  /* 2026-09-28. The handler passed `secondFactorVerified: false` whatever the
+     route verified, and kept a lost ledger entry (and a content change during
+     the send, and an unrecorded filed sequence) in its own audit row while
+     answering a plain success. */
+  const sent = (over: Record<string, unknown> = {}) => ({
+    result: {
+      transmittalId: 8,
+      transmissionId: '<mdn-2@sponsor>',
+      status: 'received',
+      transport: 'as2',
+      httpStatus: 200,
+      ackReceivedAt: VERIFIED_AT,
+      message: 'FDA ESG AS2 transmit accepted.',
+    },
+    bundle: { sha256: 'b'.repeat(64), sizeBytes: 10, format: 'estar' },
+    ledgerWriteFailed: false,
+    contentAfterTransmit: 'match',
+    filedSequenceRecorded: true,
+    filedSequenceReason: null,
+    ...over,
+  });
+
+  it('records the second factor the route verified, not a hard-coded false', async () => {
+    governedTransmit.executeGovernedTransmit.mockResolvedValue(sent());
+    await esgTransmit(
+      { ...SIGNED_CTX, signoff: { ...SIGNED_CTX.signoff, authenticationMethod: 'password+mfa', secondFactorVerified: true } } as any,
+      GOOD_TRANSMIT,
+    );
+    const call = governedTransmit.executeGovernedTransmit.mock.calls[0][0];
+    expect(call.secondFactorVerified).toBe(true);
+    // The transmit ledger's spelling, as the HTTP transmit route records it.
+    expect(call.authenticationMethod).toBe('password+totp');
+  });
+
+  it('a password-only signer is recorded as password-only', async () => {
+    governedTransmit.executeGovernedTransmit.mockResolvedValue(sent());
+    await esgTransmit(
+      { ...SIGNED_CTX, signoff: { ...SIGNED_CTX.signoff, authenticationMethod: 'password', secondFactorVerified: false } } as any,
+      GOOD_TRANSMIT,
+    );
+    const call = governedTransmit.executeGovernedTransmit.mock.calls[0][0];
+    expect(call.secondFactorVerified).toBe(false);
+    expect(call.authenticationMethod).toBe('password');
+  });
+
+  it('says so when the transmission left but its ledger entry was not written', async () => {
+    governedTransmit.executeGovernedTransmit.mockResolvedValue(sent({ ledgerWriteFailed: true }));
+    const r = await esgTransmit(SIGNED_CTX, GOOD_TRANSMIT);
+    // The bytes are with the agency: reporting it un-sent would be false too.
+    expect(r.success).toBe(true);
+    expect(r.data?.ledgerWriteFailed).toBe(true);
+    expect(r.data?.ledgerWarning).toMatch(/ledger entry could not be written/);
+    expect(r.message).toMatch(/ledger entry could not be written/);
+  });
+
+  it('says so when the package changed during the send, or the filed sequence was not recorded', async () => {
+    governedTransmit.executeGovernedTransmit.mockResolvedValue(
+      sent({ contentAfterTransmit: 'drift', filedSequenceRecorded: false, filedSequenceReason: 'append-failed' }),
+    );
+    const r = await esgTransmit(SIGNED_CTX, GOOD_TRANSMIT);
+    expect(r.success).toBe(true);
+    expect(r.data?.contentWarning).toMatch(/changed while the transmission was in progress/);
+    expect(r.data?.filedSequenceWarning).toMatch(/could not be added to the package filed history/);
+    expect(r.message).toMatch(/changed while the transmission was in progress/);
+    expect(r.message).toMatch(/filed history/);
+  });
+
+  it('a clean transmit carries none of those notices', async () => {
+    governedTransmit.executeGovernedTransmit.mockResolvedValue(sent());
+    const r = await esgTransmit(SIGNED_CTX, GOOD_TRANSMIT);
+    expect(r.data).not.toHaveProperty('ledgerWriteFailed');
+    expect(r.data).not.toHaveProperty('ledgerWarning');
+    expect(r.data).not.toHaveProperty('contentWarning');
+    expect(r.data).not.toHaveProperty('filedSequenceWarning');
+  });
+
   it('reports a missing-credentials CredentialError as a structured refusal, never a success', async () => {
     const credErr = Object.assign(
       new Error(
