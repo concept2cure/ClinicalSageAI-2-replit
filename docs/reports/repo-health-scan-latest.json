@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T19:07:25.135Z",
+  "generatedAt": "2026-09-28T00:44:29.573Z",
   "git": {
-    "sha": "225cbdc45c3d74511305ae2457110e9e61aba0a1",
+    "sha": "7ddc06389795b1e79f2b3d566b7c04b5987df467",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2267,7 +2267,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 2734
+        "lines": 2729
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
