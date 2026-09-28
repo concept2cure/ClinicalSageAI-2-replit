@@ -173,6 +173,7 @@ import {
   type RunHandle,
 } from '../../services/ana/run-control.js';
 import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-status.js';
+import { createRunHold, type RunHold } from '../../services/ana/run-hold.js';
 import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../../services/ana/governed-tool-gate.js';
 import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
 import {
@@ -278,6 +279,33 @@ function heldToolContext(
     projectRef: projectId ? String(projectId) : null,
     servingModel: servingModel ?? null,
   };
+}
+
+/**
+ * The turn's round-boundary hold (services/ana/run-hold.ts), wired to its run
+ * row. The checkpoint's pause wait used to be a loop written inline in the
+ * checkpoint; it moved to run-hold.ts so everything that waits at a round
+ * boundary in one turn shares one pause clock and one paused/resumed pair.
+ * Expiry 'resume' is that loop's behaviour: a pause nobody answers within
+ * MAX_PAUSE_MS is resumed as abandoned (no control event, no user).
+ */
+function streamRunHold(run: {
+  runId: string;
+  handle: RunHandle;
+  runOrgId: number | null;
+  res: Response;
+  emit: (frame: Record<string, unknown>) => void;
+}): RunHold {
+  return createRunHold({
+    readStatus: () => readStatus(getPool(), run.runId),
+    wake: ms => run.handle.wake(ms),
+    emit: run.emit,
+    clientGone: () => run.res.writableEnded,
+    stopForDisconnect: () =>
+      stopRunInternally(getPool(), run.runId, 'client_disconnected', run.runOrgId ?? undefined),
+    expiry: 'resume',
+    resumeAbandoned: () => resumeAbandonedRun(getPool(), run.runId),
+  });
 }
 
 export function mountStreamRoute(router: Router): void {
@@ -1713,6 +1741,10 @@ export function mountStreamRoute(router: Router): void {
           if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
         };
 
+        /** One hold per turn: the checkpoint's pause wait (run-hold.ts). None without a run row. */
+        const runHold =
+          runId && runHandle ? streamRunHold({ runId, handle: runHandle, runOrgId, res, emit: emitControl }) : null;
+
         /**
          * Settle every tool call in this round that a person has to authorise.
          *
@@ -2582,7 +2614,6 @@ export function mountStreamRoute(router: Router): void {
         // by the control endpoint at the moment of acceptance, so a crash of
         // this process cannot lose a human decision; what happens below is only
         // telling the client what the server did.
-        let pauseAnnounced = false;
 
         /* Splice drained queue entries into the next model turn, and return the
            steers among them for the caller to announce once it knows the run
@@ -2663,7 +2694,7 @@ export function mountStreamRoute(router: Router): void {
         };
 
         const checkpoint = async (upcomingRound: number): Promise<'continue' | 'abort'> => {
-          if (!runId || !runHandle) return 'continue';
+          if (!runId || !runHandle || !runHold) return 'continue';
           if (runHandle.cancelSignal.aborted) {
             emitControl({ type: 'cancelled', round: upcomingRound });
             return 'abort';
@@ -2672,45 +2703,17 @@ export function mountStreamRoute(router: Router): void {
           void runHandle.heartbeat(upcomingRound);
 
           // Pause: hold at the round boundary until resumed / cancelled. The
-          // wait is woken by the control write (NOTIFY, or directly when the
-          // control landed on this instance) rather than by a 200ms poll; the
-          // timeout is only a ceiling on how long a missed wake can stall it.
-          const WAKE_CEILING_MS = 5_000;
-          const pauseStart = Date.now();
-          let status = await readStatus(getPool(), runId);
-          while (status === 'paused') {
-            if (!pauseAnnounced) {
-              emitControl({ type: 'paused', round: upcomingRound });
-              pauseAnnounced = true;
-            }
-            if (res.writableEnded) {
-              await stopRunInternally(getPool(), runId, 'client_disconnected', runOrgId ?? undefined);
-              break;
-            }
-            if (Date.now() - pauseStart > MAX_PAUSE_MS) {
-              // Nobody came back. Resuming is a server decision, so it is
-              // recorded as one — no control event, attributed to no user.
-              await resumeAbandonedRun(getPool(), runId);
-              // Take the new status with us. Breaking on the stale 'paused'
-              // skipped the `resumed` emit below, leaving the client showing
-              // Paused for a run that was already working again.
-              status = 'running';
-              break;
-            }
-            await runHandle.wake(WAKE_CEILING_MS);
-            status = await readStatus(getPool(), runId);
-          }
-          if (pauseAnnounced && status === 'running') {
-            emitControl({ type: 'resumed', round: upcomingRound });
-            pauseAnnounced = false;
-          }
+          // wait — woken by the control write, announced once as paused and
+          // once as resumed, resumed as abandoned past MAX_PAUSE_MS — is the
+          // turn's shared hold (services/ana/run-hold.ts), where it moved.
+          const held = await runHold.hold(upcomingRound);
 
           // Steers and screen reports: splice each into the next model turn.
           // The drain is atomic and covers both, so neither can be applied
           // twice.
           const drainedSteers = spliceQueued(await consumeInterjections(getPool(), runId));
 
-          if (runHandle.cancelSignal.aborted || status === 'cancelled') {
+          if (runHandle.cancelSignal.aborted || held === 'cancelled') {
             emitControl({ type: 'cancelled', round: upcomingRound });
             return 'abort';
           }

@@ -46,7 +46,8 @@ export const LIVE_RUN_STATUSES: readonly RunStatus[] = [
  * `hold_expired` and `hold_unavailable` are named now so the run-policy work
  * that will produce them does not reshape this type (row 74, slice S1 of the
  * run-policy design). Until a writer exists for one, no surface has words for
- * it and the client ignores it.
+ * it and the client ignores it. (Slice S3 added the writer for `hold_expired`,
+ * run-control.ts endHeldRun; nothing calls it until the Manual policy lands.)
  */
 export type RunStoppedReason =
   | 'cancelled'
