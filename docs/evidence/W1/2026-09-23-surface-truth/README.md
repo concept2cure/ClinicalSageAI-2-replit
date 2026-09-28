@@ -1,9 +1,10 @@
 # D2 — the launch boundary on a fresh organisation, surface by surface
 
 **Date:** 2026-09-23 · **Row:** D2 (Launch catalog) · **Workstream:** W1
-**Status of this folder:** the boundary sweep and the gate rule are complete;
-29 of the 55 in-scope findings are closed (25 here, 3 by other sessions, 1
-deferred as a decision) and 26 are open, listed below by name.
+**Status of this folder:** the boundary sweep and the gate rule are complete.
+Of the 55 in-scope findings, 40 are fixed here, 3 were fixed by other
+sessions, 2 are deferred as product or security decisions, and 10 are open —
+all shell layout and wording, none of them a false statement about data.
 
 ## What was run
 
@@ -78,20 +79,21 @@ identically on the upstream source and is not this change's.
 | 22, 127 (high), 133, 138, 140 | Shell (account menu, AnA rail, tray) | Fixed, `b9cabbf5a` — 25/31 fail → 31/31 pass |
 | 112 (high), 113 (high) | QMS SOP register | Fixed upstream by `12e12240c` (HS-1) before this landed; this session's parallel fix was discarded rather than duplicated |
 | 119 | Vault header count | Fixed upstream (count renders only over a read vault) |
+| 18 (high), 110 (high), 114, 20 | Identity console | Fixed, `c541ff5b0` — a refused SCIM read is a refusal, never "the allowlist is not enforced"; 4/4 fail → pass |
+| 42 (high), 6, 7, 9 | AnA command | Fixed, `cac23587b` — zero programs is `200 { data: null }` and the empty state; failures say what the server answered; 4 fail → 9/9 pass |
+| 85 | Onboarding | Fixed, `4d217e473` — names the organisation it changes and starts from its recorded name and industry; 4/4 fail → pass |
+| 122, 123 | Setup client type | Fixed, `f04feac2c` — a pending change saved under the page's reason; the route now requires a reason and records it; 7 fail → pass |
+| 47, 53, 54, 129 | Audit trail headers and copy, Apps eyebrow, breadcrumb | Fixed, `04e784bc2` — one meaning for `.ct-head`; §11.10(e); 5/5 fail → pass |
 | 43 (high) | Master licensing owner identity | **Deferred — a security decision.** Making the console honour the hard-coded `DEFAULT_MASTER_ADMIN_EMAILS` would admit whoever self-signs-up that address first (signup does not verify email) to Master Administration. Proposal: `resolveMasterAdmin` true only when `resolvePlatformAdmin` is; delete the hard-coded default; add email verification to signup before any email-keyed grant is honoured. |
+| 19 (high) | Identity console for an org admin | **Deferred — a product decision.** Every SCIM route is platform-admin only and takes an organisation id from the body; Setup sends org admins to the console to manage "their" SCIM. The console now says honestly that a platform administrator is required. Letting an org admin manage their own SCIM needs org-scoped routes: new capability, not a fix. |
 
-**Open — not yet addressed** (their fix agents stopped on a usage limit before
-editing; none re-verified on the current code yet):
+**Open** (layout and wording; not yet re-checked against the current code):
 
 | Finding | Surface |
 |---|---|
-| 18 (high), 110 (high), 114, 20 | Identity console: a 403 on the SCIM reads is shown as "no allowlist rules — not enforced" / "didn't respond"; writes toast "HTTP 0" |
-| 19 (high) | Identity console: an org admin is sent there to manage their own SCIM, and every SCIM route is platform-admin only — a product decision |
-| 42 (high), 6, 7, 9 | AnA command: an empty org is shown as a failed read blaming sign-in or plan (the rollup answers 404 for zero programs) |
-| 85 | Onboarding: "New organization" renames and re-profiles the signed-in org |
-| 44, 53, 54, 122, 123 | Apps catalog, Audit trail, Setup: contradictory lock copy, raw ids, a governed profile change with no reason |
-| 128, 129, 131, 132 | Shell header: breadcrumb domain crumb, empty middle crumb, dead org switcher and Help |
-| 130, 134, 135, 136, 137, 139, 47 | Shell layout: rail highlight, header squeeze, squashed logo, floating button overlap, modal copy, audit-trail column headers |
+| 44 | Apps catalog: lock copy that disagrees with the rail |
+| 128, 131, 132 | Shell header: the domain crumb falls back to "Biotech & Pharma"; the organisation switcher and Help icon do nothing |
+| 130, 134, 135, 136, 137, 139 | Shell layout: rail highlight, header squeeze at 1440px, squashed logo, floating button over the dock, task-modal copy and keys |
 
 ### Out-of-scope findings (must be resolved before that surface joins the catalog)
 
