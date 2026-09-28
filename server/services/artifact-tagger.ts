@@ -236,7 +236,9 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
           `UPDATE concept2cure_artifacts
            SET content = $4, status = $5, title = $6,
                version = COALESCE(version, 1) + 1,
-               metadata = metadata || $7::jsonb,
+               -- json has no \`||\` (see the artifact-id branch above): merged
+               -- as jsonb, assigned back to the json column (2026-09-28).
+               metadata = COALESCE(metadata::jsonb, '{}'::jsonb) || $7::jsonb,
                updated_at = NOW()
            WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
           [
