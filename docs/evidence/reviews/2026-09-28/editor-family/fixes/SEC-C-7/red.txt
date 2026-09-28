@@ -1,0 +1,746 @@
+$ npx vitest run --config vitest.config.ts server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx
+# 2026-09-28T04:57:49Z at 84ce8fa3 (working tree)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+ × client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a review bound to an account, names the signer only, never a stored label 241ms
+   → expected <div class="es-target-name"></div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a reviewer with no account, keeps the name the decision is recorded for 31ms
+ × client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the request-a-review drawer > says a chosen account is listed under its own name, before anything is typed 139ms
+   → Unable to find an element with the text: /listed under the account’s own name/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<div
+  aria-label="Request a review"
+  aria-modal="true"
+  class="de"
+  role="dialog"
+  tabindex="-1"
+>
+  <div
+    class="de-h"
+  >
+    <div>
+      <div
+        class="de-h-eye"
+      >
+        Protocol · review
+      </div>
+      <div
+        class="de-h-t"
+      >
+        Request a review
+      </div>
+      <div
+        class="de-h-s"
+      >
+        Assigns a reviewer to this protocol. Recorded as a governed action.
+      </div>
+    </div>
+    <button
+      aria-label="Close"
+      class="de-x"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="de-body"
+  >
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="_r_a_-reviewerUserId"
+        id="_r_a_-reviewerUserId-label"
+      >
+        Reviewer account
+      </label>
+      <div
+        class="de-desc"
+        id="_r_a_-reviewerUserId-desc"
+      >
+        The assigned account signs its own review, as review or approval. Without an account, someone takes responsibility for recording the decision.
+      </div>
+      <select
+        aria-describedby="_r_a_-reviewerUserId-desc"
+        class="de-select"
+        id="_r_a_-reviewerUserId"
+      >
+        <option
+          value=""
+        >
+          Select…
+        </option>
+        <option
+          value=""
+        >
+          No account here: their decision is recorded on their behalf
+        </option>
+        <option
+          value="21"
+        >
+          Dr Amara Okafor · member
+        </option>
+      </select>
+    </div>
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="_r_a_-reviewerName"
+        id="_r_a_-reviewerName-label"
+      >
+        Reviewer name
+      </label>
+      <input
+        class="de-input"
+        id="_r_a_-reviewerName"
+        placeholder="Defaults to the account’s name; required when there is no account"
+        type="text"
+        value=""
+      />
+    </div>
+    <div
+      class="de-field half"
+    >
+      <label
+        class="de-label"
+        for="_r_a_-role"
+        id="_r_a_-role-label"
+      >
+        Review role
+      </label>
+      <select
+        class="de-select"
+        id="_r_a_-role"
+      >
+        <option
+          value=""
+        >
+          Select…
+        </option>
+        <option
+          value="scientific"
+        >
+          scientific
+        </option>
+        <option
+          value="statistical"
+        >
+          statistical
+        </option>
+        <option
+          value="ethics"
+        >
+          ethics
+        </option>
+        <option
+          value="safety"
+        >
+          safety
+        </option>
+        <option
+          value="regulatory"
+        >
+          regulatory
+        </option>
+        <option
+          value="general"
+        >
+          general
+        </option>
+      </select>
+    </div>
+    <div
+      class="de-field half"
+    >
+      <label
+        class="de-label"
+        for="_r_a_-dueDate"
+        id="_r_a_-dueDate-label"
+      >
+        Due date
+      </label>
+      <input
+        class="de-input"
+        id="_r_a_-dueDate"
+        type="date"
+        value=""
+      />
+    </div>
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="_r_a_-reason"
+        id="_r_a_-reason-label"
+      >
+        Reason for change (governed)
+        <span
+          aria-hidden="true"
+          class="req"
+        >
+          *
+        </span>
+      </label>
+      <textarea
+        aria-required="true"
+        class="de-textarea"
+        id="_r_a_-reason"
+        placeholder="Why this change is being made — at least 8 characters; written to the audit trail."
+        rows="3"
+      />
+    </div>
+    <div
+      class="de-gov"
+    >
+      <span
+        class="ico"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-lock"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="11"
+            rx="2"
+            ry="2"
+            width="18"
+            x="3"
+            y="11"
+          />
+          <path
+            d="M7 11V7a5 5 0 0 1 10 0v4"
+          />
+        </svg>
+      </span>
+      <span
+        class="de-gov-t"
+      >
+        This is a governed record — saving writes an audit entry and may require your e-signature per 21 CFR §11.
+      </span>
+    </div>
+  </div>
+  <div
+    class="de-f"
+  >
+    <button
+      class="de-btn ghost"
+    >
+      Cancel
+    </button>
+    <button
+      class="de-btn primary"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-lock"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect
+          height="11"
+          rx="2"
+          ry="2"
+          width="18"
+          x="3"
+          y="11"
+        />
+        <path
+          d="M7 11V7a5 5 0 0 1 10 0v4"
+        />
+      </svg>
+       
+      Request review
+    </button>
+  </div>
+</div>
+stderr | server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T04:57:53.385Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > a different name typed beside the account is refused, and nothing is recorded 17ms
+   → the assignment was expected to be refused: expected null not to be null
+ × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > the same name, typed with other capitals or spacing, is stored as the account spells it 8ms
+   → expected { …(2) } to deeply equal { …(2) }
+ × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > a blank name means the account’s name 2ms
+   → reviewer_name is required.
+ × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > an account with no name on record is listed under its email, the name a signature from it would print 2ms
+   → reviewer_name is required.
+ × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > an account with neither a name nor an email cannot be listed, and says so 2ms
+   → expected 'reviewer_name is required.' to match /no name or email on record/
+ ✓ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > the membership checks still come first: another organisation’s user is refused 4ms
+ ✓ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a reviewer with no account is named as typed > stores the typed name, trimmed 3ms
+ ✓ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a reviewer with no account is named as typed > needs a name 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > a different name typed beside the account is refused, and nothing is recorded
+AssertionError: the assignment was expected to be refused: expected null not to be null
+ ❯ refusal server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts:62:64
+     60| async function refusal(p: Promise<unknown>): Promise<{ code: string; m…
+     61|   const err = await p.then(() => null, (e: unknown) => e);
+     62|   expect(err, 'the assignment was expected to be refused').not.toBeNul…
+       |                                                                ^
+     63|   return { code: String((err as { code?: string }).code), message: Str…
+     64| }
+ ❯ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts:102:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > the same name, typed with other capitals or spacing, is stored as the account spells it
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+-   "reviewer_name": "Dr Amara Okafor",
++   "reviewer_name": "dr   AMARA okafor",
+    "reviewer_user_id": 21,
+  }
+
+ ❯ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts:112:30
+    110|     const docId = await protocol();
+    111|     const { id } = await assignReviewerTx(client, ORG, AUTHOR, docId, …
+    112|     expect(await stored(id)).toEqual({ reviewer_name: 'Dr Amara Okafor…
+       |                              ^
+    113|   });
+    114|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > a blank name means the account’s name
+ProtocolReviewError: reviewer_name is required.
+ ❯ Module.assignReviewerTx server/services/protocol-reviews/protocol-reviews-service.ts:58:64
+     56| ): Promise<{ id: number; role: string }> {
+     57|   if (!Number.isInteger(protocolDocumentId) || protocolDocumentId <= 0…
+     58|   if (!input.reviewerName || !input.reviewerName.trim()) throw new Pro…
+       |                                                                ^
+     59|   const role = input.role ?? 'general';
+     60|   if (!ROLES.includes(role)) throw new ProtocolReviewError('BAD_INPUT'…
+ ❯ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts:117:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'BAD_INPUT' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > an account with no name on record is listed under its email, the name a signature from it would print
+ProtocolReviewError: reviewer_name is required.
+ ❯ Module.assignReviewerTx server/services/protocol-reviews/protocol-reviews-service.ts:58:64
+     56| ): Promise<{ id: number; role: string }> {
+     57|   if (!Number.isInteger(protocolDocumentId) || protocolDocumentId <= 0…
+     58|   if (!input.reviewerName || !input.reviewerName.trim()) throw new Pro…
+       |                                                                ^
+     59|   const role = input.role ?? 'general';
+     60|   if (!ROLES.includes(role)) throw new ProtocolReviewError('BAD_INPUT'…
+ ❯ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts:123:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'BAD_INPUT' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > an account with neither a name nor an email cannot be listed, and says so
+AssertionError: expected 'reviewer_name is required.' to match /no name or email on record/
+
+- Expected:
+/no name or email on record/
+
++ Received:
+"reviewer_name is required."
+
+ ❯ server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts:133:23
+    131|     const r = await refusal(assignReviewerTx(client, ORG, AUTHOR, docI…
+    132|     expect(r.code).toBe('BAD_INPUT');
+    133|     expect(r.message).toMatch(/no name or email on record/);
+       |                       ^
+    134|     expect(await assignments(docId)).toBe(0);
+    135|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a review bound to an account, names the signer only, never a stored label
+AssertionError: expected <div class="es-target-name"></div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="es-target-name"
+>
+  Dr Someone Else · Phase 2 dose-ranging study of C2C-101
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx:63:59
+     61|   it('for a review bound to an account, names the signer only, never a…
+     62|     const dialog = openSigning('Dr Someone Else', 21);
+     63|     expect(within(dialog).queryByText(/Dr Someone Else/)).toBeNull();
+       |                                                           ^
+     64|     expect(within(dialog).getByText(PROTOCOL)).toBeTruthy();
+     65|     expect(within(dialog).getByText('Dr Amara Okafor')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the request-a-review drawer > says a chosen account is listed under its own name, before anything is typed
+TestingLibraryElementError: Unable to find an element with the text: /listed under the account’s own name/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<div
+  aria-label="Request a review"
+  aria-modal="true"
+  class="de"
+  role="dialog"
+  tabindex="-1"
+>
+  <div
+    class="de-h"
+  >
+    <div>
+      <div
+        class="de-h-eye"
+      >
+        Protocol · review
+      </div>
+      <div
+        class="de-h-t"
+      >
+        Request a review
+      </div>
+      <div
+        class="de-h-s"
+      >
+        Assigns a reviewer to this protocol. Recorded as a governed action.
+      </div>
+    </div>
+    <button
+      aria-label="Close"
+      class="de-x"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="de-body"
+  >
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="_r_a_-reviewerUserId"
+        id="_r_a_-reviewerUserId-label"
+      >
+        Reviewer account
+      </label>
+      <div
+        class="de-desc"
+        id="_r_a_-reviewerUserId-desc"
+      >
+        The assigned account signs its own review, as review or approval. Without an account, someone takes responsibility for recording the decision.
+      </div>
+      <select
+        aria-describedby="_r_a_-reviewerUserId-desc"
+        class="de-select"
+        id="_r_a_-reviewerUserId"
+      >
+        <option
+          value=""
+        >
+          Select…
+        </option>
+        <option
+          value=""
+        >
+          No account here: their decision is recorded on their behalf
+        </option>
+        <option
+          value="21"
+        >
+          Dr Amara Okafor · member
+        </option>
+      </select>
+    </div>
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="_r_a_-reviewerName"
+        id="_r_a_-reviewerName-label"
+      >
+        Reviewer name
+      </label>
+      <input
+        class="de-input"
+        id="_r_a_-reviewerName"
+        placeholder="Defaults to the account’s name; required when there is no account"
+        type="text"
+        value=""
+      />
+    </div>
+    <div
+      class="de-field half"
+    >
+      <label
+        class="de-label"
+        for="_r_a_-role"
+        id="_r_a_-role-label"
+      >
+        Review role
+      </label>
+      <select
+        class="de-select"
+        id="_r_a_-role"
+      >
+        <option
+          value=""
+        >
+          Select…
+        </option>
+        <option
+          value="scientific"
+        >
+          scientific
+        </option>
+        <option
+          value="statistical"
+        >
+          statistical
+        </option>
+        <option
+          value="ethics"
+        >
+          ethics
+        </option>
+        <option
+          value="safety"
+        >
+          safety
+        </option>
+        <option
+          value="regulatory"
+        >
+          regulatory
+        </option>
+        <option
+          value="general"
+        >
+          general
+        </option>
+      </select>
+    </div>
+    <div
+      class="de-field half"
+    >
+      <label
+        class="de-label"
+        for="_r_a_-dueDate"
+        id="_r_a_-dueDate-label"
+      >
+        Due date
+      </label>
+      <input
+        class="de-input"
+        id="_r_a_-dueDate"
+        type="date"
+        value=""
+      />
+    </div>
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="_r_a_-reason"
+        id="_r_a_-reason-label"
+      >
+        Reason for change (governed)
+        <span
+          aria-hidden="true"
+          class="req"
+        >
+          *
+        </span>
+      </label>
+      <textarea
+        aria-required="true"
+        class="de-textarea"
+        id="_r_a_-reason"
+        placeholder="Why this change is being made — at least 8 characters; written to the audit trail."
+        rows="3"
+      />
+    </div>
+    <div
+      class="de-gov"
+    >
+      <span
+        class="ico"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-lock"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="11"
+            rx="2"
+            ry="2"
+            width="18"
+            x="3"
+            y="11"
+          />
+          <path
+            d="M7 11V7a5 5 0 0 1 10 0v4"
+          />
+        </svg>
+      </span>
+      <span
+        class="de-gov-t"
+      >
+        This is a governed record — saving writes an audit entry and may require your e-signature per 21 CFR §11.
+      </span>
+    </div>
+  </div>
+  <div
+    class="de-f"
+  >
+    <button
+      class="de-btn ghost"
+    >
+      Cancel
+    </button>
+    <button
+      class="de-btn primary"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-lock"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect
+          height="11"
+          rx="2"
+          ry="2"
+          width="18"
+          x="3"
+          y="11"
+        />
+        <path
+          d="M7 11V7a5 5 0 0 1 10 0v4"
+        />
+      </svg>
+       
+      Request review
+    </button>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx:86:27
+     84|     const dialog = screen.getByRole('dialog');
+     85|     await waitFor(() => expect(within(dialog).getByRole('option', { na…
+     86|     expect(within(dialog).getByText(/listed under the account’s own na…
+       |                           ^
+     87|     const name = within(dialog).getByLabelText(/Reviewer name/) as HTM…
+     88|     expect(name.placeholder).toMatch(/Only for a reviewer with no acco…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 4 passed (11)
+   Start at  04:57:50
+   Duration  7.65s (transform 2.17s, setup 283ms, import 4.00s, tests 4.78s, environment 774ms)
+
+# exit=1

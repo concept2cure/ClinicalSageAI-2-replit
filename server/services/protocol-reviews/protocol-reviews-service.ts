@@ -15,6 +15,7 @@ import { pool } from '../../db';
 // The roles that can sign here (routes/protocol-reviews.ts runs requireEditorAccess).
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { requireProtocolForWriteTx } from '../protocol-development/protocol-development-service';
+import { resolveSignerIdentity, SignerNotAttributableError } from '../part11/resolve-signer-identity';
 import {
   summarizeReviewConsensus,
   evaluateReviewReadiness,
@@ -40,10 +41,40 @@ const DISPOSITIONS = ['approve', 'approve_with_changes', 'reject', 'abstain'];
 // ─── Assignments ─────────────────────────────────────────────────────────────
 
 export interface AssignReviewerInput {
-  reviewerName: string;
+  /** Required without an account. With one, blank means the account's own name. */
+  reviewerName?: string | null;
   reviewerUserId?: number | null;
   role?: string;
   dueDate?: string | null;
+}
+
+/** Capitals and runs of whitespace do not make two names different. */
+const nameKey = (s: string): string => s.trim().replace(/\s+/g, ' ').toLowerCase();
+
+/**
+ * The name an account-bound review is listed under: the account's own, as a
+ * signature from it would print it (resolveSignerIdentity).
+ *
+ * Periodic review 2026-09-28, editor family, SEC-C-7: the typed name was stored
+ * as given beside the account, so a review bound to B could be listed, and B's
+ * signed disposition shown, as "Dr A". The HTTP route and the AnA tool
+ * assign_protocol_reviewer both reach this through assignReviewerTx.
+ */
+async function accountReviewerName(client: Queryable, orgId: number, reviewerUserId: number, typed: string): Promise<string> {
+  let name: string;
+  try {
+    name = (await resolveSignerIdentity(client, reviewerUserId, orgId, 'review assignment')).name;
+  } catch (err) {
+    if (!(err instanceof SignerNotAttributableError)) throw err;
+    throw new ProtocolReviewError('BAD_INPUT', 'That reviewer\'s account has no name or email on record, so a review cannot be listed under it. Nothing was recorded.');
+  }
+  if (typed && nameKey(typed) !== nameKey(name)) {
+    throw new ProtocolReviewError(
+      'BAD_INPUT',
+      `That account is ${name}, and a review assigned to it is listed under that name, not "${typed}". Leave the name blank, or name a reviewer who has no account. Nothing was recorded.`,
+    );
+  }
+  return name;
 }
 
 /** Assign a reviewer to a protocol document for a given review role. */
@@ -55,10 +86,12 @@ export async function assignReviewerTx(
   input: AssignReviewerInput,
 ): Promise<{ id: number; role: string }> {
   if (!Number.isInteger(protocolDocumentId) || protocolDocumentId <= 0) throw new ProtocolReviewError('BAD_INPUT', 'A valid protocol_document_id is required.');
-  if (!input.reviewerName || !input.reviewerName.trim()) throw new ProtocolReviewError('BAD_INPUT', 'reviewer_name is required.');
+  const typed = (input.reviewerName ?? '').trim();
+  if (input.reviewerUserId == null && !typed) throw new ProtocolReviewError('BAD_INPUT', 'reviewer_name is required.');
   const role = input.role ?? 'general';
   if (!ROLES.includes(role)) throw new ProtocolReviewError('BAD_INPUT', `Invalid review role "${role}".`);
   await requireProtocolForWriteTx(client, orgId, protocolDocumentId, { signedContent: false });
+  let reviewerName = typed;
   if (input.reviewerUserId != null) {
     // Only the assigned user can sign the disposition, and nothing reassigns a
     // review, so an assignment to someone who can never sign is a review that
@@ -73,11 +106,12 @@ export async function assignReviewerTx(
     if (!GOVERNED_WRITE_ROLES.has(String(member.rows[0].role ?? '').toLowerCase())) {
       throw new ProtocolReviewError('BAD_INPUT', `That reviewer's role (${member.rows[0].role}) cannot sign, so they could never record a disposition. Nothing was recorded.`);
     }
+    reviewerName = await accountReviewerName(client, orgId, input.reviewerUserId, typed);
   }
   const { rows } = await client.query(
     `INSERT INTO protocol_review_assignments (organization_id, protocol_document_id, reviewer_name, reviewer_user_id, role, status, due_date, created_by)
      VALUES ($1,$2,$3,$4,$5,'assigned',$6,$7) RETURNING id`,
-    [orgId, protocolDocumentId, input.reviewerName.trim(), input.reviewerUserId ?? null, role, input.dueDate ?? null, userId],
+    [orgId, protocolDocumentId, reviewerName, input.reviewerUserId ?? null, role, input.dueDate ?? null, userId],
   );
   return { id: Number(rows[0].id), role };
 }
