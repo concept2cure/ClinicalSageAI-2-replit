@@ -20832,3 +20832,170 @@ registerToolHandler('review_protocol_design_gates', async (input, ctx) => {
     return pdevToolError('review_protocol_design_gates', err);
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol industry-gap engines (docs/design/PROTOCOL_INDUSTRY_GAPS.md Tier 1).
+//
+// Eleven READ-ONLY tools, each a thin call into protocol-industry-service.ts —
+// the same function the /api/study-design and /api/protocol-development routes
+// call, so AnA and the screen report one engine's output from one read. Every
+// engine is pure; the service reads the rows and throws a ProtocolDevError with
+// a sentence when it cannot (no design bound, version not recorded), which
+// pdevToolError passes through as the error. Nothing is written, so there is no
+// reason-for-change and no governed-action row.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Run a read inside a transaction that carries the RLS tenant variable, so the
+ * service's queries get the database-level boundary as well as their explicit
+ * organization_id filters — the same shape review_protocol_design_derivation
+ * uses. SELECTs only; COMMIT ends a transaction that wrote nothing.
+ */
+async function industryRead<T>(orgId: number, run: (q: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> }) => Promise<T>): Promise<T> {
+  const { getPool } = await import('../../db.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, orgId);
+    const out = await run(client);
+    await client.query('COMMIT');
+    return out;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** document_id as an integer, or NaN. */
+function industryDocId(input: Record<string, unknown>): number {
+  return typeof input.document_id === 'number' && Number.isInteger(input.document_id) ? input.document_id : NaN;
+}
+
+type IndustryDesignEngine = 'trial-schema' | 'ctq' | 'usdm' | 'dct-profile' | 'who-ictrp' | 'dose-escalation' | 'enrollment' | 'interim-oc';
+
+/** The eight design-only tools share one shape: bound design → engine → verbatim note. */
+function registerIndustryDesignTool(tool: string, engine: IndustryDesignEngine, note: string): void {
+  registerToolHandler(tool, async (input, ctx) => {
+    if (!ctx?.organizationId) return JSON.stringify({ error: `${tool} requires tenant context.` });
+    const documentId = industryDocId(input);
+    if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+    try {
+      const { designEngineForProtocol } = await import('../protocol-development/protocol-industry-service.js');
+      const orgId = ctx.organizationId;
+      const result = await industryRead(orgId, (q) => designEngineForProtocol(q, orgId, documentId, engine));
+      return JSON.stringify({ ok: true, ...result, note });
+    } catch (err) {
+      return pdevToolError(tool, err);
+    }
+  });
+}
+
+registerIndustryDesignTool(
+  'review_trial_schema',
+  'trial-schema',
+  'Projected by projectTrialSchema (ICH M11 §1.2). Report status and every gap verbatim. Do not describe epochs, days or windows the model does not contain; an arm labelled "(no intervention recorded)" is reported that way. The svg field is the schematic as rendered — do not redraw it.',
+);
+registerIndustryDesignTool(
+  'derive_ctq_factors',
+  'ctq',
+  'Derived by deriveCtqFactors (ICH E6(R3) critical-to-quality factors). Every likelihood and impact is a DEFAULT SEED (ratingSource "default_seed"), not an assessment. Report factors with their derivedFrom provenance and notAssessed verbatim; nothing was written to the RBM risk assessment.',
+);
+registerIndustryDesignTool(
+  'export_usdm_projection',
+  'usdm',
+  'Projected by projectUsdm. CONFORMANCE IS UNVERIFIED: report conformance.status and its reason verbatim and never call this export valid, conformant or USDM-compliant. Report unmappedDesignFields and unfilledUsdmEntities in full.',
+);
+registerIndustryDesignTool(
+  'review_dct_profile',
+  'dct-profile',
+  'Profiled by profileDecentralization. An activity with no stated location is "unstated" — not site, not decentralised — and is excluded from the off-site share. A null share is "not assessed", never 0%. Report findings and notAssessed verbatim.',
+);
+registerIndustryDesignTool(
+  'review_who_ictrp_record',
+  'who-ictrp',
+  'Projected by projectWhoIctrp (WHO TRDS, 24 items). Report every item in order with its status and gap verbatim. Items the design does not carry are missing — "not carried by the study design; supplied at registration" — never supply one. Nothing was registered.',
+);
+
+registerIndustryDesignTool(
+  'review_dose_escalation_design',
+  'dose-escalation',
+  'Projected by projectDoseEscalation over the BOIN engine. Report status, gaps, boundaries and the decision table verbatim. A parameter whose source is "engine default" was not chosen by the sponsor — say so. missing means an escalation-phase design states no rules: a protocol gap, not a clean result.',
+);
+
+registerIndustryDesignTool(
+  'review_enrollment_forecast',
+  'enrollment',
+  'Projected by projectEnrollment over the Poisson–Gamma accrual engine. Report every figure with its time unit, verbatim. Rates are sponsor inputs: missing means no accrual plan is recorded — never assume a rate. Null times mean the target is not reached; the interval is among simulations that reached it.',
+);
+
+registerIndustryDesignTool(
+  'review_interim_operating_characteristics',
+  'interim-oc',
+  'Computed by projectInterimOperatingCharacteristics over the exact group-sequential engine. The characteristics are of the RECORDED boundaries when recorded; report every discrepancy with the spending function verbatim and never substitute the solved value. Report gaps verbatim; a null power means alpha or power is not recorded.',
+);
+
+registerToolHandler('review_spirit_conformance', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_spirit_conformance requires tenant context.' });
+  const documentId = industryDocId(input);
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  try {
+    const { spiritForProtocol } = await import('../protocol-development/protocol-industry-service.js');
+    const orgId = ctx.organizationId;
+    const result = await industryRead(orgId, (q) => spiritForProtocol(q, orgId, documentId));
+    return JSON.stringify({
+      ok: true,
+      ...result,
+      note: 'Assessed by assessSpiritConformance over the bound design and this protocol\'s sections. Report each row\'s status, evidence and gap and the summary counts verbatim. not_assessable is neither missing nor met. Compute no percentage and never say the protocol "meets SPIRIT".',
+    });
+  } catch (err) {
+    return pdevToolError('review_spirit_conformance', err);
+  }
+});
+
+registerToolHandler('review_deviation_trends', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_deviation_trends requires tenant context.' });
+  const documentId = industryDocId(input);
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const windowMonths = typeof input.window_months === 'number' && Number.isInteger(input.window_months) ? input.window_months : undefined;
+  if (windowMonths !== undefined && (windowMonths < 1 || windowMonths > 36)) {
+    return JSON.stringify({ error: 'window_months must be a whole number between 1 and 36.' });
+  }
+  try {
+    const { deviationTrendsForProtocol } = await import('../protocol-development/protocol-industry-service.js');
+    // The clock is read HERE, at the boundary; the engine is handed the date.
+    const today = new Date().toISOString().slice(0, 10);
+    const orgId = ctx.organizationId;
+    const result = await industryRead(orgId, (q) => deviationTrendsForProtocol(q, orgId, documentId, { today, windowMonths }));
+    return JSON.stringify({
+      ok: true,
+      ...result,
+      note: 'Trended by trendDeviations. Report every count, share and signal verbatim. A null share means nothing to measure — "no deviations recorded", never "0%". A per-site view is not available (protocol_deviations carries no site linkage). notAssessed lists signals that could not be evaluated; that is not the absence of a problem.',
+    });
+  } catch (err) {
+    return pdevToolError('review_deviation_trends', err);
+  }
+});
+
+registerToolHandler('review_protocol_redline', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_redline requires tenant context.' });
+  const documentId = industryDocId(input);
+  const from = typeof input.from_version === 'string' ? input.from_version : '';
+  const to = typeof input.to_version === 'string' ? input.to_version : '';
+  if (!Number.isInteger(documentId) || !from.trim() || !to.trim()) {
+    return JSON.stringify({ error: 'document_id, from_version and to_version are required.' });
+  }
+  try {
+    const { redlineForProtocol } = await import('../protocol-development/protocol-industry-service.js');
+    const orgId = ctx.organizationId;
+    const result = await industryRead(orgId, (q) => redlineForProtocol(q, orgId, documentId, from, to));
+    return JSON.stringify({
+      ok: true,
+      ...result,
+      note: 'Compared by redlineVersions. Report the summary and each section\'s change verbatim; quote the diff ops rather than paraphrasing. A section carrying a note has no diff (line cap or edit budget) — report the note. A null line total is unknown, never 0. This compares the protocol DOCUMENT; the study design\'s changes come from the amendment substantiality engine.',
+    });
+  } catch (err) {
+    return pdevToolError('review_protocol_redline', err);
+  }
+});
