@@ -36,7 +36,29 @@ export interface TagArtifactParams {
   source?: string;
   /** Additional metadata to store */
   metadata?: Record<string, any>;
+  /**
+   * Runs INSIDE this write's transaction, after the artifact row is written and
+   * before COMMIT, with the row as persisted. A throw rolls the whole write
+   * back. It exists so an e-signature-tier caller (AnA revert_to_version) can
+   * record its electronic signature in the transaction that writes the version
+   * it signs — never in a second one after the commit (2026-09-28).
+   */
+  inTransaction?: ArtifactWriteHook;
 }
+
+/** The artifact row as this write persisted it, read back in its transaction. */
+export interface PersistedArtifactRow {
+  id: number;
+  artifactId: string;
+  version: number;
+  content: string;
+  ctdSection: string | null;
+}
+
+export type ArtifactWriteHook = (
+  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> },
+  persisted: PersistedArtifactRow
+) => Promise<void>;
 
 export interface TagArtifactResult {
   artifactId: number;
@@ -44,6 +66,30 @@ export interface TagArtifactResult {
   sectionCode: string;
   isNew: boolean;
   sectionStatusUpdated: boolean;
+}
+
+/**
+ * The artifact row this write persisted, read back in its own transaction for
+ * an `inTransaction` hook. Fails closed: a write that matched no row (see the
+ * update branch's KNOWN note) has nothing to hand a signer, and a hook must
+ * never run against a write that did not happen.
+ */
+async function readPersistedArtifact(
+  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> },
+  artifactId: number | string,
+  projectId: number,
+  organizationId: number
+): Promise<PersistedArtifactRow> {
+  const found = await client.query(
+    `SELECT id, artifact_id, version, content, ctd_section FROM concept2cure_artifacts
+      WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
+    [artifactId, projectId, organizationId]
+  );
+  const row = found.rows[0];
+  if (!row) {
+    throw new Error(`artifact-tagger: the write matched no artifact ${String(artifactId)} in this project; nothing to hand the in-transaction hook.`);
+  }
+  return { id: row.id, artifactId: row.artifact_id, version: Number(row.version), content: row.content, ctdSection: row.ctd_section ?? null };
 }
 
 /**
@@ -116,11 +162,18 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
         // What was previously crammed into `metadata` is the change description,
         // which the table does have a column for.
         const previousContent = String(cur.content ?? '');
+        // ON CONFLICT DO NOTHING (2026-09-28): the version store
+        // (ana/artifactVersionStore.ts) records a row for every version as it is
+        // written, current version included, so the before-image usually
+        // already exists — and this INSERT then failed on
+        // c2c_artifact_unique_version and rolled the whole update back. The
+        // existing row IS the record of that version; nothing is lost.
         const vResult = await client.query(
           `INSERT INTO concept2cure_artifact_versions
              (artifact_id, organization_id, version, content, content_hash,
               change_description, created_by_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (artifact_id, version) DO NOTHING
            RETURNING id`,
           [
             cur.id,
@@ -135,12 +188,16 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
         versionId = vResult.rows[0]?.id;
       }
 
-      // Update the artifact
+      // Update the artifact. `metadata` is a json column (shared/schema.ts,
+      // migrations/0000), and json has no `||`: `metadata || $8::jsonb` failed
+      // at plan time on every call, so this branch could never commit
+      // (2026-09-28, found by the revert_to_version signature test). Merged as
+      // jsonb and assigned back, which works on a json or a jsonb column.
       await client.query(
         `UPDATE concept2cure_artifacts
          SET content = $4, status = $5, ctd_section = $6, title = $7,
              version = COALESCE(version, 1) + 1,
-             metadata = metadata || $8::jsonb,
+             metadata = COALESCE(metadata::jsonb, '{}'::jsonb) || $8::jsonb,
              updated_at = NOW()
          WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
         [
@@ -314,6 +371,12 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
 
     // ── SYNC project_sections STATUS ──────────────────────────────────────
     let sectionStatusUpdated = false;
+    // Under a SAVEPOINT (2026-09-28): this sync is non-fatal by design, but a
+    // failed statement aborts the Postgres transaction, and COMMIT on an
+    // aborted transaction rolls back WITHOUT throwing — so an absent
+    // project_sections table silently discarded the artifact write above while
+    // this function reported success.
+    await client.query('SAVEPOINT artifact_tagger_section_sync');
     try {
       const sectionRow = await client.query(
         `SELECT status FROM project_sections
@@ -357,9 +420,16 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
           sectionStatusUpdated = true;
         }
       }
+      await client.query('RELEASE SAVEPOINT artifact_tagger_section_sync');
     } catch (sectionErr) {
       // Non-fatal: project_sections table may not exist yet or section not initialized
+      await client.query('ROLLBACK TO SAVEPOINT artifact_tagger_section_sync');
+      sectionStatusUpdated = false;
       console.warn('[ArtifactTagger] Section sync skipped:', sectionErr);
+    }
+
+    if (params.inTransaction) {
+      await params.inTransaction(client, await readPersistedArtifact(client, resultArtifactId, projectId, organizationId));
     }
 
     await client.query('COMMIT');
