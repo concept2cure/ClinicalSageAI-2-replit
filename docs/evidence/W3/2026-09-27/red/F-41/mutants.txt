@@ -1,7 +1,11 @@
-M1 the helper uses the default organisation alone: Tests  9 failed | 12 passed (21); failing: setting its password through the activation link; an expired link; a link another request used first; asking for a reset; a wrong password; a sign-in refused because the account is locked; a sign-in refused because the address is not yet confirmed; a sign-in refused because the account was taken out of use (the entry OQ-PROJ-18 reads); changing its password while signed in
-M2 the sign-in membership ignores the default: Tests  1 failed | 20 passed (21); failing: keeps the default organisation when the account is a member there
-M3 the reset request names no organisation: Tests  1 failed | 20 passed (21); failing: asking for a reset
-M4 the signed-in change takes the default again: Tests  1 failed | 20 passed (21); failing: changing its password while signed in
-M5 the wrong-password refusal takes the default again: Tests  1 failed | 20 passed (21); failing: a wrong password
-M6 the password set through the link names no organisation: Tests  2 failed | 19 passed (21); failing: setting its password through the activation link; keeps the default organisation when the account is a member there
-M7 the inactive-account refusal takes the default again: Tests  1 failed | 20 passed (21); failing: a sign-in refused because the account was taken out of use (the entry OQ-PROJ-18 reads)
+Each mutant of the fix, applied alone to the fixed tree, against
+server/routes/__tests__/passwordResetAuditTrail.test.ts (21 cases). The rule lives in
+server/services/sign-in-organisation.ts; the call sites are in server/routes/auth.ts.
+
+M1 the organisation is the default alone (sign-in-organisation.ts): Tests  9 failed | 12 passed (21); failing: setting its password through the activation link; an expired link; a link another request used first; asking for a reset; a wrong password; a sign-in refused because the account is locked; a sign-in refused because the address is not yet confirmed; a sign-in refused because the account was taken out of use (the entry OQ-PROJ-18 reads); changing its password while signed in
+M2 the sign-in membership ignores the default (sign-in-organisation.ts): Tests  1 failed | 20 passed (21); failing: keeps the default organisation when the account is a member there
+M3 the reset request names no organisation (auth.ts): Tests  1 failed | 20 passed (21); failing: asking for a reset
+M4 the signed-in change takes the default again (auth.ts): Tests  1 failed | 20 passed (21); failing: changing its password while signed in
+M5 the wrong-password refusal takes the default again (auth.ts): Tests  1 failed | 20 passed (21); failing: a wrong password
+M6 the password set through the link names no organisation (auth.ts): Tests  2 failed | 19 passed (21); failing: setting its password through the activation link; keeps the default organisation when the account is a member there
+M7 the inactive-account refusal takes the default again (auth.ts): Tests  1 failed | 20 passed (21); failing: a sign-in refused because the account was taken out of use (the entry OQ-PROJ-18 reads)
