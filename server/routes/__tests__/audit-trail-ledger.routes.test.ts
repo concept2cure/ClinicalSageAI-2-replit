@@ -294,3 +294,94 @@ describe('GET /api/audit-trail/ledger — an entry names the account that acted 
     expect(events.find((e) => e.actor === 'SCIM')?.actorRef).toBeNull();
   });
 });
+
+/* #24 (launch sweep finding 53's remainder, 2026-09-28). audit_logs carries no
+   signature column, so the ledger reported sig=false for every audit_logs row —
+   including an SOP made effective under password re-authentication, which read
+   "C2c Work Approve", unsigned, no meaning, no address. The signature row names
+   its audit row (electronic_signatures.signature_manifest.auditId; an authoring
+   e-sign records its signatureId), and the ledger now joins on exactly that. */
+describe('GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row', () => {
+  const SIG_FIXTURE = `
+    CREATE TABLE IF NOT EXISTS electronic_signatures (
+      id serial PRIMARY KEY, organization_id integer, signature_type text, signature_meaning text,
+      signer_name text, ip_address text, signature_manifest json);
+    CREATE TABLE IF NOT EXISTS authoring_signatures (
+      id uuid PRIMARY KEY, doc_id uuid, tenant_id integer, meaning text, signer_name text, ip_address text);
+    CREATE TABLE IF NOT EXISTS authoring_documents (id uuid PRIMARY KEY, tenant_id integer, title text);`;
+  const DOC = '6f1c2b1e-0a4d-4c7e-9f3a-111111111111';
+  const SIG = '9b2e7c55-3d1f-4b8a-8e6c-222222222222';
+
+  beforeAll(async () => {
+    await pglite.exec(SIG_FIXTURE);
+  });
+  beforeEach(async () => {
+    await pglite.exec('DELETE FROM electronic_signatures; DELETE FROM authoring_signatures; DELETE FROM authoring_documents;');
+  });
+
+  async function write(action: string, resourceType: string, resourceId: string, details: Record<string, unknown>): Promise<string> {
+    await pglite.transaction(async (tx) => {
+      await writeChainedAuditRow(tx, { tenantId: ORG, userId: 11, action, resourceType, resourceId, details });
+    });
+    const r = await pglite.query<{ id: string }>('SELECT id FROM audit_logs ORDER BY chain_seq DESC LIMIT 1');
+    return r.rows[0].id;
+  }
+  const ledger = async () => {
+    const res = await request(appFor({ organizationId: ORG })).get('/api/audit-trail/ledger');
+    expect(res.status).toBe(200);
+    return res.body.data as AuditLedgerEntry[];
+  };
+
+  it('an SOP approval: signed, the declared meaning, the act and the document named, linked to its signature row', async () => {
+    const auditId = await write('c2c.work.approve', 'qms-document', '1', {});
+    await pglite.query(
+      `INSERT INTO electronic_signatures (organization_id, signature_type, signature_meaning, signer_name, ip_address, signature_manifest)
+       VALUES ($1, 'qms-document-approval', 'APPROVED', 'Rae Okafor', '10.1.2.3', $2)`,
+      [ORG, JSON.stringify({ auditId, docNumber: 'C2C-SOP-001', version: '1.0' })],
+    );
+    const [e] = await ledger();
+    expect(e).toMatchObject({
+      id: `AUD-${auditId}`,
+      sig: true,
+      kind: 'esign',
+      meaning: 'APPROVED',
+      event: 'Controlled document approved (e-signature)',
+      target: 'C2C-SOP-001 v1.0',
+      targetRef: 'qms-document:1',
+      ip: '10.1.2.3',
+    });
+    expect(e.signatureRef).toMatch(/^electronic_signatures:\d+$/);
+  });
+
+  it('a document e-sign: signed, by the signature the row records — for that document only', async () => {
+    await pglite.query(
+      `INSERT INTO authoring_signatures (id, doc_id, tenant_id, meaning, signer_name) VALUES ($1, $2, $3, 'REVIEWER', 'Rae Okafor')`,
+      [SIG, DOC, ORG],
+    );
+    await pglite.query(`INSERT INTO authoring_documents (id, tenant_id, title) VALUES ($1, $2, 'Module 2.5 Clinical Overview')`, [DOC, ORG]);
+    const signed = await write('authoring.document.e-sign', 'authoring_document', DOC, { meaning: 'REVIEWER', signatureId: SIG });
+    // The same signature id recorded against a different document links nothing.
+    const other = await write('authoring.document.e-sign', 'authoring_document', '00000000-0000-0000-0000-000000000000', { meaning: 'REVIEWER', signatureId: SIG });
+    const data = await ledger();
+    expect(data.find((e) => e.id === `AUD-${signed}`)).toMatchObject({
+      sig: true, meaning: 'REVIEWER', event: 'Document e-signed', signatureRef: `authoring_signatures:${SIG}`,
+      target: 'Module 2.5 Clinical Overview',
+      targetRef: `authoring_document:${DOC}`,
+    });
+    expect(data.find((e) => e.id === `AUD-${other}`)).toMatchObject({ sig: false, signatureRef: null });
+  });
+
+  it('claims nothing it cannot link: no signature row, or another organisation’s, leaves the row unsigned', async () => {
+    const unsigned = await write('c2c.work.approve', 'qms-document', '2', {});
+    const foreign = await write('c2c.work.approve', 'qms-document', '3', {});
+    await pglite.query(
+      `INSERT INTO electronic_signatures (organization_id, signature_type, signature_meaning, signer_name, signature_manifest)
+       VALUES ($1, 'qms-document-approval', 'APPROVED', 'Someone Else', $2)`,
+      [OTHER_ORG, JSON.stringify({ auditId: foreign, docNumber: 'X-1', version: '1.0' })],
+    );
+    const data = await ledger();
+    for (const id of [unsigned, foreign]) {
+      expect(data.find((e) => e.id === `AUD-${id}`)).toMatchObject({ sig: false, signatureRef: null, event: 'C2c Work Approve' });
+    }
+  });
+});

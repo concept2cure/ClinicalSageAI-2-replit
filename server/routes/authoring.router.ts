@@ -4423,7 +4423,10 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         resourceId: String(docId ?? ''),
         ipAddress: (req.ip ?? undefined) as string | undefined,
         userAgent: req.headers['user-agent'] as string | undefined,
-        details: { meaning, intent, documentHash: docHash, signer: email },
+        // signatureId: §11.70's link from this audit row to the signature it
+        // records — what the audit-trail ledger joins on to show the row as
+        // signed, with the signer's meaning (#24).
+        details: { meaning, intent, documentHash: docHash, signer: email, signatureId },
       });
 
       await client.query('COMMIT');
