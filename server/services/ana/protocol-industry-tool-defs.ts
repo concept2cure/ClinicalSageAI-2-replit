@@ -176,11 +176,12 @@ export const REVIEW_PROTOCOL_REDLINE: AnaTool = {
   name: 'review_protocol_redline',
   description:
     'READ-ONLY. Compare two recorded versions of a protocol document section by section (redlineVersions): each section unchanged, modified, added, removed, ' +
-    'reordered or retitled, with a line-level diff for modified sections and the summary counts. This is the tracked-changes comparison an amendment package ' +
-    '(EU CTR substantial modification, 21 CFR 312.30, an IRB amendment) requires. ' +
+    'reordered or retitled, with a line-level diff for modified sections and the summary counts. EU CTR 536/2014 Annex II asks for the previous and new ' +
+    'wording in track changes for a substantial modification; a 21 CFR 312.30 amendment must describe the change, which a redline supports. ' +
     'Report the summary and the per-section changes verbatim; quote the diff ops rather than paraphrasing what changed. If either version label is not ' +
-    'recorded for this document, or is recorded twice, the tool returns an error and no comparison — say the redline did not run. A section that comes back with a note has no diff — it was above the ' +
-    'engine\'s line cap or edit budget; report the note. A null line total means a section could not be counted: say unknown, never 0. This compares the DOCUMENT\'s versions; the study DESIGN\'s changes come from ' +
+    'recorded for this document, or is recorded twice, the tool returns an error and no comparison — say the redline did not run. Report every section note: it explains an absent diff or absent ' +
+    'counts (the engine\'s line cap or edit budget), or that a position rests on row order. A non-empty summary.positionsFromRowOrder means a moved or ' +
+    'reordered verdict may reflect row order rather than an edit; say so. A null line total means a section could not be counted: say unknown, never 0. This compares the DOCUMENT\'s versions; the study DESIGN\'s changes come from ' +
     'the amendment substantiality engine.',
   input_schema: {
     type: 'object',

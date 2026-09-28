@@ -111,7 +111,7 @@ only), the CAPA join anchored on the scoped row, input bounds, route order
 | `study-design/__tests__/who-ictrp-registration.test.ts` | 24 |
 | `protocol-deviations/__tests__/deviation-trends.test.ts` | 51 |
 | `protocol-deviations/__tests__/deviation-trends-rows.test.ts` | 12 |
-| `protocol-development/__tests__/protocol-redline.test.ts` | 45 |
+| `protocol-development/__tests__/protocol-redline.test.ts` | 57 |
 | `study-design/__tests__/dose-escalation.test.ts` | 15 |
 | `study-design/__tests__/enrollment-projection.test.ts` | 8 |
 | `study-design/__tests__/interim-oc.test.ts` | 14 |
@@ -120,7 +120,7 @@ only), the CAPA join anchored on the scoped row, input bounds, route order
 | `study-design/__tests__/multiplicity-check.test.ts` | 10 |
 | `study-design/__tests__/biospecimen-profile.test.ts` | 9 |
 | `study-design/__tests__/master-protocol.test.ts` | 8 |
-| `protocol-development/__tests__/protocol-industry-service.pglite.integration.test.ts` | 17 |
+| `protocol-development/__tests__/protocol-industry-service.pglite.integration.test.ts` | 19 |
 | `ana/__tests__/protocol-industry-tools.test.ts` | 8 |
 | `client/…/__tests__/protocolDevIndustryProjections.test.ts` | 20 |
 | `study-design/__tests__/planning-inputs.test.ts` | 13 |
@@ -177,6 +177,8 @@ red, the file was restored byte for byte, and the suite re-ran green.
 | Master protocol | the arm-existence check disabled | `an arm the design does not carry, a duplicate id and a one-user shared control are defects` |
 | Service | `assessed_at` not passed to the engine | `reads assessed_at: a pre-fix minor / false is an assessment only when one is on record` (`expected +0 to be 1`) |
 | Deviation vocabulary | a severity admitted that the union does not have | `category "Consent" and severity "high" count as uncategorised / unassessed` and `an unassessed deviation is counted … never as minor` |
+| Snapshot | `snapshotVersionTx` without the `section_key` tie-break | `sections tied on order_index are ordered the same way…` (`expected [ 'b_rationale', 'a_background' ] to deeply equal [ 'a_background', 'b_rationale' ]`) |
+| Service | the working-copy read back on an `id` tie-break | same test (`reordered`/`moved` non-zero) — **survived at first**, when the fixture's id order matched key order; caught after writing the sections in the opposite order |
 | Service | CAPA join without its org anchor | `excludes other organisations' … CAPA` (`expected 1 to be 0`) — after strengthening the test so the only open action is another org's |
 | Service | version lookup without its org filter | `a label not recorded for this org is NOT_FOUND — including one another org recorded` (`promise resolved … instead of rejecting`) |
 | AnA tools | one handler unregistered | `review_protocol_redline handler registered: expected undefined to be type of 'function'` |
@@ -227,14 +229,32 @@ design as an AliasCode). The one client consumer, `usdmView` in
 test pins that (`expected 'None exported.' to be 'StudyIntervention_1 — Drug X
 10 mg'` when pointed back at the design).
 
-The remaining engine (redline) is being fixed the same way; its row is added
-here when it lands.
+| Redline | 9 major (2 fabrication) | **a cap note claimed a method that did not produce the counts**: counts found by the linear no-shared-line pass were described as "a minimal line diff found within 200 edits"; the note now names the method actually used. The tie warning ("this move may reflect row order") sat only on moved sections, and on ties with a section only one version has, which cannot move anything; it is now on every tied shared section and listed in `summary.positionsFromRowOrder`. The header said 21 CFR 312.30 requires a marked-up protocol; it says EU CTR 536/2014 Annex II asks for track changes and a 312.30 amendment must describe the change. Seven weak tests (titleless / statusless rows, NaN order, a missing version label, statusChanged, retitled > reordered, the capped budget boundary) now each fail under their mutant | 57 (was 45) | 15 |
+
+**The redline's root cause, fixed at the source.** `snapshotVersionTx` and
+`finalizeProtocolTx` read sections `ORDER BY order_index` with no tie-break, and
+the working-copy read broke ties by `id`. An UPDATE writes the new row version
+at the end of the heap, so two sections sharing an `order_index` could be listed
+in opposite orders by a snapshot and the working copy, and the redline reported
+a move nobody made. All three reads now order by `order_index, section_key, id`.
+Pinned end to end through the real `snapshotVersionTx` (`sections tied on
+order_index are ordered the same way in the snapshot and the working copy`),
+which fails if either side loses the tie-break.
+
+AnA's `review_protocol_redline` note said "a section carrying a note has no
+diff"; a tie note sits beside a diff, so that was false. It now says what a note
+can mean and to report `positionsFromRowOrder` beside any moved verdict.
 
 ## What is not done, and why
 
-- **Adversarial review is running** (two independent lenses per engine,
-  workflow `protocol-industry-engines-v2`); confirmed findings land as
-  follow-up commits and are recorded in this file.
+- **Adversarial review is complete** for all eight Tier 1 engines (workflow
+  `protocol-industry-engines-v2`: 29 agents, two lenses per engine, every
+  blocking and major finding reproduced, fixed and pinned). The Tier 2 and
+  Tier 3 wirings have not yet had the same two-lens review.
+- **A second line-diff engine exists**: `versionDiffService.ts` `diffText` uses
+  the same line rule with an N×M LCS. Moving `splitContentLines` and the run
+  counting into one pure line-diff module and making `diffText` delegate is its
+  own change (it touches `document-analysis.ts` callers).
 - **USDM conformance stays `unverified`.** Vendoring the CDISC USDM JSON schema
   and validating against it needs network access this environment does not
   have.

@@ -21026,7 +21026,7 @@ registerToolHandler('review_protocol_redline', async (input, ctx) => {
     return JSON.stringify({
       ok: true,
       ...result,
-      note: 'Compared by redlineVersions. Report the summary and each section\'s change verbatim; quote the diff ops rather than paraphrasing. A section carrying a note has no diff (line cap or edit budget) — report the note. A null line total is unknown, never 0. This compares the protocol DOCUMENT; the study design\'s changes come from the amendment substantiality engine.',
+      note: 'Compared by redlineVersions. Report the summary and each section\'s change verbatim; quote the diff ops rather than paraphrasing. Report every section note: it explains an absent diff or absent counts (line cap or edit budget), or that the section\'s position rests on row order. A non-empty summary.positionsFromRowOrder means a moved or reordered verdict may reflect row order rather than an edit — say so beside those verdicts. A null line total is unknown, never 0. This compares the protocol DOCUMENT; the study design\'s changes come from the amendment substantiality engine.',
     });
   } catch (err) {
     return pdevToolError('review_protocol_redline', err);

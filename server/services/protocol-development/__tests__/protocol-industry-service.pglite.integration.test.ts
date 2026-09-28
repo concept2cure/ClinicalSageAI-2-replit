@@ -55,12 +55,13 @@ import {
   redlineForProtocol,
   spiritForProtocol,
 } from '../protocol-industry-service';
+import { snapshotVersionTx } from '../protocol-development-service';
 
 const ORG = 7;
 const OTHER = 9;
 
 const DDL = `
-CREATE TABLE protocol_documents (id serial PRIMARY KEY, organization_id int NOT NULL, title text, version text, status text, study_design_id text, deleted_at timestamptz);
+CREATE TABLE protocol_documents (id serial PRIMARY KEY, organization_id int NOT NULL, title text, version text, status text, study_design_id text, protocol_kind text, updated_at timestamptz, deleted_at timestamptz);
 CREATE TABLE protocol_sections (id serial PRIMARY KEY, organization_id int NOT NULL, protocol_document_id int, section_key text, title text, content text, status text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_versions (id serial PRIMARY KEY, organization_id int NOT NULL, protocol_document_id int, version text NOT NULL, change_summary text, snapshot text, created_by int, created_at timestamptz NOT NULL DEFAULT now());
 CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int NOT NULL, protocol_document_id int NOT NULL, description text,
@@ -270,6 +271,22 @@ describe('redlineForProtocol — versions are looked up, never guessed', () => {
     const out = await redlineForProtocol(q, ORG, id, '0.1', CURRENT_VERSION_LABEL);
     expect(out.redline.summary).toMatchObject({ modified: 1, added: 0 });
     expect(out.redline.to).toMatch(/^current/);
+  });
+
+  it('sections tied on order_index are ordered the same way in the snapshot and the working copy', async () => {
+    // Neither heap order (an UPDATE writes the new row version at the end) nor
+    // id order is section order: b_rationale was written first. Without the same
+    // tie-break on both sides, the snapshot and the working copy list the two
+    // tied sections in different orders, and the redline reports a move nobody made.
+    const id = await insertDoc(ORG, null, '0.1');
+    await pglite.query(`INSERT INTO protocol_sections (organization_id, protocol_document_id, section_key, title, content, status, order_index) VALUES ($1,$2,'b_rationale','Rationale','B.','draft',1),($1,$2,'a_background','Background','A.','draft',1)`, [ORG, id]);
+    await pglite.query(`UPDATE protocol_sections SET content = 'A, edited.' WHERE section_key = 'a_background'`);
+    const { version } = await snapshotVersionTx(q, ORG, 1, id, 'tie-break');
+    const stored = await pglite.query(`SELECT snapshot FROM protocol_versions WHERE version = $1`, [version]);
+    const keys = (JSON.parse((stored.rows[0] as { snapshot: string }).snapshot).sections as Array<{ section_key: string }>).map((x) => x.section_key);
+    expect(keys).toEqual(['a_background', 'b_rationale']);
+    const out = await redlineForProtocol(q, ORG, id, version, CURRENT_VERSION_LABEL);
+    expect(out.redline.summary).toMatchObject({ unchanged: 2, reordered: 0, moved: 0 });
   });
 
   it('refuses the working copy as the EARLIER side, and empty labels', async () => {

@@ -246,7 +246,7 @@ async function readLiveSnapshot(q: Queryable, orgId: number, documentId: number)
   if (doc.rows.length === 0) throw new ProtocolDevError('NOT_FOUND', `Protocol document ${documentId} was not found for this organization.`);
   const sections = await q.query(
     `SELECT section_key, title, content, status, order_index FROM protocol_sections
-      WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`,
+      WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, section_key, id`,
     [documentId, orgId],
   );
   const recorded = (doc.rows[0] as { version?: unknown }).version;
