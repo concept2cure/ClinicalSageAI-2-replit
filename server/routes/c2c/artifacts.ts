@@ -25,7 +25,9 @@ import { resolveGovernedContext } from '../../services/concept2cure/governedDocu
 import { createTraceId, emitTraceEvent } from '../../services/generation-guard.js';
 import { markPackagesContentChangedForArtifact } from '../../services/ectd/package-content-change';
 import { artifactApproval } from '../../services/ectd/package-content-fingerprint';
-import { reviewQuorumVerdict } from '../../services/artifact-approval-act';
+import { ARTIFACT_ACT_MEANING, reviewQuorumVerdict } from '../../services/artifact-approval-act';
+import { ArtifactActConflictError, commitSignedArtifactAct } from '../../services/artifact-signed-act';
+import { SignerNotAttributableError } from '../../services/part11/resolve-signer-identity';
 import { interceptArtifactChange, interceptFeedback } from '../../services/intelligence/rim-interceptors.js';
 import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
 import * as crypto from 'crypto';
@@ -50,6 +52,7 @@ import {
   verifyIntegrityChain,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
+import { verifyReauth } from './actions';
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
 import { clientIpKey } from '../../utils/client-ip';
 
@@ -1510,7 +1513,13 @@ router.get(
    (governed typed targets, e.g. `document:<id>`). No client called this
    route (grep client/src for the path: none). The GET below stays: rows
    already written are §11.70 history and must remain readable.
-   Pinned by server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts. */
+   Pinned by server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts.
+   2026-09-28 (D5), correcting the note above: this router still writes
+   `concept2cure_signatures`, from the status route's approve and lock, and
+   that table is what the readiness engine, the Artifacts Center and the DOCX
+   signature block read for an artifact. Those two acts now re-authenticate the
+   signer and commit the signature on the status change's transaction (see
+   PUT …/status); consolidating the two substrates is not done here. */
 
 /**
  * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
@@ -2533,19 +2542,39 @@ router.put(
         return sendError(res, 400, `Invalid status. Must be one of: ${validStatuses.join(', ')}`);
       }
 
-      // ── Attestation required for approve and lock/publish ────────────
+      // ── Approve and lock are electronic signatures ───────────────────
+      // 2026-09-28 (D5): each act fixes its own §11.50(a)(3) meaning —
+      // 'approval' for review → approved, 'release' for approved → locked —
+      // and the signer confirms it. Free text ("Approved", "Released") was
+      // accepted and written as the meaning; a different meaning, or none, is
+      // refused here, before the password is asked for or anything is read.
       const requiresAttestation = status === 'approved' || status === 'locked';
-      if (requiresAttestation) {
+      const actMeaning = requiresAttestation
+        ? ARTIFACT_ACT_MEANING[status as 'approved' | 'locked']
+        : null;
+      if (actMeaning) {
+        const act = status === 'approved' ? 'Approving' : 'Locking';
         if (
           !attestation ||
           typeof attestation !== 'object' ||
-          !attestation.meaning ||
-          !attestation.attestationText
+          typeof attestation.attestationText !== 'string' ||
+          !attestation.attestationText.trim()
         ) {
           return sendError(
             res,
             400,
-            `Attestation is required for ${status}. Must include: meaning (e.g. "Approved", "Released"), attestationText (acknowledgement of intent)`
+            `${act} is an electronic signature. Send attestation.attestationText (your statement of intent) and attestation.meaning '${actMeaning}'. Nothing was signed.`,
+            undefined,
+            'ATTESTATION_REQUIRED'
+          );
+        }
+        if (attestation.meaning !== actMeaning) {
+          return sendError(
+            res,
+            400,
+            `${act} this document is signed with the meaning '${actMeaning}'. Nothing was signed.`,
+            undefined,
+            attestation.meaning ? 'SIGNATURE_MEANING_MISMATCH' : 'SIGNATURE_MEANING_REQUIRED'
           );
         }
       }
@@ -2784,149 +2813,26 @@ router.put(
         },
       };
 
-      const [updated] = await db
-        .update(concept2cureArtifacts)
-        .set(updateData)
-        .where(eq(concept2cureArtifacts.id, artifact.id))
-        .returning();
-
-      const signerName = (req as any).userName || req.userEmail || 'unknown';
-      const signerEmail = req.userEmail || 'unknown';
-
-      // ── Create attestation signature for approve/lock ────────────────
-      let signatureRecord = null;
-      if (requiresAttestation && attestation) {
-        const signedAt = new Date();
-        const signatureId = `sig_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-        const signaturePurpose =
-          status === 'approved' ? 'approval_attestation' : 'publish_attestation';
-
-        // Find version record for signature linkage
-        const [versionRow] = await db
-          .select()
-          .from(concept2cureArtifactVersions)
-          .where(
-            and(
-              eq(concept2cureArtifactVersions.artifactId, artifact.id),
-              eq(concept2cureArtifactVersions.version, artifact.version)
-            )
-          )
-          .limit(1);
-
-        if (versionRow) {
-          const signatureHash = crypto
-            .createHash('sha256')
-            .update(
-              JSON.stringify({
-                signatureId,
-                artifactId: artifact.artifactId,
-                version: artifact.version,
-                contentHash: versionRow.contentHash,
-                signerId: userId,
-                signaturePurpose,
-                signatureMeaning: attestation.meaning,
-                signedAt: signedAt.toISOString(),
-              })
-            )
-            .digest('hex');
-
-          const [sig] = await db
-            .insert(concept2cureSignatures)
-            .values({
-              organizationId,
-              signatureId,
-              artifactId: artifact.id,
-              artifactVersionId: versionRow.id,
-              signatureType: status === 'approved' ? 'approval' : 'publish',
-              signaturePurpose,
-              signatureMeaning: attestation.meaning,
-              signerId: userId,
-              signerName,
-              signerEmail,
-              signerRole: userRole,
-              authenticationMethod: 'session_jwt',
-              authenticationTimestamp: signedAt,
-              secondFactorVerified: false,
-              signatureHash,
-              signatureManifest: {
-                attestationText: attestation.attestationText,
-                reason: attestation.reason || reason || null,
-                previousStatus,
-                newStatus: status,
-              },
-              ipAddress: clientIpKey(req),
-              deviceInfo: null,
-              status: 'active',
-              signedAt,
-            })
-            .returning();
-
-          signatureRecord = {
-            signatureId: sig.signatureId,
-            signatureType: sig.signatureType,
-            signatureMeaning: sig.signatureMeaning,
-            signerName: sig.signerName,
-            signerRole: sig.signerRole,
-            signedAt: sig.signedAt,
-            signatureHash: sig.signatureHash,
-          };
-
-          await logAuditEntry(req, 'SIGN', 'signature', signatureId, null, {
-            artifactId: paramStr(req.params.artifactId),
-            version: artifact.version,
-            signatureType: sig.signatureType,
-            signaturePurpose,
-            signatureMeaning: attestation.meaning,
-            attestationText: attestation.attestationText,
-          });
-        }
-      }
-
-      // ── Create submission snapshot for lock/publish ──────────────────
-      let snapshotRecord = null;
-      if (status === 'locked') {
-        const snapshotId = `snap_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-        const [snapshot] = await db
-          .insert(concept2cureSubmissionSnapshots)
-          .values({
-            snapshotId,
-            artifactId: artifact.id,
-            organizationId,
-            versionId: artifact.version,
-            approvedVersionId: artifact.approvedVersionId ?? artifact.version,
-            publishedVersionId: artifact.version,
-            contentHash: artifact.contentHash || '',
-            title: artifact.title,
-            ctdSection: artifact.ctdSection,
-            templateId: artifact.templateId,
-            actionType: 'publish',
-            actorId: userId,
-            actorName: signerName,
-            actorEmail: signerEmail,
-            actorRole: userRole,
-            attestationText: attestation?.attestationText || null,
-            signatureMeaning: attestation?.meaning || null,
-            metadata: {
-              previousStatus,
-              newStatus: status,
-              reason: reason || null,
-              signatureId: signatureRecord?.signatureId || null,
-            },
-          })
-          .returning();
-
-        snapshotRecord = {
-          snapshotId: snapshot.snapshotId,
-          versionId: snapshot.versionId,
-          contentHash: snapshot.contentHash,
-          actionType: snapshot.actionType,
-          actorName: snapshot.actorName,
-          createdAt: snapshot.createdAt,
-        };
-      }
-
-      // Log provenance
-      await db.insert(concept2cureProvenanceEvents).values({
+      // ── The signed acts: re-authenticate, then one transaction ──────────
+      // 2026-09-28 (D5). Approve and lock wrote their Part 11 signature from the
+      // session alone (authentication_method 'session_jwt', §11.200 not met),
+      // printed the signer as `userName || email || 'unknown'`, committed the
+      // status first and the signature after it on its own, and skipped the
+      // signature silently when the version had no stored row — so an approval
+      // could stand unsigned. Now the signer re-authenticates before anything is
+      // written, and the status, the version signed, the ledger pair, the
+      // signature, the lock's snapshot and the provenance event commit together
+      // (server/services/artifact-signed-act.ts). Nothing after the COMMIT can
+      // turn a committed signature into an error answer: the audit entry and the
+      // feedback signal below do not throw.
+      let updated: typeof concept2cureArtifacts.$inferSelect;
+      let signatureRecord: Record<string, unknown> | null = null;
+      let snapshotRecord: Record<string, unknown> | null = null;
+      const provenanceEvent = (
+        actor: { name: string; email: string },
+        signatureId: string | null,
+        snapshotId: string | null
+      ) => ({
         organizationId,
         artifactId: artifact.id,
         eventId: `evt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`,
@@ -2936,8 +2842,8 @@ router.put(
           attestation?.meaning ? ` (${attestation.meaning})` : ''
         }`,
         actorId: userId,
-        actorName: (req as any).userName || req.userEmail || 'unknown',
-        actorEmail: req.userEmail || 'unknown',
+        actorName: actor.name,
+        actorEmail: actor.email,
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/status`,
         backendService: 'concept2cure-api',
         ipAddress: clientIpKey(req),
@@ -2949,14 +2855,121 @@ router.put(
             ? {
                 meaning: attestation.meaning,
                 attestationText: attestation.attestationText,
-                signerName: (req as any).userName || req.userEmail || 'unknown',
+                signerName: actor.name,
                 signerRole: userRole,
               }
             : null,
-          signatureId: signatureRecord?.signatureId || null,
-          snapshotId: snapshotRecord?.snapshotId || null,
+          signatureId,
+          snapshotId,
         },
       });
+
+      if (actMeaning) {
+        const reauth = await verifyReauth(userId, req.body?.reauth);
+        if (!reauth.ok) {
+          return sendError(
+            res,
+            401,
+            'Re-enter your password to sign. Nothing was signed.',
+            undefined,
+            reauth.error ?? 'REAUTH_REQUIRED'
+          );
+        }
+        const [storedVersion] = await db
+          .select()
+          .from(concept2cureArtifactVersions)
+          .where(
+            and(
+              eq(concept2cureArtifactVersions.artifactId, artifact.id),
+              eq(concept2cureArtifactVersions.version, artifact.version)
+            )
+          )
+          .limit(1);
+        const signed = await db
+          .transaction(async tx => {
+            const act = await commitSignedArtifactAct(tx, {
+              artifact,
+              version: storedVersion ?? null,
+              status: status as 'approved' | 'locked',
+              previousStatus,
+              updateData,
+              organizationId,
+              userId,
+              userRole,
+              attestationText: attestation.attestationText.trim(),
+              reason: (typeof reason === 'string' && reason.trim()) || null,
+              // verifyReauth refuses a TOTP it could not verify (actions.ts), so
+              // a code present here is a verified second factor.
+              secondFactorVerified: Boolean(req.body?.reauth?.totp),
+              ipAddress: clientIpKey(req),
+            });
+            await tx.insert(concept2cureProvenanceEvents).values({
+              ...provenanceEvent(act.signer, act.signature.signatureId, act.snapshot?.snapshotId ?? null),
+              organizationId,
+            });
+            return act;
+          })
+          .catch((err: unknown) => {
+            // A stale read and an unnamed signer are answered as such; anything
+            // else is the 500 below. Nothing was written in any of them.
+            if (err instanceof ArtifactActConflictError || err instanceof SignerNotAttributableError) {
+              return err;
+            }
+            throw err;
+          });
+        if (signed instanceof ArtifactActConflictError) {
+          return sendError(res, 409, signed.message, undefined, signed.code);
+        }
+        if (signed instanceof SignerNotAttributableError) {
+          return sendError(
+            res,
+            403,
+            'Your account has no name or membership this signature can print, so it cannot sign here. Nothing was signed.',
+            undefined,
+            signed.code
+          );
+        }
+
+        updated = signed.row;
+        signatureRecord = {
+          signatureId: signed.signature.signatureId,
+          signatureType: signed.signature.signatureType,
+          signatureMeaning: signed.signature.signatureMeaning,
+          signerName: signed.signature.signerName,
+          signerRole: signed.signature.signerRole,
+          signedAt: signed.signature.signedAt,
+          signatureHash: signed.signature.signatureHash,
+          authenticationMethod: signed.signature.authenticationMethod,
+          versionSigned: signed.version.version,
+        };
+        if (signed.snapshot) {
+          snapshotRecord = {
+            snapshotId: signed.snapshot.snapshotId,
+            versionId: signed.snapshot.versionId,
+            contentHash: signed.snapshot.contentHash,
+            actionType: signed.snapshot.actionType,
+            actorName: signed.snapshot.actorName,
+            createdAt: signed.snapshot.createdAt,
+          };
+        }
+      } else {
+        [updated] = await db
+          .update(concept2cureArtifacts)
+          .set(updateData)
+          .where(eq(concept2cureArtifacts.id, artifact.id))
+          .returning();
+        await db.insert(concept2cureProvenanceEvents).values({
+          ...provenanceEvent(
+            {
+              name: (req as any).userName || req.userEmail || 'unknown',
+              email: req.userEmail || 'unknown',
+            },
+            null,
+            null
+          ),
+          organizationId,
+        });
+      }
 
       // WO-16C: the outcome was discarded; it is now answered as `auditTrail`.
       const statusAudit = await logAuditEntry(
