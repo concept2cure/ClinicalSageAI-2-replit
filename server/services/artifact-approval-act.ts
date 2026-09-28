@@ -26,7 +26,23 @@
  * that printed it, that records nothing, and the user goes round in a circle.
  * These name the governed act that does record the version and say the
  * calling surface records none.
+ * 2026-09-28 (D5): the status route's approve and lock are electronic
+ * signatures: the act's own meaning (ARTIFACT_ACT_MEANING), re-authentication
+ * before anything is written, and the status, the signature and the ledger pair
+ * on one transaction. authoring-actions approve-artifact / lock-artifact do not
+ * sign yet (handed on in docs/work-orders/README.md).
  */
+
+import type { GovernedSignMeaning } from './part11/signature-meanings';
+
+/**
+ * The meaning each signed act of the status route is signed with (§11.50(a)(3)).
+ * The act fixes it; the signer confirms it, and a different one is refused.
+ */
+export const ARTIFACT_ACT_MEANING = {
+  approved: 'approval',
+  locked: 'release',
+} as const satisfies Record<'approved' | 'locked', GovernedSignMeaning>;
 
 /** A pg-style client: the pool, or queryableFromDrizzle(db | tx). */
 export interface ApprovalActQueryable {
@@ -112,11 +128,12 @@ export async function reviewQuorumVerdict(
 
 /** The governed approval act — the only writer of approved_version_id. */
 export const GOVERNED_APPROVE_ACTION =
-  "the review workflow's Approve action (the status route's review → approved, which takes an attestation " +
-  'and applies the review quorum, or authoring-actions approve-artifact)';
+  "the review workflow's Approve action (the status route's review → approved, an electronic signature with the " +
+  "meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact)";
 /** The governed lock act — the only writer of published_version_id on a lock. */
 export const GOVERNED_LOCK_ACTION =
-  "the review workflow's Lock action (the status route's approved → locked, or authoring-actions lock-artifact)";
+  "the review workflow's Lock action (the status route's approved → locked, an electronic signature with the " +
+  "meaning 'release', or authoring-actions lock-artifact)";
 
 /**
  * The remedy an approved-but-not-filable artifact needs, told by a surface

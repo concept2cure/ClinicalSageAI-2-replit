@@ -100,6 +100,7 @@ to one line; edit only your own row to limit merge conflicts.
 | **D5 — a quality-gating verdict is never chosen by an empty collection.** `server/services/qms/quality-gating-verdict.ts` (new: `assessSection`, `batchVerdict`, the one assessment both routes run), `server/routes/{tenant-quality-validation,quality-management-api}.ts` (validate-section, batch-validate, the plan dashboard, `GET /plans/:id` only), `client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx`, the two QMS entries in `scripts/ci/writerless-stores-baseline.json`, both quality API references. Closes the fail-open `7983d7299` handed to the QMS lane ("report 'not assessed'") and the three `= ANY(($1, …))` routes that always answered 500 | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done `da00b021a`: red 28/28 against HEAD and 20/28 against the first version (adversarially reviewed), green 28/28; client red 3/5, green 18/18. Evidence: `docs/evidence/D5-GOVERNED-PATH/2026-09-22/` (README "CI, 2026-09-23") |
 | **D5 — AnA's completion cascade commits its ledger rows with the completion.** `server/services/ana-ri/command-executor.ts` `updateTask`'s board block and `boardWriteWithLineage` only; `server/services/tasking/task-side-effects.ts` if a pool-client entry point is needed. The cascade AnA runs after `boardWriteWithLineage` COMMITs is on the pool with no ledger row for the dependents it unblocks; the HTTP routes already run it in the completion's transaction (`cascadeUnblockOnCompletionInTx`) | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: the cascade runs on the completion's transaction (`cascadeUnblockOnCompletionOnClient`), its rows after the completion's; red 2/2 on HEAD, green; the two older AnA task suites moved onto one pool fixture (`__tests__/pglite-pool.fixture.ts`). Evidence: `docs/evidence/D5/2026-09-28-ana-cascade-ledger/` |
 | **D5 — every task put on the board at project creation, or raised from a statistical assessment, has its task.create row.** `server/services/tasking/blueprint-milestones.ts` (new: the one blueprint-milestone seeder), the milestone block of `POST /projects` in `server/routes/concept2cure.ts`, `createTasksForDesign` in `server/services/biostatistics-bridge/bridge-service.ts`, its entry in `scripts/ci/discarded-audit-write-baseline.json`. Both wrote board tasks outside any transaction: the seeder with no ledger row at all, the bridge best-effort with the outcome discarded | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: one transaction each, every task with its row, all or none, nothing when the creator cannot be named; red 5/5 (seeder, HEAD's code), 1/1 (route), 4/4 (bridge), green 20/20. Evidence: `docs/evidence/D5/2026-09-28-task-create-ledger/` |
+| **D5 — approving or locking an artifact is an electronic signature.** The status route's review → approved and approved → locked (`server/routes/c2c/artifacts.ts`), `server/services/artifact-signed-act.ts` (new: the one transaction), `ARTIFACT_ACT_MEANING` in `server/services/artifact-approval-act.ts`, and the three suites that pinned the old contract. Taken over from `…01Wcyqbq` (handed on 2026-09-24, "Found by the vault re-baseline"; that lane's last commit was 2026-09-25 07:23) | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: the act's own meaning, re-authentication before any write, then status + version signed + ledger pair + signature (+ lock snapshot, provenance) on one transaction, only from the state the signer was shown; adversarially reviewed and its findings fixed; red 12/12 on HEAD, green 15/15. Next in this lane: `concept2cure_signatures` append-only on an applier, and `promote_artifact`'s unsigned 'approved'. Evidence: `docs/evidence/D5/2026-09-28-artifact-approval-signature/`. The authoring-actions twins are handed on below (item 6) |
 
 If you are one of the sessions above, correct your own row. If a lane you want
 is claimed, take the next unclaimed finding in §3 rather than duplicating it.
@@ -112,7 +113,7 @@ adversarial skeptic; 2026-09-24). Every item below was upheld by its skeptic.
 Items in this lane's own code are fixed in this lane, not listed here.
 
 **→ `…01Wcyqbq` (launch-catalog follow-through, D2/D5/D6)**
-- `server/routes/c2c/artifacts.ts` status route writes Part 11 'approval'/'publish' signatures to `concept2cure_signatures` from the session alone (no re-verification); the printed signer name falls back to 'unknown'; the signature is not atomic with the status change and is skipped silently when no version row exists; the removal note and its pinning test say this router writes no signature substrate (false). The seal-verified route persists a client-supplied `signerRole`.
+- ~~`server/routes/c2c/artifacts.ts` status route writes Part 11 'approval'/'publish' signatures to `concept2cure_signatures` from the session alone (no re-verification); the printed signer name falls back to 'unknown'; the signature is not atomic with the status change and is skipped silently when no version row exists; the removal note and its pinning test say this router writes no signature substrate (false).~~ **Done 2026-09-28 by `…01P6GWSv`** (the claim was stale): re-authentication, the act's own meaning, one transaction, the note corrected; evidence `docs/evidence/D5/2026-09-28-artifact-approval-signature/`. Still open: the seal-verified route persists a client-supplied `signerRole`.
 - AnA `approve_qms_document` makes a QMS controlled document effective with no password/MFA, no signing-authority and no self-approval check; the QMS router accepts `status: 'effective'` directly on create and patch; three paths bypass the signed approval; two parallel QMS document-control backends, the guarded one unreached.
 - `AUTH_BOUNDARY_MODE=warn` is honoured in production: one env var turns default-deny off with an info log.
 - Submission Center shows a passing Validation gate when the readiness read fails.
@@ -862,6 +863,42 @@ in all of them. Reproduced locally at `6bd237ca9`.
      its actions to, and `create_task` needs the pattern
      `tasking/blueprint-milestones.ts` uses: the insert and its row on one
      transaction, and nothing written when no one can be named.
+6. **→ `…01GJidg5` (`server/routes/authoring-actions.ts`, touched 2026-09-28
+   18:28, inside its window).** `/api/authoring-actions/approve-artifact` and
+   `/lock-artifact` record an approved or locked version with no signature at
+   all. The status route now signs both acts, so these are the one API path
+   around the ceremony (no client calls them). Route each through `verifyReauth`
+   and `commitSignedArtifactAct` (`server/services/artifact-signed-act.ts`),
+   or refuse them. `server/routes/__tests__/lockArtifactCoversApproval.test.ts`
+   pins their current behaviour.
+7. **→ `…01GJidg5` (`cmcRegisters.tsx`, `288411a4e`, 16:21).** Trunk CI 12615:
+   `client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx` ›
+   CmQcTesting fails 2/2 locally at HEAD. *"a review PUTs the disposition and
+   the reviewer"* and *"refuses to let the analyst review their own result"*
+   both wait for `S-2` and find *"No QC testing records yet"*.
+8. **→ `…01KiDof7` (`server/routes/global-compliance.ts`, `80cbd718a`, 18:00).**
+   Trunk CI 12615 fails on this file in two places:
+   - `npm run ci:org-path-param-guards` fails on it.
+   - `tests/artifact-change-invalidates-bundles.contract.test.ts` fails with
+     *"BACKSTOP_ONLY lists files that no longer write those columns; remove
+     them"*, naming this file.
+9. **→ `…01PwLFr8` (`f0147f452` / `7b00c78de`).** Trunk CI 12615 fails two
+   gates on this session's files:
+   - `ci:tenant-entry-points` fails because `server/routes/mdx-admin.ts`
+     changed since its justification.
+   - `ci:check-css-selector-shadowing` fails on
+     `client/src/concept2cure/v2/styles/app-v2.css`: `.c2c-v2 .crumbs .sep` is
+     defined at lines 1480 and 1484.
+10. **→ `…01KiDof7` (`server/services/ana-ri/command-executor.ts`, `dc48d9264`,
+    17:32, inside its window). Found by the review of the artifact approval
+    signature.** AnA `update_artifact_status` (`command-executor.ts:818`) sets
+    an artifact approved or locked with a reason only. It is not in
+    `PART11_ESIGN_COMMANDS` (`part11-governance.ts:88`). It records no
+    version, so the result is not filable. But after a signed approval it can
+    lock the artifact with no re-authentication, no release signature and no
+    snapshot, and the artifact then reads as locked. Make approve and lock
+    e-signature-tier, or refuse them and name the status route, which now
+    signs both (`server/services/artifact-signed-act.ts`).
 
 ## 1. The rules come first
 

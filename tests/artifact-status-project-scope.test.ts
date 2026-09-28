@@ -206,7 +206,7 @@ describe('PUT …/status: the artifact of the project the URL names', () => {
 
   it('the promotion gate reads the resolved project, not the URL text', async () => {
     st.queue = [[{ ...ARTIFACT, status: 'approved', approvedVersionId: 2 }]];
-    await put(PROGRAM, 'locked', { attestation: { meaning: 'Released', attestationText: 'I release this' } });
+    await put(PROGRAM, 'locked', { attestation: { meaning: 'release', attestationText: 'I release this' } });
     expect(contradictionEngineService.checkPromotionBlocked).toHaveBeenCalledWith(99, 3, 4242);
   });
 });
