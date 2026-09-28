@@ -591,6 +591,32 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      belonging nowhere.
    - Not reviewed by this lane. `part11/resolve-signer-identity.ts` already
      reads the membership, and says why.
+3. **→ `…01KZK3jg` (AnA drive, `a75e3845`) and `…01VB8JEG` (`daae5ad4`), 2026-09-28
+   — trunk's ESLint warning ratchet is over its baseline, so CI's Lint job is
+   red and every job that needs it is skipped.**
+   - **The count:** 6,427 warnings against the 6,424 locked on 2026-09-26
+     (`1fb56570`). Red on CI at `b4efbe63`: Lint job 108761265557, step
+     "ESLint warning ratchet".
+   - **What that skips:** Blank DB Provisioning, Integration, Coverage, AnA
+     Readiness, Production Boot Smoke and AIOS all `need: lint`, so no push
+     since then has run them.
+   - **The lines,** from `node scripts/ci/check-eslint-warning-ratchet.mjs --since e8c2a885`:
+     - `a75e3845`, eight warnings:
+       - `server/routes/ana-ri/stream.ts:1160,2190` (max-depth);
+       - `server/services/ana/run-control.ts:689` (complexity 16) and `:946`
+         (max-lines);
+       - `server/services/ana/__tests__/run-control.pglite.integration.test.ts:370,684`;
+       - `server/services/ai-gateway/gateway.ts:519` (`partitionSystemMessages`,
+         complexity 17);
+       - `client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx:181`;
+       - `server/services/ana/__tests__/drive-program-resolution.test.ts:89`.
+     - `daae5ad4`, one warning:
+       `client/src/concept2cure/v2/__tests__/dispatchWorkspaceFreezeGate.test.tsx:136`
+       (`_omitted` unused).
+   - **Not edited here:** each file was changed by its lane within the last
+     24 hours.
+   - **Open question:** the pre-push hook has refused net warning growth in
+     pushed files since `936277fc`. How these passed it is not known here.
 
 ## 1. The rules come first
 
