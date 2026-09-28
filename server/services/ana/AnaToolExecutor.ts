@@ -7938,7 +7938,7 @@ async function mergeProgramMetadata(
      trims any keys the caller explicitly passed as null (delete semantics). */
   const { rows } = await pool.query<{ id: string; metadata: Record<string, unknown> }>(
     `UPDATE regulatory_programs
-        SET metadata   = jsonb_strip_nulls(COALESCE(metadata, '{}'::jsonb) || $3::jsonb),
+        SET metadata   = jsonb_strip_nulls(COALESCE(metadata::jsonb, '{}'::jsonb) || $3::jsonb),
             updated_at = NOW()
       WHERE id = $1 AND organization_id = $2
       RETURNING id, metadata`,
@@ -20930,25 +20930,25 @@ registerIndustryDesignTool(
 registerIndustryDesignTool(
   'review_enrollment_forecast',
   'enrollment',
-  'Projected by projectEnrollment over the Poisson–Gamma accrual engine. Report every figure with its time unit, verbatim. Rates are sponsor inputs: missing means no accrual plan is recorded — never assume a rate. Null times mean the target is not reached; the interval is among simulations that reached it.',
+  'Projected by projectEnrollment over the Poisson–Gamma accrual engine. Report every figure with its time unit, verbatim. Rates are sponsor inputs: missing means no accrual plan is recorded — never assume a rate. A site with no rate variability or activation time recorded is a gap, never zero. The median and interval are reported only when every simulation reached the target: null times with probReached above 0 mean the times are not reported (never quote one); probReached 0 means the target is not reached. Say whether the seed was recorded or derived (forecast.seedSource).',
 );
 
 registerIndustryDesignTool(
   'review_interim_operating_characteristics',
   'interim-oc',
-  'Computed by projectInterimOperatingCharacteristics over the exact group-sequential engine. The characteristics are of the RECORDED boundaries when recorded; report every discrepancy with the spending function verbatim and never substitute the solved value. Report gaps verbatim; a null power means alpha or power is not recorded.',
+  'Computed by projectInterimOperatingCharacteristics over the exact group-sequential engine. The characteristics are of the RECORDED boundaries when recorded; report every discrepancy with the spending function verbatim and never substitute the solved value. Report gaps verbatim. typeIError is ONE-SIDED and non-binding (futility ignored); typeIErrorIfFutilityBinding is reported separately and is never the type I error. A type I error above the design\'s alpha is a gap — report it. A null power or expected sample size is explained by a gap (alpha, power or planned N not recorded or invalid); power assumes no group-sequential inflation, as its note says.',
 );
 
 registerIndustryDesignTool(
   'review_mmrm_sizing',
   'mmrm',
-  'Sized by projectMmrmSizing over the MMRM planning engine. Report every figure and gap verbatim. The assumptions are the sponsor\'s: where one is missing nothing is sized — name the missing assumption, never supply one or assume complete data.',
+  'Sized by projectMmrmSizing over the MMRM planning engine. Report every figure and gap verbatim. The assumptions are the sponsor\'s: where one is missing nothing is sized — name the missing assumption, never supply one or assume complete data. The allocation is the design\'s (sizing.allocationRatio, allocationSource), never an assumed 1:1; nPerArm is the first arm\'s n and nSecondArm the second\'s. A non-inferiority, equivalence or unrecorded frame is not sized — report the gap.',
 );
 
 registerIndustryDesignTool(
   'review_external_control_plan',
   'external-control',
-  'Reviewed by projectExternalControlPlan over the external-control engine. Report each pre-specification element and the borrowing strength verbatim. No posterior or treatment effect exists at protocol stage — never quote one. A fixed power-prior discount is not a prior-data conflict plan.',
+  'Reviewed by projectExternalControlPlan over the external-control engine. Report each pre-specification element and the borrowing strength verbatim. No posterior or treatment effect exists at protocol stage — never quote one. A fixed power-prior discount, or a fixed commensurate τ², is not a prior-data conflict plan; elements the design cannot yet record are reported as such.',
 );
 
 registerIndustryDesignTool(

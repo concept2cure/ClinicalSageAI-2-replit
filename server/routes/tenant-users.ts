@@ -97,6 +97,23 @@ function sessionOrganizationId(req: any): number | null {
 }
 
 /**
+ * The caller's own invitation by id, whichever organization issued it, or
+ * null — also null for another person's invitation, so its existence is not
+ * disclosed. It lives in the inviting organization's rows, which the session's
+ * tenant policy hides (migrations/20260928_invitations_for_member.sql).
+ */
+async function ownInvitation(
+  callerId: number,
+  invitationId: number
+): Promise<{ organizationId: number; status: string } | null> {
+  const { rows } = await pool.query(
+    'SELECT organization_id, status FROM public.invitations_for_member($1) WHERE id = $2',
+    [callerId, invitationId]
+  );
+  return rows[0] ? { organizationId: Number(rows[0].organization_id), status: String(rows[0].status) } : null;
+}
+
+/**
  * GET /api/tenant-users/invitations/mine
  * List the session user's PENDING cross-org invitations (decision-register
  * item 12, #727). Self-only by construction: scoped to the caller's user_id.
@@ -116,6 +133,10 @@ router.get('/invitations/mine', async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    // The invitations naming the caller live in the INVITING organizations'
+    // rows, which this scope's tenant policy hides; invitations_for_member
+    // reads them for a member of this scope's organization and nobody else
+    // (migrations/20260928_invitations_for_member.sql).
     const result = await pool.query(
       `SELECT
          id,
@@ -125,8 +146,8 @@ router.get('/invitations/mine', async (req, res) => {
          status,
          invited_by_id as "invitedById",
          created_at as "createdAt"
-       FROM organization_invitations
-       WHERE user_id = $1 AND status = 'pending'
+       FROM public.invitations_for_member($1)
+       WHERE status = 'pending'
        ORDER BY created_at DESC`,
       [callerId]
     );
@@ -176,7 +197,16 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
       }>;
     };
 
-    const result = await atomicQuotaService.atomicAcceptInvitation(invitationId, callerId);
+    // Only the caller's own invitation is found, whichever organization issued
+    // it; the accept then runs in THAT organization's scope, where its tenant
+    // policy admits the invitation, the membership write and the quota lock.
+    const own = await ownInvitation(callerId, invitationId);
+    if (!own) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Invitation not found' });
+    }
+    const result = await inVerifiedOrgScope(req, own.organizationId, 'member', () =>
+      atomicQuotaService.atomicAcceptInvitation(invitationId, callerId)
+    );
 
     if (!result.success) {
       const statusByError: Record<string, number> = {
@@ -224,35 +254,28 @@ router.post('/invitations/:invitationId/decline', async (req, res) => {
       return res.status(400).json({ error: 'Invalid invitation ID' });
     }
 
-    const inviteResult = await pool.query(
-      `SELECT id, organization_id, user_id, status
-       FROM organization_invitations
-       WHERE id = $1`,
-      [invitationId]
-    );
-
-    if (inviteResult.rows.length === 0) {
+    // The caller's own invitation only (see accept); the decline is written in
+    // the inviting organization's scope, and must reach the row it names.
+    const invitation = await ownInvitation(callerId, invitationId);
+    if (!invitation) {
       return res.status(404).json({ error: 'Invitation not found' });
-    }
-
-    const invitation = inviteResult.rows[0];
-
-    if (Number(invitation.user_id) !== callerId) {
-      return res
-        .status(403)
-        .json({ error: 'Only the invited user may respond to this invitation' });
     }
 
     if (invitation.status !== 'pending') {
       return res.status(409).json({ error: `Invitation has already been ${invitation.status}` });
     }
 
-    await pool.query(
-      `UPDATE organization_invitations
-       SET status = 'declined', responded_at = NOW()
-       WHERE id = $1 AND organization_id = $2 AND user_id = $3 AND status = 'pending'`,
-      [invitationId, invitation.organization_id, callerId]
+    const declined = await inVerifiedOrgScope(req, invitation.organizationId, 'member', () =>
+      pool.query(
+        `UPDATE organization_invitations
+         SET status = 'declined', responded_at = NOW()
+         WHERE id = $1 AND organization_id = $2 AND user_id = $3 AND status = 'pending'`,
+        [invitationId, invitation.organizationId, callerId]
+      )
     );
+    if (declined.rowCount !== 1) {
+      return res.status(409).json({ error: 'Invitation is no longer pending' });
+    }
 
     log.debug(`Invitation ${invitationId} declined by user ${callerId}`);
     res.json({ success: true, message: 'Invitation declined' });

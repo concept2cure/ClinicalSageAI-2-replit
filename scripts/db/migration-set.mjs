@@ -2657,6 +2657,16 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D3/2026-09-28-platform-role-grants/.
   'migrations/20260928_platform_role_grants_platform_writes.sql',
 
+  // ── organization_invitations: the invitee finds their own (D3) ───────────
+  // An invitation to another organization lives in THAT organization's rows,
+  // behind the FORCEd tenant policy, so an invitee signed into their own
+  // organization saw an empty list and got 404 on accept and decline.
+  // invitations_for_member(user) reads the invitations naming a member of the
+  // calling scope's organization, and nobody else's; accept and decline then
+  // run in the inviting organization's scope (tenant-users.ts). The table's
+  // policy is unchanged. Evidence docs/evidence/D3/2026-09-28-invitation-acceptance/.
+  'migrations/20260928_invitations_for_member.sql',
+
   // ── submissions.program_id: a submission carries its project (LX-22) ─────
   // The project → submission link was guessed from product names; two projects
   // for one product shared a filing spine. Additive column, a composite
@@ -2704,6 +2714,22 @@ export const C2C_MIGRATION_FILES = [
   // Its project key is project_ref TEXT with no foreign key — see the dated
   // note in the file for why the integer FK could not hold a Module 3 project.
   'migrations/0011_governed_decision_transitions.sql',
+
+  // ── Data lineage + evidence chain (2026-09-28) ───────────────────────────
+  // Same class as 0011 above: the only DDL for data_lineage_records and
+  // evidence_chain_records, on NO applier, so neither table existed on a
+  // deployed database. lineage-dossier's loadDataLineage hits 42P01, which
+  // isMissingTable DOES match, so it silently returns [] and
+  // computeLineageConfidence silently withholds its +10 — a sealed lineage
+  // report scoring lower for a table that was never provisioned rather than
+  // for evidence that was never recorded. GET /api/data-lineage/coverage/:type/:id
+  // answers 500.
+  //
+  // Fully IF NOT EXISTS-guarded (13 guarded statements, no unguarded CREATE),
+  // so it is replay-safe as-is and needs no in-place amendment. Public schema,
+  // organization_id INTEGER NOT NULL on both tables, so the sweep below
+  // polices them — which it could not while they were invisible to it.
+  'migrations/20260327_data_lineage_tracking.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
