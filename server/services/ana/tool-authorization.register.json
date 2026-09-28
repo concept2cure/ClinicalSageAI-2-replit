@@ -3079,7 +3079,7 @@
   "review_deviation_trends": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20971"
+   "site": "AnaToolExecutor.ts:20977"
   },
   "review_dms_plan_completeness": {
    "class": "read",
@@ -3181,6 +3181,11 @@
    "writes": "none",
    "site": "AnaToolExecutor.ts:20941"
   },
+  "review_multiplicity_control": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20953"
+  },
   "review_other_support": {
    "class": "read",
    "writes": "none",
@@ -3219,7 +3224,7 @@
   "review_protocol_redline": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20995"
+   "site": "AnaToolExecutor.ts:21001"
   },
   "review_protocol_regulatory_rules": {
    "class": "read",
@@ -3265,7 +3270,7 @@
   "review_spirit_conformance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20953"
+   "site": "AnaToolExecutor.ts:20959"
   },
   "review_tmf_completeness": {
    "class": "read",

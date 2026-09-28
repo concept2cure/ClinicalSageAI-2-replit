@@ -162,7 +162,7 @@ tool and a surface to land honestly:
 | Group-sequential operating characteristics and spending boundaries | `stats/group-sequential-oc.ts` | **Wired in this change.** `study-design/interim-oc.ts` computes type I error, power at the fixed design's alternative, expected information and sample size and per-look stopping probabilities for the boundaries the protocol RECORDS, solves the named spending function's, and reports every look where they differ as a discrepancy; `lan_demets` (a family) and unrecorded sidedness are gaps. Reachable at `/api/study-design/:id/interim-oc`, in the projections pane, and as AnA's `review_interim_operating_characteristics` |
 | MMRM sample size and power | `stats/mmrm-design.ts` | **Wired in this change.** `StatisticalPlan.mmrmAssumptions` records the sponsor's covariance, ρ, SD, δ and per-visit retention; `study-design/mmrm-sizing.ts` sizes with the engine, never lets its defaults (power 0.90, complete data) stand in for a missing assumption, compares the planned N both ways and cross-checks the visit count against the SoA. Reachable at `/api/study-design/:id/mmrm`, in the projections pane, and as AnA's `review_mmrm_sizing` |
 | External-control borrowing: power prior, commensurate prior, tipping point | `stats/external-control.ts` | **Wired in this change** at design stage. `StudyDesign.externalControlPlan` records source, method, discount, planned concurrent size; `study-design/external-control-plan.ts` lists each element FDA's 2023 draft guidance expects pre-specified (stated or not — a fixed a0 is not a conflict plan) and the engine's borrowing strength at the planned concurrent-control size. No posterior or effect is computed: those are analysis-stage. Reachable at `/api/study-design/:id/external-control`, in the projections pane, and as AnA's `review_external_control_plan` |
-| Multiplicity procedures: Bonferroni, Holm, Hochberg, fixed-sequence, graphical | `stats/multiplicity.ts` | Evaluate the multiplicity strategy the spine records instead of only naming it |
+| Multiplicity procedures: Bonferroni, Holm, Hochberg, fixed-sequence, graphical | `stats/multiplicity.ts` | **Wired in this change.** `study-design/multiplicity-check.ts` simulates the named procedure's family-wise error over the confirmatory family (with the unadjusted rate for contrast and the Monte Carlo SE), decides "controlled" against a stated tolerance, checks the alpha allocation covers the family, states the independence assumption, and refuses to approximate a graphical or gatekeeping procedure the spine does not parameterise. MUL-001 still gates presence; this checks substance. Reachable at `/api/study-design/:id/multiplicity`, in the projections pane, and as AnA's `review_multiplicity_control` |
 | Win ratio, RMST | `stats/win-ratio.ts`, `stats/rmst.ts` | Composite and time-to-event endpoint methods |
 
 `sample-size.ts` solves continuous endpoints exactly and binary /
@@ -234,8 +234,8 @@ the reachability gate — and is a separate change so it can be reviewed as one.
 4. Tier 2 wiring, one engine per session, in the table's order — dose-finding
    first because Project Optimus is the live regulatory pressure *(dose-finding
    enrollment forecasting, group-sequential operating characteristics, MMRM
-   sizing and the external-control plan done in this change; multiplicity is
-   next)*.
+   sizing, the external-control plan and multiplicity done in this change; win
+   ratio and RMST remain)*.
 5. Tier 3 in the order listed. Item 16 waits for reference data.
 6. Retire `/api/protocol`.
 

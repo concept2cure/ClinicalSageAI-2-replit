@@ -396,6 +396,31 @@ export function externalControlView(payload: Obj): ProjectionView {
   };
 }
 
+/* ── Multiplicity control (Tier 2) ───────────────────────────────────────── */
+
+function fwerText(label: string, r: Obj | null): string {
+  if (!r) return '';
+  return `${label}: family-wise error ${num(r.fwer)} (Monte Carlo SE ${num(r.monteCarloSe)})` +
+    (typeof r.controlled === 'boolean' ? (r.controlled ? ' — controlled at alpha.' : ' — NOT controlled at alpha.') : '.');
+}
+
+export function multiplicityView(payload: Obj): ProjectionView {
+  const m = (payload.multiplicity ?? {}) as Obj;
+  return {
+    standard: str(m.basis),
+    percent: null,
+    status: str(m.status),
+    gaps: strings(m.gaps),
+    note: [
+      m.method ? `Procedure: ${str(m.method)} at alpha ${num(m.alpha)}.` : '',
+      fwerText('Named procedure', (m.procedure ?? null) as Obj | null),
+      fwerText('Each hypothesis at full alpha', (m.unadjusted ?? null) as Obj | null),
+      ...strings(m.notes),
+    ].filter(Boolean).join(' '),
+    entries: strings(m.family).map((f, i) => ({ key: `family:${i}`, label: f, status: 'confirmatory', text: '', gaps: [] })),
+  };
+}
+
 /** In the order the design document names them. */
 export const INDUSTRY_PROJECTIONS: ProjectionSpec[] = [
   {
@@ -452,5 +477,10 @@ export const INDUSTRY_PROJECTIONS: ProjectionSpec[] = [
     id: 'external-control', label: 'External-control plan', path: 'external-control',
     of: 'What the study design object pre-specifies about borrowing from an external control, and how strongly it borrows (FDA 2023 draft guidance).',
     normalize: externalControlView,
+  },
+  {
+    id: 'multiplicity', label: 'Multiplicity control', path: 'multiplicity',
+    of: 'Whether the study design object’s multiplicity procedure holds the family-wise error at alpha over its confirmatory endpoints, by seeded simulation.',
+    normalize: multiplicityView,
   },
 ];

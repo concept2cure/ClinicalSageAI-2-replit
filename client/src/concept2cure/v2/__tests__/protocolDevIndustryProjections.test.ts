@@ -17,7 +17,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  ctqView, dctView, doseEscalationView, enrollmentView, externalControlView, INDUSTRY_PROJECTIONS, interimOcView, mmrmView, spiritView,
+  ctqView, dctView, doseEscalationView, enrollmentView, externalControlView, INDUSTRY_PROJECTIONS, interimOcView, mmrmView, multiplicityView, spiritView,
   trialSchemaView, usdmView, whoIctrpView,
 } from '../surfaces/ProtocolDevIndustryProjections';
 
@@ -263,6 +263,19 @@ describe('external-control plan', () => {
     expect(v.note).toContain('power_prior (a0 = 0.5): effective historical N 60');
     expect(v.note).toContain('No posterior or treatment effect is computed at protocol stage.');
     expect(v.entries[0]).toMatchObject({ label: 'Tipping-point sensitivity analysis', status: 'not stated' });
+  });
+});
+
+describe('multiplicity control', () => {
+  it('prints both rates with their SE and the controlled verdict, never recomputed', () => {
+    const v = multiplicityView({ multiplicity: {
+      status: 'rendered', gaps: [], notes: ['independence caveat'], family: ['A', 'B'], method: 'holm', alpha: 0.05,
+      procedure: { fwer: 0.0489, monteCarloSe: 0.0015, controlled: true }, unadjusted: { fwer: 0.0973, monteCarloSe: 0.0021 },
+    } });
+    expect(v.note).toContain('Named procedure: family-wise error 0.0489 (Monte Carlo SE 0.0015) — controlled at alpha.');
+    expect(v.note).toContain('Each hypothesis at full alpha: family-wise error 0.0973 (Monte Carlo SE 0.0021).');
+    expect(v.note).toContain('independence caveat');
+    expect(v.entries.map((e) => e.label)).toEqual(['A', 'B']);
   });
 });
 
