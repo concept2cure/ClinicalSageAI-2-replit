@@ -204,7 +204,14 @@ router.get('/governed/decisions', requireControlPlaneAccess, async (req, res) =>
   if (!parsed.success) {
     return res.status(400).json({ error: { code: 'INVALID_QUERY', details: parsed.error.flatten() } });
   }
-  const entries = await getRecentGovernedDecisions(parsed.data);
+  /* The governed-decision ledger is tenant-scoped. This call used to omit the
+     organization entirely, which made the search predicate `organization_id =
+     NULL` and returned an empty list for every caller — an empty ledger served
+     as the answer. The tenant comes from the session, never from the query. */
+  const entries = await getRecentGovernedDecisions({
+    ...parsed.data,
+    organizationId: String(req.user?.organizationId ?? ''),
+  });
   return res.json({ entries, count: entries.length });
 });
 
@@ -213,7 +220,10 @@ router.get('/governed/decisions', requireControlPlaneAccess, async (req, res) =>
  */
 router.get('/governed/decisions/summary', requireControlPlaneAccess, async (req, res) => {
   const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : undefined;
-  const summary = await getGovernedDecisionSummary({ projectId });
+  const summary = await getGovernedDecisionSummary({
+    projectId,
+    organizationId: String(req.user?.organizationId ?? ''),
+  });
   res.json({ summary });
 });
 

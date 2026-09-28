@@ -21,11 +21,25 @@ import type {
   GovernedDecisionOutcome,
   GovernedMutationIntent,
 } from '../../shared/types/governed-document-fabric';
-import type { RecommendationType, ActionState, DecisionRecord } from './decision-record-service.js';
+import type { ActionState, DecisionRecord } from './decision-record-service.js';
+import { domainTrackForCtdSection } from './domain-track.js';
 
 const log = createScopedLogger('governed-decision-repository');
 
 export const GOVERNED_DECISION_REPOSITORY_VERSION = '2.0.0';
+
+/**
+ * The discriminator that marks a decision_records row as a governed-fabric
+ * decision.
+ *
+ * It lives in `decision_code`, not in `recommendation_type`. That column
+ * carries a CHECK constraint naming twelve recommendation types, and this
+ * repository used to write a thirteenth, `governed_fabric_decision`, on the
+ * stated belief that the column was free text. It is not: every write was
+ * rejected, and the read below filtered on the same illegal value, so the
+ * filter could not have matched even had the writes landed.
+ */
+export const GOVERNED_FABRIC_CODE_PREFIX = 'governed-fabric:';
 
 // ═══════════════════════════════════════════════════════════════════════
 // Types
@@ -151,6 +165,57 @@ export function isValidTransition(from: string, to: GovernedLifecycleState): boo
 // ═══════════════════════════════════════════════════════════════════════
 
 /**
+ * Ledger writes run one at a time, and never inside the caller's critical
+ * section.
+ *
+ * ## Why this queue exists
+ *
+ * These writes used to be free, because they all failed: the row violated two
+ * CHECK constraints and PostgreSQL rejected it before touching a page. Making
+ * them succeed made them real work, and real work fired unawaited — the
+ * evaluator's hot path calls `recordGovernedDecisionSync`, which deliberately
+ * does not await — competes for the same 20-connection pool as the request
+ * that triggered it.
+ *
+ * That competition is not theoretical. A Module 3 compile holds a transaction
+ * open while it calls `resolveSubmissionSpine`, which reads through the shared
+ * pool. With a compile's worth of ledger writes in flight there was no
+ * connection left to serve that read, so the compile's transaction sat idle
+ * holding its locks, every other writer queued behind it on
+ * `Lock/transactionid`, and the 30s `statement_timeout` cancelled them.
+ * Measured: the CMC staff simulation went from 118 passed / 0 failed to 114/4,
+ * all four cascading from one compile that waited 30.0s on an INSERT into
+ * `cmc_module3_sections`.
+ *
+ * So the ledger gets exactly one connection's worth of concurrency, taken
+ * after the current turn of the event loop. A governance record is not worth a
+ * millisecond of the transaction it describes, and an audit writer that can
+ * starve the thing it audits is a worse failure than a slow one.
+ *
+ * Failures stay data: they are counted and logged here, exactly as the inline
+ * catch did, so `governanceMetrics` remains the honest signal.
+ */
+let ledgerQueue: Promise<void> = Promise.resolve();
+
+function enqueueLedgerWrite(write: () => Promise<void>, decisionId: string): Promise<void> {
+  ledgerQueue = ledgerQueue.then(async () => {
+    // Yield first, so the write can never run synchronously inside the
+    // caller's transaction on the same tick.
+    await new Promise<void>(resolve => setTimeout(resolve, 0));
+    try {
+      await write();
+    } catch (err) {
+      governanceMetrics.recordPersistenceFailure('recordGovernedDecision', err);
+      log.warn('Governed decision durable write failed', {
+        decisionId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  });
+  return ledgerQueue;
+}
+
+/**
  * Record a governed decision durably. Async, DB-first.
  */
 export async function recordGovernedDecision(
@@ -179,18 +244,37 @@ export async function recordGovernedDecision(
     );
   }
 
-  try {
+  await enqueueLedgerWrite(async () => {
     const { decisionRecordService } = await import('./decision-record-service.js');
     await decisionRecordService.create({
       organizationId: orgIdNumeric,
+      /* decision_records.project_id is INTEGER NOT NULL, and this platform's
+         projects are uuid-keyed programs, so a governed-fabric decision has no
+         integer to put here. 0 is a placeholder meaning "not addressable as an
+         integer" — never project number zero — and the real reference travels
+         in decision_context.projectRef below, which is what the per-project
+         reads filter on. */
       projectId: Number(evaluation.context.projectId) || 0,
-      decisionCode: `governed-fabric:${decisionId}`,
+      decisionCode: `${GOVERNED_FABRIC_CODE_PREFIX}${decisionId}`,
       title: `Governed ${evaluation.context.intendedAction}: ${evaluation.decision.outcome}`.slice(0, 200),
-      domainTrack: 'governance',
-      // Governed-fabric decisions are tagged with a repository-specific
-      // discriminator that is intentionally outside the base RecommendationType
-      // enum; the column is free text and create/search use the same literal.
-      recommendationType: 'governed_fabric_decision' as RecommendationType,
+      // The ledger's domain_track is a discipline, and the CTD's own module
+      // numbering is the discipline split — so a governed act on a placed
+      // artifact is attributed from where it sits, not from a tenth value
+      // invented for the fabric. 'governance' was that tenth value: the CHECK
+      // constraint rejected it, the catch below swallowed the rejection, and
+      // decision_records stayed empty on every deployment while every caller
+      // was handed a decisionId for a row that was never written.
+      domainTrack: domainTrackForCtdSection(
+        evaluation.context.ctdSection,
+        evaluation.context.sectionCode,
+        evaluation.context.moduleCode,
+      ),
+      /* A governed-fabric decision is a verdict on whether an artifact may enter
+         or leave the submission data package, which is what `data_package`
+         names — and, unlike the thirteenth value this line used to cast into
+         the enum, it is one the column's CHECK constraint accepts. The
+         fabric discriminator is GOVERNED_FABRIC_CODE_PREFIX on decision_code. */
+      recommendationType: 'data_package',
       recommendationSummary: evaluation.decision.rationale.slice(0, 500),
       recommendationRationale: evaluation.decision.rationale,
       confidenceLevel: evaluation.readiness.score >= 75 ? 'high' : evaluation.readiness.score >= 40 ? 'moderate' : 'low',
@@ -216,6 +300,8 @@ export async function recordGovernedDecision(
       decisionContext: {
         governedDecisionId: decisionId,
         kind: 'governed-fabric-decision',
+        // The addressable project reference. See the projectId note above.
+        projectRef: String(evaluation.context.projectId ?? ''),
         intent: evaluation.context.intendedAction,
         outcome: evaluation.decision.outcome,
         readinessLevel: evaluation.readiness.level,
@@ -225,13 +311,7 @@ export async function recordGovernedDecision(
     });
     governanceMetrics.recordDecisionCreated(evaluation.decision.outcome);
     governanceMetrics.recordPersistenceWrite();
-  } catch (err) {
-    governanceMetrics.recordPersistenceFailure('recordGovernedDecision', err);
-    log.warn('Governed decision durable write failed', {
-      decisionId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
+  }, decisionId);
 
   return ref;
 }
@@ -307,13 +387,21 @@ export async function getRecentGovernedDecisions(options: {
   try {
     const { decisionRecordService } = await import('./decision-record-service.js');
     const limit = Math.max(1, Math.min(options.limit ?? 50, 500));
+    /* search() is tenant-scoped and now refuses an absent organizationId. It
+       always did filter on it — the claim in the comment this replaces was
+       false, and an org-less call became `organization_id = NULL`, which
+       matched nothing and served an empty ledger as the answer. */
+    /* A uuid-keyed project cannot be matched on the integer column, so it is
+       matched on decision_context.projectRef instead. Filtering the integer
+       column with NaN (or with the 0 placeholder) would return nothing, or
+       every project's decisions — both of which read as an answer. */
+    const numericProjectId = options.projectId ? Number(options.projectId) : undefined;
+    const projectIsNumeric = numericProjectId !== undefined && Number.isFinite(numericProjectId);
     const records = await decisionRecordService.search({
-      // Repository supports org-less queries; search's column filter treats an
-      // absent organizationId as no filter. Pass the value through unchanged.
-      organizationId: (options.organizationId ? Number(options.organizationId) : undefined) as number,
-      projectId: options.projectId ? Number(options.projectId) : undefined,
-      // See note above: governed-fabric discriminator is outside the base enum.
-      recommendationType: 'governed_fabric_decision' as RecommendationType,
+      organizationId: Number(options.organizationId),
+      projectId: projectIsNumeric ? numericProjectId : undefined,
+      projectRef: !projectIsNumeric && options.projectId ? String(options.projectId) : undefined,
+      decisionCodePrefix: GOVERNED_FABRIC_CODE_PREFIX,
       limit,
     });
     governanceMetrics.recordQueryExecuted();
@@ -371,12 +459,33 @@ export async function getGovernedDecision(
   organizationId: number
 ): Promise<GovernedDecisionRecord | null> {
   try {
-    const { decisionRecordService } = await import('./decision-record-service.js');
-    const record = await decisionRecordService.getById(decisionId, organizationId);
+    const record = await resolveGovernedDecisionRow(decisionId, organizationId);
     return record ? mapRow(record as unknown as Record<string, unknown>) : null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Find the decision_records row a governed-fabric decisionId names.
+ *
+ * `recordGovernedDecision` mints the decisionId itself and hands it to the
+ * caller, but `create` lets the database mint the primary key — so the id
+ * every caller holds is stored only in `decision_code`, and a `WHERE id = $1`
+ * lookup on it could never match. Resolve by the code first; fall back to the
+ * primary key so a row addressed by its real id still resolves.
+ */
+async function resolveGovernedDecisionRow(
+  decisionId: string,
+  organizationId: number,
+): Promise<DecisionRecord | null> {
+  const { decisionRecordService } = await import('./decision-record-service.js');
+  const byCode = await decisionRecordService.getByDecisionCode(
+    `${GOVERNED_FABRIC_CODE_PREFIX}${decisionId}`,
+    organizationId,
+  );
+  if (byCode) return byCode;
+  return decisionRecordService.getById(decisionId, organizationId);
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -390,7 +499,7 @@ export async function transitionGovernedDecision(
 
   try {
     const { decisionRecordService } = await import('./decision-record-service.js');
-    const current = await decisionRecordService.getById(input.decisionId, input.organizationId);
+    const current = await resolveGovernedDecisionRow(input.decisionId, input.organizationId);
     if (!current) {
       return { success: false, decisionId: input.decisionId, previousState: 'unknown', newState: input.targetState, transitionedAt: timestamp, error: 'Decision not found' };
     }
@@ -400,7 +509,9 @@ export async function transitionGovernedDecision(
       return { success: false, decisionId: input.decisionId, previousState: currentState, newState: input.targetState, transitionedAt: timestamp, error: `Invalid transition: ${currentState} → ${input.targetState}` };
     }
 
-    const transitioned = await decisionRecordService.transition(input.decisionId, {
+    /* transition() addresses the row by primary key, which is not the id the
+       caller holds — see resolveGovernedDecisionRow. Use the row we resolved. */
+    const transitioned = await decisionRecordService.transition(current.id, {
       organizationId: input.organizationId,
       // targetState is a GovernedLifecycleState; every state reachable as a
       // transition target is also a valid ActionState (only the start state

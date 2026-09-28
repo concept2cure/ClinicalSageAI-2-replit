@@ -17,6 +17,7 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
+import { assertDomainTrack, DEFAULT_DOMAIN_TRACK, type DomainTrack } from './domain-track.js';
 
 const log = createScopedLogger('decision-record');
 
@@ -59,6 +60,12 @@ export interface DecisionRecord {
   projectId: number;
   decisionCode: string;
   title: string;
+  /**
+   * What the stored row holds. Writes are narrowed to `DomainTrack` and
+   * checked at the boundary; a read describes the database, which may also
+   * hold rows this process did not write. Typing the read as the union would
+   * be an assertion about data this code has not validated.
+   */
   domainTrack: string;
   recommendationType: RecommendationType;
   recommendationSummary: string;
@@ -87,7 +94,7 @@ export interface CreateDecisionInput {
   projectId: number;
   decisionCode: string;
   title: string;
-  domainTrack: string;
+  domainTrack: DomainTrack;
   recommendationType: RecommendationType;
   recommendationSummary: string;
   recommendationRationale?: string;
@@ -145,7 +152,12 @@ export class DecisionRecordService {
       projectId: Number(input.projectId),
       decisionCode: String(input.recommendationType || `DEC-${Date.now()}`),
       title: String(input.contextDescription || input.recommendationSummary || 'Decision'),
-      domainTrack: String(input.domainTrack || 'regulatory'),
+      // Absent stays the documented default; present-but-wrong is refused by
+      // create() rather than silently rewritten into a discipline the caller
+      // did not choose.
+      domainTrack: input.domainTrack == null
+        ? DEFAULT_DOMAIN_TRACK
+        : assertDomainTrack(input.domainTrack, 'decisionRecordService.createDecision'),
       recommendationType: (input.recommendationType as RecommendationType) || 'regulatory_strategy',
       recommendationSummary: String(input.recommendationSummary || ''),
       recommendationRationale: (input.recommendationDetail as string) || undefined,
@@ -160,6 +172,14 @@ export class DecisionRecordService {
 
   async create(input: CreateDecisionInput): Promise<DecisionRecord> {
     log.info('Creating decision record', { code: input.decisionCode, project: input.projectId });
+
+    /* decision_records.domain_track carries a CHECK naming the nine
+       disciplines. Reaching the INSERT with anything else means a constraint
+       violation inside whatever catch block the caller happens to have, which
+       is how this ledger came to hold zero rows in production while every
+       caller was told its decision had been recorded. Refuse at the boundary,
+       naming the caller and the allowed set. */
+    const domainTrack = assertDomainTrack(input.domainTrack, 'decisionRecordService.create');
 
     const result = await pool!.query(
       `
@@ -176,7 +196,7 @@ export class DecisionRecordService {
         input.projectId,
         input.decisionCode,
         input.title,
-        input.domainTrack,
+        domainTrack,
         input.recommendationType,
         input.recommendationSummary,
         input.recommendationRationale ?? null,
@@ -198,8 +218,30 @@ export class DecisionRecordService {
     domainTrack?: string;
     actionState?: ActionState;
     recommendationType?: RecommendationType;
+    /** Match `decision_code` by prefix, e.g. the governed-fabric discriminator. */
+    decisionCodePrefix?: string;
+    /**
+     * Match `decision_context->>'projectRef'`, the addressable project
+     * reference for decisions whose project is uuid-keyed and therefore
+     * cannot be matched on the INTEGER `project_id` column.
+     */
+    projectRef?: string;
     limit?: number;
   }): Promise<DecisionRecord[]> {
+    /* The tenant predicate below is unconditional, so an absent organizationId
+       became `organization_id = NULL` — a filter that matches no row and
+       returns an empty list indistinguishable from "this tenant has no
+       decisions". Two callers did exactly that, and their endpoints served an
+       empty governed-decision ledger as though it were the answer. An
+       unscoped search is refused rather than answered. */
+    if (!Number.isInteger(input.organizationId) || input.organizationId <= 0) {
+      throw new Error(
+        `decisionRecordService.search: organizationId must be a positive integer (got ` +
+          `${JSON.stringify(input.organizationId)}). Refusing an unscoped search — an ` +
+          'untenanted query here returns an empty list that reads as an empty ledger.',
+      );
+    }
+
     const conditions: string[] = ['organization_id = $1'];
     const params: (string | number)[] = [input.organizationId];
     let idx = 2;
@@ -215,6 +257,14 @@ export class DecisionRecordService {
     if (input.actionState) {
       conditions.push(`action_state = $${idx++}`);
       params.push(input.actionState);
+    }
+    if (input.projectRef) {
+      conditions.push(`decision_context->>'projectRef' = $${idx++}`);
+      params.push(input.projectRef);
+    }
+    if (input.decisionCodePrefix) {
+      conditions.push(`decision_code LIKE $${idx++}`);
+      params.push(`${input.decisionCodePrefix}%`);
     }
     if (input.recommendationType) {
       conditions.push(`recommendation_type = $${idx++}`);
@@ -233,6 +283,25 @@ export class DecisionRecordService {
     );
 
     return result.rows.map(this.map);
+  }
+
+  /**
+   * Look a decision up by its `decision_code`.
+   *
+   * `create` lets the database mint the primary key, so a caller that
+   * generated its own identifier before the write holds a value that is NOT
+   * the primary key — it is only ever stored in `decision_code`. Looking such
+   * an id up with `getById` can never match. This is the lookup that can.
+   */
+  async getByDecisionCode(
+    decisionCode: string,
+    organizationId: number,
+  ): Promise<DecisionRecord | null> {
+    const result = await pool!.query(
+      'SELECT * FROM decision_records WHERE decision_code = $1 AND organization_id = $2 LIMIT 1',
+      [decisionCode, organizationId]
+    );
+    return result.rows[0] ? this.map(result.rows[0]) : null;
   }
 
   async getById(id: string, organizationId: number): Promise<DecisionRecord | null> {

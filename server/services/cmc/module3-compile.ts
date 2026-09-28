@@ -72,9 +72,14 @@ export async function resolveProjectRegionCode(
     | { id: string; programType: string | null; productName: string | null; name: string | null; code: string | null }
     | undefined;
   if (!p) return null;
+  /* Run the spine reads on the CALLER'S connection. This function is reached
+     from composeProjectModule3, which the compile route calls with an open
+     transaction — taking a second pooled connection here is what stalled that
+     transaction under a saturated pool. */
   const spine = await resolveSubmissionSpine(
     { programId: p.id, programType: p.programType, productName: p.productName, title: p.name, programCode: p.code },
     orgId,
+    client,
   );
   return regionCodeForPrimaryRegion(spine?.primaryRegion);
 }

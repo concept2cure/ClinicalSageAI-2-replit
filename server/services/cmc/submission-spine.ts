@@ -9,7 +9,15 @@
  *
  * @module server/services/cmc/submission-spine
  */
+import type { PoolClient } from 'pg';
 import { pool } from '../../db';
+
+/**
+ * Anything that can run a query: the shared pool, or a client already inside a
+ * transaction. Declared here rather than imported from module3-compile, which
+ * imports this module.
+ */
+type Queryable = Pick<PoolClient, 'query'>;
 
 /**
  * Application types whose programs carry a canonical submission spine — the
@@ -50,6 +58,24 @@ export interface SubmissionSpine {
 export async function resolveSubmissionSpine(
   anchor: SpineAnchor,
   orgId: number,
+  /**
+   * Where to run these three reads.
+   *
+   * Callers inside an open transaction MUST pass their own client. This
+   * function used to reach for the shared pool unconditionally, so a caller
+   * holding a transaction on one connection took a SECOND connection here —
+   * and when the pool had no slot free, the read waited while the caller's
+   * transaction sat idle holding its locks. Measured: the Module 3 compile
+   * route (module3OperatingSystemRoutes POST /compile/:projectId) opens a
+   * transaction, calls composeProjectModule3 -> resolveProjectRegionCode ->
+   * here, and with the 20-connection dev pool saturated the transaction stalled
+   * on Client/ClientRead while a concurrent compile's INSERT INTO
+   * cmc_module3_sections waited on its uncommitted rows until the 30s
+   * statement_timeout cancelled it. Raising the pool ceiling hid it; passing
+   * the client removes the second connection altogether, and the reads then
+   * also see the caller's own snapshot.
+   */
+  executor: Queryable = pool,
 ): Promise<SubmissionSpine | null> {
   if (anchor.programId === null) return null;
   const appType = (anchor.programType ?? '').trim().toLowerCase();
@@ -63,7 +89,7 @@ export async function resolveSubmissionSpine(
   ];
   if (identityKeys.length === 0) return null;
   try {
-    const subRes = await pool.query(
+    const subRes = await executor.query(
       `SELECT id, application_type, primary_region FROM submissions
         WHERE organization_id = $1 AND deleted_at IS NULL
           AND lower(application_type) = $2
@@ -77,7 +103,7 @@ export async function resolveSubmissionSpine(
     const submissionId = Number(sub.id);
     const primaryRegion = sub.primary_region == null ? null : String(sub.primary_region);
 
-    const seqRes = await pool.query(
+    const seqRes = await executor.query(
       `SELECT id, sequence_number, region FROM ectd_sequences
         WHERE submission_id = $1 AND organization_id = $2 AND deleted_at IS NULL
         ORDER BY sequence_number DESC, id DESC
@@ -89,7 +115,7 @@ export async function resolveSubmissionSpine(
       return { submissionId, applicationType: String(sub.application_type), primaryRegion, sequence: null };
     }
 
-    const leafRes = await pool.query(
+    const leafRes = await executor.query(
       `SELECT count(*)::int AS n FROM submission_leaves
         WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
       [Number(seq.id), orgId],
