@@ -292,6 +292,33 @@ function ageLimitsField(block: RegistryEligibilityBlock): RegistrationField {
 }
 
 /**
+ * ClinicalTrials.gov titles, per the PRS protocol data element definitions: the
+ * Brief Title is a short title "written in language intended for the lay
+ * public" (at most 300 characters); the Official Title corresponds to the title
+ * of the protocol (at most 600); the Acronym is optional (at most 14). The
+ * official title is never shown as the brief one — it used to be, which filled a
+ * required lay-language field with the scientific title and called it rendered.
+ */
+export const CTGOV_TITLE_LIMITS = { brief: 300, official: 600, acronym: 14 } as const;
+
+const NO_PUBLIC_TITLE =
+  'The design records no public (lay-language) title. The registry asks for a title written for the lay public; the official title is not reused as one.';
+
+/** A rendered value longer than the registry accepts is partial, never truncated. */
+function withinLimit(f: RegistrationField, limit: number): RegistrationField {
+  if (f.status !== 'rendered' || f.value === null || f.value.length <= limit) return f;
+  return partial(f.name, f.value, f.required, `${f.name} is ${f.value.length} characters; ClinicalTrials.gov accepts at most ${limit}.`);
+}
+
+function ctgovTitleFields(design: StudyDesign): RegistrationField[] {
+  return [
+    withinLimit(field('Brief title', design.publicTitle ?? null, true, NO_PUBLIC_TITLE), CTGOV_TITLE_LIMITS.brief),
+    withinLimit(field('Official title', design.title ?? null, true), CTGOV_TITLE_LIMITS.official),
+    withinLimit(field('Acronym', design.acronym ?? null, false, 'The design records no acronym; the study may have none.'), CTGOV_TITLE_LIMITS.acronym),
+  ];
+}
+
+/**
  * The EU CTIS population module. CTIS renders inclusion and exclusion as two fields, so each
  * carries its own half of the same block — and, like the ClinicalTrials.gov module, every
  * criterion appears whether or not the grammar could read it.
@@ -434,13 +461,7 @@ function projectCtGov(design: StudyDesign): RegistrationRecord {
         : field('Primary outcome measure', primary.value, true);
 
   const modules: RegistrationModule[] = [
-    {
-      name: 'Study identification',
-      fields: [
-        field('Brief title', design.title ?? null, true),
-        field('Official title', design.title ?? null, true),
-      ],
-    },
+    { name: 'Study identification', fields: ctgovTitleFields(design) },
     {
       name: 'Study status',
       fields: [
@@ -519,6 +540,9 @@ function projectCtis(design: StudyDesign): RegistrationRecord {
       name: 'Trial identification',
       fields: [
         field('Full title', design.title ?? null, true),
+        // Not required here: a new required field changes what `registrable` means for CTIS
+        // (see ctisPopulationFields). Shown so the absence of a lay title is visible.
+        field('Public title', design.publicTitle ?? null, false, NO_PUBLIC_TITLE),
         field('Trial phase', design.phase ? CTIS_PHASE[design.phase] : null, true),
       ],
     },

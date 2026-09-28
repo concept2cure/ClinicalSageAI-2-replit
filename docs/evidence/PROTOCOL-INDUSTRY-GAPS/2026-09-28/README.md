@@ -57,6 +57,27 @@ could only ever report "not recorded".
 The panel re-reads the design after every write, so a block shows as recorded
 only once the server has confirmed it.
 
+### Registration titles: the official title is no longer used as the lay one
+
+The ClinicalTrials.gov projection filled the required **Brief title** — which
+the PRS data element definitions describe as "a short title … written in
+language intended for the lay public" (at most 300 characters) — with the
+protocol's official title, and called it rendered. WHO TRDS item 9 (Public
+Title, "intended for the lay public in easily understood language") could only
+ever be missing. The design now carries `publicTitle?` and `acronym?`
+(`study-design-types.ts`), recorded by a person and never derived from `title`:
+
+| Consumer | Now |
+|---|---|
+| ClinicalTrials.gov | Brief title from `publicTitle`, else missing with the reason (the official title is not reused); Official title from `title`; Acronym (optional); each checked against the PRS limits (300 / 600 / 14) — longer is `partial` with its length, never truncated |
+| EU CTIS | Public title (optional, so `registrable` keeps its meaning — see `ctisPopulationFields`) |
+| WHO TRDS | item 9 renders `publicTitle`; item 10 appends a recorded acronym ("include trial acronym if available") and stays rendered without one |
+| USDM | one StudyTitle per recorded title, typed official / public / acronym with C2C-INTERNAL codes (not CDISC terms); the `StudyTitle.type` always-unfilled line is retired |
+| SPIRIT 1 | a recorded acronym must appear in the title; without one the gap says the design does not record whether the trial has one |
+
+A design with no public title is now **not registrable** on ClinicalTrials.gov
+where it used to look complete: the brief title was never there.
+
 ### Withdrawn, not shipped: a second protocol DOCX renderer
 
 A structured `GET /api/protocol-export/:id/docx` was built early in this session
@@ -179,6 +200,11 @@ red, the file was restored byte for byte, and the suite re-ran green.
 | Deviation vocabulary | a severity admitted that the union does not have | `category "Consent" and severity "high" count as uncategorised / unassessed` and `an unassessed deviation is counted … never as minor` |
 | Snapshot | `snapshotVersionTx` without the `section_key` tie-break | `sections tied on order_index are ordered the same way…` (`expected [ 'b_rationale', 'a_background' ] to deeply equal [ 'a_background', 'b_rationale' ]`) |
 | Service | the working-copy read back on an `id` tie-break | same test (`reordered`/`moved` non-zero) — **survived at first**, when the fixture's id order matched key order; caught after writing the sections in the opposite order |
+| Titles | CT.gov brief title from the official title again | `never shows the official title as the lay brief title…` and the length test |
+| Titles | PRS length limits not applied | `a title longer than ClinicalTrials.gov accepts is partial with its length, never truncated` |
+| Titles | WHO item 9 back to always missing; item 10 drops the acronym | `item 9 renders a recorded public title; item 10 carries a recorded acronym…` |
+| Titles | USDM public title typed as official; an official title invented from the public one | `emits a recorded public title and acronym as their own typed titles…`, `no official title: no official StudyTitle is invented from the public one` |
+| Titles | SPIRIT 1 ignores a recorded acronym | `checks a recorded acronym appears in the title…` |
 | Service | CAPA join without its org anchor | `excludes other organisations' … CAPA` (`expected 1 to be 0`) — after strengthening the test so the only open action is another org's |
 | Service | version lookup without its org filter | `a label not recorded for this org is NOT_FOUND — including one another org recorded` (`promise resolved … instead of rejecting`) |
 | AnA tools | one handler unregistered | `review_protocol_redline handler registered: expected undefined to be type of 'function'` |
@@ -262,8 +288,10 @@ can mean and to report `positionsFromRowOrder` beside any moved verdict.
   (the planning-inputs panel); the SoA grid itself is still edited through the
   design API and AnA drafting. The DCT profile reports every activity without
   a location as `unstated`.
-- **WHO item 9 (public title)** stays `missing` until the design carries a
-  distinct public title (`publicTitle?` on the spine).
+- **A public title and acronym can be carried by the design but not yet
+  entered on screen**: they travel the design API and AnA drafting until the
+  planning-inputs panel gains a titles block (after that path's adversarial
+  review lands).
 - **Win ratio / RMST are deliberately not wired**: analysis-on-data engines have
   nothing to compute before data exist; see the design document's Tier 2 table. **Tier 3** as listed in the design document.
 - **The legacy `/api/protocol` optimizer** (model-generated figures outside the
