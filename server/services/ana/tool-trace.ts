@@ -15,6 +15,7 @@
  * continuity note. The DB persistence and route wiring live elsewhere.
  */
 
+import { isTruncated } from '../ai-gateway/finish-reason.js';
 import type { HumanControlEvent, TurnStoppedReason } from './run-status.js';
 import type { TurnPlanStep } from './turn-plan.js';
 
@@ -304,6 +305,8 @@ export function turnStopWarning(reason: TurnStoppedReason, rounds: number): stri
       return rounds > 0
         ? `The run was stopped between rounds${ran}, before AnA said she was done.`
         : 'The run was stopped before its first tool round.';
+    case 'answer_cut_off':
+      return `The answer was cut off${ran}, before AnA finished writing it. What the person saw ends where it stopped.`;
     default:
       // A reserved run-policy reason: nothing produces one yet. Said plainly
       // rather than dropped, so a record can never be silent about a stop.
@@ -328,7 +331,22 @@ const UNFINISHED_STOP: ReadonlyMap<string, (rounds: number | null) => string> = 
 >([
   ['max_rounds', (rounds) => `stopped at the round limit${rounds ? ` (${rounds} rounds)` : ''}`],
   ['duplicate_thrash', () => 'was stopped because it was repeating the same step,'],
+  ['answer_cut_off', () => 'had its answer cut off'],
 ]);
+
+/**
+ * Why the turn ended, once its last answer is known. A loop that ended for
+ * want of tools ended by her choice — unless the answer she was writing was
+ * cut off (the model's length limit, or a stream that stalled mid-answer:
+ * isTruncated). Then the turn did not finish, and nothing may show it as
+ * finished. Any other reason already says the turn stopped short, and stands.
+ */
+export function turnEndingReason(
+  loopReason: TurnStoppedReason,
+  lastFinishReason: string | null | undefined,
+): TurnStoppedReason {
+  return loopReason === 'no_more_tools' && isTruncated(lastFinishReason) ? 'answer_cut_off' : loopReason;
+}
 
 /**
  * The continuity note for a turn whose predecessor did not finish.

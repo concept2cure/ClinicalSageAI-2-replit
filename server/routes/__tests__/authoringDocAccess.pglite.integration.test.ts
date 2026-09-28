@@ -142,9 +142,23 @@ describe('GET /docs/:docId — the caller’s access', () => {
     expect(access.esign.allowed).toBe(false);
     expect(access.esign.reason).toMatch(/Owner or Approver grant/);
     expect(access.fileToVault.allowed).toBe(false);
-    expect(access.fileToVault.reason).toMatch(/Owner or Author grant/);
+    expect(access.fileToVault.reason).toMatch(/Owner, Author or Approver grant/);
     expect(access.assignReview.allowed).toBe(false);
     expect(access.assignReview.reason).toMatch(/Your role: viewer/);
+  });
+
+  it('a FROZEN document can still be filed to the vault — the sealed record is what filing is for', async () => {
+    // 2026-09-28: /file-to-vault was an 'edit', refused on an immutable status,
+    // so the service's sealed-record path could never run.
+    const before = ((await jdb.pool.query(`SELECT status FROM authoring_documents WHERE id = $1`, [docId])).rows[0] as { status: string }).status;
+    await jdb.pool.query(`UPDATE authoring_documents SET status = 'FROZEN' WHERE id = $1`, [docId]);
+    try {
+      const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect(res.body.access.fileToVault).toEqual({ allowed: true, reason: null });
+    } finally {
+      await jdb.pool.query(`UPDATE authoring_documents SET status = $2 WHERE id = $1`, [docId, before]);
+    }
   });
 
   it('a failed permission lookup is reported as unknown, not as a denial', async () => {

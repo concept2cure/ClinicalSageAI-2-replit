@@ -1,0 +1,13 @@
+--- fixture tests against the UNFIXED gateway ---
+ × server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > chat: no [KNOWN] or [INFERRED] marker 13ms
+ × server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > document_analysis: no [KNOWN] or [INFERRED] marker 4ms
+ × server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > document_drafting: no [KNOWN] or [INFERRED] marker 2ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > structured_output: no [KNOWN] or [INFERRED] marker 1ms
+ × server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > regulatory_review: no [KNOWN] or [INFERRED] marker 1ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > code_generation: no [KNOWN] or [INFERRED] marker 0ms
+ × server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > summarization: no [KNOWN] or [INFERRED] marker 1ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > embedding: no [KNOWN] or [INFERRED] marker 0ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > general: no [KNOWN] or [INFERRED] marker 1ms
+ × server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > structured_output does not report success 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 4 passed | 7 skipped (17)

@@ -325,6 +325,7 @@ const KNOWN_STOPPED_REASONS: ReadonlySet<string> = new Set<AnaStoppedReason>([
   'max_rounds',
   'duplicate_thrash',
   'cancelled',
+  'answer_cut_off',
 ]);
 
 /**
