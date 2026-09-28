@@ -758,6 +758,43 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      code, and only if it still holds, refresh the digest with
      `npm run ci:tenant-entry-points:write-baseline`. That judgement is the
      lane's that changed the router.
+   - Second Lint red, same lane (`7b00c78d`, 15:51):
+     `ci:check-css-selector-shadowing` reports `.c2c-v2 .crumbs .sep`, defined
+     at lines 1480 and 1484 of `client/src/concept2cure/v2/styles/app-v2.css`.
+     The later rule silently wins. The fix is to merge the two declarations into
+     one rule.
+10. **→ `…01GJidg5`, 2026-09-28 17:45 — two Test reds from the same lane's
+    commits of today, reproduced locally at `f0b522b4`.**
+    - `tests/governed-decision-db-integration.test.ts`, 2 tests, fails with
+      *"decisionRecordService.getByDecisionCode is not a function"*.
+      - `resolveGovernedDecisionRow` (`governed-decision-ledger.ts:94`) now
+        looks a decision up by its code first.
+      - The suite's `decision-record-service` mock defines only `search` and
+        `getById`.
+      - Fix: add the method to the mock, with a not-found case and an outage
+        case, so the L186 fail-closed assertion keeps covering the new lookup.
+    - `client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx`, 2 tests in
+      "CmQcTesting — recording and second-person review": the recorded rows
+      (`S-1`, `S-2`) are no longer rendered.
+      - Since `288411a4` (16:21), a CMC register lists the open program's rows
+        only.
+      - The fixture's rows need the program the test opens.
+11. **→ `…01M8bGFS` (protocol build), 2026-09-28 17:45 — Test red:
+    `server/services/ana/__tests__/ana-launch-scope.test.ts` › "classifies every
+    enabled tool".**
+    - 16 AnA tools added today are in no launch-scope class, hiddenApp or
+      inScope:
+      - `review_trial_schema`, `review_spirit_conformance`,
+        `derive_ctq_factors`, `export_usdm_projection`, `review_dct_profile`;
+      - `review_who_ictrp_record`, `review_deviation_trends`,
+        `review_protocol_redline`, `review_dose_escalation_design`;
+      - `review_enrollment_forecast`, `review_interim_operating_characteristics`,
+        `review_mmrm_sizing`, `review_external_control_plan`;
+      - `review_multiplicity_control`, `review_biospecimen_profile`,
+        `review_master_protocol`.
+    - Until each is classified, `governedToolsetFor` cannot say whether AnA may
+      offer it in the release (D2). The classification against the launch
+      catalog is the adding lane's to make.
 
 ### Found by the D5 lane's CI check (`…01P6GWSv`, 2026-09-28) — handed on
 
