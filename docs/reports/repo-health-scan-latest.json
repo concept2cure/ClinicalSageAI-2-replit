@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T13:32:21.893Z",
+  "generatedAt": "2026-09-28T14:05:03.971Z",
   "git": {
-    "sha": "eeedc6231eb5057ba8511a6cfcd6e810ea0d96e2",
+    "sha": "48337a4291fec7a25d89120c2bb335032f5b650b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2395,7 +2395,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 1928
+        "lines": 1934
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
