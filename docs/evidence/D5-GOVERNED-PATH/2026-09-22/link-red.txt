@@ -1,0 +1,7 @@
+# unifiedTasks-governed.pglite.integration.test.ts, the table built exactly as the migration set builds it (no test-added column), against the HEAD model
+    "err": "Failed query: insert into \"cross_module_task_links\" (\"id\", \"link_id\", \"organization_id\", \"source_task_id\", \"source_module\", \"target_task_id\", \"target_module\", \"link_type\", \"dependency_type\", \"is_blocking\", \"status\", \"impact_description\", \"risk_level\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, $5, $6, $7, default, $8, $9, 
+    "err": "Failed query: insert into \"cross_module_task_links\" (\"id\", \"link_id\", \"organization_id\", \"source_task_id\", \"source_module\", \"target_task_id\", \"target_module\", \"link_type\", \"dependency_type\", \"is_blocking\", \"status\", \"impact_description\", \"risk_level\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, $5, $6, $7, default, $8, $9, 
+   → expected 500 to be 200 // Object.is equality
+   → expected 'INTERNAL_ERROR' to be 'AUDIT_WRITE_FAILED' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 19 passed (21)

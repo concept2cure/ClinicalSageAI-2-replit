@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T03:02:43.752Z",
+  "generatedAt": "2026-09-28T04:44:23.034Z",
   "git": {
-    "sha": "41e7c539f6a93af3b7a76a26259c61ee08509455",
+    "sha": "8b8f6598383cb158b91448bba16d21acb3f480fe",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,11 +1977,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1071859
+        "bytes": 1072006
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 859522
+        "bytes": 859708
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -1993,11 +1993,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 283794
+        "bytes": 284340
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 238974
+        "bytes": 240665
       },
       {
         "file": "server/statistics-service.ts",
@@ -2041,7 +2041,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 149555
+        "bytes": 149801
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2159,11 +2159,11 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20702
+        "lines": 20701
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20203
+        "lines": 20205
       },
       {
         "file": "server/statistics-service.ts",
@@ -2171,7 +2171,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6482
+        "lines": 6490
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2187,7 +2187,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5135
+        "lines": 5161
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2255,7 +2255,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3000
+        "lines": 3004
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",

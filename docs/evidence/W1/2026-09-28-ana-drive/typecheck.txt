@@ -3,3 +3,5 @@ npm run typecheck — the merged tree (concept2cure-v2 at 0abf4467 + this change
 > NODE_OPTIONS="--max-old-space-size=24576" tsc --noEmit
 
 error TS lines: 0
+
+Second pass, 2026-09-28: npm run typecheck — exit 0, 0 errors.

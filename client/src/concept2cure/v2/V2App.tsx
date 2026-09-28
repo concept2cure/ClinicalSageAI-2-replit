@@ -39,6 +39,7 @@ import {
 import {
   advertisedScreenActions,
   applySurfaceAction,
+  readDirectiveProgram,
   validateDriveAction,
 } from './surfaceActions';
 import { LiveDriveOverlay } from './LiveDriveOverlay';
@@ -248,30 +249,6 @@ export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
 /** True when the activity record has something real to show for this turn. */
 function hasReportableWork(m: AnaChatMessage): boolean {
   return hasReportableActivity(activityPropsFor(m));
-}
-
-/**
- * The program a project-scoped drive directive carries, when the server
- * resolved one (navigate_to's `program`): `{ id, name?, code? }` with a
- * non-empty string id, or null. It rides beside the registry's directive —
- * program identity is tenant data, not registry state, so re-validation
- * against the registry cannot vouch for it; the surfaces that read the open
- * program validate it by fetching, as they do after any selection.
- */
-export function readDirectiveProgram(
-  raw: unknown
-): { id: string; name?: string; code?: string } | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const p = (raw as { program?: unknown }).program;
-  if (!p || typeof p !== 'object') return null;
-  const { id, name, code } = p as { id?: unknown; name?: unknown; code?: unknown };
-  const idStr = typeof id === 'number' ? String(id) : typeof id === 'string' ? id.trim() : '';
-  if (!idStr) return null;
-  return {
-    id: idStr,
-    ...(typeof name === 'string' && name.trim() ? { name: name.trim() } : {}),
-    ...(typeof code === 'string' && code.trim() ? { code: code.trim() } : {}),
-  };
 }
 
 /**

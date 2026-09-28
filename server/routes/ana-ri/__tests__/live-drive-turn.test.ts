@@ -44,6 +44,8 @@ const h = vi.hoisted(() => {
     onWake: null as null | ((ms: number) => void),
     /** The context post-processing was handed — where chips come from. */
     post: null as any,
+    /** The saved thread: prior turns, then the question this turn saved. */
+    history: [] as Array<{ role: string; content: string }>,
   };
   const pool = {
     query: async () => ({ rows: [], rowCount: 0 }),
@@ -185,7 +187,7 @@ vi.mock('../../../services/ana-ri/context-enrichment.js', () => ({
 }));
 vi.mock('../../../services/chat-thread-helpers.js', () => ({
   getOrCreateThread: async () => 'thread-1',
-  getThreadMessages: async () => [],
+  getThreadMessages: async () => h.state.history,
   saveChatMessage: async () => {},
   programIdForThread: () => null,
   ThreadAccessError: class ThreadAccessError extends Error {},
@@ -247,6 +249,7 @@ beforeEach(() => {
   h.state.drains = [];
   h.state.onWake = null;
   h.state.post = null;
+  h.state.history = [];
   vi.mocked(applyControl).mockClear();
 });
 
@@ -589,5 +592,35 @@ describe('POST /stream/:runId/control — screen_report', () => {
     const unknown = await request(app).post('/api/ana-ri/stream/run_test/control').send({ action: 'observe' });
     expect(unknown.status).toBe(400);
     expect(vi.mocked(applyControl)).not.toHaveBeenCalled();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. The history AnA is given opens on a question
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('history — the window opens on a question after an unanswered turn', () => {
+  // q1's turn failed or was stopped, so post-processing saved no answer. The
+  // thread ends with this turn's own question, saved before the model runs.
+  const turnOf = (n: number) => [{ role: 'user', content: `q${n}` }, { role: 'assistant', content: `a${n}` }];
+  const saved = [...turnOf(0), { role: 'user', content: 'q1, never answered' }, ...range(2, 10).flatMap(turnOf)];
+  const sent = () =>
+    h.state.gatewayCalls[0].messages.filter((m: any) => m.role !== 'system').map((m: any) => `${m.role}:${m.content}`);
+
+  it.each([
+    ['saved in the thread', () => ((h.state.history = [...saved, { role: 'user', content: 'go' }]), {})],
+    ['sent by the client (no saved thread yet)', () => ({ conversation_history: saved })],
+  ])('history %s: the answer at the far edge is dropped, not opened on', async (_source, arrange) => {
+    await turn(arrange());
+    // Opening on 'assistant:a0' is the conversation the API refuses.
+    expect(sent().slice(0, 3)).toEqual(['user:q1, never answered', 'user:q2', 'assistant:a2']);
+    expect(sent()).toContain('assistant:a10');
+  });
+
+  it('a thread whose pairs are intact is passed through unchanged', async () => {
+    const intact = range(0, 11).flatMap(turnOf);
+    h.state.history = [...intact, { role: 'user', content: 'go' }];
+    await turn({});
+    expect(sent().slice(0, 20)).toEqual(intact.slice(-20).map(m => `${m.role}:${m.content}`));
   });
 });

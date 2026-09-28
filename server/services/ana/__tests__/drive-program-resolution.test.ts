@@ -371,4 +371,28 @@ describe('act_on_screen projects.open-program — a reference that names several
     expect(opened.directive.params.program).toBe('LEGACY-7');
     expect(ctx.turnState?.program).toEqual(LEGACY);
   });
+
+  // LEGACY-7 is the 137th most recent program: the Projects screen lists the
+  // 50 most recent, so it could only refuse the open as "No program named".
+  it('hands the screen the program found, so one past its first page opens', async () => {
+    const opened = await call('act_on_screen', { action: 'projects.open-program', params: { program: 'legacy-7' } }, turn());
+    expect(opened.directive.program).toEqual(LEGACY);
+    expect(opened.directive.params).toEqual({ program: 'legacy-7' });
+  });
+
+  it('a program the model supplies never reaches the screen, as a param or beside one', async () => {
+    const missed = await call(
+      'act_on_screen',
+      {
+        action: 'projects.open-program',
+        params: { program: 'no such program', programId: BX301.id },
+        program: { id: BX301.id, name: 'Forged' },
+      },
+      turn(),
+    );
+    // A miss still goes to the screen, which refuses it with its own list.
+    expect(missed.status).toBe('action_ready');
+    expect(missed.directive.params).toEqual({ program: 'no such program' });
+    expect(missed.directive.program).toBeUndefined();
+  });
 });

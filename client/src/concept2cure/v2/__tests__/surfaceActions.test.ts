@@ -99,7 +99,7 @@ describe('applySurfaceAction', () => {
     const nav = vi.fn();
     const outcome = applySurfaceAction(directive(), nav);
     expect(outcome).toEqual({ status: 'applied', detail: 'Searched' });
-    expect(handler).toHaveBeenCalledWith({ query: 'x' });
+    expect(handler).toHaveBeenCalledWith({ query: 'x' }, {});
     expect(nav).not.toHaveBeenCalled();
   });
 
@@ -135,7 +135,7 @@ describe('applySurfaceAction', () => {
     // The destination mounts and registers — the stashed directive performs.
     const handler = vi.fn().mockReturnValue({ ok: true });
     registerSurfaceActionHandlers('vault', { 'vault.search': handler });
-    expect(handler).toHaveBeenCalledWith({ query: 'x' });
+    expect(handler).toHaveBeenCalledWith({ query: 'x' }, {});
     expect(deferred).toHaveBeenCalledWith({ status: 'applied' });
     // One shot: a re-registration does not re-perform.
     handler.mockClear();
@@ -228,7 +228,7 @@ describe('applySurfaceAction', () => {
     expect(d.surfaceId).toBe('tasking');
     const outcome = applySurfaceAction(d, vi.fn());
     expect(outcome).toEqual({ status: 'applied', detail: 'Switched' });
-    expect(handler).toHaveBeenCalledWith({ view: 'table' });
+    expect(handler).toHaveBeenCalledWith({ view: 'table' }, {});
   });
 
   it('alias stash: an act for an unmounted aliased surface navigates by nav-target id and performs on the v2 registration', () => {
@@ -241,7 +241,7 @@ describe('applySurfaceAction', () => {
     expect(nav).toHaveBeenCalledWith('tasking');
     const handler = vi.fn().mockReturnValue({ ok: true });
     registerSurfaceActionHandlers('tasks', { 'tasking.set-view': handler });
-    expect(handler).toHaveBeenCalledWith({ view: 'board' });
+    expect(handler).toHaveBeenCalledWith({ view: 'board' }, {});
     expect(deferred).toHaveBeenCalledWith({ status: 'applied' });
   });
 

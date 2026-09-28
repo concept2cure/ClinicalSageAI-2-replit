@@ -2253,6 +2253,25 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
         reason: `Reverted to revision ${rev_id}`,
       });
 
+      /* 2026-09-28 (GE-P-1, coverage-gap sweep): the audit record for this
+         revert is written HERE, on the transaction client, so it commits with
+         the revert or not at all — as the save and freeze paths do. It ran
+         after COMMIT on the pool: a failed audit write left a committed,
+         unaudited revert, reported as a failure in production and as a
+         success, with no audit row, elsewhere. On the caller's client the
+         writer also records the hash-chained entry. */
+      await createAuditTrail(
+        req,
+        result.rows[0]?.doc_id,
+        sectionId,
+        'REVERT',
+        currentSection.rows[0]?.content ?? null,
+        revision.content ?? null,
+        `Reverted to revision ${rev_id}`,
+        { revisionId: rev_id, revisionCreatedAt: revision.created_at },
+        client,
+      );
+
       await client.query('COMMIT');
     } catch (txErr) {
       await client.query('ROLLBACK').catch(() => {});
@@ -2260,17 +2279,6 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
     } finally {
       client.release();
     }
-
-    await createAuditTrail(
-      req,
-      result.rows[0]?.doc_id,
-      sectionId,
-      'REVERT',
-      currentSection.rows[0]?.content ?? null,
-      revision.content ?? null,
-      `Reverted to revision ${rev_id}`,
-      { revisionId: rev_id, revisionCreatedAt: revision.created_at },
-    );
 
     res.json({
       success: true,

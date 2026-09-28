@@ -44,8 +44,14 @@ interface Dashboard {
   qmp: { id: number; name: string; version: string; status: string };
   sections: { totalSections: number; sectionsByGateLevel: { hard: number; soft: number; info: number }; activeSections: number; inactiveSections: number; sectionsAllowingOverride: number };
   factors: { totalFactors: number; factorsByRiskLevel: { high: number; medium: number; low: number }; activeFactors: number; inactiveFactors: number; requiredFactors: number };
-  overallCompleteness: number;
-  riskProfile: { highRiskPercentage: number; mediumRiskPercentage: number; lowRiskPercentage: number };
+  /** Null when no CTQ factor is in scope: not assessed, never 0%. */
+  overallCompleteness: number | null;
+  riskProfile: { highRiskPercentage: number | null; mediumRiskPercentage: number | null; lowRiskPercentage: number | null };
+}
+
+/** A share as the surface shows it: a whole percent, or a dash when there is none. */
+function pct(share: number | null): string {
+  return share === null ? '—' : `${Math.round(share)}%`;
 }
 
 interface RawResult<T> { ok: boolean; status: number; body: T | null; message: string | null; code: string | null }
@@ -156,9 +162,14 @@ function useQmpRegister() {
   }, []);
   useEffect(() => { void loadPlans(); }, [loadPlans]);
 
+  // Only the latest request may land: a slower answer for the plan selected
+  // before must never be shown as this plan's.
+  const dashRequest = useRef(0);
   const loadDashboard = useCallback(async (id: number) => {
-    setDashState('loading');
+    const request = ++dashRequest.current;
+    setDash(null); setDashState('loading');
     const { ok, body } = await rawJson<Dashboard>('GET', `/api/quality/dashboard/${id}`);
+    if (request !== dashRequest.current) return;
     // Require the full dashboard shape before rendering — a partial/empty body
     // (e.g. a freshly created plan with no sections yet) must not crash the view.
     if (!ok || !body || !body.sections?.sectionsByGateLevel || !body.factors?.factorsByRiskLevel || !body.riskProfile) {
@@ -270,7 +281,11 @@ function qmpAnaContext({ listState, plans, activePlan, dashState, dash }: {
           ? 'Quality management: no quality plans defined yet for this organization.'
           : `Quality management: ${plans.length} plan(s)` +
             (activePlan ? `, "${activePlan.name}" (v${activePlan.version ?? '—'}, ${activePlan.status ?? 'no status'}) selected` : '') +
-            (dash ? `; ${dash.overallCompleteness}% complete across ${dash.sections.totalSections} section(s).` : '.'),
+            (dash && dashState === 'ready'
+              ? dash.overallCompleteness === null
+                ? `; completeness not assessed — no risk factor is linked to its ${dash.sections.totalSections} gated section(s).`
+                : `; ${pct(dash.overallCompleteness)} complete across ${dash.sections.totalSections} section(s).`
+              : '.'),
     facts: {
       plansState: listState,
       planCount: plans.length,
@@ -279,7 +294,7 @@ function qmpAnaContext({ listState, plans, activePlan, dashState, dash }: {
         ? { selectedPlanId: activePlan.id, selectedPlanName: activePlan.name, selectedPlanVersion: activePlan.version, selectedPlanStatus: activePlan.status }
         : {}),
       dashboardState: dashState,
-      ...(dash
+      ...(dash && dashState === 'ready'
         ? {
             overallCompletenessPct: dash.overallCompleteness,
             totalSections: dash.sections.totalSections,
@@ -351,7 +366,9 @@ function PlanRegisterCard({ plans, listState, active, ask, onSelect, onOpen }: {
 function PlanDashboardCard({ dash, dashState }: { dash: Dashboard | null; dashState: DashState }) {
   return (
     <div className="pj-card">
-      <div className="pj-card-h"><span className="t">Plan dashboard</span>{dash && <span className={'rd-chip tone-' + (dash.overallCompleteness >= 80 ? 'ok' : 'warn')}>{dash.overallCompleteness}% complete</span>}</div>
+      <div className="pj-card-h"><span className="t">Plan dashboard</span>{dash && dashState === 'ready' && (dash.overallCompleteness === null
+        ? <span className="rd-chip tone-idle">Not assessed</span>
+        : <span className={'rd-chip tone-' + (Math.round(dash.overallCompleteness) >= 80 ? 'ok' : 'warn')}>{pct(dash.overallCompleteness)} complete</span>)}</div>
       <div className="pj-card-b">
         {dashState === 'loading' ? <EmptyState icon={I.layers} title="Loading dashboard…" />
           : dashState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the plan dashboard" hint="The plan dashboard didn’t respond." />
@@ -374,7 +391,11 @@ function PlanDashboardCard({ dash, dashState }: { dash: Dashboard | null; dashSt
               </div>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Risk profile</div>
-                <div style={{ fontSize: 13 }}>High {dash.riskProfile.highRiskPercentage}% · Medium {dash.riskProfile.mediumRiskPercentage}% · Low {dash.riskProfile.lowRiskPercentage}%</div>
+                <div style={{ fontSize: 13 }}>
+                  {dash.riskProfile.highRiskPercentage === null
+                    ? 'Not assessed — no risk factor is linked to this plan’s gating rules.'
+                    : <>High {pct(dash.riskProfile.highRiskPercentage)} · Medium {pct(dash.riskProfile.mediumRiskPercentage)} · Low {pct(dash.riskProfile.lowRiskPercentage)}</>}
+                </div>
               </div>
             </div>
           )}

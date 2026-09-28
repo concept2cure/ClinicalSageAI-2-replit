@@ -633,13 +633,23 @@ Each item was written test-first and closed.
 - `ci:requestdb-coverage --strict-no-regression`: 229/229.
 - Scoped typecheck: no errors in the changed files.
 
+**Closed after the push: a link failed on every real database.** The Drizzle
+model declared `cross_module_task_links.updated_at`, which no applier creates.
+Drizzle names every modelled column in `INSERT … RETURNING`, so
+`POST /api/regulatory/tasks/:id/link` answered 500 on any database built from
+the migration set. It failed honestly, and nothing was written. Nothing read the
+column, so it is removed from the model (`shared/schema.ts`, with a dated note);
+no migration changes. The PGlite suite used to add the column itself. It now
+builds the table exactly as the migration set does:
+- against the old model: red, 2 failed of 21 (`link-red.txt`);
+- with the fix: green, 77/77 across both unified-task suites (`link-green.txt`).
+
 **Still open.**
 - The AnA command executor calls the cascade with no transaction, so the
-  dependents it unblocks there have no ledger row.
-- `cross_module_task_links.updated_at` is declared in the Drizzle model, but no
-  migration creates it. `POST /api/regulatory/tasks/:id/link` therefore answers
-  500 on a real database. It fails honestly and records nothing. The PGlite
-  suite adds the column itself.
+  dependents it unblocks there have no ledger row. Its own board write and
+  `task.transition` row became one transaction on 2026-09-24, in another lane
+  (`boardWriteWithLineage`). The cascade still runs after that COMMIT, on the
+  pool (`command-executor.ts`, `cascadeUnblockOnCompletion`).
 - A dependency link racing a completion of the same pair can deadlock.
   Postgres aborts one side (40P01), which rolls back and is answered as a
   failure.
@@ -647,6 +657,132 @@ Each item was written test-first and closed.
   The real `LazyRequestDbClient` path (BEGIN and COMMIT on the request's own
   connection) rests on Drizzle's node-postgres driver, which the release guard
   in `lazyRequestDbClient.ts` backs up.
+
+## CI, 2026-09-23: two failures this work caused, and what they exposed
+
+CI run 12178 (`3d58f9e18`) failed. Its failures were traced one by one, with
+the earlier runs compared. Two were caused by this workstream.
+
+**1. `tests/ui/surface-honesty.contract.test.ts` (Test job).** The lint paydown
+(`a3e66c99b`) moved the register-form mount into `GovernedDrawers`, which sits
+after `<C2CToast` in the file. The contract cut the mount out as the text
+between `<ProtocolRegisterForm` and `<C2CToast`, so it read an empty string. The
+behaviour was intact, but the contract proved nothing. A parallel CI session
+fixed it first, in `e9c112863`: the case now reads the element itself, braces
+balanced, and was shown to fail against two mutations. This lane had written a
+narrower fix. It was discarded in favour of that one.
+
+**2. `ci:writerless-stores` (Lint job).** The QMS change (`65010f91b`) removed
+the last code that looked like a writer for `ctq_factors` and
+`qmp_section_gating`. None of it ever saved a row: the Drizzle calls never
+executed, and the POST failed on the real DDL. The gate was right. These stores
+have readers and no writer. It asks for a writer, no readers, or a written
+reason that an empty read is correct. For three readers, an empty read was not
+correct.
+
+- **An empty collection chose the verdict.** `validate-section` and
+  `batch-validate` answered `valid: true` for a section no gating rule covers
+  ("all sections pass automatically"). With no writer, that was every section
+  on every real database.
+- **A figure computed from nothing.** The plan dashboard divided by
+  `totalFactors || 1`, so `QmpWorkspace` showed "0% complete" for a plan with
+  no factors linked.
+- **Three routes that could never have answered.** Four lookups bound a JS
+  array as a row constructor, `= ANY(($1, …))`. Postgres rejects that, so these
+  routes answered 500 whenever they reached the query:
+  - `batch-validate`, for any non-empty batch;
+  - `validate-section`, when a rule listed factors;
+  - `GET /api/quality/plans/:id`, when a rule listed factors.
+
+  The API reference recorded these as known defects.
+
+**The review round.** The first version of the fix was reviewed adversarially
+from two angles: verdict correctness, and honest state on the surface. It
+still let an empty collection choose the verdict, one level down, and it had
+more defects besides:
+- **A vacuous pass.** A rule that named nothing checkable still passed the
+  section. That covers a rule naming no factor, one naming only a retired
+  factor, one naming a factor with no criteria, and one naming a factor that
+  does not exist.
+- **The batch could pass over a failure.** A section that failed a soft gate
+  left the batch `valid: true`.
+- **A missing threshold never blocked.** A rule with no threshold recorded read
+  as an informational gate.
+- **String ids were dropped.** Factor ids stored as strings, a form the
+  governed delete already matches, were fetched and then filtered out.
+- **An unknown plan was answered calmly.** `validate-section` answered "not
+  assessed" for a plan the caller does not have.
+- **The surface showed the wrong plan's figures.** While a plan loaded, it
+  showed the previous plan's figure. A slower answer for an earlier plan could
+  replace the current one's. Shares showed as `33.33333333333333%`, and the
+  new copy used terms the surface uses nowhere else.
+
+The fix, as it stands:
+- **One assessment for both routes:** `assessSection` in
+  `server/services/qms/quality-gating-verdict.ts`. Each route keeps only its own
+  way of deriving the gate level. The routes had duplicated the check; that
+  copy is gone.
+- **A section is assessed only when something was checked.** Every factor its
+  rule names must exist, and at least one active factor with criteria must be
+  checked. Otherwise it is `valid: null, assessed: false`, with a message
+  saying why.
+- **The batch verdict (`batchVerdict`):**
+  - `false` when any section failed, on any gate that blocks;
+  - otherwise `null` when any section was not assessed;
+  - `true` only when every section was assessed and none failed.
+  - An empty batch is refused with 400.
+- **Ids and thresholds:** ids are read in both stored forms, and a missing
+  threshold takes the column's default, 100, a hard gate.
+- **An unknown plan:** `validate-section` answers 404, as `batch-validate`
+  does.
+- **The dashboard** reports completeness and risk shares as `null` when no
+  factor is linked.
+- **The surface:**
+  - it says "Not assessed" and "no risk factor is linked to this plan's gating
+    rules";
+  - figures and what it tells AnA appear only once the dashboard is ready;
+  - an out-of-date answer is dropped;
+  - shares show as whole percents.
+- **The four lookups** use `inArray`, and the reference records them as fixed.
+
+With the readers honest, both stores are baselined with an adjudicated reason
+that names its tests.
+
+A parallel CI session (`7983d7299`) baselined the same two stores at the same
+time. It named the `valid: true` fail-open as this lane's to fix, as "report
+'not assessed'", which is what this change does. Its entries also said no
+client calls these readers. One does: `QmpWorkspace` reads the dashboard. The
+merged baseline keeps the entries that describe the fixed state.
+
+**Proof.**
+- **The server suite.** `quality-gating-not-assessed.pglite.integration.test.ts`
+  runs 28 cases on real DDL and real Drizzle, through both validation mounts.
+  - Against the HEAD routes: red, 28 of 28 (`qg-red.txt`). Six of those
+    failures are contaminated. HEAD's malformed query leaves the file's PGlite
+    unable to parse the next message, so those cases fail in `beforeEach`.
+    Each, run alone on a fresh PGlite, failed on its own assertion.
+  - Against the first version of the fix: red, 20 of 28
+    (`qg-review-red.txt`).
+  - With the fix: green, 28/28 (`qg-green.txt`).
+- **The client.** Against HEAD: red, 3 of 5. Against the first version: red,
+  3 of 5. With the fix: green, 18/18 across both QMP suites.
+- **The out-of-order guard.** Removed alone, it fails the plan-switch case
+  (`qg-review-red.txt`).
+- **A bug the type check caught.** `sectionCodes.map(notAssessedSection)` passed
+  the array index as the message. A new assertion fails on it and passes on
+  the fix.
+- **The gate.** `ci:writerless-stores` is red against the committed baseline
+  (`wl-gate-red.txt`) and OK with the two entries (`wl-gate-green.txt`).
+
+**Not this workstream's, recorded as found and since fixed by others.**
+- **`chain-order.pglite.test.ts`.** Rows stamped in the same millisecond were
+  ordered by random ids. Fixed in the test by `e9c112863`, which records the
+  production writer's tie as found for the audit-chain lane.
+- **`ci:tenant-entry-points`.** It read comments as code. Fixed at the gate by
+  `7983d7299`.
+- **The migration-header gate.** Lint step 8 diffs against `HEAD~1`, so a merge
+  that brings in headerless 2026 migrations re-flags them. It was green again
+  on the next run, `c2568f76c`.
 
 ## Known limits
 

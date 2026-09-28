@@ -794,6 +794,10 @@ export function DocumentWorkbench({
   const [sources, setSources] = useState<SectionSource[]>([]);
   const [sourcesState, setSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [projectSources, setProjectSources] = useState<ProjectSource[]>([]);
+  /* 2026-09-28 (GE-H-1, coverage-gap sweep): the data room's read state. A
+     failed read set the same [] as an empty data room, and the picker then told
+     the author to add documents to a data room that may already hold them. */
+  const [projectSourcesState, setProjectSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   /** Citations the last document-wide re-read could NOT refresh, with the
    *  server's reason. Held rather than toasted away: "3 could not be re-read"
    *  is the finding, and a message that fades in four seconds is not where a
@@ -1662,12 +1666,16 @@ export function DocumentWorkbench({
     const pid = programId;
     if (!pid) {
       setProjectSources([]);
+      setProjectSourcesState('idle');
       return;
     }
+    setProjectSourcesState('loading');
     const { ok, body } = await readJson<{ sources?: ProjectSource[] }>(
       `/api/c2c/projects/${encodeURIComponent(pid)}/sources`
     );
-    setProjectSources(ok && Array.isArray(body?.sources) ? body!.sources! : []);
+    const read = ok && Array.isArray(body?.sources);
+    setProjectSources(read ? body!.sources! : []);
+    setProjectSourcesState(read ? 'ready' : 'error');
   }, [programId]);
 
   /* ── Recompute the revision ledger server-side ──
@@ -3750,7 +3758,10 @@ export function DocumentWorkbench({
                     {String(activeDoc?.status).toUpperCase() === 'APPROVED'
                       ? 'This document has been approved and frozen. Its content is part of the signed record and cannot be edited.'
                       : 'This document is frozen. Its content is sealed under a content hash and cannot be edited.'}{' '}
-                    Create a new version to make further changes.
+                    {/* 2026-09-28 (GE-P-2, coverage-gap sweep): this said "Create a new
+                        version to make further changes" — a capability nothing provides.
+                        The remedy that exists is a new document; this one stays the record. */}
+                    To make further changes, start a new document in Authoring; this one remains the record.
                   </div>
                 )}
                 {/* Above the canvas, at reading width: the accept decision is
@@ -4532,6 +4543,21 @@ export function DocumentWorkbench({
                   >
                     {I.plus} Record a source
                   </button>
+                ) : projectSourcesState === 'error' ? (
+                  <div role="alert" style={{ fontSize: 12 }}>
+                    The project’s data room could not be read, so no sources are listed. This is
+                    not the same as the data room being empty.
+                    <button className="nda-open" style={{ marginLeft: 8 }} onClick={() => void loadProjectSources()}>
+                      Retry
+                    </button>
+                    <button className="nda-open" style={{ marginLeft: 8 }} onClick={() => setPicking(false)}>
+                      Close
+                    </button>
+                  </div>
+                ) : projectSourcesState === 'loading' ? (
+                  <div role="status" style={{ fontSize: 12, opacity: 0.8 }}>
+                    Reading the project’s data room…
+                  </div>
                 ) : projectSources.length === 0 ? (
                   <div style={{ fontSize: 12, opacity: 0.8 }}>
                     No project sources available. Add documents to the project’s data room first, or
