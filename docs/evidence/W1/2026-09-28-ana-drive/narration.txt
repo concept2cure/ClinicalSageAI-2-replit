@@ -128,7 +128,11 @@ AssertionError: the person read "…front door.Stop 2: …"
 - Stop 2: the Vault holds every source.
 - That is the whole demonstration.
 + Stop 1: Projects is the front door.Stop 2: the Vault holds every source.That is the whole demonstration.
-Restored: 28 passed.
+Restored: 28 passed. The test took that file past the 500-line lint limit
+(515 counted lines), and the warning ratchet refused the push. The four tests
+of the pure builder buildScreenReportTurn, which never used the route
+harness, moved unchanged to screen-report-turn.test.ts. The two files hold
+the same 28 tests, and neither has a warning.
 
 flagship-opus-5-5.test.ts pins the new field with the rest of Opus 5.5's
 documented surface.
