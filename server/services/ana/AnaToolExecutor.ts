@@ -359,10 +359,54 @@ function preHandlerRefusal(
   return null;
 }
 
+/** The refusal for a caller without an editor role in the organization, or null when they have one. */
+async function editorRoleRefusal(tool: string, act: string, ctx: ToolContext): Promise<string | null> {
+  let orgRole: string | null;
+  try {
+    const { resolveSignerOrgRole } = await import('../part11/resolve-signer-role');
+    orgRole = await resolveSignerOrgRole(Number(ctx.userId), Number(ctx.organizationId));
+  } catch (err) {
+    return JSON.stringify({ error: `${tool} could not confirm your role in this organization, so nothing was changed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+  const { GOVERNED_WRITE_ROLES } = await import('../../middleware/orgMembership');
+  if (!orgRole || !GOVERNED_WRITE_ROLES.has(orgRole)) {
+    return JSON.stringify({ error: `Insufficient permissions: ${act} needs an editor role in this organization. Nothing was changed.` });
+  }
+  return null;
+}
+
+/**
+ * 4. A confirmed write runs only for someone who may edit in the organization
+ *    (weekly launch-catalog review 2026-09-28). Rule 3 asks for a person's yes;
+ *    nothing asked whose. /api/ana-ri is mounted behind authenticateToken only,
+ *    and most confirm-class handlers wrote with no role check, so a `viewer`
+ *    could confirm a controlled-document create, a vault write or a protocol
+ *    change from chat that the HTTP routes refuse them (requireEditorAccess).
+ *    The role is read from organization_users for the verified principal —
+ *    never from the input — against the same GOVERNED_WRITE_ROLES. Platform
+ *    commands keep their own RBAC (class `command`); reads and a person's own
+ *    settings (`self`) are not asked.
+ */
+async function writeRoleRefusal(
+  name: string,
+  input: Record<string, any>,
+  ctx: ToolContext | undefined,
+): Promise<{ code: string; result: string } | null> {
+  if (toolAuthorizationOf(name, input).class !== 'confirm') return null;
+  if (!ctx?.userId || !ctx?.organizationId) {
+    return {
+      code: 'WRITE_ROLE_UNVERIFIED',
+      result: JSON.stringify({ error: `${name} changes a record and needs an identified member of the organization. Nothing was changed.` }),
+    };
+  }
+  const refusal = await editorRoleRefusal(name, 'this change', ctx);
+  return refusal ? { code: 'WRITE_ROLE_REQUIRED', result: refusal } : null;
+}
+
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
     const orgId = ctx?.organizationId ?? undefined;
-    const refusal = preHandlerRefusal(name, input, ctx);
+    const refusal = preHandlerRefusal(name, input, ctx) ?? (await writeRoleRefusal(name, input, ctx));
     if (refusal) {
       recordToolOutcome(name, 'failure', 0, refusal.code, orgId);
       return refusal.result;
@@ -13688,22 +13732,6 @@ registerToolHandler('approve_qms_document', async () =>
    organization_users for the verified principal (ctx.userId, ctx.organizationId)
    through resolveSignerOrgRole, and checked against GOVERNED_WRITE_ROLES — the
    set requireEditorAccess uses — before anything is opened. Never from input. */
-/** The refusal for a caller without an editor role in the organization, or null when they have one. */
-async function editorRoleRefusal(tool: string, act: string, ctx: ToolContext): Promise<string | null> {
-  let orgRole: string | null;
-  try {
-    const { resolveSignerOrgRole } = await import('../part11/resolve-signer-role');
-    orgRole = await resolveSignerOrgRole(Number(ctx.userId), Number(ctx.organizationId));
-  } catch (err) {
-    return JSON.stringify({ error: `${tool} could not confirm your role in this organization, so nothing was changed: ${err instanceof Error ? err.message : String(err)}` });
-  }
-  const { GOVERNED_WRITE_ROLES } = await import('../../middleware/orgMembership');
-  if (!orgRole || !GOVERNED_WRITE_ROLES.has(orgRole)) {
-    return JSON.stringify({ error: `Insufficient permissions: ${act} needs an editor role in this organization. Nothing was changed.` });
-  }
-  return null;
-}
-
 registerToolHandler('revise_qms_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'revise_qms_document requires tenant context.' });
   if (!ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires user context — a controlled revision cannot be opened without an identified actor (21 CFR Part 11).' });

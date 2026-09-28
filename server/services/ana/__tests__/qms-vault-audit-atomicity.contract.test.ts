@@ -236,8 +236,13 @@ describe('create_qms_document — controlled document creation is audited atomic
       { doc_number: 'SOP-102', title: 'x', doc_type: 'sop' },
       { organizationId: 1, humanConfirmed: true },
     );
-    expect(res.error).toMatch(/requires user context/i);
+    // 2026-09-28: the registry wrapper now refuses a confirmed write with no
+    // identified member (writeRoleRefusal) before the handler's own
+    // "requires user context" check is reached. Same refusal, one layer earlier.
+    expect(res.error).toMatch(/identified member/i);
+    expect(res.error).toMatch(/Nothing was changed/);
     expect((await pglite.query(`SELECT * FROM qms_documents`)).rows).toHaveLength(0);
+    expect(await ledgerRows()).toHaveLength(0);
   });
 });
 

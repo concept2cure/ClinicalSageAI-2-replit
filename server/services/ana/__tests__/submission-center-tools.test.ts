@@ -10,7 +10,19 @@
  * against a seeded DB fixture.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// 2026-09-28: the registry wrapper now asks organization_users for the caller's
+// role before any confirm-class tool runs; these guards model an editor ('member').
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+beforeEach(() => {
+  resolveSignerOrgRole.mockClear();
+});
+
 import { getToolHandler, type ToolContext } from '../AnaToolExecutor.js';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
@@ -273,7 +285,12 @@ describe('submission AI tasks — tenant + input guards', () => {
     const out = JSON.parse(
       await handler({ sequence_id: 1, section_code: '2.7.3', title: 'Summary' }, { humanConfirmed: true } as ToolContext),
     );
-    expect(out.error).toMatch(/tenant context/);
+    // 2026-09-28: a confirm-class call with no identified member is refused by the
+    // registry wrapper (writeRoleRefusal) before the handler's tenant guard, and
+    // before any role lookup.
+    expect(out.error).toMatch(/needs an identified member of the organization/);
+    expect(out.error).toMatch(/Nothing was changed/);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
   it('place_into_sequence validates required inputs before touching the core', async () => {
     const handler = getToolHandler('place_into_sequence')!;
@@ -566,7 +583,12 @@ describe('ingestion tools — tenant + input guards', () => {
   it('classify_submission_document refuses without org/user context', async () => {
     const handler = getToolHandler('classify_submission_document')!;
     const out = JSON.parse(await handler({ document_id: 1 }, { humanConfirmed: true } as ToolContext));
-    expect(out.error).toMatch(/tenant context/);
+    // 2026-09-28: a confirm-class call with no identified member is refused by the
+    // registry wrapper (writeRoleRefusal) before the handler's tenant guard, and
+    // before any role lookup.
+    expect(out.error).toMatch(/needs an identified member of the organization/);
+    expect(out.error).toMatch(/Nothing was changed/);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('classify_submission_document requires a numeric document_id', async () => {
@@ -578,7 +600,12 @@ describe('ingestion tools — tenant + input guards', () => {
   it('extract_submission_document refuses without org/user context', async () => {
     const handler = getToolHandler('extract_submission_document')!;
     const out = JSON.parse(await handler({ document_id: 1, section_code: '2.7', submission_id: 1 }, { humanConfirmed: true } as ToolContext));
-    expect(out.error).toMatch(/tenant context/);
+    // 2026-09-28: a confirm-class call with no identified member is refused by the
+    // registry wrapper (writeRoleRefusal) before the handler's tenant guard, and
+    // before any role lookup.
+    expect(out.error).toMatch(/needs an identified member of the organization/);
+    expect(out.error).toMatch(/Nothing was changed/);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('extract_submission_document validates required inputs', async () => {

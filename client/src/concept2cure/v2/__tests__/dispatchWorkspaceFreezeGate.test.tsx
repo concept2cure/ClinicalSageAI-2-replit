@@ -50,6 +50,9 @@ const AWAITING_RELEASE_SIGNATURE = {
   unacknowledgedShadowCriticals: 0, shadowReviewRunCount: 1, shadowReviewMissing: false,
   gate: { cleared: false, blockers: ['The release signature is unsigned.'] },
   freezeGate: { cleared: true, blockers: [] },
+  // What the server sends for a never-signed sequence: the dispatch signature
+  // would supply the release (P11-28b). Kept so this fixture is the real shape.
+  dispatchGateOnSigning: { cleared: true, blockers: [] },
   releaseSignature: { required: true, verdict: 'unsigned', cleared: false },
   readiness: { errors: 0, warnings: 0, infos: 0, findings: [] }, leafCount: 4,
 };
@@ -93,6 +96,7 @@ describe('DispatchWorkspace — the Freeze button is gated on freezeGate', () =>
     serve({
       ...AWAITING_RELEASE_SIGNATURE,
       freezeGate: { cleared: false, blockers: ['No completed Shadow Review has run for this sequence'] },
+      dispatchGateOnSigning: { cleared: false, blockers: ['No completed Shadow Review has run for this sequence'] },
     });
     render(<DispatchWorkspace {...({ sub: SUB, seq: SEQ, onGoverned: vi.fn() } as any)} />);
     await waitFor(() => expect(text()).toMatch(/Dispatch/));
@@ -109,6 +113,7 @@ describe('DispatchWorkspace — the Freeze button is gated on freezeGate', () =>
       ...AWAITING_RELEASE_SIGNATURE,
       gate: { cleared: false, blockers: ['The release signature no longer binds its content.'] },
       freezeGate: { cleared: false, blockers: ['The release signature no longer binds its content.'] },
+      dispatchGateOnSigning: { cleared: false, blockers: ['The release signature no longer binds its content.'] },
       releaseSignature: { required: true, verdict: 'invalid', cleared: false },
     });
     render(<DispatchWorkspace {...({ sub: SUB, seq: SEQ, onGoverned: vi.fn() } as any)} />);

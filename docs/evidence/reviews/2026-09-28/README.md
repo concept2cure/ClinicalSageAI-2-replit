@@ -70,13 +70,31 @@ Checks on the whole batch:
 
 ### Open items raised by the fixes (for the control session)
 
-1. **Class-level role gap in AnA's confirmed writes.** The QMS fix agent matched each confirm or
-   conditional register entry against its handler: 93 of 179 write a governed record with no role
-   check, and service-routed writers are also unchecked. Seventeen of them are in the launch catalog,
-   among them `create_qms_document`, `save_document_to_vault`, `update_vault_document`,
-   `create_protocol_document` and `create_regulatory_commitment`. `/api/ana-ri` is mounted with
-   `authenticateToken` only, so a `viewer` can confirm any of them. One check in the registry wrapper,
-   for every write-class tool, is the proportionate fix. Taken up next in this session.
+1. **Class-level role gap in AnA's confirmed writes: fixed the same day.** The QMS fix agent matched
+   each confirm or conditional register entry against its handler: 93 of 179 wrote a governed record with
+   no role check, and service-routed writers were also unchecked. Seventeen were in the launch catalog,
+   among them `create_qms_document`, `save_document_to_vault`, `update_vault_document` and
+   `create_protocol_document`. `/api/ana-ri` is mounted with `authenticateToken` only, so a `viewer`
+   could confirm any of them.
+
+   The fix is one rule in the registry wrapper (`writeRoleRefusal` in `AnaToolExecutor.ts`), beside the
+   confirmation gate, which every way of reaching a handler passes through. A call whose register class is
+   `confirm` runs only for an identified member whose role in `organization_users` is in
+   `GOVERNED_WRITE_ROLES`, the set `requireEditorAccess` uses. It fails closed when the role cannot be read.
+   - Platform commands keep their own RBAC (class `command`).
+   - Reads and `self` are not asked.
+   - The only production caller that marks a write as confirmed (`/api/ana-ri/governed-action`) always
+     passes the verified user and organisation.
+
+   Proof:
+   - `confirmed-write-role-gate.test.ts`: 6 of 9 fail without the rule, 9 of 9 pass with it.
+   - The rule broke 107 existing tests in 32 files. Five agents classified every failure as a harness
+     that never modelled a role, or as a gate-subject test. None was a production path.
+   - The harnesses now model an editor, and the gate-subject tests pin the new refusal. Each removed
+     assertion matched a handler message that is now unreachable, and was replaced with a stricter one.
+     Several files pin the viewer case, each shown failing with `member` substituted.
+   - All 133 tool-handler test files pass: 2,379 tests.
+
 2. **Enterprise sign-in session organisation.** `verify-password` should choose the session's
    organisation with `signInMembership`, so that the token, the challenge event and `verify-mfa` agree
    for a membership-only account. As it stands, such an account is refused `NO_ORGANIZATION` at that
