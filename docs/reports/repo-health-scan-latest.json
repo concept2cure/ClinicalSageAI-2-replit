@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T16:50:30.618Z",
+  "generatedAt": "2026-09-28T16:52:20.091Z",
   "git": {
-    "sha": "d417639585a630b2aafcdfaec5182a6fc813d117",
+    "sha": "46f118c028a2bad2f6a2b94990f211d5882cbeee",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2009,7 +2009,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 191827
+        "bytes": 192487
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2195,7 +2195,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 4478
+        "lines": 4482
       },
       {
         "file": "server/storage.ts",

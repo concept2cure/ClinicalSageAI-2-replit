@@ -81,7 +81,6 @@ import type { NavigationDirective } from '../../../shared/navigation/index.js';
 import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
 import {
   runAgenticToolLoop,
-  type StoppedReason,
   resolveMaxRounds,
   resolveRoundExtension,
   capToolResultForModel,
@@ -107,6 +106,7 @@ import {
   formatStoppedTurnNote,
   formatTraceForContext,
   refusalOf,
+  turnEndingReason,
   turnStopWarning,
   type ToolTraceEntry,
 } from '../../services/ana/tool-trace.js';
@@ -172,7 +172,7 @@ import {
   reapOrphanedRuns,
   type RunHandle,
 } from '../../services/ana/run-control.js';
-import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-status.js';
+import { MAX_PAUSE_MS, type HumanControlEvent, type TurnStoppedReason } from '../../services/ana/run-status.js';
 import { createRunHold, type RunHold } from '../../services/ana/run-hold.js';
 import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../../services/ana/governed-tool-gate.js';
 import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
@@ -325,11 +325,14 @@ export function mountStreamRoute(router: Router): void {
     // Why the agentic loop stopped, when it ran; endRun records it. A turn
     // whose first answer called no tools never enters the loop, and ends for
     // want of tools.
-    let loopStoppedReason: StoppedReason = 'no_more_tools';
+    let loopStoppedReason: TurnStoppedReason = 'no_more_tools';
     // How many tool rounds the loop ran (0 when it never entered). Carried with
     // the reason on `done` and into the message metadata, so "stopped at the
     // round limit" can say which limit.
     let loopRounds = 0;
+    // Why the latest model call stopped writing. The last one wrote the answer
+    // the person reads; if it was cut off, the turn did not finish.
+    let lastFinishReason: string | undefined;
     // The run is closed exactly once, by whichever of the disconnect handler and
     // the finally block gets there first.
     let runSettled = false;
@@ -1709,6 +1712,7 @@ export function mountStreamRoute(router: Router): void {
       // chain another step (extract structure → search → compare versions) or
       // produce a grounded answer. Bounded + thrash-resistant; the loop core is
       // unit-tested independently of the gateway and this SSE transport.
+      lastFinishReason = gwResponse.finishReason;
       const streamToolUses = (gwResponse as AnaGatewayResponse).toolUses;
       if (streamToolUses && streamToolUses.length > 0) {
         const toToolCall = (c: {
@@ -2592,6 +2596,7 @@ export function mountStreamRoute(router: Router): void {
             res.write(`data: ${JSON.stringify({ type: 'text', content: roundText })}\n\n`);
           }
           recordCacheUsage(roundResponse);
+          lastFinishReason = roundResponse.finishReason;
           emitServerToolSteps(roundResponse, round);
           recordServerToolEvidence(roundResponse);
           lastServedModel = servedModelOf(roundResponse);
@@ -2769,6 +2774,9 @@ export function mountStreamRoute(router: Router): void {
         loopStoppedReason = loopResult.stoppedReason;
         loopRounds = loopResult.rounds;
       }
+      // The answer she was writing was cut off — the length limit, or a stream
+      // that stalled mid-answer: the turn did not finish, whatever the loop saw.
+      loopStoppedReason = turnEndingReason(loopStoppedReason, lastFinishReason);
 
       // RIM interception moved to the background post-processing block below,
       // so it scans the *cleaned* content (guidance/command blocks stripped) and
