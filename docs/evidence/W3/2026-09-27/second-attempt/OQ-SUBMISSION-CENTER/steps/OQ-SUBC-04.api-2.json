@@ -1,0 +1,48 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/submissions/sequences/3/leaves",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "sectionCode": "m1.2",
+      "title": "Cover letter",
+      "documentTable": "vault_documents",
+      "documentUuid": "923dab70-0e06-4b93-80db-ea307f9f3ca4",
+      "lifecycleOp": "new",
+      "reason": "Placed by the validation run for this sequence"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 41,
+    "rateLimitRetries": 0,
+    "body": {
+      "id": 2,
+      "sequenceId": 3,
+      "sectionCode": "m1.2",
+      "title": "Cover letter",
+      "granularity": null,
+      "lifecycleOp": "new",
+      "documentTable": "vault_documents",
+      "documentId": null,
+      "documentUuid": "923dab70-0e06-4b93-80db-ea307f9f3ca4",
+      "documentType": null,
+      "leafGuid": null,
+      "parentLeafId": null,
+      "checksum": null,
+      "documentContentSha256": "2930c00b0752d4c0b5b4156add459d0609bb4c027b020c1ed6744e93eb931866",
+      "documentPinnedAt": "2026-09-28T01:05:49.812Z",
+      "organizationId": 1,
+      "createdBy": 1,
+      "createdAt": "2026-09-28T01:05:49.810Z",
+      "updatedAt": "2026-09-28T01:05:49.810Z",
+      "deletedAt": null,
+      "auditTrail": {
+        "persisted": true,
+        "chained": true
+      }
+    }
+  }
+}

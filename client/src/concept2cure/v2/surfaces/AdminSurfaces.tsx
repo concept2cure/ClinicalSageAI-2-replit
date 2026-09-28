@@ -993,6 +993,16 @@ async function downloadSignedAuditExport(): Promise<{ ok: boolean; error?: strin
   }
 }
 
+/** The account beside an actor's name: a name alone does not say which account acted (VSR-001 F-42). */
+function ActorRef({ value }: { value?: string | null }) {
+  if (!value) return null;
+  return (
+    <span className="mono" style={{ marginLeft: 6, fontSize: 10.5, color: 'var(--text-400)' }}>
+      {value}
+    </span>
+  );
+}
+
 export function AuditTrail({ onAsk }: SurfaceViewProps) {
   const [kind, setKind] = useState('all');
   const [q, setQ] = useState('');
@@ -1012,6 +1022,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       (!term ||
         e.event.toLowerCase().includes(term) ||
         e.actor.toLowerCase().includes(term) ||
+        (e.actorRef ?? '').toLowerCase().includes(term) ||
         e.target.toLowerCase().includes(term) ||
         e.id.toLowerCase().includes(term)),
   );
@@ -1372,7 +1383,10 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             <div className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>
               {e.when}
             </div>
-            <div style={{ fontSize: 12 }}>{e.actor}</div>
+            <div style={{ fontSize: 12 }}>
+              {e.actor}
+              <ActorRef value={e.actorRef} />
+            </div>
             <div style={{ fontWeight: 400, fontSize: 12 }}>
               <span
                 style={{
@@ -1436,7 +1450,10 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Event</span>
             <span style={{ fontWeight: 500 }}>{entry.event}</span>
             <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Actor</span>
-            <span>{entry.actor}</span>
+            <span>
+              {entry.actor}
+              <ActorRef value={entry.actorRef} />
+            </span>
             <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Timestamp</span>
             <span className="mono">{entry.when}</span>
             <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Target</span>

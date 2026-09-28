@@ -1,0 +1,5 @@
+OQ-PROJ-06b's new check (OQ-001 v0.9), verbatim, applied to the ledger response the
+2026-09-27 first attempt recorded at d224ecff (first-attempt/OQ-PROJECTS/steps/OQ-PROJ-06b.api-1.json).
+
+recorded ledger: 36 entries; entries whose actor reads "JM Smith": 22; accounts named "JM Smith" in the organisation: 2 (user:1, the run identity; user:2, the demo account)
+FAIL: the creation entry names its actor "JM Smith" by display name alone, not as the run identity's account user:1

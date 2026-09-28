@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T01:47:21.426Z",
+  "generatedAt": "2026-09-28T02:02:11.187Z",
   "git": {
-    "sha": "97465528bc4faa0a8ae0eaf2d9250fd924940c98",
+    "sha": "e8c2a885d46b839fbb1ec4f7c94556db680abe0f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2029,7 +2029,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 157499
+        "bytes": 158041
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2206,12 +2206,12 @@
         "lines": 3685
       },
       {
-        "file": "server/services/intelligent-report-engine.ts",
-        "lines": 3563
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 3566
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3549
+        "file": "server/services/intelligent-report-engine.ts",
+        "lines": 3563
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",

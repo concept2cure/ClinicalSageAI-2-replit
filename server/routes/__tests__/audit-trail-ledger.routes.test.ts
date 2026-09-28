@@ -96,11 +96,11 @@ function appFor(user: { organizationId?: number; role?: string } | null) {
 }
 
 /** The launch apps' governed write, exactly as they issue it: inside a transaction. */
-async function governedWrite(orgId: number, action: string, details: Record<string, unknown>): Promise<void> {
+async function governedWrite(orgId: number, action: string, details: Record<string, unknown>, userId = 11): Promise<void> {
   await pglite.transaction(async (tx) => {
     await writeChainedAuditRow(tx, {
       tenantId: orgId,
-      userId: 11,
+      userId,
       action,
       resourceType: 'vault_document',
       resourceId: 'doc-42',
@@ -258,5 +258,39 @@ describe('GET /api/audit-trail/ledger — the verdict sees cross-tenant legacy l
     const res = await request(appFor({ organizationId: ORG })).get('/api/audit-trail/ledger');
     expect(res.status).toBe(200);
     expect(res.body.meta.chain).toMatchObject({ ok: true, legacyRows: 1, rowsChecked: 1 });
+  });
+});
+
+/* ── F-42 (VSR-001 §18) ──────────────────────────────────────────────────────
+   The ledger named the account that acted by its display name alone, and a
+   display name is not an identity. In the 2026-09-27 execution the run
+   identity and the demo account were both "JM Smith", and the entry for the
+   program the run created could not say which of them created it. */
+describe('GET /api/audit-trail/ledger — an entry names the account that acted (F-42)', () => {
+  it('tells apart two accounts that share a display name', async () => {
+    await pglite.exec(`INSERT INTO users (id, name, email) VALUES (12, 'Rita Reviewer', 'rita.two@example.test') ON CONFLICT (id) DO NOTHING`);
+    await governedWrite(ORG, 'vault.document.ingest', { description: 'Ingested by the first account' }, 11);
+    await governedWrite(ORG, 'vault.document.ingest', { description: 'Ingested by the second account' }, 12);
+
+    const res = await request(appFor({ organizationId: ORG })).get('/api/audit-trail/ledger');
+    expect(res.status).toBe(200);
+    const data: AuditLedgerEntry[] = res.body.data;
+    const by = (event: string) => data.find((e) => e.event === event);
+    expect(by('Ingested by the first account')).toMatchObject({ actor: 'Rita Reviewer', actorRef: 'user:11' });
+    expect(by('Ingested by the second account')).toMatchObject({ actor: 'Rita Reviewer', actorRef: 'user:12' });
+  });
+
+  it('names the account on an audit_events entry too, and names none for the system', async () => {
+    await pglite.query(
+      `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, record_hash, sequence_number)
+       VALUES ($1, 'projects.update', 'project', 1, 11, 'Rita Reviewer', $2, 1),
+              ($1, 'scim.sync', 'user', 2, NULL, 'SCIM', $3, 2)`,
+      [ORG, 'a'.repeat(64), 'b'.repeat(64)],
+    );
+    const res = await request(appFor({ organizationId: ORG })).get('/api/audit-trail/ledger');
+    expect(res.status).toBe(200);
+    const events = (res.body.data as AuditLedgerEntry[]).filter((e) => e.source === 'audit_events');
+    expect(events.find((e) => e.actor === 'Rita Reviewer')?.actorRef).toBe('user:11');
+    expect(events.find((e) => e.actor === 'SCIM')?.actorRef).toBeNull();
   });
 });

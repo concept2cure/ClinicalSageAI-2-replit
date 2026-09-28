@@ -3,6 +3,16 @@
 The weekly review `docs/LAUNCH_DEFINITION_OF_DONE.md` (operating cadence) requires, run on the six launch
 apps (Projects, Vault, Authoring, Submission Center, Submission Readiness, QMS controlled documents).
 
+> **A second, independent pass ran the same day: `ectd-lane-second-pass/`.**
+> Another session picked up the same 2026-09-24 debt concurrently and swept the
+> eCTD / Submission Center lane alone, at `c1cd656b2`, with four lenses. Neither
+> session knew of the other. **Their findings do not overlap** — that pass found
+> the Freeze button gated on the dispatch verdict (unreachable for IND/NDA/BLA/MAA)
+> and the tenant-isolation gate carrying no submission-lane table at all. Both
+> are fixed there; two further findings are filed, not fixed. This README is
+> unchanged apart from this note. The duplication was not coordinated and is
+> recorded in that directory's README.
+
 - **Head reviewed:** `aff7eae16` (`concept2cure-v2`, 2026-09-28 01:16 UTC).
 - **Lenses:** the repo's auditors invoked by name, read-only, no gate run with `write-baseline`:
   `part11-ux-auditor`, `honest-state-auditor`, `security-auditor`, `a11y-auditor`,

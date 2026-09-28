@@ -541,7 +541,30 @@ interface ReadinessAssessment {
   unacknowledgedShadowCriticals: number;
   shadowReviewRunCount: number;
   shadowReviewMissing: boolean;
+  /** The DISPATCH-step verdict: every gate, including the §11.70 requirement
+   *  that a release signature already exists. Governs dispatch, never freeze. */
   gate: { cleared: boolean; blockers: string[] };
+  /** The FREEZE-step verdict. Same gates, minus the REQUIREMENT for a release
+   *  signature — which `assess-dispatch-readiness.ts` computes separately
+   *  precisely because requiring one to freeze inverts the order the product
+   *  works in. An `invalid` signature still blocks it, so this is not the
+   *  weaker gate, only the correctly-scoped one.
+   *
+   *  Declared here, and not merely read, because it was the absence of a
+   *  declaration that hid the defect: the server returned `freezeGate` and the
+   *  client typed only `gate`, so reading the wrong field was not a type error.
+   *  Both fields are now on the interface; picking the wrong one is a choice a
+   *  reviewer can see, not a gap the compiler stays silent about. */
+  freezeGate: { cleared: boolean; blockers: string[] };
+  /** §11.70 state. Informational — the blocking happens in the two gates. */
+  releaseSignature?: {
+    required: boolean;
+    verdict: string;
+    runId?: string | null;
+    signatureId?: number | null;
+    detail?: string | null;
+    cleared: boolean;
+  };
   readiness: { errors: number; warnings: number; infos: number; findings: ReadinessFinding[] };
   leafCount: number;
 }
@@ -1275,7 +1298,21 @@ export function DispatchWorkspace({
               </div>
             )}
             <div className="sc-disp-actions">
-              {a.gate.cleared && seq.status === 'validated' && (
+              {/* FREEZE reads `freezeGate`, not `gate`. `gate` is the dispatch
+                  verdict and for IND / NDA / BLA / MAA it requires a §11.70
+                  release signature to already exist. Freezing is how a sequence
+                  becomes signable in the first place, so gating this button on
+                  `gate` hid it until a release had been signed — for exactly
+                  the four types that need one, the sequence could never leave
+                  `validated` through this screen. The server has computed the
+                  two verdicts separately since composeDispatchGatesForStep
+                  landed; only the client was still reading the single one. */}
+              {/* `?.` because this is network data, not a local value: a
+                  payload without `freezeGate` must hide the button, not throw
+                  and white-screen the workspace (hostilePayloadProbe). Missing
+                  is treated as NOT cleared — fail closed. It never falls back
+                  to `gate`, which is the defect this line is fixing. */}
+              {a.freezeGate?.cleared === true && seq.status === 'validated' && (
                 <button
                   type="button"
                   className="sp-primary sc-btn"
