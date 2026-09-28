@@ -20836,7 +20836,7 @@ registerToolHandler('review_protocol_design_gates', async (input, ctx) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Protocol industry-gap engines (docs/design/PROTOCOL_INDUSTRY_GAPS.md Tier 1).
 //
-// Fifteen READ-ONLY tools, each a thin call into protocol-industry-service.ts —
+// Sixteen READ-ONLY tools, each a thin call into protocol-industry-service.ts —
 // the same function the /api/study-design and /api/protocol-development routes
 // call, so AnA and the screen report one engine's output from one read. Every
 // engine is pure; the service reads the rows and throws a ProtocolDevError with
@@ -20875,9 +20875,10 @@ function industryDocId(input: Record<string, unknown>): number {
 
 type IndustryDesignEngine =
   | 'trial-schema' | 'ctq' | 'usdm' | 'dct-profile' | 'who-ictrp'
-  | 'dose-escalation' | 'enrollment' | 'interim-oc' | 'mmrm' | 'external-control' | 'multiplicity' | 'biospecimens';
+  | 'dose-escalation' | 'enrollment' | 'interim-oc' | 'mmrm' | 'external-control' | 'multiplicity' | 'biospecimens'
+  | 'master-protocol';
 
-/** The twelve design-only tools share one shape: bound design → engine → verbatim note. */
+/** The thirteen design-only tools share one shape: bound design → engine → verbatim note. */
 function registerIndustryDesignTool(tool: string, engine: IndustryDesignEngine, note: string): void {
   registerToolHandler(tool, async (input, ctx) => {
     if (!ctx?.organizationId) return JSON.stringify({ error: `${tool} requires tenant context.` });
@@ -20960,6 +20961,12 @@ registerIndustryDesignTool(
   'review_biospecimen_profile',
   'biospecimens',
   'Profiled by profileBiospecimens from the recorded specimen volumes. Report every figure and gap verbatim; totals with a missing volume are lower bounds. The OHRP figures are expedited-review reference points, not safety limits — never call the protocol unsafe for exceeding them, and never assume a volume.',
+);
+
+registerIndustryDesignTool(
+  'review_master_protocol',
+  'master-protocol',
+  'Checked by checkMasterProtocol. Report each element as stated or not stated and each integrity defect verbatim. A structural check only: it computes no statistic and does not judge adequacy — never call the design sound or compliant on its strength.',
 );
 
 registerToolHandler('review_spirit_conformance', async (input, ctx) => {

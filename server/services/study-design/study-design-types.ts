@@ -579,6 +579,41 @@ export interface ExternalControlPlan {
   covariateBalancePlanned?: boolean;
 }
 
+/**
+ * The structure of a master protocol (platform, basket, umbrella, MAMS): its
+ * sub-studies and the rules that govern them. Every value is the sponsor's;
+ * see master-protocol.ts.
+ */
+export interface MasterProtocolPlan {
+  subStudies: Array<{
+    id: string;
+    name: string;
+    /** The population or disease the sub-study enrols. */
+    population: string;
+    /** The biomarker that assigns participants to it (basket / umbrella). */
+    biomarker?: string;
+    /** The assay that measures the biomarker, and its validation status. */
+    biomarkerAssay?: string;
+    /** Arm names (design `arms`) this sub-study randomises between. */
+    arms: string[];
+    /** Its own statistical hypothesis and decision rule, stated. */
+    decisionRule?: string;
+  }>;
+  /**
+   * The arm several sub-studies share as control. `null` states there is none;
+   * absent means the plan does not say.
+   */
+  sharedControlArm?: string | null;
+  /** Whether comparisons use controls enrolled before a treatment arm opened. */
+  nonConcurrentControls?: 'not_used' | 'used_with_time_adjustment' | 'used';
+  /** How a new arm or sub-study is added (amendment, IRB, randomisation update). */
+  armAdditionProcedure?: string;
+  /** When an arm is dropped for futility or efficacy. */
+  armDroppingRules?: string;
+  /** How type I error is handled across sub-studies. */
+  multiplicityAcrossSubStudies?: string;
+}
+
 export interface StudyDesign {
   /** Stable id (set once persisted; optional for an in-memory/proposed design). */
   id?: string;
@@ -609,6 +644,8 @@ export interface StudyDesign {
   accrualPlan?: AccrualPlan;
   /** A pre-specified external-control borrowing plan. See external-control-plan.ts. */
   externalControlPlan?: ExternalControlPlan;
+  /** The sub-studies and governing rules of a master protocol. See master-protocol.ts. */
+  masterProtocol?: MasterProtocolPlan;
 
   /**
    * Regulatory-strategy attributes the regional rules read. Absent fields are
