@@ -29,6 +29,13 @@ vi.mock('../../ai-gateway/gateway', () => ({
   }),
 }));
 
+// 2026-09-28: a confirmed write now also needs an identified member with an editor
+// role (writeRoleRefusal, after the model and confirmation gates). The "person's
+// yes" case below models a member; the role is stubbed so no DB is needed.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({ resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member') }));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { executeAgenticLoop, getToolHandler, registerToolHandler } from '../AnaToolExecutor';
@@ -170,6 +177,7 @@ describe('the /api/chat door: the agentic loop tells the gate which model produc
   it('and on a person\'s yes, the Opus-written content reaches the handler', async () => {
     await getToolHandler('update_protocol_section')!({ section_id: 1, content: 'x' }, {
       organizationId: 1,
+      userId: 2,
       servingModel: OPUS,
       humanConfirmed: true,
     } as any);

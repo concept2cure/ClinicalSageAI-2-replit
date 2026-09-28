@@ -4,7 +4,17 @@
  * test short-circuit before any DB/connector call, so no mocking is required.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// 2026-09-28: confirmed writes now need an editor role (registry wrapper,
+// writeRoleRefusal); these calls model a confirmed person who may edit, so
+// the membership lookup answers 'member'. The pg stub has no organization_users row.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { getToolHandler } from '../AnaToolExecutor';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
@@ -24,8 +34,12 @@ describe('Add-on AnA tools — registration', () => {
 
 describe('Effort + COI tools — context + validation guards', () => {
   it('create_effort_certification refuses without tenant/user context', async () => {
+    // 2026-09-28: a confirmed write with no identified member is now refused by the
+    // registry wrapper (writeRoleRefusal) before the handler's own context check.
+    resolveSignerOrgRole.mockClear();
     const out = JSON.parse(await getToolHandler('create_effort_certification')!({ personnel_id: 1, period_start: '2026-01-01', period_end: '2026-06-30' }, { humanConfirmed: true } as any));
-    expect(out.error).toMatch(/tenant \+ user context/);
+    expect(out.error).toMatch(/needs an identified member of the organization\. Nothing was changed\./);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
   it('create_effort_certification requires period fields', async () => {
     const out = JSON.parse(await getToolHandler('create_effort_certification')!({ personnel_id: 1 }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
@@ -66,8 +80,11 @@ describe('Briefing + coverage-gap tools — context + input guards', () => {
     expect(out.error).toMatch(/tenant context/);
   });
   it('triage_compliance_attention requires tenant + user context', async () => {
+    // 2026-09-28: refused by the registry wrapper (no identified member) before the handler runs.
+    resolveSignerOrgRole.mockClear();
     const out = JSON.parse(await getToolHandler('triage_compliance_attention')!({}, { organizationId: 1, humanConfirmed: true } as any));
-    expect(out.error).toMatch(/tenant \+ user context/);
+    expect(out.error).toMatch(/needs an identified member of the organization\. Nothing was changed\./);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
   it('fulfill_regulatory_commitment requires a commitment_id', async () => {
     const out = JSON.parse(await getToolHandler('fulfill_regulatory_commitment')!({}, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
