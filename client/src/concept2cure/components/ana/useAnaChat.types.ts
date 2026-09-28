@@ -589,8 +589,10 @@ export interface UseAnaChatOptions {
   effortLevel?: 'fast' | 'balanced' | 'thorough' | null;
   /**
    * Explicit model override (gateway registry id) the user pinned in the
-   * advanced picker. Sent as `model_override` when set; the server validates it
-   * against the tenant's enabled models and drops it silently when invalid.
+   * advanced picker. Sent as `model_override` when set; the server pins it only
+   * when it is enabled for the tenant, is its approved-models entry and, on
+   * high-risk work, is approved for high risk. Otherwise it answers with the
+   * default model and says so in a `warning` frame (code MODEL_OVERRIDE_REFUSED).
    */
   modelOverride?: string | null;
   /**

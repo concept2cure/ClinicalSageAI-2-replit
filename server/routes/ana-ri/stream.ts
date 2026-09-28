@@ -5,7 +5,8 @@
  *  - pre-token `status` events during orchestration / context assembly
  *  - `thread_id` + `orchestration` metadata before first token
  *  - `text` tokens during gateway generation
- *  - `warning` events when server-side degradation occurs
+ *  - `warning` events when server-side degradation occurs, or a model the
+ *    request pinned is refused (code MODEL_OVERRIDE_REFUSED)
  *  - `grounding_strip`, `done`, and `post_done` events after last token
  *
  * Background post-processing (guidance executor, command executor, persistence,
@@ -29,6 +30,7 @@ import {
   resolveStrategyWithPrecedence,
   resolveModelOverride,
 } from '../../services/ai-gateway/effort.js';
+import { isHighRiskRequest } from '../../services/ai-governance/approved-models.js';
 import {
   resolveThinkingConfig,
   isSubstantiveTurn,
@@ -1332,16 +1334,52 @@ export function mountStreamRoute(router: Router): void {
         ? undefined
         : resolveApiEffort(effortUsed);
 
-      // Optional explicit model override. Validated against THIS tenant's enabled
-      // model set; an invalid / disabled / absent value is DROPPED SILENTLY and we
-      // fall back to the (effort-derived) strategy above. The override does not
-      // bypass governance — the gateway still enforces residency/ZDR placement.
-      // In deterministic mode (or any gateway substrate without a model registry)
-      // there is nothing to override against — pass an empty set so the override
-      // resolves to none and we fall back to the effort-derived strategy.
+      // Optional explicit model override, pinned only when it is governed:
+      // enabled in THIS tenant's model set, the registry row an approved-models
+      // entry (its id, provider and pinned version — CLAUDE.md Rule 2), and on
+      // high-risk work approved for high risk. `highRisk` is the gateway's own
+      // question (isHighRiskRequest), asked of the same taskType and riskTier
+      // this turn sends it below, and the approval is keyed to the row's
+      // registry id as the gateway's is, so a pin accepted here is not then
+      // refused by the gateway's high-risk check for the same row. A refused or
+      // absent value falls back to the (effort-derived) strategy or cost tier
+      // below — never a 4xx. That default is not itself checked against
+      // approved-models on normal-risk work (resolveTierModel matches enabled
+      // models only), which is why the warning does not call it governed.
+      //
+      // A refusal HERE is said: it used to be dropped silently, so a person who
+      // chose a model was answered by another under their choice. Two
+      // substitutions are still silent: the gateway drops a pin the tenant's
+      // placement (residency, ZDR, vendor allow-list) excludes and selects by
+      // strategy instead, and deterministic mode serves canned content whatever
+      // was pinned.
+      //
+      // The candidates are the registry's enabled models. In deterministic mode
+      // those are the models of whichever providers are configured (often none,
+      // so every override resolves to none); a substrate with no registry
+      // passes an empty set.
       const overrideCandidates =
         typeof gw.getModels === 'function' ? gw.getModels().filter(m => m.enabled) : [];
-      const resolvedOverride = resolveModelOverride(model_override, overrideCandidates);
+      const resolvedOverride = resolveModelOverride(model_override, overrideCandidates, {
+        highRisk: isHighRiskRequest(routingPlan.taskType, routingPlan.riskTier),
+      });
+      // Only when a model was named: most turns carry no override at all, and a
+      // non-string or blank value is not "the model you chose". Present tense:
+      // this is written before any model is called, and the default can fail.
+      if (
+        !resolvedOverride &&
+        typeof model_override === 'string' &&
+        model_override.trim() !== '' &&
+        !res.writableEnded
+      ) {
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'warning',
+            code: 'MODEL_OVERRIDE_REFUSED',
+            message: 'The model you chose is not available or approved for this work, so AnA is answering with the default model.',
+          })}\n\n`
+        );
+      }
 
       // Substantive-turn signal — drives BOTH the reasoning depth and the cost
       // tier below, computed once so they agree.
