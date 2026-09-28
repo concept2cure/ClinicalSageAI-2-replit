@@ -97,6 +97,16 @@
 -- ── AMENDED IN PLACE 2026-09-24, a third time (ledger L203) ─────────────────
 -- The chained list takes schema-qualified names and gains fourteen children
 -- outside public. See the note above that block.
+-- ── AMENDED IN PLACE 2026-09-28 (D3) ─────────────────────────────────────────
+-- drafting_tasks joins the text-program-id class (complaints, mdr_events,
+-- vigilance_events): generated draft content — title, eCTD section, draft text
+-- — naming its program by a TEXT project_id with no foreign key and no tenant
+-- column. Its two routes (server/routes/misc-inline-routes.ts, the /v1/drafting
+-- pair) already read and write it only through the program's ownership, inside
+-- a tenant scope; the table did not. Measured as app_service in tenant A's
+-- scope: B's draft was read, rewritten and deleted, and a task was filed under
+-- B's program and under no program at all. Nothing is removed from this file.
+-- Evidence docs/evidence/D3/2026-09-28-drafting-tasks/.
 --
 -- Idempotent: guarded on pg_policies and pg_class, safe to re-run every deploy.
 
@@ -182,6 +192,9 @@ DECLARE
     ['complaints',                 'program_id',       'regulatory_programs',  'id',       'organization_id'],
     ['mdr_events',                 'program_id',       'regulatory_programs',  'id',       'organization_id'],
     ['vigilance_events',           'program_id',       'regulatory_programs',  'id',       'organization_id'],
+    -- 2026-09-28 (D3): generated drafts, same shape — see the header note.
+    -- A task naming no program is visible to no tenant scope (fail closed).
+    ['drafting_tasks',             'project_id',       'regulatory_programs',  'id',       'organization_id'],
 
     -- Children with a foreign key into a tenant-keyed parent that had row
     -- security OFF: the output of scripts/db/rls-coverage-check.sql's child rule
