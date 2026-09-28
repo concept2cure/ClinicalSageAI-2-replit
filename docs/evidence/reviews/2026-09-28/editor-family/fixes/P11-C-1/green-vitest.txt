@@ -1,0 +1,237 @@
+
+ RUN  v4.1.7 <repo>
+
+stdout | server/middleware/__tests__/role-claims.test.ts
+{
+  "timestamp": "2026-09-28T03:05:32.074Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T03:05:32.075Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/middleware/__tests__/role-claims.test.ts
+{
+  "timestamp": "2026-09-28T03:05:32.076Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/middleware/__tests__/role-claims.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/middleware/__tests__/role-claims.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/middleware/__tests__/role-claims.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-development-study-design.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+{
+  "timestamp": "2026-09-28T03:05:32.244Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/protocol-development-study-design.test.ts
+{
+  "timestamp": "2026-09-28T03:05:32.244Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > grants regulatory-author to every org role that does the work 3ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > does NOT grant it to viewer — read-only is the point of that role 1ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > does not grant it to an unknown role 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > grants nothing beyond the functional role — a member does not become an admin 1ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > keeps the declared roles, and does not duplicate a role already present 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > reads the roles array when the token carries one, and the role claim otherwise 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > is case-insensitive about the stored role 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > the guard the grant exists for > requireRole(regulatory-author) admits a member and refuses a viewer 1ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > the guard the grant exists for > a member still cannot pass a guard that asks for admin or a platform role 1ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the platform grants > admits every organization role except viewer 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the platform grants > names no role the platform cannot grant 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the platform grants > is the ONE implementation — no route file keeps a private copy 39ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the platform grants > refuses a viewer, admits a member, and requires a usable org context 1ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses without re-authentication, and writes nothing 32ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a wrong password the same way 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses an undeclared meaning before asking for credentials (21 CFR 11.50) 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a meaning finalization cannot carry 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a viewer cannot sign, and nothing is asked or written 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > an enrolled second factor that was not given is named as such 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > finalizes, checks independence, and writes the ledger AND the signature row in one transaction 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > records the second factor only when one was verified 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a non-author cannot sign as the author 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an approval is checked for independence on the signing client 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an author approving their own protocol is refused before the finalization runs 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses without re-authentication, and records no disposition 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a viewer cannot sign a disposition 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > passes the signer and the declared meaning to the domain write, then signs 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a review assigned to someone else is refused and rolled back 15ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses authorship as a review meaning 2ms
+stderr | server/routes/__tests__/protocol-write-authority.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-write-authority.routes.test.ts
+{
+  "timestamp": "2026-09-28T03:05:33.554Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > 403 without organization context 28ms
+ ✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > returns the real-store protocols for the acting org, source = protocol_documents 5ms
+ ✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > honest empty list when the org has no protocols — no fallback data 3ms
+ ✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > fails closed to an empty list when the store is not provisioned (42P01) 3ms
+ ✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > 500s on a non-42P01 assembler failure 3ms
+ ✓ server/middleware/__tests__/signing-attempt-limiter.test.ts > signingAttemptLimiter > allows ten attempts, then refuses the eleventh with 429 72ms
+ ✓ server/middleware/__tests__/signing-attempt-limiter.test.ts > signingAttemptLimiter > counts per signer: another signer is not refused 24ms
+ ✓ server/middleware/__tests__/signing-attempt-limiter.test.ts > signingAttemptLimiter > one scope is one budget, even when two routers each build the limiter 26ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > reads the write routes from the routers themselves 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > a viewer adding a risk is refused, and nothing is filed or ledgered 30ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > the same request from a member is filed and ledgered 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-amendments/amendments 4ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-amendments/amendments/1/changes 9ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-amendments/amendments/1/status 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-budget/documents/1/items 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PUT /api/protocol-budget/documents/1/params 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-consent/forms 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-consent/elements/1 4ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-consent/forms/1/approve 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-development/documents/1/synopsis 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-development/documents/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/study-design 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/study-design/remove 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/design-derivation/apply 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-development/sections/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/objectives 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/eligibility 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/visits 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-development/documents/1/visits/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/visits/1/remove 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/assessments/1/remove 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/team 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/versions 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/finalize 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-deviations/deviations 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-deviations/deviations/1/assessment 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-deviations/deviations/1/capa 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-deviations/capa/1/status 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-deviations/deviations/1/close 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-milestones/documents/1/milestones 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-milestones/milestones/1/status 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-reviews/documents/1/reviewers 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-reviews/documents/1/comments 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-reviews/comments/1/resolve 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-reviews/assignments/1/disposition 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-risks/documents/1/risks 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-risks/risks/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-soa/documents/1/assessments 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-soa/cells 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-soa/cells/clear 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-templates/templates 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-templates/templates/1/sections 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-templates/templates/1/clone 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-templates/documents/1/save-as-template 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-amendments/amendments 9ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-amendments/amendments/1/changes 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-amendments/amendments/1/status 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-budget/documents/1/items 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PUT /api/protocol-budget/documents/1/params 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-consent/forms 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-consent/elements/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-consent/forms/1/approve 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-development/documents/1/synopsis 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-development/documents/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/study-design 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/study-design/remove 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/design-derivation/apply 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-development/sections/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/objectives 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/eligibility 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/visits 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-development/documents/1/visits/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/visits/1/remove 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/assessments/1/remove 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/team 4ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/versions 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/finalize 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-deviations/deviations 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-deviations/deviations/1/assessment 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-deviations/deviations/1/capa 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-deviations/capa/1/status 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-deviations/deviations/1/close 6ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-milestones/documents/1/milestones 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-milestones/milestones/1/status 4ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-reviews/documents/1/reviewers 5ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-reviews/documents/1/comments 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-reviews/comments/1/resolve 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-reviews/assignments/1/disposition 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-risks/documents/1/risks 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-risks/risks/1 4ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-soa/documents/1/assessments 6ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-soa/cells 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-soa/cells/clear 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-templates/templates 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-templates/templates/1/sections 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-templates/templates/1/clone 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-templates/documents/1/save-as-template 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendments 6ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendments/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendments/1/readiness 5ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendments/1/substantiality 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-budget/documents/1/summary 5ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-consent/forms 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-consent/forms/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-consent/forms/1/completeness 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents/1 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents/1/completeness 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents/1/design-derivation 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-deviations/deviations 11ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-deviations/deviations/1 10ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-milestones/documents/1/milestones 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-milestones/documents/1/timeline 4ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-reviews/documents/1/summary 8ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-risks/documents/1/register 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-soa/documents/1/matrix 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-templates/templates 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-templates/templates/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller whose session carries no role 2ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > binds the design and records the governed action 58ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > 404s for another organization's protocol and writes nothing 16ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > 404s for a design that is not this tenant's 10ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > refuses a reason shorter than the governed minimum 6ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > refuses a request with no organisation context, and writes nothing 8ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design/remove > unbinds and records the governed action 9ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design/remove > 404s for another organization's protocol 7ms
+
+ Test Files  6 passed (6)
+      Tests  159 passed (159)
+   Start at  03:05:30
+   Duration  5.63s (transform 4.00s, setup 283ms, import 8.94s, tests 3.49s, environment 1ms)
+

@@ -546,6 +546,21 @@ export function requireEditorAccess(req: any, res: any, next: () => void) {
   return next();
 }
 
+const READ_METHODS: ReadonlySet<string> = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+/**
+ * `requireEditorAccess` for a request that can change something; a read
+ * passes. Mounted once at the top of a router whose reads a viewer may use and
+ * whose writes it may not, so a write route added later is gated without
+ * anyone remembering to gate it. The ProtocolDev routers asked for a writing
+ * role on their two signing routes only, and a viewer could change everything
+ * else on a protocol (periodic review 2026-09-28, P11-C-1).
+ */
+export function requireEditorAccessForWrites(req: any, res: any, next: () => void) {
+  if (READ_METHODS.has(String(req.method ?? '').toUpperCase())) return next();
+  return requireEditorAccess(req, res, next);
+}
+
 /**
  * The acting user for a governed write, from the SESSION only.
  *

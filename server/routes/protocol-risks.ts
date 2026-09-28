@@ -16,8 +16,11 @@ import { recordGovernedAction } from './c2c/actions';
 import { addRiskTx, updateRiskTx, getRiskRegister } from '../services/protocol-risks/protocol-risks-service';
 import { recordProtocolRiskAdded, recordProtocolRiskUpdated, recordProtocolRiskRegisterView } from '../services/protocol-risks-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
+// A viewer reads a protocol and changes nothing on it (11.10(d), (g)).
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
