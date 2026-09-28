@@ -19,6 +19,7 @@ import {
   type WhoIctrpRecord,
   type WhoTrdsItem,
 } from '../who-ictrp-registration';
+import { interventions, primaryOutcomes, secondaryOutcomes } from '../who-ictrp-arms-outcomes';
 import { type StudyDesign } from '../study-design-types';
 
 const OFFICIAL_NAMES = [
@@ -100,6 +101,11 @@ function item(rec: WhoIctrpRecord, n: number): WhoTrdsItem {
   return found;
 }
 
+/** A design value outside the TypeScript union, as JSON loaded from the database can carry. */
+function untyped<T>(value: string): T {
+  return value as unknown as T;
+}
+
 describe('WHO TRDS item list', () => {
   it('is version 1.3.1 with exactly 24 items in official order and official names', () => {
     expect(WHO_TRDS_VERSION).toBe('1.3.1');
@@ -110,6 +116,16 @@ describe('WHO TRDS item list', () => {
 
   it('declares exactly the fourteen registration-only items', () => {
     expect([...WHO_TRDS_REGISTRATION_ONLY_ITEMS]).toEqual(REGISTRATION_ONLY);
+  });
+
+  it('is frozen deeply: the list, every item definition, and the registration-only list', () => {
+    expect(Object.isFrozen(WHO_TRDS_ITEMS)).toBe(true);
+    for (const def of WHO_TRDS_ITEMS) expect(Object.isFrozen(def)).toBe(true);
+    expect(Object.isFrozen(WHO_TRDS_REGISTRATION_ONLY_ITEMS)).toBe(true);
+    expect(() => {
+      (WHO_TRDS_ITEMS[0] as { name: string }).name = 'TAMPERED';
+    }).toThrow(TypeError);
+    expect(projectWhoIctrp(completeDesign()).items[0].name).toBe('Primary Registry and Trial Identifying Number');
   });
 });
 
@@ -159,6 +175,7 @@ describe('projectWhoIctrp — design-carried items', () => {
         'Placebo: Placebo oral once daily; duration 24 weeks (placebo)',
       ],
     });
+    expect(item(rec, 13).gap).toBeUndefined();
     expect(item(rec, 17)).toMatchObject({ status: 'rendered', value: '400' });
     expect(item(rec, 19)).toMatchObject({
       status: 'rendered',
@@ -166,26 +183,14 @@ describe('projectWhoIctrp — design-carried items', () => {
     });
     expect(item(rec, 20)).toMatchObject({
       status: 'rendered',
-      value: ['Body weight change: change from baseline in body weight; timepoint: week 24'],
+      value: [
+        '[key secondary] Body weight change: change from baseline in body weight; timepoint: week 24',
+        '[secondary] FPG change: change in fasting plasma glucose; timepoint: week 24',
+      ],
     });
     for (const n of [10, 11, 12, 13, 14, 15, 17, 19, 20]) {
       expect(item(rec, n).status).not.toBe('missing');
     }
-  });
-
-  it('item 11 renders target regions verbatim (trimmed, de-duplicated) as partial, never as confirmed countries', () => {
-    const i = item(projectWhoIctrp(completeDesign()), 11);
-    expect(i.status).toBe('partial');
-    expect(i.value).toEqual(['Germany', 'India']);
-    expect(i.gap).toMatch(/does not state that each entry is a country of recruitment/);
-  });
-
-  it('item 11 is missing when the design carries no target regions', () => {
-    const d = completeDesign();
-    delete d.targetRegions;
-    const i = item(projectWhoIctrp(d), 11);
-    expect(i).toMatchObject({ status: 'missing', value: null });
-    expect(i.gap).toMatch(/targetRegions records no country or region/);
   });
 
   it('item 14 renders every criterion and the stated age bounds, and names sex as absent', () => {
@@ -214,10 +219,71 @@ describe('projectWhoIctrp — design-carried items', () => {
     d.population.eligibility = [];
     expect(item(projectWhoIctrp(d), 14)).toMatchObject({ status: 'missing', value: null, gap: 'The design records no eligibility criteria.' });
   });
+
+  it('item 14 is missing when every criterion is blank, and renders no empty "Inclusion: " line', () => {
+    const d = completeDesign();
+    d.population.eligibility = [{ type: 'inclusion', text: '  ' }, { type: 'exclusion', text: '' }];
+    expect(item(projectWhoIctrp(d), 14)).toMatchObject({ status: 'missing', value: null, gap: 'Every recorded eligibility criterion is empty.' });
+  });
+
+  it('item 14 names a criterion of unrecognised type instead of dropping it silently or calling it empty', () => {
+    const d = completeDesign();
+    d.population.eligibility = [{ type: untyped<'inclusion'>('Inclusion'), text: 'Age 18-75 years' }];
+    const only = item(projectWhoIctrp(d), 14);
+    expect(only).toMatchObject({ status: 'missing', value: null });
+    expect(only.gap).toBe('Not rendered: criterion "Age 18-75 years" has unrecognised type "Inclusion" (the recognised types are "inclusion" and "exclusion").');
+
+    d.population.eligibility.push({ type: 'inclusion', text: 'HbA1c >= 7%' }, { type: 'exclusion', text: ' ' });
+    const mixed = item(projectWhoIctrp(d), 14);
+    expect(mixed.status).toBe('partial');
+    expect((mixed.value as string[]).filter(v => /^(Inclusion|Exclusion):/.test(v))).toEqual(['Inclusion: HbA1c >= 7%']);
+    expect(mixed.gap).toContain('criterion "Age 18-75 years" has unrecognised type "Inclusion"');
+    expect(mixed.gap).toContain('1 recorded eligibility criterion with empty text is not rendered.');
+  });
 });
 
-describe('projectWhoIctrp — study type, interventions, sample size', () => {
-  it('item 15 renders type, allocation, masking, assignment and phase as stated, and names purpose as absent', () => {
+describe('projectWhoIctrp — item 11 countries of recruitment', () => {
+  it('renders target regions verbatim (trimmed, de-duplicated) as partial, never as confirmed countries', () => {
+    const i = item(projectWhoIctrp(completeDesign()), 11);
+    expect(i).toMatchObject({ status: 'partial', value: ['Germany', 'India'], source: 'StudyDesign.targetRegions' });
+    expect(i.gap).toMatch(/does not state that each entry is a country of recruitment/);
+  });
+
+  it('renders the planned recruiting sites\' countries from the accrual plan', () => {
+    const d = completeDesign();
+    delete d.targetRegions;
+    d.accrualPlan = { timeUnit: 'month', sites: [{ id: 's1', country: 'Germany', meanRate: 1 }, { id: 's2', country: ' India ', meanRate: 2 }, { id: 's3', country: 'Germany', meanRate: 1 }] };
+    expect(item(projectWhoIctrp(d), 11)).toEqual({
+      number: 11,
+      name: 'Countries of Recruitment',
+      status: 'rendered',
+      value: ['Germany', 'India'],
+      source: 'StudyDesign.accrualPlan.sites[].country',
+    });
+  });
+
+  it('with both sources, renders site countries and names each target region no site country matches', () => {
+    const d = completeDesign();
+    d.targetRegions = ['Germany', 'EU'];
+    d.accrualPlan = { timeUnit: 'month', sites: [{ id: 's1', country: 'Germany', meanRate: 1 }, { id: 's2', meanRate: 1 }] };
+    const i = item(projectWhoIctrp(d), 11);
+    expect(i).toMatchObject({ status: 'partial', value: ['Germany'], source: 'StudyDesign.accrualPlan.sites[].country' });
+    expect(i.gap).toContain('1 of 2 planned site(s) in StudyDesign.accrualPlan.sites record no country');
+    expect(i.gap).toContain('StudyDesign.targetRegions also records "EU", which no planned site\'s country matches');
+  });
+
+  it('is missing, naming both fields, when neither records a country', () => {
+    const d = completeDesign();
+    delete d.targetRegions;
+    d.accrualPlan = { timeUnit: 'month', sites: [{ id: 's1', meanRate: 1 }] };
+    const i = item(projectWhoIctrp(d), 11);
+    expect(i).toMatchObject({ status: 'missing', value: null });
+    expect(i.gap).toBe('Neither StudyDesign.accrualPlan.sites[].country nor StudyDesign.targetRegions records a country or region.');
+  });
+});
+
+describe('projectWhoIctrp — item 15 study type', () => {
+  it('renders type, allocation, masking, assignment and phase as stated, and names purpose as absent', () => {
     const i = item(projectWhoIctrp(completeDesign()), 15);
     expect(i.status).toBe('partial');
     expect(i.value).toEqual([
@@ -231,7 +297,7 @@ describe('projectWhoIctrp — study type, interventions, sample size', () => {
     expect(i.gap).toMatch(/Purpose \(treatment, prevention, diagnostic, …\) is not recorded/);
   });
 
-  it('item 15 maps no structural design outside the TRDS assignment categories', () => {
+  it('maps no structural design outside the TRDS assignment categories', () => {
     const d = completeDesign();
     d.framework.structuralDesign = 'adaptive';
     d.phase = '2b';
@@ -242,7 +308,7 @@ describe('projectWhoIctrp — study type, interventions, sample size', () => {
     expect(i.gap).not.toMatch(/Who is masked/);
   });
 
-  it('item 15 does not state a study type when no arm assigns an intervention', () => {
+  it('does not state a study type when no arm assigns an intervention', () => {
     const d = completeDesign();
     d.arms = [];
     delete d.randomization;
@@ -253,16 +319,53 @@ describe('projectWhoIctrp — study type, interventions, sample size', () => {
     expect(i.gap).toMatch(/Masking is not stated/);
   });
 
-  it('item 13 is partial when an arm has no intervention and missing with no arms', () => {
-    const d = completeDesign();
-    d.arms.push({ name: 'Observation', interventions: [] });
-    const i = item(projectWhoIctrp(d), 13);
-    expect(i.status).toBe('partial');
-    expect((i.value as string[])[2]).toBe('Observation: (no intervention recorded)');
-    expect(i.gap).toBe('No intervention is recorded for arm(s): Observation.');
+  it('invents neither a phase nor an assignment when the design records neither', () => {
+    const d = completeDesign() as Partial<StudyDesign>;
+    delete d.phase;
+    delete d.framework;
+    const i = item(projectWhoIctrp(d as StudyDesign), 15);
+    expect((i.value as string[]).some(v => v.startsWith('Phase:'))).toBe(false);
+    expect((i.value as string[]).some(v => v.startsWith('Assignment:'))).toBe(false);
+    expect(i.gap).toContain('Phase is not stated: the design records no phase.');
+    expect(i.gap).toContain('Assignment is not stated: the design records no structural design.');
+  });
 
-    d.arms = [];
-    expect(item(projectWhoIctrp(d), 13)).toMatchObject({ status: 'missing', value: null });
+  it('renders no Object.prototype member for an unrecognised phase, structural design, allocation or blinding, and echoes the value', () => {
+    const d = completeDesign();
+    d.phase = untyped<StudyDesign['phase']>('constructor');
+    d.framework.structuralDesign = untyped<StudyDesign['framework']['structuralDesign']>('toString');
+    d.randomization = { ratio: [1, 1], allocationMethod: untyped<'block'>('hasOwnProperty'), blinding: untyped<'open'>('valueOf') };
+    const i = item(projectWhoIctrp(d), 15);
+    expect(i.value).toEqual(['Study type: Interventional']);
+    expect(JSON.stringify(i)).not.toMatch(/function|native code/);
+    expect(i.gap).toContain('Phase is not stated: "constructor" is not a recognised StudyPhase.');
+    expect(i.gap).toContain('structural design "toString" is not one of the TRDS assignment categories');
+    expect(i.gap).toContain('Allocation is not stated: "hasOwnProperty" is not a recognised allocation method.');
+    expect(i.gap).toContain('Masking is not stated: "valueOf" is not a recognised blinding level.');
+    expect(i.gap).not.toMatch(/Who is masked/);
+  });
+
+  it('a single-arm design that records several arms or a randomization states neither allocation nor assignment, and names the contradiction', () => {
+    const d = completeDesign();
+    d.framework.structuralDesign = 'single_arm';
+    d.randomization = { ratio: [1, 1], allocationMethod: 'block', blinding: 'open' };
+    const i = item(projectWhoIctrp(d), 15);
+    expect((i.value as string[]).some(v => /^(Allocation|Assignment):/.test(v))).toBe(false);
+    expect(i.gap).toContain('the structural design is "single_arm" but 2 arms are recorded and randomization.allocationMethod is "block"');
+
+    d.arms = [d.arms[0]];
+    d.randomization = { ratio: [1], allocationMethod: 'none', blinding: 'open' };
+    const consistent = item(projectWhoIctrp(d), 15);
+    expect(consistent.value).toEqual(['Study type: Interventional', 'Allocation: N/A (single arm)', 'Masking: None (open label)', 'Assignment: Single arm', 'Phase: 3']);
+  });
+
+  it('does not call a minimization randomized when the design does not say it has a random element', () => {
+    const d = completeDesign();
+    d.randomization = { ratio: [1, 1], allocationMethod: 'minimization', blinding: 'double' };
+    const i = item(projectWhoIctrp(d), 15);
+    expect(i.value).toContain('Allocation: Minimization');
+    expect((i.value as string[]).some(v => /Randomized/.test(v))).toBe(false);
+    expect(i.gap).toContain('Whether the minimization includes a random element is not recorded');
   });
 
   it('sample size is missing when plannedSampleSize is absent or not a positive whole number', () => {
@@ -282,45 +385,31 @@ describe('projectWhoIctrp — study type, interventions, sample size', () => {
   });
 });
 
-describe('projectWhoIctrp — outcomes split by role', () => {
-  it('primary endpoints go to item 19 only and key secondaries to item 20 only', () => {
+describe('projectWhoIctrp — outcomes by role', () => {
+  it('primary endpoints go to item 19 only; key secondary and secondary endpoints to item 20 only', () => {
     const rec = projectWhoIctrp(completeDesign());
     const primary = (item(rec, 19).value as string[]).join(' | ');
-    const keySecondary = (item(rec, 20).value as string[]).join(' | ');
+    const secondary = (item(rec, 20).value as string[]).join(' | ');
     expect(primary).toMatch(/HbA1c change/);
-    expect(primary).not.toMatch(/Body weight change/);
-    expect(keySecondary).toMatch(/Body weight change/);
-    expect(keySecondary).not.toMatch(/HbA1c change/);
-    for (const other of ['FPG change', 'Hypoglycaemia', 'Biomarker Z']) {
+    expect(primary).not.toMatch(/Body weight change|FPG change/);
+    expect(secondary).toMatch(/\[key secondary\] Body weight change/);
+    expect(secondary).toMatch(/\[secondary\] FPG change/);
+    expect(secondary).not.toMatch(/HbA1c change/);
+    for (const other of ['Hypoglycaemia', 'Biomarker Z']) {
       expect(primary).not.toContain(other);
-      expect(keySecondary).not.toContain(other);
+      expect(secondary).not.toContain(other);
     }
   });
 
-  it('a plain secondary endpoint is not promoted to a key secondary outcome', () => {
-    const d = completeDesign();
-    d.endpoints = d.endpoints.filter(e => e.role !== 'key_secondary');
-    const i = item(projectWhoIctrp(d), 20);
-    expect(i).toMatchObject({ status: 'missing', value: null });
-    expect(i.gap).toBe('No endpoint has role "key_secondary". 1 endpoint(s) with role "secondary" are not promoted to key secondary outcomes.');
-  });
-
-  it('an outcome without a timepoint is partial; the Schedule of Activities supplies one when it collects the endpoint', () => {
+  it('items 13, 19 and 20 are exactly what who-ictrp-arms-outcomes.ts renders for the same design', () => {
     const d = completeDesign();
     delete d.endpoints[0].timepoint;
-    const untimed = item(projectWhoIctrp(d), 19);
-    expect(untimed.status).toBe('partial');
-    expect(untimed.gap).toBe('Timepoint is not recorded for: HbA1c change.');
-
-    d.scheduleOfActivities = {
-      epochs: [{ id: 'e1', name: 'Treatment', kind: 'treatment', order: 0 }],
-      visits: [{ id: 'V9', name: 'Week 24', epochId: 'e1', studyDay: 168, order: 0 }],
-      activities: [{ id: 'a1', name: 'HbA1c', category: 'efficacy', endpointNames: ['HbA1c change'], order: 0 }],
-      cells: [{ activityId: 'a1', visitId: 'V9', state: 'performed' }],
-    };
-    const timed = item(projectWhoIctrp(d), 19);
-    expect(timed.status).toBe('rendered');
-    expect((timed.value as string[])[0]).toMatch(/timepoint: Week 24 \(day 168\)$/);
+    d.arms[0].interventions[0].dose = ' ';
+    const rec = projectWhoIctrp(d);
+    expect(item(rec, 13)).toEqual({ number: 13, name: 'Intervention(s)', ...interventions(d) });
+    expect(item(rec, 19)).toEqual({ number: 19, name: 'Primary Outcome(s)', ...primaryOutcomes(d) });
+    expect(item(rec, 20)).toEqual({ number: 20, name: 'Key Secondary Outcomes', ...secondaryOutcomes(d) });
+    expect([item(rec, 13).status, item(rec, 19).status]).toEqual(['partial', 'partial']);
   });
 
   it('primary outcome is missing when no endpoint has the primary role', () => {

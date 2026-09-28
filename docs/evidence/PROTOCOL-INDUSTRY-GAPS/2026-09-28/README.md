@@ -178,8 +178,10 @@ re-ran verify-by-failing. Landed so far:
 
 | DCT profile | 10 (1 blocking) | duplicated activity ids took whichever location came last in the array — order-dependent and fabricated; a cell naming an undefined visit was dropped silently; an epoch "undefined" was invented; IMP, PK and consent rules covered only some off-site locations (`DCT-IMP-HOME` is now `DCT-IMP-OFFSITE`) | 61 (was 44) | 10 |
 
-The remaining engines (WHO, USDM, deviation trends, redline) are being fixed
-the same way; their rows are added here as they land.
+| WHO TRDS | 7 major (+ minors) | a name-only intervention rendered item 13 complete; every SoA visit — even an unresolved visit id — was presented as an outcome timepoint; the item list was frozen only shallowly; item 11 ignored the accrual plan's site countries; the phase and assignment fallbacks were untested | 47 (was 24) | 16 |
+
+The remaining engines (USDM, deviation trends, redline) are being fixed the
+same way; their rows are added here as they land.
 
 ## What is not done, and why
 
