@@ -105,6 +105,27 @@ describe('POST /api/study-design/persist', () => {
   });
 });
 
+describe('the governed writes never put the caught error in a 5xx body', () => {
+  it('persist and delete answer 500 with a code and a sentence, not the error text', async () => {
+    h.persist.mockRejectedValue(new Error('duplicate key value violates unique constraint "cdisc_prm_studies_pkey"'));
+    const p = await post({ ...DESIGN, programId: PROGRAM });
+    expect(p.status).toBe(500);
+    expect(JSON.stringify(p.body)).not.toMatch(/duplicate key|cdisc_prm_studies/);
+    expect(p.body.error).toBe('INTERNAL_ERROR');
+    h.query.mockImplementation(async (sql: string) => {
+      if (/DELETE|UPDATE/i.test(sql)) throw new Error('relation "cdisc_prm_studies" does not exist');
+      return { rows: [] };
+    });
+    try {
+      const d = await del({ reason: 'Superseded by the amended design' });
+      expect(d.status).toBe(500);
+      expect(JSON.stringify(d.body)).not.toMatch(/relation|cdisc_prm_studies/);
+    } finally {
+      h.query.mockImplementation(async () => ({ rows: [] }));
+    }
+  });
+});
+
 describe('DELETE /api/study-design/:studyId', () => {
   it('refuses a viewer, before a connection is taken', async () => {
     const res = await del({ reason: 'Superseded by the amended design' }, 'viewer');
