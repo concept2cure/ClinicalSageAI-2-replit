@@ -1505,7 +1505,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
                   <span className="esig" style={{ marginRight: 6 }} role="img" aria-label="E-signed (21 CFR Part 11)">
                     {I.shieldCheck}
                   </span>
-                  {entry.meaning} (ss11.50)
+                  {entry.meaning} (§11.50)
                 </span>
               </React.Fragment>
             )}
@@ -1534,7 +1534,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             >
               {I.shieldCheck}
               <span>
-                This entry was digitally signed per 21 CFR ss11.50. Meaning:{' '}
+                This entry was digitally signed per 21 CFR §11.50. Meaning:{' '}
                 <strong>{entry.meaning}</strong>. Signature is hash-bound and tamper-evident.
               </span>
             </div>
@@ -3066,7 +3066,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                   <div className="ac-val-row">
                     <div className="ac-val-main">
-                      <b>E-signatures (21 CFR ss11.50 / ss11.70)</b>
+                      <b>E-signatures (21 CFR §11.50 / §11.70)</b>
                       <span>
                         Password + TOTP verification; signature meaning recorded on every signing.
                       </span>
