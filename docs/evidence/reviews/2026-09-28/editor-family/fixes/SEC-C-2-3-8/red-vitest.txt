@@ -1,0 +1,29 @@
+$ npx vitest run server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts   (before the fix)
+ × protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a finalized protocol takes no new assessment, and no cell is set or cleared 18ms
+ × protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a superseded protocol takes no new assessment, and no cell is set or cleared 6ms
+ ✓ protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a protocol still in development takes all three 9ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > another tenant cannot claim, block or overwrite a protocol’s budget parameters 6ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against another tenant’s protocol is refused, and nothing is written 5ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against another tenant’s protocol is refused, and nothing is written 6ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against another tenant’s protocol is refused, and nothing is written 6ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against another tenant’s protocol is refused, and nothing is written 5ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against another tenant’s protocol is refused, and nothing is written 7ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against another tenant’s protocol is refused, and nothing is written 5ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against a protocol that does not exist is refused 2ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against a protocol that does not exist is refused 2ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against a protocol that does not exist is refused 2ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against a protocol that does not exist is refused 2ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against a protocol that does not exist is refused 2ms
+ × protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against a protocol that does not exist is refused 2ms
+ ✓ protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against the caller’s own protocol is written 5ms
+ ✓ protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against the caller’s own protocol is written 5ms
+ ✓ protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against the caller’s own protocol is written 5ms
+ ✓ protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against the caller’s own protocol is written 10ms
+ ✓ protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against the caller’s own protocol is written 4ms
+ ✓ protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against the caller’s own protocol is written 4ms
+AssertionError: the write was expected to be refused: expected null not to be null
+AssertionError: the write was expected to be refused: expected null not to be null
+AssertionError: the write was expected to be refused: expected null not to be null
+AssertionError: the write was expected to be refused: expected null not to be null
+ Test Files  1 failed (1)
+      Tests  15 failed | 7 passed (22)

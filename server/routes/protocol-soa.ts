@@ -33,7 +33,7 @@ function resolveOrgId(req: Request): number | null {
   const n = raw == null ? NaN : typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
 }
-const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, BAD_INPUT: 400 };
+const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, BAD_INPUT: 400, INVALID_STATE: 409 };
 function fail(res: Response, err: unknown): void {
   const code = (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) { res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } }); return; }

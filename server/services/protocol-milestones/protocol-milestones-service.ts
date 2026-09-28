@@ -10,6 +10,7 @@
 
 import { pool } from '../../db';
 import { summarizeTimeline, type TimelineSummary } from './protocol-milestones-logic';
+import { requireProtocolForWriteTx } from '../protocol-development/protocol-development-service';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -27,6 +28,7 @@ const STATUSES = ['planned', 'in_progress', 'met', 'missed', 'cancelled'];
 
 export async function addMilestoneTx(client: Queryable, orgId: number, userId: number, protocolDocumentId: number, input: { name: string; milestoneType?: string; targetDate?: string | null; notes?: string | null }): Promise<{ id: number }> {
   if (input.milestoneType && !TYPES.includes(input.milestoneType)) throw new ProtocolMilestoneError('BAD_INPUT', `Invalid milestone_type "${input.milestoneType}".`);
+  await requireProtocolForWriteTx(client, orgId, protocolDocumentId, { signedContent: false });
   const { rows } = await client.query(
     `INSERT INTO protocol_milestones (organization_id, protocol_document_id, name, milestone_type, target_date, status, notes, created_by)
      VALUES ($1,$2,$3,$4,$5,'planned',$6,$7) RETURNING id`,
