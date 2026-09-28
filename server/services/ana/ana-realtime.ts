@@ -15,13 +15,14 @@
  * unit-tests without sockets or a model.
  */
 
-import type { Server as SocketIOServer, Socket } from 'socket.io';
+import type { Server as SocketIOServer } from 'socket.io';
 
 import { createScopedLogger } from '../../utils/logger.js';
 import { verifyLiveToken } from '../token-revocation';
 import { requireAccessTokenReason } from '../../middleware/tokenType';
 import { checkOrgMembership } from '../../middleware/orgMembership';
 import { shouldProcessTenantInBackground } from '../tenant/tenant-lifecycle.js';
+import { startSessionRecheck, type RecheckableSocket } from '../../socket/sessionRecheck';
 import type { GatewayRequest } from '../ai-gateway/types.js';
 import { governedToolsetFor } from './governed-toolset.js';
 import { getPool } from '../../db.js';
@@ -197,10 +198,7 @@ const runAgenticTurnInScope: RunTurn = async (input, signal, emit) => {
   return { text, turnRecord };
 };
 
-interface AuthedSocket extends Socket {
-  orgId?: string;
-  authUserId?: string;
-}
+type AuthedSocket = RecheckableSocket;
 
 /**
  * Attach the ANA real-time duplex namespace (`/ana`) to the socket.io server.
@@ -266,6 +264,7 @@ export function registerAnaRealtime(io: SocketIOServer, runTurn: RunTurn = runAg
         }
         socket.orgId = String(organizationId);
         socket.authUserId = String(userId);
+        socket.sessionToken = token;
         next();
       } catch (err: any) {
         log.warn(`[ana-realtime] Auth failed for ${socket.id}: ${err?.message}`);
@@ -284,6 +283,14 @@ export function registerAnaRealtime(io: SocketIOServer, runTurn: RunTurn = runAg
 
     const emit: RealtimeEmit = (event, payload) => socket.emit(event, payload);
     const session = new AnaRealtimeSession(emit, runTurn);
+
+    // IAM-19 (P1-33), 2026-09-28: the handshake checks are re-run on a timer,
+    // as on the main namespace. Until now nothing looked again after connect,
+    // so a removed member, an ended session or a suspended tenant kept a live
+    // channel into the tool loop for the token's lifetime. When the session
+    // ends the socket is told why and disconnected, and the disconnect below
+    // disposes the session, which aborts any turn in flight.
+    startSessionRecheck(socket, 'ana-realtime');
 
     socket.on('ana:message', (data: {
       turnId?: string;
