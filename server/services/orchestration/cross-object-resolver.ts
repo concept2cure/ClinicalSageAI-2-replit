@@ -8,7 +8,7 @@
  * All queries are tenant-scoped (organizationId) and project-scoped.
  */
 
-import { db } from '../../db';
+import { db, getPool } from '../../db';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -345,6 +345,50 @@ async function resolveTasks(
   }
 }
 
+/**
+ * Module 3's approved-section count, against the set the composer produces.
+ *
+ * The join is the platform's two project spines meeting: `projects.id` is the
+ * integer this resolver works in, `projects.regulatory_program_id` is the
+ * program uuid, and `cmc_module3_sections.project_id` is TEXT holding that
+ * uuid. Returns null when the project has no program anchor or no composed
+ * sections — the caller then reports NOT ASSESSED rather than a zero.
+ */
+async function resolveModule3SectionCompleteness(
+  orgId: number,
+  projectId: number,
+): Promise<{ total: number; approved: number; missing: string[] } | null> {
+  try {
+    const { rows } = await getPool().query<{ section_key: string; approval_state: string; stale: boolean }>(
+      `SELECT s.section_key, s.approval_state, s.stale
+         FROM projects p
+         JOIN cmc_module3_sections s
+           ON s.project_id = p.regulatory_program_id::text
+          AND s.organization_id = p.organization_id
+        WHERE p.id = $1 AND p.organization_id = $2
+        ORDER BY s.section_key`,
+      [projectId, orgId],
+    );
+    if (rows.length === 0) return null;
+
+    const missing: string[] = [];
+    let approved = 0;
+    for (const r of rows) {
+      if (r.approval_state === 'approved' && !r.stale) approved += 1;
+      else if (r.stale) missing.push(`${r.section_key} — approved then went stale; re-approval required`);
+      else missing.push(`${r.section_key} — not approved (${r.approval_state ?? 'draft'})`);
+    }
+    return { total: rows.length, approved, missing };
+  } catch (err) {
+    // Not assessed beats a guessed percentage. The caller reports null.
+    logger.warn('Module 3 section completeness could not be read', {
+      projectId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
 async function resolveModulePlacements(
   orgId: number,
   projectId: number
@@ -373,16 +417,44 @@ async function resolveModulePlacements(
     const expectedModules = ['Module 1', 'Module 2', 'Module 3', 'Module 4', 'Module 5'];
     const result: ModulePlacementSnapshot[] = [];
 
+    /* Module 3 is the one module this platform has a deterministic denominator
+       for: composeModule3FromCanonicalSources produces a fixed section set per
+       project (3.1, 3.2.S.1-7, 3.2.P.1-8, 3.2.A, 3.2.R, 3.3), and the export
+       gate enforces approval over exactly that set. Measuring against it is
+       what stops the dashboard and the gate disagreeing. */
+    const m3 = await resolveModule3SectionCompleteness(orgId, projectId);
+
     for (const mod of expectedModules) {
       const items = moduleGroups.get(mod) || [];
       const published = items.filter((a) => !!a.publishedVersionId);
+
+      if (mod === 'Module 3' && m3) {
+        result.push({
+          module: mod,
+          documentCount: items.length,
+          artifactCount: items.length,
+          completenessPercent: m3.total > 0 ? Math.round((m3.approved / m3.total) * 100) : 0,
+          assessedAgainst: `${m3.approved} of ${m3.total} composed Module 3 sections approved`,
+          hasValidation: true,
+          missingItems: m3.missing,
+        });
+        continue;
+      }
+
+      /* Every other module: no required-section list exists to measure against,
+         so completeness is NOT ASSESSED. It used to be documentCount * 20 — a
+         figure with no denominator, published as a percentage and fed into the
+         readiness score and AnA's prompt. A null says what is true. */
       result.push({
         module: mod,
         documentCount: items.length,
         artifactCount: items.length,
-        completenessPercent: items.length > 0 ? Math.min(100, items.length * 20) : 0,
+        completenessPercent: null,
         hasValidation: false,
-        missingItems: items.length === 0 ? [`No documents assigned to ${mod}`] : [],
+        missingItems:
+          items.length === 0
+            ? [`No documents assigned to ${mod}`]
+            : [`Completeness not assessed — no required-section list for ${mod}`],
       });
     }
 
@@ -690,6 +762,10 @@ export function summarizePayloadForAI(payload: CrossObjectReasoningPayload): str
   if (payload.moduleMap.length > 0) {
     lines.push('### Module Coverage');
     for (const m of payload.moduleMap) {
+      if (m.completenessPercent === null) {
+        lines.push(`- ${m.module}: ${m.documentCount} docs, completeness not assessed`);
+        continue;
+      }
       const status = m.completenessPercent >= 80 ? 'OK' : m.completenessPercent > 0 ? 'Partial' : 'Empty';
       lines.push(`- ${m.module}: ${m.documentCount} docs, ${m.completenessPercent}% [${status}]`);
       if (m.missingItems.length > 0) {
