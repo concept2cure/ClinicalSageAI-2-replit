@@ -279,6 +279,19 @@ describe('assessSpiritConformance — the design as evidence', () => {
     expect(r.gap).toMatch(/Drug X/);
   });
 
+  it('checks a recorded acronym appears in the title, and says when none is recorded (SPIRIT 1)', () => {
+    const d = spiritDesign();
+    expect(row(assessSpiritConformance(d), '1').gap).toMatch(/nor does the design record whether the trial has an acronym/);
+    d.acronym = 'DX-T2D';
+    const missingAcronym = row(assessSpiritConformance(d), '1');
+    expect(missingAcronym.gap).toMatch(/does not identify the recorded acronym "DX-T2D"/);
+    d.title = `${d.title} (DX-T2D)`;
+    const named = row(assessSpiritConformance(d), '1');
+    expect(named.gap).not.toMatch(/acronym "DX-T2D"|nor does the design record/);
+    expect(named.evidence).toContain('design: acronym "DX-T2D"');
+    expect(named.status).toBe('partial');
+  });
+
   it('flags a schedule whose visits carry no study day (SPIRIT 13)', () => {
     const d = spiritDesign();
     delete d.scheduleOfActivities!.visits[2].studyDay;
