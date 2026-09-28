@@ -161,6 +161,24 @@ red, the file was restored byte for byte, and the suite re-ran green.
 
 ---
 
+## Adversarial review of the Tier 1 engines
+
+Every Tier 1 engine was reviewed by two independent agents with distinct
+lenses — honesty/determinism/duplication, and regulatory-domain
+correctness/test strength — each told to refute, to verify with probes, and to
+report only what it reproduced. Every blocking and major finding went to a fix
+agent, which reproduced it, fixed it, pinned it with a test seen failing, and
+re-ran verify-by-failing. Landed so far:
+
+| Engine | Blocking/major found | Notable | Tests after | Mutants caught |
+|---|---|---|---|---|
+| Trial schema | 13 | a shared epoch id drew visits in both epochs; crossover drawn as combination therapy through the washout; XML-illegal characters broke the SVG | 36 (was 21) | 19, incl. every mutant the reviewers showed survived |
+| SPIRIT | 13 (+10 minor) | **SPIRIT 2013 superseded by SPIRIT 2025** — now stated on every output; title terms matched as raw substrings scored unrelated sections `met`; a DMC charter with no `present` read as "no DMC"; rows the engine admitted it could not see scored `met` | 68 (was 25) | 20 |
+| CtQ | 5 blocking/major ×2 lenses | an unrecorded blinding produced two CRITICAL blinding factors; exclusion-criterion risk text pointed the wrong way; a second rating vocabulary contradicted the RBM catalogue (three rows now take the catalogue's rating; `ratingFrom` names the source) | 43 (was 25) | 10 |
+
+The remaining engines (DCT, WHO, USDM, deviation trends, redline) are being
+fixed the same way; their rows are added here as they land.
+
 ## What is not done, and why
 
 - **Adversarial review is running** (two independent lenses per engine,

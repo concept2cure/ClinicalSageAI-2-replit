@@ -66,11 +66,13 @@ describe('SPIRIT 2013', () => {
         basis: 'SPIRIT 2013',
         documentProvided: false,
         summary: { met: 10, partial: 3, missing: 7, notAssessable: 31, total: 51 },
+        supersededBy: 'SPIRIT 2025 statement (34 items). Conformance to SPIRIT 2013 is not conformance to SPIRIT 2025.',
         items: [{ item: '4', title: 'Funding', status: 'not_assessable', evidence: [], gap: 'only a protocol section can evidence this' }],
       },
     });
     expect(v.note).toContain('met 10, partial 3, missing 7, not assessable 31, of 51 checklist rows.');
     expect(v.note).toContain('not assessable here, not missing');
+    expect(v.note).toContain('Superseded: SPIRIT 2025 statement (34 items).');
     expect(v.entries[0]).toMatchObject({ label: '4. Funding', status: 'not_assessable' });
     expect(v.percent).toBeNull();
   });

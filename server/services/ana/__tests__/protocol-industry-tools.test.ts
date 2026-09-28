@@ -112,6 +112,7 @@ describe('PROTOCOL_INDUSTRY_TOOLS — the description steers the model', () => {
     expect(by.review_dct_profile).toMatch(/"unstated"/);
     expect(by.review_dct_profile).toMatch(/never as 0%/);
     expect(by.review_spirit_conformance).toMatch(/NOT_ASSESSABLE .* not missing and it is not met/);
+    expect(by.review_spirit_conformance).toMatch(/SUPERSEDED by the SPIRIT 2025 statement/);
     expect(by.review_deviation_trends).toMatch(/never "0%"/);
     expect(by.review_deviation_trends).toMatch(/no site linkage/);
     expect(by.derive_ctq_factors).toMatch(/DEFAULT SEED/);

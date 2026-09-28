@@ -1,15 +1,23 @@
 /**
- * SPIRIT 2013 item catalogue — the 33-item checklist as data.
+ * SPIRIT 2013 item catalogue — the 33-item checklist as data, the map from each
+ * item to the protocol sections that can evidence it, and the whole-word
+ * section matcher that reads that map.
  *
  * SPIRIT 2013 (Standard Protocol Items: Recommendations for Interventional
- * Trials; Chan et al., Ann Intern Med 2013 / BMJ 2013) is the protocol-content
- * standard that journals, funders and many ethics committees expect a trial
- * protocol to satisfy. Its checklist has 33 numbered items; several carry
- * lettered sub-items (2a/2b, 5a–5d, 11a–11d, 16a–16c, 17a/17b, 18a/18b,
- * 20a–20c, 21a/21b, 26a/26b, 31a–31c), giving 51 assessable rows. This module
- * carries those rows in checklist order, each with the SPIRIT section it sits
- * under, a faithful paraphrase of its wording, and which evidence source in this
- * platform can answer it.
+ * Trials; Chan et al., Ann Intern Med 2013;158:200-207) was the protocol-content
+ * guideline for randomised-trial protocols until the SPIRIT 2025 statement
+ * (Chan et al., 2025; BMJ 2025;389:e081477; Nat Med 2025;31:1784-1792)
+ * superseded it with 34 minimum items, a new open-science section and a
+ * patient and public involvement item. Journals now reference SPIRIT 2025.
+ * THIS CATALOGUE IS THE 2013 CHECKLIST ONLY; it is not the 2025 checklist and
+ * conformance to it is not conformance to SPIRIT 2025.
+ *
+ * The 2013 checklist has 33 numbered items; eleven carry lettered sub-items
+ * (2a/2b, 5a–5d, 6a/6b, 11a–11d, 16a–16c, 17a/17b, 18a/18b, 20a–20c, 21a/21b,
+ * 26a/26b, 31a–31c), giving 51 assessable rows. This module carries those rows
+ * in checklist order, each with the SPIRIT section it sits under, a faithful
+ * paraphrase of its wording, and which evidence source in this platform can
+ * answer it.
  *
  * Honesty contract for the catalogue itself:
  *  - `description` is a paraphrase, never the verbatim published text. Where the
@@ -21,10 +29,29 @@
  *    {@link StudyDesign} object, not about SPIRIT: `design` means the design
  *    object carries the fields that answer the item; `protocol_document` means
  *    only an authored protocol section can; `either` means the design carries
- *    a partial signal that a document section may complete.
+ *    a partial signal that a document section may complete. An item whose
+ *    SPIRIT wording asks for something the design object has no field for
+ *    (e.g. who decides termination, 21b) is `either`, never `design`: a
+ *    design-only item can never be completed by an authored section, so it
+ *    must be one the design can answer in full.
+ *
+ * Honesty contract for the section matcher ({@link sectionsForTopic}):
+ *  - Title terms match WHOLE WORDS of the normalised title, never substrings:
+ *    "Dose Conversion Table" does not contain the word "version", and
+ *    "Emergency Unblinding" does not contain the word "blinding".
+ *  - A term that is too generic alone is written as an all-of group
+ *    (`['consent', 'ancillary']`) and `titleExcludes` voids a title match that
+ *    names a neighbouring topic ("Patient Registration" is not trial
+ *    registration; "Audit Trail" is not auditing; "Data Monitoring Committee"
+ *    is 21a, not 5d).
+ *  - A section whose key is an umbrella key is umbrella even when its title
+ *    names the topic: the canonical "ethics" section titled "Ethics, Consent &
+ *    Regulatory" MAY cover consent, it is not a consent section.
  *
  * The conformance engine that consumes this catalogue is
- * `./spirit-conformance`. This file is data only.
+ * `./spirit-conformance`, which re-exports everything here. This file holds
+ * the catalogue, the topic map, the pure matcher that reads it, and the input
+ * and result shapes; no judging happens here.
  *
  * @module server/services/study-design/spirit-items
  */
@@ -72,7 +99,7 @@ const APPX: SpiritSection = 'Appendices';
 /** The SPIRIT 2013 checklist rows, in checklist order. Frozen: this is reference data. */
 export const SPIRIT_2013_ITEMS: readonly SpiritItem[] = Object.freeze([
   // ─── Administrative information ───────────────────────────────────────────
-  { item: '1', number: 1, section: ADMIN, title: 'Title', evidencedBy: 'design',
+  { item: '1', number: 1, section: ADMIN, title: 'Title', evidencedBy: 'either',
     description: 'Descriptive title identifying the study design, population, interventions and, if applicable, trial acronym.' },
   { item: '2a', number: 2, section: ADMIN, title: 'Trial registration: identifier', evidencedBy: 'protocol_document',
     description: 'Trial identifier and registry name; if not yet registered, the name of the intended registry.' },
@@ -112,7 +139,7 @@ export const SPIRIT_2013_ITEMS: readonly SpiritItem[] = Object.freeze([
     description: 'Strategies to improve adherence to intervention protocols, and any procedures for monitoring adherence (e.g. drug tablet return, laboratory tests).' },
   { item: '11d', number: 11, section: PIO, title: 'Interventions: concomitant care', evidencedBy: 'protocol_document',
     description: 'Relevant concomitant care and interventions that are permitted or prohibited during the trial.' },
-  { item: '12', number: 12, section: PIO, title: 'Outcomes', evidencedBy: 'design',
+  { item: '12', number: 12, section: PIO, title: 'Outcomes', evidencedBy: 'either',
     description: 'Primary, secondary and other outcomes, including the specific measurement variable, analysis metric (e.g. change from baseline, final value, time to event), method of aggregation (e.g. median, proportion) and time point for each outcome. Explanation of the clinical relevance of the chosen efficacy and harm outcomes is strongly recommended.' },
   { item: '13', number: 13, section: PIO, title: 'Participant timeline', evidencedBy: 'design',
     description: 'Time schedule of enrolment, interventions (including any run-ins and washouts), assessments and visits for participants. A schematic diagram is highly recommended.' },
@@ -145,11 +172,11 @@ export const SPIRIT_2013_ITEMS: readonly SpiritItem[] = Object.freeze([
   { item: '20c', number: 20, section: DATA, title: 'Statistical methods: analysis population and missing data', evidencedBy: 'design',
     description: 'Definition of the analysis population relating to protocol non-adherence (e.g. as-randomised analysis), and any statistical methods to handle missing data (e.g. multiple imputation).' },
   // ─── Methods: Monitoring ──────────────────────────────────────────────────
-  { item: '21a', number: 21, section: MONITOR, title: 'Data monitoring: committee', evidencedBy: 'design',
+  { item: '21a', number: 21, section: MONITOR, title: 'Data monitoring: committee', evidencedBy: 'either',
     description: 'Composition of the data monitoring committee (DMC); summary of its role and reporting structure; statement of whether it is independent from the sponsor and competing interests; reference to where further details of its charter can be found if not in the protocol. Alternatively, an explanation of why a DMC is not needed.' },
-  { item: '21b', number: 21, section: MONITOR, title: 'Data monitoring: interim analyses and stopping', evidencedBy: 'design',
+  { item: '21b', number: 21, section: MONITOR, title: 'Data monitoring: interim analyses and stopping', evidencedBy: 'either',
     description: 'Description of any interim analyses and stopping guidelines, including who will have access to the interim results and make the final decision to terminate the trial.' },
-  { item: '22', number: 22, section: MONITOR, title: 'Harms', evidencedBy: 'design',
+  { item: '22', number: 22, section: MONITOR, title: 'Harms', evidencedBy: 'either',
     description: 'Plans for collecting, assessing, reporting and managing solicited and spontaneously reported adverse events and other unintended effects of trial interventions or trial conduct.' },
   { item: '23', number: 23, section: MONITOR, title: 'Auditing', evidencedBy: 'protocol_document',
     description: 'Frequency and procedures for auditing trial conduct, if any, and whether the process will be independent from investigators and the sponsor.' },
@@ -185,60 +212,204 @@ export const SPIRIT_2013_ITEMS: readonly SpiritItem[] = Object.freeze([
 
 // ─── Where a protocol document evidences an item ─────────────────────────────
 
+/** One authored protocol section; mirrors a `protocol_sections` row. */
+export interface SpiritProtocolSection {
+  sectionKey: string;
+  title: string;
+  content: string | null;
+  /** `protocol_sections` vocabulary is not_started | draft | complete; only `complete` can meet an item. */
+  status: string;
+}
+
+export interface SpiritProtocolDocument {
+  sections: SpiritProtocolSection[];
+}
+
+// ─── The shapes the conformance engine returns (re-exported by it) ───────────
+
+export type SpiritItemStatus = 'met' | 'partial' | 'missing' | 'not_assessable';
+
+/** Why an item was not assessed: no document was passed, or the design records the item as inapplicable. */
+export type SpiritNotAssessableReason = 'no_document' | 'not_applicable';
+
+export interface SpiritItemResult {
+  item: string;
+  number: number;
+  section: SpiritSection;
+  title: string;
+  evidencedBy: SpiritEvidenceSource;
+  status: SpiritItemStatus;
+  /** Provenance lines, each prefixed `design:`, `document:` or `note:`. */
+  evidence: string[];
+  /** What is absent, present whenever status is not `met`. */
+  gap?: string;
+  notAssessableReason?: SpiritNotAssessableReason;
+}
+
+export interface SpiritConformance {
+  items: SpiritItemResult[];
+  summary: { met: number; partial: number; missing: number; notAssessable: number; total: number };
+  /** SPIRIT_BASIS: the 2013 checklist, with its supersession stated. */
+  basis: string;
+  /** The guideline that superseded SPIRIT 2013; a consumer must not present 2013 conformance as current. */
+  supersededBy: string;
+  /** Whether a protocol document was passed; without one every document-only item is not_assessable. */
+  documentProvided: boolean;
+}
+
+/** A whole-word phrase, or an all-of group of phrases that must every one appear in the title. */
+export type SpiritTitleTerm = string | readonly string[];
+
 /**
  * How the conformance engine locates a SPIRIT item in an authored protocol
  * document (`protocol_sections` rows). Keys are normalised section keys
- * (lower-case, spaces and hyphens → underscores); title terms are lower-case
- * fragments of a section title. A `keys`/`titleTerms` match addresses the item
- * directly; an `umbrellaKeys` match is a broader section that MAY cover it and
- * can only ever score partial. Only items an authored document can evidence
- * (`evidencedBy` of `protocol_document` or `either`) have an entry.
+ * (lower-case, spaces and hyphens → underscores). Title terms are matched as
+ * WHOLE WORDS of the normalised title (see {@link normaliseTitle}). A `keys`
+ * or title match addresses the item directly; an `umbrellaKeys` match is a
+ * broader section that MAY cover it and can only ever score partial. Only
+ * items an authored document can evidence (`evidencedBy` of
+ * `protocol_document` or `either`) have an entry.
  */
 export interface SpiritDocumentTopic {
   label: string;
   /** Normalised section keys that address the item directly. */
-  keys: string[];
-  /** Lower-case fragments of a section title that address the item directly. */
-  titleTerms: string[];
-  /** Broader sections that MAY cover the item; a match here is at most partial. */
-  umbrellaKeys?: string[];
+  keys: readonly string[];
+  /** Whole-word phrases (or all-of groups) of a section title that address the item directly. */
+  titleTerms: readonly SpiritTitleTerm[];
+  /** Whole-word phrases that void a title match because they name a neighbouring topic. */
+  titleExcludes?: readonly string[];
+  /** Broader sections that MAY cover the item; a match here is at most partial, whatever the title says. */
+  umbrellaKeys?: readonly string[];
 }
 
+const RANDOMISATION_UMBRELLA = ['design', 'randomization', 'randomisation', 'allocation'];
+const DMC_TERMS = ['data monitoring committee', 'data monitoring board', 'dmc', 'dsmb', 'idmc', 'data safety monitoring', 'data and safety monitoring', 'safety monitoring committee', 'safety monitoring board'];
+
+/*
+ * The key `safety` is SPECIFIC to item 22, not an umbrella: this platform's
+ * own clinical template (protocol-development-logic.ts) keys its "Safety
+ * Reporting & Pharmacovigilance" section `safety`, and that section is the
+ * adverse-event collection and reporting plan SPIRIT 22 asks for.
+ */
 export const SPIRIT_DOCUMENT_TOPICS: Readonly<Record<string, SpiritDocumentTopic>> = Object.freeze({
-  '2a': { label: 'trial registration', keys: ['registration', 'trial_registration'], titleTerms: ['registration', 'registry'], umbrellaKeys: ['synopsis', 'administrative'] },
-  '2b': { label: 'the WHO trial registration data set', keys: ['who_trds', 'trial_registration_data_set', 'registration_data_set'], titleTerms: ['registration data set', 'who trds'], umbrellaKeys: ['registration', 'trial_registration'] },
-  '3': { label: 'protocol version and date', keys: ['version', 'protocol_version', 'revision_history', 'document_history'], titleTerms: ['version', 'revision history', 'document history'], umbrellaKeys: ['synopsis', 'administrative', 'title_page'] },
-  '4': { label: 'funding', keys: ['funding', 'funding_sources'], titleTerms: ['funding', 'financial support'], umbrellaKeys: ['administrative', 'sponsor'] },
-  '5a': { label: 'protocol contributors', keys: ['contributors', 'protocol_contributors', 'roles_and_responsibilities', 'investigators'], titleTerms: ['contributor', 'roles and responsibilities', 'investigator'], umbrellaKeys: ['administrative'] },
-  '5b': { label: 'the sponsor contact', keys: ['sponsor', 'sponsor_contact'], titleTerms: ['sponsor'], umbrellaKeys: ['administrative', 'contributors'] },
-  '5c': { label: 'the role of the sponsor and funders', keys: ['sponsor_role', 'role_of_sponsor', 'funder_role'], titleTerms: ['role of the sponsor', 'role of sponsor', 'sponsor role', 'role of funder'], umbrellaKeys: ['sponsor', 'funding', 'administrative'] },
-  '5d': { label: 'trial committees and oversight groups', keys: ['committees', 'steering_committee', 'trial_organisation', 'trial_organization', 'oversight'], titleTerms: ['steering committee', 'committee', 'oversight', 'coordinating cent'], umbrellaKeys: ['administrative'] },
-  '6a': { label: 'background and rationale', keys: ['background', 'rationale', 'introduction'], titleTerms: ['background', 'rationale', 'introduction'] },
-  '9': { label: 'the study setting', keys: ['setting', 'study_setting', 'sites', 'study_sites'], titleTerms: ['study setting', 'setting', 'study sites', 'centres', 'centers'], umbrellaKeys: ['design'] },
-  '11b': { label: 'intervention discontinuation and modification', keys: ['discontinuation', 'withdrawal', 'dose_modification'], titleTerms: ['discontinuation', 'withdrawal', 'dose modification'], umbrellaKeys: ['intervention'] },
-  '11c': { label: 'adherence', keys: ['adherence', 'compliance'], titleTerms: ['adherence', 'compliance'], umbrellaKeys: ['intervention'] },
-  '11d': { label: 'concomitant care', keys: ['concomitant', 'concomitant_medications', 'prohibited_medications'], titleTerms: ['concomitant', 'prohibited'], umbrellaKeys: ['intervention'] },
-  '15': { label: 'recruitment', keys: ['recruitment', 'enrolment', 'enrollment'], titleTerms: ['recruitment', 'enrolment', 'enrollment'], umbrellaKeys: ['population'] },
-  '16b': { label: 'allocation concealment', keys: ['allocation_concealment', 'concealment'], titleTerms: ['concealment'], umbrellaKeys: ['design', 'randomization', 'randomisation', 'allocation'] },
-  '16c': { label: 'allocation implementation', keys: ['allocation_implementation', 'randomization_implementation', 'randomisation_implementation'], titleTerms: ['implementation'], umbrellaKeys: ['design', 'randomization', 'randomisation', 'allocation'] },
-  '17a': { label: 'blinding', keys: ['blinding', 'masking'], titleTerms: ['blinding', 'masking', 'blind'], umbrellaKeys: ['design'] },
-  '17b': { label: 'emergency unblinding', keys: ['unblinding', 'emergency_unblinding'], titleTerms: ['unblinding'], umbrellaKeys: ['blinding', 'masking'] },
-  '18a': { label: 'data collection methods', keys: ['data_collection', 'crf', 'case_report_forms'], titleTerms: ['data collection', 'case report form'], umbrellaKeys: ['assessments', 'data_management'] },
-  '18b': { label: 'participant retention', keys: ['retention', 'participant_retention', 'follow_up'], titleTerms: ['retention', 'follow-up'], umbrellaKeys: ['discontinuation'] },
-  '19': { label: 'data management', keys: ['data_management'], titleTerms: ['data management'] },
-  '20b': { label: 'additional (subgroup, adjusted, sensitivity) analyses', keys: ['subgroup_analyses', 'additional_analyses', 'sensitivity_analyses'], titleTerms: ['subgroup', 'additional analyses', 'sensitivity analyses'], umbrellaKeys: ['statistics'] },
-  '23': { label: 'auditing', keys: ['auditing', 'audit'], titleTerms: ['audit'], umbrellaKeys: ['data_management', 'monitoring'] },
-  '24': { label: 'research ethics approval', keys: ['ethics_approval', 'irb_approval', 'research_ethics'], titleTerms: ['ethics approval', 'irb', 'ethics committee'], umbrellaKeys: ['ethics'] },
-  '25': { label: 'protocol amendments', keys: ['amendments', 'protocol_amendments'], titleTerms: ['amendment'], umbrellaKeys: ['ethics'] },
-  '26a': { label: 'informed consent', keys: ['consent', 'informed_consent'], titleTerms: ['consent'], umbrellaKeys: ['ethics'] },
-  '26b': { label: 'consent for ancillary studies', keys: ['ancillary_consent', 'specimen_consent'], titleTerms: ['ancillary', 'future use'], umbrellaKeys: ['ethics', 'consent'] },
-  '27': { label: 'confidentiality', keys: ['confidentiality', 'privacy'], titleTerms: ['confidentiality', 'privacy'], umbrellaKeys: ['ethics', 'data_management'] },
-  '28': { label: 'declaration of interests', keys: ['conflicts_of_interest', 'declaration_of_interests', 'coi'], titleTerms: ['conflict of interest', 'conflicts of interest', 'declaration of interest', 'competing interest'], umbrellaKeys: ['ethics'] },
+  '1': { label: 'the protocol title', keys: ['title_page', 'title', 'protocol_title'], titleTerms: ['title page', 'protocol title', 'full title'], umbrellaKeys: ['synopsis'] },
+  '2a': { label: 'trial registration', keys: ['trial_registration', 'study_registration', 'trial_registry'], titleTerms: ['trial registration', 'study registration', 'trial registry', 'registry name', 'registration number', 'registry identifier', 'trial identifier', 'trial identifiers', 'clinicaltrials gov'],
+    titleExcludes: ['patient registration', 'participant registration', 'subject registration'], umbrellaKeys: ['synopsis', 'administrative'] },
+  '2b': { label: 'the WHO trial registration data set', keys: ['who_trds', 'trial_registration_data_set', 'registration_data_set'], titleTerms: ['registration data set', 'who trds'], umbrellaKeys: ['trial_registration', 'study_registration'] },
+  '3': { label: 'protocol version and date', keys: ['version', 'protocol_version', 'version_history', 'revision_history', 'document_history'], titleTerms: ['version', 'revision history', 'document history', 'protocol date'], umbrellaKeys: ['synopsis', 'administrative', 'title_page'] },
+  '4': { label: 'funding', keys: ['funding', 'funding_sources'], titleTerms: ['funding', 'financial support', 'sources of support'], umbrellaKeys: ['administrative', 'sponsor'] },
+  '5a': { label: 'protocol contributors', keys: ['contributors', 'protocol_contributors', 'roles_and_responsibilities'], titleTerms: ['contributor', 'contributors', 'protocol authors', 'roles and responsibilities'], umbrellaKeys: ['administrative'] },
+  '5b': { label: 'the sponsor contact', keys: ['sponsor', 'sponsor_contact', 'sponsor_information'], titleTerms: ['sponsor'],
+    titleExcludes: ['role', 'roles', 'responsibility', 'responsibilities', 'obligations', 'signature', 'signatures', 'approval'], umbrellaKeys: ['administrative', 'contributors'] },
+  '5c': { label: 'the role of the sponsor and funders', keys: ['sponsor_role', 'role_of_sponsor', 'funder_role', 'role_of_funder'], titleTerms: [['role', 'sponsor'], ['role', 'funder'], ['role', 'funders'], ['role', 'funding']], umbrellaKeys: ['sponsor', 'funding', 'administrative'] },
+  '5d': { label: 'trial committees and oversight groups', keys: ['committees', 'trial_committees', 'steering_committee', 'adjudication_committee', 'trial_organisation', 'trial_organization', 'study_organisation', 'study_organization'],
+    titleTerms: ['committees', 'steering committee', 'adjudication committee', 'endpoint adjudication', 'coordinating centre', 'coordinating center', 'trial management group', 'trial organisation', 'trial organization', 'study organisation', 'study organization', 'study leadership'],
+    titleExcludes: ['data monitoring', 'dmc', 'dsmb', 'idmc', 'data safety monitoring', 'data and safety monitoring', 'safety monitoring'], umbrellaKeys: ['administrative'] },
+  '6a': { label: 'background and rationale', keys: ['background', 'rationale', 'introduction', 'study_rationale'], titleTerms: ['background', 'rationale', 'introduction'],
+    titleExcludes: ['dose', 'dosing', 'background therapy', 'background treatment', 'background medication', 'background medications'] },
+  '9': { label: 'the study setting', keys: ['setting', 'study_setting', 'sites', 'study_sites'], titleTerms: ['setting', 'settings', 'study sites', 'trial sites', 'participating sites', 'participating centres', 'participating centers', 'centres', 'centers'],
+    titleExcludes: ['coordinating'], umbrellaKeys: ['design'] },
+  '11b': { label: 'intervention discontinuation and modification', keys: ['discontinuation', 'withdrawal', 'dose_modification', 'dose_modifications'],
+    titleTerms: ['discontinuation', 'withdrawal', 'dose modification', 'dose modifications', 'dose adjustment', 'dose adjustments', 'dose reduction', 'dose reductions', 'dose interruption'],
+    titleExcludes: ['study discontinuation', 'trial discontinuation', 'closure'], umbrellaKeys: ['intervention'] },
+  '11c': { label: 'adherence to the intervention', keys: ['adherence', 'treatment_adherence', 'intervention_adherence', 'treatment_compliance', 'intervention_compliance', 'drug_compliance'],
+    titleTerms: ['adherence', ['compliance', 'treatment'], ['compliance', 'intervention'], ['compliance', 'drug'], ['compliance', 'medication'], ['compliance', 'dosing']],
+    titleExcludes: ['protocol adherence', 'adherence to protocol', 'adherence to the protocol', 'gcp', 'good clinical practice', 'regulatory', 'statement of compliance'], umbrellaKeys: ['intervention'] },
+  '11d': { label: 'concomitant care', keys: ['concomitant', 'concomitant_medications', 'concomitant_therapy', 'prohibited_medications'], titleTerms: ['concomitant', 'prohibited', 'permitted medications', 'permitted therapies', 'rescue medication', 'rescue medications'], umbrellaKeys: ['intervention'] },
+  '12': { label: 'outcomes', keys: ['outcomes', 'endpoints', 'outcome_measures', 'study_endpoints'], titleTerms: ['outcomes', 'outcome', 'endpoints', 'endpoint', 'outcome measures'],
+    titleExcludes: ['adjudication', 'committee', 'euthanasia', 'humane', 'pregnancy'], umbrellaKeys: ['objectives'] },
+  '15': { label: 'recruitment', keys: ['recruitment', 'recruitment_strategy', 'accrual'], titleTerms: ['recruitment', 'accrual', 'enrolment strategy', 'enrollment strategy', 'enrolment strategies', 'enrollment strategies'], umbrellaKeys: ['population', 'enrolment', 'enrollment'] },
+  '16b': { label: 'allocation concealment', keys: ['allocation_concealment', 'concealment'], titleTerms: ['concealment'], umbrellaKeys: RANDOMISATION_UMBRELLA },
+  '16c': { label: 'allocation implementation', keys: ['allocation_implementation', 'randomization_implementation', 'randomisation_implementation'],
+    titleTerms: [['implementation', 'allocation'], ['implementation', 'randomization'], ['implementation', 'randomisation'], ['implementation', 'sequence']], umbrellaKeys: RANDOMISATION_UMBRELLA },
+  '17a': { label: 'blinding', keys: ['blinding', 'masking'], titleTerms: ['blinding', 'masking'], umbrellaKeys: ['design'] },
+  '17b': { label: 'emergency unblinding', keys: ['unblinding', 'emergency_unblinding', 'code_break'], titleTerms: ['unblinding', 'code break', 'code breaking', 'breaking the blind'], umbrellaKeys: ['blinding', 'masking'] },
+  '18a': { label: 'data collection methods', keys: ['data_collection', 'crf', 'case_report_forms'], titleTerms: ['data collection', 'case report form', 'case report forms', 'crf', 'crfs'], umbrellaKeys: ['assessments', 'data_management'] },
+  '18b': { label: 'participant retention', keys: ['retention', 'participant_retention'], titleTerms: ['retention', 'loss to follow up', 'lost to follow up'],
+    titleExcludes: ['record', 'records', 'data retention', 'specimen', 'specimens', 'sample', 'samples'], umbrellaKeys: ['discontinuation'] },
+  '19': { label: 'data management', keys: ['data_management'], titleTerms: ['data management', 'data handling'] },
+  '20b': { label: 'additional (subgroup, adjusted, sensitivity) analyses', keys: ['subgroup_analyses', 'additional_analyses', 'sensitivity_analyses', 'adjusted_analyses'],
+    titleTerms: ['subgroup', 'subgroups', 'additional analyses', 'sensitivity analyses', 'sensitivity analysis', 'adjusted analyses', 'adjusted analysis', 'supplementary analyses'], umbrellaKeys: ['statistics'] },
+  '21a': { label: 'the data monitoring committee', keys: ['dmc', 'dsmb', 'idmc', 'data_monitoring_committee', 'data_safety_monitoring_board'], titleTerms: DMC_TERMS, umbrellaKeys: ['safety', 'monitoring', 'data_monitoring', 'data_safety'] },
+  '21b': { label: 'interim analyses and stopping guidelines', keys: ['interim_analysis', 'interim_analyses', 'stopping_rules', 'stopping_guidelines', 'early_stopping', 'halting_rules'],
+    titleTerms: ['interim analysis', 'interim analyses', 'stopping rules', 'stopping guidelines', 'stopping boundaries', 'early stopping', 'halting rules', 'early termination'],
+    titleExcludes: ['visit', 'participant', 'participants', 'individual', 'subject', 'subjects'], umbrellaKeys: ['statistics', 'safety', 'data_safety', 'dmc', 'dsmb', 'data_monitoring_committee'] },
+  '22': { label: 'harms (adverse-event collection, assessment, reporting and management)', keys: ['safety', 'harms', 'adverse_events', 'safety_reporting', 'ae_reporting', 'pharmacovigilance'],
+    titleTerms: ['harms', 'adverse event', 'adverse events', 'safety reporting', 'pharmacovigilance'] },
+  '23': { label: 'auditing', keys: ['auditing', 'audit', 'audits'], titleTerms: ['audit', 'audits', 'auditing'], titleExcludes: ['audit trail', 'audit trails'], umbrellaKeys: ['data_management', 'monitoring', 'quality_assurance'] },
+  '24': { label: 'research ethics approval', keys: ['ethics_approval', 'irb_approval', 'research_ethics', 'irb', 'iec'],
+    titleTerms: ['ethics approval', 'ethical approval', 'irb', 'iec', 'ethics committee', 'research ethics', 'institutional review board'], umbrellaKeys: ['ethics'] },
+  '25': { label: 'protocol amendments', keys: ['amendments', 'protocol_amendments'], titleTerms: ['amendment', 'amendments', 'protocol modification', 'protocol modifications'], titleExcludes: ['history', 'summary of changes'], umbrellaKeys: ['ethics'] },
+  '26a': { label: 'informed consent', keys: ['consent', 'informed_consent', 'consent_process'], titleTerms: ['consent', 'assent'],
+    titleExcludes: ['consent form', 'consent forms', 'ancillary', 'future use', 'future research'], umbrellaKeys: ['ethics'] },
+  '26b': { label: 'consent for ancillary studies', keys: ['ancillary_consent', 'specimen_consent', 'future_use_consent'],
+    titleTerms: [['consent', 'ancillary'], ['consent', 'future use'], ['consent', 'future research'], ['consent', 'specimen'], ['consent', 'specimens'], ['consent', 'samples']], umbrellaKeys: ['ethics', 'consent', 'informed_consent'] },
+  '27': { label: 'confidentiality', keys: ['confidentiality', 'privacy', 'data_protection'], titleTerms: ['confidentiality', 'privacy', 'data protection'], umbrellaKeys: ['ethics', 'data_management'] },
+  '28': { label: 'declaration of interests', keys: ['conflicts_of_interest', 'conflict_of_interest', 'declaration_of_interests', 'competing_interests', 'coi'],
+    titleTerms: ['conflict of interest', 'conflicts of interest', 'declaration of interest', 'declaration of interests', 'declarations of interest', 'competing interest', 'competing interests', 'financial disclosure'], umbrellaKeys: ['ethics'] },
   '29': { label: 'access to data', keys: ['data_access', 'access_to_data'], titleTerms: ['access to data', 'data access'], umbrellaKeys: ['data_management'] },
-  '30': { label: 'ancillary and post-trial care', keys: ['post_trial_care', 'ancillary_care', 'compensation'], titleTerms: ['post-trial', 'post trial', 'ancillary care', 'compensation'], umbrellaKeys: ['ethics'] },
+  '30': { label: 'ancillary and post-trial care', keys: ['post_trial_care', 'ancillary_care', 'injury_compensation', 'insurance'],
+    titleTerms: ['post trial', 'ancillary care', 'compensation for injury', 'compensation for harm', 'injury compensation', 'research related injury', 'trial related injury', 'insurance'], umbrellaKeys: ['ethics', 'compensation'] },
   '31a': { label: 'dissemination of results', keys: ['dissemination', 'publication', 'publication_policy'], titleTerms: ['dissemination', 'publication'] },
   '31b': { label: 'authorship', keys: ['authorship'], titleTerms: ['authorship'], umbrellaKeys: ['dissemination', 'publication', 'publication_policy'] },
   '31c': { label: 'public access to the protocol, data and code', keys: ['data_sharing', 'public_access'], titleTerms: ['data sharing', 'public access'], umbrellaKeys: ['dissemination', 'publication', 'publication_policy'] },
-  '32': { label: 'informed consent materials', keys: ['consent_form', 'informed_consent_form', 'icf'], titleTerms: ['consent form', 'icf'], umbrellaKeys: ['appendices', 'appendix'] },
-  '33': { label: 'biological specimens', keys: ['specimens', 'biological_specimens', 'biospecimens', 'biobanking'], titleTerms: ['specimen', 'biobank'], umbrellaKeys: ['appendices', 'appendix'] },
+  '32': { label: 'informed consent materials', keys: ['consent_form', 'consent_forms', 'informed_consent_form', 'icf'], titleTerms: ['consent form', 'consent forms', 'consent materials', 'icf'], umbrellaKeys: ['appendices', 'appendix'] },
+  '33': { label: 'biological specimens', keys: ['specimens', 'biological_specimens', 'biospecimens', 'biobanking'],
+    titleTerms: ['specimen', 'specimens', 'biospecimen', 'biospecimens', 'biobank', 'biobanking', 'biological samples'], titleExcludes: ['consent'], umbrellaKeys: ['appendices', 'appendix'] },
 });
+
+// ─── The section matcher ─────────────────────────────────────────────────────
+
+/** Normalised section key: lower-case, spaces and hyphens → underscores; '' for a non-string. */
+export function normaliseSectionKey(key: unknown): string {
+  return typeof key === 'string' ? key.trim().toLowerCase().replace(/[\s-]+/g, '_') : '';
+}
+
+/**
+ * A title (or a term) as space-padded lower-case words: '&' reads as "and",
+ * apostrophes are dropped and every other non-alphanumeric run is one space,
+ * so "Investigator's Brochure" → " investigators brochure " and
+ * "ClinicalTrials.gov" → " clinicaltrials gov ". Padding makes
+ * `includes(' version ')` a whole-word test.
+ */
+export function normaliseTitle(title: unknown): string {
+  if (typeof title !== 'string') return ' ';
+  const words = title.toLowerCase().replace(/&/g, ' and ').replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  return ` ${words} `;
+}
+
+function hasPhrase(normalisedTitle: string, phrase: string): boolean {
+  const p = normaliseTitle(phrase);
+  return p.trim().length > 0 && normalisedTitle.includes(p);
+}
+
+function titleAddresses(topic: SpiritDocumentTopic, title: unknown): boolean {
+  const t = normaliseTitle(title);
+  if ((topic.titleExcludes ?? []).some(p => hasPhrase(t, p))) return false;
+  return topic.titleTerms.some(term => (typeof term === 'string' ? [term] : term).every(p => hasPhrase(t, p)));
+}
+
+/** A readable form of a title term for a gap line: `"version"` or `"consent" + "ancillary"`. */
+export function describeTitleTerm(term: SpiritTitleTerm): string {
+  return (typeof term === 'string' ? [term] : term).map(p => `"${p}"`).join(' + ');
+}
+
+/**
+ * The sections of a document that address a topic directly (`specific`) and
+ * the broader ones that may cover it (`umbrella`). Keys decide first: a
+ * `keys` match is specific and an `umbrellaKeys` match is umbrella whatever
+ * the title says; only an unkeyed section is matched on whole title words.
+ * Non-object entries are skipped.
+ */
+export function sectionsForTopic(topic: SpiritDocumentTopic, sections: unknown): { specific: SpiritProtocolSection[]; umbrella: SpiritProtocolSection[] } {
+  const specific: SpiritProtocolSection[] = [];
+  const umbrella: SpiritProtocolSection[] = [];
+  const list = Array.isArray(sections) ? sections.filter((s): s is SpiritProtocolSection => typeof s === 'object' && s !== null) : [];
+  for (const s of list) {
+    const key = normaliseSectionKey(s.sectionKey);
+    if (topic.keys.includes(key)) specific.push(s);
+    else if ((topic.umbrellaKeys ?? []).includes(key)) umbrella.push(s);
+    else if (titleAddresses(topic, s.title)) specific.push(s);
+  }
+  return { specific, umbrella };
+}

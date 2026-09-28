@@ -20903,7 +20903,7 @@ registerIndustryDesignTool(
 registerIndustryDesignTool(
   'derive_ctq_factors',
   'ctq',
-  'Derived by deriveCtqFactors (ICH E6(R3) critical-to-quality factors). Every likelihood and impact is a DEFAULT SEED (ratingSource "default_seed"), not an assessment. Report factors with their derivedFrom provenance and notAssessed verbatim; nothing was written to the RBM risk assessment.',
+  'Derived by deriveCtqFactors (ICH E6(R3) critical-to-quality factors). Every likelihood and impact is a DEFAULT SEED (ratingSource "default_seed"; ratingFrom names the RBM catalogue row or category table), not an assessment. Report factors with their derivedFrom provenance and notAssessed verbatim; nothing was written to the RBM risk assessment.',
 );
 registerIndustryDesignTool(
   'export_usdm_projection',
@@ -20980,7 +20980,7 @@ registerToolHandler('review_spirit_conformance', async (input, ctx) => {
     return JSON.stringify({
       ok: true,
       ...result,
-      note: 'Assessed by assessSpiritConformance over the bound design and this protocol\'s sections. Report each row\'s status, evidence and gap and the summary counts verbatim. not_assessable is neither missing nor met. Compute no percentage and never say the protocol "meets SPIRIT".',
+      note: 'Assessed by assessSpiritConformance over the bound design and this protocol\'s sections. Report each row\'s status, evidence and gap and the summary counts verbatim. not_assessable is neither missing nor met. Compute no percentage and never say the protocol "meets SPIRIT". SPIRIT 2013 is superseded by SPIRIT 2025: report supersededBy and never present 2013 conformance as the current standard.',
     });
   } catch (err) {
     return pdevToolError('review_spirit_conformance', err);

@@ -10,7 +10,7 @@
  * no model, no clock, no RNG.
  *
  *   • `projectTrialSchema`          — ICH M11 §1.2 trial schema (model + SVG)
- *   • `assessSpiritConformance`     — SPIRIT 2013, 33 items
+ *   • `assessSpiritConformance`     — SPIRIT 2013, 33 items (superseded by SPIRIT 2025; said on every output)
  *   • `deriveCtqFactors`            — ICH E6(R3) critical-to-quality factors
  *   • `projectUsdm`                 — CDISC USDM-shaped export, conformance unverified
  *   • `profileDecentralization`     — decentralised-element profile of the SoA
@@ -85,7 +85,8 @@ export const REVIEW_SPIRIT_CONFORMANCE: AnaTool = {
     'Report each item\'s status — met, partial, missing, not_assessable — with its evidence and gap VERBATIM, and the summary counts exactly as returned. ' +
     'NOT_ASSESSABLE means the item can only be judged from a protocol section the engine was not given: it is not missing and it is not met. ' +
     'Never total the counts yourself, never compute a conformance percentage, and never say the protocol "meets SPIRIT" — the engine returns per-item ' +
-    'statuses, not a verdict. If no design is bound, the design-evidenced items come back missing with that reason; say so.',
+    'statuses, not a verdict. SPIRIT 2013 HAS BEEN SUPERSEDED by the SPIRIT 2025 statement: report the output\'s supersededBy verbatim, and never present ' +
+    '2013 conformance as conformance to the current guideline. If no design is bound, the tool returns an error and no checklist; say so.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
@@ -97,8 +98,9 @@ export const DERIVE_CTQ_FACTORS: AnaTool = {
     'biomarker sampling, IMP administration, dose-modification rules, blinding, stopping rules and DMC, interim analyses, DLT definitions — each with ' +
     'derivedFrom provenance naming the element. ' +
     DESIGN_REQUIRED + ' ' +
-    'Every likelihood and impact is a DEFAULT SEED (ratingSource: "default_seed") from a documented category table, not an assessment: report them as ' +
-    'starting values a sponsor rates, never as the study\'s assessed risk. Report notAssessed — the design areas the engine could not read — verbatim. ' +
+    'Every likelihood and impact is a DEFAULT SEED (ratingSource: "default_seed"), not an assessment — taken from the RBM catalogue row for the same ' +
+    'factor where one exists, otherwise from the documented category table; each row\'s ratingFrom names which. Report them as starting values a ' +
+    'sponsor rates, never as the study\'s assessed risk. Report notAssessed — the design areas the engine could not read — verbatim. ' +
     'The output drops into the RBM module\'s risk assessment as seeds; this tool does not write it there.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };

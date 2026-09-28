@@ -75,7 +75,13 @@ must keep. Every engine is deterministic: no model, no clock, no RNG, no DB.
    Engine: `study-design/spirit-conformance.ts` — the 33 items as data, each
    judged from the design or the protocol document. Items evidenced only by
    the document are `not_assessable` when no document is passed — never
-   `missing`.
+   `missing`. **SPIRIT 2013 was superseded by the SPIRIT 2025 statement
+   (34 items) in April 2025**; adversarial review caught that this document and
+   the engine presented 2013 as current. Every output now carries
+   `supersededBy`, and the AnA tool may never present 2013 conformance as
+   conformance to the current guideline. A SPIRIT 2025 item catalogue is the
+   next step for this engine and needs the published checklist text, which
+   this environment cannot fetch.
 
 3. **Critical-to-quality factors derived from the design (ICH E6(R3)).** The
    revised GCP expects CtQ factors identified at design, before monitoring is
