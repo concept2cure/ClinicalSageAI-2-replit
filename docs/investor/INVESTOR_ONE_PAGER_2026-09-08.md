@@ -1,36 +1,34 @@
 # Concept2Cure.RI
 
-**A regulated-industry operating system for life-sciences submission work — drug, device, and diagnostic.**
+**A governed operating system for regulatory submission work in life sciences.**
 
 ## The question that stops every AI pilot
 
-A sponsor's quality organization asks three things before an AI system goes near a regulatory submission: what did the AI do, what authority permitted it, and what will prove that in an inspection. Those are not procurement preferences. They are 21 CFR Part 11, and a chat transcript does not answer them. A transcript is not attributable, not tamper-evident, and cannot be re-derived six months later when a reviewer asks why a claim was worded that way.
+A sponsor's quality organization asks three things before an AI system goes near a regulatory submission: what did the AI do, what authority permitted it, and what will prove that in an inspection. Those are not procurement preferences. They are 21 CFR Part 11, and a chat transcript does not answer them. A transcript is not attributable, not tamper-evident, and cannot be re-derived when a reviewer asks why a claim was worded that way.
 
-So the work stays where it is: authoring in Veeva Vault, eCTD lifecycle in Certara or Lorenz, intelligence lookups in Cortellis — and the work that actually decides the outcome, the gap register, the pre-IND strategy, the CRL response, in a spreadsheet on a shared drive. What is offered to change that is a chat wrapper over a document store. It produces text nobody can defend, so the sponsor does the work twice.
+So the work stays where it is: authoring in Veeva Vault, eCTD lifecycle in Certara or Lorenz, and the gap register, pre-IND strategy and CRL response in a spreadsheet on a shared drive. What is offered to change that is a chat wrapper over a document store. It produces text nobody can defend, so the sponsor does the work twice.
 
-## We built the kernel instead
+## Engines decide; the model narrates
 
-Every consequential action is evaluated by a governance kernel — seven services, three domains: governance, security, observability. Each returns allow, review, or deny with a rationale, a timestamp, a regulatory reference such as 21 CFR §11.10(e), and an evidence payload. Decisions are written to immutably hash-chained records. Every model call routes through one AI gateway with provider fallback across Claude, GPT-4, and Kimi and full request and response audit; a bypass would fail lint, fail our design-CI gates, and fail its own kernel decision. The sponsor's evidence lives in our schema, not a vendor's chat history.
+Numbers, verdicts and governed content come from deterministic engines — the eCTD packager, validators, regulatory clocks, conformance checkers, rule packs. The model frames, drafts and explains, and a tool that asks a model for a figure is treated as a defect. Only entries in an approved-models registry can serve drafting or review, each with a pinned version, a rationale and an evaluation reference; content from an unapproved model is refused before it is stored.
 
 ## What an inspector can pull
 
 | Inspection question | What the system produces |
 |---|---|
-| What did the AI do? | Immutable kernel decision record: allow / review / deny, rationale, regulatory reference, evidence hash |
-| Who authorized it? | TOTP re-authenticated e-signature, reason-for-change, verified signing authority |
-| Where did this sentence come from? | Span-level lineage: model, retrieval set, reviewer, timestamp, cited sources |
-| Has the record been altered? | HMAC-sealed, hash-chained audit tables with a scheduled chain-integrity sweep |
+| What did the AI do? | A retrieval-run record of inputs, outputs, model and decision trace, with content digests |
+| Who authorized it? | One signing ceremony that re-verifies every signer — standing, lockout, password, enrolled second factor — and records what it checked |
+| Where did this sentence come from? | Span-level lineage: the machine author of each accepted range, and every cited source with its checksum at citation time |
+| Has the record been altered? | One HMAC-sealed, sequence-ordered audit chain per tenant, checked by a verifier |
 
-## What runs on it
+## What ships first, and the evidence behind it
 
-Nine end-to-end workstreams — IND/NDA/BLA, 510(k)/De Novo, EU MDR and IVDR clinical evaluation, CMC Module 3, CSR, deficiency and CRL response, regulatory intelligence, post-market, RIM operations — share one kernel, one memory, one audit chain. Four committed golden-journey suites drive the signed end-to-end path today: CER EU-MDR, 510(k) eSTAR, NDA eCTD, IND authoring.
+The launch release is six apps: Projects, Vault, Authoring, Submission Center, Submission Readiness and QMS controlled documents. The wider tree covers device, EU MDR, CSR, post-market and RIM work; it stays behind a flag that is off in production until launch is done.
 
-Two layers above the kernel matter most. Client- and project-scoped memory carries locked facts, decisions, and open questions across users and sessions, with entries superseded through successor pointers rather than deleted. The Submission Twin maps every claim to its evidence and catches drift between the CMC and clinical sections before the regulator does. The twin is trustworthy only because the kernel governs every write into it, and useful only because memory carries what the team decided last quarter.
+Launch is defined in writing as ten rows, each with named evidence. The validation package is drafted and executed on a clean install in the production posture: installation qualification 12 pass, 0 fail, 3 deviations; operational qualification 101 pass, 0 fail, 2 deviations of 103, across one protocol per launch app. Tenant isolation is proven by a two-tenant contract run as the non-superuser database role with row-level security enforcing, and each leak it found was shown failing before its fix. A connector for Claude exposes 19 tools, each carrying its scope and a governed flag, over OAuth 2.1 with PKCE.
 
-Underneath: 4,180 server TypeScript files, 439 client React files, 554 versioned migrations, 261 of them on the deploy applier, roughly 694 table declarations, fail-closed row-level tenancy on every governed table — `organizationId` appears 736 times in the schema monolith alone — and 2,299 product test files.
+Underneath: 4,180 server TypeScript files, 554 migrations — 261 on the deploy applier — and 2,299 product test files.
 
 ## What we are not claiming
 
-Part 11 features do not confer Part 11 compliance. Validation for intended use stays the sponsor's work; ours is wired so §11.10(a–k) has an answer at every point, which makes that validation an exercise rather than a rewrite. The first production sponsor running all nine workstreams is a near-term milestone, not a fact today. We hold the line by making gates fail on purpose: the CI check that blocks the unsafe way to remove schema ships with a self-test proving it catches the case it exists to catch.
-
-Competitors reach the inspection question and stop. We start there. Every claim above has a file path as its answer.
+Part 11 features do not confer Part 11 compliance; validation for intended use is the sponsor's work, and ours is built to make it an exercise rather than a rewrite. The platform is not yet hosted in production. No model has yet passed performance qualification, so high-risk drafting in production waits on it. The first production sponsor is the next milestone, not a fact today. Every claim above has a file path, and the launch rows name the evidence still owed.
