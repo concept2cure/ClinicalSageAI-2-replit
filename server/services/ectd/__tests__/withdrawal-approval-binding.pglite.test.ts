@@ -55,9 +55,13 @@ vi.mock('../../../db.js', () => ({
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) } }));
 // The release-signature store is not in this harness (it has its own journey);
 // every other readiness input is read from the database by the assessor.
-vi.mock('../release-signature-status', () => ({
+vi.mock('../release-signature-status', async (importOriginal) => ({
   resolveReleaseSignatureStatus: async () => ({ verdict: 'unsigned', detail: 'stubbed: no release signature store in this harness' }),
   isReleaseSignatureRequired: () => false,
+  // Pure, and the one place its rule lives (f07edd7c8 / a0011b738): the real
+  // function, so the harness cannot drift from it. Without it every
+  // assessment here threw "No signingNowResolvesRelease export is defined".
+  signingNowResolvesRelease: (await importOriginal<typeof import('../release-signature-status')>()).signingNowResolvesRelease,
 }));
 
 import { assembleSequence, assembledTransmitBlockers } from '../assemble-from-core';

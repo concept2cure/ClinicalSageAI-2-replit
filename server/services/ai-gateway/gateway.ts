@@ -75,6 +75,7 @@ import {
 } from './providers/org-placement';
 import { governServerTools } from './server-tool-policy';
 import { isTerminalGatewayError } from './gateway-outcome';
+import { modelCallRefusal, type ModelCallRefusalScope } from './model-call-scope.js';
 import {
   decideSensitivePlacement,
   readProviderPlacementApprovals,
@@ -93,6 +94,7 @@ import {
 // In-flight concurrency limiter — bounds simultaneous outbound provider calls.
 import { Semaphore, resolveMaxConcurrency } from './concurrency.js';
 import { apiEffortForModel } from './effort.js';
+import { GatewayStreamStalledError, watchStreamForStall } from './stream-stall.js';
 const log = createScopedLogger('ai-gateway');
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1322,6 +1324,17 @@ export class AIGateway {
     // between agentic rounds. Spend nothing: no classification, no policy
     // pass, no provider call, no audit row for work that was never done.
     if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+
+    // A sub-agent's tool may not call a model (model-call-scope.ts). Refused
+    // here, before anything is spent: no placement lookup, no classification,
+    // no policy pass or rate bucket, no dispatch — so no ledger row either.
+    const refusal = modelCallRefusal();
+    if (refusal) {
+      log.warn(
+        `[ai-gateway] refused a model call from a sub-agent's tool (${refusal.tool}, run ${refusal.runId}, parent ${refusal.parentRunId}); nothing was sent`,
+      );
+      throw new SubAgentToolModelCallError(refusal);
+    }
 
     // Apply the org's default placement policy (residency / zero-retention) when
     // the request doesn't specify it. Explicit request values always win; if no
@@ -2637,35 +2650,32 @@ export class AIGateway {
     let stopDetails: unknown = null;
     let resolvedModel: string | undefined;
 
-    // Per-chunk watchdog — detect stalled streams (no data for 30s)
-    let lastChunkTime = Date.now();
-    const chunkTimeoutMs = 30_000;
-    let streamStalled = false;
+    // Stall watch. Silence is a stall only while text is streaming; thinking,
+    // a tool's buffered arguments and the gaps between blocks are the model
+    // working, and the SDK hides the pings that say so (stream-stall.ts).
     let streamAborted = false;
-    const chunkWatchdog = setInterval(() => {
-      if (Date.now() - lastChunkTime > chunkTimeoutMs) {
-        streamStalled = true;
-        clearInterval(chunkWatchdog);
-        log.warn(
-          `[AI Gateway] Stream stalled — no chunk received for ${chunkTimeoutMs / 1000}s. ` +
+    let stalledForMs = 0;
+    const openTextBlocks = new Set<number>();
+    const stall = watchStreamForStall((silentMs, writing) => {
+      stalledForMs = silentMs;
+      log.warn(
+        `[AI Gateway] Stream stalled — no chunk for ${Math.round(silentMs / 1000)}s ` +
+          `${writing ? 'while text was streaming' : 'while the model was working'}. ` +
           `Accumulated ${content.length} chars so far. Aborting stream.`
-        );
-        // If the stream object has a controller/abort method, try to close it
-        try {
-          if (stream && typeof (stream as any).controller?.abort === 'function') {
-            (stream as any).controller.abort();
-          }
-        } catch { /* best-effort abort */ }
-      }
-    }, 5_000);
+      );
+      try {
+        if (stream && typeof (stream as any).controller?.abort === 'function') {
+          (stream as any).controller.abort();
+        }
+      } catch { /* best-effort abort */ }
+    });
 
     try {
       for await (const event of stream as AsyncIterable<any>) {
-        // Update watchdog timestamp on every event
-        lastChunkTime = Date.now();
+        stall.chunk();
 
-        // Break out if watchdog flagged a stall (race between interval and iterator)
-        if (streamStalled) break;
+        // Break out if the watch fired (race between its timer and the iterator)
+        if (stall.stalled) break;
 
         // The caller cancelled. Stop reading and stop generating — the SDK
         // holds the same signal, so the request is already on its way down.
@@ -2697,7 +2707,12 @@ export class AIGateway {
           }
         } else if (event.type === 'content_block_start') {
           openContentBlock(event, toolUses, toolInputBuffers, serverToolUses);
+          if (event.content_block?.type === 'text') {
+            openTextBlocks.add(event.index);
+            stall.writing(true);
+          }
         } else if (event.type === 'content_block_stop') {
+          if (openTextBlocks.delete(event.index)) stall.writing(openTextBlocks.size > 0);
           // The block is closed, so its fragments are now a complete JSON
           // document — parse it onto the tool use it belongs to.
           const buffered = toolInputBuffers.get(event.index);
@@ -2726,7 +2741,7 @@ export class AIGateway {
       // Return whatever content was accumulated so far (partial response)
       if (!content) throw streamErr; // Re-throw if nothing was captured
     } finally {
-      clearInterval(chunkWatchdog);
+      stall.stop();
     }
 
     // Any buffer still open never saw its content_block_stop — a stall, an
@@ -2749,8 +2764,14 @@ export class AIGateway {
       stopReason = 'aborted';
     }
 
+    // A stall with nothing produced is a failure, not an empty answer: the
+    // SDK ends an aborted stream without throwing, so this is the one place
+    // that can tell the difference.
+    if (stall.stalled && !content && toolUses.length === 0) {
+      throw new GatewayStreamStalledError(modelConfig.provider, modelConfig.model, stalledForMs);
+    }
     // If stream stalled but we have partial content, mark finish reason accordingly
-    if (streamStalled && content) {
+    if (stall.stalled) {
       stopReason = 'chunk_timeout';
       log.warn(`[AI Gateway] Returning partial response (${content.length} chars) after stream stall`);
     }
@@ -2935,32 +2956,30 @@ export class AIGateway {
     // only thing that says every call's arguments are complete.
     let choiceClosed = false;
 
-    // Per-chunk watchdog — abort a stream that goes silent for 30s (mirrors the
-    // Anthropic path) so a hung provider can't wedge the turn.
-    let lastChunkTime = Date.now();
-    const chunkTimeoutMs = 30_000;
-    let streamStalled = false;
-    const chunkWatchdog = setInterval(() => {
-      if (Date.now() - lastChunkTime > chunkTimeoutMs) {
-        streamStalled = true;
-        clearInterval(chunkWatchdog);
-        log.warn(
-          `[AI Gateway] ${provider} stream stalled — no chunk for ${chunkTimeoutMs / 1000}s. ` +
+    // Stall watch — the same rule as the Anthropic path (stream-stall.ts). No
+    // blocks here: text and a call's arguments stream as they are generated,
+    // so the stream is writing from its first output fragment on, and the
+    // prompt read and any reasoning before it are the model working.
+    let stalledForMs = 0;
+    const stall = watchStreamForStall((silentMs, writing) => {
+      stalledForMs = silentMs;
+      log.warn(
+        `[AI Gateway] ${provider} stream stalled — no chunk for ${Math.round(silentMs / 1000)}s ` +
+          `${writing ? 'while it was writing' : 'before it wrote anything'}. ` +
           `Accumulated ${content.length} chars. Aborting stream.`
-        );
-        try {
-          if (stream && typeof (stream as any).controller?.abort === 'function') {
-            (stream as any).controller.abort();
-          }
-        } catch { /* best-effort abort */ }
-      }
-    }, 5_000);
+      );
+      try {
+        if (stream && typeof (stream as any).controller?.abort === 'function') {
+          (stream as any).controller.abort();
+        }
+      } catch { /* best-effort abort */ }
+    });
 
     let streamAborted = false;
     try {
       for await (const chunk of stream as AsyncIterable<any>) {
-        lastChunkTime = Date.now();
-        if (streamStalled) break;
+        stall.chunk();
+        if (stall.stalled) break;
 
         // Same cancel contract as the Anthropic path: stop reading, stop
         // generating, keep what arrived. AnA falls back across providers, so a
@@ -2989,8 +3008,10 @@ export class AIGateway {
         if (delta.text) {
           content += delta.text;
           onStream(delta.text, { type: 'text' });
+          stall.writing(true);
         }
         for (const fragment of parseOpenAIToolCallFragments(chunk)) {
+          stall.writing(true);
           const buffered = toolInputBuffers.get(fragment.index);
           if (!buffered) {
             toolUses.push({ id: fragment.id, name: fragment.name, input: {} });
@@ -3019,7 +3040,7 @@ export class AIGateway {
       log.error(`[AI Gateway] ${provider} stream interrupted:`, streamErr?.message);
       if (!content) throw streamErr; // nothing captured — surface the failure
     } finally {
-      clearInterval(chunkWatchdog);
+      stall.stop();
     }
 
     // A stream that ended before finish_reason — a stall, a cancel, a dropped
@@ -3041,7 +3062,11 @@ export class AIGateway {
       finishReason = 'aborted';
     }
 
-    if (streamStalled && content) {
+    // Nothing produced before the stall: a failure, never an empty answer.
+    if (stall.stalled && !content && toolUses.length === 0) {
+      throw new GatewayStreamStalledError(provider, modelConfig.model, stalledForMs);
+    }
+    if (stall.stalled) {
       finishReason = 'chunk_timeout';
       log.warn(`[AI Gateway] Returning partial ${provider} response (${content.length} chars) after stall`);
     }
@@ -4090,6 +4115,21 @@ export class ModelNotApprovedError extends GatewayPolicyError {
         `(${reason === 'explicit' ? 'named by the caller' : 'the only models remaining'}). ` +
         'See approvedForHighRisk in server/services/ai-governance/approved-models.ts.',
     );
+  }
+}
+
+/**
+ * A sub-agent's tool tried to call a model (see model-call-scope.ts).
+ *
+ * A {@link GatewayPolicyError} whose name is not overridden, so it is terminal
+ * on every path (isTerminalGatewayError matches by name): never retried, never
+ * walked down the fallback ladder, never counted against a provider's health.
+ * Thrown before anything is sent.
+ */
+export class SubAgentToolModelCallError extends GatewayPolicyError {
+  readonly code = 'SUB_AGENT_TOOL_MODEL_CALL' as const;
+  constructor(readonly scope: ModelCallRefusalScope) {
+    super(`A sub-agent's tool (${scope.tool}) may not call a model; nothing was sent.`);
   }
 }
 

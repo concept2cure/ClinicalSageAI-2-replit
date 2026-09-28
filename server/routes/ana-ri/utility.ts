@@ -686,6 +686,8 @@ export function mountUtilityRoutes(router: Router): void {
               // mean anything.
               signaturePurpose: signatureMeaning ?? 'approval',
               verifiedAt: esign?.verifiedAt,
+              authenticationMethod: esign?.authenticationMethod,
+              secondFactorVerified: esign?.secondFactorVerified,
             },
           }),
     };

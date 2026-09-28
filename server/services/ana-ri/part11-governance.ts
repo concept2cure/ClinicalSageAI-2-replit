@@ -126,6 +126,17 @@ export interface Part11Signoff {
    * so those handlers fail closed when it is absent.
    */
   verifiedAt?: Date;
+  /**
+   * The factors the route's re-verification actually checked for THIS
+   * dispatch ('password', or 'password+mfa' when a TOTP was also verified),
+   * and whether that second factor was verified. Stamped by the route from
+   * reverifySigner's result, never by a handler or the client. Added
+   * 2026-09-28: the FDA ESG transmit handler hard-coded
+   * `secondFactorVerified: false`, so a transmission whose signer passed MFA
+   * was recorded as having passed a password only.
+   */
+  authenticationMethod?: 'password' | 'password+mfa';
+  secondFactorVerified?: boolean;
 }
 
 /** Does this command require a Part 11 sign-off (at least a reason-for-change)? */

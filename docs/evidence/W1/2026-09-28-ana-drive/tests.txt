@@ -35,3 +35,12 @@ npx vitest run --config vitest.config.ts server/services/ana/__tests__ server/se
         the hook proxy's forwarding — removed one at a time)
      an open offered as a chip (Live Drive off) opens the program the server found
      the server's program wins over a name the page reads differently
+
+Regression sweep — third pass (stall watch), 2026-09-28
+npx vitest run --config vitest.config.ts server/services/ai-gateway server/services/ana/__tests__ server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__ server/routes/chat server/routes/__tests__/chat-path-parity.test.ts client/src/concept2cure/v2/__tests__ client/src/concept2cure/components/ana/__tests__ shared/navigation
+ Test Files  1 failed | 604 passed | 1 skipped (606)
+      Tests  1 failed | 7608 passed | 3 skipped (7612)
+ The one failure is the same submissionCenterGovernedWorkspaces test as the
+ second pass, still red on concept2cure-v2 and left to D4/D6.
+ New: server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts, 8
+ tests; 5 fail against the gateway as pushed (listed in silent-thinking.txt).

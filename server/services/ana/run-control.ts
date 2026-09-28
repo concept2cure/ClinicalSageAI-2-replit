@@ -914,6 +914,52 @@ export async function resumeAbandonedRun(pool: Pool, runId: string): Promise<voi
   driveLocalRun(runId, 'running');
 }
 
+/**
+ * Hold a running run for its person: running → paused (row 74).
+ *
+ * For a turn whose person asked to be asked before each further step
+ * (Manual). Like resumeAbandonedRun, it is not routed through applyControl and
+ * writes no control event: nobody pressed pause — the person chose the policy,
+ * and the policy is recorded on the turn, not as a pause they did not make.
+ * Their answer (resume, steer, cancel) goes through applyControl as usual and
+ * is recorded as theirs. False when the run was not running.
+ */
+export async function holdForPerson(pool: RunControlQuery, runId: string): Promise<boolean> {
+  const { rowCount } = await pool.query(
+    `UPDATE ana_runs SET status = 'paused', updated_at = now() WHERE id = $1 AND status = 'running'`,
+    [runId],
+  );
+  return (rowCount ?? 0) > 0;
+}
+
+/**
+ * End a held run nobody came back to: paused → finished, stopped_reason
+ * 'hold_expired' (row 74).
+ *
+ * The counterpart of resumeAbandonedRun for a turn that must not carry on
+ * unattended: where that one resumes, this one ends. A server decision, so no
+ * control event. Guarded on 'paused', so a resume that landed first wins and
+ * this returns false; afterwards applyControl refuses TERMINAL and the turn's
+ * own endRun is a no-op. Everything waiting on the run in this process is
+ * woken — its cancel signal is not aborted, because nobody cancelled it.
+ *
+ * A failed write is thrown, where resumeAbandonedRun logs and carries on.
+ * Carrying on is that one's safe default; here false would read as "a
+ * Continue landed first" and keep a turn waiting that nobody may be coming
+ * back to, with its row in a state nobody knows. The turn ends on the error.
+ */
+export async function endHeldRun(pool: RunControlQuery, runId: string): Promise<boolean> {
+  const { rowCount } = await pool.query(
+    `UPDATE ana_runs
+     SET status = 'finished', stopped_reason = 'hold_expired', finished_at = now(), updated_at = now()
+     WHERE id = $1 AND status = 'paused'`,
+    [runId],
+  );
+  if (!rowCount) return false;
+  await notifyAndDrive(pool, runId, 'finished');
+  return true;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Approval — holding a run at a governed action until a person decides
 // ─────────────────────────────────────────────────────────────────────────────

@@ -202,6 +202,20 @@ describe('GA-6: closing the section rename returns focus to Rename', () => {
     await waitFor(() => expect(document.activeElement).toBe(renameBtn()));
   });
 
+  it('an Escape the rename handled does not also close the AnA rail', async () => {
+    // 2026-09-28: the AnA rail's Escape listener did not check whether the key
+    // had already been handled, so leaving the rename also dismissed AnA.
+    await mount();
+    const ana = () => screen.queryByLabelText(/AnA — document authoring/);
+    if (!ana()) fireEvent.click(toggle('AnA'));
+    await waitFor(() => expect(ana()).not.toBeNull());
+    fireEvent.click(renameBtn());
+    const group = await screen.findByRole('group', { name: /rename section/i });
+    fireEvent.keyDown(within(group).getByLabelText('Section code'), { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('group', { name: /rename section/i })).toBeNull());
+    expect(ana(), 'AnA closed on an Escape the rename already handled').not.toBeNull();
+  });
+
   it('after a successful rename', async () => {
     const group = await openRename();
     fireEvent.change(within(group).getByLabelText('Section title'), { target: { value: 'General Information (revised)' } });

@@ -47,6 +47,7 @@ import type {
 } from '../fixtures/admin-data';
 import { useIndustryProfile } from '../../mdx/hooks/useIndustryProfile';
 import {
+  CLIENT_TYPE_LABEL,
   CLIENT_TYPE_OPTIONS,
   buildOrgProfilePatch,
   governedToPicker,
@@ -335,7 +336,6 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
 
   const nameDirty = orgLoaded && name.trim() !== savedName;
   const txwDirty = settingsLoaded && JSON.stringify(txw) !== JSON.stringify(savedTxw);
-  const dirty = nameDirty || txwDirty;
   const editable = !loading && !loadError;
 
   const setTxwField = <K extends keyof TranslationPolicy>(k: K, v: TranslationPolicy[K]) =>
@@ -373,6 +373,12 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
       );
       if (r.error) failures.push(`Organization name — ${saveFailure(r.error, r.status)}`);
       else setSavedName(r.data?.organization?.name ?? name.trim());
+    }
+
+    if (clientTypeDirty) {
+      const patch = buildOrgProfilePatch(clientType, govSpec);
+      const saved = patch ? await saveProfile(patch, why) : false;
+      if (!saved) failures.push('Client type — not saved to the governed industry profile.');
     }
 
     if (txwDirty) {
@@ -419,14 +425,21 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
     );
   }, [govPrimary, govSpec]);
 
-  const chooseClientType = (t: string) => {
-    setClientType(t);
-    const patch = buildOrgProfilePatch(t, govSpec);
-    if (patch) void saveProfile(patch);
-  };
+  /* A chip is a pending change, saved by "Save to organization" under the
+     page's one reason for change like every other field here. It used to
+     PATCH the governed profile on click, with no reason and no confirmation
+     (launch sweep finding 122). */
+  const chooseClientType = (t: string) => setClientType(t);
+  const clientTypeDirty =
+    profile.status === 'ready' || profile.status === 'empty'
+      ? Boolean(clientType) && (govPrimary == null || !pickerMatchesProfile(clientType, govPrimary, govSpec))
+      : false;
+  const dirty = nameDirty || txwDirty || clientTypeDirty;
 
   const clientTypeStatus: string =
-    profile.status === 'error'
+    clientTypeDirty && saveState.status !== 'saving'
+      ? 'Not saved yet — give a reason above and save to the organization.'
+      : profile.status === 'error'
       ? 'Governed profile unreachable — the client type could not be read and cannot be changed.'
       : saveState.status === 'saving'
         ? 'Saving to governed org profile…'
@@ -656,7 +669,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                       disabled={profile.status === 'loading' || saveState.status === 'saving'}
                       onClick={() => chooseClientType(t)}
                     >
-                      {t}
+                      {CLIENT_TYPE_LABEL[t]}
                     </button>
                   ))}
                 </div>
@@ -937,14 +950,14 @@ function chainSummary(v: ChainVerdictView): string {
   if (v.verdict === 'unverified') {
     return 'The server returned no chain verdict on this read, so the chain is not verified here';
   }
-  const span = `${v.rowsChecked} chained entry(ies) verified server-side (${v.sequencedRows} sequenced, ${v.legacyRows} legacy)`;
+  const span = `${v.rowsChecked} chained ${v.rowsChecked === 1 ? 'entry' : 'entries'} verified server-side (${v.sequencedRows} sequenced, ${v.legacyRows} legacy)`;
   if (v.verdict === 'intact') return `Hash chain verifies intact over ${span}`;
   return `Hash chain breaks at entry ${v.brokenAt?.id ?? 'unknown'} (${v.brokenAt?.segment ?? 'unknown'} segment, ${
     v.brokenAt?.commitsTo ? `commits to ${v.brokenAt.commitsTo}` : 'content does not derive from any predecessor'
   }) over ${span}`;
 }
 
-/* ════════════ Audit trail — immutable hash-chain viewer (ss11.10(e)) ════════════
+/* ════════════ Audit trail — immutable hash-chain viewer (§11.10(e)) ════════════
    Live-anchored to GET /api/audit-trail/ledger (mounted in
    server/bootstrap/register-regulatory-routes.ts, router
    server/routes/audit-trail-ledger.routes.ts). REAL: an org-scoped, newest-first
@@ -1091,7 +1104,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
     const filtered = kind !== 'all' || term.length > 0;
     return {
       summary:
-        `Audit trail: ${entries.length} hash-chained entry(ies)` +
+        `Audit trail: ${entries.length} hash-chained ${entries.length === 1 ? 'entry' : 'entries'}` +
         (filtered ? `, filtered to ${log.length} by kind "${kind}"${term ? ` and the search "${q}"` : ''}` : '') +
         `. ${chainSummary(chainStatus)}` +
         (entry ? ` Entry ${entry.id} is open.` : ''),
@@ -1141,7 +1154,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       <AdminHeader
         eyebrow="Admin — compliance"
         title="Audit trail"
-        sub={`${entries.length} entries — hash-chained — append-only — 21 CFR Part 11 ss11.10(e)`}
+        sub={`${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} — hash-chained — append-only — 21 CFR Part 11 §11.10(e)`}
         actions={
           <React.Fragment>
             <button
@@ -1492,7 +1505,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
                   <span className="esig" style={{ marginRight: 6 }} role="img" aria-label="E-signed (21 CFR Part 11)">
                     {I.shieldCheck}
                   </span>
-                  {entry.meaning} (ss11.50)
+                  {entry.meaning} (§11.50)
                 </span>
               </React.Fragment>
             )}
@@ -1521,7 +1534,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             >
               {I.shieldCheck}
               <span>
-                This entry was digitally signed per 21 CFR ss11.50. Meaning:{' '}
+                This entry was digitally signed per 21 CFR §11.50. Meaning:{' '}
                 <strong>{entry.meaning}</strong>. Signature is hash-bound and tamper-evident.
               </span>
             </div>
@@ -1986,7 +1999,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   return (
     <div className="page-inner">
       <AdminHeader
-        eyebrow="Workspace — /api/module-subscriptions"
+        eyebrow="Workspace — apps"
         title="Apps catalog"
         sub="Every application — the destinations you open and work in — entitlement-aware. Active apps launch; anything you cannot open states which of the reasons applies and the step that resolves it, never a dead button. Platform services (below) are the capabilities that run inside these apps."
         actions={
@@ -3053,7 +3066,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                   <div className="ac-val-row">
                     <div className="ac-val-main">
-                      <b>E-signatures (21 CFR ss11.50 / ss11.70)</b>
+                      <b>E-signatures (21 CFR §11.50 / §11.70)</b>
                       <span>
                         Password + TOTP verification; signature meaning recorded on every signing.
                       </span>

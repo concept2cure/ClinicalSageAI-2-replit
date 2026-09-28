@@ -14,6 +14,7 @@ import {
   withRules,
   composeDispatchGates,
   composeStepVerdicts,
+  externalNotAssessed,
 } from '../assess-dispatch-readiness';
 import { DISPATCH_GATE_RULE_IDS } from '../validation-rule-corpus';
 
@@ -183,5 +184,36 @@ describe('composeStepVerdicts — each step verdict carries every gate it must',
     );
     expect(v.gate.cleared).toBe(true);
     expect(v.dispatchGateOnSigning.cleared).toBe(true);
+  });
+});
+
+describe('an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28)', () => {
+  const clear = { cleared: true, blockers: [] as string[] };
+  const block = { cleared: false, blockers: ['x'] };
+
+  it('says why the external gate cleared without a report', () => {
+    expect(externalNotAssessed({ ran: false, configured: false })).toMatch(/No agency-grade validator is configured/);
+    expect(externalNotAssessed({ ran: false, configured: true })).toMatch(/configured but did not run/);
+    expect(externalNotAssessed({ ran: true, configured: true })).toBeUndefined();
+  });
+
+  it('carries the sentence on the external gate view only when it cleared', () => {
+    const note = externalNotAssessed({ ran: false, configured: false })!;
+    const views = dispatchGateViews(
+      { structural: clear, external: clear, shadowPresence: block, releaseSignature: block },
+      { external: note },
+    );
+    const ext = views.find((v) => v.key === 'external')!;
+    expect(ext.cleared).toBe(true);
+    expect(ext.notAssessed).toBe(note);
+    for (const v of views.filter((x) => x.key !== 'external')) expect(v.notAssessed).toBeUndefined();
+  });
+
+  it('a gate that blocks keeps its blockers and no not-assessed note', () => {
+    const views = dispatchGateViews(
+      { structural: clear, external: block, shadowPresence: clear, releaseSignature: clear },
+      { external: 'ignored' },
+    );
+    expect(views.find((v) => v.key === 'external')!.notAssessed).toBeUndefined();
   });
 });
