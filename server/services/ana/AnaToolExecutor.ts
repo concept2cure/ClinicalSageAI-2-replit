@@ -17284,8 +17284,15 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       if (ref) {
         const { resolveProgramRef } = await import('../ana-ri/drive-context.js');
         const found = await resolveProgramRef(ctx?.organizationId ?? null, ref);
-        if (found.status === 'found') await settleOpen?.(turnProgramOf(found.program));
-        else if (found.status === 'ambiguous') return await unresolvedProgramResult(ref, found);
+        if (found.status === 'found') {
+          await settleOpen?.(turnProgramOf(found.program));
+          // The screen can only match what its page lists, so a program past
+          // the first 50 was refused there as unknown although it was found
+          // here. Hand the screen the program found, beside the registry's
+          // fields as navigate_to does — never as a param: params are what
+          // the model writes, and the registry keeps only declared ones.
+          res.directive.program = turnProgramOf(found.program);
+        } else if (found.status === 'ambiguous') return await unresolvedProgramResult(ref, found);
       }
     }
     /* An operation on a screen that shows ONE program needs a program open —

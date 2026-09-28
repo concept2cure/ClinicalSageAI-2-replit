@@ -118,6 +118,7 @@ import {
 import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { selectToolsForTurn, SELF_DRIVE_TOOLS } from '../../services/ana/tool-selection.js';
+import { recentTurns } from '../../services/ana/history-window.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
 import { buildContextUsedEvent, type ContextUpload } from '../../services/ana/turn-context-used.js';
 import { guardUserInput, PromptInjectionError } from '../../services/ana/ana-input-guard.js';
@@ -980,7 +981,9 @@ export function mountStreamRoute(router: Router): void {
           const previousMsgs = serverHistory.slice(0, -1);
           streamPriorTurns = previousMsgs.length;
           if (previousMsgs.length > 0) {
-            for (const msg of previousMsgs.slice(-20)) {
+            // Opens on a question: after an unanswered turn, the last twenty
+            // messages can start on an answer (services/ana/history-window.ts).
+            for (const msg of recentTurns(previousMsgs, 20)) {
               messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
             }
             streamHistoryLoaded = true;
@@ -999,9 +1002,10 @@ export function mountStreamRoute(router: Router): void {
       if (!streamHistoryLoaded && conversation_history && Array.isArray(conversation_history)) {
         const MAX_HISTORY_MSGS = 20;
         const MAX_MSG_LENGTH = 50000;
-        for (const msg of conversation_history.slice(-MAX_HISTORY_MSGS)) {
-          if (!msg.role || !['user', 'assistant'].includes(msg.role)) continue;
-          if (typeof msg.content !== 'string' || msg.content.length > MAX_MSG_LENGTH) continue;
+        const clientTurns = conversation_history
+          .slice(-MAX_HISTORY_MSGS)
+          .filter((msg: any) => typeof msg?.content === 'string' && msg.content.length <= MAX_MSG_LENGTH);
+        for (const msg of recentTurns(clientTurns, MAX_HISTORY_MSGS)) {
           messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
           streamPriorTurns += 1;
         }

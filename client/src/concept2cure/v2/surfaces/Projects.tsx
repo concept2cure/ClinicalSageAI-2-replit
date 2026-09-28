@@ -9,7 +9,12 @@ import {
 } from '@shared/constants/domain/product-types';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
-import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import {
+  listedChoices,
+  notifySurfaceActionReady,
+  useSurfaceActionHandlers,
+  type DirectiveProgram,
+} from '../surfaceActions';
 import { usePublishSurfaceContext } from '../surfaceContext';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
@@ -1078,7 +1083,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   }, [wizardOpen, live.loading, live.error, projects, list, ws, status, q, needle, view, health, truncated]);
   usePublishSurfaceContext('projects', anaContext);
 
-  const openProj = (pr: ProjPortfolioEntry) => {
+  const openProj = (
+    pr: Pick<ProjPortfolioEntry, 'id' | 'title' | 'code'> & Partial<Pick<ProjPortfolioEntry, 'ws' | 'status'>>,
+  ) => {
     try {
       publishShellProject({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status });
       if (window.C2C?.setSurface) window.C2C.setSurface('project-home', pr.title);
@@ -1093,12 +1100,27 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   /* One guard for all three: while the wizard owns the canvas, a person may be
      mid-form — AnA operating the portfolio underneath (or navigating away)
      would discard their work. Honest refusal instead. */
+  /* The program the server found. act_on_screen resolves the reference across
+     every program the person has and hands over the one it matched; this page
+     lists only the 50 most recent, so a program past it was refused here as
+     unknown although it exists. It arrives beside the params, never in them —
+     the model writes params. Needs no page, so it does not wait for one. */
+  const openResolvedProgram = (program: DirectiveProgram, named: string | undefined) => {
+    const found = projects.find((p) => p.id === program.id) ?? {
+      id: program.id,
+      title: program.name || named || '',
+      code: program.code || '—',
+    };
+    openProj(found);
+    return { ok: true as const, detail: `Opened ${found.code} — ${found.title}` };
+  };
   const wizardGuard = () =>
     wizardOpen ? { ok: false as const, reason: 'The new-project wizard is open — close it first.' } : null;
   useSurfaceActionHandlers('projects', {
-    'projects.open-program': (params) => {
+    'projects.open-program': (params, { program }) => {
       const guarded = wizardGuard();
       if (guarded) return guarded;
+      if (program) return openResolvedProgram(program, params.program);
       const wanted = (params.program ?? '').trim().toLowerCase();
       // Not-ready, not failed: the bus holds the directive and re-attempts on
       // this surface's ready signal below — the navigate→act gap.

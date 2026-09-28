@@ -26,6 +26,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { Vault } from '../surfaces/Vault';
 import { Projects } from '../surfaces/Projects';
+import { AnaActionChip } from '../AnaActionChips';
 import {
   __resetSurfaceActionBus,
   applySurfaceAction,
@@ -369,5 +370,82 @@ describe('Projects — AnA opens a real program', () => {
     });
     expect(d).not.toBeNull();
     expect(d!.surfaceId).toBe('projects');
+  });
+});
+
+/* The page lists the 50 most recent programs; the server resolves a reference
+   across all of them and hands over the one it found. A program past the page
+   was refused here as "No program named" although it existed. */
+describe('Projects — the program the server found', () => {
+  it('opens the program the server found, even one past this page', async () => {
+    const onNav = vi.fn();
+    render(<Projects surface={{ id: 'projects', label: 'Projects' } as any} onAsk={vi.fn()} onNav={onNav} segment="biopharma" />);
+    await waitFor(() => expect(registeredSurfaceId()).toBe('projects'));
+    await screen.findAllByText(/BX-204/);
+
+    let outcome: any;
+    act(() => {
+      outcome = applySurfaceAction(
+        validateDriveAction({
+          ...directive('projects.open-program', { program: 'legacy-7' }),
+          program: { id: 'p-legacy-7', name: 'Zeta Device Study', code: 'LEGACY-7' },
+        })!,
+        vi.fn(),
+      );
+    });
+    expect(outcome.status).toBe('applied');
+    expect(outcome.detail).toBe('Opened LEGACY-7 — Zeta Device Study');
+    expect((window as any).C2C_PROJECT?.id).toBe('p-legacy-7');
+    expect(onNav).toHaveBeenCalledWith('project-home');
+  });
+
+  it('an open offered as a chip (Live Drive off) opens the program the server found', async () => {
+    const onNav = vi.fn();
+    render(
+      <>
+        <Projects surface={{ id: 'projects', label: 'Projects' } as any} onAsk={vi.fn()} onNav={onNav} segment="biopharma" />
+        <AnaActionChip
+          onNav={vi.fn()}
+          action={{
+            label: 'Open a program',
+            actionType: 'surface_action',
+            actionId: 'projects.open-program',
+            surfaceId: 'projects',
+            params: { program: 'legacy-7' },
+            program: { id: 'p-legacy-7', name: 'Zeta Device Study', code: 'LEGACY-7' },
+          }}
+        />
+      </>,
+    );
+    await waitFor(() => expect(registeredSurfaceId()).toBe('projects'));
+    await screen.findAllByText(/BX-204/);
+
+    act(() => {
+      screen.getByRole('button', { name: /Open a program/ }).click();
+    });
+    expect((window as any).C2C_PROJECT?.id).toBe('p-legacy-7');
+    expect(onNav).toHaveBeenCalledWith('project-home');
+  });
+
+  it('the server\'s program wins over a name the page reads differently', async () => {
+    const onNav = vi.fn();
+    render(<Projects surface={{ id: 'projects', label: 'Projects' } as any} onAsk={vi.fn()} onNav={onNav} segment="biopharma" />);
+    await waitFor(() => expect(registeredSurfaceId()).toBe('projects'));
+    await screen.findAllByText(/BX-204/);
+
+    let outcome: any;
+    act(() => {
+      outcome = applySurfaceAction(
+        validateDriveAction({
+          ...directive('projects.open-program', { program: 'ZZ-999' }),
+          program: { id: 'p1', name: 'x', code: 'y' },
+        })!,
+        vi.fn(),
+      );
+    });
+    // p1 is on the page: its own row is opened, with the page's own name.
+    expect(outcome.status).toBe('applied');
+    expect(outcome.detail).toContain('BX-204');
+    expect((window as any).C2C_PROJECT?.id).toBe('p1');
   });
 });
