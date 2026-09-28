@@ -55,7 +55,6 @@ function serveDocs(payload: unknown) {
 }
 
 const makeProps = () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   surface: { id: 'ectd-coauthor', label: 'eCTD' } as any,
   onAsk: vi.fn(),
   onNav: vi.fn(),

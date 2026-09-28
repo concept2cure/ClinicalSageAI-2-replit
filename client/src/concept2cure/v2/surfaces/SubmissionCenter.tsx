@@ -841,12 +841,8 @@ export function SubmissionCenter({
         deviceFilingsUnavailable: deviceRes.error ? 'the eSTAR tracker read failed' : null,
         deviceAssemblyVerdict:
           assembly.state === 'ready'
-            ? {
-                artifactKind: assembly.artifactKind,
-                missingRequiredSections: assembly.missingRequired,
-                undeterminedSections: assembly.undetermined,
-                otherBlockers: assembly.otherBlockers,
-              }
+            ? { artifactKind: assembly.artifactKind, missingRequiredSections: assembly.missingRequired,
+                undeterminedSections: assembly.undetermined, otherBlockers: assembly.otherBlockers }
             : assembly.state === 'error'
               ? 'unavailable'
               : 'loading',

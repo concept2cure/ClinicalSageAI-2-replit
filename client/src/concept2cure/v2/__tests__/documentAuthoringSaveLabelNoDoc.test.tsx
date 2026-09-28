@@ -57,7 +57,6 @@ const SECTIONS = {
 };
 
 function props() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return { surface: { id: 'document-authoring', label: 'Authoring' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biotech' };
 }
 
