@@ -56,7 +56,7 @@ import { DocumentWorkbench, type AuthDoc } from './DocumentWorkbench';
 import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { FileToVaultDialog } from './FileToVaultDialog';
 import { AssignReviewDialog } from './AssignReviewDialog';
-import { useProgramSummary, programHeadline } from './programSummary';
+import { useProgramRead, programHeadline, programLineFor } from './programSummary';
 import { describeProvenance, type DocumentProvenance } from './provenance';
 
 /** GET /docs/:id → `document` (the columns this card reads). */
@@ -131,7 +131,7 @@ export function DocumentCanvas({
      hidden while collapsed, so its state survives; before that first expand
      a long thread pays nothing for canvases nobody opened. */
   const [workbenchMounted, setWorkbenchMounted] = useState(false);
-  const program = useProgramSummary(programId);
+  const { program, state: programState } = useProgramRead(programId);
   const rootRef = useRef<HTMLElement>(null);
   const expandBtnRef = useRef<HTMLButtonElement>(null);
   const backBtnRef = useRef<HTMLButtonElement>(null);
@@ -278,7 +278,7 @@ export function DocumentCanvas({
           <h3 className="dcv-title" id={titleId}>{title}</h3>
           <div className="dcv-meta">
             {programId ? (
-              <span className="dcv-project">{I.folder} {programLine ?? 'Reading the program…'}</span>
+              <span className="dcv-project">{I.folder} {programLineFor(program, programState)}</span>
             ) : (
               <span className="dcv-project dcv-project-none" data-testid="dc-no-program">{I.folder} Not filed under a program</span>
             )}
