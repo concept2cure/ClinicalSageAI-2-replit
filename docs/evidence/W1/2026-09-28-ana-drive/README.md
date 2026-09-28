@@ -57,6 +57,23 @@ now halt it or leave it halted, including the moves still in flight.
 - An app-authored operator turn folded on a fallback model is labelled as the
   app, never as the person's interjection.
 
+**Rate limits.** A change on `concept2cure-v2` this week (`50b04d99`, IAM-18)
+metered every `/api/ana-ri` request in the 30-a-minute AI bucket. That included
+requests that call no model: the rail's activity poll, the Live Drive state
+read, and the run control endpoint, which now carries one confirmation per
+move. In the browser, one session's polls and a demonstration's confirmations
+used the bucket up. The confirmations were refused, so each of AnA's rounds
+waited out its ceiling, and the person's next question was refused and shown
+as "AnA is unreachable — the network or the AI gateway did not respond".
+
+- Reads and the control endpoint under `/api/ana-ri` are now ordinary API
+  traffic, and everything else there stays AI. Every GET route there was
+  checked, and none calls a model. The change is in
+  `server/middleware/redisRateLimiter.ts`.
+- A refused turn now says what happened: a rate limit, the organisation's
+  weekly cap, or no provider configured. It is no longer shown as a network
+  failure.
+
 **Programs.**
 - Program references are resolved in SQL across all of the tenant's programs,
   not only the 100 most recent.
@@ -74,9 +91,11 @@ now halt it or leave it halted, including the moves still in flight.
 
 ## Evidence
 
-- `browser-battery.txt`: **19/19** in headless Chromium against the real app
-  (local PostgreSQL provisioned with `install-fresh`, the migration set and
-  the GA demo seed).
+- `browser-battery.txt`: **19/19** in headless Chromium against the real app,
+  run on the merged tree. It used local PostgreSQL provisioned with
+  `install-fresh`, the migration set and the GA demo seed. The merged run
+  logged no 429s; the run just before the rate-limit fix had failed 2 of the
+  19 checks on 429s.
   - Navigation from Home and from the rail.
   - A program's Vault with none open.
   - Opening a program.
@@ -92,8 +111,9 @@ now halt it or leave it halted, including the moves still in flight.
     listed title.
   - The stand-in model rejects what the real Messages API rejects (an empty
     non-final message).
-- `typecheck.txt`: `npm run typecheck` on the final code, exit 0, no errors.
-- Unit and integration tests: see the test counts in the commit message.
+- `typecheck.txt`: `npm run typecheck` on the merged tree, exit 0, no errors.
+- `tests.txt`: the regression sweep over every area this touches, before the
+  merge and on the merged tree (593 files and 7,454 tests passed).
   - Every new test was first seen failing with its fix removed by hand, then
     passing with it restored.
   - Server tests use real HTTP through the stream route, and real PostgreSQL

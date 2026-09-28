@@ -1,48 +1,47 @@
-01:00:21.535 fake model on :8787 delay=900 noText=false
-01:00:58.904 #1 stream=true tools=40 msgs=1 -> navigate_to {"target":"biostatistics"}
-01:00:59.812 #2 stream=true tools=40 msgs=3 -> text "Navigation result: navigation_ready. You are on biostatistics now."
-01:01:00.319 #3 stream=false tools=0 msgs=1 -> text "FAKE: the tool navigate_to was not offered on this turn."
-01:01:07.813 #4 stream=true tools=50 msgs=1 -> navigate_to {"target":"vault"}
-01:01:08.215 #5 stream=true tools=50 msgs=3 -> navigate_to {"target":"vault","program":"BX-099 · generalized myasthenia gravis (MAA)"}
-01:01:09.222 #6 stream=true tools=50 msgs=5 -> text "Navigation result: navigation_ready. You are on vault now."
-01:01:18.360 #7 stream=true tools=50 msgs=1 -> act_on_screen {"action":"projects.open-program","params":{"program":"bx-301"}}
-01:01:19.311 #8 stream=true tools=50 msgs=3 -> text "Open program: action_ready."
-01:01:28.738 #9 stream=true tools=50 msgs=1 -> act_on_screen {"action":"vault.search","params":{"query":"stability"}}
-01:01:29.679 #11 received screen report: "Search the vault" on the vault screen did not happen: This vault has no documents yet, so there is nothing to search.
-01:01:29.679 #10 stream=true tools=50 msgs=3 -> text "Vault search result: action_ready."
-01:01:56.582 #11 stream=true tools=40 msgs=1 -> navigate_to {"target":"biostatistics"}
-01:01:57.391 #12 stream=true tools=40 msgs=3 -> text "Navigation result: navigation_ready. You are on biostatistics now."
-01:01:57.891 #13 stream=false tools=0 msgs=1 -> text "FAKE: the tool navigate_to was not offered on this turn."
-01:02:07.294 #14 stream=true tools=50 msgs=1 -> list_demo_scripts {}
-01:02:07.753 #15 stream=true tools=50 msgs=3 -> start_product_demo {"demo":"training-orientation"}
-01:02:08.181 #16 stream=true tools=50 msgs=5 -> navigate_to {"target":"projects","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:09.372 #17 stream=true tools=50 msgs=7 -> act_on_screen {"action":"projects.open-program","params":{"program":"Vorelinib · KIT-mutant GIST (IND)"}}
-01:02:10.261 #18 stream=true tools=50 msgs=9 -> navigate_to {"target":"project-home","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:11.594 #19 stream=true tools=50 msgs=11 -> navigate_to {"target":"vault","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:13.300 #20 stream=true tools=50 msgs=13 -> navigate_to {"target":"authoring","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:14.973 #21 stream=true tools=50 msgs=15 -> navigate_to {"target":"protocol-dev","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:18.157 #22 stream=true tools=50 msgs=17 -> navigate_to {"target":"submissions","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:19.959 #23 stream=true tools=50 msgs=19 -> act_on_screen {"action":"submissions.set-workspace","params":{"workspace":"validation"}}
-01:02:21.130 #24 stream=true tools=50 msgs=21 -> navigate_to {"target":"dispatch-readiness","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:22.789 #25 stream=true tools=50 msgs=23 -> navigate_to {"target":"quality","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:24.245 #26 stream=true tools=50 msgs=25 -> act_on_screen {"action":"quality.filter-changes","params":{"stage":"approved"}}
-01:02:25.075 #27 stream=true tools=50 msgs=27 -> navigate_to {"target":"audit-trail","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:26.263 #28 stream=true tools=50 msgs=29 -> text "That is the whole demonstration: 12 stops. Ask me about any of them."
-01:02:31.201 #29 stream=true tools=50 msgs=1 -> list_demo_scripts {}
-01:02:31.667 #30 stream=true tools=50 msgs=3 -> start_product_demo {"demo":"sales-flagship"}
-01:02:32.088 #31 stream=true tools=50 msgs=5 -> navigate_to {"target":"projects","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:33.692 #32 stream=true tools=50 msgs=7 -> act_on_screen {"action":"projects.open-program","params":{"program":"Vorelinib · KIT-mutant GIST (IND)"}}
-01:02:34.556 #33 stream=true tools=50 msgs=9 -> navigate_to {"target":"authoring","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:35.558 #34 stream=true tools=50 msgs=11 -> act_on_screen {"action":"authoring.open-document","params":{}}
-01:02:36.632 #35 stream=true tools=50 msgs=13 -> act_on_screen {"action":"authoring.open-document","params":{"title":"Quarterly summary"}}
-01:02:37.158 #37 received screen report: "Open a document for authoring" on the authoring screen did not happen: No document matching "Quarterly summary" in scope (status filter: all). Documents listed: "Clinical Overview (CTD Module 2.5)".
-01:02:37.159 #36 stream=true tools=50 msgs=15 -> act_on_screen {"action":"authoring.open-document","params":{"title":"Clinical Overview (CTD Module 2.5)"}}
-01:02:37.830 #37 stream=true tools=50 msgs=17 -> navigate_to {"target":"protocol-dev","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:39.418 #38 stream=true tools=50 msgs=19 -> navigate_to {"target":"vault","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:40.945 #39 stream=true tools=50 msgs=21 -> navigate_to {"target":"submissions","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:42.281 #40 stream=true tools=50 msgs=23 -> navigate_to {"target":"dispatch-readiness","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:43.769 #41 stream=true tools=50 msgs=25 -> navigate_to {"target":"quality","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:45.212 #42 stream=true tools=50 msgs=27 -> navigate_to {"target":"audit-trail","program":"Vorelinib · KIT-mutant GIST (IND)"}
-01:02:46.853 #43 stream=true tools=50 msgs=29 -> text "That is the whole demonstration: 10 stops. Ask me about any of them."
-01:02:51.942 #44 stream=true tools=40 msgs=1 -> navigate_to {"target":"biostatistics"}
-01:02:52.320 #45 stream=true tools=40 msgs=3 -> text "Navigation result: navigation_ready. You are on biostatistics now."
+01:45:51.164 fake model on :8787 delay=900 noText=false
+01:46:27.073 #1 stream=true tools=42 msgs=1 -> navigate_to {"target":"biostatistics"}
+01:46:27.927 #2 stream=true tools=42 msgs=3 -> text "Navigation result: navigation_ready. You are on biostatistics now."
+01:46:35.886 #3 stream=true tools=50 msgs=1 -> navigate_to {"target":"vault"}
+01:46:36.261 #4 stream=true tools=50 msgs=3 -> navigate_to {"target":"vault","program":"BX-099 · generalized myasthenia gravis (MAA)"}
+01:46:37.235 #5 stream=true tools=50 msgs=5 -> text "Navigation result: navigation_ready. You are on vault now."
+01:46:46.209 #6 stream=true tools=50 msgs=1 -> act_on_screen {"action":"projects.open-program","params":{"program":"bx-301"}}
+01:46:47.180 #7 stream=true tools=50 msgs=3 -> text "Open program: action_ready."
+01:46:47.599 #8 stream=false tools=0 msgs=1 -> text "FAKE: the tool act_on_screen was not offered on this turn."
+01:46:56.534 #9 stream=true tools=50 msgs=1 -> act_on_screen {"action":"vault.search","params":{"query":"stability"}}
+01:46:57.581 #10 stream=true tools=50 msgs=3 -> text "Vault search result: action_ready."
+01:47:24.437 #11 stream=true tools=42 msgs=1 -> navigate_to {"target":"biostatistics"}
+01:47:25.245 #12 stream=true tools=42 msgs=3 -> text "Navigation result: navigation_ready. You are on biostatistics now."
+01:47:33.976 #13 stream=true tools=50 msgs=1 -> list_demo_scripts {}
+01:47:34.447 #14 stream=true tools=50 msgs=3 -> start_product_demo {"demo":"training-orientation"}
+01:47:34.865 #15 stream=true tools=50 msgs=5 -> navigate_to {"target":"projects","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:47:36.016 #16 stream=true tools=50 msgs=7 -> act_on_screen {"action":"projects.open-program","params":{"program":"Vorelinib · KIT-mutant GIST (IND)"}}
+01:47:36.903 #17 stream=true tools=50 msgs=9 -> navigate_to {"target":"project-home","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:47:38.119 #18 stream=true tools=50 msgs=11 -> navigate_to {"target":"vault","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:47:39.801 #19 stream=true tools=50 msgs=13 -> navigate_to {"target":"authoring","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:47:41.298 #20 stream=true tools=50 msgs=15 -> navigate_to {"target":"protocol-dev","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:47:43.640 #21 stream=true tools=50 msgs=17 -> navigate_to {"target":"submissions","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:47:45.318 #22 stream=true tools=50 msgs=19 -> act_on_screen {"action":"submissions.set-workspace","params":{"workspace":"validation"}}
+01:47:46.448 #23 stream=true tools=50 msgs=21 -> navigate_to {"target":"dispatch-readiness","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:47:48.029 #24 stream=true tools=50 msgs=23 -> navigate_to {"target":"quality","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:47:49.511 #25 stream=true tools=50 msgs=25 -> act_on_screen {"action":"quality.filter-changes","params":{"stage":"approved"}}
+01:47:50.329 #26 stream=true tools=50 msgs=27 -> navigate_to {"target":"audit-trail","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:47:51.376 #27 stream=true tools=50 msgs=29 -> text "That is the whole demonstration: 12 stops. Ask me about any of them."
+01:47:55.443 #28 stream=true tools=50 msgs=1 -> list_demo_scripts {}
+01:47:55.906 #29 stream=true tools=50 msgs=3 -> start_product_demo {"demo":"sales-flagship"}
+01:47:56.326 #30 stream=true tools=50 msgs=5 -> navigate_to {"target":"projects","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:47:57.937 #31 stream=true tools=50 msgs=7 -> act_on_screen {"action":"projects.open-program","params":{"program":"Vorelinib · KIT-mutant GIST (IND)"}}
+01:47:58.770 #32 stream=true tools=50 msgs=9 -> navigate_to {"target":"authoring","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:47:59.677 #33 stream=true tools=50 msgs=11 -> act_on_screen {"action":"authoring.open-document","params":{}}
+01:48:00.732 #34 stream=true tools=50 msgs=13 -> act_on_screen {"action":"authoring.open-document","params":{"title":"Quarterly summary"}}
+01:48:01.231 #36 received screen report: "Open a document for authoring" on the authoring screen did not happen: No document matching "Quarterly summary" in scope (status filter: all). Documents listed: "Clinical Overview (CTD Module 2.5)".
+01:48:01.231 #35 stream=true tools=50 msgs=15 -> act_on_screen {"action":"authoring.open-document","params":{"title":"Clinical Overview (CTD Module 2.5)"}}
+01:48:01.874 #36 stream=true tools=50 msgs=17 -> navigate_to {"target":"protocol-dev","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:48:03.416 #37 stream=true tools=50 msgs=19 -> navigate_to {"target":"vault","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:48:04.864 #38 stream=true tools=50 msgs=21 -> navigate_to {"target":"submissions","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:48:06.200 #39 stream=true tools=50 msgs=23 -> navigate_to {"target":"dispatch-readiness","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:48:07.643 #40 stream=true tools=50 msgs=25 -> navigate_to {"target":"quality","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:48:09.088 #41 stream=true tools=50 msgs=27 -> navigate_to {"target":"audit-trail","program":"Vorelinib · KIT-mutant GIST (IND)"}
+01:48:10.725 #42 stream=true tools=50 msgs=29 -> text "That is the whole demonstration: 10 stops. Ask me about any of them."
+01:48:11.362 #43 stream=false tools=0 msgs=1 -> text "FAKE: the tool list_demo_scripts was not offered on this turn."
+01:48:15.135 #44 stream=true tools=42 msgs=1 -> navigate_to {"target":"biostatistics"}
+01:48:15.502 #45 stream=true tools=42 msgs=3 -> text "Navigation result: navigation_ready. You are on biostatistics now."

@@ -331,6 +331,26 @@ export function hydrateToolTrace(
   return calls;
 }
 
+/**
+ * What the person is told when the stream route refuses a turn outright. Each
+ * refusal says what actually happened: a rate limit or a usage cap was read as
+ * "AnA is unreachable — the network or the AI gateway did not respond", which
+ * sent people to check a connection that was fine.
+ */
+export function streamRefusalText(err: unknown): string {
+  const failure = err as { code?: string; status?: number } | undefined;
+  if (failure?.code === 'GATEWAY_UNAVAILABLE') {
+    return 'No AI provider is configured for this deployment, so AnA cannot answer. This is a server setting, not your connection. Prior turns are preserved.';
+  }
+  if (failure?.code === 'WEEKLY_LIMIT_EXCEEDED') {
+    return 'This organization has reached its weekly limit for AnA requests, so this one was not sent. An administrator can review the limit. Prior turns are preserved.';
+  }
+  if (failure?.status === 429) {
+    return 'Too many AnA requests in the last minute, so this one was not taken. Wait a moment and ask again. Prior turns are preserved.';
+  }
+  return 'AnA is unreachable — the network or the AI gateway did not respond. Prior turns are preserved.';
+}
+
 export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const [messages, setMessages] = useState<AnaChatMessage[]>([]);
   /* The transcript `send` forwards as `conversation_history`, read at call
@@ -947,8 +967,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
              say that, not "unreachable". */
           let code: string | undefined;
           try {
-            const j = (await res.clone().json()) as { error?: { code?: string } };
-            code = j?.error?.code;
+            // Nested ({ error: { code } }) from the route; top-level ({ code })
+            // from the platform's usage limiter.
+            const j = (await res.clone().json()) as { error?: { code?: string } | string; code?: string };
+            code = (typeof j?.error === 'object' ? j.error?.code : undefined) ?? j?.code;
           } catch {
             /* not JSON: keep the status-only error */
           }
@@ -1595,12 +1617,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               if (m.id !== assistantId) return m;
               return {
                 ...m,
-                text:
-                  m.text.length > 0
-                    ? m.text
-                    : (err as { code?: string } | undefined)?.code === 'GATEWAY_UNAVAILABLE'
-                      ? 'No AI provider is configured for this deployment, so AnA cannot answer. This is a server setting, not your connection. Prior turns are preserved.'
-                      : 'AnA is unreachable — the network or the AI gateway did not respond. Prior turns are preserved.',
+                text: m.text.length > 0 ? m.text : streamRefusalText(err),
                 streaming: false,
                 statusPhase: undefined,
                 completedAt: Date.now(),

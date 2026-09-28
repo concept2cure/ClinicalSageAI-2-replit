@@ -797,3 +797,44 @@ describe('a driving turn ended from its own chat', () => {
     expect(types(t.seen)).toEqual(['drive_state']);
   });
 });
+
+/* A refused turn says why. A rate limit or a usage cap was shown as "AnA is
+   unreachable — the network or the AI gateway did not respond", which sent
+   people to check a connection that was fine. */
+describe('a turn the stream route refuses says why', () => {
+  function refuseWith(status: number, body: unknown) {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (String(url).endsWith('/api/ana-ri/stream')) {
+        return { ok: false, status, body: null, clone: () => ({ json: async () => body }) };
+      }
+      return { ok: true, status: 200, json: async () => ({ ok: true }) };
+    });
+  }
+  async function answerTo(): Promise<string> {
+    const { result } = renderHook(() => useAnaChat({ projectId: 'p1' }));
+    await act(async () => {
+      await result.current.send('take me to CMC');
+    });
+    return result.current.messages.at(-1)?.text ?? '';
+  }
+
+  it('a rate limit reads as one, not as an unreachable network', async () => {
+    refuseWith(429, { error: 'Rate limit exceeded', message: 'Too many AI requests. Please wait before making more.' });
+    const text = await answerTo();
+    expect(text).toMatch(/^Too many AnA requests in the last minute/);
+    expect(text).not.toMatch(/unreachable/);
+  });
+
+  it('the weekly usage cap reads as the organization’s limit', async () => {
+    refuseWith(429, { error: 'Weekly usage limit reached', code: 'WEEKLY_LIMIT_EXCEEDED' });
+    expect(await answerTo()).toMatch(/^This organization has reached its weekly limit/);
+  });
+
+  it('no provider configured still says so, and anything else is unreachable', async () => {
+    refuseWith(503, { error: { code: 'GATEWAY_UNAVAILABLE' } });
+    expect(await answerTo()).toMatch(/^No AI provider is configured/);
+    cleanup();
+    refuseWith(502, {});
+    expect(await answerTo()).toMatch(/^AnA is unreachable/);
+  });
+});
