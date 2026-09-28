@@ -617,6 +617,27 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      24 hours.
    - **Open question:** the pre-push hook has refused net warning growth in
      pushed files since `936277fc`. How these passed it is not known here.
+4. **→ `…01T2wooC` (D5, every AnA turn is an immutable record), 2026-09-28 —
+   a tenant purge cannot reach `ana_turn_records` or `ana_record_blobs`, and
+   the Blank DB job will fail on it once it runs again.**
+   - **The step:** `ci:purge-coverage`, the last step of Blank DB
+     Provisioning. It ratchets the org-keyed tables the offboarding purge
+     leaves behind. The two tables above are new to that residue, from
+     `migrations/20260926_ana_turn_records.sql` (`f7597c2c`).
+   - **Why nobody saw it:** CI has not run this step since they landed. The
+     job stopped one step earlier on the live-schema ratchet's false positive
+     (fixed in `ebb4ef74`), and since `a75e3845` Lint's red skips the job
+     entirely (item 3).
+   - **Reproduced locally:** the job's own steps on a database built from
+     empty, `docs/evidence/TRUNK-TESTS/2026-09-28/blank-db-live-schema/green/blank-db-job-replicated.txt`.
+   - **The decision is the lane's:**
+     - `PURGE_CHILD_TABLES` in `server/services/tenant/tenant-offboarding.ts`
+       (FK-safe order), or a cascade path, erases a tenant's turn records;
+     - or they are kept with the audit and billing records the purge already
+       retains, and the baseline says so, with the reason.
+     It bears on the lane's own hand-on to P0-8 (both tables into
+     `APPEND_ONLY_TABLES`): keeping a table append-only and deleting from it
+     at purge are two answers to the same question.
 
 ## 1. The rules come first
 

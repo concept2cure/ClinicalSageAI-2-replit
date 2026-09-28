@@ -85,8 +85,41 @@ The regex accepts an optional column list between the name and `AS`:
   - `RECURSIVE` not accepted;
   - a space required before `AS` after the column list.
 
+## The job itself, replicated
+
+The same result on the database this lane already had leaves one question:
+does it hold on a database the job builds itself? So the job's own steps
+were run in order on a database created empty for this purpose
+(`green/blank-db-job-replicated.txt`):
+- the database is blank;
+- deploy-migrate refuses it (exit 3, as the job expects);
+- install-fresh and deploy-migrate succeed.
+
+**The ratchet (step 13).**
+- With the parser before this change: exit 1, and `expected` is the one new
+  absence.
+- With the fix: exit 0.
+
+**The steps the job never reached.** On CI the job stopped at step 13, so
+nothing after it had run since the red began:
+- Steps 8 to 12 pass: replay rebuilds nothing, RLS coverage, parent-scope
+  delegates, the readiness contract, post-deploy invariants.
+- **Step 14, `ci:purge-coverage`, fails.** Two org-keyed tables are ones a
+  tenant purge cannot reach: `ana_turn_records` and `ana_record_blobs`. Both
+  are the D5 turn-record lane's (`migrations/20260926_ana_turn_records.sql`,
+  `f7597c2c`, 2026-09-26), and they landed while this step was hidden. They
+  are immutable, chained records. Whether a purge erases them or keeps them
+  with the audit records it already retains is that lane's decision; it bears
+  on its own append-only hand-on. Handed on through the work-orders board, not
+  edited here.
+
 ## Still owed
 
-The Blank DB job going green on CI, on the push that carries this. The job
-builds its own database with install-fresh, not this lane's `npm run up`.
-Until CI shows the result, this README claims the local result only.
+- **CI's own result.** On CI the job `needs: lint`, and Lint has been red
+  since `a75e3845` on the ESLint warning ratchet (handed on through the
+  board, item 3 of this lane's hand-ons). So CI has not run this job on any
+  push since.
+- **After Lint is green,** expect the job to reach step 14 and fail there
+  until the purge decision above is made.
+
+This README claims the local result only.
