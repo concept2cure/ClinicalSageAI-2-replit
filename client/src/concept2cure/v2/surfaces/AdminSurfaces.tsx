@@ -1037,6 +1037,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
         e.actor.toLowerCase().includes(term) ||
         (e.actorRef ?? '').toLowerCase().includes(term) ||
         e.target.toLowerCase().includes(term) ||
+        (e.targetRef ?? '').toLowerCase().includes(term) ||
         e.id.toLowerCase().includes(term)),
   );
 
@@ -1471,6 +1472,18 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             <span className="mono">{entry.when}</span>
             <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Target</span>
             <span>{entry.target}</span>
+            {entry.targetRef && (
+              <React.Fragment>
+                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Record</span>
+                <span className="mono">{entry.targetRef}</span>
+              </React.Fragment>
+            )}
+            {entry.signatureRef && (
+              <React.Fragment>
+                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Signature record</span>
+                <span className="mono">{entry.signatureRef}</span>
+              </React.Fragment>
+            )}
             <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Kind</span>
             <span>
               <span
