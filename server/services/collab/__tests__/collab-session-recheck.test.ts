@@ -95,7 +95,7 @@ describe('session re-check on an open collaboration socket', () => {
       const closeHandlers: Array<() => void> = [];
       const connection = {
         readOnly: false,
-        close: vi.fn(() => closeHandlers.forEach(fn => fn())),
+        close: vi.fn((_event?: { code: number; reason: string }) => closeHandlers.forEach(fn => fn())),
         onClose: vi.fn((fn: () => void) => {
           closeHandlers.push(fn);
           return connection;
