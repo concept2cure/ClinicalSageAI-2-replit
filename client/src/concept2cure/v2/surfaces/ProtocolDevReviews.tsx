@@ -36,6 +36,31 @@ export interface ReviewPaneProps {
   onEdit?: (kind: PdevFormKind, target?: PdevFormTarget) => void;
 }
 
+/** The disposition control: the signature on offer, or the signed state. */
+function DispositionAction({ name, signed, someoneElses, onSign }: {
+  name: string; signed: boolean; someoneElses: boolean; onSign: () => void;
+}) {
+  const who = name || 'this reviewer';
+  return (
+    <span className="pde-review-act">
+      {/* The visible label is short so the row stays one line; the
+          accessible name carries the reviewer, and contains the visible
+          text, so WCAG 2.5.3 (Label in Name) holds. */}
+      {signed ? (
+        <button type="button" className="pg-btn outline" aria-label={'Disposition signed for ' + who} disabled
+          title="A disposition is already signed for this review.">
+          <PG.Ic n="checkCircle" s={14} />Disposition signed
+        </button>
+      ) : (
+        <button type="button" className="pg-btn outline" aria-label={'Record disposition for ' + who} disabled={someoneElses}
+          title={someoneElses ? 'Assigned to another user. Only they can sign this disposition.' : undefined} onClick={onSign}>
+          <PG.Ic n="penLine" s={14} />Record disposition
+        </button>
+      )}
+    </span>
+  );
+}
+
 function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit'] }) {
   const name = str(r.reviewer);
   const disposition = str(r.disposition);
@@ -44,6 +69,10 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
   const me = Number(useAuthUser()?.id);
   // The server refuses anyone but the assigned user; say so before the click.
   const someoneElses = assignedTo !== null && Number.isFinite(me) && assignedTo !== me;
+  // The server's own test for a signed disposition (setDispositionTx), which
+  // refuses a second one. Offering it again spent the signer's password and
+  // code on a certain refusal (periodic review 2026-09-28, editor family, P11-C-4).
+  const signed = disposition !== '' || str(r.status) === 'completed';
   return (
     <div className="pde-review-row">
       <span className="pde-review-name">{name || 'Unnamed reviewer'}</span>
@@ -54,25 +83,10 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
         {disposition ? ' · ' + PG.labelize(disposition) : ' · no disposition recorded'}
       </span>
       {onEdit && (
-        <span className="pde-review-act">
-          {/* The visible label is short so the row stays one line; the
-              accessible name carries the reviewer, and contains the visible
-              text, so WCAG 2.5.3 (Label in Name) holds. */}
-          <button
-            type="button"
-            className="pg-btn outline"
-            aria-label={'Record disposition for ' + (name || 'this reviewer')}
-            disabled={someoneElses}
-            title={someoneElses ? 'Assigned to another user. Only they can sign this disposition.' : undefined}
-            onClick={() => onEdit('review-disposition', {
-              id: Number(r.id), label: name,
-              defaults: disposition ? { disposition } : undefined,
-              reviewerUserId: assignedTo,
-            })}
-          >
-            <PG.Ic n="penLine" s={14} />Record disposition
-          </button>
-        </span>
+        <DispositionAction
+          name={name} signed={signed} someoneElses={someoneElses}
+          onSign={() => onEdit('review-disposition', { id: Number(r.id), label: name, reviewerUserId: assignedTo })}
+        />
       )}
     </div>
   );
