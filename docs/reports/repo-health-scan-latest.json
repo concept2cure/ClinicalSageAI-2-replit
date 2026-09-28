@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T04:55:32.263Z",
+  "generatedAt": "2026-09-28T05:01:18.333Z",
   "git": {
-    "sha": "e585f40c7c589d5cb03f946849d03382ff6cf780",
+    "sha": "407930f5e421ffd6341a2740ff7580323fa6215b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1993,7 +1993,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 284340
+        "bytes": 293934
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2088,16 +2088,16 @@
         "bytes": 127662
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 127593
+      },
+      {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
         "bytes": 126270
       },
       {
         "file": "server/src/routes/stability.router.ts",
         "bytes": 125488
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 122153
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2171,7 +2171,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6490
+        "lines": 6698
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2262,16 +2262,16 @@
         "lines": 2861
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2805
+      },
+      {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "lines": 2796
       },
       {
         "file": "server/routes/auth.ts",
         "lines": 2729
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2717
       },
       {
         "file": "server/routes/knowledge-base.ts",
