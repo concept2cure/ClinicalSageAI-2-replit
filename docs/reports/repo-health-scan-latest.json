@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T00:44:29.573Z",
+  "generatedAt": "2026-09-28T01:18:36.540Z",
   "git": {
-    "sha": "7ddc06389795b1e79f2b3d566b7c04b5987df467",
+    "sha": "aff7eae16e9cd3305490f9a97d7aa68b0c2b1f5a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2092,6 +2092,10 @@
         "bytes": 126270
       },
       {
+        "file": "server/src/routes/stability.router.ts",
+        "bytes": 125488
+      },
+      {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
         "bytes": 122153
       },
@@ -2150,10 +2154,6 @@
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 105559
-      },
-      {
-        "file": "server/src/routes/stability.router.ts",
-        "bytes": 102387
       }
     ],
     "largeFilesByLines": [
@@ -2230,6 +2230,10 @@
         "lines": 3228
       },
       {
+        "file": "server/src/routes/stability.router.ts",
+        "lines": 3204
+      },
+      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "lines": 3119
       },
@@ -2248,10 +2252,6 @@
       {
         "file": "server/routes/concept2cure.ts",
         "lines": 3007
-      },
-      {
-        "file": "server/src/routes/stability.router.ts",
-        "lines": 2934
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
