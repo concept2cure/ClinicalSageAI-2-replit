@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-004 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-004 |
 | Runner (the executable protocol) | `tests/validation/oq/submission-center/run.mjs` — `npm run validation:oq -- submission-center` |
@@ -16,6 +16,7 @@
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
 | 0.2 | 2026-09-22 | W3 | §5 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
 | 0.3 | 2026-09-23 | W3 | OQ-SUBC-08 presents the signer's authenticator code and first shows that a password-only signature from a signer with a second factor enrolled is refused with no row written. The route accepted that signature until 828faf809 (VSR-001 §13, F-18); v0.2 could not have seen it, because no signer had a second factor. |
+| 0.4 | 2026-09-27 | W3 | Two steps follow product changes that the 2026-09-27 first attempt showed failing (VSR-001 §18). OQ-SUBC-04 places a document ingested into the submission's own program and adds the refusal of another project's document (409 `CROSS_PROJECT`, PF-11, 2026-09-26). Since LX-22, OQ-SUBC-03 gives the submission a program of its own, so the step's former document, OQ-SUBC-00's, was another project's and was refused. OQ-SUBC-08's signature states its meaning, `approval`, as the Submission Center's modal proposes for a freeze: without one, a sign is refused 400 `SIGNATURE_MEANING_REQUIRED` (P1-21, 2026-09-25) before the second-factor check the step exists to show. |
 
 ## 1. Method
 
@@ -33,11 +34,11 @@ IQ-001 executed; OQ-SUBC-00 creates a program and ingests one PDF to serve as a 
 | OQ-SUBC-01 | URS-SUBC-001 | scripted | `GET /api/submissions` anonymous | 401/403 |
 | OQ-SUBC-02 | URS-SUBC-002 | scripted | Create with region `mars` | 400 `VALIDATION` |
 | OQ-SUBC-03 | URS-SUBC-002, 003 | scripted | Create IND/biotech/fda submission; sequence `0000` original; list | 201/201; audit outcome reported; listed as draft |
-| OQ-SUBC-04 | URS-SUBC-004 | scripted | Place leaf `m1.2` → `vault_documents`; then `not_a_table` | 200 and listed; 400 with the allowed list |
+| OQ-SUBC-04 | URS-SUBC-004 | scripted | Ingest a cover letter into the submission's own program; place it as leaf `m1.2` → `vault_documents`; then OQ-SUBC-00's document, another program's; then `not_a_table` | 200 and listed; another project's document refused 409 `CROSS_PROJECT`; 400 with the allowed list |
 | OQ-SUBC-05 | URS-SUBC-005 | scripted | draft→assembling; assembling→dispatched | 200; refused; status `assembling` |
 | OQ-SUBC-06 | URS-SUBC-006 | scripted | generic transition to `frozen`; freeze without signature | `GOVERNED_REQUIRED`; 400 |
 | OQ-SUBC-07 | URS-SUBC-007 | scripted | `POST /api/c2c/actions/sign` without `reauth` | 4xx; no `actionId` |
-| OQ-SUBC-08 | URS-SUBC-007 | **credentialed** (`OQ_SIGNER_EMAIL` / `OQ_SIGNER_PASSWORD`, and `OQ_SIGNER_TOTP_SECRET` for a signer with a second factor enrolled, as OQ-006 §1; deviation *not executed — credential not supplied* when absent) | as the signer: when a second factor is enrolled, first sign with `reauth:{password}` only (v0.3); then `POST /api/c2c/actions/sign {target:"ectd-sequence:<id>", reason, payload:{intent:"freeze"}, reauth:{password, totp}}`; read signatures by target; `POST /sequences/:id/freeze {signatureActionId}` | with a second factor enrolled the password-only signature is refused 401 `REAUTH_TOTP_REQUIRED` and writes no row; sign 200 with `actionId`; exactly one `electronic_signatures` row by the signer, `second_factor_verified` true when a code was presented; freeze of the never-validated sequence (status `assembling` after OQ-SUBC-04) refused 409 `INVALID_STATE` by the state machine — a valid signature is necessary, not sufficient; status unchanged. A frozen outcome needs a validated, shadow-reviewed sequence and is outside this fixture |
+| OQ-SUBC-08 | URS-SUBC-007 | **credentialed** (`OQ_SIGNER_EMAIL` / `OQ_SIGNER_PASSWORD`, and `OQ_SIGNER_TOTP_SECRET` for a signer with a second factor enrolled, as OQ-006 §1; deviation *not executed — credential not supplied* when absent) | as the signer: when a second factor is enrolled, first sign with `reauth:{password}` only (v0.3); then `POST /api/c2c/actions/sign {target:"ectd-sequence:<id>", reason, payload:{intent:"freeze", meaning:"approval"}, reauth:{password, totp}}`; read signatures by target; `POST /sequences/:id/freeze {signatureActionId}` | with a second factor enrolled the password-only signature is refused 401 `REAUTH_TOTP_REQUIRED` and writes no row; sign 200 with `actionId`; exactly one `electronic_signatures` row by the signer, `second_factor_verified` true when a code was presented; freeze of the never-validated sequence (status `assembling` after OQ-SUBC-04) refused 409 `INVALID_STATE` by the state machine — a valid signature is necessary, not sufficient; status unchanged. A frozen outcome needs a validated, shadow-reviewed sequence and is outside this fixture |
 | OQ-SUBC-09 | URS-SUBC-008 | scripted | `GET /capabilities` | every gateway `configured:false` |
 | OQ-SUBC-10 | URS-SUBC-009 | scripted | `GET /api/dossier-map?projectId=<program uuid>` | 200 with per-module data |
 | OQ-SUBC-11 | URS-SUBC-010 | unscripted | compile FDA initial; status | <500; observation recorded |

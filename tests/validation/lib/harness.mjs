@@ -43,6 +43,11 @@ const require = createRequire(import.meta.url);
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(HERE, '..', '..', '..');
 
+/** Text with this checkout's location removed: a record names files by their path in the repository. */
+function repoRelative(text) {
+  return String(text).split(`file://${REPO_ROOT}/`).join('').split(`${REPO_ROOT}/`).join('');
+}
+
 export const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-23c';
 export const BASE_URL = (process.env.VALIDATION_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
 export const CHROMIUM_PATH =
@@ -137,7 +142,7 @@ export async function devLogin(baseUrl = BASE_URL, email = TEST_USER_EMAIL) {
  * message or record.
  */
 export async function passwordLogin(baseUrl, { email, password, totpSecret = '' }) {
-  const login = await postJson(baseUrl, '/api/auth/login', { email, password });
+  const login = await signIn(baseUrl, email, password);
   if (!login.ok) {
     throw new Error(`password login for ${email} failed (${login.status}): ${JSON.stringify(login.body?.error ?? login.body).slice(0, 200)}`);
   }
@@ -146,12 +151,46 @@ export async function passwordLogin(baseUrl, { email, password, totpSecret = '' 
   return validatedSession(baseUrl, verified, 'password+totp');
 }
 
+/** The longest the harness waits for the sign-in limiter: its fifteen-minute window and a minute over. */
+const SIGN_IN_WAIT_MAX_MS = 16 * 60 * 1000;
+
+/**
+ * The password step, waiting out the sign-in limiter at most once. The server
+ * allows ten sign-ins per client address in fifteen minutes (loginLimiter in
+ * server/routes/auth.ts), and a run signs in from one address: OQ-001 alone
+ * made eleven once OQ-PROJ-19 (2026-09-26) opened a session of its own, and
+ * that step was refused 429. The refusal is the brute-force control working,
+ * not the requirement under test, so the harness waits for the window the
+ * server names, as a person would, says so in the transcript, and tries once
+ * more. It never goes around the limiter.
+ */
+async function signIn(baseUrl, email, password) {
+  const login = await postJson(baseUrl, '/api/auth/login', { email, password });
+  if (login.status !== 429) return login;
+  const waitMs = Math.min(limiterWaitMs(login), SIGN_IN_WAIT_MAX_MS);
+  console.info(`    (429 on the sign-in for ${email}: the sign-in limiter's window; waiting ${Math.round(waitMs / 1000)} s, then one retry)`);
+  await sleep(waitMs);
+  return postJson(baseUrl, '/api/auth/login', { email, password });
+}
+
+/** How long the limiter says to wait: Retry-After, else RateLimit-Reset (both seconds), else its whole window. */
+function limiterWaitMs({ retryAfter, rateLimitReset }) {
+  const seconds = [retryAfter, rateLimitReset].map(Number).find((s) => Number.isFinite(s) && s > 0);
+  return seconds ? seconds * 1000 + 1000 : 15 * 60 * 1000 + 1000;
+}
+
 function postJson(baseUrl, route, payload) {
   return fetch(`${baseUrl}${route}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: baseUrl },
     body: JSON.stringify(payload),
-  }).then(async (r) => ({ status: r.status, ok: r.ok, body: await r.json().catch(() => ({})) }));
+  }).then(async (r) => ({
+    status: r.status,
+    ok: r.ok,
+    retryAfter: r.headers.get('retry-after'),
+    rateLimitReset: r.headers.get('ratelimit-reset'),
+    body: await r.json().catch(() => ({})),
+  }));
 }
 
 async function completeTotpChallenge(baseUrl, email, challenge, totpSecret) {
@@ -607,7 +646,7 @@ export async function createRun({ app, appLabel, protocolId, protocolTitle, need
         console.log(`  ${id}  FAIL  (${e.message})`);
       } else {
         rec.status = 'fail';
-        rec.failure = `runner error: ${e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : String(e)}`;
+        rec.failure = `runner error: ${repoRelative(e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : String(e))}`;
         console.log(`  ${id}  FAIL  (${rec.failure})`);
       }
       if (page) {
