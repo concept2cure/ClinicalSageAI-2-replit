@@ -79,7 +79,15 @@ crash tests nothing.
 
 ---
 
-## P11-28b — CONFIRMED, BLOCKER — the Dispatch button has the same shape one step later. NOT FIXED: a design decision.
+## P11-28b — CONFIRMED, BLOCKER — the Dispatch button has the same shape one step later. FIXED same day.
+
+> **Resolved 2026-09-28** — `docs/evidence/D7/2026-09-28-dispatch-reachable/`. The
+> "design decision" framing below was wrong: sign-then-transition is already the
+> established design (Freeze uses it), so the only open question was which
+> verdicts the click resolves, and that is answerable from the resolver's spine
+> precedence. The server now reports `dispatchGateOnSigning`; the client reads it.
+> The fix also corrected two false sentences the P11-28a fix left on screen.
+> Text below is kept as filed.
 
 `SubmissionSeqWorkspaces.tsx:1296` gates Dispatch on `a.gate.cleared`, which for
 these four types requires a release signature to already exist. For a sequence

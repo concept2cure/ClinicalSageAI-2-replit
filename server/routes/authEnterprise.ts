@@ -41,6 +41,7 @@ import { sendLoginOtpEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
 import { mfaEnrolmentOf } from '../services/mfa-enrolment';
 import { padUnknownEmailTiming } from '../services/login-timing-pad';
+import { auditOrganizationOf } from '../services/sign-in-organisation';
 
 const router = Router();
 // SECURITY FIX: isDev variable and devUser removed — no more dev-mode auth bypasses.
@@ -291,6 +292,13 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
 
     const user = userResult[0];
 
+    // 2026-09-28 (SEC-0928-2): every refusal below took its tenant from
+    // users.default_organization_id alone. An account added through
+    // POST /api/tenant-users has a membership and no default, so its refusals
+    // (address unconfirmed, out of use, locked, wrong password) named no
+    // organisation and were written to the platform's chain (tenant 0). They
+    // now name the organisation its sign-in lands in, as routes/auth.ts has
+    // since F-41 (f339a4459).
     // An account out of use (suspended, deprovisioned) signs in nowhere: the
     // main login refuses it before comparing the password (AUTH_ACCOUNT_INACTIVE);
     // this step admitted it and minted the MFA-partial token (security audit
@@ -302,7 +310,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       await recordAuthEvent({
         action: 'user_login',
         userId: user.id,
-        tenantId: user.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(user),
         email: user.email,
         outcome: 'failure',
         reason: 'email_unverified',
@@ -315,7 +323,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       await recordAuthEvent({
         action: 'user_login',
         userId: user.id,
-        tenantId: user.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(user),
         email: user.email,
         outcome: 'failure',
         reason: 'account_inactive',
@@ -331,7 +339,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       await recordAuthEvent({
         action: 'user_login',
         userId: user.id,
-        tenantId: user.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(user),
         email: user.email,
         outcome: 'failure',
         reason: 'account_locked',
@@ -362,7 +370,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       await recordAuthEvent({
         action: 'user_login',
         userId: user.id,
-        tenantId: user.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(user),
         email: user.email,
         outcome: 'failure',
         reason: failResult?.locked ? 'wrong_password_threshold_exceeded' : 'wrong_password',
@@ -408,6 +416,12 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     let maskedEmail: string | undefined;
 
     // Password verified, second factor requested: the same event /api/auth/login records.
+    // 2026-09-28 (SEC-0928-2): deliberately not auditOrganizationOf. Past the
+    // NO_ORGANIZATION guard this sign-in lands in the default organisation (the
+    // partial token names it, and verify-mfa records its events against the
+    // token's organisation), so the challenge names the same one. Where the
+    // default is not a membership, auditOrganizationOf would name the first
+    // membership and split one sign-in across two ledgers.
     await recordAuthEvent({
       action: 'user_login_mfa_challenge',
       userId: user.id,

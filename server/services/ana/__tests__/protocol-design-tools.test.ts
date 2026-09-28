@@ -75,6 +75,14 @@ vi.mock('../../protocol-development/design-derivation-service', () => ({ readDer
 const assembleOnePdevDocFacets = vi.fn();
 vi.mock('../../protocol-development/pdev-view-assembler', () => ({ assembleOnePdevDocFacets }));
 
+// 2026-09-28: the registry wrapper now asks organization_users for the caller's
+// role before any confirm-class tool runs; CTX models an editor ('member').
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { getToolHandler } from '../AnaToolExecutor';
 import { PROTOCOL_DESIGN_TOOLS } from '../protocol-design-tool-defs';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
@@ -117,6 +125,7 @@ beforeEach(() => {
   readDerivation.mockResolvedValue({ documentId: 5, studyDesignId: 'SD-1', derivation: EMPTY_DERIVATION });
   applyDerivationTx.mockResolvedValue({ studyDesignId: 'SD-1', applied: [], rejected: [], derivation: EMPTY_DERIVATION });
   assembleOnePdevDocFacets.mockResolvedValue(null);
+  resolveSignerOrgRole.mockImplementation(async () => 'member');
 });
 
 // ─── Registration ────────────────────────────────────────────────────────────
@@ -175,7 +184,24 @@ describe('protocol ⇄ design tool descriptions', () => {
 describe('protocol ⇄ design tools — context guards', () => {
   it.each(GOVERNED)('%s refuses without tenant + user context', async (name) => {
     const out = await call(name, { document_id: 5, study_design_id: 'SD-1', accepted_paths: ['title'] }, { humanConfirmed: true });
-    expect(out.error).toMatch(/tenant \+ user context/);
+    // 2026-09-28: refused by the registry wrapper (writeRoleRefusal) before the
+    // handler's own tenant + user guard, and before any role lookup.
+    expect(out.error).toMatch(/needs an identified member of the organization/);
+    expect(out.error).toMatch(/Nothing was changed/);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
+    expect(queries).toHaveLength(0);
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+  });
+
+  it.each(GOVERNED)('%s refuses a viewer before opening a transaction', async (name) => {
+    resolveSignerOrgRole.mockImplementation(async () => 'viewer');
+    const out = await call(name, { document_id: 5, study_design_id: 'SD-1', accepted_paths: ['title'] });
+    expect(out.error).toMatch(/editor role/);
+    expect(out.error).toMatch(/Nothing was changed/);
+    expect(resolveSignerOrgRole).toHaveBeenCalledWith(42, 7);
+    expect(queries).toHaveLength(0);
+    expect(bindStudyDesignTx).not.toHaveBeenCalled();
+    expect(applyDerivationTx).not.toHaveBeenCalled();
     expect(recordGovernedAction).not.toHaveBeenCalled();
   });
 

@@ -441,6 +441,46 @@ describe('a governed write does not take the protocol off screen', () => {
   });
 });
 
+describe('a protocol read that cannot be read is not an empty register (HS-C-1)', () => {
+  // A 200 whose body is not the protocol read model used to land on the empty
+  // state ("No protocol in development") or, with rows missing their fields,
+  // on a readiness gate reading "Ready to finalize". Neither is what the
+  // server said. Periodic review 2026-09-28, editor family, honest-state lens.
+  const MALFORMED: Array<[string, unknown]> = [
+    ['an empty object', {}],
+    ['an envelope around an object', { success: true, data: {} }],
+    ['an error carried on a 200', { error: 'Something went wrong' }],
+    ['rows with no fields', { success: true, data: [{}] }],
+    ['a row with an id and nothing else', { success: true, data: [{ id: '2' }] }],
+    ['a row whose fields are present but null', { success: true, data: [{ id: '2', sections: null, completenessFindings: null }] }],
+  ];
+  it.each(MALFORMED)('%s reads as a failed load', async (_label, body) => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url.startsWith('/api/protocol-dev')) return ok(body);
+      return ok({ data: [] });
+    });
+    render(<Providers><ProtocolWorkspace {...props()} /></Providers>);
+    expect(await screen.findByText("Couldn't load the protocol")).toBeTruthy();
+    expect(screen.queryByText(/No protocol in development/)).toBeNull();
+    expect(screen.queryByText(/Ready to finalize/)).toBeNull();
+    expect(screen.queryByRole('button', { name: /Start a protocol/ })).toBeNull();
+  });
+
+  it('a store that is not provisioned says so, and offers no start', async () => {
+    // protocol-dev.routes.ts answers SQLSTATE 42P01 with { data: [], meta:
+    // { pendingStore: true } }. That is not an organisation with no protocol,
+    // and "Start a protocol" would be refused.
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url.startsWith('/api/protocol-dev')) return ok({ data: [], meta: { count: 0, pendingStore: true } });
+      return ok({ data: [] });
+    });
+    render(<Providers><ProtocolWorkspace {...props()} /></Providers>);
+    expect(await screen.findByText(/isn.t set up on this installation/)).toBeTruthy();
+    expect(screen.queryByText(/No protocol in development/)).toBeNull();
+    expect(screen.queryByRole('button', { name: /Start a protocol/ })).toBeNull();
+  });
+});
+
 describe('empty state', () => {
   it('names the open project and offers both a start and an AnA draft', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {

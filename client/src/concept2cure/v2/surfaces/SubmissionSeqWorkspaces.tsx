@@ -556,7 +556,15 @@ interface ReadinessAssessment {
    *  Both fields are now on the interface; picking the wrong one is a choice a
    *  reviewer can see, not a gap the compiler stays silent about. */
   freezeGate: { cleared: boolean; blockers: string[] };
-  /** §11.70 state. Informational — the blocking happens in the two gates. */
+  /** The DISPATCH verdict as it will stand once the operator's dispatch
+   *  signature is recorded — what the Dispatch button asks. On the submissions
+   *  spine the release signature IS that dispatch signature, so gating the
+   *  button on `gate` (which requires it to exist already) hid the only control
+   *  that creates it. The server decides when signing resolves the requirement
+   *  (signingNowResolvesRelease: the resolver's spine precedence lives there),
+   *  and this client never re-derives it. */
+  dispatchGateOnSigning: { cleared: boolean; blockers: string[] };
+  /** §11.70 state. Informational — the blocking happens in the gates. */
   releaseSignature?: {
     required: boolean;
     verdict: string;
@@ -1200,6 +1208,14 @@ export function DispatchWorkspace({
     hasKeys<ReadinessAssessment>('gate', 'readiness'),
   );
   const a = live.data;
+  // Which governed step is open, each read from the verdict for THAT step. A
+  // missing field is not cleared: this is network data, so absence fails closed
+  // rather than throwing or falling back to another step's verdict.
+  const freezeOpen = a?.freezeGate?.cleared === true;
+  const dispatchOpen = a?.dispatchGateOnSigning?.cleared === true;
+  // The gate blocks, and its only blocker is the release signature that the
+  // dispatch e-signature itself records. See the header state that reads this.
+  const awaitingOwnSignature = !!a && !a.gate.cleared && dispatchOpen;
   const [qc, setQc] = React.useState<{
     phase: 'idle' | 'running' | 'done' | 'error';
     data?: DispatchQcResult;
@@ -1264,15 +1280,34 @@ export function DispatchWorkspace({
           />
         ) : (
           <>
-            <div className={`sc-gate ${a.gate.cleared ? 'ok' : 'blocked'}`} role="status">
-              {a.gate.cleared ? I.shieldCheck : I.lock}{' '}
+            {/* Three states, not two. `awaitingOwnSignature` is a gate whose
+                only blocker is the release signature the dispatch e-signature
+                itself records (dispatchGateOnSigning clears, `gate` does not).
+                Reporting that as "Dispatch blocked" sent the user looking for a
+                defect that does not exist; reporting it as clear would be false.
+                `?.` / `=== true`: network data, and missing fails closed. */}
+            <div
+              className={`sc-gate ${a.gate.cleared || awaitingOwnSignature ? 'ok' : 'blocked'}`}
+              role="status"
+            >
+              {a.gate.cleared || awaitingOwnSignature ? I.shieldCheck : I.lock}{' '}
               {a.gate.cleared
                 ? 'Dispatch gate clear'
-                : `Dispatch blocked — ${a.gate.blockers.length} ${
-                    a.gate.blockers.length === 1 ? 'blocker' : 'blockers'
-                  }`}
+                : awaitingOwnSignature
+                  ? 'Dispatch gate clear except for the release signature — the dispatch e-signature applies it'
+                  : `Dispatch blocked — ${a.gate.blockers.length} ${
+                      a.gate.blockers.length === 1 ? 'blocker' : 'blockers'
+                    }`}
             </div>
-            {!a.gate.cleared && (
+            {awaitingOwnSignature && (
+              <div className="scaf-note sc-mb">
+                This submission type requires a 21 CFR Part 11 release signature, and none is on record
+                for this sequence yet. When the sequence is dispatched, the dispatch e-signature is
+                recorded as that release signature, and the server checks the full gate again with it
+                on record before anything moves.
+              </div>
+            )}
+            {!a.gate.cleared && !awaitingOwnSignature && (
               <ol className="sc-blockers">
                 {a.gate.blockers.map((b, i) => (
                   <li key={i}>{b}</li>
@@ -1312,7 +1347,7 @@ export function DispatchWorkspace({
                   and white-screen the workspace (hostilePayloadProbe). Missing
                   is treated as NOT cleared — fail closed. It never falls back
                   to `gate`, which is the defect this line is fixing. */}
-              {a.freezeGate?.cleared === true && seq.status === 'validated' && (
+              {freezeOpen && seq.status === 'validated' && (
                 <button
                   type="button"
                   className="sp-primary sc-btn"
@@ -1321,13 +1356,28 @@ export function DispatchWorkspace({
                   {I.lock} Freeze sequence (Part 11 e-signature)
                 </button>
               )}
-              {a.gate.cleared && seq.status === 'frozen' && (
+              {/* DISPATCH reads `dispatchGateOnSigning`, not `gate` — the same
+                  defect as Freeze, one step later (P11-28b). For IND / NDA / BLA
+                  / MAA `gate` requires a release signature to exist already, and
+                  on the submissions spine the signature it accepts is the one
+                  this click records (runGoverned signs, then dispatches). Gated
+                  on `gate`, the only control that creates the signature never
+                  rendered. The server says when signing resolves the
+                  requirement, and re-checks `gate` at transition with the new
+                  signature on record, so nothing the server enforces is relaxed
+                  here. When the signature is what this click supplies, the label
+                  says so: the signer is applying the release, not only moving a
+                  status (§11.50 — the meaning of the act must be clear). */}
+              {dispatchOpen && seq.status === 'frozen' && (
                 <button
                   type="button"
                   className="sp-primary sc-btn"
                   onClick={() => onGoverned(seq, 'dispatch')}
                 >
-                  {I.rocket} Dispatch sequence (Part 11 e-signature)
+                  {I.rocket}{' '}
+                  {awaitingOwnSignature
+                    ? 'Sign the release and dispatch (Part 11 e-signature)'
+                    : 'Dispatch sequence (Part 11 e-signature)'}
                 </button>
               )}
             </div>
@@ -1338,7 +1388,10 @@ export function DispatchWorkspace({
                 is configured for this organization.
               </div>
             )}
-            {a.gate.cleared &&
+            {/* A freeze instruction reads the FREEZE verdict. Gated on `gate`,
+                it was hidden for every IND / NDA / BLA / MAA sequence — a third
+                instance of the step-verdict defect, beside the two buttons. */}
+            {freezeOpen &&
               seq.status !== 'validated' &&
               seq.status !== 'frozen' &&
               seq.status !== 'dispatched' && (
@@ -1348,10 +1401,25 @@ export function DispatchWorkspace({
                   workspace first.
                 </div>
               )}
-            {!a.gate.cleared && (
+            {/* Say what is locked, for the step this sequence is at. This read
+                "Freeze and dispatch stay locked while the gate blocks" whenever
+                `gate` blocked — including beside a rendered Freeze button, once
+                Freeze read its own verdict: a sentence on screen contradicting
+                the control under it. */}
+            {((seq.status === 'validated' && !freezeOpen) ||
+              (seq.status === 'frozen' && !dispatchOpen) ||
+              (seq.status !== 'validated' &&
+                seq.status !== 'frozen' &&
+                seq.status !== 'dispatched' &&
+                !freezeOpen)) && (
               <div className="scaf-note sc-mt">
-                Freeze and dispatch stay locked while the gate blocks. The server enforces this
-                same gate atomically with the e-signature, so it cannot be bypassed from here.
+                {seq.status === 'validated'
+                  ? 'Freeze stays locked while the gate blocks.'
+                  : seq.status === 'frozen'
+                    ? 'Dispatch stays locked while the gate blocks.'
+                    : 'Freeze and dispatch stay locked while the gate blocks.'}{' '}
+                The server enforces this same gate atomically with the e-signature, so it cannot be
+                bypassed from here.
               </div>
             )}
             <div className="cm-pushbar sc-mt">

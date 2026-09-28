@@ -2,7 +2,16 @@
  * eGrants AnA tools (C2C-14) — registration + input guards.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// 2026-09-28: the registry wrapper now asks organization_users for the caller's
+// role before any confirm-class tool runs; these guards model an editor ('member').
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { getToolHandler } from '../AnaToolExecutor';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
@@ -23,9 +32,17 @@ describe('eGrants AnA tools — registration', () => {
 });
 
 describe('eGrants AnA tools — context + input guards', () => {
+  beforeEach(() => {
+    resolveSignerOrgRole.mockClear();
+  });
+  // 2026-09-28: a confirm-class call with no identified member is now refused by
+  // the registry wrapper (writeRoleRefusal) before the handler's own
+  // tenant + user guard can run, and before any role lookup.
   it('create_grant_proposal refuses without tenant/user context', async () => {
     const out = JSON.parse(await getToolHandler('create_grant_proposal')!({ title: 'X' }, { humanConfirmed: true } as any));
-    expect(out.error).toMatch(/tenant \+ user context/);
+    expect(out.error).toMatch(/needs an identified member of the organization/);
+    expect(out.error).toMatch(/Nothing was changed/);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
   it('record_grant_award rejects an invalid funding_agency', async () => {
     const out = JSON.parse(await getToolHandler('record_grant_award')!({ award_number: 'A1', funding_agency: 'martian_grants' }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
@@ -41,7 +58,9 @@ describe('eGrants AnA tools — context + input guards', () => {
   });
   it('open_grant_closeout requires tenant/user context', async () => {
     const out = JSON.parse(await getToolHandler('open_grant_closeout')!({ award_id: 1 }, { humanConfirmed: true } as any));
-    expect(out.error).toMatch(/tenant \+ user context/);
+    expect(out.error).toMatch(/needs an identified member of the organization/);
+    expect(out.error).toMatch(/Nothing was changed/);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
   // Finalizing, executing and approving are electronic signatures, which AnA
   // cannot give; ana-cannot-sign.test.ts proves these three write nothing.

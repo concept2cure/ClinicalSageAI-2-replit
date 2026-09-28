@@ -1858,9 +1858,32 @@ export class AIGateway {
     // for every provider invocation (primary + fallback paths), so wrapping it
     // here caps outbound concurrency without touching the retry / circuit-
     // breaker / timeout logic, which all run inside the provider executors.
-    const response = await this.outboundLimiter.run(() =>
-      this.dispatchProvider(modelConfig, governed.request, requestId, startTime)
-    );
+    const response = await this.outboundLimiter
+      .run(() => this.dispatchProvider(modelConfig, governed.request, requestId, startTime))
+      .catch((error: unknown) => {
+        /* A cancel that lands WHILE the call is in flight is still a cancel.
+
+           GatewayAbortedError used to be created only before a call started
+           (route()'s pre-call check), and route() and retryWithBackoff treat
+           only that type as terminal. When the caller aborts mid-call, the SDK
+           throws its own error instead — Anthropic's APIUserAbortError, whose
+           `name` is plain 'Error', so it cannot be recognised by name. It went
+           through as a provider failure: retried, walked down every fallback
+           rung, recorded against the circuit breaker each time. One Stop during
+           a round-2+ call re-ran the request 16 times, told the user every
+           provider had failed, and counted 6 failures against Anthropic — twice
+           the threshold that marks it unhealthy for every tenant.
+
+           So the test is the caller's own signal, not the error's shape: if the
+           caller aborted, whatever came back is that cancel. This is the one
+           chokepoint every primary and fallback call passes through, inside the
+           retry loop, so the retry loop and both route() catches all see the
+           terminal type they already honour. */
+        if (request.signal?.aborted && !(error instanceof GatewayAbortedError)) {
+          throw new GatewayAbortedError('in_flight');
+        }
+        throw error;
+      });
     return {
       ...response,
       ...(governed.withheld.length > 0 ? { withheldServerTools: governed.withheld } : {}),
@@ -4304,7 +4327,7 @@ export class FileReferenceNotCarriedError extends GatewayPolicyError {
  * said is worth keeping.
  */
 export class GatewayAbortedError extends Error {
-  constructor(readonly phase: 'pre_call' | 'pre_stream') {
+  constructor(readonly phase: 'pre_call' | 'pre_stream' | 'in_flight') {
     super(`AI request cancelled by the caller (${phase})`);
     this.name = 'GatewayAbortedError';
   }

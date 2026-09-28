@@ -72,6 +72,9 @@ to one line; edit only your own row to limit merge conflicts.
 | **W2 / D6 — security-plan P0-17, the engineering half (INF-22): a full-history secret scan in CI.** gitleaks over every commit, blocking, installed by `go install` at a pinned module version (checksum-verified by the Go module proxy; no third-party action); a new job in `.github/workflows/ci.yml`, `.gitleaksignore` for findings already in history (each with its reason; the `neondb_owner` credential stays listed as live until the founder rotates it), a contract test, evidence `docs/evidence/W2/2026-09-26-p0-17-history-secret-scan/`. Not the rotation (founder), not `scripts/ci/check-committed-secrets.mjs` (the working-tree gate) | `…session_01AiwZKGaEFjD9AfVvkYExci` | **released** 2026-09-26 — row **D1**. Done: blocking "Secret scan (full history)" in `ci.yml`, green over 8,369 commits and red on a removed ignore block and on new-commit probes; contract test 8/8 with four mutants caught (`docs/evidence/W2/2026-09-26-p0-17-history-secret-scan/`). **For the founder (P0-17):** revoke the `ep-wild-forest` and `ep-icy-brook` Neon owner passwords and the Hugging Face token in `3e1dcf8f0`, and confirm no environment's `JWT_SECRET` signed the demo token in `VaultMarketingPage.jsx`. The job warns on every run until `.gitleaksignore` stops listing them as live |
 | **D4 / W3 — the validation package at head.** IQ-001 and all six OQ protocols executed on a from-blank install at one commit: the first execution since `bfdb0a08` (2026-09-23c), across the P0/P1 tranches. The second signer is created through user administration (`POST /api/tenant-users`, the activation link, the colleague's own password and authenticator), the local half of D4's "real second account". A failing step is fixed failing-first only where no lane holds the file; otherwise it is handed to that lane here. `tests/validation/**`, `docs/validation/**`, `docs/evidence/W3/2026-09-27/` | `…session_01TTTQ1hpdMr1yAMVYH4nYdE` | **released** 2026-09-28 — row **D4**. Final at `89ee3a81`: IQ 12/0/3, OQ 101 pass / 0 fail / 2 deviation of 103; TM-001 69 of 71 pass, 0 uncovered (`docs/evidence/W3/2026-09-27/`, VSR-001 §18). Fixed, each failing first: F-41 `f339a445`/`81eb7491` (a user-administration member's sign-in and credential events went to tenant 0, not its organisation) and F-42 `af305e8a` (the ledger named its actor by display name alone). OQ-004 v0.4, OQ-001 v0.9, URS-001 v0.6, URS-004 v0.2; the harness waits out the sign-in limiter. **Hand-ons below: → D6 (the sign-in limiter counts per client IP), → D6/D3 (user-administration members have no default organisation).** |
 | **Founder-directed 2026-09-27, moves no D-row: AnA runs multiple agents, and Manual/Auto is a real run policy.** The founder, 2026-09-27: *"can AnA run multiple agents and if not, she must"*, and asked for Claude's Manual/Auto control. RULE 2 says a session that moves no D-row reports blocked; this is recorded as the founder's explicit exception, not a reading around the rule. Measured first (13-agent map, every gap claim adversarially checked, all upheld): in production AnA cannot run more than one agent. `start_deep_investigation` is the only child loop, launch scope strips it, and it is fire-and-forget. `convene_drafting_council` is sequential. `/api/agent-swarm` claims parallel LangGraph and is a sequential loop with no org scope and no callers. **Scope:** (1) a launch-scoped delegation tool that runs bounded child agent loops concurrently and joins their results into the parent's round. Children are propose-only, run on approved models, carry tenant scope and `parentRunId` explicitly, and cannot recurse. `/api/agent-swarm` is retired in the same change (zero duplication). (2) Manual/Auto becomes a server-side run policy on run-control's existing pause/wake. The Ask/Agent control is visible but inert today and gets wired to it. `stoppedReason` reaches the client, so a round-capped turn says it was cut short instead of reading as finished. The Home mode pill that is never sent gets wired. (3) `model_override` gains the approved-models check it lacks. **Not in scope:** the progress-panel deltas (fold earlier steps, Connectors and Web search rows), which are row 59's. The child turn-record chain is row 60's slice; this lane sets `parentRunId` on the gateway ledger and leaves the chain to that lane. Touches files in rows 59/60's scope (`stream.ts`, `useAnaChat.ts`, `AnaActivity.tsx`). All were cold (>24h) at claim; edits are additive and disclosed here. Evidence `docs/evidence/ANA-AGENTS/2026-09-27/` | `…session_019ZvHmh63vQ2C66VAwZg2kc` | **claimed** 2026-09-27 |
+| **D4 / W3 follow-up — trunk CI: Blank DB Provisioning is red, and the one step red in it is a parser false positive.** Red on every run read, 2026-09-27 and 28 (`00870fe4`, `d224ecff`, `7ddc0638`), each at the same step: the live-schema ratchet (`ci:tables-live-schema`). It reads the CTE `WITH expected(schema_name, table_name, trigger_name) AS (…)` in `server/services/audit/audit-immutability-triggers.ts` (`e8724680`, 2026-09-25) as a table named `expected` that no database has; reproduced locally, it is the only new absence. `cteNames` binds `WITH x AS (` and, since `5fd4b79b`, `AS MATERIALIZED (`, but not a CTE with a column list. While the job is red, any real absence it exists to catch lands unseen. Scope: `scripts/ci/check-migration-reachability.mjs` (`cteNames` only) and `tests/schema-contract/migration-reachability-guard.contract.test.ts` | `…session_01TTTQ1hpdMr1yAMVYH4nYdE` | **claimed** 2026-09-28 — row D4: trunk CI red that this lane met on its own push, fixed at its cause as VSR-001 §16.7 records. Evidence: `docs/evidence/TRUNK-TESTS/2026-09-28/blank-db-live-schema/` |
+| **D4 — periodic review: the editor family, line by line.** The weekly reviews of 2026-09-24 and 2026-09-28 both record that `DocumentWorkbench.tsx` (5,134 lines), `RichSectionEditor.tsx` (2,716) and the `ProtocolDev*` family (15 files, about 4,250) were not read line by line. They are the surface every regulated draft passes through. Six lenses, read-only: Part 11 UX, honest state, security and accessibility, one agent each per file group; design system and microcopy across all three. Each blocker, high or medium finding goes to a separate agent told to refute it. Reports are filed beside the canonical review in `docs/evidence/reviews/2026-09-28/editor-family/`, with a pointer from its README. Confirmed findings are fixed failing-first where no lane holds the file. `DocumentWorkbench.tsx` was changed by the W1/D2 AnA-drive lane in `a75e3845` (2026-09-28 01:16), so its findings go to that lane until 24 hours have passed | `…session_01TTTQ1hpdMr1yAMVYH4nYdE` | **claimed** 2026-09-28 — row D4 (periodic review is a validation activity) |
+| **D7 / D5 — P11-28b: the Dispatch button is gated on a signature its own click creates.** From `docs/evidence/reviews/2026-09-28/ectd-lane-second-pass/part11-ux.md`. For IND / NDA / BLA / MAA the Submission Center's Dispatch button reads `gate`, which requires a release signature to already exist, and the signature it would accept is the one the click records — so no such sequence can be dispatched through the product's own screen, which D7's test sequence needs. Fix: the server states whether signing now clears the dispatch gate (the resolver's spine precedence lives there, and re-deriving it in the client is how P11-28a happened); the client reads that. `server/services/ectd/{assess-dispatch-readiness,release-signature-status}.ts` (the resolver's return and the assessment's verdicts only), `SubmissionSeqWorkspaces.tsx` (`DispatchWorkspace` only), their tests | `…session_01VB8JEGfy93uohAfBxSwmYx` | **released** 2026-09-28 — row **D7**. Done: server reports `dispatchGateOnSigning` (`composeStepVerdicts`, `signingNowResolvesRelease`), Dispatch reads it; 12 probes red-then-green (`docs/evidence/D7/2026-09-28-dispatch-reachable/`). Owed: a pglite sign→dispatch case for an IND |
 
 If you are one of the sessions above, correct your own row. If a lane you want
 is claimed, take the next unclaimed finding in §3 rather than duplicating it.
@@ -589,6 +592,53 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      belonging nowhere.
    - Not reviewed by this lane. `part11/resolve-signer-identity.ts` already
      reads the membership, and says why.
+3. **→ `…01KZK3jg` (AnA drive, `a75e3845`) and `…01VB8JEG` (`daae5ad4`), 2026-09-28
+   — trunk's ESLint warning ratchet is over its baseline, so CI's Lint job is
+   red and every job that needs it is skipped.**
+   - **The count:** 6,427 warnings against the 6,424 locked on 2026-09-26
+     (`1fb56570`). Red on CI at `b4efbe63`: Lint job 108761265557, step
+     "ESLint warning ratchet".
+   - **What that skips:** Blank DB Provisioning, Integration, Coverage, AnA
+     Readiness, Production Boot Smoke and AIOS all `need: lint`, so no push
+     since then has run them.
+   - **The lines,** from `node scripts/ci/check-eslint-warning-ratchet.mjs --since e8c2a885`:
+     - `a75e3845`, eight warnings:
+       - `server/routes/ana-ri/stream.ts:1160,2190` (max-depth);
+       - `server/services/ana/run-control.ts:689` (complexity 16) and `:946`
+         (max-lines);
+       - `server/services/ana/__tests__/run-control.pglite.integration.test.ts:370,684`;
+       - `server/services/ai-gateway/gateway.ts:519` (`partitionSystemMessages`,
+         complexity 17);
+       - `client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx:181`;
+       - `server/services/ana/__tests__/drive-program-resolution.test.ts:89`.
+     - `daae5ad4`, one warning:
+       `client/src/concept2cure/v2/__tests__/dispatchWorkspaceFreezeGate.test.tsx:136`
+       (`_omitted` unused).
+   - **Not edited here:** each file was changed by its lane within the last
+     24 hours.
+   - **Open question:** the pre-push hook has refused net warning growth in
+     pushed files since `936277fc`. How these passed it is not known here.
+4. **→ `…01T2wooC` (D5, every AnA turn is an immutable record), 2026-09-28 —
+   a tenant purge cannot reach `ana_turn_records` or `ana_record_blobs`, and
+   the Blank DB job will fail on it once it runs again.**
+   - **The step:** `ci:purge-coverage`, the last step of Blank DB
+     Provisioning. It ratchets the org-keyed tables the offboarding purge
+     leaves behind. The two tables above are new to that residue, from
+     `migrations/20260926_ana_turn_records.sql` (`f7597c2c`).
+   - **Why nobody saw it:** CI has not run this step since they landed. The
+     job stopped one step earlier on the live-schema ratchet's false positive
+     (fixed in `ebb4ef74`), and since `a75e3845` Lint's red skips the job
+     entirely (item 3).
+   - **Reproduced locally:** the job's own steps on a database built from
+     empty, `docs/evidence/TRUNK-TESTS/2026-09-28/blank-db-live-schema/green/blank-db-job-replicated.txt`.
+   - **The decision is the lane's:**
+     - `PURGE_CHILD_TABLES` in `server/services/tenant/tenant-offboarding.ts`
+       (FK-safe order), or a cascade path, erases a tenant's turn records;
+     - or they are kept with the audit and billing records the purge already
+       retains, and the baseline says so, with the reason.
+     It bears on the lane's own hand-on to P0-8 (both tables into
+     `APPEND_ONLY_TABLES`): keeping a table append-only and deleting from it
+     at purge are two answers to the same question.
 
 ## 1. The rules come first
 
