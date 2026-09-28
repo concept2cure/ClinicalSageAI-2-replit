@@ -218,3 +218,45 @@ describe('protocol-dev — the five projections (read-only)', () => {
     expect(await screen.findByText(/Design store unavailable/)).toBeTruthy();
   });
 });
+
+describe('protocol-dev — the bind drawer reports a list it could not read (HS-C-3)', () => {
+  // A 200 that did not carry a `designs` array used to fall back to [], and
+  // the drawer told an author "This organisation has no persisted study design
+  // yet" about a read that failed. Periodic review 2026-09-28, editor family,
+  // honest-state lens.
+  const html200 = { ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected token <'); } } as unknown as Response;
+  const MALFORMED: Array<[string, Response]> = [
+    ['an empty object', ok({})],
+    ['an error carried on a 200', ok({ error: 'Something went wrong' })],
+    ['the list inside an envelope', ok({ data: DESIGN_LIST })],
+    ['designs present but null', ok({ designs: null })],
+    ['a design with no id', ok({ designs: [{ title: 'Untitled' }] })],
+    ['an HTML page on a 200', html200],
+  ];
+
+  function listReturns(res: Response) {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url.startsWith('/api/protocol-dev')) return ok({ success: true, data: [BASE_DOC] });
+      if (method === 'GET' && url === '/api/study-design') return res;
+      return ok({});
+    });
+  }
+
+  it.each(MALFORMED)('%s is a failed read, not an organisation with no design', async (_label, res) => {
+    listReturns(res);
+    await openTab();
+    fireEvent.click(await screen.findByRole('button', { name: /Bind a study design/ }));
+    // The drawer re-mounts per state (loading, error, none, ready), so the
+    // assertion reads the screen rather than the first dialog it opened as.
+    expect(await screen.findByText(/study-design store could not be read/)).toBeTruthy();
+    expect(screen.queryByText(/no persisted study design yet/)).toBeNull();
+  });
+
+  it('an organisation with genuinely no design is still told so', async () => {
+    listReturns(ok({ designs: [] }));
+    await openTab();
+    fireEvent.click(await screen.findByRole('button', { name: /Bind a study design/ }));
+    expect(await screen.findByText(/no persisted study design yet/)).toBeTruthy();
+    expect(screen.queryByText(/study-design store could not be read/)).toBeNull();
+  });
+});

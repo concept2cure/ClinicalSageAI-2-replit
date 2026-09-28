@@ -270,3 +270,71 @@ describe('protocol-dev — Design derivation, apply', () => {
     expect(posted).toHaveLength(0);
   });
 });
+
+describe('a derivation read that is not a derivation is a failed read (HS-C-3)', () => {
+  // A 200 whose body did not carry the five buckets used to be drawn as five
+  // "Nothing in this bucket." panels under "study design not named by the
+  // server": a comprehensive-looking "nothing proposed, nothing conflicting,
+  // nothing incomplete" from a read that failed. The enveloped case even hid a
+  // real proposed path. Periodic review 2026-09-28, editor family,
+  // honest-state lens.
+  const MALFORMED: Array<[string, unknown]> = [
+    ['an empty object', {}],
+    ['an error carried on a 200', { error: 'Something went wrong' }],
+    ['the read model inside an envelope', { data: { documentId: 41, studyDesignId: 'sd_bx204', derivation: DERIVATION } }],
+    ['a design id and no derivation', { documentId: 41, studyDesignId: 'sd_bx204' }],
+    ['a derivation missing its buckets', { documentId: 41, studyDesignId: 'sd_bx204', derivation: { proposed: [] } }],
+    ['a derivation with one bucket null', { documentId: 41, studyDesignId: 'sd_bx204', derivation: { ...DERIVATION, unevidenced: null } }],
+  ];
+
+  function readReturns(body: unknown, apply?: unknown) {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url.includes('/design-derivation')) return ok(body);
+      if (method === 'GET' && url.startsWith('/api/protocol-dev')) return ok({ success: true, data: [BASE_DOC] });
+      if (method === 'POST' && url.includes('/design-derivation/apply')) return ok(apply);
+      return ok({});
+    });
+  }
+
+  it.each(MALFORMED)('%s is reported as a failure, not as an empty derivation', async (_label, body) => {
+    readReturns(body);
+    await openTab();
+    expect(await within(pane()).findByText(/could not be read/i)).toBeTruthy();
+    expect(within(pane()).queryAllByRole('group')).toHaveLength(0);
+    expect(within(pane()).queryByText(/Nothing in this bucket/)).toBeNull();
+    expect(within(pane()).queryByText(/Derived against study design/)).toBeNull();
+  });
+
+  it('a derivation whose five buckets are genuinely empty is still drawn as empty', async () => {
+    readReturns({
+      documentId: 41, studyDesignId: 'sd_bx204',
+      derivation: { proposed: [], conflicts: [], unchanged: [], unevidenced: [], incomplete: [] },
+    });
+    await openTab();
+    await within(pane()).findByRole('group', { name: /Proposed/ });
+    expect(within(pane()).getAllByText(/Nothing in this bucket/)).toHaveLength(5);
+    expect(within(pane()).queryByText(/could not be read/i)).toBeNull();
+  });
+
+  it('an apply whose answer carries no derivation says the diff could not be re-read', async () => {
+    readReturns(
+      { documentId: 41, studyDesignId: 'sd_bx204', derivation: DERIVATION },
+      { documentId: 41, studyDesignId: 'sd_bx204', applied: ['title'], rejected: [] },
+    );
+    await openTab();
+    const g = await within(pane()).findByRole('group', { name: /Proposed/ });
+    fireEvent.click(within(g).getByRole('checkbox'));
+    fireEvent.click(within(pane()).getByRole('button', { name: /Apply accepted/ }));
+    fireEvent.change(await screen.findByLabelText(/Reason for change/), {
+      target: { value: 'Adopt the protocol title into the bound design.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Apply and record/ }));
+
+    // What was written is still reported; the buckets are not redrawn empty.
+    const result = await within(pane()).findByRole('group', { name: /Result of the last apply/ });
+    expect(within(result).getByText(/title/)).toBeTruthy();
+    expect(within(pane()).getByText(/could not be read/i)).toBeTruthy();
+    expect(within(pane()).queryByRole('group', { name: /Proposed/ })).toBeNull();
+    expect(within(pane()).queryByText(/Nothing in this bucket/)).toBeNull();
+  });
+});
