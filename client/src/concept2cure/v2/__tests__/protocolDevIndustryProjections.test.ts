@@ -189,10 +189,16 @@ describe('USDM export', () => {
   it('prints the conformance status and reason verbatim — unverified stays unverified', () => {
     const v = usdmView({
       usdm: {
-        conformance: { status: 'unverified', reason: 'The CDISC USDM JSON schema is not vendored.', standard: 'CDISC USDM v3' },
+        conformance: { status: 'unverified', reason: 'The CDISC USDM JSON schema is not vendored.', standard: 'CDISC USDM v4.0.0' },
         unfilledUsdmEntities: ['Organization: no sponsor on the design'],
         unmappedDesignFields: ['safety.doseEscalation: no USDM home in this mapping'],
-        study: { versions: [{ studyDesigns: [{ arms: [{ id: 'StudyArm_1', name: 'Drug X' }], epochs: [], encounters: [], activities: [], objectives: [{ id: 'Objective_1', text: 'Show superiority' }], estimands: [], studyInterventions: [] }] }] },
+        study: {
+          versions: [{
+            // v4.0.0: interventions live on the version; the design carries only their ids.
+            studyInterventions: [{ id: 'StudyIntervention_1', name: 'Drug X 10 mg' }],
+            studyDesigns: [{ arms: [{ id: 'StudyArm_1', name: 'Drug X' }], epochs: [], encounters: [], activities: [], objectives: [{ id: 'Objective_1', text: 'Show superiority' }], estimands: [], studyInterventionIds: ['StudyIntervention_1'] }],
+          }],
+        },
       },
     });
     expect(v.status).toBe('unverified');
@@ -202,6 +208,7 @@ describe('USDM export', () => {
     expect(v.entries[0].text).toBe('StudyArm_1 — Drug X');
     expect(v.entries[1].text).toBe('None exported.');
     expect(v.entries[4].text).toBe('Objective_1 — Show superiority');
+    expect(v.entries[6].text).toBe('StudyIntervention_1 — Drug X 10 mg');
     expect(v.entries[7].gaps).toEqual(['safety.doseEscalation: no USDM home in this mapping']);
   });
 });

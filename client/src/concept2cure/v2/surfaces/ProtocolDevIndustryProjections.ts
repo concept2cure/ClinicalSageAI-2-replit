@@ -156,7 +156,8 @@ export function usdmView(payload: Obj): ProjectionView {
       usdmEntityEntry('Activity', sd.activities),
       usdmEntityEntry('Objective', sd.objectives),
       usdmEntityEntry('Estimand', sd.estimands),
-      usdmEntityEntry('StudyIntervention', sd.studyInterventions),
+      // USDM v4.0.0 holds interventions on the StudyVersion; the design lists their ids.
+      usdmEntityEntry('StudyIntervention', version.studyInterventions),
       { key: 'usdm:unmapped', label: 'Design fields with no USDM home in this mapping', status: '', text: unmapped.length ? '' : 'None.', gaps: unmapped },
     ],
   };

@@ -16,7 +16,7 @@ narrates.
 | Trial schema figure | ICH M11 §1.2 | `study-design/trial-schema.ts` (+ `trial-schema-svg.ts`) | `GET /api/study-design/:id/trial-schema` | `review_trial_schema` |
 | SPIRIT 2013 checklist, row by row | SPIRIT 2013 (33 items, 51 rows) | `study-design/spirit-conformance.ts` (+ `spirit-items.ts`) | `GET /api/study-design/:id/spirit` (design only); `GET /api/protocol-development/documents/:id/spirit` (design + sections) | `review_spirit_conformance` |
 | Critical-to-quality factors from the design | ICH E6(R3); TransCelerate RACT | `study-design/ctq-derivation.ts` | `…/:id/ctq` | `derive_ctq_factors` |
-| USDM-shaped export, conformance **unverified** | CDISC USDM / TransCelerate DDF | `study-design/usdm-projection.ts` (+ `usdm-schedule.ts`, `usdm-types.ts`) | `…/:id/usdm` | `export_usdm_projection` |
+| USDM v4.0.0-shaped export, conformance **unverified** | CDISC USDM v4.0.0 (DDF-RA v4.0.0) / TransCelerate DDF | `study-design/usdm-projection.ts` (+ `usdm-schedule.ts`, `usdm-types.ts`) | `…/:id/usdm` | `export_usdm_projection` |
 | Decentralised-element profile | FDA DCT guidance (2024); EMA/HMA/EC (2022) | `study-design/dct-profile.ts` + `SoaActivity.location?` | `…/:id/dct-profile` | `review_dct_profile` |
 | WHO Trial Registration Data Set | WHO ICTRP TRDS v1.3.1; ICMJE | `study-design/who-ictrp-registration.ts` | `…/:id/who-ictrp` | `review_who_ictrp_record` |
 | Deviation trends and signals | ICH E6(R3) RBQM; TransCelerate KRIs | `protocol-deviations/deviation-trends.ts` | `GET /api/protocol-deviations/deviations/trends` | `review_deviation_trends` |
@@ -106,7 +106,7 @@ only), the CAPA join anchored on the scoped row, input bounds, route order
 | `study-design/__tests__/trial-schema.test.ts` | 21 |
 | `study-design/__tests__/spirit-conformance.test.ts` | 25 |
 | `study-design/__tests__/ctq-derivation.test.ts` | 25 |
-| `study-design/__tests__/usdm-projection.test.ts` | 25 |
+| `study-design/__tests__/usdm-projection.test.ts` | 34 |
 | `study-design/__tests__/dct-profile.test.ts` | 44 |
 | `study-design/__tests__/who-ictrp-registration.test.ts` | 24 |
 | `protocol-deviations/__tests__/deviation-trends.test.ts` | 51 |
@@ -145,7 +145,7 @@ red, the file was restored byte for byte, and the suite re-ran green.
 | SPIRIT | a document section allowed to override a design-evidenced row | `has a judge for every design-evidenced row…` — **not** by the dedicated "never lets a document override a design-evidenced row" test, which stayed green. Flagged for the review stage as a weak test. |
 | CtQ | blinding factors emitted for an open-label design (factor with no trigger) | `fires blind-maintenance and emergency-unblinding rows for a blinded design only` |
 | CtQ | a rating marked `assessed` instead of `default_seed` | `marks every rating default_seed…` |
-| USDM | a ScheduledActivityInstance pointing at a non-existent encounter | `every ScheduledActivityInstance points at an existing activity, encounter and epoch` |
+| USDM | a ScheduledActivityInstance pointing at a non-existent encounter | `every ScheduledActivityInstance points at an existing activity, encounter and epoch` (since replaced by `every id is unique and every reference in the graph resolves, for every design shape`) |
 | USDM | conformance flipped to `verified` | `reports status unverified… for every design shape` |
 | USDM | ids counted across calls (module-level counter) | `ids are positional and identical across two calls` |
 | DCT | `unstated` treated as `site` | 6 tests incl. `never counts an unstated activity as site` |
@@ -218,8 +218,17 @@ copies — the service's validators, the route's zod enums, the trend engine and
 the logic module's types. The logic module now exports the one list of each,
 Record-keyed against its union, and the others import it.
 
-The remaining engines (USDM, redline) are being fixed the same way; their rows
-are added here as they land.
+| USDM | 10 (blocking: crossover) | **a crossover was exported as both arms receiving both drugs throughout**: every arm got one StudyElement spanning every treatment epoch. Placement is now made only for a concurrent model (parallel, single-arm, factorial) with exactly one treatment epoch; otherwise no element is built and both ledgers say why. **The graph mixed USDM versions** — v3-era `studyPhase` on StudyVersion beside v4 classes; it is now aligned to v4.0.0 throughout, every emitted class pinned to the attribute names transcribed from DDF-RA v4.0.0 `USDM_API.json` (28 classes, checked by script, 0 mismatches). An absent estimand population matched an absent analysis population as `''`; two baseline visits anchored timing on the first; absent coded values became a Code for `"undefined"`; a missing blinding level became open-label | 34 (was 25) | 20 |
+
+The USDM output shape changed with the move to v4.0.0 (interventions now live
+on the StudyVersion, `interventionModel` is `model`, `studyPhase` is on the
+design as an AliasCode). The one client consumer, `usdmView` in
+`ProtocolDevIndustryProjections.ts`, reads interventions from the version; its
+test pins that (`expected 'None exported.' to be 'StudyIntervention_1 — Drug X
+10 mg'` when pointed back at the design).
+
+The remaining engine (redline) is being fixed the same way; its row is added
+here when it lands.
 
 ## What is not done, and why
 

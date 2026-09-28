@@ -108,13 +108,17 @@ export const DERIVE_CTQ_FACTORS: AnaTool = {
 export const EXPORT_USDM_PROJECTION: AnaTool = {
   name: 'export_usdm_projection',
   description:
-    'READ-ONLY. Project the study design bound to a protocol document as a CDISC USDM-shaped object graph (projectUsdm) — Study, StudyVersion, StudyDesign, ' +
+    'READ-ONLY. Project the study design bound to a protocol document as an object graph shaped to CDISC USDM v4.0.0 (projectUsdm) — Study, StudyVersion, ' +
+    'InterventionalStudyDesign, ' +
     'arms, epochs, cells, activities, encounters, the main schedule timeline, eligibility criteria, objectives, endpoints, estimands, interventions — with ' +
     'deterministic identifiers. ' +
     DESIGN_REQUIRED + ' ' +
     'CONFORMANCE IS UNVERIFIED and the engine says so: the CDISC USDM JSON schema is not vendored, so the graph follows USDM entity naming and has NOT been ' +
     'validated against the standard. Report conformance.status and its reason verbatim; never call the export "valid", "conformant" or "USDM-compliant". ' +
-    'Report unmappedDesignFields and unfilledUsdmEntities in full — they are the honest boundary of what was exported. The engine invents no sponsor, ' +
+    'Report unmappedDesignFields and unfilledUsdmEntities in full — they are the honest boundary of what was exported; a required attribute the design ' +
+    'lacks is exported null and named there, so the graph is deliberately not schema-valid until the design is complete. When the arm-to-epoch ' +
+    'assignment is undetermined (crossover, a second treatment epoch, dose-ranging, adaptive or master-protocol designs) no StudyElement is exported and ' +
+    'the ledger says why — never describe the arms\' interventions as given together. The engine invents no sponsor, ' +
     'registry identifier, date or timing the design does not carry.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
