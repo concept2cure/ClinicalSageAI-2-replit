@@ -8,6 +8,7 @@ import {
   SURFACE_CTX, CL_MOD, CL_MOD_OPTIONS, CL_TYPE, CL_PRI, CL_PRI_LABEL, clModLabel,
   type C2CTask, type ActivityItem, type TeamMember, type ProjectEntry,
 } from '../fixtures/collab-data';
+import { MODULE_COLOR_UNKNOWN } from '../fixtures/task-board-data';
 
 /* ================================================================
    Collaboration layer -- universal "add to tasking / assign / collaborate"
@@ -210,7 +211,7 @@ export const C2C = {
   mod: CL_MOD,
 
   modColor(m: string): string {
-    return CL_MOD[m] || '#888';
+    return CL_MOD[m] || MODULE_COLOR_UNKNOWN;
   },
   list(): C2CTask[] {
     return tasks;

@@ -34,30 +34,82 @@ export interface RecheckableSocket extends Socket {
   authUserId?: string;
   /** The handshake token, kept so the session can be re-verified while connected. */
   sessionToken?: string;
-  /** The re-verification timer, cleared on disconnect. */
-  sessionRecheck?: NodeJS.Timeout;
 }
 
-export type SessionEndReason = 'session_ended' | 'membership_revoked' | 'tenant_inactive';
+/**
+ * `tenant_read_only` is the collaboration socket's: a writable connection whose
+ * tenant has become read-only is ended so it reconnects downgraded
+ * (server/services/hocuspocus-server.ts).
+ */
+export type SessionEndReason = 'session_ended' | 'membership_revoked' | 'tenant_inactive' | 'tenant_read_only';
 
-/** Why this socket's session may no longer stay open, or null while it may. */
-export async function sessionEndReason(socket: RecheckableSocket): Promise<SessionEndReason | null> {
-  const userId = Number(socket.authUserId);
-  const organizationId = Number(socket.orgId);
+/** Who an open session belongs to, as its handshake verified it. */
+export interface SessionSubject {
+  token: string;
+  userId: number;
+  organizationId: number;
+}
+
+/**
+ * Why this session may no longer stay open, or null while it may — the checks
+ * every socket transport re-runs. `tenant` is the transport's own tenant rule:
+ * background-work permission for socket.io; the collaboration socket applies
+ * its read-only downgrade. Added 2026-09-28 when the collaboration socket, the
+ * last one without a re-check, needed the same decision (zero duplication).
+ */
+export async function sessionEndReasonFor(
+  { token, userId, organizationId }: SessionSubject,
+  tenant: (organizationId: number) => Promise<SessionEndReason | null> = async id =>
+    (await shouldProcessTenantInBackground(id)) ? null : 'tenant_inactive'
+): Promise<SessionEndReason | null> {
   try {
     // Signature, revocation, account standing, the password-change rule and
     // the session's inactivity, exactly as the handshake verified them. The
     // re-check is not the user acting, so it is not the session's activity
     // (P1-1): an open tab does not keep an unattended session alive.
-    await verifyLiveToken(socket.sessionToken ?? '', undefined, { activity: false });
+    await verifyLiveToken(token, undefined, { activity: false });
   } catch {
     return 'session_ended';
   }
   // Anything but a confirmed membership ends it, including a membership that
   // could not be read (fail closed, as the handshake does).
   if ((await checkOrgMembership(userId, organizationId)) !== 'member') return 'membership_revoked';
-  if (!(await shouldProcessTenantInBackground(organizationId))) return 'tenant_inactive';
-  return null;
+  return tenant(organizationId);
+}
+
+/** Why this socket's session may no longer stay open, or null while it may. */
+export function sessionEndReason(socket: RecheckableSocket): Promise<SessionEndReason | null> {
+  return sessionEndReasonFor({
+    token: socket.sessionToken ?? '',
+    userId: Number(socket.authUserId),
+    organizationId: Number(socket.orgId),
+  });
+}
+
+/**
+ * Run `check` every SOCKET_SESSION_RECHECK_MS; the first time it names a
+ * reason (a check that throws counts as `session_ended` — fail closed), stop and
+ * call `end`. Returns the function that stops it. Never keeps the process alive.
+ */
+export function startRecheckTimer(
+  check: () => Promise<SessionEndReason | null>,
+  end: (reason: SessionEndReason) => void
+): () => void {
+  let inFlight = false;
+  const timer = setInterval(() => {
+    if (inFlight) return;
+    inFlight = true;
+    void check()
+      .catch(() => 'session_ended' as const)
+      .then(reason => {
+        inFlight = false;
+        if (!reason) return;
+        clearInterval(timer);
+        end(reason);
+      });
+  }, SOCKET_SESSION_RECHECK_MS);
+  timer.unref?.();
+  return () => clearInterval(timer);
 }
 
 /**
@@ -66,25 +118,13 @@ export async function sessionEndReason(socket: RecheckableSocket): Promise<Sessi
  * namespace in the log line.
  */
 export function startSessionRecheck(socket: RecheckableSocket, label: string): void {
-  let inFlight = false;
-  const timer = setInterval(() => {
-    if (inFlight) return;
-    inFlight = true;
-    void sessionEndReason(socket)
-      .catch(() => 'session_ended' as const)
-      .then(reason => {
-        inFlight = false;
-        if (!reason) return;
-        log.warn(`[${label}] Ending socket ${socket.id} (org ${socket.orgId}, user ${socket.authUserId}): ${reason}`);
-        clearInterval(timer);
-        socket.emit('session:ended', { reason });
-        socket.disconnect(true);
-      });
-  }, SOCKET_SESSION_RECHECK_MS);
-  timer.unref?.();
-  socket.sessionRecheck = timer;
-  socket.on('disconnect', () => {
-    clearInterval(timer);
-    socket.sessionRecheck = undefined;
-  });
+  const stop = startRecheckTimer(
+    () => sessionEndReason(socket),
+    reason => {
+      log.warn(`[${label}] Ending socket ${socket.id} (org ${socket.orgId}, user ${socket.authUserId}): ${reason}`);
+      socket.emit('session:ended', { reason });
+      socket.disconnect(true);
+    }
+  );
+  socket.on('disconnect', stop);
 }
