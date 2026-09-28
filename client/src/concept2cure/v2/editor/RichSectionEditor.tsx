@@ -14,7 +14,7 @@
  * What it preserves from the canvases it replaces:
  *   - honest save-state labels: server-persisted, in-flight, failed-but-cached,
  *     and device-only are distinct states with distinct words (DocCanvas);
- *   - a device-local crash cache (`dc::<key>`) so a reload never loses
+ *   - a device-local crash cache (`dc::<account>::<key>`) so a reload never loses
  *     in-progress work — offered back via an explicit restore notice, never
  *     silently loaded over the server's content (fixes DocCanvas, which
  *     hydrated stale localStorage OVER newer server content);
@@ -61,6 +61,8 @@ import Highlight from '@tiptap/extension-highlight';
 import { Collaboration } from '@tiptap/extension-collaboration';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { redactInternals } from '@/lib/queryClient';
+import { deviceDraftKey } from '@/lib/deviceDraftCache';
+import { authService } from '@/services/portal/authService';
 import { Mapping } from '@tiptap/pm/transform';
 import type { Transaction } from '@tiptap/pm/state';
 import * as Y from 'yjs';
@@ -200,7 +202,8 @@ export interface RichSectionEditorProps {
   onDirtyChange?: (dirty: boolean) => void;
   readOnly?: boolean;
   placeholder?: string;
-  /** Device crash-cache key (stored under `dc::<storageKey>`). Null disables. */
+  /** Device crash-cache key (stored under `dc::<account>::<storageKey>`, see
+   *  lib/deviceDraftCache). Null disables. */
   storageKey?: string | null;
   ariaLabel?: string;
   /** 'full' draws ribbon + footer; 'bare' is just the canvas (host owns chrome). */
@@ -328,7 +331,8 @@ const SAVE_META: Record<SaveState, { dot: string; label: string }> = {
   error: { dot: 'var(--error)', label: 'Save failed — kept on this device' },
 };
 
-const cacheKeyFor = (storageKey: string) => 'dc::' + storageKey;
+/** The signed-in account's draft for this section (see lib/deviceDraftCache). */
+const cacheKeyFor = (storageKey: string) => deviceDraftKey(authService.getUser()?.id, storageKey);
 
 /** One shared empty list, so an absent caption directory does not produce a new
  *  array identity on every render and re-run the memos that key on it. */
@@ -1946,8 +1950,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           </div>
         )}
 
-        {/* ── Crash-cache restore offer (explicit, never silent) ── */}
-        {restoreOffer != null && (
+        {/* ── Crash-cache restore offer (explicit, never silent) ──
+            Not on a read-only canvas, including one frozen while it was open:
+            restoring would put unsaved text on a sealed section (SEC-A-5). */}
+        {restoreOffer != null && !readOnly && (
           <div className="rse-gate" role="status">
             A draft cached on this device differs from the saved section.
             <button type="button" className="rse-link" onClick={restoreCached}>

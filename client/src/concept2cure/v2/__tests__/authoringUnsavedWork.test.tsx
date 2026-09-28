@@ -31,6 +31,8 @@ vi.mock('@/lib/queryClient', async importOriginal => ({
 }));
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
+  // The editor keys its device draft by the signed-in account (SEC-A-5).
+  authService: { getUser: () => null },
 }));
 
 /* jsdom implements no layout; ProseMirror's scroll-into-view asks for client
@@ -52,6 +54,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { collectSuggestions } from '../editor/suggestions';
 import type { Editor } from '@tiptap/core';
+import { deviceDraftKey } from '@/lib/deviceDraftCache';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
 
@@ -308,7 +311,7 @@ describe('switching sections over unsaved work is held, not silent', () => {
     // Nothing reached the governed store.
     expect(contentPatches()).toHaveLength(0);
     // The device cache still holds it, and returning offers it back.
-    expect(localStorage.getItem('dc::S1')).toMatch(/Half-written sentence that/);
+    expect(localStorage.getItem(deviceDraftKey(null, 'S1'))).toMatch(/Half-written sentence that/);
     fireEvent.click(screen.getByRole('button', { name: /3\.2\.S\.1\s*General Information/ }));
     await waitFor(() => expect(openSectionCode()).toBe('3.2.S.1'));
     expect(await screen.findByRole('button', { name: /Restore the device draft/i })).toBeTruthy();

@@ -28,6 +28,7 @@ import type { Editor } from '@tiptap/core';
 
 import { RichSectionEditor } from '../editor/RichSectionEditor';
 import { collectCommentAnchors, type CommentAnchorPayload } from '../editor/commentAnchor';
+import { deviceDraftKey } from '@/lib/deviceDraftCache';
 
 const emptyRects = function () {
   return [] as unknown as DOMRectList;
@@ -287,7 +288,7 @@ describe('V-2 — source mode reports "saved" only for the text it sent', () => 
     expect(footer()).toMatch(/Unsaved changes/);
     expect(footer()).not.toMatch(/All changes saved/);
     expect(onDirty.mock.calls.at(-1)?.[0]).toBe(true);
-    expect(localStorage.getItem('dc::sec-1')).toBe(S2);
+    expect(localStorage.getItem(deviceDraftKey(null, 'sec-1'))).toBe(S2);
     expect(discardTab()).toBe(true);
     expect(saveButton().disabled).toBe(false);
     expect(onSave).toHaveBeenCalledTimes(1);
@@ -343,12 +344,12 @@ describe('V-2 — source mode reports "saved" only for the text it sent', () => 
     expect(onSave.mock.calls.map((c) => c[0])).toEqual([S0 + 'XY']);
     expect(footer()).toMatch(/All changes saved/);
     expect(onDirty.mock.calls.at(-1)?.[0]).toBe(false);
-    expect(localStorage.getItem('dc::sec-4')).toBeNull();
+    expect(localStorage.getItem(deviceDraftKey(null, 'sec-4'))).toBeNull();
   });
 
   it('source mode: a restored device draft is what the next save sends', async () => {
     const cached = FIG + '<p>Recovered after a crash.</p>';
-    localStorage.setItem('dc::sec-1', cached);
+    localStorage.setItem(deviceDraftKey(null, 'sec-1'), cached);
     const { onSave, settle } = await mountSource();
     fireEvent.click(screen.getByRole('button', { name: 'Restore the device draft' }));
     fireEvent.click(saveButton());
@@ -361,12 +362,12 @@ describe('V-2 — source mode reports "saved" only for the text it sent', () => 
     const { ta, onSave, settle } = await mountSource();
     const S1 = FIG + '<p>Only edit.</p>';
     fireEvent.change(ta, { target: { value: S1 } });
-    expect(localStorage.getItem('dc::sec-1')).toBe(S1);
+    expect(localStorage.getItem(deviceDraftKey(null, 'sec-1'))).toBe(S1);
     fireEvent.click(saveButton());
     await settle();
     expect(onSave.mock.calls.map((c) => c[0])).toEqual([S1]);
     expect(footer()).toMatch(/All changes saved/);
-    expect(localStorage.getItem('dc::sec-1')).toBeNull();
+    expect(localStorage.getItem(deviceDraftKey(null, 'sec-1'))).toBeNull();
     expect(discardTab()).toBe(false);
   });
 
@@ -396,7 +397,7 @@ describe('V-2 — the rich canvas keeps its device draft the same way', () => {
 
     expect(footer()).toMatch(/Unsaved changes/);
     expect(onDirty.mock.calls.at(-1)?.[0]).toBe(true);
-    expect(localStorage.getItem('dc::sec-2')).toBe(canvas().getHTML());
-    expect(localStorage.getItem('dc::sec-2')).toContain('Typed mid-save.');
+    expect(localStorage.getItem(deviceDraftKey(null, 'sec-2'))).toBe(canvas().getHTML());
+    expect(localStorage.getItem(deviceDraftKey(null, 'sec-2'))).toContain('Typed mid-save.');
   });
 });
