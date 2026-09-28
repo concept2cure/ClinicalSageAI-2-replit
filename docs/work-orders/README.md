@@ -694,10 +694,24 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
    - **A-A-5 (medium).** The "has a draft" dot on the governed outline has no
      style, so it is invisible, and its title reads the governed status
      ("todo").
-   - **SEC-A-5 (medium).** The device draft cache is keyed by section only
-     (`storageKey={activeSection.id}`) and outlives sign-out. The editor half,
-     purging `dc::*` on sign-out and gating restore on read-only, is this
-     lane's.
+   - **SEC-A-5 (medium): fixed in the editor, `de430222`.** The draft cache is
+     keyed by account and purged at sign-out, so nothing remains for the host.
+   - **HS-B-1:** the Sources rail's "Record a source" picker was fixed by
+     `59b0d8f9` (GE-H-1). Still open: the Cite picker, the Vault rail, and
+     existing citations painted "unresolved" when the read failed.
+   - **Follow-ons from this lane's fixes, each a small host change:**
+     - `AUDIT_EVENT_LABELS` for the new citation audit operations
+       (`63b43274`):
+       - `CITATION_ADDED`: "source cited";
+       - `CITATION_UPDATED`: "citation text changed";
+       - `CITATION_REMOVED`: "citation removed";
+       - `CITATION_REFRESHED`: "source re-read; recorded checksum updated".
+       Also list citations in the Audit rail's empty state.
+     - The second-cite toast ("Source re-resolved against its current
+       content.") is now false: a re-cite keeps the recorded checksum.
+     - When an anchor is refused because the quoted words changed
+       (`b43ec3af`), the host's "anchoring it…" toast gets no follow-up. Pass
+       an `onAnchorRefused` in `commentsApi` and toast from it.
 7. **→ The AnA lanes (`AnaToolExecutor.ts` changed by `…01KiDof7` at
    `41e7c539`), 2026-09-28 — SEC-C-5 (medium).** `update_protocol_section`
    records `fcoiReason(input, 'Protocol section edited via AnA')`: a reason
