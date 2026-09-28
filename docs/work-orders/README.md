@@ -869,7 +869,7 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
       - The fixture's rows need the program the test opens.
 11. ~~**→ `…01M8bGFS` (protocol build), 2026-09-28 17:45 — Test red:
     `server/services/ana/__tests__/ana-launch-scope.test.ts` › "classifies every
-    enabled tool".**~~ **Done by its lane, `759049b5`.** Green at `1f5c009b`.
+    enabled tool".**~~ **Done by `…01KiDof7`, `759049b5`.** Green at `1f5c009b`.
     - 16 AnA tools added today are in no launch-scope class, hiddenApp or
       inScope:
       - `review_trial_schema`, `review_spirit_conformance`,
@@ -992,6 +992,82 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
       `RichSectionEditor.tsx`, and `DocumentCanvas`, which the completeness
       critic found as a fourth host) depends on this wiring. Until it lands,
       a fenced `selection` field is rendered by no live path.
+15. **→ `…01M8bGFS` (protocol build; every file below changed by it on
+    2026-09-28), 2026-09-28 23:30 — a read-only review of the protocol
+    industry engines, re-checked at `1f5c009b` after the lane's evening
+    fixes.**
+    - Filed:
+      - `docs/evidence/reviews/2026-09-28/editor-family/triage/new-protocol-build.md`:
+        the review at `3c87da01`;
+      - `…/triage/new-protocol-build-recheck.md`: the status at `1f5c009b`,
+        each original probe re-run with `tsx`.
+    - Closed:
+      - PB-3, by `1ccf2f11`;
+      - PB-9, by `759049b5` (`…01KiDof7`);
+      - PB-2's substance: an allocation above alpha is now a gap, and the
+        recorded allocation is what is simulated.
+    - **Open, the lane's to fix:**
+      - **PB-1 (high): unbounded synchronous CPU on the event loop.** Any
+        authenticated user can reach it, a viewer included, through
+        `POST /api/study-design/<engine>`, `GET /:id/<engine>` and the AnA
+        review tools. Interim OC, BOIN and part of enrollment are now capped
+        (`85d7ce56`, `f4833a2d`). Still open:
+        - **Multiplicity.** There is no family limit, and `study-design.ts:107`
+          endpoints has no `.max`: 3,000 endpoints take 20.5 s. It is also a
+          **new regression from `1ccf2f11`**: the recorded-allocation path
+          copies the m×m matrix on every simulation, so 800 endpoints (76 KB)
+          take 30 s.
+        - **MMRM.** The cap is on `/planning` only. The engine has none, so a
+          design saved through `/persist` with 400 visits costs 22 s on every
+          GET and every AnA call.
+        - **Enrollment.** The work budget ignores the fixed cost of each
+          arrival: 100,000 patients at one site (a 176-byte body) take 17 s,
+          where the comment promises 1–2 s.
+        - `industryRead` holds a pooled connection in an open transaction for
+          the whole computation (`AnaToolExecutor.ts:20854`).
+      - **PB-7 (high): the governed `/planning` write keeps no before-image.**
+        The payload is `{studyId, block, cleared}`, and the prior value is
+        compared (`STALE_BLOCK`) but never stored. The same applies to the
+        prior `metadata.design` on `/persist`.
+      - **PB-8 (medium): a finalized protocol stays bound by reference to a
+        design that is still writable.** `readBoundDesign` reads no status
+        and no `updated_at`, and neither `/planning` nor `/persist` checks
+        for a finalized binding.
+      - **PB-4 (medium), case (a):** a pk, pd or biomarker activity with no
+        specimen still leaves the totals unmarked as lower bounds, so the
+        screen prints "within" for a total that is not known.
+      - **PB-5 (medium):** redline, deviation trends and protocol-scoped
+        SPIRIT still have no UI, and `README.md:34-36` still says all sixteen
+        engines are in the pane.
+      - **PB-6 (medium):** the projections pane still has no request token.
+        A slow response renders, and downloads, under a later projection's
+        label.
+      - **PB-2, wording only:** "controlled at alpha" is a weak-control
+        simulation under the global null, and the screen does not say so.
+      - **Lows:**
+        - PB-10: the ratingFrom provenance copy;
+        - PB-11: "no RNG" at `protocol-industry-tool-defs.ts:9-10`;
+        - PB-12: no §0 claim row naming the D-row and where the Rule 2
+          exception is recorded;
+        - PB-13: React key collisions, now reachable because duplicate ids
+          are listed.
+      - **Documentation drift in `tool-authorization.register.json`**
+        (`05286bf0`), from this lane's NEW-P11-B-1a fix, when it lands. In
+        `classify_submission_document`, `site` and `writes` should name the
+        verdict-row rule and the `coauthor_document.updated` event.
+16. **→ `…01KiDof7` (`80cbd718`, 18:00), 2026-09-28 23:40 — trunk's Lint job
+    is red at `ci:org-path-param-guards`.**
+    - `DELETE /gdpr/:orgId/data-subject/:dataSubjectId`
+      (`server/routes/global-compliance.ts`) was retired to a 410 that erases
+      nothing and names the signed path. It no longer calls `enforceOrgScope`,
+      so the gate reports an unguarded org path parameter.
+    - It reads no org data, so this is harmless in effect. But the gate is
+      red for every lane.
+    - Either run `enforceOrgScope(req, res, orgId)` before answering 410,
+      which is cheap and keeps the rule without exceptions, or record the
+      stub as a reviewed exception.
+    - Reproduced by this lane's local Lint job at `d73b215d`. Its other three
+      reds are items 8 and 9 and the D5 lane's item 4.
 
 ### Found by the D5 lane's CI check (`…01P6GWSv`, 2026-09-28) — handed on
 

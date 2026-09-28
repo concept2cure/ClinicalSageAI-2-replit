@@ -143,8 +143,13 @@ file per group plus the completeness critic. That re-check found:
   model. `buildChatContext` has no production caller, and the stream route
   never reads `module_context`.
 - **Protocol-build review (`triage/new-protocol-build.md`):** 13 findings in
-  another lane's new engines, being re-checked against that lane's later
-  commits before hand-on.
+  another lane's new engines. The re-check at `1f5c009b`
+  (`triage/new-protocol-build-recheck.md`) found:
+  - 2 fixed, 4 partly fixed and 7 open;
+  - 3 new defects in PB-1's unbounded-CPU class, one of them a regression
+    from the lane's own fix.
+
+  Handed on as board item 15.
 
 Round 2's fixes were each made failing first and reviewed by an agent told to
 refute them.
