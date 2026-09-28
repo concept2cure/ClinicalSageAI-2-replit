@@ -187,6 +187,19 @@ describe('AnaWorkPanel — a turn the loop cut short', () => {
     expect(screen.queryByText(/Finished/)).toBeNull();
   });
 
+  it('says a turn whose answer was cut off stopped — never "Finished"', () => {
+    const cut = liveTurn({
+      streaming: false,
+      completedAt: T0 + 72_000,
+      progress: settledPhases,
+      stoppedReason: 'answer_cut_off',
+      rounds: 1,
+    });
+    render(<AnaWorkPanel messages={cut} streaming={false} />);
+    expect(screen.getByText('Stopped: answer cut off · 1m 12s')).toBeTruthy();
+    expect(screen.queryByText(/Finished/)).toBeNull();
+  });
+
   it('says a turn stopped for repeating a step stopped there', () => {
     const thrash = liveTurn({
       streaming: false,

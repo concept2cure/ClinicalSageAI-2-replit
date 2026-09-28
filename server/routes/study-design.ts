@@ -69,6 +69,8 @@ import {
 } from '../services/study-design';
 import { burdenProfileForDesign } from '../services/study-design/burden-adapters';
 import { compareBurden } from '../services/study-design/burden-delta';
+import { DESIGN_ENGINES } from '../services/protocol-development/protocol-industry-service';
+import { assessSpiritConformance } from '../services/study-design/spirit-conformance';
 
 const router = Router();
 
@@ -423,6 +425,16 @@ projectionPost('eligibility', 'eligibility', d => eligibilityResponse(d));
 projectionPost('registration', 'registration', (d, req) =>
   registrationResponse(d, req.body?.registry ?? req.query.registry));
 
+// The protocol industry-gap engines (docs/design/PROTOCOL_INDUSTRY_GAPS.md):
+// trial schema, CtQ factors, USDM export, DCT profile, WHO TRDS. One map, owned
+// by protocol-industry-service.ts, drives these routes AND AnA's tools, so the
+// path, the response key and the engine cannot drift apart. SPIRIT is here
+// design-only — its document-evidenced rows come back not_assessable, never
+// missing; the protocol-scoped read with sections is
+// GET /api/protocol-development/documents/:id/spirit.
+for (const [path, project] of Object.entries(DESIGN_ENGINES)) projectionPost(path, path, (d) => project(d));
+projectionPost('spirit', 'spirit', (d) => ({ spirit: assessSpiritConformance(d) }));
+
 // ─── POST /registry-filing ────────────────────────────────────────────────────
 //
 // Its own handler rather than a `projectionPost`, because the context and the placements are
@@ -557,6 +569,8 @@ projectionRoute('eligibility', 'eligibility-load', d => eligibilityResponse(d));
 projectionRoute('registration', 'registration-load', (d, req) => registrationResponse(d, req.query.registry));
 projectionRoute('registry-filing', 'registry-filing-load', (d, req) =>
   registryFilingResponse(d, req.query.registry, filingContextFromQuery(req.query), []));
+for (const [path, project] of Object.entries(DESIGN_ENGINES)) projectionRoute(path, `${path}-load`, (d) => project(d));
+projectionRoute('spirit', 'spirit-load', (d) => ({ spirit: assessSpiritConformance(d) }));
 
 // ─── GET /:studyId (load) ─────────────────────────────────────────────────────
 

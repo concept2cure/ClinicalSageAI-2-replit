@@ -36,8 +36,8 @@ describe('finding 47 — one meaning for .ct-head', () => {
 
 describe('findings 53 and 54 — the audit trail and Apps catalog in words', () => {
   const src = read('surfaces/AdminSurfaces.tsx');
-  it('cites §11.10(e), not "ss11.10(e)", and never writes "entry(ies)"', () => {
-    expect(src).not.toMatch(/ss11\.10/);
+  it('cites § sections, never "ss11.10(e)" or "ss11.50", and never writes "entry(ies)"', () => {
+    expect(src).not.toMatch(/\bss11\.\d/);
     expect(src).not.toMatch(/entry\(ies\)/);
   });
   it('shows no API route as the Apps catalog eyebrow', () => {

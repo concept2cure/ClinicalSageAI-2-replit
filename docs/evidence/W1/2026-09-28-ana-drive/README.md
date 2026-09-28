@@ -130,8 +130,57 @@ rule was first made to fail on a request built to break it.
   - The client carries it through its one validator, the bus passes it to the
     screen's handler, and a chip carries it when Live Drive is off.
 
+## A model that thinks is not a stalled stream (third pass)
+
+A real adaptive model does something the stand-in never did: it thinks in
+silence. Opus 5.5 always thinks before writing, and Opus 5 and Sonnet 5 do
+unless told not to. With the default display, none of that thinking is
+streamed; the API sends only `ping` events, and the Anthropic SDK drops them.
+
+The gateway aborted any stream silent for 30 s. The SDK ends an aborted stream
+without an error, so the gateway returned an empty answer as a success. Any
+turn whose model thought for longer than 30 s ended as an empty AnA bubble,
+with no move and no error, and Progress read "Finished".
+
+Reproduced in the browser by making the stand-in think silently the way the
+API does (`silent-thinking-before.png`).
+
+- **The fix** (`server/services/ai-gateway/stream-stall.ts`, both stream
+  paths):
+  - Silence is a stall only while text is streaming.
+  - Thinking, a tool's buffered arguments and the gaps between blocks are
+    the model working, up to five minutes.
+  - A stall before anything is produced is an error, so the fallback model
+    runs, rather than an empty answer.
+- **The proof:** the same ask with 35 s of silent thinking passes
+  (`silent-thinking-after.png`). The whole battery passed 19/19 with silent
+  thinking on every one of its 43 streamed rounds (`silent-thinking.txt`).
+
+## A cut-off answer says so (fourth pass)
+
+The stream route never read why the model stopped writing. An answer that hit
+the length limit, or a stream that stalled mid-answer, reached the person as a
+finished one. The status line read "Finished", there was no note and no
+Continue, and the next turn was handed it as complete.
+
+It now ends the turn `answer_cut_off`, through the existing stop-reason
+channel, using the gateway's own `isTruncated` check. That reason has words on
+every surface that words a stop: the note under the answer (with Continue),
+the status line, the next turn's note and the turn record.
+
+Shown failing and then passing in the browser, with the stand-in ending an
+answer at `max_tokens` (`answer-cut-off.txt` and the before/after
+screenshots).
+
 ## Evidence
 
+- `answer-cut-off.txt`, `answer-cut-off-before.png`,
+  `answer-cut-off-after.png`: a cut-off answer, before and after.
+- `harness/`: the stand-in model, its self-test and the browser battery that
+  produced every run below, with how to repeat them. Run from this folder on
+  the current tree, it passed 19/19, with the stand-in refusing nothing.
+- `silent-thinking.txt`, `silent-thinking-before.png`,
+  `silent-thinking-after.png`: the silent-thinking cut-off, before and after.
 - `contract-audit.txt`: the rules, their sources, the stand-in failing each
   one on purpose, what AnA sent in both configurations, and both battery runs.
 - `browser-battery.txt`: **19/19** in headless Chromium against the real app,

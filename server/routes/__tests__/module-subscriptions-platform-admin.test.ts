@@ -108,9 +108,7 @@ const savedPlatform = process.env.PLATFORM_ADMIN_EMAILS;
 const savedMaster = process.env.MASTER_ADMIN_EMAILS;
 beforeEach(() => {
   delete process.env.PLATFORM_ADMIN_EMAILS;
-  // A value naming nobody in these tests, so the built-in owner default cannot
-  // colour the org-admin cases.
-  process.env.MASTER_ADMIN_EMAILS = 'nobody-in-this-suite@example.invalid';
+  delete process.env.MASTER_ADMIN_EMAILS;
   grants.byUser.clear();
   grants.fail = false;
   clearMasterAdminGrantCache();
@@ -168,5 +166,36 @@ describe('GET /navigation — platformAdmin agrees with requirePlatformAdmin', (
     expect(nav.status).toBe(200);
     expect(nav.body.platformAdmin).toBe(false);
     expect(consoleStatus).toBe(403);
+  });
+});
+
+/* Finding 43 (launch sweep 2026-09-23): the nav resolver answered
+   `masterAdmin: true` — every module unlocked — for an account the licensing
+   console refused with 403, because the owner grant was keyed on an e-mail
+   allowlist beside the platform guard rather than inside it. */
+describe('GET /navigation — the owner grant never exceeds platform administration (finding 43)', () => {
+  it('an address on MASTER_ADMIN_EMAILS alone is not the owner: both answers say no', async () => {
+    process.env.MASTER_ADMIN_EMAILS = 'owner@example.com';
+    const { nav, consoleStatus } = await bothAnswers({ userId: 6, email: 'owner@example.com', role: 'admin' });
+    expect(consoleStatus).toBe(403);
+    expect(nav.body.platformAdmin).toBe(false);
+    expect(nav.body.masterAdmin, 'an unlock the console refuses the same person').toBe(false);
+  });
+
+  it('the same address, admitted by the platform guard, is the owner: both answers say yes', async () => {
+    process.env.MASTER_ADMIN_EMAILS = 'owner@example.com';
+    process.env.PLATFORM_ADMIN_EMAILS = 'owner@example.com';
+    const { nav, consoleStatus } = await bothAnswers({ userId: 7, email: 'owner@example.com', role: 'admin' });
+    expect(consoleStatus).toBe(200);
+    expect(nav.body.platformAdmin).toBe(true);
+    expect(nav.body.masterAdmin).toBe(true);
+  });
+
+  it('an in-app super_admin designation: console yes, commercial unlock yes', async () => {
+    grants.byUser.set(8, 'super_admin');
+    const { nav, consoleStatus } = await bothAnswers({ userId: 8, email: 'designee@example.com', role: 'member' });
+    expect(consoleStatus).toBe(200);
+    expect(nav.body.platformAdmin).toBe(true);
+    expect(nav.body.masterAdmin).toBe(true);
   });
 });

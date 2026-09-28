@@ -83,17 +83,20 @@ identically on the upstream source and is not this change's.
 | 42 (high), 6, 7, 9 | AnA command | Fixed, `cac23587b` — zero programs is `200 { data: null }` and the empty state; failures say what the server answered; 4 fail → 9/9 pass |
 | 85 | Onboarding | Fixed, `4d217e473` — names the organisation it changes and starts from its recorded name and industry; 4/4 fail → pass |
 | 122, 123 | Setup client type | Fixed, `f04feac2c` — a pending change saved under the page's reason; the route now requires a reason and records it; 7 fail → pass |
-| 47, 53, 54, 129 | Audit trail headers and copy, Apps eyebrow, breadcrumb | Fixed, `04e784bc2` — one meaning for `.ct-head`; §11.10(e); 5/5 fail → pass |
-| 43 (high) | Master licensing owner identity | **Deferred — a security decision.** Making the console honour the hard-coded `DEFAULT_MASTER_ADMIN_EMAILS` would admit whoever self-signs-up that address first (signup does not verify email) to Master Administration. Proposal: `resolveMasterAdmin` true only when `resolvePlatformAdmin` is; delete the hard-coded default; add email verification to signup before any email-keyed grant is honoured. |
+| 47, 53, 54, 129 | Audit trail headers and copy, Apps eyebrow, breadcrumb | Fixed, `04e784bc2` — one meaning for `.ct-head`; §11.10(e); 5/5 fail → pass. **53 is partly open:** its raw targets (`user:1`) remain; see `../2026-09-28-populated/`. |
+| 43 (high) | Master licensing owner identity | **Fixed 2026-09-28 by `d57bff619`** ([`docs/evidence/D6/2026-09-28-owner-grant/`](../../D6/2026-09-28-owner-grant/README.md)). The hard-coded default address is deleted. The owner grant is decided inside `resolvePlatformAdmin` (`resolveAdminStanding`), so the nav and the console can no longer disagree, and a federated e-mail never matches. Shown live: before, `masterAdmin: true` with 87 surfaces unlocked and the console at 403; after, `false` and 403, or `true` and 200 once the owner is configured. Sign-up e-mail verification had already landed upstream (IAM-17). |
 | 19 (high) | Identity console for an org admin | **Deferred — a product decision.** Every SCIM route is platform-admin only and takes an organisation id from the body; Setup sends org admins to the console to manage "their" SCIM. The console now says honestly that a platform administrator is required. Letting an org admin manage their own SCIM needs org-scoped routes: new capability, not a fix. |
 
-**Open** (layout and wording; not yet re-checked against the current code):
+**Closed 2026-09-28** (layout and wording; the ten items this record left
+open): see [`../2026-09-28-shell-chrome/`](../2026-09-28-shell-chrome/README.md).
+Each was re-checked against current code first, and all ten were still
+present. The fixes are shown failing first and measured live.
 
-| Finding | Surface |
-|---|---|
-| 44 | Apps catalog: lock copy that disagrees with the rail |
-| 128, 131, 132 | Shell header: the domain crumb falls back to "Biotech & Pharma"; the organisation switcher and Help icon do nothing |
-| 130, 134, 135, 136, 137, 139 | Shell layout: rail highlight, header squeeze at 1440px, squashed logo, floating button over the dock, task-modal copy and keys |
+| Finding | Surface | Now |
+|---|---|---|
+| 44 | Apps catalog: lock copy that disagrees with the rail | The card reads its own verdict. A module the plan includes, with no row written, opens, as the server and the rail already said. Live: 87 of 87 open. |
+| 128, 131, 132 | Shell header: the domain crumb falls back to "Biotech & Pharma"; the organisation switcher and Help icon do nothing | One grouping function for the breadcrumb and the rail. The org is a label. Help goes where "Get help" goes. |
+| 130, 134, 135, 136, 137, 139 | Shell layout: rail highlight, header squeeze at 1440px, squashed logo, floating button over the dock, task-modal copy and keys | The current page is highlighted and the category shows as pressed. The header gives way in priority order. The logo keeps the top of the collapsed rail. The duplicate floating launcher is removed (the header's Task and Collaborate buttons remain). The task modal speaks in names, not keys. |
 
 ### Out-of-scope findings (must be resolved before that surface joins the catalog)
 

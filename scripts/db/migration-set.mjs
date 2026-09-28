@@ -2665,6 +2665,24 @@ export const C2C_MIGRATION_FILES = [
   // below polices it. Evidence docs/evidence/D5-ANA-RECORD/2026-09-26/.
   'migrations/20260926_ana_turn_records.sql',
 
+  // ── Governed decision transition log (2026-09-28) ────────────────────────
+  // This file was on NO applier, so the table existed on no deployed database
+  // — it is on developer boxes only because someone applied it by hand. That
+  // absence was not inert: getProjectReviewQueue reads this table and THROWS on
+  // failure by design (fail closed), so on every deployed database the 42P01
+  // propagated through hasUnresolvedGovernedDecisions to
+  // buildCanonicalGovernedState, and the CMC final-export gate answered
+  // `governedStateEvaluated: false, fabricBlocks: true` — permanently, for
+  // every project. Reproduced by renaming the table away on a working box:
+  // readiness flipped governedStateEvaluated true -> false and the guard
+  // returned canonicalGovernedState {error: "Canonical governed-state
+  // evaluation failed", degraded: true, blocked: true}.
+  //
+  // Public schema, organization_id INTEGER, so the sweep below polices it.
+  // Its project key is project_ref TEXT with no foreign key — see the dated
+  // note in the file for why the integer FK could not hold a Module 3 project.
+  'migrations/0011_governed_decision_transitions.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

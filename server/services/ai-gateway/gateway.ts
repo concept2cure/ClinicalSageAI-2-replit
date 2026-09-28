@@ -75,6 +75,7 @@ import {
 } from './providers/org-placement';
 import { governServerTools } from './server-tool-policy';
 import { isTerminalGatewayError } from './gateway-outcome';
+import { assertDeterministicServingAllowed, isDeterministicModeRequested } from './deterministic-mode';
 import { modelCallRefusal, type ModelCallRefusalScope } from './model-call-scope.js';
 import {
   decideSensitivePlacement,
@@ -94,6 +95,7 @@ import {
 // In-flight concurrency limiter — bounds simultaneous outbound provider calls.
 import { Semaphore, resolveMaxConcurrency } from './concurrency.js';
 import { apiEffortForModel } from './effort.js';
+import { GatewayStreamStalledError, watchStreamForStall } from './stream-stall.js';
 const log = createScopedLogger('ai-gateway');
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -404,51 +406,52 @@ const TASK_PROVIDER_PREFERENCES: Record<TaskType, ProviderName[]> = {
 // Deterministic Mode Responses
 // ─────────────────────────────────────────────────────────────────────────────
 
+// A fixed response makes no claim about the caller's input. It says that nothing
+// was read or produced, and it never uses [KNOWN] or [INFERRED], which are this
+// platform's markers for verified and derived facts. Until 2026-09-28 several
+// did: "[KNOWN] Section headers present and correctly numbered" about a document
+// no model had seen (docs/work-orders/WO-16-fabrication-findings.json #101).
+// [MISSING] remains where it is true: the analysis is missing.
 const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
   chat:
     '## AnA Response (Demo Mode)\n\n' +
-    "I'm AnA — your Audit & Narrative Assistant. I'm currently running in **demo mode** because no AI provider API key is configured.\n\n" +
-    'When connected to Claude, I can:\n' +
-    '- **[KNOWN]** Analyze your regulatory documents against ICH, FDA, and EMA requirements\n' +
-    '- **[KNOWN]** Detect contradictions, assumption drift, and cross-section inconsistencies\n' +
-    '- **[KNOWN]** Guide you through governed promotion (draft → review → approved → locked → submission-ready)\n' +
-    '- **[INFERRED]** Suggest corrections based on body-specific expectations\n\n' +
-    'To enable live AI responses, set `ANTHROPIC_API_KEY` in your `.env` file.\n\n' +
-    '*Evidence discipline: Every claim is tagged [KNOWN], [INFERRED], or [MISSING].*',
+    "I'm AnA — your Audit & Narrative Assistant. I'm running in **demo mode** because no AI provider is configured, so this is a fixed message, not an answer to what you asked.\n\n" +
+    'With a provider connected, I can:\n' +
+    '- Analyze your regulatory documents against ICH, FDA and EMA requirements\n' +
+    '- Detect contradictions, assumption drift and cross-section inconsistencies\n' +
+    '- Guide you through governed promotion (draft → review → approved → locked → submission-ready)\n' +
+    '- Suggest corrections based on body-specific expectations\n\n' +
+    'To enable live AI responses, set `ANTHROPIC_API_KEY` in your `.env` file.',
   document_analysis:
     '## Document Analysis (Demo Mode)\n\n' +
-    '**[KNOWN]** The document structure follows eCTD Module format.\n\n' +
-    '**Findings:**\n' +
-    '- **[KNOWN]** Section headers present and correctly numbered\n' +
-    '- **[INFERRED]** Content completeness appears adequate for initial review\n' +
-    '- **[MISSING]** Cross-references to supporting data not verified (requires live AI)\n\n' +
-    '**Recommendation:** Enable live AI mode for full regulatory analysis with body-specific gap detection.',
+    'No document was analyzed. AnA is running in demo mode without an AI provider, so this is a fixed message.\n\n' +
+    '**[MISSING]** Structure, completeness and cross-reference checks all require a live provider.\n\n' +
+    '**Recommendation:** Configure an AI provider for regulatory analysis with body-specific gap detection.',
   document_drafting:
     '## Document Draft (Demo Mode)\n\n' +
-    '**[KNOWN]** This is a placeholder draft generated in demo mode.\n\n' +
-    'When connected to Claude, AnA generates regulatory-grade document drafts with:\n' +
+    'No draft was written. This is a fixed placeholder served in demo mode, and it must not be accepted into a document.\n\n' +
+    'With a provider connected, AnA generates regulatory drafts with:\n' +
     '- Body-specific language (FDA/EMA/PMDA)\n' +
     '- Evidence-backed claims with citation tracking\n' +
     '- Governed content that flows through the approval pipeline\n\n' +
     'Set `ANTHROPIC_API_KEY` in `.env` to enable real document drafting.',
   structured_output:
-    '{"result": "demo_mode", "status": "success", "message": "Deterministic mode active. Set ANTHROPIC_API_KEY to enable live AI.", "data": {}}',
+    '{"result": "demo_mode", "status": "unavailable", "message": "Deterministic mode active: no provider produced this. Set ANTHROPIC_API_KEY to enable live AI.", "data": {}}',
   regulatory_review:
     '## Regulatory Review (Demo Mode)\n\n' +
-    '**[KNOWN]** AnA is operating in demo mode — no live AI analysis performed.\n\n' +
-    '**When connected, AnA provides:**\n' +
+    'No review was performed. AnA is running in demo mode without an AI provider.\n\n' +
+    '**With a provider connected, AnA provides:**\n' +
     '- **Compliance check** against 21 CFR Part 11, ICH E6(R2), EU MDR, ISO 14155\n' +
     '- **Gap detection** with body-specific expectations (FDA, EMA, PMDA, MHRA)\n' +
     '- **Risk ranking** with severity classification (critical → major → minor)\n' +
     '- **Correction drafts** with governed execution paths\n' +
     '- **Contradiction detection** with overlay-aware authority escalation\n\n' +
-    '**[MISSING]** Live regulatory analysis requires `ANTHROPIC_API_KEY` in `.env`.',
+    '**[MISSING]** Regulatory analysis requires a configured provider (`ANTHROPIC_API_KEY` in `.env`).',
   code_generation:
     '// Demo mode — set ANTHROPIC_API_KEY for live code generation\nfunction demoMode() {\n  return { status: "demo", message: "AI provider not configured" };\n}',
   summarization:
-    '**Summary (Demo Mode):** [KNOWN] This content relates to regulatory submissions. ' +
-    '[INFERRED] The document appears to follow standard eCTD formatting. ' +
-    '[MISSING] Detailed analysis requires live AI — set ANTHROPIC_API_KEY in .env.',
+    '**Summary (Demo Mode):** No content was summarized. AnA is running in demo mode without an AI provider. ' +
+    '[MISSING] A summary requires a configured provider — set ANTHROPIC_API_KEY in .env.',
   embedding: '[]',
   general:
     "**AnA (Demo Mode):** I'm running without an AI provider. " +
@@ -2649,35 +2652,32 @@ export class AIGateway {
     let stopDetails: unknown = null;
     let resolvedModel: string | undefined;
 
-    // Per-chunk watchdog — detect stalled streams (no data for 30s)
-    let lastChunkTime = Date.now();
-    const chunkTimeoutMs = 30_000;
-    let streamStalled = false;
+    // Stall watch. Silence is a stall only while text is streaming; thinking,
+    // a tool's buffered arguments and the gaps between blocks are the model
+    // working, and the SDK hides the pings that say so (stream-stall.ts).
     let streamAborted = false;
-    const chunkWatchdog = setInterval(() => {
-      if (Date.now() - lastChunkTime > chunkTimeoutMs) {
-        streamStalled = true;
-        clearInterval(chunkWatchdog);
-        log.warn(
-          `[AI Gateway] Stream stalled — no chunk received for ${chunkTimeoutMs / 1000}s. ` +
+    let stalledForMs = 0;
+    const openTextBlocks = new Set<number>();
+    const stall = watchStreamForStall((silentMs, writing) => {
+      stalledForMs = silentMs;
+      log.warn(
+        `[AI Gateway] Stream stalled — no chunk for ${Math.round(silentMs / 1000)}s ` +
+          `${writing ? 'while text was streaming' : 'while the model was working'}. ` +
           `Accumulated ${content.length} chars so far. Aborting stream.`
-        );
-        // If the stream object has a controller/abort method, try to close it
-        try {
-          if (stream && typeof (stream as any).controller?.abort === 'function') {
-            (stream as any).controller.abort();
-          }
-        } catch { /* best-effort abort */ }
-      }
-    }, 5_000);
+      );
+      try {
+        if (stream && typeof (stream as any).controller?.abort === 'function') {
+          (stream as any).controller.abort();
+        }
+      } catch { /* best-effort abort */ }
+    });
 
     try {
       for await (const event of stream as AsyncIterable<any>) {
-        // Update watchdog timestamp on every event
-        lastChunkTime = Date.now();
+        stall.chunk();
 
-        // Break out if watchdog flagged a stall (race between interval and iterator)
-        if (streamStalled) break;
+        // Break out if the watch fired (race between its timer and the iterator)
+        if (stall.stalled) break;
 
         // The caller cancelled. Stop reading and stop generating — the SDK
         // holds the same signal, so the request is already on its way down.
@@ -2709,7 +2709,12 @@ export class AIGateway {
           }
         } else if (event.type === 'content_block_start') {
           openContentBlock(event, toolUses, toolInputBuffers, serverToolUses);
+          if (event.content_block?.type === 'text') {
+            openTextBlocks.add(event.index);
+            stall.writing(true);
+          }
         } else if (event.type === 'content_block_stop') {
+          if (openTextBlocks.delete(event.index)) stall.writing(openTextBlocks.size > 0);
           // The block is closed, so its fragments are now a complete JSON
           // document — parse it onto the tool use it belongs to.
           const buffered = toolInputBuffers.get(event.index);
@@ -2738,7 +2743,7 @@ export class AIGateway {
       // Return whatever content was accumulated so far (partial response)
       if (!content) throw streamErr; // Re-throw if nothing was captured
     } finally {
-      clearInterval(chunkWatchdog);
+      stall.stop();
     }
 
     // Any buffer still open never saw its content_block_stop — a stall, an
@@ -2761,8 +2766,14 @@ export class AIGateway {
       stopReason = 'aborted';
     }
 
+    // A stall with nothing produced is a failure, not an empty answer: the
+    // SDK ends an aborted stream without throwing, so this is the one place
+    // that can tell the difference.
+    if (stall.stalled && !content && toolUses.length === 0) {
+      throw new GatewayStreamStalledError(modelConfig.provider, modelConfig.model, stalledForMs);
+    }
     // If stream stalled but we have partial content, mark finish reason accordingly
-    if (streamStalled && content) {
+    if (stall.stalled) {
       stopReason = 'chunk_timeout';
       log.warn(`[AI Gateway] Returning partial response (${content.length} chars) after stream stall`);
     }
@@ -2947,32 +2958,30 @@ export class AIGateway {
     // only thing that says every call's arguments are complete.
     let choiceClosed = false;
 
-    // Per-chunk watchdog — abort a stream that goes silent for 30s (mirrors the
-    // Anthropic path) so a hung provider can't wedge the turn.
-    let lastChunkTime = Date.now();
-    const chunkTimeoutMs = 30_000;
-    let streamStalled = false;
-    const chunkWatchdog = setInterval(() => {
-      if (Date.now() - lastChunkTime > chunkTimeoutMs) {
-        streamStalled = true;
-        clearInterval(chunkWatchdog);
-        log.warn(
-          `[AI Gateway] ${provider} stream stalled — no chunk for ${chunkTimeoutMs / 1000}s. ` +
+    // Stall watch — the same rule as the Anthropic path (stream-stall.ts). No
+    // blocks here: text and a call's arguments stream as they are generated,
+    // so the stream is writing from its first output fragment on, and the
+    // prompt read and any reasoning before it are the model working.
+    let stalledForMs = 0;
+    const stall = watchStreamForStall((silentMs, writing) => {
+      stalledForMs = silentMs;
+      log.warn(
+        `[AI Gateway] ${provider} stream stalled — no chunk for ${Math.round(silentMs / 1000)}s ` +
+          `${writing ? 'while it was writing' : 'before it wrote anything'}. ` +
           `Accumulated ${content.length} chars. Aborting stream.`
-        );
-        try {
-          if (stream && typeof (stream as any).controller?.abort === 'function') {
-            (stream as any).controller.abort();
-          }
-        } catch { /* best-effort abort */ }
-      }
-    }, 5_000);
+      );
+      try {
+        if (stream && typeof (stream as any).controller?.abort === 'function') {
+          (stream as any).controller.abort();
+        }
+      } catch { /* best-effort abort */ }
+    });
 
     let streamAborted = false;
     try {
       for await (const chunk of stream as AsyncIterable<any>) {
-        lastChunkTime = Date.now();
-        if (streamStalled) break;
+        stall.chunk();
+        if (stall.stalled) break;
 
         // Same cancel contract as the Anthropic path: stop reading, stop
         // generating, keep what arrived. AnA falls back across providers, so a
@@ -3001,8 +3010,10 @@ export class AIGateway {
         if (delta.text) {
           content += delta.text;
           onStream(delta.text, { type: 'text' });
+          stall.writing(true);
         }
         for (const fragment of parseOpenAIToolCallFragments(chunk)) {
+          stall.writing(true);
           const buffered = toolInputBuffers.get(fragment.index);
           if (!buffered) {
             toolUses.push({ id: fragment.id, name: fragment.name, input: {} });
@@ -3031,7 +3042,7 @@ export class AIGateway {
       log.error(`[AI Gateway] ${provider} stream interrupted:`, streamErr?.message);
       if (!content) throw streamErr; // nothing captured — surface the failure
     } finally {
-      clearInterval(chunkWatchdog);
+      stall.stop();
     }
 
     // A stream that ended before finish_reason — a stall, a cancel, a dropped
@@ -3053,7 +3064,11 @@ export class AIGateway {
       finishReason = 'aborted';
     }
 
-    if (streamStalled && content) {
+    // Nothing produced before the stall: a failure, never an empty answer.
+    if (stall.stalled && !content && toolUses.length === 0) {
+      throw new GatewayStreamStalledError(provider, modelConfig.model, stalledForMs);
+    }
+    if (stall.stalled) {
       finishReason = 'chunk_timeout';
       log.warn(`[AI Gateway] Returning partial ${provider} response (${content.length} chars) after stall`);
     }
@@ -3485,6 +3500,11 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): GatewayResponse {
+    // Every fixed response passes through here, from the explicit mode and the
+    // development no-provider fallback alike. In production it needs the
+    // written acceptance (deterministic-mode.ts); the boot gate refuses the
+    // same configuration, and this covers setDeterministicMode() at runtime.
+    assertDeterministicServingAllowed();
     const content = DETERMINISTIC_RESPONSES[request.taskType] || DETERMINISTIC_RESPONSES.general;
     if (request.stream && typeof request.onStream === 'function' && content) {
       try {
@@ -3916,10 +3936,7 @@ export class AIGateway {
       // AI_GATEWAY_DETERMINISTIC is the canonical switch; DETERMINISTIC_MODE
       // is honored as a legacy alias only — set the canonical var in new
       // environments.
-      deterministicMode:
-        process.env.AI_GATEWAY_DETERMINISTIC === 'true' ||
-        process.env.DETERMINISTIC_MODE === 'true' ||
-        false,
+      deterministicMode: isDeterministicModeRequested(process.env),
       defaultStrategy: (process.env.AI_GATEWAY_STRATEGY as RoutingStrategy) || 'task_based',
       // NOTE: model *selection* is driven by the DEFAULT_MODELS registry above
       // (task/quality strategies over qualityScore), not by these per-provider

@@ -1505,7 +1505,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
                   <span className="esig" style={{ marginRight: 6 }} role="img" aria-label="E-signed (21 CFR Part 11)">
                     {I.shieldCheck}
                   </span>
-                  {entry.meaning} (ss11.50)
+                  {entry.meaning} (§11.50)
                 </span>
               </React.Fragment>
             )}
@@ -1534,7 +1534,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             >
               {I.shieldCheck}
               <span>
-                This entry was digitally signed per 21 CFR ss11.50. Meaning:{' '}
+                This entry was digitally signed per 21 CFR §11.50. Meaning:{' '}
                 <strong>{entry.meaning}</strong>. Signature is hash-bound and tamper-evident.
               </span>
             </div>
@@ -1571,10 +1571,18 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
    Sample-data pill. Fields the backend cannot truthfully supply (renewsAt — no
    renewal column is read anywhere server-side) are left empty, never invented.
 
-   ENTITLEMENT HONESTY. Every card states one of five things, and they are not
-   interchangeable: the module is on; it is in the plan and simply not switched
-   on; an administrator switched it off; the plan does not include it; it is not
-   offered for this workspace's industry. The reason and the remedy travel
+   ENTITLEMENT HONESTY. Every card states one of four things, and they are not
+   interchangeable: the module is open to this organization (subscribed, or in
+   the plan with no row written — the server's 'included', which needs none);
+   an administrator switched it off; the plan does not include it; it is not
+   offered for this workspace's industry.
+
+   "In the plan, no row written" used to be a fifth state, drawn locked with no
+   Open button: "Included in your plan. Not switched on for this organization."
+   The server has never treated it as locked — decideNavEntitlement answers
+   'included', entitled; canAccessModule admits it — so the rail beside this
+   screen opened every module this screen said was off (launch sweep finding
+   44). `on` is now the verdict's own answer (open ⇔ no lock). The reason and the remedy travel
    together — the last one has no remedy on this screen and is given none,
    rather than a plans button that would resolve nothing. The wording is the
    shell's own (lockNotice / lockShortReason in navEntitlements.tsx), so the
@@ -1756,23 +1764,35 @@ function mapLiveCatalog(payload: unknown, orgTier: string | null, launchScopeEnf
     return {
       group: cat.charAt(0).toUpperCase() + cat.slice(1),
       note: `${mods.length} module${mods.length === 1 ? '' : 's'} — live subscription state for this organization`,
-      apps: mods.map((m) => ({
-        id: m.moduleId,
-        name: m.name,
-        tier: tierBandLabel(m),
-        on: m.isEnabled,
-        desc: m.description || m.name,
-        lock: moduleVerdict(m, orgTier, launchScopeEnforced),
-        /* canAccessModule() allows the write when the module is already in the
-           org's enabled set OR its tier and industry match — so an org that
-           downgraded can still switch OFF a module it is currently running,
-           and nothing else outside the plan can be switched at all. */
-        /* No switch for a module the release excludes: a toggle that writes a
-           grant nothing honours is a dead control. */
-        toggleable: (m.isAvailable || m.isEnabled) && !(launchScopeEnforced && m.launchScope === 'later'),
-      })),
+      apps: mods.map((m) => {
+        const lock = moduleVerdict(m, orgTier, launchScopeEnforced);
+        return {
+          id: m.moduleId,
+          name: m.name,
+          tier: tierBandLabel(m),
+          // Open to this organization ⇔ no lock — not `isEnabled`, which is
+          // false for a module the plan includes with no row written.
+          on: lock === null,
+          desc: m.description || m.name,
+          lock,
+          /* canAccessModule() allows the write when the module is already in the
+             org's enabled set OR its tier and industry match — so an org that
+             downgraded can still switch OFF a module it is currently running,
+             and nothing else outside the plan can be switched at all. */
+          /* No switch for a module the release excludes: a toggle that writes a
+             grant nothing honours is a dead control. */
+          toggleable: (m.isAvailable || m.isEnabled) && !(launchScopeEnforced && m.launchScope === 'later'),
+        };
+      }),
     };
   });
+}
+
+/** Whether this organization can open the module — the catalog verdict's own
+ *  answer, for a list that only needs yes or no (the tier decides only the
+ *  reason, so it is not needed here). */
+function moduleIsOpen(m: LiveModuleEntry, launchScopeEnforced: boolean): boolean {
+  return moduleVerdict(m, null, launchScopeEnforced) === null;
 }
 
 /** Map GET /license into the fixture display shape, or null on shape mismatch.
@@ -2167,11 +2187,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                         told to buy a plan for a module their administrator had
                         switched off — and told an administrator had switched
                         off a module nobody had ever touched. */}
-                    {a.lock
-                      ? `${label} is ${lockShortReason(a.lock)}.`
-                      : a.on
-                        ? a.desc
-                        : 'Included in your plan. Not switched on for this organization.'}
+                    {a.lock ? `${label} is ${lockShortReason(a.lock)}.` : a.desc}
                   </div>
                   <div className="launch-foot">
                     <span
@@ -2768,7 +2784,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
   }, [liveGrants]);
   // Live module catalog (real per-org enabled/disabled state) for the Modules
   // section, and live org API keys for the API-keys section.
-  const modState = useLiveData<{ modules: LiveModuleEntry[] }>(
+  const modState = useLiveData<{ modules: LiveModuleEntry[]; launchScope?: { enforced?: boolean } }>(
     sec === 'modules' ? '/api/module-subscriptions/catalog' : null,
   );
   const liveModules = (modState.data?.modules ?? []).filter(isLiveModuleEntry);
@@ -3066,7 +3082,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                   <div className="ac-val-row">
                     <div className="ac-val-main">
-                      <b>E-signatures (21 CFR ss11.50 / ss11.70)</b>
+                      <b>E-signatures (21 CFR §11.50 / §11.70)</b>
                       <span>
                         Password + TOTP verification; signature meaning recorded on every signing.
                       </span>
@@ -3399,20 +3415,22 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   />
                 ) : (
                   <div className="ob-mods">
-                    {liveModules.map((m) => (
-                      <span
-                        key={m.moduleId}
-                        className="ob-mod"
-                        style={m.isEnabled ? undefined : { opacity: 0.55 }}
-                        title={
-                          m.isEnabled
-                            ? 'Enabled for this organization'
-                            : 'Not enabled for this organization'
-                        }
-                      >
-                        {m.isEnabled ? I.check : I.lock} {m.name}
-                      </span>
-                    ))}
+                    {/* Open or not by the Apps catalog's own verdict: `isEnabled`
+                        read a module the plan includes, with no row written, as
+                        locked (finding 44). */}
+                    {liveModules.map((m) => {
+                      const open = moduleIsOpen(m, modState.data?.launchScope?.enforced === true);
+                      return (
+                        <span
+                          key={m.moduleId}
+                          className="ob-mod"
+                          style={open ? undefined : { opacity: 0.55 }}
+                          title={open ? 'Open to this organization' : 'Not open to this organization — see the Apps catalog'}
+                        >
+                          {open ? I.check : I.lock} {m.name}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>

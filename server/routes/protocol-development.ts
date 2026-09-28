@@ -56,6 +56,7 @@ import {
   applyDerivationTx,
   DerivationError,
 } from '../services/protocol-development/design-derivation-service';
+import { redlineForProtocol, spiritForProtocol } from '../services/protocol-development/protocol-industry-service';
 
 // A viewer cannot sign (the router's writing-role gate below, 21 CFR 11.10(g)),
 // and the password behind a signature cannot be guessed without limit here any
@@ -325,6 +326,30 @@ router.get('/documents/:id/design-derivation', async (req, res) => {
   } catch (err) {
     return fail(res, err);
   }
+});
+
+/* SPIRIT 2013 and the version redline (docs/design/PROTOCOL_INDUSTRY_GAPS.md).
+   Both read-only: no audit row, nothing written. SPIRIT reads the bound design
+   AND this protocol's sections, so document-evidenced rows are judged rather
+   than reported not_assessable; a protocol with no design bound answers 409
+   with the reason, never an empty checklist. The redline compares two recorded
+   versions, or a recorded version against the working copy (?to=current). */
+router.get('/documents/:id/spirit', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try { return res.json(await spiritForProtocol(requestPgClient(req), orgId, id)); } catch (err) { return fail(res, err); }
+});
+
+router.get('/documents/:id/redline', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const from = typeof req.query.from === 'string' ? req.query.from : '';
+  const to = typeof req.query.to === 'string' ? req.query.to : '';
+  try { return res.json(await redlineForProtocol(requestPgClient(req), orgId, id, from, to)); } catch (err) { return fail(res, err); }
 });
 
 const applyDerivationSchema = z

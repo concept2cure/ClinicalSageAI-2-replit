@@ -36,8 +36,7 @@ import {
   addToWorkQueue,
 } from '../services/user-intelligence.js';
 import { resolveNavEntitlements } from '../services/entitlements/navigation-entitlements.js';
-import { resolveMasterAdmin } from '../services/entitlements/master-admin.js';
-import { resolvePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
+import { resolveAdminStanding } from '../services/entitlements/master-admin.js';
 import { writeModuleGrant } from '../services/entitlements/module-grants.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { pool } from '../db.js';
@@ -122,13 +121,9 @@ router.get('/navigation', authenticateToken, async (req: Request, res: Response)
     if (!orgId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const [masterAdmin, platformAdmin] = await Promise.all([
-      // resolveMasterAdmin, not isMasterAdmin: the sync check cannot see a
-      // designation made in the Access Management console, and answering "no"
-      // here would grey the rail for somebody the owner has designated.
-      resolveMasterAdmin(req),
-      resolvePlatformAdmin(req),
-    ]);
+    // One pass for both: the owner grant is decided inside platform
+    // administration (finding 43), so the two can no longer disagree.
+    const { masterAdmin, platformAdmin } = await resolveAdminStanding(req);
     return res.json({
       ...(await resolveNavEntitlements(Number(orgId), { masterAdmin })),
       platformAdmin,

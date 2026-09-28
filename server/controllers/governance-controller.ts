@@ -17,10 +17,13 @@ import { createScopedLogger } from '../utils/logger';
 
 const log = createScopedLogger('governance-controller');
 
-export async function handleGetReviewQueue(organizationId: number, projectId: number) {
+export async function handleGetReviewQueue(organizationId: number, projectId: number | string) {
   try {
-    const queue = await getProjectReviewQueue(projectId, organizationId);
-    const unresolved = await hasUnresolvedGovernedDecisions(projectId, organizationId);
+    // The transition log keys on the project as the platform addresses it —
+    // a program uuid or a legacy numeric id rendered as text.
+    const projectRef = String(projectId);
+    const queue = await getProjectReviewQueue(projectRef, organizationId);
+    const unresolved = await hasUnresolvedGovernedDecisions(projectRef, organizationId);
     governanceMetrics.recordQueryExecuted();
     return { queue, unresolved };
   } catch (error) {

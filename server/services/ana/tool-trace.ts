@@ -15,6 +15,7 @@
  * continuity note. The DB persistence and route wiring live elsewhere.
  */
 
+import { isTruncated } from '../ai-gateway/finish-reason.js';
 import { parseRunPolicy, type AnaRunPolicy, type HumanControlEvent, type PolicyHold, type TurnStoppedReason } from './run-status.js';
 import { AUTO_TIME_WORDS, PAUSE_WORDS, isPolicyHoldOutcome, stepLabels } from '@shared/ana/run-policy';
 import type { TurnPlanStep } from './turn-plan.js';
@@ -403,6 +404,8 @@ function stopWords(
         `Manual was asked for, but run control was not available for this turn, so AnA stopped${ran} ` +
         `where she would have asked the person.${notRunSentence(pendingSteps)}`
       );
+    case 'answer_cut_off':
+      return `The answer was cut off${ran}, before AnA finished writing it. What the person saw ends where it stopped.`;
     default:
       // A reason this module has no words for. Said plainly rather than
       // dropped, so a record can never be silent about a stop.
@@ -459,7 +462,22 @@ const UNFINISHED_STOP: ReadonlyMap<string, (rounds: number | null) => string> = 
   ['approval_timeout', () => 'stopped when an approval you asked for went unanswered, so that action was not taken,'],
   ['hold_expired', () => `stopped after waiting ${PAUSE_WORDS} for the person to say whether to go on,`],
   ['hold_unavailable', () => 'stopped where it would have asked the person (Manual could not hold this turn)'],
+  ['answer_cut_off', () => 'had its answer cut off'],
 ]);
+
+/**
+ * Why the turn ended, once its last answer is known. A loop that ended for
+ * want of tools ended by her choice — unless the answer she was writing was
+ * cut off (the model's length limit, or a stream that stalled mid-answer:
+ * isTruncated). Then the turn did not finish, and nothing may show it as
+ * finished. Any other reason already says the turn stopped short, and stands.
+ */
+export function turnEndingReason(
+  loopReason: TurnStoppedReason,
+  lastFinishReason: string | null | undefined,
+): TurnStoppedReason {
+  return loopReason === 'no_more_tools' && isTruncated(lastFinishReason) ? 'answer_cut_off' : loopReason;
+}
 
 /**
  * The continuity note for a turn whose predecessor did not finish.

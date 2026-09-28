@@ -329,6 +329,7 @@ const KNOWN_STOPPED_REASONS: ReadonlySet<string> = new Set<AnaStoppedReason>([
   'approval_timeout',
   'hold_expired',
   'hold_unavailable',
+  'answer_cut_off',
 ]);
 
 /** Labels that are non-empty strings (shared/ana/run-policy.ts), or undefined when there are none. */

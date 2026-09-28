@@ -1,14 +1,14 @@
 {
   "pack": "biotech",
   "prefix": "[Demo · Biotech]",
-  "startedAt": "2026-09-28T13:29:16.547Z",
+  "startedAt": "2026-09-28T14:10:04.343Z",
   "records": {
     "tally": {
       "created": {
-        "qms-document": 4,
-        "qms-status-change": 1,
-        "qms-change": 1,
-        "qms-change-link": 1
+        "authoring-review-request": 2,
+        "authoring-signature": 1,
+        "qms-approval": 2,
+        "qms-training-ack": 1
       },
       "found": {
         "program": 1,
@@ -18,7 +18,6 @@
         "authoring-section": 16,
         "authoring-comment": 3,
         "authoring-comment-resolution": 2,
-        "authoring-review-request": 2,
         "authoring-freeze": 1,
         "authoring-workflow": 1,
         "protocol-document": 1,
@@ -36,7 +35,11 @@
         "submission": 1,
         "sequence": 1,
         "leaf": 6,
-        "sequence-transition": 1
+        "sequence-transition": 1,
+        "qms-document": 4,
+        "qms-status-change": 1,
+        "qms-change": 1,
+        "qms-change-link": 1
       }
     },
     "identities": {
@@ -45,7 +48,11 @@
         "userId": "1",
         "organizationId": "1"
       },
-      "signer": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+      "signer": {
+        "email": "rae.okafor@concept2cure.pro",
+        "userId": "4",
+        "organizationId": "1"
+      }
     },
     "provenance": "Seeded demonstration content authored for the Concept2Cure launch demo (fictional sponsor, molecule, study and people). Not model-drafted: no AI provider is configured.",
     "program": {
@@ -226,7 +233,7 @@
           }
         ],
         "review": {
-          "reviewer": "jm.smith@concept2cure.pro",
+          "reviewer": "rae.okafor@concept2cure.pro",
           "status": "pending"
         },
         "frozen": {
@@ -234,7 +241,13 @@
           "contentHash": "060af8eda61cc6f8cc6addcdc4e10dad3f2f965c1ec445543e2f2aa16e1287d6",
           "frozenAt": "2026-09-28T13:25:30.472Z"
         },
-        "signature": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+        "signature": {
+          "id": "9f5a8f70-7b76-4eb0-9609-c175d7a76a0f",
+          "signer": "rae.okafor@concept2cure.pro",
+          "meaning": "REVIEWER",
+          "coveredFreezeVersion": "1.0",
+          "coveredContentHash": "060af8eda61cc6f8cc6addcdc4e10dad3f2f965c1ec445543e2f2aa16e1287d6"
+        }
       },
       {
         "key": "clinical-overview",
@@ -278,7 +291,7 @@
           }
         ],
         "review": {
-          "reviewer": "jm.smith@concept2cure.pro",
+          "reviewer": "rae.okafor@concept2cure.pro",
           "status": "pending"
         },
         "workflow": {
@@ -698,10 +711,29 @@
           "docNumber": "C2C-SOP-001",
           "title": "[Demo · Biotech] SOP-001 Document Control",
           "version": "1.0",
-          "status": "draft",
-          "created": true,
+          "status": "effective",
+          "created": false,
           "target": "effective",
-          "approval": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+          "approval": {
+            "approverId": 4,
+            "approvedAt": "2026-09-28T14:10:20.986Z",
+            "signature": {
+              "id": 1,
+              "signedAt": "2026-09-28T14:10:20.986Z",
+              "actionId": "act_096ccc72bd3e4602a3a9a404389bee74",
+              "auditId": "1c0ccbc6-6c64-47f6-b8da-1cd194b9cdba",
+              "sha256Chain": "8ea89f4127bfe53f35b11fce78896ffe20146d0e3f6591126aa8cfe961e7fae8",
+              "meaning": "APPROVED",
+              "boundPayloadDigest": "b22b0df5263b7507ade3c3db670add732627cc8a3018ba57786335432cb68c51",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "authenticationMethod": "password",
+              "secondFactorVerified": false
+            },
+            "auditTrail": {
+              "persisted": true,
+              "chained": true
+            }
+          }
         },
         {
           "key": "sop-002",
@@ -709,10 +741,29 @@
           "docNumber": "C2C-SOP-002",
           "title": "[Demo · Biotech] SOP-002 Change Control",
           "version": "1.0",
-          "status": "draft",
-          "created": true,
+          "status": "effective",
+          "created": false,
           "target": "effective",
-          "approval": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+          "approval": {
+            "approverId": 4,
+            "approvedAt": "2026-09-28T14:10:21.638Z",
+            "signature": {
+              "id": 2,
+              "signedAt": "2026-09-28T14:10:21.638Z",
+              "actionId": "act_150afeb20d35486aa9221baf2f381b21",
+              "auditId": "66dd09d6-157f-468a-8ecc-9594e6ad04d8",
+              "sha256Chain": "1dc2be76b4de6e3bb3f9dea282e05a451e7516e3748af1c04a71c1d37319b6bb",
+              "meaning": "APPROVED",
+              "boundPayloadDigest": "cf2a919afc1a797be16f78f1a8f84c0c3e636a2f65b80f54f2b7a9cdc17f2d22",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "authenticationMethod": "password",
+              "secondFactorVerified": false
+            },
+            "auditTrail": {
+              "persisted": true,
+              "chained": true
+            }
+          }
         },
         {
           "key": "sop-003",
@@ -721,7 +772,7 @@
           "title": "[Demo · Biotech] SOP-003 Deviation Management",
           "version": "1.0",
           "status": "in_review",
-          "created": true,
+          "created": false,
           "target": "in_review"
         },
         {
@@ -731,7 +782,7 @@
           "title": "[Demo · Biotech] SOP-004 Training",
           "version": "1.0",
           "status": "draft",
-          "created": true,
+          "created": false,
           "target": "draft"
         }
       ],
@@ -741,42 +792,41 @@
         "status": "proposed",
         "classification": "minor"
       },
-      "deviation": "not supported by the QMS API — see notes"
+      "deviation": "not supported by the QMS API — see notes",
+      "trainingAck": {
+        "documentId": 1,
+        "version": "1.0"
+      }
     },
     "audit": {
       "window": 500,
-      "entriesBefore": 171,
-      "entriesAfter": 180,
-      "entriesWrittenThisRun": 9,
+      "entriesBefore": 189,
+      "entriesAfter": 195,
+      "entriesWrittenThisRun": 6,
       "eventsThisRun": [
-        "Mdx Qms Change Link",
-        "Mdx Qms Change Create",
-        "Mdx Qms Document Create",
-        "Mdx Qms Document Update",
+        "Mdx Qms Training Acknowledge",
+        "C2c Work Approve",
+        "Authoring Document E Sign",
         "Authoring Section View Frozen"
       ],
       "unchainedThisRun": 0,
       "chain": {
         "store": "audit_logs",
         "ok": true,
-        "rowsChecked": 180,
+        "rowsChecked": 195,
         "legacyRows": 0,
-        "sequencedRows": 180
+        "sequencedRows": 195
       }
     },
     "summary": {
-      "created": 7,
-      "found": 172
+      "created": 6,
+      "found": 177
     }
   },
   "notes": [
-    "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
-    "Authoring e-signature on Protocol Synopsis C2C-101-201: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
     "The submission is the program's canonical spine created by intake (title = program name, productName = program product). There is no PATCH /api/submissions/:id, so the story's label \"IND 0000 — Original IND\" is carried by the sequence (number 0000, type original), not by a renamed submission.",
     "Shadow Review not executed: 1 run(s) exist for sequence 0000 and none completed (latest status \"failed\"); no AI provider is configured.",
-    "QMS approval of C2C-SOP-001: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
-    "QMS approval of C2C-SOP-002: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
     "QMS deviation not created: /api/mdx/qms exposes documents, changes (with a \"deviation\" link TYPE by reference), nonconforming products, suppliers, internal audits, management reviews and training — there is no deviation entity to write (server/routes/mdx-qms.ts). SOP-003 Deviation Management describes the process; the register itself is not a launch QMS capability."
   ],
-  "finishedAt": "2026-09-28T13:29:41.313Z"
+  "finishedAt": "2026-09-28T14:10:23.034Z"
 }
