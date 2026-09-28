@@ -176,8 +176,10 @@ re-ran verify-by-failing. Landed so far:
 | SPIRIT | 13 (+10 minor) | **SPIRIT 2013 superseded by SPIRIT 2025** — now stated on every output; title terms matched as raw substrings scored unrelated sections `met`; a DMC charter with no `present` read as "no DMC"; rows the engine admitted it could not see scored `met` | 68 (was 25) | 20 |
 | CtQ | 5 blocking/major ×2 lenses | an unrecorded blinding produced two CRITICAL blinding factors; exclusion-criterion risk text pointed the wrong way; a second rating vocabulary contradicted the RBM catalogue (three rows now take the catalogue's rating; `ratingFrom` names the source) | 43 (was 25) | 10 |
 
-The remaining engines (DCT, WHO, USDM, deviation trends, redline) are being
-fixed the same way; their rows are added here as they land.
+| DCT profile | 10 (1 blocking) | duplicated activity ids took whichever location came last in the array — order-dependent and fabricated; a cell naming an undefined visit was dropped silently; an epoch "undefined" was invented; IMP, PK and consent rules covered only some off-site locations (`DCT-IMP-HOME` is now `DCT-IMP-OFFSITE`) | 61 (was 44) | 10 |
+
+The remaining engines (WHO, USDM, deviation trends, redline) are being fixed
+the same way; their rows are added here as they land.
 
 ## What is not done, and why
 

@@ -121,13 +121,13 @@ describe('decentralised elements', () => {
     const v = dctView({
       dctProfile: {
         measures: { activitiesTotal: 8, activitiesWithStatedLocation: 4, offSiteShare: { value: 0.75, numerator: 3, denominator: 4 }, visitsFullyOffSiteCapable: ['V3'] },
-        findings: [{ severity: 'warning', code: 'DCT-IMP-HOME', message: 'IMP administered at home', activityIds: ['a_imp'] }],
+        findings: [{ severity: 'warning', code: 'DCT-IMP-OFFSITE', message: 'IMP administered off-site', activityIds: ['a_imp'] }],
         activities: [],
       },
     });
     expect(v.note).toContain('3 of 4 activities with a stated location (75%)');
     expect(v.note).toContain('V3');
-    expect(v.entries[0]).toMatchObject({ label: 'DCT-IMP-HOME', status: 'warning' });
+    expect(v.entries[0]).toMatchObject({ label: 'DCT-IMP-OFFSITE', status: 'warning' });
     expect(v.entries[0].text).toContain('Activities: a_imp');
   });
 });

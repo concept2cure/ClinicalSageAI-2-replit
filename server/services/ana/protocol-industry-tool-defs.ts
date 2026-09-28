@@ -124,8 +124,9 @@ export const REVIEW_DCT_PROFILE: AnaTool = {
   description:
     'READ-ONLY. Profile the decentralised elements of the Schedule of Activities bound to a protocol document (profileDecentralization; FDA guidance on ' +
     'decentralized elements, 2024; EMA/HMA recommendation paper, 2022): where each activity happens, the share of activities with a stated off-site ' +
-    'location, the visits every performed activity of which is off-site capable, and findings on IMP administration at home, remote-only safety ' +
-    'assessments, off-site PK or biomarker sampling and remote consent. ' +
+    'location, the visits every performed activity of which is off-site capable, and findings on off-site IMP administration, remote-only safety ' +
+    'assessments, off-site PK or biomarker sampling and remote consent. A duplicated activity id or a cell naming an undefined visit is reported as ' +
+    'a structural defect and those rows come back unstated — never resolved to a guessed location. ' +
     DESIGN_REQUIRED + ' ' +
     'An activity with NO stated location is "unstated" — it is not at the site, it is not decentralised, and it is excluded from the off-site share. ' +
     'When nothing has a stated location the share is null and notAssessed says why; report null as "not assessed", never as 0% or as "conducted at site". ' +

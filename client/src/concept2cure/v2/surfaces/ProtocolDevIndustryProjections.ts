@@ -218,8 +218,10 @@ export function dctView(payload: Obj): ProjectionView {
         text: str(f.message) + (Array.isArray(f.activityIds) && f.activityIds.length ? `\nActivities: ${strings(f.activityIds).join(', ')}` : ''),
         gaps: [],
       })),
-      ...rows(p.activities).map((a) => ({
-        key: 'dct-activity:' + str(a.activityId),
+      ...rows(p.activities).map((a, i) => ({
+        // An index as well as the id: a duplicated activity id is reported by the
+        // engine as two unstated rows, and both must render.
+        key: `dct-activity:${i}:${str(a.activityId)}`,
         label: str(a.name),
         status: str(a.location),
         text: `Category: ${str(a.category)}`,
