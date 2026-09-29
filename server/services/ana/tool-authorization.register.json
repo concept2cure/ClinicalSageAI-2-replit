@@ -1477,6 +1477,11 @@
    "writes": "INSERT rbm_kris",
    "site": "rbm/rbm-actuator.ts:117"
   },
+  "derive_ctq_factors": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20903"
+  },
   "describe_capabilities": {
    "class": "read",
    "writes": "none",
@@ -1876,6 +1881,11 @@
    "class": "read",
    "writes": "none",
    "site": "AnaToolExecutor.ts:10790"
+  },
+  "export_usdm_projection": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20908"
   },
   "extract_document_structure": {
    "class": "read",
@@ -3015,9 +3025,11 @@
    "site": "AnaToolExecutor.ts:19204"
   },
   "retire_qms_document": {
-   "class": "confirm",
-   "writes": "retires a controlled document (terminal); the handler requires a reason of 8+ characters and records a governed action",
-   "site": "AnaToolExecutor.ts:13707"
+   "class": "refuse",
+   "writes": "none; the handler refuses (e-signed route, 2026-09-28 Q-0928-1 / SEC-0928-1: was confirm and retired the document with a reason only)",
+   "site": "AnaToolExecutor.ts:13751",
+   "refusedBy": "handler",
+   "why": "Retiring a controlled document is an e-signed act: the person does it with the document's Retire action in the Quality register, which asks for their password and second factor."
   },
   "review_amendment": {
    "class": "read",
@@ -3028,6 +3040,11 @@
    "class": "read",
    "writes": "none",
    "site": "AnaToolExecutor.ts:11177"
+  },
+  "review_biospecimen_profile": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20960"
   },
   "review_commitment_portfolio": {
    "class": "read",
@@ -3054,15 +3071,35 @@
    "writes": "SELECT only",
    "site": "AnaToolExecutor.ts:12951"
   },
+  "review_dct_profile": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20913"
+  },
   "review_deviation": {
    "class": "read",
    "writes": "none",
    "site": "AnaToolExecutor.ts:10937"
   },
+  "review_deviation_trends": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20990"
+  },
   "review_dms_plan_completeness": {
    "class": "read",
    "writes": "none",
    "site": "AnaToolExecutor.ts:11068"
+  },
+  "review_dose_escalation_design": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20924"
+  },
+  "review_enrollment_forecast": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20930"
   },
   "review_expiring_training": {
    "class": "read",
@@ -3073,6 +3110,11 @@
    "class": "read",
    "writes": "none",
    "site": "AnaToolExecutor.ts:11307"
+  },
+  "review_external_control_plan": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20948"
   },
   "review_financial_disclosure": {
    "class": "read",
@@ -3114,6 +3156,11 @@
    "writes": "SELECT + scoring",
    "site": "AnaToolExecutor.ts:12860"
   },
+  "review_interim_operating_characteristics": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20936"
+  },
   "review_invention_disclosure": {
    "class": "read",
    "writes": "none",
@@ -3133,6 +3180,21 @@
    "class": "read",
    "writes": "none",
    "site": "AnaToolExecutor.ts:13010"
+  },
+  "review_master_protocol": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20966"
+  },
+  "review_mmrm_sizing": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20942"
+  },
+  "review_multiplicity_control": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20954"
   },
   "review_other_support": {
    "class": "read",
@@ -3168,6 +3230,11 @@
    "class": "read",
    "writes": "none",
    "site": "AnaToolExecutor.ts:11663"
+  },
+  "review_protocol_redline": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:21014"
   },
   "review_protocol_regulatory_rules": {
    "class": "read",
@@ -3210,6 +3277,11 @@
    "writes": "none",
    "site": "AnaToolExecutor.ts:10690"
   },
+  "review_spirit_conformance": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20972"
+  },
   "review_tmf_completeness": {
    "class": "read",
    "writes": "none",
@@ -3225,10 +3297,20 @@
    "writes": "none",
    "site": "AnaToolExecutor.ts:11640"
   },
+  "review_trial_schema": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20898"
+  },
+  "review_who_ictrp_record": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20918"
+  },
   "revise_qms_document": {
    "class": "confirm",
-   "writes": "opens a controlled revision (reason required): document back to draft, approval cleared; the effective version is withdrawn in place (hand-on) + governed-action row",
-   "site": "AnaToolExecutor.ts:13653"
+   "writes": "opens a controlled revision (reason of 8+ characters required; caller must hold an editor role in organization_users, 2026-09-28 Q-0928-2): document back to draft, approval cleared; the effective version is withdrawn in place (hand-on) + governed-action row",
+   "site": "AnaToolExecutor.ts:13678"
   },
   "run_cdisc_pipeline": {
    "class": "read",

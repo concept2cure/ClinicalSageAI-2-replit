@@ -200,6 +200,30 @@ describe('DocumentCanvas — keyboard', () => {
     expect(document.activeElement).toBe(screen.getByTestId('dc-open-editor'));
   });
 
+  /* 2026-09-28, coverage-gap sweep GA-4: a workbench rail open inside the
+     expanded canvas now closes on Escape. Both listeners are on the document,
+     so without the canvas yielding the first Escape collapsed the whole
+     canvas with the rail still open behind it. One Escape, one layer. */
+  it('Escape with a workbench rail open closes the rail first, then the canvas', async () => {
+    render(<Host />);
+    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+    fireEvent.click(screen.getByTestId('dc-open-editor'));
+    await screen.findByTestId('dc-expanded');
+    await waitFor(() => expect(document.querySelector('.ed')).not.toBeNull());
+    const bar = document.querySelector('.ed-doc-actions') as HTMLElement;
+    fireEvent.click(within(bar).getByRole('button', { name: /^\s*History/ }));
+    await waitFor(() => expect(document.querySelector('aside.ed-comments')).not.toBeNull());
+
+    (document.activeElement as HTMLElement | null)?.blur();
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    await waitFor(() => expect(document.querySelector('aside.ed-comments')).toBeNull());
+    expect(screen.getByTestId('dc-expanded').hasAttribute('hidden'), 'the first Escape collapsed the canvas').toBe(false);
+
+    (document.activeElement as HTMLElement | null)?.blur();
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    await waitFor(() => expect(screen.getByTestId('dc-expanded').hasAttribute('hidden')).toBe(true));
+  });
+
   it('offers exactly one way back while expanded', async () => {
     render(<Host />);
     await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
@@ -410,5 +434,49 @@ describe('the canvas — microcopy', () => {
       }
     }
     expect(hits).toEqual([]);
+  });
+});
+
+/* 2026-09-28, coverage-gap sweep GE-P-3: the canvas offered File to vault and
+   Assign review to every member who could read the document. The read now
+   carries the caller's `access`; a refused act is disabled and described by
+   the server's reason, and an unknown one is left for the server to decide. */
+describe('DocumentCanvas — acts the server will refuse', () => {
+  const describedBy = (el: Element) =>
+    (el.getAttribute('aria-describedby') ?? '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .join(' ');
+  function withAccess(access: unknown) {
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string, ...rest: unknown[]) => {
+      if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) return ok({ ...DOC_ROW, access });
+      return base(method, url, ...rest);
+    });
+  }
+
+  it('disables File to vault and Assign review with the reason as described text', async () => {
+    withAccess({
+      fileToVault: { allowed: false, reason: 'Filing to the vault needs an Owner or Author grant on this document. Your grants on it: Reviewer.' },
+      assignReview: { allowed: false, reason: 'Assigning a review needs an editing role in this organization. Your role: viewer.' },
+      freeze: null,
+      esign: null,
+    });
+    render(<Host />);
+    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+    const vault = screen.getByTestId('dc-file-to-vault') as HTMLButtonElement;
+    const assign = screen.getByTestId('dc-assign-review') as HTMLButtonElement;
+    await waitFor(() => expect(vault.disabled).toBe(true));
+    expect(describedBy(vault)).toMatch(/Owner or Author grant/);
+    expect(assign.disabled).toBe(true);
+    expect(describedBy(assign)).toMatch(/Your role: viewer/);
+  });
+
+  it('leaves them enabled when the document read returns no access', async () => {
+    render(<Host />);
+    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+    await waitFor(() => expect((screen.getByTestId('dc-file-to-vault') as HTMLButtonElement).disabled).toBe(false));
+    expect((screen.getByTestId('dc-assign-review') as HTMLButtonElement).disabled).toBe(false);
   });
 });

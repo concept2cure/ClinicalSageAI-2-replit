@@ -1,0 +1,1171 @@
+$ npx vitest run --config vitest.config.ts server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts server/services/protocol-export/__tests__/protocol-export-signature.test.ts client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx
+# 2026-09-28T04:58:11Z at 84ce8fa3 (working tree)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+ × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signed finalization prints the printed name, the meaning in words, the UTC time and the reason 11ms
+   → expected '# A Phase 2 Study of Drug X\n_Protoco…' to contain '**Status:** Finalized'
+ × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > comes before the content, so no page of the protocol reads unsigned above its signature 2ms
+   → expected -1 to be less than -1
+ × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a revoked signature says so first, and still names who signed 6ms
+   → no signature section: expected -1 to be greater than -1
+ × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a finalized protocol with no signature on record says so, never a signer 1ms
+   → no signature section: expected -1 to be greater than -1
+ × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a protocol that is not finalized says no signature applies 7ms
+   → expected '# A Phase 2 Study of Drug X\n_Protoco…' to contain '**Status:** In development'
+ × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signature record that could not be read is said, not printed as unsigned 1ms
+   → no signature section: expected -1 to be greater than -1
+ × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a meaning outside the protocol vocabulary is printed as stored, not mapped to a guess 1ms
+   → no signature section: expected -1 to be greater than -1
+ × server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a decision recorded on someone’s behalf names them 1ms
+   → no signature section: expected -1 to be greater than -1
+ × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > who signed, as what, and when, from the signature row 63ms
+   → Unable to find an element with the text: /Signed by/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<div
+  class="pde-review-row"
+>
+  <span
+    class="pde-review-name"
+  >
+    Dr Rui Reviewer
+  </span>
+  <span
+    class="pg-badge"
+    data-tone="ok"
+  >
+    Completed
+  </span>
+  <span
+    class="pde-review-meta"
+  >
+    Scientific
+     · no due date
+     · Approve
+  </span>
+  <span
+    class="pde-review-act"
+  >
+    <button
+      aria-label="Record disposition for Dr Rui Reviewer"
+      class="pg-btn outline"
+      type="button"
+    >
+      <span
+        class="pg-ic"
+        style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-pen-line"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 20h9"
+          />
+          <path
+            d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+          />
+        </svg>
+      </span>
+      Record disposition
+    </button>
+  </span>
+</div>
+ × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for 9ms
+   → Unable to find an element with the text: /Signed by/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<div
+  class="pde-review-row"
+>
+  <span
+    class="pde-review-name"
+  >
+    Dr Iyer
+  </span>
+  <span
+    class="pg-badge"
+    data-tone="ok"
+  >
+    Completed
+  </span>
+  <span
+    class="pde-review-meta"
+  >
+    Scientific
+     · no due date
+     · Approve
+  </span>
+  <span
+    class="pde-review-act"
+  >
+    <button
+      aria-label="Record disposition for Dr Iyer"
+      class="pg-btn outline"
+      type="button"
+    >
+      <span
+        class="pg-ic"
+        style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-pen-line"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 20h9"
+          />
+          <path
+            d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+          />
+        </svg>
+      </span>
+      Record disposition
+    </button>
+  </span>
+</div>
+ × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a revoked signature says it is revoked 8ms
+   → Unable to find an element with the text: /Signature revoked/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<div
+  class="pde-review-row"
+>
+  <span
+    class="pde-review-name"
+  >
+    Dr Iyer
+  </span>
+  <span
+    class="pg-badge"
+    data-tone="ok"
+  >
+    Completed
+  </span>
+  <span
+    class="pde-review-meta"
+  >
+    Scientific
+     · no due date
+     · Approve
+  </span>
+  <span
+    class="pde-review-act"
+  >
+    <button
+      aria-label="Record disposition for Dr Iyer"
+      class="pg-btn outline"
+      type="button"
+    >
+      <span
+        class="pg-ic"
+        style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-pen-line"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 20h9"
+          />
+          <path
+            d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+          />
+        </svg>
+      </span>
+      Record disposition
+    </button>
+  </span>
+</div>
+ × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a recorded disposition with no signature on record says so 7ms
+   → Unable to find an element with the text: /No electronic signature is on record/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<div
+  class="pde-review-row"
+>
+  <span
+    class="pde-review-name"
+  >
+    Dr Iyer
+  </span>
+  <span
+    class="pg-badge"
+    data-tone="ok"
+  >
+    Completed
+  </span>
+  <span
+    class="pde-review-meta"
+  >
+    Scientific
+     · no due date
+     · Approve
+  </span>
+  <span
+    class="pde-review-act"
+  >
+    <button
+      aria-label="Record disposition for Dr Iyer"
+      class="pg-btn outline"
+      type="button"
+    >
+      <span
+        class="pg-ic"
+        style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-pen-line"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 20h9"
+          />
+          <path
+            d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+          />
+        </svg>
+      </span>
+      Record disposition
+    </button>
+  </span>
+</div>
+ × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a signature record that could not be read is said, not left blank 14ms
+   → Unable to find an element with the text: /signature record could not be read/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<div
+  class="pde-review-row"
+>
+  <span
+    class="pde-review-name"
+  >
+    Dr Iyer
+  </span>
+  <span
+    class="pg-badge"
+    data-tone="ok"
+  >
+    Completed
+  </span>
+  <span
+    class="pde-review-meta"
+  >
+    Scientific
+     · no due date
+     · Approve
+  </span>
+  <span
+    class="pde-review-act"
+  >
+    <button
+      aria-label="Record disposition for Dr Iyer"
+      class="pg-btn outline"
+      type="button"
+    >
+      <span
+        class="pg-ic"
+        style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-pen-line"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 20h9"
+          />
+          <path
+            d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+          />
+        </svg>
+      </span>
+      Record disposition
+    </button>
+  </span>
+</div>
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > an open review, with nothing signed, says nothing about a signature 6ms
+ × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a finalized protocol with no live signature says so, never nothing 4ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a protocol that is not finalized, with no signature, renders nothing 2ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a read model without the facet is treated as unreadable, not as unsigned 2ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ × client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > the meaning is printed in words 1ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+stderr | server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T04:58:14.680Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > carries the printed name recorded at signing, the time, the meaning and the reason 116ms
+   → expected undefined to deeply equal { Object (state, signature) }
+ × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today 35ms
+   → Cannot read properties of undefined (reading 'signature')
+ × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature 94ms
+   → Cannot read properties of undefined (reading 'state')
+ × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a finalized protocol with no signature row says none, never a signer 17ms
+   → expected undefined to deeply equal { state: 'none' }
+ × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature 17ms
+   → expected undefined to deeply equal { state: 'none' }
+ × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so 40ms
+   → expected undefined to deeply equal { Object (state, signature) }
+ × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review 32ms
+   → expected undefined to match object { Object (state, signature) }
+ × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > an unsigned review has no signature 18ms
+   → expected undefined to deeply equal { state: 'none' }
+ × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads 34ms
+   → expected undefined to deeply equal { state: 'unavailable' }
+ × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row 28ms
+   → expected undefined to be 'finalized' // Object.is equality
+ × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature 22ms
+   → expected '# A Phase 2 Study\n_Protocol C2C-101-…' to contain '- Not finalized: no electronic signat…'
+ × server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it 35ms
+   → expected null to be an instance of Error
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 29 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > carries the printed name recorded at signing, the time, the meaning and the reason
+AssertionError: expected undefined to deeply equal { Object (state, signature) }
+
+- Expected:
+{
+  "signature": {
+    "meaning": "approval",
+    "reason": "Protocol complete; approved for IRB submission",
+    "recordedOnBehalfOf": null,
+    "signedAt": "2026-09-28T04:58:19.681Z",
+    "signerName": "Dana Approver",
+  },
+  "state": "signed",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts:240:30
+    238|     const doc = await docById(docId);
+    239|     expect(doc.status).toBe('finalized');
+    240|     expect(doc.finalization).toEqual({
+       |                              ^
+    241|       state: 'signed',
+    242|       signature: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/29]⎯
+
+ FAIL  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today
+TypeError: Cannot read properties of undefined (reading 'signature')
+ ❯ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts:257:50
+    255|     await q(`UPDATE users SET name = 'Dana Renamed' WHERE id = $1`, [A…
+    256|     try {
+    257|       expect((await docById(docId)).finalization.signature.signerName)…
+       |                                                  ^
+    258|     } finally {
+    259|       await q(`UPDATE users SET name = 'Dana Approver' WHERE id = $1`,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/29]⎯
+
+ FAIL  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature
+TypeError: Cannot read properties of undefined (reading 'state')
+ ❯ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts:273:29
+    271|     });
+    272|     const doc = await docById(docId);
+    273|     expect(doc.finalization.state).toBe('revoked');
+       |                             ^
+    274|     expect(doc.finalization.signature).toMatchObject({ signerName: 'Da…
+    275|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/29]⎯
+
+ FAIL  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a finalized protocol with no signature row says none, never a signer
+AssertionError: expected undefined to deeply equal { state: 'none' }
+
+- Expected:
+{
+  "state": "none",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts:281:49
+    279|     const docId = await finalizable();
+    280|     await q(`UPDATE protocol_documents SET status = 'finalized' WHERE …
+    281|     expect((await docById(docId)).finalization).toEqual({ state: 'none…
+       |                                                 ^
+    282|   });
+    283|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/29]⎯
+
+ FAIL  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature
+AssertionError: expected undefined to deeply equal { state: 'none' }
+
+- Expected:
+{
+  "state": "none",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts:293:49
+    291|       [`protocol-document:${docId}`, STRANGER, OTHER_ORG],
+    292|     );
+    293|     expect((await docById(docId)).finalization).toEqual({ state: 'none…
+       |                                                 ^
+    294|   });
+    295| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/29]⎯
+
+ FAIL  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so
+AssertionError: expected undefined to deeply equal { Object (state, signature) }
+
+- Expected:
+{
+  "signature": {
+    "meaning": "responsibility",
+    "reason": "Recording Dr Iyer’s emailed approval",
+    "recordedOnBehalfOf": "Dr Iyer (external)",
+    "signedAt": "2026-09-28T04:58:19.946Z",
+    "signerName": "Dana Approver",
+  },
+  "state": "signed",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts:304:30
+    302|     const review = (await docById(docId)).reviews.find((r: any) => r.i…
+    303|     expect(review.reviewer).toBe('Dr Iyer (external)');
+    304|     expect(review.signature).toEqual({
+       |                              ^
+    305|       state: 'signed',
+    306|       signature: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/29]⎯
+
+ FAIL  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review
+AssertionError: expected undefined to match object { Object (state, signature) }
+
+- Expected:
+{
+  "signature": {
+    "meaning": "review",
+    "recordedOnBehalfOf": null,
+    "signerName": "Dr Rui Reviewer",
+  },
+  "state": "signed",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts:321:30
+    319|     await signDisposition(aid, REVIEWER, 'review', 'Reviewed the stati…
+    320|     const review = (await docById(docId)).reviews.find((r: any) => r.i…
+    321|     expect(review.signature).toMatchObject({
+       |                              ^
+    322|       state: 'signed',
+    323|       signature: { signerName: 'Dr Rui Reviewer', meaning: 'review', r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/29]⎯
+
+ FAIL  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > an unsigned review has no signature
+AssertionError: expected undefined to deeply equal { state: 'none' }
+
+- Expected:
+{
+  "state": "none",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts:331:30
+    329|     const aid = await assignment(docId, 'Dr Rui Reviewer', REVIEWER);
+    330|     const review = (await docById(docId)).reviews.find((r: any) => r.i…
+    331|     expect(review.signature).toEqual({ state: 'none' });
+       |                              ^
+    332|   });
+    333| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/29]⎯
+
+ FAIL  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads
+AssertionError: expected undefined to deeply equal { state: 'unavailable' }
+
+- Expected:
+{
+  "state": "unavailable",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts:344:32
+    342|       expect(doc.title).toBe('Unreadable store protocol');
+    343|       expect(doc.sections).toHaveLength(1);
+    344|       expect(doc.finalization).toEqual({ state: 'unavailable' });
+       |                                ^
+    345|       expect(doc.reviews.find((r: any) => r.id === String(aid)).signat…
+    346|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/29]⎯
+
+ FAIL  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row
+AssertionError: expected undefined to be 'finalized' // Object.is equality
+
+- Expected:
+"finalized"
+
++ Received:
+undefined
+
+ ❯ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts:357:29
+    355|     const signed = await finalize(docId);
+    356|     const { document, markdown } = await getProtocolExport(ORG, docId);
+    357|     expect(document.status).toBe('finalized');
+       |                             ^
+    358|     expect(document.finalization).toMatchObject({ state: 'signed', sig…
+    359|     const utc = new Date(String(signed.signedAt)).toISOString().replac…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/29]⎯
+
+ FAIL  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature
+AssertionError: expected '# A Phase 2 Study\n_Protocol C2C-101-…' to contain '- Not finalized: no electronic signat…'
+
+- Expected
++ Received
+
+- - Not finalized: no electronic signature has been applied to this version.
++ # A Phase 2 Study
++ _Protocol C2C-101-201 · v0.1_
++
++ ## Objectives & Endpoints
++ - **primary:** Reduce HbA1c
++
++ ## Eligibility
++ **Inclusion:**
++ - Adults 18-75
++
++ ## Schedule of Assessments
++ - **Screening**
++
++ ## Background
++ Original text.
+
+ ❯ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts:372:24
+    370|     try {
+    371|       const { markdown } = await getProtocolExport(ORG, docId);
+    372|       expect(markdown).toContain('- Not finalized: no electronic signa…
+       |                        ^
+    373|     } finally {
+    374|       await q(`ALTER TABLE electronic_signatures_away RENAME TO electr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/29]⎯
+
+ FAIL  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it
+AssertionError: expected null to be an instance of Error
+ ❯ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts:384:19
+    382|     try {
+    383|       const err = await getProtocolExport(ORG, docId).then(() => null,…
+    384|       expect(err).toBeInstanceOf(Error);
+       |                   ^
+    385|       expect(String((err as Error).message)).toMatch(/signature record…
+    386|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/29]⎯
+
+ FAIL  server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signed finalization prints the printed name, the meaning in words, the UTC time and the reason
+AssertionError: expected '# A Phase 2 Study of Drug X\n_Protoco…' to contain '**Status:** Finalized'
+
+- Expected
++ Received
+
+- **Status:** Finalized
++ # A Phase 2 Study of Drug X
++ _Protocol PRO-001 · v1.0_
++
++ ## Synopsis
++ A randomized study.
+
+ ❯ server/services/protocol-export/__tests__/protocol-export-signature.test.ts:46:16
+     44|   it('a signed finalization prints the printed name, the meaning in wo…
+     45|     const md = markdown('finalized', SIGNED);
+     46|     expect(md).toContain('**Status:** Finalized');
+       |                ^
+     47|     expect(signatureSection(md)).toEqual([
+     48|       '- Signed by: Dana Approver',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/29]⎯
+
+ FAIL  server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > comes before the content, so no page of the protocol reads unsigned above its signature
+AssertionError: expected -1 to be less than -1
+ ❯ server/services/protocol-export/__tests__/protocol-export-signature.test.ts:61:49
+     59|     ));
+     60|     expect(md.indexOf('## Electronic signature')).toBeLessThan(md.inde…
+     61|     expect(md.indexOf('**Status:** Finalized')).toBeLessThan(md.indexO…
+       |                                                 ^
+     62|   });
+     63|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/29]⎯
+
+ FAIL  server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a revoked signature says so first, and still names who signed
+AssertionError: no signature section: expected -1 to be greater than -1
+ ❯ signatureSection server/services/protocol-export/__tests__/protocol-export-signature.test.ts:37:41
+     35|   const lines = md.split('\n');
+     36|   const start = lines.indexOf('## Electronic signature');
+     37|   expect(start, 'no signature section').toBeGreaterThan(-1);
+       |                                         ^
+     38|   const rest = lines.slice(start + 1);
+     39|   const end = rest.findIndex((l) => l.startsWith('## '));
+ ❯ server/services/protocol-export/__tests__/protocol-export-signature.test.ts:65:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/29]⎯
+
+ FAIL  server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a finalized protocol with no signature on record says so, never a signer
+AssertionError: no signature section: expected -1 to be greater than -1
+ ❯ signatureSection server/services/protocol-export/__tests__/protocol-export-signature.test.ts:37:41
+     35|   const lines = md.split('\n');
+     36|   const start = lines.indexOf('## Electronic signature');
+     37|   expect(start, 'no signature section').toBeGreaterThan(-1);
+       |                                         ^
+     38|   const rest = lines.slice(start + 1);
+     39|   const end = rest.findIndex((l) => l.startsWith('## '));
+ ❯ server/services/protocol-export/__tests__/protocol-export-signature.test.ts:71:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/29]⎯
+
+ FAIL  server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a protocol that is not finalized says no signature applies
+AssertionError: expected '# A Phase 2 Study of Drug X\n_Protoco…' to contain '**Status:** In development'
+
+- Expected
++ Received
+
+- **Status:** In development
++ # A Phase 2 Study of Drug X
++ _Protocol PRO-001 · v1.0_
++
++ ## Synopsis
++ A randomized study.
+
+ ❯ server/services/protocol-export/__tests__/protocol-export-signature.test.ts:78:16
+     76|   it('a protocol that is not finalized says no signature applies', () …
+     77|     const md = markdown('in_development', { state: 'none' });
+     78|     expect(md).toContain('**Status:** In development');
+       |                ^
+     79|     expect(signatureSection(md)).toEqual(['- Not finalized: no electro…
+     80|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/29]⎯
+
+ FAIL  server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signature record that could not be read is said, not printed as unsigned
+AssertionError: no signature section: expected -1 to be greater than -1
+ ❯ signatureSection server/services/protocol-export/__tests__/protocol-export-signature.test.ts:37:41
+     35|   const lines = md.split('\n');
+     36|   const start = lines.indexOf('## Electronic signature');
+     37|   expect(start, 'no signature section').toBeGreaterThan(-1);
+       |                                         ^
+     38|   const rest = lines.slice(start + 1);
+     39|   const end = rest.findIndex((l) => l.startsWith('## '));
+ ❯ server/services/protocol-export/__tests__/protocol-export-signature.test.ts:83:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/29]⎯
+
+ FAIL  server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a meaning outside the protocol vocabulary is printed as stored, not mapped to a guess
+AssertionError: no signature section: expected -1 to be greater than -1
+ ❯ signatureSection server/services/protocol-export/__tests__/protocol-export-signature.test.ts:37:41
+     35|   const lines = md.split('\n');
+     36|   const start = lines.indexOf('## Electronic signature');
+     37|   expect(start, 'no signature section').toBeGreaterThan(-1);
+       |                                         ^
+     38|   const rest = lines.slice(start + 1);
+     39|   const end = rest.findIndex((l) => l.startsWith('## '));
+ ❯ server/services/protocol-export/__tests__/protocol-export-signature.test.ts:89:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/29]⎯
+
+ FAIL  server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a decision recorded on someone’s behalf names them
+AssertionError: no signature section: expected -1 to be greater than -1
+ ❯ signatureSection server/services/protocol-export/__tests__/protocol-export-signature.test.ts:37:41
+     35|   const lines = md.split('\n');
+     36|   const start = lines.indexOf('## Electronic signature');
+     37|   expect(start, 'no signature section').toBeGreaterThan(-1);
+       |                                         ^
+     38|   const rest = lines.slice(start + 1);
+     39|   const end = rest.findIndex((l) => l.startsWith('## '));
+ ❯ server/services/protocol-export/__tests__/protocol-export-signature.test.ts:94:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/29]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > who signed, as what, and when, from the signature row
+TestingLibraryElementError: Unable to find an element with the text: /Signed by/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<div
+  class="pde-review-row"
+>
+  <span
+    class="pde-review-name"
+  >
+    Dr Rui Reviewer
+  </span>
+  <span
+    class="pg-badge"
+    data-tone="ok"
+  >
+    Completed
+  </span>
+  <span
+    class="pde-review-meta"
+  >
+    Scientific
+     · no due date
+     · Approve
+  </span>
+  <span
+    class="pde-review-act"
+  >
+    <button
+      aria-label="Record disposition for Dr Rui Reviewer"
+      class="pg-btn outline"
+      type="button"
+    >
+      <span
+        class="pg-ic"
+        style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-pen-line"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 20h9"
+          />
+          <path
+            d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+          />
+        </svg>
+      </span>
+      Record disposition
+    </button>
+  </span>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx:50:23
+     48|   it('who signed, as what, and when, from the signature row', () => {
+     49|     const el = row(review({ reviewerUserId: 9, reviewer: 'Dr Rui Revie…
+     50|     expect(within(el).getByText(/Signed by/).textContent).toMatch(/Sig…
+       |                       ^
+     51|     expect(within(el).getByText(/2026-09-28 04:40:12 UTC/)).toBeTruthy…
+     52|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/29]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for
+TestingLibraryElementError: Unable to find an element with the text: /Signed by/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<div
+  class="pde-review-row"
+>
+  <span
+    class="pde-review-name"
+  >
+    Dr Iyer
+  </span>
+  <span
+    class="pg-badge"
+    data-tone="ok"
+  >
+    Completed
+  </span>
+  <span
+    class="pde-review-meta"
+  >
+    Scientific
+     · no due date
+     · Approve
+  </span>
+  <span
+    class="pde-review-act"
+  >
+    <button
+      aria-label="Record disposition for Dr Iyer"
+      class="pg-btn outline"
+      type="button"
+    >
+      <span
+        class="pg-ic"
+        style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-pen-line"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 20h9"
+          />
+          <path
+            d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+          />
+        </svg>
+      </span>
+      Record disposition
+    </button>
+  </span>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx:56:29
+     54|   it('a decision recorded for a reviewer with no account names the sig…
+     55|     const el = row(review({ signature: signed({ recordedOnBehalfOf: 'D…
+     56|     const line = within(el).getByText(/Signed by/);
+       |                             ^
+     57|     expect(line.textContent).toMatch(/Signed by Dana Approver as Respo…
+     58|     expect(line.textContent).toMatch(/recorded on behalf of Dr Iyer/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/29]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a revoked signature says it is revoked
+TestingLibraryElementError: Unable to find an element with the text: /Signature revoked/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<div
+  class="pde-review-row"
+>
+  <span
+    class="pde-review-name"
+  >
+    Dr Iyer
+  </span>
+  <span
+    class="pg-badge"
+    data-tone="ok"
+  >
+    Completed
+  </span>
+  <span
+    class="pde-review-meta"
+  >
+    Scientific
+     · no due date
+     · Approve
+  </span>
+  <span
+    class="pde-review-act"
+  >
+    <button
+      aria-label="Record disposition for Dr Iyer"
+      class="pg-btn outline"
+      type="button"
+    >
+      <span
+        class="pg-ic"
+        style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-pen-line"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 20h9"
+          />
+          <path
+            d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+          />
+        </svg>
+      </span>
+      Record disposition
+    </button>
+  </span>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx:63:23
+     61|   it('a revoked signature says it is revoked', () => {
+     62|     const el = row(review({ signature: { ...signed(), state: 'revoked'…
+     63|     expect(within(el).getByText(/Signature revoked/).textContent).toMa…
+       |                       ^
+     64|   });
+     65|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/29]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a recorded disposition with no signature on record says so
+TestingLibraryElementError: Unable to find an element with the text: /No electronic signature is on record/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<div
+  class="pde-review-row"
+>
+  <span
+    class="pde-review-name"
+  >
+    Dr Iyer
+  </span>
+  <span
+    class="pg-badge"
+    data-tone="ok"
+  >
+    Completed
+  </span>
+  <span
+    class="pde-review-meta"
+  >
+    Scientific
+     · no due date
+     · Approve
+  </span>
+  <span
+    class="pde-review-act"
+  >
+    <button
+      aria-label="Record disposition for Dr Iyer"
+      class="pg-btn outline"
+      type="button"
+    >
+      <span
+        class="pg-ic"
+        style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-pen-line"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 20h9"
+          />
+          <path
+            d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+          />
+        </svg>
+      </span>
+      Record disposition
+    </button>
+  </span>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx:68:23
+     66|   it('a recorded disposition with no signature on record says so', () …
+     67|     const el = row(review({ signature: { state: 'none' } }));
+     68|     expect(within(el).getByText(/No electronic signature is on record/…
+       |                       ^
+     69|   });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/29]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a signature record that could not be read is said, not left blank
+TestingLibraryElementError: Unable to find an element with the text: /signature record could not be read/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<div
+  class="pde-review-row"
+>
+  <span
+    class="pde-review-name"
+  >
+    Dr Iyer
+  </span>
+  <span
+    class="pg-badge"
+    data-tone="ok"
+  >
+    Completed
+  </span>
+  <span
+    class="pde-review-meta"
+  >
+    Scientific
+     · no due date
+     · Approve
+  </span>
+  <span
+    class="pde-review-act"
+  >
+    <button
+      aria-label="Record disposition for Dr Iyer"
+      class="pg-btn outline"
+      type="button"
+    >
+      <span
+        class="pg-ic"
+        style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-pen-line"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 20h9"
+          />
+          <path
+            d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+          />
+        </svg>
+      </span>
+      Record disposition
+    </button>
+  </span>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx:73:23
+     71|   it('a signature record that could not be read is said, not left blan…
+     72|     const el = row(review({ signature: { state: 'unavailable' } }));
+     73|     expect(within(el).getByText(/signature record could not be read/))…
+       |                       ^
+     74|   });
+     75|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/29]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a finalized protocol with no live signature says so, never nothing
+ FAIL  client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a protocol that is not finalized, with no signature, renders nothing
+ FAIL  client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a read model without the facet is treated as unreadable, not as unsigned
+ FAIL  client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > the meaning is printed in words
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ ❯ createFiberFromTypeAndProps node_modules/react-dom/cjs/react-dom-client.development.js:5021:28
+ ❯ createFiberFromElement node_modules/react-dom/cjs/react-dom-client.development.js:5035:14
+ ❯ reconcileChildFibersImpl node_modules/react-dom/cjs/react-dom-client.development.js:6920:31
+ ❯ node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/react-dom/cjs/react-dom-client.development.js:9702:13
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11899:15
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/29]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  29 failed | 1 passed (30)
+   Start at  04:58:12
+   Duration  7.79s (transform 2.25s, setup 386ms, import 3.41s, tests 4.98s, environment 617ms)
+
+# exit=1

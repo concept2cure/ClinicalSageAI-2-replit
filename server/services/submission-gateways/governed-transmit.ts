@@ -389,11 +389,6 @@ export interface GovernedTransmitOutcome {
   preTransmitWarnings: string[] | null;
 }
 
-/** Operator wording for a content change that landed during the send. */
-export const CONTENT_CHANGED_DURING_TRANSMIT =
-  'The package content changed while the transmission was in progress. The agency received the assembled bundle ' +
-  'as recorded on this transmittal (its sha256); the package no longer matches it. Review the change and re-assemble ' +
-  'before any further transmission.';
 
 /**
  * Run the full governed transmit ceremony and hand the bytes to the regional
@@ -764,7 +759,7 @@ export async function executeGovernedTransmit(
       // a digest of the exact bundle bytes the agency received. Freeze and
       // dispatch always wrote this row; transmit — the irreversible act — never
       // did, so no signature manifestation existed for it anywhere.
-      await persistGovernedActionSignature(client, {
+      const signature = await persistGovernedActionSignature(client, {
         orgId: organizationId,
         userId,
         target: signedTarget,
@@ -790,6 +785,22 @@ export async function executeGovernedTransmit(
         extraManifest: { ...filedSequenceFacts, ...preTransmitFacts },
         manifestKind: 'governed-transmit',
       });
+      // 2026-09-28 (Q-0928-3): the declared §11.50 meaning lived only on the
+      // electronic_signatures row, which the transmittal log does not read, so
+      // the meaning a signer asserted was never shown back anywhere. Stamped on
+      // the transmittal in THIS transaction — it exists exactly when the
+      // signature does — and merged, because the gateways read
+      // metadata.environment from the same column.
+      await client.query(
+        `UPDATE submission_transmittals
+            SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb, updated_at = now()
+          WHERE id = $2 AND organization_id = $3`,
+        [
+          JSON.stringify({ signature: { meaning: input.meaning, signatureId: signature.id } }),
+          result.transmittalId,
+          organizationId,
+        ],
+      );
       await client.query('COMMIT');
     } catch (ledgerErr) {
       try { await client.query('ROLLBACK'); } catch { /* noop */ }

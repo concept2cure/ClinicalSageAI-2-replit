@@ -27,7 +27,8 @@ vi.mock('../../ana-ri/command-executor.js', async importOriginal => {
   };
 });
 
-import { commandBlockProposer, getToolHandler, servedModelOf } from '../AnaToolExecutor.js';
+import { getToolHandler, servedModelOf } from '../AnaToolExecutor.js';
+import { commandBlockProposer } from '../command-attribution.js';
 import { agentAuditDetails } from '../../ana-ri/mdx-tool-policy.js';
 
 const repoRoot = path.resolve(__dirname, '..', '..', '..', '..');
@@ -78,7 +79,7 @@ describe('an agent mutation’s audit row names the model call', () => {
     // every round's text; the stream passes the round that wrote them.
     expect(read('server/routes/ana-ri/post-processing.ts')).toMatch(/servingModel: servingModel \?\? null/);
     const stream = read('server/routes/ana-ri/stream.ts');
-    expect(stream).toMatch(/runStreamPostProcessing\(\{[\s\S]{0,1200}?servingModel: commandBlockProposer\(commandRounds, lastServedModel\),/);
+    expect(stream).toMatch(/runStreamPostProcessing\(\{[\s\S]{0,4000}?servingModel: commandBlockProposer\(commandRounds, lastServedModel\),/);
     expect(stream).toMatch(/COMMAND_FENCE\.test\(fullContent\) \? \[lastServedModel\] : \[\]/);
     expect(stream).toMatch(/if \(COMMAND_FENCE\.test\(roundText\)\) commandRounds\.push\(lastServedModel\);/);
   });

@@ -8,7 +8,8 @@
  *
  *   $4 / $20 per MTok · 1M context · adaptive thinking that cannot be disabled
  *   · no sampling parameters · effort low–max, API default `medium` ·
- *   structured outputs · mid-conversation system messages.
+ *   structured outputs · mid-conversation system messages · notes between
+ *   tool calls returned as progress-update thinking blocks.
  *
  * The rung below it is Opus 5, the previous flagship, so a request Opus 5.5
  * cannot serve — an outage, a model this account cannot reach yet, a classifier
@@ -38,6 +39,7 @@ describe('the flagship slot serves Claude Opus 5.5', () => {
       supportsSamplingParams: false,
       supportsInlineSystem: true,
       supportsStructuredOutputs: true,
+      progressUpdatesInThinking: true,
       maxApiEffort: 'max',
       enabled: true,
     });

@@ -64,7 +64,7 @@ import {
   SignatureMeaningError,
   SignatureRevocationUnresolvedError,
 } from '../../services/part11/signature-persistence.js';
-import { GOVERNED_SIGN_MEANINGS, isGovernedSignMeaning } from '../../services/part11/signature-meanings.js';
+import { signMeaningRefusal } from '../../services/part11/signature-meanings.js';
 import { clientIpOf } from '../../utils/client-ip';
 
 const router = Router();
@@ -626,16 +626,8 @@ export function separationOfDutiesRefusal(
  * (the writer, persistGovernedActionSignature, enforces the same rule for every
  * caller). Other commands carry no signer-declared meaning here.
  */
-function signMeaningRefusal(
-  command: Command,
-  body: ActionEnvelope,
-): { error: 'SIGNATURE_MEANING_REQUIRED' | 'SIGNATURE_MEANING_UNKNOWN'; detail: string } | null {
-  if (command !== 'sign') return null;
-  const meaning = body.payload?.meaning;
-  const detail = `One of: ${GOVERNED_SIGN_MEANINGS.join(', ')}.`;
-  if (typeof meaning !== 'string' || meaning.length === 0) return { error: 'SIGNATURE_MEANING_REQUIRED', detail };
-  if (!isGovernedSignMeaning(meaning)) return { error: 'SIGNATURE_MEANING_UNKNOWN', detail };
-  return null;
+function commandMeaningRefusal(command: Command, body: ActionEnvelope) {
+  return command === 'sign' ? signMeaningRefusal(body.payload?.meaning) : null;
 }
 
 function makeHandler(command: Command) {
@@ -654,7 +646,7 @@ function makeHandler(command: Command) {
     if (!body?.reason || typeof body.reason !== 'string' || body.reason.trim().length < 8) {
       return res.status(400).json({ error: 'REASON_REQUIRED', detail: 'Minimum 8 characters.' });
     }
-    const meaningRefusal = signMeaningRefusal(command, body);
+    const meaningRefusal = commandMeaningRefusal(command, body);
     if (meaningRefusal) return res.status(400).json(meaningRefusal);
 
     // Re-auth gate for high-risk commands.

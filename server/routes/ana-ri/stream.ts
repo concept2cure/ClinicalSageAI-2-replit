@@ -5,7 +5,8 @@
  *  - pre-token `status` events during orchestration / context assembly
  *  - `thread_id` + `orchestration` metadata before first token
  *  - `text` tokens during gateway generation
- *  - `warning` events when server-side degradation occurs
+ *  - `warning` events when server-side degradation occurs, or a model the
+ *    request pinned is refused (code MODEL_OVERRIDE_REFUSED)
  *  - `grounding_strip`, `done`, and `post_done` events after last token
  *
  * Background post-processing (guidance executor, command executor, persistence,
@@ -29,6 +30,7 @@ import {
   resolveStrategyWithPrecedence,
   resolveModelOverride,
 } from '../../services/ai-gateway/effort.js';
+import { isHighRiskRequest } from '../../services/ai-governance/approved-models.js';
 import {
   resolveThinkingConfig,
   isSubstantiveTurn,
@@ -36,6 +38,7 @@ import {
   resolveModelTier,
   resolveTierModel,
 } from '../../services/ai-gateway/reasoning.js';
+import { asParagraph } from '../../services/ai-gateway/progress-updates.js';
 import { orchestrate } from '../../services/ana-ri/orchestrator.js';
 import type { IntentLens, UserRole } from '../../services/ana-ri/persona.js';
 import type { DetectedDocumentTemplatePayload } from '../../../shared/types/ana-document-detection.js';
@@ -51,13 +54,15 @@ import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
 import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
-import { commandBlockProposer, getToolHandler, servedModelOf } from '../../services/ana/AnaToolExecutor.js';
+import { getToolHandler, servedModelOf } from '../../services/ana/AnaToolExecutor.js';
+import { commandBlockProposer } from '../../services/ana/command-attribution.js';
 import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import {
   directiveFromToolResult,
   surfaceActionFromToolResult,
   demoStartFromToolResult,
+  MAX_NAVIGATION_ACTIONS,
   type DemoStartDirective,
 } from '../../services/ana-ri/navigation-actions.js';
 import {
@@ -78,7 +83,6 @@ import type { NavigationDirective } from '../../../shared/navigation/index.js';
 import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
 import {
   runAgenticToolLoop,
-  type StoppedReason,
   resolveMaxRounds,
   resolveRoundExtension,
   capToolResultForModel,
@@ -101,8 +105,11 @@ import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import {
   buildTraceEntry,
   collectTracesFromHistory,
+  formatStoppedTurnNote,
   formatTraceForContext,
   refusalOf,
+  turnEndingReason,
+  turnStopWarning,
   type ToolTraceEntry,
 } from '../../services/ana/tool-trace.js';
 import { runWithRunScope } from '../../services/ai-gateway/run-scope.js';
@@ -117,7 +124,8 @@ import {
 } from '../../services/ana/turn-record.js';
 import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
-import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
+import { selectToolsForTurn, SELF_DRIVE_TOOLS } from '../../services/ana/tool-selection.js';
+import { recentTurns } from '../../services/ana/history-window.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
 import { buildContextUsedEvent, type ContextUpload } from '../../services/ana/turn-context-used.js';
 import { guardUserInput, PromptInjectionError } from '../../services/ana/ana-input-guard.js';
@@ -157,6 +165,8 @@ import {
   readRun,
   releaseLocalRun,
   consumeInterjections,
+  readMoveId,
+  type RunQueueEntry,
   requestApproval,
   recordApprovalDecision,
   readApprovalDecision,
@@ -165,13 +175,15 @@ import {
   reapOrphanedRuns,
   type RunHandle,
 } from '../../services/ana/run-control.js';
-import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-status.js';
+import { MAX_PAUSE_MS, type HumanControlEvent, type TurnStoppedReason } from '../../services/ana/run-status.js';
+import { createRunHold, type RunHold } from '../../services/ana/run-hold.js';
 import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../../services/ana/governed-tool-gate.js';
 import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
 import {
   describeServerToolStep,
   serverToolEvidence,
   summariseServerToolResult,
+  serverToolStepIdField,
 } from '../../services/ana/server-tool-steps.js';
 import type { GatewayServerToolUse } from '../../services/ai-gateway/types.js';
 import { resolveOrgId, resolveUserId } from '../../types/auth-request.js';
@@ -188,6 +200,72 @@ const dbPool = {
 
 /** A command block's opening fence, as parseCommandBlocks reads it. */
 const COMMAND_FENCE = /```command\s*\n/;
+
+/**
+ * Frame a screen report as the operator-channel turn AnA reads next round.
+ *
+ * A screen report is what the APP observed on the person's screen while she
+ * drove it — a move she made that did not land. It is neither the person's
+ * words nor an instruction, and must not read as either: framed as a steer it
+ * told her the person had redirected her mid-task. What she needs from it is
+ * the fact, and the one thing to do with it — say plainly what could not be
+ * done rather than narrate a screen that never changed.
+ *
+ * `origin: 'external'` because the text arrived from the client, so it is
+ * scanned like anything else the model did not author (GatewayMessage.origin).
+ * It opens with "[Screen report]", the marker the Live Drive prompt block
+ * names (services/ana-ri/live-drive.ts); a text already carrying the marker is
+ * not marked twice. Exported for its test.
+ */
+export function buildScreenReportTurn(report: string): GatewayMessage | null {
+  const observed = (report ?? '').trim().replace(/^\[Screen report\]\s*/i, '').trim();
+  if (!observed) return null;
+  return {
+    role: 'system',
+    inlineSystem: true,
+    origin: 'external',
+    // Folded on a model without inline system turns, it must not be labelled
+    // as the person's words (GatewayMessage.foldLabel).
+    foldLabel: 'App observation',
+    content:
+      "[Screen report] The app reported this from the person's screen during this turn. " +
+      'It is an observation the application made — not something the person said, and not ' +
+      'an instruction to you:\n\n' +
+      `${observed}\n\n` +
+      'State plainly what could not be done. Do not say or imply that it happened, and do ' +
+      'not describe the screen as if it had changed. If there is another way to finish the ' +
+      'task, take it.',
+  };
+}
+
+/**
+ * The longest the checkpoint holds the next model call for the screen to
+ * settle the last round's moves. A navigation shows its screen in well under
+ * three seconds; an operation can be held for its screen's data. Past this she
+ * goes on, told which moves are still unconfirmed (buildUnconfirmedMovesTurn).
+ */
+export const MOVE_SETTLE_MAX_MS = 10_000;
+
+/**
+ * Tell AnA which of her moves the screen has not confirmed yet. Written by our
+ * own code from registry labels, so `origin: 'app'`; folded, it is an app
+ * observation, never the person's words. Exported for its test.
+ */
+export function buildUnconfirmedMovesTurn(moves: string[]): GatewayMessage | null {
+  const listed = moves.map(m => m.trim()).filter(Boolean);
+  if (listed.length === 0) return null;
+  return {
+    role: 'system',
+    inlineSystem: true,
+    origin: 'app',
+    foldLabel: 'App observation',
+    content:
+      "[Screen report] The person's screen has not yet confirmed " +
+      (listed.length === 1 ? 'this move' : 'these moves') +
+      `: ${listed.join('; ')}. Do not say ${listed.length === 1 ? 'it' : 'they'} happened. ` +
+      'If you mention one, say it was asked for and is not confirmed yet.',
+  };
+}
 
 /** Register POST /stream on the given router. */
 /**
@@ -209,6 +287,33 @@ function heldToolContext(
   };
 }
 
+/**
+ * The turn's round-boundary hold (services/ana/run-hold.ts), wired to its run
+ * row. The checkpoint's pause wait used to be a loop written inline in the
+ * checkpoint; it moved to run-hold.ts so everything that waits at a round
+ * boundary in one turn shares one pause clock and one paused/resumed pair.
+ * Expiry 'resume' is that loop's behaviour: a pause nobody answers within
+ * MAX_PAUSE_MS is resumed as abandoned (no control event, no user).
+ */
+function streamRunHold(run: {
+  runId: string;
+  handle: RunHandle;
+  runOrgId: number | null;
+  res: Response;
+  emit: (frame: Record<string, unknown>) => void;
+}): RunHold {
+  return createRunHold({
+    readStatus: () => readStatus(getPool(), run.runId),
+    wake: ms => run.handle.wake(ms),
+    emit: run.emit,
+    clientGone: () => run.res.writableEnded,
+    stopForDisconnect: () =>
+      stopRunInternally(getPool(), run.runId, 'client_disconnected', run.runOrgId ?? undefined),
+    expiry: 'resume',
+    resumeAbandoned: () => resumeAbandonedRun(getPool(), run.runId),
+  });
+}
+
 export function mountStreamRoute(router: Router): void {
   router.post('/stream', async (req: Request, res: Response) => {
     // Opaque id for this run, emitted to the client as `run_started` so it can
@@ -227,7 +332,14 @@ export function mountStreamRoute(router: Router): void {
     // Why the agentic loop stopped, when it ran; endRun records it. A turn
     // whose first answer called no tools never enters the loop, and ends for
     // want of tools.
-    let loopStoppedReason: StoppedReason = 'no_more_tools';
+    let loopStoppedReason: TurnStoppedReason = 'no_more_tools';
+    // How many tool rounds the loop ran (0 when it never entered). Carried with
+    // the reason on `done` and into the message metadata, so "stopped at the
+    // round limit" can say which limit.
+    let loopRounds = 0;
+    // Why the latest model call stopped writing. The last one wrote the answer
+    // the person reads; if it was cut off, the turn did not finish.
+    let lastFinishReason: string | undefined;
     // The run is closed exactly once, by whichever of the disconnect handler and
     // the finally block gets there first.
     let runSettled = false;
@@ -354,12 +466,15 @@ export function mountStreamRoute(router: Router): void {
       for (const step of steps) {
         const label = describeServerToolStep(step);
         const status = step.isError ? 'error' : 'success';
-        res.write(`data: ${JSON.stringify({ type: 'tool_use', round, name: step.name, label, input: step.input ?? {} })}\n\n`);
+        // The step's own id as the pairing key (see serverToolStepIdField).
+        const stepId = serverToolStepIdField(step);
+        res.write(`data: ${JSON.stringify({ type: 'tool_use', round, name: step.name, ...stepId, label, input: step.input ?? {} })}\n\n`);
         res.write(
           `data: ${JSON.stringify({
             type: 'tool_result',
             round,
             name: step.name,
+            ...stepId,
             label,
             status,
             ...(step.isError ? { message: 'This search did not return results.' } : {}),
@@ -387,6 +502,7 @@ export function mountStreamRoute(router: Router): void {
         live_drive,
         drive_mode,
         locked_screens,
+        drive_acks,
       } = req.body;
       // Screens closed to this person, from the shell's copy of the server's
       // own verdict set — the self-drive tools refuse them honestly.
@@ -913,7 +1029,9 @@ export function mountStreamRoute(router: Router): void {
           const previousMsgs = serverHistory.slice(0, -1);
           streamPriorTurns = previousMsgs.length;
           if (previousMsgs.length > 0) {
-            for (const msg of previousMsgs.slice(-20)) {
+            // Opens on a question: after an unanswered turn, the last twenty
+            // messages can start on an answer (services/ana/history-window.ts).
+            for (const msg of recentTurns(previousMsgs, 20)) {
               messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
             }
             streamHistoryLoaded = true;
@@ -921,20 +1039,32 @@ export function mountStreamRoute(router: Router): void {
             // already ran in earlier turns (stored on each assistant message's
             // metadata) so she reuses prior findings instead of re-running them.
             const traceNote = formatTraceForContext(collectTracesFromHistory(previousMsgs));
-            if (traceNote) {
-              messages.push({ role: 'system', content: traceNote });
-            }
+            // …except the work of a turn that did not finish. The trace note
+            // says "reuse these findings"; when the last turn was cut short by
+            // the round limit or the repeat guard, this one says its findings
+            // are not complete, so she neither presents them as settled nor
+            // starts over when asked to continue. Each is sent only when it
+            // has something to say.
+            const stoppedNote = formatStoppedTurnNote(previousMsgs);
+            messages.push(
+              ...[traceNote, stoppedNote].filter(Boolean).map((content) => ({ role: 'system' as const, content })),
+            );
           }
         } catch {
           /* fall through to client history */
         }
       }
+      // Client history carries role and content, not the metadata a stop is
+      // stored in: a turn served from it gets neither the trace note nor the
+      // stopped-turn note, so a capped predecessor is not named here (a known
+      // limit, handed on with row 74 — the client does not send it).
       if (!streamHistoryLoaded && conversation_history && Array.isArray(conversation_history)) {
         const MAX_HISTORY_MSGS = 20;
         const MAX_MSG_LENGTH = 50000;
-        for (const msg of conversation_history.slice(-MAX_HISTORY_MSGS)) {
-          if (!msg.role || !['user', 'assistant'].includes(msg.role)) continue;
-          if (typeof msg.content !== 'string' || msg.content.length > MAX_MSG_LENGTH) continue;
+        const clientTurns = conversation_history
+          .slice(-MAX_HISTORY_MSGS)
+          .filter((msg: any) => typeof msg?.content === 'string' && msg.content.length <= MAX_MSG_LENGTH);
+        for (const msg of recentTurns(clientTurns, MAX_HISTORY_MSGS)) {
           messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
           streamPriorTurns += 1;
         }
@@ -1244,16 +1374,52 @@ export function mountStreamRoute(router: Router): void {
         ? undefined
         : resolveApiEffort(effortUsed);
 
-      // Optional explicit model override. Validated against THIS tenant's enabled
-      // model set; an invalid / disabled / absent value is DROPPED SILENTLY and we
-      // fall back to the (effort-derived) strategy above. The override does not
-      // bypass governance — the gateway still enforces residency/ZDR placement.
-      // In deterministic mode (or any gateway substrate without a model registry)
-      // there is nothing to override against — pass an empty set so the override
-      // resolves to none and we fall back to the effort-derived strategy.
+      // Optional explicit model override, pinned only when it is governed:
+      // enabled in THIS tenant's model set, the registry row an approved-models
+      // entry (its id, provider and pinned version — CLAUDE.md Rule 2), and on
+      // high-risk work approved for high risk. `highRisk` is the gateway's own
+      // question (isHighRiskRequest), asked of the same taskType and riskTier
+      // this turn sends it below, and the approval is keyed to the row's
+      // registry id as the gateway's is, so a pin accepted here is not then
+      // refused by the gateway's high-risk check for the same row. A refused or
+      // absent value falls back to the (effort-derived) strategy or cost tier
+      // below — never a 4xx. That default is not itself checked against
+      // approved-models on normal-risk work (resolveTierModel matches enabled
+      // models only), which is why the warning does not call it governed.
+      //
+      // A refusal HERE is said: it used to be dropped silently, so a person who
+      // chose a model was answered by another under their choice. Two
+      // substitutions are still silent: the gateway drops a pin the tenant's
+      // placement (residency, ZDR, vendor allow-list) excludes and selects by
+      // strategy instead, and deterministic mode serves canned content whatever
+      // was pinned.
+      //
+      // The candidates are the registry's enabled models. In deterministic mode
+      // those are the models of whichever providers are configured (often none,
+      // so every override resolves to none); a substrate with no registry
+      // passes an empty set.
       const overrideCandidates =
         typeof gw.getModels === 'function' ? gw.getModels().filter(m => m.enabled) : [];
-      const resolvedOverride = resolveModelOverride(model_override, overrideCandidates);
+      const resolvedOverride = resolveModelOverride(model_override, overrideCandidates, {
+        highRisk: isHighRiskRequest(routingPlan.taskType, routingPlan.riskTier),
+      });
+      // Only when a model was named: most turns carry no override at all, and a
+      // non-string or blank value is not "the model you chose". Present tense:
+      // this is written before any model is called, and the default can fail.
+      if (
+        !resolvedOverride &&
+        typeof model_override === 'string' &&
+        model_override.trim() !== '' &&
+        !res.writableEnded
+      ) {
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'warning',
+            code: 'MODEL_OVERRIDE_REFUSED',
+            message: 'The model you chose is not available or approved for this work, so AnA is answering with the default model.',
+          })}\n\n`
+        );
+      }
 
       // Substantive-turn signal — drives BOTH the reasoning depth and the cost
       // tier below, computed once so they agree.
@@ -1297,7 +1463,8 @@ export function mountStreamRoute(router: Router): void {
       // than a string. They used to be concatenated onto the tool-result user
       // message, which put a human's redirect in the same turn as tool output
       // — the untrusted half of the transcript — with nothing to tell the two
-      // apart. See services/ana/operator-channel.ts.
+      // apart. See services/ana/operator-channel.ts. Screen reports ride the
+      // same channel, framed as the app's observation (buildScreenReportTurn).
       let pendingOperatorTurns: GatewayMessage[] = [];
       // Structured record of the tools run this turn (persisted on the assistant
       // message's metadata for cross-turn memory; see tool-trace.ts).
@@ -1330,16 +1497,28 @@ export function mountStreamRoute(router: Router): void {
       // turns them into `actionType: 'navigate'` chips on `post_done`, which is the
       // only path from a model decision to a screen change — see
       // services/ana-ri/navigation-actions.ts for why it is tool-driven and offered
-      // rather than performed.
+      // rather than performed. A move past the Live Drive budget is held in
+      // unappliedNavigation below instead.
       const collectedNavigation: NavigationDirective[] = [];
       // Validated surface-action directives from `act_on_screen` this turn —
       // same carrier contract: offered as chips by post-processing, applied
-      // live under Drive within the mode's action budget.
+      // live under Drive within the mode's action budget (past it, held in
+      // unappliedSurfaceActions below).
       const collectedSurfaceActions: SurfaceActionDirective[] = [];
       // Demonstrations fetched WITHOUT Live Drive this turn — the moves can only
       // be offered, so the start itself is offered as a chip that runs the same
       // one-click start as the rail's Control menu (navigation-actions.ts).
       const collectedDemoStarts: DemoStartDirective[] = [];
+      // Live Drive: the moves the turn's budget stopped from being made, in the
+      // order AnA resolved them. They are held apart from the two lists above
+      // (which then hold only moves that were applied, or offered because the
+      // turn does not drive) so post-processing can put them AHEAD of those in
+      // the chip list. Appended behind, they fell past the chip cap — the cap
+      // equals the assist budget, so every applied move had already filled it —
+      // and the person was left with nothing to press for the one move AnA
+      // told them was "offered as a chip".
+      const unappliedNavigation: NavigationDirective[] = [];
+      const unappliedSurfaceActions: SurfaceActionDirective[] = [];
       // Live Drive: how many directives were emitted for immediate application
       // this turn, per kind. Budgets come from the shared per-mode policy
       // (assist = the chip budget, so driving can never move a person more
@@ -1352,6 +1531,13 @@ export function mountStreamRoute(router: Router): void {
       };
       let driveNavigationsApplied = 0;
       let driveActionsApplied = 0;
+      /* The moves emitted since the last round boundary that the screen has not
+         yet settled, id → what the move was (for the model, if it never does).
+         Filled only when the client said it reports every move (`drive_acks`):
+         the checkpoint waits on this set, and a client that never answers must
+         not stall each round to the ceiling. */
+      const driveAcks = drive_acks === true;
+      const awaitingMoves = new Map<string, string>();
       // Document drafts emitted this turn — persisted to the governed artifact
       // version history (concept2cure_artifacts / _artifact_versions) by
       // post-processing so Document Studio version history survives the session.
@@ -1411,9 +1597,6 @@ export function mountStreamRoute(router: Router): void {
         governedTools,
         typeof message === 'string' ? message : '',
         {
-          // A driving turn MUST be offered the self-drive tools whatever the
-          // message's wording scores — a demo ask like "run the sales demo"
-          // must never lose navigate_to/act_on_screen to relevance trimming.
           pinned: [
             ...(Array.isArray(selected_tools)
               ? selected_tools.filter((t: unknown): t is string => typeof t === 'string')
@@ -1421,16 +1604,15 @@ export function mountStreamRoute(router: Router): void {
             // An @app mention names a capability; operating it needs the
             // self-drive tools whatever the wording scores.
             ...invokedAppPins(message),
-            ...(driveState.enabled
-              ? [
-                  'list_app_screens',
-                  'navigate_to',
-                  'list_screen_actions',
-                  'act_on_screen',
-                  'list_demo_scripts',
-                  'start_product_demo',
-                ]
-              : []),
+            // Every turn here is offered the self-drive tools whatever the
+            // message's wording scores — a demo ask like "run the sales demo"
+            // must never lose navigate_to/act_on_screen to relevance trimming.
+            // Pinned whether or not this turn drives: with Live Drive off the
+            // moves become chips under the answer, which this route renders,
+            // so she still needs the tools to offer them. They are pinned HERE
+            // rather than always-on because voice and deep investigations
+            // share the selector and can do neither (tool-selection.ts).
+            ...SELF_DRIVE_TOOLS,
           ],
           context: {
             projectType: asStr(submission_type),
@@ -1543,6 +1725,7 @@ export function mountStreamRoute(router: Router): void {
       // chain another step (extract structure → search → compare versions) or
       // produce a grounded answer. Bounded + thrash-resistant; the loop core is
       // unit-tested independently of the gateway and this SSE transport.
+      lastFinishReason = gwResponse.finishReason;
       const streamToolUses = (gwResponse as AnaGatewayResponse).toolUses;
       if (streamToolUses && streamToolUses.length > 0) {
         const toToolCall = (c: {
@@ -1574,6 +1757,10 @@ export function mountStreamRoute(router: Router): void {
         const emitControl = (obj: Record<string, unknown>) => {
           if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
         };
+
+        /** One hold per turn: the checkpoint's pause wait (run-hold.ts). None without a run row. */
+        const runHold =
+          runId && runHandle ? streamRunHold({ runId, handle: runHandle, runOrgId, res, emit: emitControl }) : null;
 
         /**
          * Settle every tool call in this round that a person has to authorise.
@@ -1801,6 +1988,10 @@ export function mountStreamRoute(router: Router): void {
                 type: 'tool_use',
                 round,
                 name: toolUse.name,
+                // The call's own id, so the client pairs each result with the
+                // call that produced it. Several calls of one tool run in the
+                // same step, so a name cannot tell them apart (see tool_result).
+                toolUseId: toolUse.id,
                 label: describeToolPlan([toolUse])[0].label,
                 input: toolUse.input,
               })}\n\n`
@@ -1934,20 +2125,31 @@ export function mountStreamRoute(router: Router): void {
           /* The model reads `entries`, not the stream. A directive the drive
              budget stops from being applied must not reach it as "being applied
              now": the screen will not move, and she would narrate a move that
-             did not happen. It is offered as a chip instead, and she is told. */
+             did not happen. It is offered as a chip instead, and she is told.
+
+             `offered` is decided by the caller from how many moves are already
+             waiting ahead of this one. Unapplied moves lead the chip list, so
+             while fewer than the cap are waiting this one is certain to get a
+             chip (or already has one, if she repeated a move). Past that it may
+             not, and she is told so rather than promised a button that the cap
+             then drops. */
           const amendForModel = (
             toolUseId: string,
             parsedResult: Record<string, unknown> | null,
-            kind: 'navigation' | 'action'
+            kind: 'navigation' | 'action',
+            offered: boolean
           ) => {
             const entry = entries.find(e => e.tool_use_id === toolUseId);
             if (!entry || !parsedResult) return;
             entry.content = JSON.stringify({
               ...parsedResult,
               applied: false,
-              instruction:
-                `This turn's ${kind} budget is used up, so this ${kind} was NOT made on their screen — ` +
-                'it is offered as a one-click chip under your answer. Say so plainly and do not narrate it as done.',
+              instruction: offered
+                ? `This turn's ${kind} budget is used up, so this ${kind} was NOT made on their screen — ` +
+                  'it is offered as a one-click chip under your answer. Say so plainly and do not narrate it as done.'
+                : `This turn's ${kind} budget is used up, so this ${kind} was NOT made on their screen, and ` +
+                  'there is no room left to offer it as a chip either. Say plainly that you could not make it, ' +
+                  'and do not narrate it as done.',
             });
           };
           const roundFailures: FailedToolCall[] = [];
@@ -2000,6 +2202,12 @@ export function mountStreamRoute(router: Router): void {
                 type: 'tool_result',
                 round,
                 name: toolUse.name,
+                /* Pairing key. Results are emitted in CALL order (mapWithConcurrency
+                   fills results[i] by input index), and the client used to match
+                   the most recent running call of the same name — so two
+                   same-named calls in one step were swapped every time, each
+                   query shown against the other's results. The id ends that. */
+                toolUseId: toolUse.id,
                 label: stepLabel,
                 status: toolStatus,
                 latencyMs,
@@ -2031,11 +2239,19 @@ export function mountStreamRoute(router: Router): void {
                 // (unknown id, missing param) yields null and never becomes one.
                 const directive = directiveFromToolResult(toolUse.name, resultStr);
                 if (directive) {
-                  collectedNavigation.push(directive);
                   // Past the turn's budget the move is NOT applied — say so to
-                  // the model instead of the handler's "being applied now".
+                  // the model instead of the handler's "being applied now", and
+                  // hold it for the front of the chip list.
                   if (driveState.enabled && driveNavigationsApplied >= driveBudget.navigations) {
-                    amendForModel(toolUse.id, parsed, 'navigation');
+                    amendForModel(
+                      toolUse.id,
+                      parsed,
+                      'navigation',
+                      unappliedNavigation.length < MAX_NAVIGATION_ACTIONS
+                    );
+                    unappliedNavigation.push(directive);
+                  } else {
+                    collectedNavigation.push(directive);
                   }
                   // Live Drive: the person opted in and is entitled, so the
                   // directive is ALSO emitted now for immediate application —
@@ -2044,8 +2260,9 @@ export function mountStreamRoute(router: Router): void {
                   if (driveState.enabled && driveNavigationsApplied < driveBudget.navigations) {
                     driveNavigationsApplied += 1;
                     res.write(
-                      `data: ${JSON.stringify(buildDriveNavigationEvent(directive, round))}\n\n`
+                      `data: ${JSON.stringify(buildDriveNavigationEvent(directive, round, toolUse.id))}\n\n`
                     );
+                    if (driveAcks) awaitingMoves.set(toolUse.id, `opening the ${directive.label} screen`);
                     auditDriveNavigation(
                       {
                         organizationId: orgId,
@@ -2067,15 +2284,28 @@ export function mountStreamRoute(router: Router): void {
                 // performs through a handler the mounted surface registered.
                 const actionDirective = surfaceActionFromToolResult(toolUse.name, resultStr);
                 if (actionDirective) {
-                  collectedSurfaceActions.push(actionDirective);
                   if (driveState.enabled && driveActionsApplied >= driveBudget.actions) {
-                    amendForModel(toolUse.id, parsed, 'action');
+                    amendForModel(
+                      toolUse.id,
+                      parsed,
+                      'action',
+                      unappliedSurfaceActions.length < MAX_NAVIGATION_ACTIONS
+                    );
+                    unappliedSurfaceActions.push(actionDirective);
+                  } else {
+                    collectedSurfaceActions.push(actionDirective);
                   }
                   if (driveState.enabled && driveActionsApplied < driveBudget.actions) {
                     driveActionsApplied += 1;
                     res.write(
-                      `data: ${JSON.stringify(buildDriveActionEvent(actionDirective, round))}\n\n`
+                      `data: ${JSON.stringify(buildDriveActionEvent(actionDirective, round, toolUse.id))}\n\n`
                     );
+                    if (driveAcks) {
+                      awaitingMoves.set(
+                        toolUse.id,
+                        `"${actionDirective.label}" on the ${actionDirective.surfaceId} screen`
+                      );
+                    }
                     auditDriveAction(
                       {
                         organizationId: orgId,
@@ -2106,10 +2336,19 @@ export function mountStreamRoute(router: Router): void {
                 ) {
                   driveState = { ...driveState, mode: 'demo' };
                   driveBudget = driveBudgetFor('demo');
-                  res.write(`data: ${JSON.stringify(buildDriveStateEvent(driveState))}\n\n`);
+                  // Marked `promoted`. Unmarked, this second drive_state was
+                  // indistinguishable from the turn-start one, and the client
+                  // read it as a fresh enable — re-arming a drive the person
+                  // had taken over or switched off moments earlier. It is a
+                  // mode change for a drive already running, and says so. The
+                  // turn-start event above never carries the flag.
+                  res.write(
+                    `data: ${JSON.stringify({ ...buildDriveStateEvent(driveState), promoted: true })}\n\n`
+                  );
                   pendingOperatorTurns.push({
                     role: 'system',
                     inlineSystem: true,
+                    foldLabel: 'Operator instruction',
                     content: buildLiveDrivePromptBlock('demo').trim(),
                   });
                 }
@@ -2291,6 +2530,7 @@ export function mountStreamRoute(router: Router): void {
           round: number,
           includeTools: boolean
         ): Promise<ModelTurn> => {
+          await settleMoves(round);
           stageRound(results, priorText, round);
 
           // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
@@ -2359,10 +2599,14 @@ export function mountStreamRoute(router: Router): void {
                 }
                 return;
               }
+              // A round's words start their own paragraph. A model ends a note
+              // without a line break, and the next round's first words ran
+              // straight on from it: "…on screen.Stop 2: …".
+              const shown = roundText ? chunk : asParagraph(fullContent, chunk);
               roundText += chunk;
-              fullContent += chunk;
-              turnRecorder?.appendStreamed(chunk);
-              res.write(`data: ${JSON.stringify({ type: 'text', content: chunk })}\n\n`);
+              fullContent += shown;
+              turnRecorder?.appendStreamed(shown);
+              res.write(`data: ${JSON.stringify({ type: 'text', content: shown })}\n\n`);
             },
             callerModule: 'ana-ri-stream-followup',
           });
@@ -2374,6 +2618,7 @@ export function mountStreamRoute(router: Router): void {
             res.write(`data: ${JSON.stringify({ type: 'text', content: roundText })}\n\n`);
           }
           recordCacheUsage(roundResponse);
+          lastFinishReason = roundResponse.finishReason;
           emitServerToolSteps(roundResponse, round);
           recordServerToolEvidence(roundResponse);
           lastServedModel = servedModelOf(roundResponse);
@@ -2397,55 +2642,25 @@ export function mountStreamRoute(router: Router): void {
         // by the control endpoint at the moment of acceptance, so a crash of
         // this process cannot lose a human decision; what happens below is only
         // telling the client what the server did.
-        let pauseAnnounced = false;
-        const checkpoint = async (upcomingRound: number): Promise<'continue' | 'abort'> => {
-          if (!runId || !runHandle) return 'continue';
-          if (runHandle.cancelSignal.aborted) {
-            emitControl({ type: 'cancelled', round: upcomingRound });
-            return 'abort';
-          }
-          heartbeatRound = upcomingRound;
-          void runHandle.heartbeat(upcomingRound);
 
-          // Pause: hold at the round boundary until resumed / cancelled. The
-          // wait is woken by the control write (NOTIFY, or directly when the
-          // control landed on this instance) rather than by a 200ms poll; the
-          // timeout is only a ceiling on how long a missed wake can stall it.
-          const WAKE_CEILING_MS = 5_000;
-          const pauseStart = Date.now();
-          let status = await readStatus(getPool(), runId);
-          while (status === 'paused') {
-            if (!pauseAnnounced) {
-              emitControl({ type: 'paused', round: upcomingRound });
-              pauseAnnounced = true;
+        /* Splice drained queue entries into the next model turn, and return the
+           steers among them for the caller to announce once it knows the run
+           was not cancelled (see the `interjected` note in the checkpoint). */
+        const spliceQueued = (entries: RunQueueEntry[]): string[] => {
+          const steers: string[] = [];
+          for (const queued of entries) {
+            // A landing only settles its move (settleMoves); nothing to read.
+            if (queued.kind === 'move_landed') continue;
+            if (queued.kind === 'screen_report') {
+              // What the APP saw on the person's screen — a move that did not
+              // land. Framed as an observation, and never announced as
+              // `interjected`: the client renders that as "You steered AnA:",
+              // and the person steered nothing.
+              const report = buildScreenReportTurn(queued.text);
+              if (report) pendingOperatorTurns.push(report);
+              continue;
             }
-            if (res.writableEnded) {
-              await stopRunInternally(getPool(), runId, 'client_disconnected', runOrgId ?? undefined);
-              break;
-            }
-            if (Date.now() - pauseStart > MAX_PAUSE_MS) {
-              // Nobody came back. Resuming is a server decision, so it is
-              // recorded as one — no control event, attributed to no user.
-              await resumeAbandonedRun(getPool(), runId);
-              // Take the new status with us. Breaking on the stale 'paused'
-              // skipped the `resumed` emit below, leaving the client showing
-              // Paused for a run that was already working again.
-              status = 'running';
-              break;
-            }
-            await runHandle.wake(WAKE_CEILING_MS);
-            status = await readStatus(getPool(), runId);
-          }
-          if (pauseAnnounced && status === 'running') {
-            emitControl({ type: 'resumed', round: upcomingRound });
-            pauseAnnounced = false;
-          }
-
-          // Steers: splice each queued redirect into the next model turn. The
-          // drain is atomic, so a steer cannot be applied twice.
-          const drainedSteers: string[] = [];
-          for (const inj of await consumeInterjections(getPool(), runId)) {
-            const framed = buildSteerMessage(inj);
+            const framed = buildSteerMessage(queued.text);
             if (framed) {
               pendingOperatorTurns.push({
                 role: 'system',
@@ -2458,10 +2673,75 @@ export function mountStreamRoute(router: Router): void {
                 content: framed,
               });
             }
-            drainedSteers.push(inj);
+            steers.push(queued.text);
           }
+          return steers;
+        };
 
-          if (runHandle.cancelSignal.aborted || status === 'cancelled') {
+        /* Before she writes the round that follows her moves, wait for the
+           screen to settle every one of them — landed, or refused with the
+           screen's own reason — bounded by MOVE_SETTLE_MAX_MS.
+
+           The model call used to follow the tool results at once. A move takes
+           the screen a moment (a navigation waits for its screen, an operation
+           for its data), so the report of one that failed arrived while she
+           was already writing, was read by no round, and she told the person
+           she had searched a vault that showed nothing, or opened a document
+           that did not open. Called from callModel, not the checkpoint: the
+           loop runs the checkpoint BEFORE a round's tools, so a wait there
+           came one answer too late.
+
+           Everything drained while waiting is spliced here, in order — a steer
+           typed in the meantime reaches this round rather than being lost. */
+        const settleMoves = async (round: number): Promise<void> => {
+          if (!runId || !runHandle || awaitingMoves.size === 0) return;
+          const WAKE_CEILING_MS = 5_000;
+          const drained: RunQueueEntry[] = [];
+          const settleStart = Date.now();
+          for (;;) {
+            for (const queued of await consumeInterjections(getPool(), runId)) {
+              if (queued.moveId) awaitingMoves.delete(queued.moveId);
+              drained.push(queued);
+            }
+            if (awaitingMoves.size === 0 || runHandle.cancelSignal.aborted || res.writableEnded) break;
+            const left = MOVE_SETTLE_MAX_MS - (Date.now() - settleStart);
+            if (left <= 0) break;
+            await runHandle.wake(Math.min(left, WAKE_CEILING_MS));
+          }
+          const steers = spliceQueued(drained);
+          if (awaitingMoves.size > 0) {
+            // Not confirmed in time — said as that, never as done. One that
+            // settles later is read by a later round.
+            const note = buildUnconfirmedMovesTurn([...awaitingMoves.values()]);
+            if (note) pendingOperatorTurns.push(note);
+          }
+          awaitingMoves.clear();
+          if (!runHandle.cancelSignal.aborted) {
+            for (const inj of steers) emitControl({ type: 'interjected', round, message: inj });
+          }
+        };
+
+        const checkpoint = async (upcomingRound: number): Promise<'continue' | 'abort'> => {
+          if (!runId || !runHandle || !runHold) return 'continue';
+          if (runHandle.cancelSignal.aborted) {
+            emitControl({ type: 'cancelled', round: upcomingRound });
+            return 'abort';
+          }
+          heartbeatRound = upcomingRound;
+          void runHandle.heartbeat(upcomingRound);
+
+          // Pause: hold at the round boundary until resumed / cancelled. The
+          // wait — woken by the control write, announced once as paused and
+          // once as resumed, resumed as abandoned past MAX_PAUSE_MS — is the
+          // turn's shared hold (services/ana/run-hold.ts), where it moved.
+          const held = await runHold.hold(upcomingRound);
+
+          // Steers and screen reports: splice each into the next model turn.
+          // The drain is atomic and covers both, so neither can be applied
+          // twice.
+          const drainedSteers = spliceQueued(await consumeInterjections(getPool(), runId));
+
+          if (runHandle.cancelSignal.aborted || held === 'cancelled') {
             emitControl({ type: 'cancelled', round: upcomingRound });
             return 'abort';
           }
@@ -2515,7 +2795,11 @@ export function mountStreamRoute(router: Router): void {
           }
         );
         loopStoppedReason = loopResult.stoppedReason;
+        loopRounds = loopResult.rounds;
       }
+      // The answer she was writing was cut off — the length limit, or a stream
+      // that stalled mid-answer: the turn did not finish, whatever the loop saw.
+      loopStoppedReason = turnEndingReason(loopStoppedReason, lastFinishReason);
 
       // RIM interception moved to the background post-processing block below,
       // so it scans the *cleaned* content (guidance/command blocks stripped) and
@@ -2592,6 +2876,15 @@ export function mountStreamRoute(router: Router): void {
           latencyMs: gwResponse.latencyMs,
           response: fullContent || undefined,
           telemetry: streamTelemetry,
+          // Why the loop stopped and how many tool rounds it ran. Until these
+          // were sent, a turn the round cap or the repeat guard cut short was
+          // indistinguishable on the client from one she finished: the work
+          // panel said "Finished in" and the transcript showed an ordinary
+          // answer. `runPolicy` is reserved for the run-policy work (row 74)
+          // and is null until a turn can carry one. Additive fields.
+          stoppedReason: loopStoppedReason,
+          rounds: loopRounds,
+          runPolicy: null,
         })}\n\n`
       );
 
@@ -2612,6 +2905,13 @@ export function mountStreamRoute(router: Router): void {
       turnRecorder?.setModel({ provider: gwResponse.provider, model: gwResponse.model, effort: effortUsed });
       turnRecorder?.setReasoning(fullThinking);
       turnRecorder?.setAnswer({ streamed: fullContent });
+      // A turn whose loop did not end by her choice says so in its record. The
+      // answer the record holds was forced from the work so far (round limit,
+      // repeat guard) or the run was stopped between rounds; an inspector
+      // reading the record must not take it for a concluded analysis.
+      if (loopStoppedReason !== 'no_more_tools') {
+        turnRecorder?.warn(turnStopWarning(loopStoppedReason, loopRounds));
+      }
       void runStreamPostProcessing({
         res,
         fullContent,
@@ -2627,10 +2927,17 @@ export function mountStreamRoute(router: Router): void {
         reasoning: fullThinking,
         humanControls: await readControlEvents(),
         plan: lastPlan,
+        stoppedReason: loopStoppedReason,
+        rounds: loopRounds,
         toolEvidenceCorpus,
         collectedProvenance,
-        collectedNavigation,
-        collectedSurfaceActions,
+        // The moves Live Drive could not make lead, so they are the chips the
+        // cap keeps; the one chip derivation (toNavigationActions and its
+        // siblings) then dedupes, so a move that was both applied and later
+        // re-requested past the budget is offered once. A turn that does not
+        // drive has nothing unapplied and reaches the same derivation unchanged.
+        collectedNavigation: [...unappliedNavigation, ...collectedNavigation],
+        collectedSurfaceActions: [...unappliedSurfaceActions, ...collectedSurfaceActions],
         collectedDemoStarts,
         collectedDrafts,
         messages,
@@ -2735,18 +3042,39 @@ export function mountStreamRoute(router: Router): void {
    *                       watching the run continue.
    *   a settled run       409, as before.
    *
-   * Body: { action: 'pause' | 'resume' | 'interject' | 'cancel', message?: string }
+   * `screen_report` rides this endpoint but is not a human control. It is what
+   * the app observed on the person's screen mid-turn (a move that did not
+   * land), sent so AnA can say so. It passes the same ownership and live-run
+   * checks — the report must come from the run's own user, and a settled run
+   * refuses it — but it is queued as an observation: no control event in the
+   * lineage, no "You steered AnA", and a paused run stays paused. It used to be
+   * sent as `interject`, which recorded the app's words as the person's.
+   *
+   * `move_landed` is the same kind of thing: the app confirming that the move
+   * the server sent as `moveId` has landed on the screen, so the checkpoint can
+   * stop waiting for it. A `screen_report` may carry the `moveId` it is about.
+   *
+   * Body: { action: 'pause' | 'resume' | 'interject' | 'cancel' | 'screen_report' | 'move_landed',
+   *         message?: string, moveId?: string }
+   *   — message required for interject and screen_report; moveId for move_landed
    */
   router.post('/stream/:runId/control', async (req: Request, res: Response) => {
     const runId = String(req.params.runId);
     const action = String(req.body?.action || '');
     const message = typeof req.body?.message === 'string' ? req.body.message : undefined;
+    const moveId = readMoveId(req.body?.moveId);
 
-    if (!['pause', 'resume', 'interject', 'cancel'].includes(action)) {
+    if (!['pause', 'resume', 'interject', 'cancel', 'screen_report', 'move_landed'].includes(action)) {
       return res.status(400).json({ ok: false, error: `Unknown control action: ${action}` });
     }
-    if (action === 'interject' && !message?.trim()) {
-      return res.status(400).json({ ok: false, error: 'interject requires a non-empty message' });
+    if ((action === 'interject' || action === 'screen_report') && !message?.trim()) {
+      return res.status(400).json({ ok: false, error: `${action} requires a non-empty message` });
+    }
+    if (req.body?.moveId !== undefined && !moveId) {
+      return res.status(400).json({ ok: false, error: 'moveId is not a move id' });
+    }
+    if (action === 'move_landed' && !moveId) {
+      return res.status(400).json({ ok: false, error: 'move_landed requires a moveId' });
     }
 
     // resolveOrgId, not extractRequestContext: the canonical resolver, and the
@@ -2762,8 +3090,9 @@ export function mountStreamRoute(router: Router): void {
       runId,
       organizationId,
       userId: resolveUserId(req),
-      action: action as 'pause' | 'resume' | 'interject' | 'cancel',
+      action: action as 'pause' | 'resume' | 'interject' | 'cancel' | 'screen_report' | 'move_landed',
       message,
+      ...(moveId ? { moveId } : {}),
     });
 
     if (!result.ok) {

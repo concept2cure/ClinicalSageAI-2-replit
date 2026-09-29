@@ -28,6 +28,12 @@ const { connect } = vi.hoisted(() => {
           ? { rows: [{ result_id: 'r-1', study_id: 'st-1', value: '1.0', unit: 'mg', pass: true, remarks: null }], rowCount: 1 }
           : { rows: [], rowCount: 0 };
       }
+      // A real UPDATE … RETURNING hands back the row as it now stands.
+      if (/^\s*update/i.test(sql) && /returning/i.test(sql)) {
+        return state.owned
+          ? { rows: [{ result_id: 'r-1', study_id: 'st-1', value: String(params[2] ?? '1.0'), unit: 'mg', pass: true, remarks: params[5] ?? null }], rowCount: 1 }
+          : { rows: [], rowCount: 0 };
+      }
       if (/^\s*(update|delete)/i.test(sql)) return { rows: [], rowCount: state.owned ? 1 : 0 };
       return { rows: [], rowCount: 0 };
     },
@@ -78,6 +84,8 @@ describe('PATCH /results/:resultId', () => {
     const payload = JSON.parse(String(audits()[0].params[3]));
     expect(payload.previous).toMatchObject({ value: '1.0', unit: 'mg' });
     expect(payload.changes).toMatchObject({ value: '1.2', remarks: 'reassayed' });
+    // What the row became, as the database returned it (added 2026-09-23).
+    expect(payload.after).toMatchObject({ value: '1.2', remarks: 'reassayed' });
     const h = heads();
     expect(h.indexOf('BEGIN')).toBeLessThan(h.indexOf('UPDATE STAB_RESULTS'));
     expect(h.indexOf('UPDATE STAB_RESULTS')).toBeLessThan(h.indexOf('INSERT INTO'));

@@ -26,6 +26,13 @@ vi.mock('../../report-os/canvas/definition-service.js', () => ({
   listDefinitions: vi.fn(async () => []),
 }));
 
+// 2026-09-28: a confirmed write now runs only for an editor role (writeRoleRefusal,
+// after the confirmation gate). user 2 here is a member who may edit; the role is
+// stubbed so no DB is needed. The refusal is pinned in confirmed-write-role-gate.test.ts.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({ resolveSignerOrgRole: vi.fn(async () => 'member') }));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { classifyToolCall } from '../governed-tool-gate.js';
 import { toolAuthorizationOf } from '../tool-authorization.js';
 import { getToolHandler } from '../AnaToolExecutor.js';
@@ -68,7 +75,10 @@ describe('the tool gate puts each one to a person', () => {
 describe('the registry refuses to run one no person confirmed', () => {
   const input = { title: 'Q3 readiness', panels: [{ report_type_id: 'readiness', scope_type: 'program' }] };
 
-  beforeEach(() => createDefinition.mockClear());
+  beforeEach(() => {
+    createDefinition.mockClear();
+    resolveSignerOrgRole.mockClear();
+  });
 
   it('on a path that cannot ask, the handler answers with a proposal and writes nothing', async () => {
     const out = JSON.parse(await getToolHandler('save_report_definition')!(input, { organizationId: 1, userId: 2 }));
@@ -77,6 +87,8 @@ describe('the registry refuses to run one no person confirmed', () => {
       data: { tier: 'confirm', retry: { command: 'save_report_definition', params: input } },
     });
     expect(createDefinition).not.toHaveBeenCalled();
+    // The confirmation gate answers first; the role is not even read.
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('once a person has confirmed, it runs', async () => {

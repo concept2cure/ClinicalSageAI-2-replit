@@ -293,8 +293,8 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!loading && !error && !empty) notifySurfaceActionReady('program-journey');
-  }, [loading, error, empty]);
+    if (!loading) notifySurfaceActionReady('program-journey');
+  }, [loading]);
 
   /* WHAT ANA SEES HERE — published above the honest-state early returns so one
      call covers every branch. Two never-fabricate rules this surface holds: no

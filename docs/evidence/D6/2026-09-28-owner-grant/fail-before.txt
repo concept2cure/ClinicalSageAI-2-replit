@@ -1,0 +1,18 @@
+== owner43 — BEFORE (upstream sources):
+ × server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > a support designation opens the console and is not the owner
+ × server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > fails CLOSED when the owner lookup throws — a database error is not a grant
+ × server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > fails CLOSED when the platform lookup throws, and never asks the owner lookup
+ × server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > loses the grant at once when the last platform standing is revoked — no window
+ × server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveAdminStanding — the owner grant never exceeds platform administration > an allowlisted address the platform guard refuses is not the owner, and is not looked up
+ × server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveAdminStanding — the owner grant never exceeds platform administration > a federated session carrying the allowlisted address is not the owner, even as staff
+ × server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveAdminStanding — the owner grant never exceeds platform administration > never answers masterAdmin without platformAdmin, across every combination of signals
+ × module-subscriptions-platform-admin.test.ts > GET /navigation — the owner grant never exceeds platform administration (finding 43) > an address on MASTER_ADMIN_EMAILS alone is not the owner: both answers say no
+ × server/services/entitlements/__tests__/master-admin.test.ts > masterAdminEmails — the allowlist > is empty when MASTER_ADMIN_EMAILS is unset — no address is the owner by default
+ × server/services/entitlements/__tests__/master-admin.test.ts > masterAdminEmails — the allowlist > is empty when the value is blank or whitespace-only
+ × server/services/entitlements/__tests__/master-admin.test.ts > masterAdminEmails — the allowlist > names no address in the source: the owner is configuration, not code
+ × server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — email signal > does not match a federated (SAML) session: its e-mail is the identity provider's word
+ × server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdmin(req) — the request adapter > reads the session provider the authenticator recorded, and refuses a federated e-mail
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  13 failed | 34 passed (47)
+== owner43 — AFTER (fixed sources):
+      Tests  47 passed (47)

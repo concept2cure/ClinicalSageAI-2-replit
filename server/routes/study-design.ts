@@ -38,6 +38,8 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 import {
   validateDesign,
   simulateTrial,
@@ -69,8 +71,13 @@ import {
 } from '../services/study-design';
 import { burdenProfileForDesign } from '../services/study-design/burden-adapters';
 import { compareBurden } from '../services/study-design/burden-delta';
+import { DESIGN_ENGINES } from '../services/protocol-development/protocol-industry-service';
+import { assessSpiritConformance } from '../services/study-design/spirit-conformance';
+import { recordPlanningInput } from './study-design-planning';
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const router = Router();
+const logger = createScopedLogger('study-design');
 
 // ─── Request context helpers (polymorphic per the auth middleware) ────────────
 
@@ -423,6 +430,16 @@ projectionPost('eligibility', 'eligibility', d => eligibilityResponse(d));
 projectionPost('registration', 'registration', (d, req) =>
   registrationResponse(d, req.body?.registry ?? req.query.registry));
 
+// The protocol industry-gap engines (docs/design/PROTOCOL_INDUSTRY_GAPS.md):
+// trial schema, CtQ factors, USDM export, DCT profile, WHO TRDS. One map, owned
+// by protocol-industry-service.ts, drives these routes AND AnA's tools, so the
+// path, the response key and the engine cannot drift apart. SPIRIT is here
+// design-only — its document-evidenced rows come back not_assessable, never
+// missing; the protocol-scoped read with sections is
+// GET /api/protocol-development/documents/:id/spirit.
+for (const [path, project] of Object.entries(DESIGN_ENGINES)) projectionPost(path, path, (d) => project(d));
+projectionPost('spirit', 'spirit', (d) => ({ spirit: assessSpiritConformance(d) }));
+
 // ─── POST /registry-filing ────────────────────────────────────────────────────
 //
 // Its own handler rather than a `projectionPost`, because the context and the placements are
@@ -480,8 +497,11 @@ router.post('/burden/compare', (req: Request, res: Response) => {
 
 
 // ─── POST /persist (governed mutation) ────────────────────────────────────────
+//
+// Writes are gated per route: the router is mounted behind authMiddleware
+// only, and its POST projections are reads a viewer may use.
 
-router.post('/persist', async (req: Request, res: Response) => {
+router.post('/persist', requireEditorAccess, async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   const orgId = resolveOrgId(req);
   if (!userId || !orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
@@ -521,8 +541,7 @@ router.post('/persist', async (req: Request, res: Response) => {
     if (err instanceof StudyDesignPersistRefusal) {
       return res.status(STUDY_DESIGN_REFUSAL_STATUS[err.code]).json({ error: err.code, detail: err.message });
     }
-    console.error('[study-design/persist]', err?.message);
-    return res.status(500).json({ error: 'PERSIST_FAILED', detail: err?.message });
+    return serverError(res, logger, 'saving the study design', err);
   } finally {
     client.release();
   }
@@ -557,6 +576,8 @@ projectionRoute('eligibility', 'eligibility-load', d => eligibilityResponse(d));
 projectionRoute('registration', 'registration-load', (d, req) => registrationResponse(d, req.query.registry));
 projectionRoute('registry-filing', 'registry-filing-load', (d, req) =>
   registryFilingResponse(d, req.query.registry, filingContextFromQuery(req.query), []));
+for (const [path, project] of Object.entries(DESIGN_ENGINES)) projectionRoute(path, `${path}-load`, (d) => project(d));
+projectionRoute('spirit', 'spirit-load', (d) => ({ spirit: assessSpiritConformance(d) }));
 
 // ─── GET /:studyId (load) ─────────────────────────────────────────────────────
 
@@ -574,14 +595,26 @@ router.get('/:studyId', async (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /:studyId/planning (governed partial write) ────────────────────────
+//
+// One block of sponsor planning inputs; the handler and its contract are in
+// study-design-planning.ts. Gated here, because this router's POST projections
+// are reads a viewer may use.
+
+router.post('/:studyId/planning', requireEditorAccess, recordPlanningInput);
+
 // ─── DELETE /:studyId (governed mutation) ─────────────────────────────────────
 
-router.delete('/:studyId', async (req: Request, res: Response) => {
+router.delete('/:studyId', requireEditorAccess, async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   const orgId = resolveOrgId(req);
   if (!userId || !orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
   const studyId = String(req.params.studyId);
-  const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : 'Deleted study design';
+  // The caller's reason, never one supplied for them: a governed delete says why.
+  const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+  if (reason.length < 8) {
+    return res.status(400).json({ error: 'REASON_REQUIRED', detail: 'Provide a reason of at least 8 characters.' });
+  }
 
   const client = await pool.connect();
   try {
@@ -600,8 +633,7 @@ router.delete('/:studyId', async (req: Request, res: Response) => {
     return res.json({ deleted: studyId, ...gov });
   } catch (err: any) {
     await client.query('ROLLBACK').catch(() => undefined);
-    console.error('[study-design/delete]', err?.message);
-    return res.status(500).json({ error: 'DELETE_FAILED', detail: err?.message });
+    return serverError(res, logger, 'deleting the study design', err);
   } finally {
     client.release();
   }

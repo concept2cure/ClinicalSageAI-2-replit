@@ -473,6 +473,10 @@ import {
 // deterministic verdict engines. Handlers live in AnaToolExecutor.ts beside the
 // other protocol-development handlers.
 import { PROTOCOL_DESIGN_TOOLS } from './protocol-design-tool-defs.js';
+// Tier 1 of docs/design/PROTOCOL_INDUSTRY_GAPS.md: trial schema, SPIRIT, CtQ, USDM,
+// DCT profile, WHO ICTRP, deviation trends, redline; Tier 2 dose escalation, enrollment, interim OC, MMRM,
+// external control, multiplicity; Tier 3 biospecimens, master protocol. All read-only.
+import { PROTOCOL_INDUSTRY_TOOLS } from './protocol-industry-tool-defs.js';
 import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC, IVD_KNOWLEDGE_TOOL_SPEC } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
@@ -1321,8 +1325,9 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
         description:
           'List of eCTD leaves. Each leaf is { ctd_section, operation, source_path, file_name, title, modified_file }. ' +
           'new / append / replace leaves carry the file to ship in source_path. A delete (withdrawal) ships no content: ' +
-          'omit source_path and give modified_file, the withdrawn leaf\'s path in the prior sequence (e.g. ../0000/m3/3-2-s-2/file.pdf). ' +
-          'replace / append also take modified_file, pointing at the filed leaf they act on. ' +
+          'omit source_path and give modified_file, which names the withdrawn leaf by the prior sequence\'s backbone and that leaf\'s ID ' +
+          '(e.g. ../0000/index.xml#leaf-3-2-S-2-file, the ID as that sequence\'s leaf manifest recorded it; never a file path). ' +
+          'replace / append in a follow-up sequence also require modified_file, naming the filed leaf they act on the same way. ' +
           'Sequence 0000 cannot carry a delete: nothing is on file to withdraw.',
         items: {
           type: 'object',
@@ -1332,7 +1337,7 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
             source_path:   { type: 'string', description: 'The file to ship. Required for new / append / replace; must be omitted for delete.' },
             file_name:     { type: 'string' },
             title:         { type: 'string' },
-            modified_file: { type: 'string', description: 'Path, from this sequence root, of the filed leaf this one acts on (e.g. ../0000/m3/3-2-s-2/file.pdf). Required for every delete (a delete in sequence 0000 is refused).' },
+            modified_file: { type: 'string', description: 'The filed leaf this one acts on, from this sequence root: the prior sequence\'s backbone, \'#\', and the leaf ID it recorded (e.g. ../0000/index.xml#leaf-3-2-S-2-file, or ../0000/m1/us/us-regional.xml#leaf-1-2-cover for Module 1). Never a file path. Required for every delete, and for a replace / append after 0000 (a delete in sequence 0000 is refused).' },
           },
           required: ['ctd_section', 'operation', 'file_name', 'title'],
         },
@@ -2713,6 +2718,8 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   // Protocol ⇄ study-design loop: bind, review the derivation, apply accepted
   // paths, read the rule pack and the design gates. See protocol-design-tool-defs.ts.
   ...PROTOCOL_DESIGN_TOOLS,
+  // The sixteen industry-gap engines, reached read-only. See protocol-industry-tool-defs.ts.
+  ...PROTOCOL_INDUSTRY_TOOLS,
 ];
 
 // Defensive registry guard: v2's cdiscTools.ts currently re-registers

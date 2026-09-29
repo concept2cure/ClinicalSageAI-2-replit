@@ -12,13 +12,28 @@
  *   the gate the live chat stream consults to hold the turn and ask.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// 2026-09-28: a confirmed write now also needs an editor role, read from
+// organization_users (writeRoleRefusal, after preHandlerRefusal). user 2 is a
+// member by default; the ordering cases below set other roles.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { getToolHandler, registerToolHandler } from '../AnaToolExecutor.js';
 import { classifyToolCall } from '../governed-tool-gate.js';
 
 const CTX = { organizationId: 1, userId: 2 };
 const run = async (tool: string, input: Record<string, unknown>, ctx: Record<string, unknown> = CTX) =>
   JSON.parse(await getToolHandler(tool)!(input, ctx as any));
+
+beforeEach(() => {
+  resolveSignerOrgRole.mockClear();
+  resolveSignerOrgRole.mockImplementation(async () => 'member');
+});
 
 describe('the registry wrapper', () => {
   it('a write the scanner took for a read is proposed, not run', async () => {
@@ -64,6 +79,34 @@ describe('the registry wrapper', () => {
     it('never takes the confirmation from what the model wrote', async () => {
       probe.mockClear();
       await run('zz_unclassified_probe', { a: 1, humanConfirmed: true, confirm: true });
+      expect(probe).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('the role check comes after the confirmation and act refusals (2026-09-28)', () => {
+    const signal = { program_id: '00000000-0000-4000-8000-000000000001', signal_type: 'kri_breach', title: 'Site 12 AE lag' };
+
+    it('an unconfirmed write by a viewer is still a proposal — the role is not read', async () => {
+      resolveSignerOrgRole.mockImplementation(async () => 'viewer');
+      expect(await run('raise_monitoring_signal', signal)).toMatchObject({ error: 'HUMAN_CONFIRMATION_REQUIRED' });
+      expect(resolveSignerOrgRole).not.toHaveBeenCalled();
+    });
+
+    it("a person's own act is refused as such for a viewer too — the role is not read", async () => {
+      resolveSignerOrgRole.mockImplementation(async () => 'viewer');
+      const out = await run('cast_committee_vote', { agenda_item_id: 4, member_id: 9, vote: 'approve' }, { ...CTX, humanConfirmed: true });
+      expect(out).toMatchObject({ error: 'NOT_AN_ANA_ACTION' });
+      expect(resolveSignerOrgRole).not.toHaveBeenCalled();
+    });
+
+    it('a confirmed write by a viewer is refused for its role, and the handler does not run', async () => {
+      const probe = vi.fn(async () => JSON.stringify({ ok: true }));
+      registerToolHandler('zz_unclassified_role_probe', probe);
+      resolveSignerOrgRole.mockImplementation(async () => 'viewer');
+      const out = await run('zz_unclassified_role_probe', { a: 1 }, { ...CTX, humanConfirmed: true });
+      expect(out.error).toMatch(/editor role/);
+      expect(out.error).toMatch(/Nothing was changed/);
+      expect(resolveSignerOrgRole).toHaveBeenCalledWith(2, 1);
       expect(probe).not.toHaveBeenCalled();
     });
   });

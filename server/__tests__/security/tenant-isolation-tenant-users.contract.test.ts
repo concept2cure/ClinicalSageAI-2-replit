@@ -71,11 +71,10 @@ async function fakeQuery(sql: string, params: unknown[] = []) {
   if (/SELECT COUNT\(\*\) as count FROM organization_users WHERE organization_id/i.test(sql)) {
     return { rows: [{ count: '1' }] };
   }
-  // invite dedupe: look up an existing user by email
-  if (/SELECT id FROM users WHERE email/i.test(sql)) {
-    return {
-      rows: dbState.existingUserIdByEmail ? [{ id: dbState.existingUserIdByEmail }] : [],
-    };
+  // invite dedupe: does this address already have an account? One row, the id
+  // or null (public.user_id_for_email — the id is all that crosses tenants).
+  if (/SELECT public\.user_id_for_email\(\$1\) AS id/i.test(sql)) {
+    return { rows: [{ id: dbState.existingUserIdByEmail ?? null }] };
   }
   // invite dedupe: is the invited user already in the target org?
   if (/SELECT id FROM organization_users WHERE user_id/i.test(sql)) {
@@ -85,21 +84,39 @@ async function fakeQuery(sql: string, params: unknown[] = []) {
   if (/SELECT id FROM organization_invitations/i.test(sql)) {
     return { rows: [] };
   }
-  // load an invitation by id (accept/decline paths)
+  // the invitee's own invitations, whichever organization issued them
+  // (public.invitations_for_member: the named user's only, and in SQL only for
+  // a member of the calling scope's organization); optionally one by id
+  if (/FROM public\.invitations_for_member\(\$1\)/i.test(sql)) {
+    const inv = dbState.invitation;
+    const mine = inv && Number(inv.user_id) === Number(params[0]) ? [inv] : [];
+    return {
+      rows: params.length > 1 ? mine.filter(i => Number(i.id) === Number(params[1])) : mine,
+    };
+  }
+  // the decline, written in the inviting organization's scope, reaches its row
+  if (/UPDATE organization_invitations\s+SET status = 'declined'/i.test(sql)) {
+    return { rows: [], rowCount: 1 };
+  }
+  // load an invitation by id (the accept transaction, in the inviting org's scope)
   if (/FROM organization_invitations\s+WHERE id = \$1/i.test(sql)) {
     return { rows: dbState.invitation ? [dbState.invitation] : [] };
   }
   if (/INSERT INTO organization_invitations/i.test(sql)) {
     return { rows: [{ id: 501 }] };
   }
-  // new-user creation path returns the created id
-  if (/INSERT INTO users/i.test(sql)) {
+  // new-user creation path: the id is drawn from the sequence first (RETURNING
+  // is held to the users SELECT policy), then inserted explicitly
+  if (/SELECT nextval\(pg_get_serial_sequence\('public\.users', 'id'\)\)/i.test(sql)) {
     return { rows: [{ id: 88 }] };
+  }
+  if (/INSERT INTO users/i.test(sql)) {
+    return { rows: [], rowCount: 1 };
   }
   // invitation issuance: storing the activation token hash on the user row
   if (/UPDATE users SET reset_token/i.test(sql)) {
     if (dbState.tokenStoreFails) throw new Error('connection terminated');
-    return { rows: [] };
+    return { rows: [], rowCount: 1 };
   }
   // invitation issuance: the organization's display name for the email
   if (/SELECT name FROM organizations WHERE id/i.test(sql)) {
@@ -382,11 +399,12 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
   it('GET /invitations/mine — lists only the caller-scoped pending invitations (200)', async () => {
     await request(app).get('/api/tenant-users/invitations/mine').expect(200);
 
-    const selects = executedMatching(/FROM organization_invitations/i);
+    // The invitations live in the inviting organizations' rows, so they are
+    // read through invitations_for_member, keyed on the session user's id.
+    const selects = executedMatching(/FROM public\.invitations_for_member\(\$1\)/i);
     expect(selects.length).toBe(1);
-    // self-only: scoped to the session user's id
-    expect(selects[0].sql).toMatch(/user_id = \$1/i);
     expect(selects[0].params).toEqual([1]);
+    expect(executedMatching(/FROM organization_invitations/i)).toEqual([]);
   });
 
   it('POST /invitations/:id/accept — the invited user accepting creates the membership and marks accepted (200)', async () => {
@@ -418,10 +436,12 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
     ).toBe(1);
   });
 
-  it("POST /invitations/:id/accept — a stranger cannot accept someone else's invitation (403)", async () => {
+  // 404, not 403: the lookup finds only the caller's own invitations, so
+  // another person's is not disclosed to exist (D3, 2026-09-28).
+  it("POST /invitations/:id/accept — a stranger cannot accept someone else's invitation (404)", async () => {
     dbState.invitation = { ...pendingInvitation(), user_id: 2 }; // invited user is NOT the caller
 
-    await request(app).post('/api/tenant-users/invitations/5/accept').expect(403);
+    await request(app).post('/api/tenant-users/invitations/5/accept').expect(404);
 
     expect(executedMatching(/INSERT INTO organization_users/i).length).toBe(0);
     expect(
@@ -429,10 +449,10 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
     ).toBe(0);
   });
 
-  it("POST /invitations/:id/decline — a stranger cannot decline someone else's invitation (403)", async () => {
+  it("POST /invitations/:id/decline — a stranger cannot decline someone else's invitation (404)", async () => {
     dbState.invitation = { ...pendingInvitation(), user_id: 2 };
 
-    await request(app).post('/api/tenant-users/invitations/5/decline').expect(403);
+    await request(app).post('/api/tenant-users/invitations/5/decline').expect(404);
 
     expect(
       executedMatching(/UPDATE organization_invitations\s+SET status = 'declined'/i).length

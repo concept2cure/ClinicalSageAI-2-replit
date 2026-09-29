@@ -1,0 +1,331 @@
+{
+ "capturedAt": "2026-09-29",
+ "head": "2a2a25ba5",
+ "account": "jm.smith@concept2cure.pro (org admin, demo org with the C2C-101 IND)",
+ "surfaces": {
+  "projects": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Projects",
+   "bodyLen": 611,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "project-home": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Project home",
+   "bodyLen": 354,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "program-journey": {
+   "errorText": [],
+   "alerts": [],
+   "title": "",
+   "bodyLen": 449,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "filings-catalog": {
+   "errorText": [],
+   "alerts": [],
+   "title": "What are you filing?",
+   "bodyLen": 3572,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "tasks": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Task board",
+   "bodyLen": 658,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "vault": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Vault (DMS)",
+   "bodyLen": 1034,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "artifacts-center": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Artifacts center",
+   "bodyLen": 786,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "document-authoring": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Summary of nonclinical data",
+   "bodyLen": 2572,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "template-library": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Template library",
+   "bodyLen": 725,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "review": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Review & approval",
+   "bodyLen": 2967,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "regulatory-workspace": {
+   "errorText": [],
+   "alerts": [],
+   "title": "",
+   "bodyLen": 434,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "protocol-dev": {
+   "errorText": [],
+   "alerts": [],
+   "title": "[Demo \u00b7 Biotech] Protocol C2C-101-201 \u2014 Phase 2 dose-ranging study of C2C-101 in",
+   "bodyLen": 2068,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "submission-center": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Submission center",
+   "bodyLen": 1790,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "dossier-map": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Dossier map",
+   "bodyLen": 522,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "ectd-compile": {
+   "errorText": [],
+   "alerts": [],
+   "title": "",
+   "bodyLen": 378,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "ectd-coauthor": {
+   "errorText": [],
+   "alerts": [],
+   "title": "",
+   "bodyLen": 1010,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "ectd-publishing": {
+   "errorText": [],
+   "alerts": [],
+   "title": "",
+   "bodyLen": 7954,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "gateway-transmittals": {
+   "errorText": [],
+   "alerts": [],
+   "title": "",
+   "bodyLen": 1022,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "dispatch-readiness": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Cleared to dispatch?",
+   "bodyLen": 523,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "quality": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Quality system",
+   "bodyLen": 2776,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "qmp": {
+   "errorText": [],
+   "alerts": [],
+   "title": "",
+   "bodyLen": 394,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "home": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Good morning, JM",
+   "bodyLen": 477,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "apps": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Apps catalog",
+   "bodyLen": 18937,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "conversation-thread": {
+   "errorText": [],
+   "alerts": [],
+   "title": "",
+   "bodyLen": 868,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "ana-command": {
+   "errorText": [],
+   "alerts": [],
+   "title": "What AnA is on top of",
+   "bodyLen": 1851,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "ana-memory": {
+   "errorText": [],
+   "alerts": [],
+   "title": "",
+   "bodyLen": 383,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "audit-trail": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Audit trail",
+   "bodyLen": 25500,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "part11-console": {
+   "errorText": [],
+   "alerts": [],
+   "title": "",
+   "bodyLen": 3581,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "admin-console": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Admin and access",
+   "bodyLen": 3399,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "setup": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Setup",
+   "bodyLen": 1702,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "onboarding": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Set up your workspace",
+   "bodyLen": 924,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "onboarding-ingest": {
+   "errorText": [],
+   "alerts": [],
+   "title": "",
+   "bodyLen": 490,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "billing": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Usage & billing",
+   "bodyLen": 624,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "usage": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Usage & billing",
+   "bodyLen": 905,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "licensing": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Plans & licensing",
+   "bodyLen": 1833,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "master-licensing": {
+   "errorText": [
+    "/couldn.t load/i"
+   ],
+   "alerts": [
+    "Couldn't load the licensing model\nMaster Administration access is restricted to platform administrators.\nTry again"
+   ],
+   "title": "Licensing",
+   "bodyLen": 963,
+   "apiFailures": [
+    "403 /api/admin/master/licensing",
+    "403 /api/admin/master/licensing"
+   ],
+   "exceptions": []
+  },
+  "access-requests": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Access requests",
+   "bodyLen": 691,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "training": {
+   "errorText": [],
+   "alerts": [],
+   "title": "Training & enablement",
+   "bodyLen": 704,
+   "apiFailures": [],
+   "exceptions": []
+  },
+  "identity-console": {
+   "errorText": [],
+   "alerts": [],
+   "title": "",
+   "bodyLen": 422,
+   "apiFailures": [
+    "403 /api/admin/scim-tenants",
+    "403 /api/admin/scim-ip-allowlist",
+    "403 /api/admin/scim-tenants",
+    "403 /api/admin/scim-ip-allowlist"
+   ],
+   "exceptions": []
+  }
+ }
+}

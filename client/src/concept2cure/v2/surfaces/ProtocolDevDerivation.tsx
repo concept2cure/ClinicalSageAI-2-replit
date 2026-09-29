@@ -85,15 +85,21 @@ function refusal(body: unknown, status: number): string {
   return obj?.message || obj?.code || `HTTP ${status}`;
 }
 
-function asDerivation(raw: unknown): DesignDerivationView {
-  const d = (raw ?? {}) as Partial<DesignDerivationView>;
-  return {
-    proposed: Array.isArray(d.proposed) ? d.proposed : [],
-    conflicts: Array.isArray(d.conflicts) ? d.conflicts : [],
-    unchanged: Array.isArray(d.unchanged) ? d.unchanged : [],
-    unevidenced: Array.isArray(d.unevidenced) ? d.unevidenced : [],
-    incomplete: Array.isArray(d.incomplete) ? d.incomplete : [],
-  };
+/**
+ * The engine's five buckets, or null when the body is not a derivation.
+ *
+ * Every bucket used to default to [] when absent, so a 200 that was not a
+ * derivation ({}, an envelope, an error on a 200, a bucket null) was drawn as
+ * five "Nothing in this bucket." panels: nothing proposed, nothing
+ * conflicting, nothing incomplete, from a read that failed. Five arrays, even
+ * five empty ones, is a derivation; anything else is a failed read (periodic
+ * review 2026-09-28, editor family, HS-C-3).
+ */
+function asDerivation(raw: unknown): DesignDerivationView | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const d = raw as Partial<Record<keyof DesignDerivationView, unknown>>;
+  const buckets = [d.proposed, d.conflicts, d.unchanged, d.unevidenced, d.incomplete];
+  return buckets.every(Array.isArray) ? (raw as DesignDerivationView) : null;
 }
 
 async function loadDerivation(documentId: number): Promise<LoadState> {
@@ -101,11 +107,9 @@ async function loadDerivation(documentId: number): Promise<LoadState> {
   const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
   if (res.status === 409) return { kind: 'unbound', message: refusal(json, res.status) };
   if (!res.ok || !json) return { kind: 'failed', message: refusal(json, res.status) };
-  return {
-    kind: 'ready',
-    studyDesignId: String(json.studyDesignId ?? ''),
-    derivation: asDerivation(json.derivation),
-  };
+  const derivation = asDerivation(json.derivation);
+  if (!derivation) return { kind: 'failed', message: 'The server answered without a derivation.' };
+  return { kind: 'ready', studyDesignId: String(json.studyDesignId ?? ''), derivation };
 }
 
 /* ── Value and provenance rendering ────────────────────────────────────────── */
@@ -395,7 +399,16 @@ export function DerivationTab({ doc, canWrite, onChanged, onError, onToast }: De
     const list = Array.isArray(body.applied) ? (body.applied as string[]) : [];
     const rejected = Array.isArray(body.rejected) ? (body.rejected as ApplyOutcome['rejected']) : [];
     setOutcome({ applied: list, rejected });
-    setState((s) => (s.kind === 'ready' ? { ...s, derivation: asDerivation(body.derivation) } : s));
+    /* The write's answer carries the re-derived buckets. Without them the
+       diff on screen is the pre-write one, and five empty buckets would be a
+       claim nobody computed; say the re-read failed instead (HS-C-3). */
+    const next = asDerivation(body.derivation);
+    setState((s) => {
+      if (s.kind !== 'ready') return s;
+      return next
+        ? { ...s, derivation: next }
+        : { kind: 'failed', message: 'The write was answered without the derivation it leaves, so the diff was not re-read.' };
+    });
     onToast?.(`${list.length} path(s) written to the design, ${rejected.length} refused. The write is in the audit trail.`);
     onChanged?.();
   };

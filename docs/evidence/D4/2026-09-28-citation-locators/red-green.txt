@@ -1,0 +1,56 @@
+-- Every citation this platform has exported carried no section and no page.
+
+-- ── RED ─────────────────────────────────────────────────────────────────────
+
+-- server/services/ana/citation-engine.ts looked the source atom up with:
+--   SELECT id, source_type, source_id, metadata
+--     FROM lumen_data_atoms
+--    WHERE id = ANY($1::uuid[])
+--
+-- Both halves are impossible against the deployed table. Run live:
+
+SELECT id, source_type, metadata FROM lumen_data_atoms LIMIT 1;
+ERROR:  column "metadata" does not exist
+
+SELECT id FROM lumen_data_atoms WHERE id = ANY(ARRAY['1']::uuid[]);
+ERROR:  invalid input syntax for type uuid: "1"
+
+-- The real shape:
+id:integer, organization_id:integer, source_type:text, source_id:text,
+atom_type:text, title:text, content:text, structured_data:json, tags:ARRAY,
+confidence:real, status:text, created_at, updated_at, embedding,
+embedding_model, embedding_updated_at
+
+-- The catch warns only on non-42P01 and returns an empty Map, so `atom` was
+-- ALWAYS undefined. Every citation got sectionCode null, pageRef null, and an
+-- artifactId that degraded to the raw vault chunk id -- the "opaque chunk ids"
+-- the engine's own comment says it exists to prevent. Those nulls freeze into
+-- the immutable ana_artifact_citation_runs row and export through
+-- GET /api/ana/citations/artifacts/:artifactId/export?format=csv as
+-- primarySourceSection / primarySourcePageRef.
+
+-- Same phantom column, three more places:
+--   knowledgeGraphService.ts:232 and :345 -- SELECT ... metadata FROM
+--     lumen_data_atoms. Nothing consumes it, so the column did not degrade a
+--     field, it failed the whole query.
+--   atomVersionService.ts:200 -- SELECT * then reads atom.metadata for the
+--     content hash. Always undefined, so two atoms differing only in their
+--     structured payload hashed identically and no version was cut.
+
+-- ── GREEN ───────────────────────────────────────────────────────────────────
+
+-- Both fixed shapes run clean against the real table:
+SELECT id, source_type, source_id, structured_data FROM lumen_data_atoms WHERE id = ANY(ARRAY[1,2]::int[]);
+SELECT id, title, content, atom_type, source_type, structured_data FROM lumen_data_atoms WHERE id = 1;
+-- (no ERROR)
+
+-- Gate, proved by restoring the original query:
+--   x never selects `metadata`, which is `structured_data`
+--   x never casts the atom id to uuid — it is an integer
+--   x selects only columns that exist
+--   Tests  3 failed (3)
+-- Restored: 3 passed.
+--
+-- It is a SOURCE test on purpose: ci:column-reachability parses statements it
+-- can see, and these are template literals inside service methods, which is
+-- how they survived that gate.

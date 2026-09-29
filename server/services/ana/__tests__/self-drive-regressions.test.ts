@@ -16,7 +16,10 @@
  *      tour was cut off partway.
  *   3. The offer. Over ~760 tools the relevance cap scored none of the
  *      self-drive tools for "go to biostatistics" or "show me around", so the
- *      model was never SHOWN navigate_to and answered in prose.
+ *      model was never SHOWN navigate_to and answered in prose. The first fix
+ *      made them always-on, which forced them onto voice and background deep
+ *      investigations too — callers that can move no screen and render no
+ *      chip. They are pinned by the callers that can surface a move instead.
  *   4. The handlers. Moves onto screens closed to this workspace; project
  *      screens opened with no program ("open a program" empty state); the
  *      program opened a moment ago forgotten by the next move; and a
@@ -24,34 +27,36 @@
  *
  * The DB is mocked at the pool: program resolution runs for real through
  * services/ana-ri/drive-context against rows scoped to ONE organisation, so a
- * handler that forgot the org id would find nothing rather than pass.
+ * handler that forgot the org id would find nothing rather than pass. The
+ * program reads are answered by support/program-table, which answers each by
+ * its WHERE clause the way the table would — drive-context matches a program
+ * in SQL, and a pool that handed back every row for any read would report a
+ * code that names one program as ambiguous between all of them.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const { pool } = vi.hoisted(() => {
-  // Organisation 5's programs. Any other organisation has none — the query is
-  // answered by the org id it is given, the same way the real WHERE clause is.
-  const ORG_PROGRAMS: Record<number, Array<{ id: string; name: string; code: string | null }>> = {
-    5: [
-      { id: 'prog-301', name: 'Bexarotene Phase 2', code: 'BX-301' },
-      { id: 'prog-302', name: 'Bexarotene Phase 3', code: 'BX-302' },
-      { id: 'prog-900', name: 'Cardiac Monitor', code: null },
-    ],
-  };
+const { pool, programReads } = vi.hoisted(() => {
+  // Bound below, once the table fake is imported: the pool is built before any
+  // import runs, and only calls it later.
+  const programReads: { answer: ProgramQuery | null } = { answer: null };
   const pool = {
     query: vi.fn(async (sql: unknown, params?: unknown[]) => {
       // Other modules touch the pool at load (config objects, not SQL text);
       // only the program read matters here.
       const text = typeof sql === 'string' ? sql : String((sql as { text?: unknown } | null)?.text ?? '');
       if (text.includes('FROM regulatory_programs')) {
-        return { rows: ORG_PROGRAMS[Number(params?.[0])] ?? [] };
+        if (!programReads.answer) throw new Error('program table not bound');
+        return programReads.answer(text, params ?? []);
       }
       return { rows: [] };
     }),
     connect: vi.fn(),
   };
-  return { pool };
+  return { pool, programReads };
 });
 
 vi.mock('../../../db.js', () => ({ getPool: () => pool, pool, db: {} }));
@@ -63,18 +68,22 @@ import {
   type ToolCall,
   type ToolResultEntry,
 } from '../agentic-loop.js';
-import { selectToolsForTurn } from '../tool-selection';
+import { selectToolsForTurn, ALWAYS_ON_TOOLS, SELF_DRIVE_TOOLS } from '../tool-selection';
 import { getAllEnabledTools } from '../AnaToolDefinitions.js';
 import { getToolHandler, type ToolContext } from '../AnaToolExecutor.js';
+import type { ProgramQuery } from '../../ana-ri/drive-context';
+import { programTable } from '../../ana-ri/__tests__/support/program-table';
 
-const SELF_DRIVE_TOOLS = [
-  'list_app_screens',
-  'navigate_to',
-  'list_screen_actions',
-  'act_on_screen',
-  'list_demo_scripts',
-  'start_product_demo',
-] as const;
+// Organisation 5's programs, most recently touched first. Any other
+// organisation has none — each read is answered by the org id it is given, the
+// same way the real WHERE clause is.
+programReads.answer = programTable(
+  [
+    { id: 'prog-301', name: 'Bexarotene Phase 2', code: 'BX-301' },
+    { id: 'prog-302', name: 'Bexarotene Phase 3', code: 'BX-302' },
+    { id: 'prog-900', name: 'Cardiac Monitor', code: null },
+  ].map((p, i, all) => ({ ...p, organization_id: 5, updated_at: all.length - i })),
+);
 
 async function call(tool: string, input: Record<string, unknown>, ctx?: ToolContext) {
   const handler = getToolHandler(tool);
@@ -184,10 +193,11 @@ describe('runAgenticToolLoop — maxRoundsFloor', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. The self-drive tools are offered whatever the wording
+// 3. The self-drive tools are offered whatever the wording — to the callers
+//    that can use them, and only to those
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('selectToolsForTurn — AnA always has her hands', () => {
+describe('selectToolsForTurn — AnA has her hands where a move can be made', () => {
   // The real surface, exactly what the stream route offers: every AnA tool plus
   // any enabled server tools. A synthetic list would sit under the cap and prove
   // nothing — the bug only exists when relevance filtering engages.
@@ -205,6 +215,12 @@ describe('selectToolsForTurn — AnA always has her hands', () => {
     expect(surface.length).toBeGreaterThan(50);
   });
 
+  it('names exactly the six tools that move and operate a screen', () => {
+    expect([...SELF_DRIVE_TOOLS].sort()).toEqual(
+      ['act_on_screen', 'list_app_screens', 'list_demo_scripts', 'list_screen_actions', 'navigate_to', 'start_product_demo'],
+    );
+  });
+
   it.each([
     'go to biostatistics',
     'open settings',
@@ -212,17 +228,51 @@ describe('selectToolsForTurn — AnA always has her hands', () => {
     'search the vault for stability',
     'switch to the billing tab',
     'run the sales demo',
-  ])('offers all six self-drive tools for "%s" with no pins', prompt => {
-    const offered = new Set(selectToolsForTurn(surface, prompt).map(t => t.name));
+  ])('a caller that pins SELF_DRIVE_TOOLS is offered all six for "%s"', prompt => {
+    // What the stream route and the chat route pass: every turn there can
+    // make the move live or offer it as a chip, so wording must not decide it.
+    const offered = new Set(selectToolsForTurn(surface, prompt, { pinned: [...SELF_DRIVE_TOOLS] }).map(t => t.name));
     const missing = SELF_DRIVE_TOOLS.filter(n => !offered.has(n));
     expect(missing, `not offered for "${prompt}" — AnA would answer in prose`).toEqual([]);
   });
 
-  it('offers them when the turn carries project context (IND)', () => {
+  it('pinned, they survive when the turn carries project context (IND)', () => {
     const offered = new Set(
-      selectToolsForTurn(surface, 'take me there', { context: { projectType: 'IND' } }).map(t => t.name),
+      selectToolsForTurn(surface, 'take me there', {
+        pinned: [...SELF_DRIVE_TOOLS],
+        context: { projectType: 'IND' },
+      }).map(t => t.name),
     );
     expect(SELF_DRIVE_TOOLS.filter(n => !offered.has(n))).toEqual([]);
+  });
+
+  it('none of them is always-on — voice and deep investigations cannot drive', () => {
+    // ALWAYS_ON_TOOLS reaches every selectToolsForTurn caller, including
+    // ana-realtime and deep-investigation, which can neither move a screen nor
+    // render a chip. A self-drive tool there is a move promised to nobody.
+    expect(SELF_DRIVE_TOOLS.filter(n => ALWAYS_ON_TOOLS.has(n))).toEqual([]);
+  });
+
+  it('a caller that pins nothing is not handed them for a turn with no screen in it', () => {
+    // The observable half of the line above, through the selector itself:
+    // an unrelated question with no pins gets no self-drive tool forced on it.
+    const offered = new Set(
+      selectToolsForTurn(surface, 'summarise the pharmacokinetic half-life findings').map(t => t.name),
+    );
+    expect(SELF_DRIVE_TOOLS.filter(n => offered.has(n))).toEqual([]);
+  });
+
+  it('both routes that can surface a move pin them', () => {
+    // The pin is the whole fix on the caller side; a route that forgets it is
+    // back to deciding AnA's hands by wording. Read from the shipped source,
+    // because the routes are too large to drive here.
+    const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
+    for (const route of ['server/routes/ana-ri/stream.ts', 'server/routes/chat/send-message.ts']) {
+      const src = readFileSync(path.join(repoRoot, route), 'utf8');
+      const call = src.slice(src.indexOf('selectToolsForTurn('));
+      const pinned = call.slice(call.indexOf('pinned:'), call.indexOf('context:'));
+      expect(pinned, `${route} does not pin the self-drive tools`).toMatch(/\.\.\.SELF_DRIVE_TOOLS/);
+    }
   });
 });
 

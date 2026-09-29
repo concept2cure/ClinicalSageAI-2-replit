@@ -23,6 +23,9 @@
  */
 import React from 'react';
 import { useAuthUser } from '@/services/portal/authService';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
+import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
+import type { PdevSignatureFacet } from '../fixtures/protocol-data';
 import * as PG from './ProtocolGov';
 import { PaneHead, type PaneAction } from './ProtocolDevShared';
 import type { PdevFormKind, PdevFormTarget } from './ProtocolDevForms';
@@ -36,6 +39,69 @@ export interface ReviewPaneProps {
   onEdit?: (kind: PdevFormKind, target?: PdevFormTarget) => void;
 }
 
+/** The read model's facet, or null when it is missing or not one: a facet this
+ *  client cannot read is reported as unreadable, never as unsigned. */
+function facetOf(v: unknown): PdevSignatureFacet | null {
+  const f = v as { state?: unknown; signature?: unknown } | null | undefined;
+  if (f?.state === 'none' || f?.state === 'unavailable') return f as PdevSignatureFacet;
+  if ((f?.state === 'signed' || f?.state === 'revoked') && f.signature && typeof f.signature === 'object') return f as PdevSignatureFacet;
+  return null;
+}
+
+/**
+ * The §11.50 manifestation of one signed act, as its signature row records it:
+ * the printed name at signing, the meaning, the UTC time (periodic review
+ * 2026-09-28, editor family, P11-C-2). It was shown once, in the signing
+ * dialog, and then nowhere. `expected` is true when the record says the act
+ * happened (a recorded disposition, a finalized protocol), so a missing or
+ * unreadable signature is said rather than left silent. The protocol header
+ * uses the same line for the finalization.
+ */
+export function SignatureLine({ facet, expected, style }: { facet: unknown; expected: boolean; style?: React.CSSProperties }) {
+  const f = facetOf(facet);
+  if (!f || f.state === 'unavailable') {
+    return expected ? <span className="pde-review-meta" style={style}>The signature record could not be read.</span> : null;
+  }
+  if (f.state === 'none') {
+    return expected ? <span className="pde-review-meta" style={style}>No electronic signature is on record.</span> : null;
+  }
+  const s = f.signature;
+  return (
+    <span className="pde-review-meta" style={style}>
+      {f.state === 'revoked' ? 'Signature revoked · signed by ' : 'Signed by '}
+      <strong>{s.signerName || 'a signer with no printed name on record'}</strong>
+      {' as ' + signatureMeaningLabel(s.meaning) + ' · '}
+      <GovernedTimestamp value={s.signedAt} layout="inline" />
+      {s.recordedOnBehalfOf ? ' · recorded on behalf of ' + s.recordedOnBehalfOf : ''}
+    </span>
+  );
+}
+
+/** The disposition control: the signature on offer, or the signed state. */
+function DispositionAction({ name, signed, someoneElses, whyId, onSign }: {
+  name: string; signed: boolean; someoneElses: boolean; whyId: string; onSign: () => void;
+}) {
+  const who = name || 'this reviewer';
+  return (
+    <span className="pde-review-act">
+      {/* The visible label is short so the row stays one line; the
+          accessible name carries the reviewer, and contains the visible
+          text, so WCAG 2.5.3 (Label in Name) holds. */}
+      {signed ? (
+        <button type="button" className="pg-btn outline" aria-label={'Disposition signed for ' + who} disabled
+          title="A disposition is already signed for this review.">
+          <PG.Ic n="checkCircle" s={14} />Disposition signed
+        </button>
+      ) : (
+        <button type="button" className="pg-btn outline" aria-label={'Record disposition for ' + who} disabled={someoneElses}
+          aria-describedby={someoneElses ? whyId : undefined} onClick={onSign}>
+          <PG.Ic n="penLine" s={14} />Record disposition
+        </button>
+      )}
+    </span>
+  );
+}
+
 function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit'] }) {
   const name = str(r.reviewer);
   const disposition = str(r.disposition);
@@ -44,6 +110,15 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
   const me = Number(useAuthUser()?.id);
   // The server refuses anyone but the assigned user; say so before the click.
   const someoneElses = assignedTo !== null && Number.isFinite(me) && assignedTo !== me;
+  // The server's own test for a signed disposition (setDispositionTx), which
+  // refuses a second one. Offering it again spent the signer's password and
+  // code on a certain refusal (periodic review 2026-09-28, editor family, P11-C-4).
+  const signed = disposition !== '' || str(r.status) === 'completed';
+  /* 2026-09-28 · GA-7 (coverage-gap sweep): the reason lived only in the
+     disabled button's `title`, which a keyboard user cannot reach (a disabled
+     button takes no focus) and most screen readers do not announce. It is now
+     visible text on the row, and the button is described by it. */
+  const whyId = React.useId();
   return (
     <div className="pde-review-row">
       <span className="pde-review-name">{name || 'Unnamed reviewer'}</span>
@@ -52,28 +127,16 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
         {str(r.role) ? PG.labelize(str(r.role)) : 'No review role recorded'}
         {due ? ' · due ' + due : ' · no due date'}
         {disposition ? ' · ' + PG.labelize(disposition) : ' · no disposition recorded'}
+        {someoneElses && !signed && <>{' · '}<span id={whyId}>Assigned to another user. Only they can sign this disposition.</span></>}
       </span>
       {onEdit && (
-        <span className="pde-review-act">
-          {/* The visible label is short so the row stays one line; the
-              accessible name carries the reviewer, and contains the visible
-              text, so WCAG 2.5.3 (Label in Name) holds. */}
-          <button
-            type="button"
-            className="pg-btn outline"
-            aria-label={'Record disposition for ' + (name || 'this reviewer')}
-            disabled={someoneElses}
-            title={someoneElses ? 'Assigned to another user. Only they can sign this disposition.' : undefined}
-            onClick={() => onEdit('review-disposition', {
-              id: Number(r.id), label: name,
-              defaults: disposition ? { disposition } : undefined,
-              reviewerUserId: assignedTo,
-            })}
-          >
-            <PG.Ic n="penLine" s={14} />Record disposition
-          </button>
-        </span>
+        <DispositionAction
+          name={name} signed={signed} someoneElses={someoneElses} whyId={whyId}
+          onSign={() => onEdit('review-disposition', { id: Number(r.id), label: name, reviewerUserId: assignedTo })}
+        />
       )}
+      {/* Its own line under the row: who signed, not who was assigned. */}
+      <SignatureLine facet={r.signature} expected={signed} style={{ flexBasis: '100%' }} />
     </div>
   );
 }

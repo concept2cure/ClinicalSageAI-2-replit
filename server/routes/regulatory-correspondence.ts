@@ -410,7 +410,7 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
   try {
     const { hasUnresolvedGovernedDecisions } = await import('../services/governed-decision-repository.js');
     const unresolvedCheck = await hasUnresolvedGovernedDecisions(
-      Number(upd.rows[0].project_id),
+      String(upd.rows[0].project_id ?? ''),
       orgId
     );
     if (unresolvedCheck.hasUnresolved) {
@@ -429,7 +429,7 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
         await recordTransitionEvent({
           decisionId: 'correspondence-lifecycle-gate',
           organizationId: orgId,
-          projectId: Number(upd.rows[0].project_id),
+          projectRef: String(upd.rows[0].project_id ?? ''),
           fromState: 'unknown',
           toState: lifecycleState,
           action: 'correspondence_lifecycle_gate',

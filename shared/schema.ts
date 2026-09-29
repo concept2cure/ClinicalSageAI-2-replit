@@ -7702,7 +7702,9 @@ export const crossModuleTaskLinks = pgTable(
     // Metadata
     metadata: json('metadata'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
+    // No updated_at (removed 2026-09-23): no applier creates the column, and
+    // Drizzle names every modelled column in INSERT … RETURNING, so declaring
+    // it made every link fail on a migration-built database. Nothing reads it.
   },
   table => ({
     sourceIdx: index('link_source_idx').on(table.sourceTaskId),

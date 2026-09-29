@@ -98,8 +98,8 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!live.loading && !live.error) notifySurfaceActionReady('shadow-review');
-  }, [live.loading, live.error]);
+    if (!live.loading) notifySurfaceActionReady('shadow-review');
+  }, [live.loading]);
 
   const rowByLens = useMemo(() => {
     const map: Record<string, ShadowLensRow> = {};

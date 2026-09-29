@@ -62,8 +62,15 @@ describe('what the register says about specific tools', () => {
     ['cast_committee_vote', 'refuse'],
     ['ack_training', 'refuse'],
     ['approve_qms_document', 'refuse'],
-    // Reasoned and audited in its handler; a person's yes on top (see the register).
-    ['retire_qms_document', 'confirm'],
+    // 2026-09-28 (Q-0928-1 / SEC-0928-1): pinned 'confirm' until today, on the
+    // ground that its handler asked for a reason and wrote a governed action. A
+    // reason is not a signature: the route retires only through the approve
+    // ceremony (password + second factor + electronic_signatures row). Refused
+    // exactly like approve_qms_document.
+    ['retire_qms_document', 'refuse'],
+    // Opening a revision is not a signature; a person's yes, and the handler
+    // checks the caller's org role (Q-0928-2).
+    ['revise_qms_document', 'confirm'],
     ['transmit_submission', 'refuse'],
     // Writes that read like reads — the scanner's misses, found by tracing.
     ['raise_monitoring_signal', 'confirm'],

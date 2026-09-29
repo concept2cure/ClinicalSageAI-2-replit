@@ -1,0 +1,21 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 .
+ × tests/routes/ana-models-endpoint.test.ts > GET /api/claude/models > returns only enabled, approved models with derived label + recommendedEffort 26ms
+   → expected [ 'claude-opus-4', …(2) ] to not include 'claude-sonnet-4'
+ ✓ tests/routes/ana-models-endpoint.test.ts > GET /api/claude/models > includes effortLevels + defaultEffort 5ms
+ ✓ tests/routes/ana-models-endpoint.test.ts > GET /api/claude/models > preserves the frameworks array and the {success,data} envelope 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/routes/ana-models-endpoint.test.ts > GET /api/claude/models > returns only enabled, approved models with derived label + recommendedEffort
+AssertionError: expected [ 'claude-opus-4', …(2) ] to not include 'claude-sonnet-4'
+ ❯ tests/routes/ana-models-endpoint.test.ts:109:21
+    107|     expect(ids).toContain('claude-haiku-4');
+    108|     expect(ids).not.toContain('disabled-model'); // enabled-filtered
+    109|     expect(ids).not.toContain('claude-sonnet-4'); // enabled, but its …
+       |                     ^
+    110|
+    111|     const opus = models.find((m) => m.id === 'claude-opus-4')!;
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  17:40:19
+   Duration  1.83s (transform 834ms, setup 75ms, import 1.55s, tests 39ms, environment 0ms)

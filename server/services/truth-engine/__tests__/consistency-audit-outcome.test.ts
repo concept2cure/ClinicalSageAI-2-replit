@@ -41,6 +41,13 @@ vi.mock('../../../db', () => {
   return { db: { select, insert }, pool: {}, getPool: () => ({}) };
 });
 
+// 2026-09-28: a confirm-class tool now runs only for a caller with an editor role
+// (writeRoleRefusal, read via resolveSignerOrgRole over drizzle, which this db stub
+// does not model). The check_consistency case below is a member's confirmed call.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({ resolveSignerOrgRole: vi.fn(async () => 'member') }));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { runConsistencyCheck } from '../truth-engine-service';
 
 const lost = { persisted: false, chained: false, tamperProof: false, error: 'relation "audit_logs" is unavailable' };

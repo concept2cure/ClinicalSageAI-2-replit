@@ -34,6 +34,10 @@ import {
 import { getActorRole, getProjectScope, loadProjectAccessRow, normalizeProjectSettings, resolveClientWorkspaceId, verifyProjectAccess } from './project-access';
 
 const logger = createScopedLogger('concept2cure-project-knowledge');
+// People are named through public.actor_name, not a join on users: since users
+// took row-level security (D3, 2026-09-28) a tenant scope reads only current
+// members, so the join dropped the name of anyone who had left
+// (docs/evidence/D3/2026-09-29-actor-names/).
 const router = Router();
 
 // The same chain the main router applies, in the same order.
@@ -123,9 +127,9 @@ router.get(
       // Fetch from projectActivities table
       const activities = await pool.query(
         `SELECT pa.id, pa.activity_type, pa.entity_type, pa.entity_id, pa.description, pa.details, pa.created_at,
-              u.full_name as user_name, u.email as user_email
+              pa.user_id, u.name as user_name, u.email as user_email
        FROM project_activities pa
-       LEFT JOIN users u ON u.id = pa.user_id
+       LEFT JOIN LATERAL public.actor_name(pa.user_id) u ON TRUE
        WHERE pa.project_id = $1 AND pa.organization_id = $2
        ORDER BY pa.created_at DESC
        LIMIT $3`,
@@ -152,7 +156,7 @@ router.get(
           entityId: a.entity_id,
           description: a.description,
           details: a.details,
-          userName: a.user_name || a.user_email || 'System',
+          userName: a.user_name || a.user_email || (a.user_id != null ? `user ${a.user_id}` : 'System'),
           timestamp: a.created_at,
         })),
         ...recentArtifacts.rows.map((a: any) => ({

@@ -1,0 +1,64 @@
+# c2c_d3w, provisioned from blank by scripts/db/provision-test-db.sh AFTER the change (install-fresh, then one deploy-migrate)
+56:  ✓ child tables scoped to their tenant-keyed parents
+442:      [WARNING] [child-rls] drafting_tasks → regulatory_programs: key or tenant column type does not fit the integer-tenant predicate — policied by text comparison instead (key_cast=t, tenant_cast=f)
+443:      [NOTICE] [child-rls] drafting_tasks already policied — leaving it alone
+726:      [NOTICE] [users-membership-rls] tenant scopes reach their own members; pre-auth and system scopes the whole table
+728:      [NOTICE] [platform-role-grants-writes] reads open; grants written by the platform scope only
+808:✅ c2c_d3w provisioned — 1238 base tables
+
+       relname        | relrowsecurity | relforcerowsecurity |                                                                  policies                                                                   
+----------------------+----------------+---------------------+---------------------------------------------------------------------------------------------------------------------------------------------
+ drafting_tasks       | t              | t                   | tenant_isolation_policy
+ platform_role_grants | t              | t                   | platform_role_grants_platform_delete, platform_role_grants_platform_insert, platform_role_grants_platform_update, platform_role_grants_read
+ users                | t              | t                   | users_any_insert, users_member_delete, users_member_read, users_member_update
+(3 rows)
+
+## rls-coverage-check after the FIRST deploy:
+regulatory_harmonization.export_job_audit_log (child of regulatory_harmonization.export_jobs, row security off)
+(the pre-existing first-deploy item handed on to D3 on 2026-09-24 — docs/work-orders/README.md, 'Handed on by the install child-scope change', item 1: after install 0, after one deploy this 1, after two 0)
+
+## a second deploy-migrate:
+      [NOTICE] - export_job_audit_log (detailed job audit)
+      [NOTICE] [child-rls] regulatory_harmonization.export_job_audit_log scoped through regulatory_harmonization.export_jobs (chained)
+✅ Schema migration complete — safe to roll services.
+## rls-coverage-check after the second deploy: 0 row(s)
+
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > reads none of B's user rows, by id, by email, or by scanning 9ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > cannot rewrite B's password hash, MFA secret or reset token, nor delete B's user 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > reads its own organization's members, the caller included 2ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > updates its own member's profile 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > INSERT … RETURNING of a non-member is refused, so tenant-users takes the id first 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > user_id_for_email answers an existing account’s id, and nothing else 2ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > pre-auth: the sign-in lookup by email finds any tenant’s user, and writes it 5ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > system: SCIM and platform administration read and write every tenant’s users 4ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account 332ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of failing or duplicating it 18ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into 268ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd 11ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every non-public child the chained list names that exists ends up policied, enabled and FORCEd 7ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > chat_messages: each tenant sees its own row and not the other's 18ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_details: each tenant sees its own row and not the other's 11ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_sections: each tenant sees its own row and not the other's 12ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > rag_chunks: each tenant sees its own row and not the other's 10ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > complaints: each tenant sees its own row and not the other's 10ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > drafting_tasks: each tenant sees its own row and not the other's 10ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's 10ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's 9ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > c2c_document_section_versions: each tenant sees its own row and not the other's 15ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > leaves the three chained tables deny-all, deliberately and visibly 2ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > the policy is inert when enforcement is off, exactly like its siblings 2ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > positive control: the console refuses a plain member 68ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > cannot write its member a platform role, so the console never admits them 15ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > cannot reinstate, re-role or delete a grant 8ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > a tenant scope reads grants: the platform-admin check runs in the caller's own scope 2ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > the platform scope grants and revokes 5ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > a platform operator grants and revokes through the Access Management console 67ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > the drafting routes, positive control (D3) > A starts a task for its own program and reads it back 116ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > the drafting routes, positive control (D3) > the route refuses B's task and B's program to A's token 19ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > tenant A's scope cannot reach tenant B's drafts (D3) > reads none of B's drafting tasks, by id, by program, or by scanning the content 4ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > tenant A's scope cannot reach tenant B's drafts (D3) > cannot rewrite or delete B's draft 7ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > tenant A's scope cannot reach tenant B's drafts (D3) > cannot file a task under B's program, or under no program at all 4ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > what still reaches the drafts (D3) > A's scope reads and writes its own program's tasks 4ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > what still reaches the drafts (D3) > the platform scope reads every organization's tasks 2ms
+ Test Files  4 passed (4)
+      Tests  37 passed (37)

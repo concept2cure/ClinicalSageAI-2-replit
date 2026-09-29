@@ -1,0 +1,467 @@
+# RED re-record 2026-09-28, three parts. Trimmed to the per-test lines, each failure's first assertion and the summary; ANSI codes stripped.
+# Test-file sha256 (the tree's, see tree.sha256):
+#   eac3639ab5aba42a4e0ab24a32d2b67c7d9a4407460e098725c5a3bf4faee082  server/services/ana/__tests__/agentic-loop-rounds-control.test.ts
+#   0df7241c7305113f318917378ae1e618cda6ad959dac7cfccca1c6e2e69257f6  server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+#   9c532a54ceca9bba5cb0364c718c54b0939a8f0de57833343a9d567e03907440  server/services/ai-gateway/__tests__/model-call-scope.test.ts
+#   6697a3c16809bd9a975cdfd7a4d51b947fe956727d1556fd91ff6b9474d50504  server/services/ana/__tests__/tool-authorization-rule-zero.test.ts
+#   2a8ddc0bcb36497bbb40ad24f1f9c8f002cc1e0f68d8aaf8062d286dd8ac9c2d  server/services/ana/__tests__/run-hold.test.ts
+#   dbcd2387ff9711c6bce49e36dc78c750172d8aa74d83273f6bafe78431417b65  server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts
+#   2d32e43f4683bdcc1344f0423fc4751216f3a6fb494603d1ad29585c70b3bd22  server/routes/ana-ri/__tests__/stream-run-hold.test.ts
+#   a0631840066a3f7fdafbcfc1f91d310e8eda8ca753ecac8f8a3e701cc2baf3d6  server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts
+#   172b308880d12a3ebb83f9b2af38bafdc8adc029fc9c5b310d7393849968e6d2  server/services/ana/__tests__/project-knowledge-search-model-free.test.ts
+
+## Part A: the nine S3 test files AS THEY ARE IN THE TREE, against HEAD (b50d45577) for all eight S3-modified source files
+#   (each written with `git show HEAD:<path> > <path>`, restored from a byte backup afterwards and its sha256 re-checked; never git stash).
+#   Stubbed, because HEAD lacks them, and ONLY these (do-nothing bodies):
+#     - server/services/ana/run-hold.ts (new module): createRunHold whose hold() returns 'running' at once; RUN_HOLD_WAKE_CEILING_MS.
+#     - server/services/ai-gateway/model-call-scope.ts (new module): runRefusingModelCalls(s, fn) = fn(); modelCallRefusal() = null.
+#     - appended to HEAD agentic-loop.ts: REDIRECTED_TOOL_RESULT() = {} and resolveRoundBudget() = {}.
+#     - appended to HEAD run-control.ts: holdForPerson() = false and endHeldRun() = false.
+#   agentic-tool-dispatch.ts (new) is imported by nothing at HEAD, so it is left as is. gateway.ts at HEAD has no
+#   SubAgentToolModelCallError; the test reads it through a dynamic import and asserts it is exported, so no stub.
+#   stream-run-hold.test.ts is a PARITY suite: it passes on HEAD's stream.ts by design (the moved pause must change nothing).
+#   The two TypeErrors below are assertions on the missing behaviour, not harness errors: `res.loop` is undefined at HEAD, and the
+#   do-nothing hold never reads the row, so the test's late-read hook is never installed.
+# run 2026-09-28T13:05:53Z; exit=1
+# restored server/routes/ana-ri/stream.ts: sha256 c85a294cc5b94a5696cf0e30a7fd3d98d58f3dc1519169cdfce883436755ccce ok=True
+# restored server/services/ai-gateway/gateway.ts: sha256 cd88d53ad9be0ece072e26a8df91e7645cc4ca2d2b8a945e31e527e9629921fc ok=True
+# restored server/services/ana/AnaToolExecutor.ts: sha256 a6d01551abd4bf0d7882356dfbb224e55a33601e36af222e6cd8e8ad84254762 ok=True
+# restored server/services/ana/agentic-loop.ts: sha256 b1cbb843ef19853a14888008a163116c89cea10a3293fe0c787f72a78a606e1d ok=True
+# restored server/services/ana/run-control.ts: sha256 d2816ac85d42f371a415ffc96e217da1ed927a9c27c131e30f8e4af9fc4b50f3 ok=True
+# restored server/services/ana/run-status.ts: sha256 b3db18c5a6dcebf6fe754e6683d90a6c923909edb2366e513c5085d5125810ea ok=True
+# restored server/services/intelligence/cross-artifact-consistency.ts: sha256 1ce8a856430b0eb739394de3401cd11c4e67aa3245c9cc141c27bd7dca3aa769 ok=True
+# restored shared/ana/run-control-limits.ts: sha256 c6a7ff5904a816349b8ba77976246ccc8dd6609c1c5f8f8265c435d6e8cecdf3 ok=True
+# restored server/services/ana/run-hold.ts: sha256 a7691aaf6a36d2684ccee6fb4b6a43afc73874b5c8b67dc582f180d76dab0894 ok=True
+# restored server/services/ai-gateway/model-call-scope.ts: sha256 b9275d7cf2ce02f334667bb709ed222cb01709021e210649224c4ba3d68b295c ok=True
+$ npx vitest run --config vitest.config.ts server/services/ana/__tests__/agentic-loop-rounds-control.test.ts server/services/ana/__tests__/executor-agentic-loop-options.test.ts server/services/ai-gateway/__tests__/model-call-scope.test.ts server/services/ana/__tests__/tool-authorization-rule-zero.test.ts server/services/ana/__tests__/run-hold.test.ts server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts server/routes/ana-ri/__tests__/stream-run-hold.test.ts server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts server/services/ana/__tests__/project-knowledge-search-model-free.test.ts
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a run that is not paused passes straight through: no frame, no wait
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a run already cancelled reports cancelled, with no frame
+   → expected 'running' to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then resumed: one paused frame, one resumed frame, both carrying the round and nothing else
+   → expected [] to deeply equal [ { type: 'paused', round: 4 } ]
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then cancelled: cancelled, and no resumed frame
+   → expected 'running' to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended some other way: the turn carries on, with no resumed frame (as the stream did)
+   → expected [] to deeply equal [ { type: 'paused', round: 2 } ]
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > nobody comes back: resumed as abandoned once, at the ceiling, and the resumed frame is sent
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > the pause clock starts when the hold is entered, before the first read (as pauseStart did)
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a dropped client stops the run and reports disconnected
+   → expected 'running' to be 'disconnected' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > two separate pauses each get their own clock
+   → the second pause inherited the first one’s clock: expected true to be false // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > three concurrent callers: one paused frame and one resumed frame
+   → expected [] to have a length of 1 but got +0
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > heldMs is the one interval the run was held, not the sum of every waiter’s
+   → expected +0 to be 10000 // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > the abandoned-pause resume runs once however many are waiting
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an aborted signal releases its own waiter as cancelled while the others keep waiting
+   → expected 'running' to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > a waiter whose read was issued before another saw the resume does not announce a second pause
+   → answerLate is not a function
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an announcement rides the paused frame
+   → expected [] to deeply equal [ { type: 'paused', round: 2, …(2) } ]
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > ends the held run once, reports expired, aborts expiredSignal, sends one hold_expired frame, and never resumes
+   → expected 'running' to be 'expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > two callers entering 60s apart both return expired by the FIRST caller’s deadline
+   → expected 'running' to be 'expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a caller entering after expiry returns expired at once, without reading the row
+   → expected 'running' to be 'expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > when a Continue wins the race (endHeld writes nothing), it re-reads and carries on
+   → expected undefined to deeply equal { type: 'resumed', round: 2 }
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a waiter held on its wake is released the moment the hold expires
+   → expected 'running' to be 'expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > the last waiter leaving by its own signal closes the pause, and a later hold starts its own clock
+   → expected 'running' to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > a dropped client closes the pause: held time stops at the disconnect
+   → expected 'running' to be 'disconnected' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > one waiter leaving by its signal does NOT close the pause the others are still waiting on
+   → expected 'running' to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > a wake that rejects is thrown out of the hold, as `await runHandle.wake()` threw out of the checkpoint
+   → a failed wake was read as a wake: expected { done: true, value: 'running' } to deeply equal { done: true, error: 'latch broke' }
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > expiry 'end': a failed end write is thrown, not read as a Continue; the turn is not expired and the pause closes
+   → expected { done: true, value: 'running' } to deeply equal { done: true, error: 'db down' }
+ × server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > checkDossierConsistency when the project artifacts cannot be read > marks the report unavailable instead of returning a clean empty report
+   → expected undefined to be 'artifacts_unreadable' // Object.is equality
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > checkDossierConsistency when the project artifacts cannot be read > a read that succeeds and finds nothing is still an ordinary report, not unavailable
+ × server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > pauses a running run and records no control event — nobody pressed pause
+   → expected false to be true // Object.is equality
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > a second hold of the same run writes nothing
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > never revives a cancelled run
+ × server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > the person's resume is theirs: running again, with exactly one event, by the owner
+   → expected { ok: false, code: 'INVALID', …(1) } to match object { ok: true, status: 'running' }
+ × server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > ends a paused run as finished, 'hold_expired', with no control event
+   → expected false to be true // Object.is equality
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > writes nothing to a run that is not paused — a resume that landed first wins
+ × server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > a late resume afterwards is refused as TERMINAL
+   → expected { ok: false, code: 'INVALID', …(1) } to match object { ok: false, code: 'TERMINAL' }
+ × server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > the turn's own endRun afterwards changes nothing
+   → expected 'no_more_tools' to be 'hold_expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > wakes what is waiting on the run in this process, without aborting it
+   → expected 'late' to be 'woke' // Object.is equality
+ × server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun when the write fails > throws the error rather than answering false, which would read as a Continue that landed first
+   → promise resolved "false" instead of rejecting
+ × server/services/ai-gateway/__tests__/model-call-scope.test.ts > the scope > is empty outside, and names the run and tool inside
+   → expected null to deeply equal { …(3) }
+ × server/services/ai-gateway/__tests__/model-call-scope.test.ts > the scope > follows async continuations started inside it
+   → expected null to deeply equal { …(3) }
+ × server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > rejects with a terminal policy error and never reaches a provider, the placement lookup or the rate bucket
+   → the refused call resolved: expected GatewayAllProvidersFailedError: All model… to be an instance of GatewayPolicyError
+ × server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > is the exported SubAgentToolModelCallError, a GatewayPolicyError whose name is not overridden
+   → SubAgentToolModelCallError is not exported: expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > refuses a call made from an async continuation started inside the scope
+   → expected false to be true // Object.is equality
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > a caller that already stopped still reads as a cancel, not a refusal (the abort check comes first)
+ × server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > a reranker-style caller that catches the refusal keeps its fallback and completes
+   → expected "dispatchProvider" to not be called at all, but actually been called 6 times
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > reaches the provider as before
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > a call made after the scoped work finished is not refused
+ × server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > each route() sees its own caller's scope, however their awaits interleave
+   → expected [ 'not refused', 'not refused', …(1) ] to deeply equal [ 'refused', 'not refused', 'refused' ]
+ × server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > the capture hazard, pinned: a timer armed inside the scope keeps it after the scope returned
+   → expected 'not refused' to be 'refused' // Object.is equality
+ × server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > the capture hazard, pinned: a memoized promise first created inside the scope refuses its later, unscoped callers too
+   → expected [ 'not refused', 'not refused' ] to deeply equal [ 'refused', 'refused' ]
+ × server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > the check_dossier_consistency tool > answers with an error, never a clean verdict, when nothing could be compared
+   → expected { verdict: 'clean', …(6) } to deeply equal { …(2) }
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts > the check_dossier_consistency tool > still reports a verdict when the documents were read
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn cut at its round ceiling says max_rounds
+   → expected undefined to deeply equal { rounds: 2, toolCallCount: 2, …(2) }
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn stopped after its first round says cancelled, not no_more_tools
+   → Cannot read properties of undefined (reading 'stoppedReason')
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > an answer with no tools reports a zero-round loop
+   → expected undefined to deeply equal { rounds: +0, toolCallCount: +0, …(2) }
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > answers TOOL_NOT_OFFERED without dispatching, and lists no other tools
+   → a tool outside the allowlist ran: expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > an offered name with no handler lists only the offered tools, never the whole registry
+   → the answer disclosed tools this loop was not offered: expected [ 'list_fda_forms', …(767) ] to deeply equal [ '__test_offered_too' ]
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > without an allowlist the unknown-tool answer is what it always was
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent: start and end per call, fired inside the worker, with the round and latency
+   → expected [] to deeply equal [ 'start:__test_ev_a', …(1) ]
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent reports a refused call too, so a caller can list what did not run
+   → expected [] to deeply equal [ 'TOOL_NOT_OFFERED' ]
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onModelResponse: once per gateway call, first call included, with its round
+   → expected [] to deeply equal [ +0, 1, 2 ]
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+   → expected undefined to match object { rounds: 1, toolCallCount: 1, …(1) }
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > stopWhen is the caller’s > ends the turn with a closing answer and its own reason
+   → expected undefined to match object { rounds: 1, …(1) }
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > bounds a round to the lanes asked for
+   → expected 4 to be 2 // Object.is equality
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > is 4 when not asked, as before
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 0 lanes is refused before any model call is spent
+   → expected null to be an instance of RangeError
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > -1 lanes is refused before any model call is spent
+   → expected null to be an instance of RangeError
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 1.5 lanes is refused before any model call is spent
+   → expected null to be an instance of RangeError
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > NaN lanes is refused before any model call is spent
+   → expected null to be an instance of RangeError
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the dispatch runs inside the refusal scope, and the gateway sends nothing for it
+   → expected null to deeply equal { runId: 'agent_child', …(2) }
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the loop's own model calls are not refused
+   → expected 'fallback-final' to be 'closing' // Object.is equality
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolModelCalls 'refuse' alone also tells the tool (ctx.modelCalls), so it asks for its model-free path
+   → the scope was open but the tool was not told: expected [ undefined ] to deeply equal [ 'refuse' ]
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolContext.modelCalls 'refuse' alone also opens the refusal scope, so the gateway enforces it
+   → the tool was told model-free but nothing enforced it: expected [ null ] to deeply equal [ { runId: 'agent_c', …(2) } ]
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > with neither, the tool is handed exactly the context the caller passed: no modelCalls
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > without the option a tool may call a model, as before
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'budget_exhausted' after round 2 withdraws tools from the round-2 model call and names itself
+   → expected { rounds: 10, toolCallCount: 10, …(2) } to match object { rounds: 2, …(2) }
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'approval_timeout' after round 2 withdraws tools from the round-2 model call and names itself
+   → expected { rounds: 10, toolCallCount: 10, …(2) } to match object { rounds: 2, …(2) }
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'halt' ends the loop as cancelled with no further model call
+   → expected { rounds: 10, toolCallCount: 10, …(2) } to match object { rounds: 1, …(2) }
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > a thrashing round still reports duplicate_thrash, not the budget
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > is asked once per executed round, with that round
+   → expected [] to deeply equal [ 1, 2, 3 ]
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > hands the checkpoint the pending calls as its second argument
+   → pending is not iterable
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > replan: the pending calls never run, the model reads one redirected result per call, the count is unchanged
+   → a replaced step was dispatched: expected "vi.fn()" to be called 1 times, but got 2 times
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > the redirected result says the step did not run and asks the model to follow the person
+   → expected {} to match object { redirected: true, …(1) }
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > the checkpoint is shown the pending step, not handed it: changing what it was shown changes nothing that runs
+   → expected [ 'input: refused', …(2) ] to deeply equal [ 'input: changed', …(2) ]
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > abort still stops before the round, exactly as before
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > bounds progress-earned extension
+   → expected { rounds: 36, toolCallCount: 36, …(2) } to match object { rounds: 20, …(2) }
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > bounds a ceiling that rises mid-turn (the demo promotion)
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > without it, the same demo-promoted Auto budget would have reached 34
+   → expected 20 to be 34 // Object.is equality
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > an always-novel Auto loop stops at 20
+   → expected { rounds: 5, toolCallCount: 5, …(2) } to match object { rounds: 20, …(1) }
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > a repeating Auto loop is cut for thrashing well before 20
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > also bounds a base ceiling above it
+   → expected 30 to be 20 // Object.is equality
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, null) → {"maxRounds":6,"progressExtension":2}
+   → expected {} to deeply equal { maxRounds: 6, progressExtension: 2 }
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, manual) → {"maxRounds":6,"progressExtension":2}
+   → expected {} to deeply equal { maxRounds: 6, progressExtension: 2 }
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, auto) → {"maxRounds":6,"progressExtension":14,"roundCap":20}
+   → expected {} to deeply equal { maxRounds: 6, …(2) }
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (thorough, auto) → {"maxRounds":10,"progressExtension":10,"roundCap":20}
+   → expected {} to deeply equal { maxRounds: 10, …(2) }
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (fast, auto) → {"maxRounds":4,"progressExtension":16,"roundCap":20}
+   → expected {} to deeply equal { maxRounds: 4, …(2) }
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (thorough, null) → {"maxRounds":10,"progressExtension":4}
+   → expected {} to deeply equal { maxRounds: 10, progressExtension: 4 }
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > takes an explicit base ceiling (the demo base) and never lowers it
+   → expected {} to deeply equal { maxRounds: 34, progressExtension: 2 }
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > adds no roundCap key outside Auto
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'novel, capped': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'novel, extended': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'thrash': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'ends early': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'demo floor': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > a one-argument checkpoint that never replans behaves as before
+ × server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > save_document_to_vault (confirm) → SUB_AGENT_READ_ONLY, and no proposal is built
+   → expected { …(4) } to deeply equal { error: 'SUB_AGENT_READ_ONLY', …(2) }
+ × server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > approve_qms_document (refuse) → SUB_AGENT_READ_ONLY, and no proposal is built
+   → expected { ok: false, …(3) } to deeply equal { error: 'SUB_AGENT_READ_ONLY', …(2) }
+ × server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > convene_drafting_council (self) → SUB_AGENT_READ_ONLY, and no proposal is built
+   → expected { status: 'not_provisioned', …(1) } to deeply equal { error: 'SUB_AGENT_READ_ONLY', …(2) }
+ × server/services/ana/__tests__/project-knowledge-search-model-free.test.ts > project_knowledge_search > under modelCalls 'refuse', retrieves with no model call: basic strategy, no reranking
+   → expected { query: 'primary endpoint', …(5) } to match object { strategy: 'basic', …(2) }
+ × server/services/ana/__tests__/project-knowledge-search-model-free.test.ts > project_knowledge_search > inside a model-call refusal scope, with no ctx flag, takes the same model-free path (what the gateway enforces decides)
+   → asked for model calls the gateway will refuse: expected { query: 'primary endpoint', …(5) } to match object { strategy: 'basic', …(1) }
+ ✓ server/services/ana/__tests__/project-knowledge-search-model-free.test.ts > project_knowledge_search > otherwise asks for exactly what it always did
+ × server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > execute_platform_command (command) → SUB_AGENT_READ_ONLY, and no proposal is built
+   → expected { status: 'executed', …(3) } to deeply equal { error: 'SUB_AGENT_READ_ONLY', …(2) }
+ × server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_self: the handler never runs, not even with a confirmation in the context
+   → expected { ok: 'self' } to deeply equal { error: 'SUB_AGENT_READ_ONLY', …(2) }
+ × server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_confirm: the handler never runs, not even with a confirmation in the context
+   → expected { ok: 'confirm' } to deeply equal { error: 'SUB_AGENT_READ_ONLY', …(2) }
+ × server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_command: the handler never runs, not even with a confirmation in the context
+   → expected { ok: 'command' } to deeply equal { error: 'SUB_AGENT_READ_ONLY', …(2) }
+ × server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > a tool nobody classified is refused as not-a-read, not proposed
+   → expected { success: false, …(5) } to deeply equal { error: 'SUB_AGENT_READ_ONLY', …(2) }
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > a read runs
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > a real read tool runs (check_numerical_integrity)
+ × server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > deeper still is refused the same way
+   → expected { ok: 'self' } to deeply equal { error: 'SUB_AGENT_READ_ONLY', …(2) }
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth undefined: a confirm tool is still proposed, not refused
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth 0: a confirm tool is still proposed, not refused
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth undefined: an unclassified probe is proposed as before
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth 0: an unclassified probe is proposed as before
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > a self-class tool runs at depth 0
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs
+ Test Files  8 failed | 1 passed (9)
+      Tests  91 failed | 36 passed (127)
+
+## Part B: run-hold.test.ts against HEAD's while-paused loop moved VERBATIM into the createRunHold shape (deps adapter only)
+#   The file used is reproduced at the end of this part. Expected: every expiry 'resume' case (today's pause) passes on HEAD's loop;
+#   the shared-hold cases (one clock, union heldMs, signal race, stale-read guard, announce, expiry 'end') fail, because HEAD had none.
+#   The wake-rejection case PASSES here: HEAD's `await runHandle.wake()` threw, and review fix [2] restored exactly that.
+# run 2026-09-28T13:06:26Z; exit=1
+# restored server/services/ana/run-hold.ts: sha256 a7691aaf6a36d2684ccee6fb4b6a43afc73874b5c8b67dc582f180d76dab0894 ok=True
+$ npx vitest run --config vitest.config.ts server/services/ana/__tests__/run-hold.test.ts
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a run that is not paused passes straight through: no frame, no wait
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a run already cancelled reports cancelled, with no frame
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then resumed: one paused frame, one resumed frame, both carrying the round and nothing else
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then cancelled: cancelled, and no resumed frame
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended some other way: the turn carries on, with no resumed frame (as the stream did)
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > nobody comes back: resumed as abandoned once, at the ceiling, and the resumed frame is sent
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > the pause clock starts when the hold is entered, before the first read (as pauseStart did)
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a dropped client stops the run and reports disconnected
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > two separate pauses each get their own clock
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > three concurrent callers: one paused frame and one resumed frame
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > heldMs is the one interval the run was held, not the sum of every waiter’s
+   → expected +0 to be 10000 // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > the abandoned-pause resume runs once however many are waiting
+   → expected "vi.fn()" to be called 1 times, but got 2 times
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an aborted signal releases its own waiter as cancelled while the others keep waiting
+   → expected undefined to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > a waiter whose read was issued before another saw the resume does not announce a second pause
+   → expected undefined to be 'running' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an announcement rides the paused frame
+   → expected [ { type: 'paused', round: 2 } ] to deeply equal [ { type: 'paused', round: 2, …(2) } ]
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > ends the held run once, reports expired, aborts expiredSignal, sends one hold_expired frame, and never resumes
+   → expected undefined to be 'expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > two callers entering 60s apart both return expired by the FIRST caller’s deadline
+   → expected undefined to be 'expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a caller entering after expiry returns expired at once, without reading the row
+   → expected undefined to be 'expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > when a Continue wins the race (endHeld writes nothing), it re-reads and carries on
+   → expected undefined to be 'running' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a waiter held on its wake is released the moment the hold expires
+   → expected undefined to be 'expired' // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > the last waiter leaving by its own signal closes the pause, and a later hold starts its own clock
+   → expected undefined to be 'cancelled' // Object.is equality
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > a dropped client closes the pause: held time stops at the disconnect
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > one waiter leaving by its signal does NOT close the pause the others are still waiting on
+   → expected undefined to be 'cancelled' // Object.is equality
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > a wake that rejects is thrown out of the hold, as `await runHandle.wake()` threw out of the checkpoint
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > expiry 'end': a failed end write is thrown, not read as a Continue; the turn is not expired and the pause closes
+   → expected { done: true, …(1) } to deeply equal { done: true, error: 'db down' }
+ Test Files  1 failed (1)
+      Tests  13 failed | 12 passed (25)
+
+#   The verbatim move used for Part B:
+#   | // RED-RECORD PART B: HEAD's while-paused loop (stream.ts, HEAD b50d45577, the checkpoint's pause block)
+#   | // moved VERBATIM into the createRunHold shape. Only the deps adapter differs: readStatus/wake/emit/
+#   | // clientGone/stopForDisconnect/resumeAbandoned stand for readStatus(getPool(), runId), runHandle.wake,
+#   | // emitControl, res.writableEnded, stopRunInternally(... 'client_disconnected' ...) and resumeAbandonedRun.
+#   | // `pauseAnnounced` was turn-scoped in the stream; it is hold-scoped here, which is the same thing.
+#   | // No signal, no expiry 'end', no heldMs: HEAD had none of them.
+#   | import { MAX_PAUSE_MS } from './run-status.js';
+#   | export const RUN_HOLD_WAKE_CEILING_MS = 5_000;
+#   | export type RunHoldOutcome = 'running' | 'cancelled' | 'expired' | 'disconnected';
+#   | export type RunHoldDeps = any;
+#   | export function createRunHold(deps: any) {
+#   |   const now: () => number = deps.now ?? Date.now;
+#   |   const maxPause: number = deps.maxPauseMs ?? MAX_PAUSE_MS;
+#   |   let pauseAnnounced = false;
+#   |   return {
+#   |     expired: () => false,
+#   |     expiredSignal: new AbortController().signal,
+#   |     heldMs: () => 0,
+#   |     hold: async (upcomingRound: number): Promise<RunHoldOutcome> => {
+#   |       const WAKE_CEILING_MS = RUN_HOLD_WAKE_CEILING_MS;
+#   |       const pauseStart = now();
+#   |       let status = await deps.readStatus();
+#   |       let disconnected = false;
+#   |       while (status === 'paused') {
+#   |         if (!pauseAnnounced) {
+#   |           deps.emit({ type: 'paused', round: upcomingRound });
+#   |           pauseAnnounced = true;
+#   |         }
+#   |         if (deps.clientGone()) {
+#   |           await deps.stopForDisconnect();
+#   |           disconnected = true;
+#   |           break;
+#   |         }
+#   |         if (now() - pauseStart > maxPause) {
+#   |           await deps.resumeAbandoned();
+#   |           status = 'running';
+#   |           break;
+#   |         }
+#   |         await deps.wake(WAKE_CEILING_MS);
+#   |         status = await deps.readStatus();
+#   |       }
+#   |       if (pauseAnnounced && status === 'running') {
+#   |         deps.emit({ type: 'resumed', round: upcomingRound });
+#   |         pauseAnnounced = false;
+#   |       }
+#   |       if (disconnected) return 'disconnected';
+#   |       return status === 'cancelled' ? 'cancelled' : 'running';
+#   |     },
+#   |   };
+#   | }
+
+## Part C: the review-fix gates against the S3 build BEFORE each review fix (recorded as each gate was written, then fixed)
+
+### red-run-hold-objections-1-2-17-18.txt: run-hold.test.ts: review [1]/[17] (last waiter out closes the pause), [2] (a failed wake is thrown), [18] (a failed end write is thrown, pause closed). The "does NOT close the others' pause" case passes here by design: it guards the fix against overcorrection (mutation O10).
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a run that is not paused passes straight through: no frame, no wait
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a run already cancelled reports cancelled, with no frame
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then resumed: one paused frame, one resumed frame, both carrying the round and nothing else
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then cancelled: cancelled, and no resumed frame
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended some other way: the turn carries on, with no resumed frame (as the stream did)
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > nobody comes back: resumed as abandoned once, at the ceiling, and the resumed frame is sent
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > the pause clock starts when the hold is entered, before the first read (as pauseStart did)
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a dropped client stops the run and reports disconnected
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > two separate pauses each get their own clock
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > three concurrent callers: one paused frame and one resumed frame
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > heldMs is the one interval the run was held, not the sum of every waiter’s
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > the abandoned-pause resume runs once however many are waiting
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an aborted signal releases its own waiter as cancelled while the others keep waiting
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > a waiter whose read was issued before another saw the resume does not announce a second pause
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an announcement rides the paused frame
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > ends the held run once, reports expired, aborts expiredSignal, sends one hold_expired frame, and never resumes
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > two callers entering 60s apart both return expired by the FIRST caller’s deadline
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a caller entering after expiry returns expired at once, without reading the row
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > when a Continue wins the race (endHeld writes nothing), it re-reads and carries on
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a waiter held on its wake is released the moment the hold expires
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > the last waiter leaving by its own signal closes the pause, and a later hold starts its own clock
+   → held time grew with nobody holding: expected 555000 to be 505000 // Object.is equality
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > a dropped client closes the pause: held time stops at the disconnect
+   → held time grew after the client went: expected 75000 to be 15000 // Object.is equality
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > one waiter leaving by its signal does NOT close the pause the others are still waiting on
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > a wake that rejects is thrown out of the hold, as `await runHandle.wake()` threw out of the checkpoint
+   → a failed wake was read as a wake: expected { done: false } to deeply equal { done: true, error: 'latch broke' }
+ × server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > expiry 'end': a failed end write is thrown, not read as a Continue; the turn is not expired and the pause closes
+   → expected 670000 to be 610000 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed | 21 passed (25)
+
+### red-agentic-loop-pending-view-objection-9.txt: agentic-loop-rounds-control.test.ts: review [9] (the checkpoint is shown a frozen copy of the pending step).
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'budget_exhausted' after round 2 withdraws tools from the round-2 model call and names itself
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'approval_timeout' after round 2 withdraws tools from the round-2 model call and names itself
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'halt' ends the loop as cancelled with no further model call
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > a thrashing round still reports duplicate_thrash, not the budget
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > is asked once per executed round, with that round
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > hands the checkpoint the pending calls as its second argument
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > replan: the pending calls never run, the model reads one redirected result per call, the count is unchanged
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > the redirected result says the step did not run and asks the model to follow the person
+ × server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > the checkpoint is shown the pending step, not handed it: changing what it was shown changes nothing that runs
+   → the checkpoint changed what ran: expected "vi.fn()" to be called with arguments: [ [ { id: 'c1', …(2) }, …(1) ], 1 ]
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > abort still stops before the round, exactly as before
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > bounds progress-earned extension
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > bounds a ceiling that rises mid-turn (the demo promotion)
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > without it, the same demo-promoted Auto budget would have reached 34
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > an always-novel Auto loop stops at 20
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > a repeating Auto loop is cut for thrashing well before 20
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > also bounds a base ceiling above it
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, null) → {"maxRounds":6,"progressExtension":2}
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, manual) → {"maxRounds":6,"progressExtension":2}
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, auto) → {"maxRounds":6,"progressExtension":14,"roundCap":20}
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (thorough, auto) → {"maxRounds":10,"progressExtension":10,"roundCap":20}
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (fast, auto) → {"maxRounds":4,"progressExtension":16,"roundCap":20}
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (thorough, null) → {"maxRounds":10,"progressExtension":4}
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > takes an explicit base ceiling (the demo base) and never lowers it
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > adds no roundCap key outside Auto
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'novel, capped': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'novel, extended': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'thrash': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'ends early': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'demo floor': stopWhen returning null and no roundCap change nothing
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > a one-argument checkpoint that never replans behaves as before
+ Test Files  1 failed (1)
+      Tests  1 failed | 29 passed (30)
+
+### red-executor-and-pks-objections-5-10-11-15.txt: executor-agentic-loop-options.test.ts and project-knowledge-search-model-free.test.ts: review [5]/[15] (either model-free switch gives both), [10] (observers contained; toolConcurrency validated before any model call), [11] (no registry disclosure under an allowlist). The 10ms sleep of review [14] was replaced by a handler-resolved promise in the same edit.
+ ✓ server/services/ana/__tests__/project-knowledge-search-model-free.test.ts > project_knowledge_search > under modelCalls 'refuse', retrieves with no model call: basic strategy, no reranking
+ × server/services/ana/__tests__/project-knowledge-search-model-free.test.ts > project_knowledge_search > inside a model-call refusal scope, with no ctx flag, takes the same model-free path (what the gateway enforces decides)
+   → asked for model calls the gateway will refuse: expected { query: 'primary endpoint', …(5) } to match object { strategy: 'basic', …(1) }
+ ✓ server/services/ana/__tests__/project-knowledge-search-model-free.test.ts > project_knowledge_search > otherwise asks for exactly what it always did
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn cut at its round ceiling says max_rounds
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn stopped after its first round says cancelled, not no_more_tools
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > an answer with no tools reports a zero-round loop
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > answers TOOL_NOT_OFFERED without dispatching, and lists no other tools
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > an offered name with no handler lists only the offered tools, never the whole registry
+   → the answer disclosed tools this loop was not offered: expected [ 'list_fda_forms', …(767) ] to deeply equal [ '__test_offered_too' ]
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > without an allowlist the unknown-tool answer is what it always was
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent: start and end per call, fired inside the worker, with the round and latency
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent reports a refused call too, so a caller can list what did not run
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onModelResponse: once per gateway call, first call included, with its round
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+   → observer broke
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > stopWhen is the caller’s > ends the turn with a closing answer and its own reason
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > bounds a round to the lanes asked for
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > is 4 when not asked, as before
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 0 lanes is refused before any model call is spent
+   → expected Error: concurrency must be at least 1 to be an instance of RangeError
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > -1 lanes is refused before any model call is spent
+   → expected Error: concurrency must be at least 1 to be an instance of RangeError
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 1.5 lanes is refused before any model call is spent
+   → expected null to be an instance of RangeError
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > NaN lanes is refused before any model call is spent
+   → expected TypeError: Cannot destructure property 'c… to be an instance of RangeError
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the dispatch runs inside the refusal scope, and the gateway sends nothing for it
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the loop's own model calls are not refused
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolModelCalls 'refuse' alone also tells the tool (ctx.modelCalls), so it asks for its model-free path
+   → the scope was open but the tool was not told: expected [ undefined ] to deeply equal [ 'refuse' ]
+ × server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolContext.modelCalls 'refuse' alone also opens the refusal scope, so the gateway enforces it
+   → the tool was told model-free but nothing enforced it: expected [ null ] to deeply equal [ { runId: 'agent_c', …(2) } ]
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > without the option a tool may call a model, as before
+ Test Files  2 failed (2)
+      Tests  9 failed | 16 passed (25)
+
+#   Not red on the pre-fix build, by nature, and shown sensitive by mutation instead (mutations.txt): the concurrent scoped/unscoped
+#   gate of review [7] (G03), the endHeldRun write-failure pin of review [18] (W05), and the plain-context guard (O07).

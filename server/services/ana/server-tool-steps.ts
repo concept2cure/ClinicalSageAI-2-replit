@@ -29,6 +29,18 @@ function asString(v: unknown): string | undefined {
  * than inventing a query it does not have — a label that named a search term
  * nobody searched for would be a fabricated record.
  */
+/**
+ * A server-run step's own id as the stream's pairing field, when the API
+ * reported one. The client pairs each tool_result with its call by
+ * `toolUseId`; these steps are correct without it only because each use and
+ * its result are written back to back, and the id keeps them correct if that
+ * ordering ever changes. Kept here rather than inline in the stream's emitter
+ * so the emitter's branching stays under the complexity ceiling.
+ */
+export function serverToolStepIdField(step: GatewayServerToolUse): { toolUseId?: string } {
+  return typeof step.id === 'string' && step.id ? { toolUseId: step.id } : {};
+}
+
 export function describeServerToolStep(step: GatewayServerToolUse): string {
   const input = step.input ?? {};
   if (step.name === 'web_search') {

@@ -49,9 +49,11 @@ function allowlistedEmails(): Set<string> {
  * Which authentication surface issued the request's token, when the
  * authenticator recorded it: `req.identity.provider` on the server/auth.ts
  * path ('local-jwt' for a password session, 'saml' for a federated one), else
- * a `provider` field on req.user. Empty when neither is set.
+ * a `provider` field on req.user. Empty when neither is set. Exported so the
+ * owner grant's e-mail allowlist (services/entitlements/master-admin.ts)
+ * refuses a federated e-mail by the same reading.
  */
-function tokenProvider(req: Request): string {
+export function tokenProvider(req: Request): string {
   const fromUser = (req.user as { provider?: unknown } | undefined)?.provider;
   return String(req.identity?.provider ?? fromUser ?? '').toLowerCase();
 }
@@ -94,21 +96,36 @@ async function hasActivePlatformGrant(userId: number): Promise<boolean> {
 }
 
 /**
- * Express middleware — gate a route to platform administrators only. Must run
- * AFTER `authMiddleware` (it relies on req.user / req.userRole being resolved).
+ * THE answer to "would {@link requirePlatformAdmin} admit this request?".
+ *
+ * The guard below decides with this and nothing else, and it is exported so a
+ * surface that only needs to know — the account menu deciding whether to offer
+ * the Master Administration console — asks the same function instead of
+ * guessing from org roles. Before 2026-09-23 the menu offered "Licensing" to
+ * every customer org admin, because the client had no platform-admin signal,
+ * and every one of them opened a seven-tab console that refused every read.
  *
  * The synchronous role/email checks run FIRST and short-circuit with NO db
- * access (the hot path stays sync + db-free). Only when they fail do we fall
- * back to an async lookup against platform_role_grants for a designated grant.
+ * access. Only when they fail do we fall back to the platform_role_grants
+ * lookup, which denies on any DB error.
+ */
+export async function resolvePlatformAdmin(req: Request): Promise<boolean> {
+  if (isPlatformAdmin(req)) return true;
+  const userId = Number(req.userId ?? NaN);
+  if (!Number.isFinite(userId)) return false;
+  return hasActivePlatformGrant(userId);
+}
+
+/**
+ * Express middleware — gate a route to platform administrators only. Must run
+ * AFTER `authMiddleware` (it relies on req.user / req.userRole being resolved).
+ * The decision is {@link resolvePlatformAdmin}.
  */
 export async function requirePlatformAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.user && req.userId == null) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  if (isPlatformAdmin(req)) {
-    return next();
-  }
-  if (req.userId != null && (await hasActivePlatformGrant(Number(req.userId)))) {
+  if (await resolvePlatformAdmin(req)) {
     return next();
   }
   logger.warn('Master Administration access denied', {

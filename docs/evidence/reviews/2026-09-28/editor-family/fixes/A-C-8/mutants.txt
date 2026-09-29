@@ -1,0 +1,27 @@
+# A-C-8 mutants, each run against protocolSoaTargetSize.test.ts; the stylesheet was restored after each.
+# Note: the first run of M2 was a malformed mutant (it inserted a second copy of the rule above the shared rule without removing the original, so the cascade was unchanged) and reported NOT CAUGHT. It was corrected to a true move; the corrected run is below.
+
+## M1: the visit-header padding rule removed (buttons back to 22 x 18px)
+   file: client/src/concept2cure/v2/styles/protocol-dev-editing.css
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts > the visit-header rename and remove buttons (A-C-8) > are each at least 24 × 24px 6ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 1 passed (2)
+
+## M2: the rule moved above the shared 2px 4px rule, which then wins the cascade (same specificity, later source)
+   file: client/src/concept2cure/v2/styles/protocol-dev-editing.css
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts > the visit-header rename and remove buttons (A-C-8) > are each at least 24 × 24px 6ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 1 passed (2)
+
+## M3: padding large enough to widen the visit column (10px: pair 69px in a 52px content box)
+   file: client/src/concept2cure/v2/styles/protocol-dev-editing.css
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts > the visit-header rename and remove buttons (A-C-8) > fit side by side inside the visit column, so the grid does not widen 5ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 1 passed (2)
+

@@ -44,6 +44,7 @@ import {
   recordFcoiReview,
 } from '../services/fcoi-metrics';
 import { clientIpOf } from '../utils/client-ip';
+import { signMeaningRefusal, type GovernedSignMeaning } from '../services/part11/signature-meanings';
 
 const router = Router();
 
@@ -302,6 +303,14 @@ router.post('/disclosures/:id/certify', async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = certifySchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  // The signer states what the signature means (§11.50(a)(3)), from the closed
+  // vocabulary; nothing is assumed for them. Checked before re-authentication:
+  // a request the signature writer would refuse never asks for a password.
+  const meaningRefused = signMeaningRefusal(parsed.data.meaning);
+  if (meaningRefused) {
+    return res.status(400).json({ error: { code: meaningRefused.error, message: meaningRefused.detail } });
+  }
+  const meaning = parsed.data.meaning as GovernedSignMeaning;
 
   // Re-authenticate even with an active session (21 CFR 11 signing).
   const reauth = await verifyReauth(userId, parsed.data.reauth);
@@ -317,10 +326,10 @@ router.post('/disclosures/:id/certify', async (req, res) => {
       await client.query('ROLLBACK');
       return res.status(409).json({ error: { code: 'INCOMPLETE', message: 'Disclosure has critical findings and cannot be certified.', findings: validation.findings } });
     }
-    const { contentHash, provenanceLinkId } = await certifyDisclosureTx(client, orgId, userId, id, parsed.data.meaning ?? 'Certified');
+    const { contentHash, provenanceLinkId } = await certifyDisclosureTx(client, orgId, userId, id, meaning);
     const gov = await recordGovernedAction(client, {
       orgId, userId, command: 'sign', target: `financial-disclosure:${id}`,
-      reason: parsed.data.reason, payload: { contentHash, provenanceLinkId, meaning: parsed.data.meaning ?? 'Certified' }, domain: 'fcoi',
+      reason: parsed.data.reason, payload: { contentHash, provenanceLinkId, meaning }, domain: 'fcoi',
     });
     // 21 CFR Part 11 signature row, same transaction as the ledger pair. A
     // certified disclosure IS a signed FDA form (3454/3455) that ships in
@@ -334,7 +343,7 @@ router.post('/disclosures/:id/certify', async (req, res) => {
       orgId, userId,
       target: `financial-disclosure:${id}`,
       reason: parsed.data.reason,
-      payload: { meaning: parsed.data.meaning ?? 'Certified' },
+      payload: { meaning },
       actionId: gov.actionId, auditId: gov.auditId, sha256Chain: gov.sha256Chain,
       authenticationMethod: parsed.data.reauth?.totp ? 'password+totp' : 'password',
       secondFactorVerified: Boolean(parsed.data.reauth?.totp),

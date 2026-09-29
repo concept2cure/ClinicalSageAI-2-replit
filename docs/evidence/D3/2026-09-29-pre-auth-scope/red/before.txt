@@ -1,0 +1,72 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T01:29:34.986Z","pid":15678,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:29:34.987Z","pid":15678,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:29:34.987Z","pid":15678,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/pre-auth-user-lookup.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/pre-auth-user-lookup.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/pre-auth-user-lookup.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/pre-auth-user-lookup.dbtest.ts
+✅ Platform health/auth routes mounted
+
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > positive control: a member of A finds another member of A 62ms
+ × tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a person removed from A is not found, whatever their default organization says 13ms
+   → {"id":"990","email":"wo03_15678_mum00u4f-lookup-leaver@example.invalid","firstName":"WO03","lastName":"lookup-leaver","displayName":"WO03 lookup-leaver","roles":["user"],"organizationId":"90301"}: expected 200 to be 404 // Object.is equality
+ × tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a current member of A is found, even with another default organization 9ms
+   → {"error":{"code":"USER_NOT_FOUND","message":"User not found"}}: expected 404 to be 200 // Object.is equality
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > B's member is not found from A 12ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > the response carries no credential field 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a person removed from A is not found, whatever their default organization says
+AssertionError: {"id":"990","email":"wo03_15678_mum00u4f-lookup-leaver@example.invalid","firstName":"WO03","lastName":"lookup-leaver","displayName":"WO03 lookup-leaver","roles":["user"],"organizationId":"90301"}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ tests/db/pre-auth-user-lookup.dbtest.ts:86:50
+     84|   it("a person removed from A is not found, whatever their default org…
+     85|     const res = await lookup(leaver);
+     86|     expect(res.status, JSON.stringify(res.body)).toBe(404);
+       |                                                  ^
+     87|   });
+     88|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a current member of A is found, even with another default organization
+AssertionError: {"error":{"code":"USER_NOT_FOUND","message":"User not found"}}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/pre-auth-user-lookup.dbtest.ts:91:50
+     89|   it('a current member of A is found, even with another default organi…
+     90|     const res = await lookup(memberDefaultB);
+     91|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+     92|     expect(res.body).toMatchObject({ id: String(memberDefaultB), organ…
+     93|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  01:29:33
+   Duration  3.26s (transform 1.50s, setup 73ms, import 1.56s, tests 1.36s, environment 0ms)
+

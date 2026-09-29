@@ -1,0 +1,25 @@
+# Mutants of context-blocks.ts, each run against context-blocks.test.ts; the file was restored after each (cmp)
+## mutant: values sanitised to one line but not escaped
+ × the authoring context block cannot carry instructions (SEC-A-4) > a section title cannot close its own tag or start a line 9ms
+ × the authoring context block cannot carry instructions (SEC-A-4) > every other field is held to the same rule 2ms
+ × the route context block is held to the same rule (SEC-A-4) > a screen name, project, role or section code cannot close its tag or start a line 12ms
+ × the route context block is held to the same rule (SEC-A-4) > an ordinary route reads as it did 17ms
+      Tests  4 failed | 4 passed (8)
+## mutant: values escaped but not flattened or capped
+ × the authoring context block cannot carry instructions (SEC-A-4) > a section title cannot close its own tag or start a line 19ms
+ × the authoring context block cannot carry instructions (SEC-A-4) > every other field is held to the same rule 1ms
+ × the authoring context block cannot carry instructions (SEC-A-4) > a flood is capped 11ms
+ × the route context block is held to the same rule (SEC-A-4) > a screen name, project, role or section code cannot close its tag or start a line 9ms
+      Tests  4 failed | 4 passed (8)
+## mutant: the authoring block does not say it is untrusted
+ × the authoring context block cannot carry instructions (SEC-A-4) > says what the block is: screen state to reason about, not instructions 6ms
+      Tests  1 failed | 7 passed (8)
+## mutant: blockers not capped
+ × the authoring context block cannot carry instructions (SEC-A-4) > a flood is capped 9ms
+      Tests  1 failed | 7 passed (8)
+## mutant: contradictions not capped
+ × the authoring context block cannot carry instructions (SEC-A-4) > a flood is capped 13ms
+      Tests  1 failed | 7 passed (8)
+## mutant: route block: the screen name raw
+ × the route context block is held to the same rule (SEC-A-4) > a screen name, project, role or section code cannot close its tag or start a line 11ms
+      Tests  1 failed | 7 passed (8)

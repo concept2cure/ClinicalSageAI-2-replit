@@ -56,8 +56,11 @@ describe('Vault document history', () => {
     mockApi(fail);
     render(<Vault {...props()} />);
     const panel = await screen.findByTestId('vault-document-history');
-    await screen.findByText(/history could not be read/i);
+    const failure = await screen.findByText(/history could not be read/i);
     expect(panel.textContent).not.toMatch(/no recorded events/i);
+    // M-0928-3: a failed read is announced as an alert, like ChainVerdict and
+    // the Data room failure, not as a polite status.
+    expect(failure.closest('[role]')?.getAttribute('role')).toBe('alert');
   });
 
   it('a broken chain is reported, not hidden', async () => {

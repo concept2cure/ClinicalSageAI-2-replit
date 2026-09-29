@@ -1,3 +1,25 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Concept2Cure.RI — sign-in second factor (TOTP and emailed codes)
+-- Compliance: 21 CFR Part 11 §11.300 (controls for identification codes and
+--             passwords), ALCOA+ (attributable: a signature is only as
+--             attributable as the sign-in behind it).
+-- Purpose: Records the TOTP step last accepted, so a code verifies once
+--          (RFC 6238 §5.2), and counts the emailed codes one challenge re-issues.
+--
+-- eCTD/CTD Context:
+--   - Module(s): none directly; identity for every governed action and signature.
+--   - Integrity Risk Addressed: a replayed second-factor code.
+--
+-- Determinism Contract:
+--   - Additive columns only, IF NOT EXISTS; replays unchanged (CLAUDE.md Rule 1).
+--
+-- Notes:
+--   - Header added 2026-09-26 (comment only, no statement changed): the
+--     migration-header gate (scripts/ci/require-migration-headers.sh) refused
+--     the push that amended this file. It registers as `drift` in
+--     c2c_migration_journal, which nothing acts on; this note is its record.
+-- =============================================================================
 -- ── Amended in place 2026-09-26 (IAM-18-8; plan P1-3's resend cap; security ─
 --    audit 2026-09-24 IAM-09; docs/evidence/D6/2026-09-25-p1/IAM-18-8/).
 -- ADDED: users.email_otp_resends INTEGER DEFAULT 0 — the number of emailed

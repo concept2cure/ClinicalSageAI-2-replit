@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS electronic_signatures (
   superseded_by INTEGER,
   updated_at    TIMESTAMPTZ
 );
+CREATE TABLE IF NOT EXISTS concept2cure_signatures (id SERIAL PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS concept2cure_submission_snapshots (id SERIAL PRIMARY KEY);
 `;
 
 const TRIGGER_MIGRATIONS = Array.from(new Set(EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS.map((t) => t.source)));
@@ -49,7 +51,9 @@ const catalog = () => pglite as unknown as TriggerCatalogClient;
 
 async function provision(): Promise<void> {
   await pglite.exec('DROP SCHEMA IF EXISTS audit CASCADE;');
-  await pglite.exec('DROP TABLE IF EXISTS audit_logs, audit_events, electronic_signatures CASCADE;');
+  await pglite.exec(
+    'DROP TABLE IF EXISTS audit_logs, audit_events, electronic_signatures, concept2cure_signatures, concept2cure_submission_snapshots CASCADE;',
+  );
   await pglite.exec(AUDIT_LOGS_PGLITE_DDL);
   await pglite.exec(STORES_DDL);
   for (const file of TRIGGER_MIGRATIONS) await pglite.exec(migration(file));

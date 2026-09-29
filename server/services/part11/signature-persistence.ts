@@ -138,6 +138,16 @@ export const BINDING_BASIS = {
    */
   PROTOCOL_DOCUMENT_CONTENT: 'protocol-document-content-sha256',
   /**
+   * sha256 over the canonical JSON of { artifactId, version, contentSha256,
+   * ctdSection } of one concept2cure_artifacts row, read in the signing
+   * transaction (contentSha256 = sha256 of the row's content). "This content,
+   * at this version, in this section": what an AnA place_in_dossier or
+   * revert_to_version signer attests to. Added 2026-09-28 with
+   * server/services/ana-ri/governed-command-signature.ts. binding_basis is
+   * free TEXT (migrations/20260813d, no CHECK), so no migration is needed.
+   */
+  C2C_ARTIFACT_VERSION_CONTENT: 'c2c-artifact-version-content-sha256',
+  /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
    * tamper-evident link to the ledger row that records the signed act (target

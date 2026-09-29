@@ -73,6 +73,13 @@ export interface AnaToolCall {
   label: string;
   status: 'running' | 'success' | 'error';
   /**
+   * The server's id for this call (the model's tool_use id). A step runs its
+   * calls concurrently, and several can be the SAME tool, so the name alone
+   * cannot say which call a result belongs to. Absent only from an older server
+   * or a persisted record written before the field existed.
+   */
+  toolUseId?: string;
+  /**
    * Agentic-loop round this call ran in (1-based). Lets the transcript group
    * tool steps by investigation round instead of one flat list, so a deep
    * multi-round investigation reads as the progression it actually was.
@@ -163,6 +170,38 @@ export type AnaTurnRecordStatus =
    * The server may well have; this view cannot say so.
    */
   | { status: 'unconfirmed' };
+
+/**
+ * Why a turn's work stopped, as the server's `done` frame (and, for a reopened
+ * thread, the assistant message's metadata) reports it — the loop's own reason
+ * (server/services/ana/run-status.ts `TurnStoppedReason`):
+ *
+ *   no_more_tools     she said she was done — the ordinary case
+ *   max_rounds        the round limit forced the answer
+ *   duplicate_thrash  she was repeating the same step, and was stopped
+ *   cancelled         the run was stopped between rounds
+ *
+ * RESERVED, produced by nothing yet: budget_exhausted, approval_timeout,
+ * hold_expired, hold_unavailable. Named so the run-policy work does not
+ * reshape this type; the hook does not accept them until a server writes them
+ * and a surface has words for them (`readTurnEnding`).
+ *
+ * Distinct from `stopped` (the person's Stop, seen by this client) and
+ * `interrupted` (the stream failed): a round-limit stop is neither, and must
+ * not borrow their flags.
+ */
+export type AnaStoppedReason =
+  | 'no_more_tools'
+  | 'max_rounds'
+  | 'duplicate_thrash'
+  | 'cancelled'
+  | 'budget_exhausted'
+  | 'approval_timeout'
+  | 'hold_expired'
+  | 'hold_unavailable'
+  /** The answer she was writing was cut off: the model's length limit, or a
+   *  stream that stalled mid-answer. */
+  | 'answer_cut_off';
 
 export interface AnaContextUsed {
   uploads: Array<{ fileId: string; fileName: string; mimeType: string; read: 'content' | 'name_only' }>;
@@ -374,6 +413,14 @@ export interface AnaChatMessage {
   /** Whether this turn's retained record was filed. See {@link AnaTurnRecordStatus}. */
   turnRecord?: AnaTurnRecordStatus;
   /**
+   * Why the turn's work stopped, when the server said. A turn the round limit
+   * or the repeat guard cut short must never read as finished; see
+   * {@link AnaStoppedReason}.
+   */
+  stoppedReason?: AnaStoppedReason;
+  /** Tool rounds the turn ran, as the server counted them. */
+  rounds?: number;
+  /**
    * Draft produced by a document-generating tool this turn. The rail reads
    * `title` only; nothing routes `content` anywhere, so this is NOT
    * editor-openable despite what it used to claim. See ledger L88.
@@ -545,8 +592,10 @@ export interface UseAnaChatOptions {
   effortLevel?: 'fast' | 'balanced' | 'thorough' | null;
   /**
    * Explicit model override (gateway registry id) the user pinned in the
-   * advanced picker. Sent as `model_override` when set; the server validates it
-   * against the tenant's enabled models and drops it silently when invalid.
+   * advanced picker. Sent as `model_override` when set; the server pins it only
+   * when it is enabled for the tenant, is its approved-models entry and, on
+   * high-risk work, is approved for high risk. Otherwise it answers with the
+   * default model and says so in a `warning` frame (code MODEL_OVERRIDE_REFUSED).
    */
   modelOverride?: string | null;
   /**
@@ -597,9 +646,18 @@ export type DriveSseEvent =
       mode?: 'assist' | 'demo';
       reason?: string;
       requiredTier?: string | null;
+      /**
+       * Set when the server switched an already-driving turn into a
+       * demonstration mid-turn (start_product_demo). It is a MODE change for
+       * the drive that is already running, never a fresh enable: it must not
+       * re-arm a drive the person took over or switched off.
+       */
+      promoted?: boolean;
     }
-  | { type: 'drive_navigation'; round?: number; directive: unknown }
-  | { type: 'drive_action'; round?: number; directive: unknown }
+  /* `moveId` names the move when it is reported back (DriveTurnControls
+     moveLanded / reportScreen); the server waits on it before her next round. */
+  | { type: 'drive_navigation'; round?: number; directive: unknown; moveId?: string }
+  | { type: 'drive_action'; round?: number; directive: unknown; moveId?: string }
   /**
    * Client-side, never on the wire: the chat instance whose turn received an
    * enabled `drive_state` reports that the turn has ended (answered, failed or
@@ -607,7 +665,18 @@ export type DriveSseEvent =
    * streaming, so a drive started from any other chat left "AnA is driving"
    * on screen, with dead controls, for good.
    */
-  | { type: 'drive_turn_end' };
+  | { type: 'drive_turn_end' }
+  /**
+   * Client-side, never on the wire: the person ended a driving turn early —
+   * its chat's Stop, or a new or other conversation replacing it — so the
+   * screen must stop moving NOW. Sent before the server's cancel is awaited,
+   * while the stream is still delivering moves the server had already written;
+   * `drive_turn_end` still follows once the stream closes. Only the drive
+   * strip's Stop used to halt the drive: every other Stop reaches only its own
+   * chat, which the shell cannot see, so the stopped turn's moves went on
+   * playing.
+   */
+  | { type: 'drive_stopped' };
 
 /**
  * The run that is driving, handed to the shell with every drive event so the
@@ -617,7 +686,23 @@ export type DriveSseEvent =
  */
 export interface DriveTurnControls {
   stop: () => void;
+  /** A steer the PERSON typed. Recorded as a human control event. */
   interject: (message: string) => Promise<boolean>;
+  /**
+   * What the app observed on screen (a move that could not be made), told to
+   * AnA mid-turn. Not a human control: it is queued as an app observation, not
+   * shown as "You steered AnA", and not written as a human control event.
+   * Bound to the run of the turn that emitted the drive event — a report about
+   * an earlier turn's move is dropped (resolves false), never delivered to a
+   * newer run. `moveId`, when given, is the move it is about: it settles that
+   * move for the server, which holds her next round until each move is settled.
+   */
+  reportScreen: (message: string, moveId?: string) => Promise<boolean>;
+  /**
+   * The move the server sent as `moveId` landed on the screen. Settles it
+   * without a word for the model. Same run binding as reportScreen.
+   */
+  moveLanded: (moveId: string) => Promise<boolean>;
 }
 
 /**

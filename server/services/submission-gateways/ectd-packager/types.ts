@@ -33,11 +33,18 @@ export interface EctdLeaf {
    */
   leafKey?: string;
   /**
-   * For a lifecycle operation (replace/delete/append), the package-relative
-   * path (+ optional `#leafId` fragment) of the prior leaf this one modifies.
+   * For a lifecycle operation (replace/delete/append), the prior leaf this one
+   * modifies, named as ICH eCTD v3.2.2 requires: the backbone of the sequence
+   * that filed it, '#', and that leaf's ID — from the sequence root, e.g.
+   * `../0000/index.xml#leaf-3-2-S-1-general` or
+   * `../0000/m1/us/us-regional.xml#leaf-1-2-cover` (the packager rebases a
+   * pointer carried by the regional backbone onto that backbone's folder).
    * Emitted as the `modified-file` attribute. For grouped submissions the path
    * must carry the application prefix + number (Module 1 Backbone Spec
    * Addendum 1), e.g. `../../../../nda456789/0001/m1/us/us-regional.xml#id2`.
+   *
+   * 2026-09-29 (W5/D7): this carried the superseded FILE's path
+   * (`../0000/m3/…/x.pdf`), which names no leaf.
    */
   modifiedFile?: string;
   /**
@@ -110,6 +117,15 @@ export interface LeafRef {
    * a follow-up sequence supersedes.
    */
   backboneDir: string;
+  /**
+   * The leaf's XML ID in the backbone that carries it, and that backbone's path
+   * from the sequence root (`index.xml`, `m1/us/us-regional.xml`). Assigned once
+   * per backbone, after every leaf is known, so the ID a backbone carries and
+   * the ID the leaf manifest records are the same value; a later sequence's
+   * `modified-file` names the leaf by exactly these two. 2026-09-29 (W5/D7).
+   */
+  id?: string;
+  backbone?: string;
 }
 
 /** One entry in the index-md5.txt manifest: a package-relative path + its MD5. */

@@ -1,0 +1,14 @@
+Unfixed scripts/ops/terraform-preflight-proof.mjs, run as
+  node scripts/ops/terraform-preflight-proof.mjs --td-json docs/evidence/W2/2026-09-23b/api-task-definition-before.json
+left this diff in another session's filed evidence:
+
+--- a/docs/evidence/W2/2026-09-23b/api-task-definition-before.json
++++ b/docs/evidence/W2/2026-09-23b/api-task-definition-before.json
+@@ -70,5 +70,6 @@
+-  ]
++  ],
++  "taskDefinitionArn": "arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-api:1"
+ }
+
+Reverted (git checkout). Fixed code, same command:
+  sha256 before 86807ba62fd4354c…  after 86807ba62fd4354c…  UNCHANGED; git status clean.

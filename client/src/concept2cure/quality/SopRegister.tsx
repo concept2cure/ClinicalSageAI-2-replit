@@ -162,6 +162,12 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
   const trainUnread = trainComp.rows == null && training.length === 0;
   const trainFailed = trainUnread && trainComp.error != null;
   const unreadSub = (failed: boolean) => (failed ? 'Could not be read' : 'Loading…');
+  /* A register that was read and holds nothing. "None in review" and "Review
+     overdue 0 — All current" were true of the empty set only vacuously, and
+     read as a compliant register to a QA lead on a new tenant (launch sweep
+     finding 112, the clause the HS-1 fix above left standing). */
+  const registerEmpty = !regUnread && docs.length === 0;
+  const nothingToReview = registerEmpty && reviewDue.length === 0;
 
   const visible = docs.filter((d) => filter === 'all' || d.status === filter);
 
@@ -219,13 +225,15 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
             <Kpi
               label="Under review"
               val={String(underReviewCount)}
-              sub={underReviewCount ? 'Awaiting approval' : 'None in review'}
+              sub={underReviewCount ? 'Awaiting approval' : registerEmpty ? 'Nothing in the register yet' : 'None in review'}
               tone={underReviewCount ? 'warn' : 'ok'}
             />
           </>
         )}
         {reviewUnread ? (
           <Kpi label="Review overdue" val="—" sub={unreadSub(reviewFailed)} />
+        ) : nothingToReview ? (
+          <Kpi label="Review overdue" val="—" sub="Nothing in the register to review" />
         ) : (
           <Kpi
             label="Review overdue"

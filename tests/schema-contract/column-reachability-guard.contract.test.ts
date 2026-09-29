@@ -38,6 +38,7 @@ import {
 } from '../../scripts/ci/lib/sql-columns.mjs';
 import {
   buildColumnSurface,
+  migrationSources,
   scanRepository,
 } from '../../scripts/ci/check-column-reachability.mjs';
 import {
@@ -300,6 +301,16 @@ describe('the guard fails on the defects it was built for', () => {
     const reported = new Set(scanRepository({ setFiles: unwired }).findings.map((f: { column: string }) => f.column));
     for (const [file, columns] of Object.entries(HISTORICAL)) {
       for (const c of columns) expect(reported.has(c), `${c} (from ${file}) must be reported when ${file} is un-wired`).toBe(true);
+    }
+  });
+
+  it('knows a column added only by db/migrations/_legacy as never applied', () => {
+    // _legacy was skipped, so these five were unknown rather than orphaned and
+    // /api/stability queried them unreported (2026-09-23).
+    const { durable, orphanAdds } = buildColumnSurface(durableSurface(), migrationSources());
+    for (const c of ['status', 'reviewed_by', 'reviewed_at', 'reject_reason', 'sample_id']) {
+      expect(durable.has(`stab_results.${c}`)).toBe(false);
+      expect(orphanAdds.get(`stab_results.${c}`)?.some((f: string) => f.startsWith('db/migrations/_legacy/'))).toBe(true);
     }
   });
 

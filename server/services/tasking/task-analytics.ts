@@ -11,7 +11,8 @@
  */
 import { and, eq, ne, lt, isNull, sql, count, avg } from 'drizzle-orm';
 import { db } from '../../db';
-import { unifiedTasks, users } from '../../../shared/schema';
+import { unifiedTasks } from '../../../shared/schema';
+import { actorLabel, resolveActorNames } from '../tenant/actor-names';
 
 export interface TaskAnalytics {
   taskStats: {
@@ -78,19 +79,27 @@ export async function loadTaskAnalytics(
     .from(unifiedTasks)
     .where(and(baseCondition, lt(unifiedTasks.dueDate, new Date()), ne(unifiedTasks.status, 'completed')));
 
-  const teamProductivity = await db
+  // Grouped by the assignee id and named through public.actor_name, not an
+  // inner join on users: since users took row-level security (D3, 2026-09-28)
+  // that join dropped everyone who had left, and their work with them
+  // (tenant/actor-names.ts; docs/evidence/D3/2026-09-29-actor-names/).
+  const byAssignee = await db
     .select({
-      name: users.name,
+      assigneeId: unifiedTasks.assigneeId,
       totalTasks: count(unifiedTasks.id),
       completedTasks: sql<number>`count(*) filter (where ${unifiedTasks.status} = 'completed')`,
       avgCompletion: avg(unifiedTasks.completionPercentage),
     })
     .from(unifiedTasks)
-    .innerJoin(users, eq(unifiedTasks.assigneeId, users.id))
-    .where(baseCondition)
-    .groupBy(users.id, users.name)
+    .where(and(baseCondition, sql`${unifiedTasks.assigneeId} IS NOT NULL`))
+    .groupBy(unifiedTasks.assigneeId)
     .orderBy(sql`count(*) filter (where ${unifiedTasks.status} = 'completed') desc`)
     .limit(10);
+  const assignees = await resolveActorNames(byAssignee.map(r => r.assigneeId));
+  const teamProductivity = byAssignee.map(({ assigneeId, ...rest }) => ({
+    name: actorLabel(assignees, assigneeId),
+    ...rest,
+  }));
 
   return {
     taskStats: taskStats as TaskAnalytics['taskStats'],

@@ -375,8 +375,8 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
     },
   });
   React.useEffect(() => {
-    if (!live.loading && !live.error) notifySurfaceActionReady('doc-journey');
-  }, [live.loading, live.error]);
+    if (!live.loading) notifySurfaceActionReady('doc-journey');
+  }, [live.loading]);
 
   usePublishSurfaceContext('doc-journey', anaContext);
 

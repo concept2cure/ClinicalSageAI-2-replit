@@ -37,13 +37,21 @@ export interface PriorLeaf {
   sourcePath?: string;
   /**
    * The leaf's PUBLISHED path within the prior sequence, backbone-relative
-   * (e.g. `m3/32-body-data/32s-drug-sub/drug-substance.pdf`), optionally with a
-   * `#leafId` fragment. Used to build the ICH `modified-file` pointer for a
-   * superseding op. When absent, the exact prior path can't be reconstructed
-   * from ctdSection/fileName alone, so no pointer is emitted (the op still
-   * carries its operation, but a downstream step must supply modified-file).
+   * (e.g. `m3/32-body-data/32s-drug-sub/drug-substance.pdf`). A record of what
+   * was filed; it is not what `modified-file` names (see `leafId`).
    */
   href?: string;
+  /**
+   * The XML ID this leaf carried in its sequence's backbone, and that
+   * backbone's path from the sequence root (`index.xml`,
+   * `m1/us/us-regional.xml`) — as the packager recorded them in the leaf
+   * manifest. ICH eCTD v3.2.2 `modified-file` names a filed leaf by exactly
+   * these: `../<seq>/<backbone>#<leafId>`. When either is absent (a manifest
+   * recorded before 2026-09-29) the leaf cannot be named, and no pointer is
+   * emitted; the caller reports the act rather than guessing one.
+   */
+  leafId?: string;
+  backbone?: string;
   /**
    * The lifecycle operation this leaf carried in its OWN sequence, when known.
    * Used when folding several prior sequences into one effective prior state: a
@@ -106,33 +114,48 @@ function keyOf(leaf: { leafKey?: string; ctdSection: string; fileName: string })
   return leaf.leafKey ?? `${leaf.ctdSection}/${leaf.fileName}`;
 }
 
+/** An XML ID (NCName) and a backbone path that stays inside the sequence. */
+const XML_ID = /^[A-Za-z_][A-Za-z0-9._-]*$/;
+const BACKBONE_PATH = /^(?:[A-Za-z0-9_-][A-Za-z0-9._-]*\/)*[A-Za-z0-9_-][A-Za-z0-9._-]*\.xml$/;
+
 /**
  * Build the ICH `modified-file` pointer for a superseding op (replace/append/
- * delete): the prior leaf's published path, prefixed with the relative traversal
- * from the NEW sequence's backbone to the prior sequence. Returns undefined when
- * the prior leaf's published href is unknown (nothing to point at).
+ * delete): the backbone of the sequence that filed the prior leaf, '#', and the
+ * ID that leaf carries there — from the NEW sequence's root, e.g.
+ * `../0000/index.xml#leaf-3-2-S-1-general`. The packager rebases a pointer
+ * carried by the regional backbone onto that backbone's folder
+ * (`../../../0000/m1/us/us-regional.xml#…`, the shape of FDA's Module 1
+ * examples).
+ *
+ * Returns undefined when the prior leaf's backbone or ID is unknown or malformed
+ * — nothing is named by guessing, and never by the file's path.
+ *
+ * 2026-09-29 (W5/D7, WO-9 Click 6): this returned the prior FILE's path
+ * (`../0000/m3/…/x.pdf`), which names no leaf, so an agency validator could
+ * resolve no replace, append or delete this product filed.
  *
  * @param prev    the prior-sequence leaf being modified
- * @param prefix  relative traversal to the prior sequence root, e.g. '../0000/'
- *                for a grouped submission where sequences are sibling folders.
- *                Empty → the bare prior href (correct only when both sequences
- *                resolve against the same backbone root).
+ * @param prefix  relative traversal to the prior sequence root, e.g. '../0000/',
+ *                used when the leaf does not carry the sequence it was last
+ *                published in. Empty → the backbone in the same root.
  */
 function modifiedFileFor(prev: PriorLeaf, prefix: string): string | undefined {
-  if (!prev.href) return undefined;
-  const href = prev.href.replace(/^\//, '');
+  const id = (prev.leafId ?? '').trim();
+  const backbone = (prev.backbone ?? '').trim().replace(/^\//, '');
+  if (!XML_ID.test(id) || !BACKBONE_PATH.test(backbone)) return undefined;
   // The prior state of an application is the FOLD of every preceding sequence,
   // so prior leaves do not all live in the same sequence folder: a leaf filed in
   // 0000 and not re-filed in 0001 is still on file, in ../0000/. When the leaf
   // names the sequence it was actually last published in, traverse to THAT
   // sequence — pointing a supersede at the most recent predecessor would name a
-  // path that does not contain the file. Falls back to the caller's
+  // backbone that does not carry the leaf. Falls back to the caller's
   // single-sequence prefix when the leaf does not carry its own sequence.
   const seq = (prev.sequenceNumber ?? '').trim();
   const effectivePrefix =
     seq && /^[0-9A-Za-z._-]+$/.test(seq) ? `../${seq}/` : prefix;
-  if (!effectivePrefix) return href;
-  return `${effectivePrefix.replace(/\/+$/, '')}/${href}`;
+  const target = `${backbone}#${id}`;
+  if (!effectivePrefix) return target;
+  return `${effectivePrefix.replace(/\/+$/, '')}/${target}`;
 }
 
 /**

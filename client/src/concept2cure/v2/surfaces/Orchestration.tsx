@@ -847,8 +847,8 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!runsState.loading && !runsState.error) notifySurfaceActionReady('orchestration');
-  }, [runsState.loading, runsState.error]);
+    if (!runsState.loading) notifySurfaceActionReady('orchestration');
+  }, [runsState.loading]);
 
   usePublishSurfaceContext('orchestration', anaContext);
 

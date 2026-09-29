@@ -1,0 +1,77 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T01:56:35.637Z","pid":27904,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:56:35.638Z","pid":27904,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:56:35.639Z","pid":27904,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-displays.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/actor-displays.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-09-29T01:56:36.809Z","pid":27904,"hostname":"vm","context":{"userId":1140,"tenantId":90301,"resourceId":"369:m2.5-actor-displays"},"msg":"[audit-service] [AUDIT] data_modify project_section"}
+{"level":30,"time":"2026-09-29T01:56:36.828Z","pid":27904,"hostname":"vm","context":{"userId":1140,"tenantId":90301,"resourceId":"f7b8758d-c709-4ea6-905c-d9a6f13c73e4"},"msg":"[audit-service] [AUDIT] data_modify regulatory_programs"}
+ ↓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the comment thread keeps every comment, named where A knows the author
+ ↓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section's history names who changed it
+ ↓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the team workload keeps sections assigned to people who left
+ ↓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section list names the leaver as assignee
+ ↓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > the lead who left is still named on the program
+ ↓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > activity names the editor, and never calls a person "System"
+stdout | tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the project activity feed answers
+[database] Database connection successful { timestamp: '2026-09-29T01:56:36.883Z', poolSize: 1 }
+
+{"level":50,"time":"2026-09-29T01:56:36.923Z","pid":27904,"hostname":"vm","context":{"error":"column u.full_name does not exist"},"msg":"[concept2cure-project-knowledge] Failed to fetch project activity"}
+ × tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the project activity feed answers 100ms
+   → {"success":false,"error":{"message":"Failed to fetch project activity"}}: expected 500 to be 200 // Object.is equality
+ × tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx audit list names the leaver's audit entries 15ms
+   → expected Set{ 'User 1140' } to deeply equal Set{ 'WO03 displays-leaver' }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the project activity feed answers
+AssertionError: {"success":false,"error":{"message":"Failed to fetch project activity"}}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/actor-displays.dbtest.ts:226:64
+    224|       .get(`/api/concept2cure/projects/${project}/activity`)
+    225|       .set(asA());
+    226|     expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(20…
+       |                                                                ^
+    227|   });
+    228|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx audit list names the leaver's audit entries
+AssertionError: expected Set{ 'User 1140' } to deeply equal Set{ 'WO03 displays-leaver' }
+
+- Expected
++ Received
+
+  Set {
+-   "WO03 displays-leaver",
++   "User 1140",
+  }
+
+ ❯ tests/db/actor-displays.dbtest.ts:235:49
+    233|     const mine = rows.filter(r => r.actor === `u-${leaver}`);
+    234|     expect(mine.length).toBeGreaterThan(0);
+    235|     expect(new Set(mine.map(r => r.actorName))).toEqual(new Set([leave…
+       |                                                 ^
+    236|   });
+    237| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 skipped (8)
+   Start at  01:56:33
+   Duration  3.42s (transform 1.23s, setup 70ms, import 2.64s, tests 444ms, environment 0ms)
+
