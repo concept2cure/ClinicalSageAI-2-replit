@@ -34,16 +34,23 @@ import type {
 type PathwayId = string;
 
 interface RootSpec {
-  program: string;
   label: string;
   numFmt: (n: string | number) => string;
 }
 
+/* Folder names for each pathway's dossier root. These used to be
+   '510(k) — K-251401', 'PMA — P250048', 'CER — IV-415 Companion' and
+   'IVDR — IVD-318 Technical File', with programs BX-204 / CV-330 / IV-415 /
+   IVD-318. A K-number and a P-number are identifiers FDA assigns to a
+   submission; these were invented, and they named the folder that LIVE
+   sections hydrate into, so every tenant's real dossier was shown filed
+   under an FDA submission it never made. The root now names the pathway
+   only. A real submission number belongs to the tenant's tracked filing. */
 const ROOTS: Record<string, RootSpec> = {
-  k510: { program: 'BX-204', label: '510(k) — K-251401',      numFmt: (n) => `§${String(n).padStart(2, '0')}` },
-  pma:  { program: 'CV-330', label: 'PMA — P250048',          numFmt: (n) => String(n) },
-  cer:  { program: 'IV-415', label: 'CER — IV-415 Companion', numFmt: (n) => `§${n}` },
-  ivd:  { program: 'IVD-318', label: 'IVDR — IVD-318 Technical File', numFmt: (n) => `§${n}` },
+  k510: { label: '510(k) dossier',        numFmt: (n) => `§${String(n).padStart(2, '0')}` },
+  pma:  { label: 'PMA dossier',           numFmt: (n) => String(n) },
+  cer:  { label: 'CER dossier',           numFmt: (n) => `§${n}` },
+  ivd:  { label: 'IVDR technical file',   numFmt: (n) => `§${n}` },
 };
 
 function rootFor(pathway: PathwayId): string {
@@ -89,7 +96,7 @@ The system is intended to:
 
 Interpretation of CGM results should be based on glucose trends and several sequential readings over time. The device should not be used for diagnosis of diabetes or to screen for diabetes.
 
-> **Status:** Locked by Jordan Chen on Apr 28, 2026. E-signed by Dr. Lee Hartman (Med Affairs) per 21 CFR Part 11.`,
+> **Status:** Draft — not signed.`,
 
   11: `# §11 Performance testing
 
@@ -240,9 +247,6 @@ const fs = new Map<string, DossierNode>();
 const subscribers = new Map<string, Set<() => void>>();
 const globalSubs = new Set<() => void>();
 
-/* Synthetic audit events created from in-store edits — merged with the seed
-   audit slice by the drawer's Activity tab. */
-const liveAuditEvents: AuditEvent[] = [];
 
 function notify(path: string): void {
   (subscribers.get(path) || new Set<() => void>()).forEach((cb) => { try { cb(); } catch (e) { console.error(e); } });
@@ -297,32 +301,19 @@ function writeSectionBody(
   const meta = fs.get(metaPath)?.meta || {};
   fs.set(metaPath, {
     kind: 'file',
-    meta: { ...meta, version: (meta.version || 0) + 1, lastEdited: opts.when || new Date().toISOString(), lastEditor: opts.who || 'You' },
+    /* No version bump here: a version is what the server's snapshot trigger
+       assigns on a successful save. Incrementing it locally claimed a version
+       that a failed PATCH never created. */
+    meta: { ...meta, lastEdited: opts.when || new Date().toISOString(), ...(opts.who ? { lastEditor: opts.who } : {}) },
   });
 
-  if (!opts.silent && prev) {
-    const diffApprox = approxDiff(prev.body || '', body);
-    liveAuditEvents.push({
-      id:        `live-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      when:      opts.when || new Date().toISOString(),
-      kind:      'section.edit',
-      actor:     opts.who || 'You',
-      role:      opts.role || 'Reg Lead',
-      target:    label || `§${sectionId}`,
-      target_id: sectionId,
-      diff:      diffApprox,
-      /* NO `ip`. A browser cannot observe its own source address — only the
-         server that received the request can — so any value written here is
-         invented. This field held one hard-coded private address on every event: a
-         fabricated attribution in a 21 CFR Part 11 surface, not a placeholder.
-         `AuditEvent.ip` is optional and the detail pane already renders an em
-         dash when it is absent, so omitting it reports exactly what this store
-         knows. A real address arrives when these events are written
-         server-side; until then the honest value is none. */
-      live:      true,
-    });
-  }
-
+  /* This pushed a `section.edit` row into an in-memory audit list — actor
+     "You", role "Reg Lead" (hardcoded), id from Math.random — before, and
+     regardless of whether, the governed PATCH succeeded, and the drawer's
+     Activity tab rendered it as the section's history. The attach path had
+     exactly this removed (see attachFile). The history now comes from the
+     server's c2c_document_section_versions rows (hooks/useSectionVersions);
+     this store records content, not events. */
   notify(path);
   notify(metaPath);
   notify(`audit:${pathway}`);
@@ -370,19 +361,9 @@ function attachFile(
   notify(`audit:${pathway}`);
 }
 
-function liveEventsForPathway(_pathway: PathwayId): AuditEvent[] {
-  return [...liveAuditEvents];
-}
-
-function activityForSection(_pathway: PathwayId, sectionId: string | number): AuditEvent[] {
-  /* Real in-store edits only.
-     This used to merge the kit's seed audit slice — a *synthesized* hash-chain —
-     under explicit sample mode, so a live dossier's Activity tab could show
-     fictional Part 11 events interleaved with real ones, in timestamp order and
-     visually identical. The seed is deleted (data/pathwayTabs.ts); there is
-     nothing left to merge and no branch that could merge it. */
-  return liveAuditEvents.filter((e) => e.target_id === sectionId);
-}
+/* liveEventsForPathway and activityForSection are removed with the list they
+   read. The browser no longer authors audit events at all; a section's history
+   is the server's (hooks/useSectionVersions). */
 
 /* ─────────────── Helpers ─────────────── */
 
@@ -580,8 +561,6 @@ export const DossierStore = {
   readSectionAttachments,
   writeSectionBody,
   attachFile,
-  activityForSection,
-  liveEventsForPathway,
   subscribe,
   subscribeAll,
   fmtSize,
