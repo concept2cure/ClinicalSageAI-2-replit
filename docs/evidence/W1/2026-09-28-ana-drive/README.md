@@ -226,7 +226,24 @@ answered. Each time AnA waited out 10 s and was told "not confirmed".
 
 `held-actions.txt` has the audit, the runs and the tests.
 
+## As production runs: launch scope enforced
+
+Production locks the screens outside the launch catalog
+(`LAUNCH_SCOPE_ENFORCE`, on by default there), and every run above had it off.
+With it on, the whole battery passed 23/23:
+- Every launch-catalog path works: navigation, a program, the Vault and its
+  search, both demonstrations.
+- AnA refuses every screen outside the release out loud ("not in this
+  release"), never moving the person onto a lock panel.
+- The battery now knows the mode (`LAUNCH_SCOPE=on`). Its refusal checks
+  were seen failing against an app without enforcement.
+
+No defect (`launch-scope-on.txt`).
+
 ## Evidence
+
+- `launch-scope-on.txt`: the whole battery with launch scope enforced, as
+  production runs it.
 
 - `held-actions.txt`, `held-design-before.png`, `held-design-after.png`: an
   action sent to another screen, before and after.

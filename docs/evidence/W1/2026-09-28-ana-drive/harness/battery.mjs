@@ -13,6 +13,12 @@ fsSync.mkdirSync(SP, { recursive: true });
 const BASE = process.env.APP_URL || 'http://localhost:5000';
 const HOME = `${BASE}/concept2cure`;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// LAUNCH_SCOPE=on: the app runs with LAUNCH_SCOPE_ENFORCE=on (production's
+// default), so Biostatistics and Inconsistency are outside the release. The
+// checks on them then assert the honest refusal: AnA says so, and the screen
+// stays where it is.
+const LAUNCH_ON = process.env.LAUNCH_SCOPE === 'on';
+const NOT_IN_RELEASE = /not available in this workspace \(not in this release\)/;
 const psql = sql => execSync(`psql ${JSON.stringify(process.env.DATABASE_URL || '')} -Atc ${JSON.stringify(sql)}`).toString().trim();
 
 const results = [];
@@ -96,7 +102,9 @@ const SCENARIOS = {
     await waitIdle(page);
     const text = await bodyText(page);
     await page.screenshot({ path: `${SP}/e2e-biostat.png` });
-    record('take me to biostatistics → Biostatistics opens', seen.some(p => p.endsWith('/biostatistics')), seen.join(' → '));
+    const opened = seen.some(p => p.endsWith('/biostatistics'));
+    if (LAUNCH_ON) record('take me to biostatistics → refused, not in this release; the screen stays', !opened && NOT_IN_RELEASE.test(text), seen.join(' → '));
+    else record('take me to biostatistics → Biostatistics opens', opened, seen.join(' → '));
     record('biostat: no tool-missing / error text', !/FAKE:|not offered|Something went wrong/i.test(text));
   },
   async vault(page) {
@@ -165,11 +173,9 @@ const SCENARIOS = {
     const designMs = Date.now() - t;
     const loaded = await selectedText('button.sp-row[aria-pressed="true"] .sp-row-t');
     await page.screenshot({ path: `${SP}/e2e-held-design.png` });
-    record(
-      'held action: a study design named from another screen is loaded',
-      loaded === 'Phase 2 dose finding' && /Screen: no report/.test(designSaid),
-      `${designSaid} (selected: ${loaded || 'none'}; answered in ${designMs} ms)`,
-    );
+    const designDetail = `${designSaid} (selected: ${loaded || 'none'}; answered in ${designMs} ms)`;
+    if (LAUNCH_ON) record('held action: a design on a screen outside the release is refused, not in this release', NOT_IN_RELEASE.test(designSaid) && !loaded, designDetail);
+    else record('held action: a study design named from another screen is loaded', loaded === 'Phase 2 dose finding' && /Screen: no report/.test(designSaid), designDetail);
   },
   async vaultSearch(page) {
     await goHome(page);
@@ -251,7 +257,9 @@ const SCENARIOS = {
     const railStill = await page.locator('aside textarea:visible').count();
     const text = await bodyText(page);
     await page.screenshot({ path: `${SP}/e2e-rail.png` });
-    record('rail: take me to biostatistics → Biostatistics opens', seen.some(p => p.endsWith('/biostatistics')), seen.join(' → '));
+    const railOpened = seen.some(p => p.endsWith('/biostatistics'));
+    if (LAUNCH_ON) record('rail: take me to biostatistics → refused, not in this release; the screen stays', !railOpened && NOT_IN_RELEASE.test(text), seen.join(' → '));
+    else record('rail: take me to biostatistics → Biostatistics opens', railOpened, seen.join(' → '));
     record('rail: the conversation is still there after the move', railStill > 0 && /Navigation result/.test(text));
   },
   async chipsWhenOff(page) {
@@ -271,7 +279,8 @@ const SCENARIOS = {
     const after = new URL(page.url()).pathname;
     await page.screenshot({ path: `${SP}/e2e-chips.png` });
     record('drive off: the ask does not move the screen', !stayed.endsWith('/biostatistics'), stayed);
-    record('drive off: a Biostatistics chip is offered and works', hasChip && after.endsWith('/biostatistics'), `chip=${hasChip} after=${after}`);
+    if (LAUNCH_ON) record('drive off: no chip is offered for a screen outside the release', !hasChip && !after.endsWith('/biostatistics'), `chip=${hasChip} after=${after}`);
+    else record('drive off: a Biostatistics chip is offered and works', hasChip && after.endsWith('/biostatistics'), `chip=${hasChip} after=${after}`);
     // Restore the default.
     await goHome(page);
     const sw2 = page.locator('[role="switch"]').first();
