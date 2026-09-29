@@ -1,68 +1,68 @@
 
  RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
 
-{"level":30,"time":"2026-09-29T17:37:38.706Z","pid":1383,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
-{"level":30,"time":"2026-09-29T17:37:38.709Z","pid":1383,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
-{"level":40,"time":"2026-09-29T17:37:38.709Z","pid":1383,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-09-29T17:39:58.999Z","pid":2803,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T17:39:59.001Z","pid":2803,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T17:39:59.001Z","pid":2803,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
 stderr | tests/db/actor-vanishing.dbtest.ts
 [SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
 
 stdout | tests/db/actor-vanishing.dbtest.ts
 [database] Database connection successful
 
-{"level":30,"time":"2026-09-29T17:37:39.612Z","pid":1383,"hostname":"vm","context":{"userId":1164,"tenantId":90301,"resourceId":"wo03_1383_mumylsd4"},"msg":"[audit-service] [AUDIT] data_modify actor_vanishing_contract"}
+{"level":30,"time":"2026-09-29T17:39:59.841Z","pid":2803,"hostname":"vm","context":{"userId":1176,"tenantId":90301,"resourceId":"wo03_2803_mumyoskh"},"msg":"[audit-service] [AUDIT] data_modify actor_vanishing_contract"}
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the CRO portfolio keeps the leaver as lead of record, not the next assignee
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.668Z', poolSize: 1 }
+[database] Database connection successful { timestamp: '2026-09-29T17:39:59.895Z', poolSize: 1 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the CRO portfolio keeps the leaver as lead of record, not the next assignee
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.669Z', poolSize: 2 }
+[database] Database connection successful { timestamp: '2026-09-29T17:39:59.896Z', poolSize: 2 }
 
- ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the sentinel still reports the leaver's over-allocation, by name 10ms
- ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the CRO portfolio keeps the leaver as lead of record, not the next assignee 14ms
+ ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the sentinel still reports the leaver's over-allocation, by name 11ms
+ ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the CRO portfolio keeps the leaver as lead of record, not the next assignee 13ms
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.760Z', poolSize: 3 }
-
-stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.761Z', poolSize: 4 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.009Z', poolSize: 3 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.763Z', poolSize: 5 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.012Z', poolSize: 4 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.764Z', poolSize: 6 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.013Z', poolSize: 5 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.765Z', poolSize: 7 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.013Z', poolSize: 6 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.769Z', poolSize: 8 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.014Z', poolSize: 7 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.770Z', poolSize: 9 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.017Z', poolSize: 8 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.771Z', poolSize: 10 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.017Z', poolSize: 9 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.773Z', poolSize: 11 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.020Z', poolSize: 10 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.773Z', poolSize: 12 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.020Z', poolSize: 11 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.774Z', poolSize: 13 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.021Z', poolSize: 12 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.774Z', poolSize: 14 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.021Z', poolSize: 13 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.778Z', poolSize: 15 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.022Z', poolSize: 14 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.779Z', poolSize: 16 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.022Z', poolSize: 15 }
 
 stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[database] Database connection successful { timestamp: '2026-09-29T17:37:39.779Z', poolSize: 17 }
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.023Z', poolSize: 16 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T17:40:00.023Z', poolSize: 17 }
 
 stderr | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
 [recommendation-engine] Generator failed: DrizzleQueryError: Failed query: 
@@ -79,7 +79,7 @@ stderr | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stay
       ORDER BY target_date ASC
       LIMIT 5
     
-params: 387,90301
+params: 399,90301
     at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
     at processTicksAndRejections (node:internal/process/task_queues:103:5)
     at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:20
@@ -102,7 +102,7 @@ params: 387,90301
     '      ORDER BY target_date ASC\n' +
     '      LIMIT 5\n' +
     '    ',
-  params: [ 387, 90301 ],
+  params: [ 399, 90301 ],
   cause: error: column "project_id" does not exist
       at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
       at processTicksAndRejections (node:internal/process/task_queues:103:5)
@@ -134,13 +134,14 @@ params: 387,90301
   }
 }
 
-(node:1383) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(node:2803) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
- ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead 130ms
- ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the RBM board names the approver and owners who left, and never calls an owned action "Unassigned" 49ms
+ ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead 153ms
+ ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the RBM board names the approver and owners who left, and never calls an owned action "Unassigned" 56ms
+ ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > task analytics keeps the leaver's work in team productivity 13ms
 
  Test Files  1 passed (1)
-      Tests  4 passed (4)
-   Start at  17:37:36
-   Duration  3.44s (transform 1.63s, setup 76ms, import 2.48s, tests 577ms, environment 0ms)
+      Tests  5 passed (5)
+   Start at  17:39:57
+   Duration  3.15s (transform 1.44s, setup 76ms, import 2.21s, tests 595ms, environment 0ms)
 

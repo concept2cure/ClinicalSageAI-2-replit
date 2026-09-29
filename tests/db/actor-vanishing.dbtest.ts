@@ -24,6 +24,7 @@ import { createAuthBoundary } from '../../server/middleware/authBoundary';
 import { authenticateToken } from '../../server/middleware/auth';
 import createProjectHomeRoutes from '../../server/routes/project-home-routes';
 import createRbmBoardRoutes from '../../server/routes/mdx-rbm-board';
+import { loadTaskAnalytics } from '../../server/services/tasking/task-analytics';
 import {
   TAG,
   ORG_A,
@@ -197,5 +198,10 @@ describe('work held by someone who left stays visible, and theirs (D3)', () => {
       ['visit site 01', leaverName],
       ['visit site 02', `user ${silent}`],
     ]);
+  });
+
+  it("task analytics keeps the leaver's work in team productivity", async () => {
+    const a = await inA(() => loadTaskAnalytics(ORG_A, projects[0]));
+    expect(a.teamProductivity.map(t => t.name)).toContain(leaverName);
   });
 });
