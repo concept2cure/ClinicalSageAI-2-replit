@@ -1,0 +1,37 @@
+# GREEN — same tests, authorizeCommand refuses hiddenApp commands under launch scope
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed by construction > DENIES a dispatchable-looking command that carries no authorization metadata 4ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed by construction > allows a read-only command without consulting RBAC 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a non-MDX write that the tenant deny-list names 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a READ the tenant deny-list names (deny outranks the degraded-read path) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a command absent from a non-empty allow-list (whitelist actually constrains) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > ALLOWS a command that is on the allow-list, and when no policy is set 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation when the caller lacks the required role (viewer) 2ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > ALLOWS a mutation when the caller holds the required role 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > demands the manager tier for Part 11 record-altering commands 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES when the RBAC lookup throws (fail closed, never fail open) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with missing userId (identity must come from the verified principal) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with missing organizationId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with non-numeric userId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with zero organizationId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > BLOCKS every mutation when tenant governance config could not be resolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > BLOCKS a Part 11 governed mutation when governance config is unresolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > keeps READ-ONLY commands available while governance is unresolved (documented degraded mode) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > lets the central gate through so the handler can apply the self-service rule 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > still demands provable identity for the GDPR commands 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > blocks the erase mutation when governance is unresolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is true for manager+ in the organization 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is true for a dedicated privacy role that has no hierarchy level 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false for an ordinary member and never trusts ctx.userRole 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false when the role lookup throws 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false without a provable identity 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > classifies EVERY dispatchable command 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > has no authorization entry for a command that is not dispatchable 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > gives every mutation-capable command a role tier or an explicit handler carve-out 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > never puts a role tier on a plain read (reads are not RBAC-gated) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > marks every dispatchable Part 11 governed command as a manager-tier write 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > mirrors the Part 11 e-signature subset exactly 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > never marks a Part 11 governed command as read-only 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > refuses a hidden-app command in production, read or write, whatever the role 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > leaves in-scope commands to the normal checks 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > with launch scope off (a development server), a hidden-app command reaches the normal checks 0ms
+      Tests  35 passed (35)
