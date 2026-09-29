@@ -30,6 +30,7 @@ import {
 } from '../../services/part11/signature-persistence';
 import { SIGNATURE_MEANINGS, signatureMeaningSchema, resolveActorUserId } from './governance';
 import { serverError } from '../../lib/api-response';
+import { cmcProjectInOrganization } from '../../services/cmc/cmc-project-access';
 import { createScopedLogger } from '../../utils/logger';
 import { clientIpOf } from '../../utils/client-ip';
 
@@ -39,6 +40,31 @@ type SignatureMeaning = (typeof SIGNATURE_MEANINGS)[number];
 const router = express.Router();
 
 const logger = createScopedLogger('cmc-module3-os');
+
+/* Every route here that names a project acts only in a project of the
+   caller's organization (PF-15). They took :projectId from the URL and wrote
+   and read under it unchecked, so an organization's Module 3 sources, compiled
+   sections, approvals and placements could be filed under another
+   organization's project, or under an id naming none. One guard, for all of
+   them: another organization's project, a deleted one and a malformed id are
+   404 before the handler runs; a lookup that cannot complete is a 500. With no
+   organization in context the handler's own refusal stands. */
+router.param('projectId', async (req, res, next, projectId: string) => {
+  let orgId: number;
+  try {
+    orgId = getOrgId(req);
+  } catch {
+    return next();
+  }
+  try {
+    if (!(await cmcProjectInOrganization(getPool(), orgId, projectId))) {
+      return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+    }
+    return next();
+  } catch (err) {
+    return serverError(res, logger, 'checking the Module 3 project', err, { projectId });
+  }
+});
 
 const upsertSourceObjectSchema = z.object({
   /* Derived from the composer's own list — the enum here used to be a
