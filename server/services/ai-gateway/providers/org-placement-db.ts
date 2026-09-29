@@ -53,6 +53,15 @@ function allowList<T extends string>(value: unknown, valid: ReadonlySet<T>): T[]
 export class DbOrgPlacementResolver implements OrgPlacementResolver {
   private cache = new Map<string, CacheEntry>();
   private readonly ttlMs: number;
+  /**
+   * Bumped by invalidate(). A lookup caches its result only if the generation
+   * it started under is still current, so a read that took its snapshot before
+   * a policy change committed cannot put the superseded policy back after the
+   * writer invalidated it. Until 2026-09-26 it could, for a full TTL, in the
+   * very process that made the change.
+   */
+  private generations = new Map<string, number>();
+  private allGeneration = 0;
 
   // One minute. The policy writer (org-placement-writer.ts) invalidates this
   // process's cache on commit; every other API process converges within the
@@ -70,6 +79,7 @@ export class DbOrgPlacementResolver implements OrgPlacementResolver {
     const key = String(orgId);
     const cached = this.cache.get(key);
     if (cached && Date.now() - cached.at < this.ttlMs) return cached.policy;
+    const generation = this.generationOf(key);
 
     // No catch: a failure propagates to the gateway as an unknown policy.
     const { rows } = await runWithTenantScope(
@@ -103,16 +113,23 @@ export class DbOrgPlacementResolver implements OrgPlacementResolver {
       };
     }
 
-    this.cache.set(key, { policy, at: Date.now() });
+    if (this.generationOf(key) === generation) this.cache.set(key, { policy, at: Date.now() });
     return policy;
+  }
+
+  private generationOf(key: string): string {
+    return `${this.allGeneration}:${this.generations.get(key) ?? 0}`;
   }
 
   /** Clear the cache for one org (after a policy update), or all orgs. */
   invalidate(organizationId?: string | number): void {
     if (organizationId === undefined) {
+      this.allGeneration += 1;
       this.cache.clear();
     } else {
-      this.cache.delete(String(Number(organizationId)));
+      const key = String(Number(organizationId));
+      this.generations.set(key, (this.generations.get(key) ?? 0) + 1);
+      this.cache.delete(key);
     }
   }
 }

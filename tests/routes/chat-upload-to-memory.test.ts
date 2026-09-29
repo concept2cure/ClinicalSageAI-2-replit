@@ -31,6 +31,16 @@ const { mockResolveGovernedContext, mockPoolQuery, mockEmbedAtom, mockGetEmbeddi
 vi.mock('../../server/services/concept2cure/governedDocumentContractService.js', () => ({
   resolveGovernedContext: mockResolveGovernedContext,
 }));
+// The Data Room source identity is not this suite's subject (chat-upload-
+// source-identity.test.ts is). Stubbed so a project-scoped upload records its
+// source; with the real service on this suite's stub pool the write fails and
+// the upload now, correctly, answers 503 SOURCE_NOT_RECORDED (PF-07).
+vi.mock('../../server/services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
+  createSource: vi.fn(async () => ({ id: 4242 })),
+  findSourceByChecksum: vi.fn(async () => null),
+  findSupersededCandidate: vi.fn(async () => null),
+  createSupersedingSource: vi.fn(async () => ({ source: { id: 4242 } })),
+}));
 
 vi.mock('../../server/db.js', () => {
   const poolStub = { query: mockPoolQuery };

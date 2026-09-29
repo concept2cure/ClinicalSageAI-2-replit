@@ -22,7 +22,7 @@ import { submissions } from '../../../shared/schema';
 import { submissionEvidenceLinks, consistencyFindings } from '../../../shared/schema/evidence';
 import type { SubmissionEvidenceLink, ConsistencyFinding } from '../../../shared/types/database';
 import { getGateway } from '../ai-gateway';
-import { classifyGatewayError } from '../ai-gateway/gateway-error-map';
+import { classifyGatewayError, type GatewayErrorCode } from '../ai-gateway/gateway-error-map';
 import auditService from '../auditService';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
@@ -32,7 +32,7 @@ const logger = createScopedLogger('truth-engine-service');
 
 export class TruthEngineError extends Error {
   constructor(
-    public code: 'NOT_FOUND' | 'INVALID_AI_RESPONSE' | 'PROVIDER_UNAVAILABLE' | 'RATE_LIMITED' | 'OVERLOADED' | 'TOKEN_LIMIT_EXCEEDED',
+    public code: 'NOT_FOUND' | GatewayErrorCode,
     message: string
   ) {
     super(message);

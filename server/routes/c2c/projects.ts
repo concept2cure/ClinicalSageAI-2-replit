@@ -77,7 +77,12 @@ import {
    create failure could not be looked up in the logs — the reference the UI
    invited the user to quote pointed at nothing. */
 import { serverError } from '../../lib/api-response.js';
+import { createSource, findSourceByChecksum } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 
+// People are named through public.actor_name, not a join on users: since users
+// took row-level security (D3, 2026-09-28) a tenant scope reads only current
+// members, so the join dropped the name of anyone who had left
+// (docs/evidence/D3/2026-09-29-actor-names/).
 const router = Router();
 
 /**
@@ -502,7 +507,7 @@ async function readProgramDetail(id: string, orgId: number): Promise<Record<stri
   const measured = await readinessByProject([id], orgId);
   return {
     ...serializeProgramDetail(rows[0] as Record<string, unknown>),
-    readiness: measured ? (measured.get(id) ?? 0) : null,
+    readiness: measured?.get(id) ?? null,
   };
 }
 
@@ -551,7 +556,7 @@ router.get('/', async (req: Request, res: Response) => {
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.organization_id = $1 AND p.deleted_at IS NULL
           AND ($4::boolean OR p.status <> 'archived')
         ORDER BY p.updated_at DESC
@@ -569,9 +574,15 @@ router.get('/', async (req: Request, res: Response) => {
       (page as Array<{ id: string }>).map((p) => p.id),
       orgId,
     );
-    for (const p of page as Array<{ id: string; readiness: number }>) {
-      const r = real?.get(p.id);
-      if (r != null) p.readiness = r;
+    /* A measurement that failed, or a program with no governed sections to
+       measure, is no figure: null, which the card renders as "not measured".
+       Both used to fall back to the stored progress_percent 0 — a failed read
+       rendered as a measured "0% ready", which the note above admits was "not
+       a good answer". A share over no sections is undefined, as a mean over
+       no programs is. (A program with its dossier spine and nothing approved
+       is a real, measured 0 and still reads 0%.) */
+    for (const p of page as Array<{ id: string; readiness: number | null }>) {
+      p.readiness = real?.get(p.id) ?? null;
     }
 
     return res.json({
@@ -937,7 +948,7 @@ router.post('/', async (req: Request, res: Response) => {
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.id = $1 AND p.organization_id = $2`,
       [newId, orgId],
     );
@@ -1115,7 +1126,7 @@ router.get('/:id/team', async (req: Request, res: Response) => {
     const { rows } = await pool.query(
       `SELECT p.lead_user_id, p.team_members, u.name, u.email
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.id = $1 AND p.organization_id = $2
         LIMIT 1`,
       [req.params.id, orgId],
@@ -1307,7 +1318,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
          COALESCE(u.name, u.email) AS actor_name,
          al.occurred_at, al.ip_address
        FROM audit_logs al
-       LEFT JOIN users u ON u.id = COALESCE(al.actor_id, al.user_id)
+       LEFT JOIN LATERAL public.actor_name(COALESCE(al.actor_id, al.user_id)) u ON TRUE
        WHERE al.tenant_id = $2
          AND (al.record_id = $1
               OR al.target = 'regulatory_program:' || $1
@@ -1394,6 +1405,89 @@ router.get('/:id/records', async (req: Request, res: Response) => {
     return res.json({ projectId: id, records });
   } catch (err: unknown) {
     return serverError(res, logger, 'listing the project records', err, { programId: id });
+  }
+});
+
+// ── POST /api/c2c/projects/:id/adopt ─────────────────────────────────────────
+//
+// A conversation file becomes this project's Data Room source (PF-07; founder
+// decision 2026-09-26). A file attached in chat with no project open records no
+// source; adopting it is the one way into a project's Data Room: from no
+// project to this one, once, audited as c2c.project.adopt on the same
+// transaction as the source, never reversed. The file must be the caller's
+// organization's; the same bytes already in this project are that source, not
+// a second one, and adopting again writes nothing.
+
+router.post('/:id/adopt', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  const userId = resolveUserId(req);
+  if (!orgId || !userId) return send403(res);
+  const programId = String(req.params.id);
+  if (!UUID_RE.test(programId)) return send404(res);
+  const fileUploadId = typeof req.body?.fileUploadId === 'string' ? req.body.fileUploadId.trim() : '';
+  if (!fileUploadId) return send400(res, 'fileUploadId is required.');
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const program = await client.query(
+      `SELECT lead_user_id FROM regulatory_programs
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+      [programId, orgId],
+    );
+    if (program.rows.length === 0) { await client.query('ROLLBACK'); return send404(res); }
+    const lead = (program.rows[0] as { lead_user_id: number | null }).lead_user_id;
+    if (!allowProgramMutation(req, res, { leadUserId: lead == null ? null : Number(lead) }, 'POST /:id/adopt')) {
+      await client.query('ROLLBACK');
+      return;
+    }
+    const file = await client.query(
+      `SELECT id, original_name, mime_type, file_size, storage_path, checksum_sha256
+         FROM file_uploads WHERE id = $1 AND organization_id = $2`,
+      [fileUploadId, orgId],
+    );
+    const f = file.rows[0] as
+      | { id: string; original_name: string | null; mime_type: string | null; file_size: number | null; storage_path: string | null; checksum_sha256: string | null }
+      | undefined;
+    if (!f) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'File not found', code: 'FILE_NOT_FOUND' }); }
+    if (!f.checksum_sha256) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        error: 'This file has no recorded checksum, so its identity cannot be established. Upload it again with the project open.',
+        code: 'FILE_IDENTITY_UNKNOWN',
+      });
+    }
+    const existing = await findSourceByChecksum(orgId, f.checksum_sha256, {
+      sourceType: 'client_document', clientProgramId: programId, clientWorkspaceId: null,
+    });
+    if (existing) {
+      await client.query('ROLLBACK');
+      return res.json({ adopted: false, sourceId: existing.id, message: 'This file is already in the project’s Data Room.' });
+    }
+    const source = await createSource(orgId, {
+      sourceType: 'client_document',
+      visibilityClass: 'project_private',
+      clientProgramId: programId,
+      clientWorkspaceId: null,
+      title: f.original_name,
+      storedArtifactRef: f.storage_path,
+      checksum: f.checksum_sha256,
+      ingestionStatus: 'ingested',
+      provenance: { origin: 'adopt', fileUploadId: f.id, storagePath: f.storage_path, adoptedByUserId: userId, adoptedFrom: 'conversation' },
+      metadata: { originalName: f.original_name, mimeType: f.mime_type, fileSize: f.file_size },
+    }, client);
+    await writeProgramAudit(client, {
+      orgId, userId, programId,
+      action: 'c2c.project.adopt',
+      details: { file_upload_id: f.id, source_id: source.id, checksum: f.checksum_sha256, from: 'conversation' },
+    });
+    await client.query('COMMIT');
+    return res.status(201).json({ adopted: true, sourceId: source.id });
+  } catch (err: unknown) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, logger, 'adopting the file into the project', err, { programId });
+  } finally {
+    client.release();
   }
 });
 

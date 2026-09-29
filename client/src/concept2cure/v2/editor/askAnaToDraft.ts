@@ -9,10 +9,17 @@
  * composer use. No second channel.
  */
 
-export function askAnaToDraftPrompt(programName: string | null): string {
-  return programName
-    ? `Draft a document for ${programName} — tell me which document type and I will draft it into the project as an editable authoring document.`
-    : 'Draft a document into this project — tell me which document type and I will draft it as an editable authoring document.';
+/**
+ * One fixed sentence, whatever the program is called. The prompt is sent as
+ * the clicking person's own words, and a program's name is stored text any
+ * member can set, so splicing it in let an instruction planted there speak
+ * as that person, outside the fence the server puts around screen context
+ * (periodic review 2026-09-28, editor family, SEC-C-4 class). AnA still
+ * knows the project: the conversation forwards it as `project_id`. The
+ * argument is kept, unused, so existing callers compile unchanged.
+ */
+export function askAnaToDraftPrompt(_programName?: string | null): string {
+  return 'Draft a document into this project — tell me which document type and I will draft it as an editable authoring document.';
 }
 
 /**

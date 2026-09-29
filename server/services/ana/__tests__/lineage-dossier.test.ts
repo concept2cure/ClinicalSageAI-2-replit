@@ -91,12 +91,17 @@ function decision(partial: Partial<DossierDecision>): DossierDecision {
 
 describe('summarizeDecisions', () => {
   it('rolls up authored/decided/approved/rejected/pending counts', () => {
+    /* Counted from actionState, which is what public.decision_records records.
+       This fixture used approvedById / rejectedById — columns of the retired
+       drizzle shape that the deployed table does not have, so every real row
+       fell through to `pending`, rejected ones included. */
     const summary = summarizeDecisions([
-      decision({ id: 'a', authoredBy: 'ana', decidedBy: 'human', approvedById: 1 }),
-      decision({ id: 'b', authoredBy: 'ana', decidedBy: 'human', rejectedById: 2 }),
+      decision({ id: 'a', authoredBy: 'ana', decidedBy: 'human', actionState: 'approved' }),
+      decision({ id: 'b', authoredBy: 'ana', decidedBy: 'human', actionState: 'rejected' }),
       decision({ id: 'c', authoredBy: 'human', decidedBy: null }),
     ]);
     expect(summary).toEqual({
+      unavailable: null,
       total: 3,
       anaAuthored: 2,
       humanAuthored: 1,
@@ -144,7 +149,7 @@ function minimalLedger(): ArtifactLedger {
 
 function fixtureDossier(): DocumentLineageDossier {
   const decisions = [
-    decision({ id: 'dec_ana', authoredBy: 'ana', decidedBy: 'human', approvedById: 3 }),
+    decision({ id: 'dec_ana', authoredBy: 'ana', decidedBy: 'human', actionState: 'approved' }),
   ];
   return {
     schemaVersion: DOSSIER_SCHEMA_VERSION,

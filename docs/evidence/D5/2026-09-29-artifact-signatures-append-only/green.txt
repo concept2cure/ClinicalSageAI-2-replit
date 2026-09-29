@@ -1,0 +1,43 @@
+# Green — 2026-09-29
+
+## The new suite (PGlite, baseline tables and cascading FKs)
+ ✓ concept2cure_signatures is append-only > a new signature can be recorded 4ms
+ ✓ concept2cure_signatures is append-only > rewriting the printed name is refused, and the signature stands as signed 6ms
+ ✓ concept2cure_signatures is append-only > rewriting the meaning is refused, and the signature stands as signed 2ms
+ ✓ concept2cure_signatures is append-only > deleting the signature is refused, and the signature stands as signed 2ms
+ ✓ concept2cure_signatures is append-only > truncating the table is refused, and the signature stands as signed 2ms
+ ✓ concept2cure_signatures is append-only > deleting the signed artifact (the cascade) is refused, and the signature stands as signed 2ms
+ ✓ concept2cure_signatures is append-only > deleting the signed version (the cascade) is refused, and the signature stands as signed 2ms
+ ✓ concept2cure_submission_snapshots is append-only > rewriting the hash is refused 3ms
+ ✓ concept2cure_submission_snapshots is append-only > deleting the snapshot is refused 2ms
+ ✓ concept2cure_submission_snapshots is append-only > truncating the table is refused 2ms
+ ✓ the migration replays > a second run (every deploy runs it again) succeeds and adds no second trigger 4ms
+      Tests  11 passed (11)
+
+## The boot-time trigger registry (fake client + real catalog)
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+
+## Real PostgreSQL 16 (a database built by install-fresh): applied twice, then probed
+apply 1: exit 0
+apply 2: exit 0
+trg_concept2cure_signatures_append_only
+trg_concept2cure_signatures_no_truncate
+trg_concept2cure_submission_snapshots_append_only
+trg_concept2cure_submission_snapshots_no_truncate
+TRUNCATE concept2cure_submission_snapshots -> ERROR:  IMMUTABILITY_VIOLATION: concept2cure_submission_snapshots is append-only (21 CFR Part 11 §11.70) — TRUNCATE refused.
+
+## Migration gates
+ci:migration-set-order exit=0 :: [ci:migration-set-order] OK — 322 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
+ci:migration-drop-safety exit=0 :: [ci:migration-drop-safety] OK — 322 migrations, 34 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed 
+ci:migration-drop-safety:selftest exit=0 :: [ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+ci:column-reachability exit=0 :: [ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+db:sync-manifest:check exit=0 :: Manifest is in sync.
+ci:runtime-ddl exit=0 :: [ci:runtime-ddl] ✅ no new runtime DDL.
+ci:check-unrun-tests exit=0 :: [ci:unrun-tests] OK — every test file is reachable by a runner, or explained.
+
+## tests/schema-contract
+      Tests  1145 passed | 3 skipped (1148)
+ FAIL  tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated
+ Test Files  1 failed | 90 passed (91)
+(the one failure, tenant-isolation-sweep, stops at migrations/20260928_invitations_for_member.sql — 'relation public.organization_invitations does not exist' — before this file; it is the D3 session's, handed on in docs/work-orders/README.md)

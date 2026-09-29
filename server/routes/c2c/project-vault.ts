@@ -105,6 +105,9 @@ interface VaultDoc {
    *  refuses any other leaf. */
   mimeType?: string | null;
   filing?: UploadFiling;
+  /** The version's recorded descriptive fields, as stored (uploads only):
+   *  what Edit details starts from. */
+  details?: { documentTitle: string | null; documentType: string | null; classification: string | null };
 }
 
 /** The placement block for an uploaded document — mirrors vault-ingest. */
@@ -415,6 +418,7 @@ export interface UploadRow {
   document_code: string | null;
   document_title: string | null;
   document_type: string | null;
+  classification?: string | null;
   version: string | null;
   file_name: string | null;
   file_size: string | number | null;
@@ -495,6 +499,11 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
       placementStatus,
       confidence: row.placement_confidence,
       rationale: row.placement_rationale,
+    },
+    details: {
+      documentTitle: row.document_title,
+      documentType: row.document_type,
+      classification: row.classification ?? null,
     },
   };
   if (placementStatus === 'unfiled') {
@@ -987,6 +996,8 @@ export default function createProjectVaultRoutes(): Router {
       const view: VaultViewId = projSegs[0] ?? (await resolveOrgVaultView(orgId));
 
       // 3) The project's active document builds + their rule-pack section specs.
+      //    Owners are named through public.actor_name, not users, so an owner who
+      //    has left is still named (D3, 2026-09-29; docs/evidence/D3/2026-09-29-actor-names/).
       const docsRes = await pool.query(
         `SELECT d.id, d.doc_type, d.agency, d.rule_pack_version, d.title,
                 d.status, d.readiness, d.updated_at,
@@ -996,7 +1007,7 @@ export default function createProjectVaultRoutes(): Router {
            LEFT JOIN c2c_rule_packs rp
              ON rp.doc_type = d.doc_type AND rp.agency = d.agency
                 AND rp.version = d.rule_pack_version
-           LEFT JOIN users du ON du.id = d.owner_id
+           LEFT JOIN LATERAL public.actor_name(d.owner_id) du ON TRUE
           WHERE d.project_id = $1 AND d.org_id = $2
           ORDER BY d.updated_at DESC`,
         [id, orgId],
@@ -1022,7 +1033,7 @@ export default function createProjectVaultRoutes(): Router {
                   ${sectionHasContentSql('ds.content')} AS has_content,
                   COALESCE(u.name, u.email) AS owner_name
              FROM c2c_document_sections ds
-             LEFT JOIN users u ON u.id = ds.owner_id
+             LEFT JOIN LATERAL public.actor_name(ds.owner_id) u ON TRUE
             WHERE ds.document_id = ANY($1::text[])
               AND EXISTS (SELECT 1 FROM c2c_documents d
                            WHERE d.id = ds.document_id AND d.org_id = $2)`,
@@ -1114,14 +1125,14 @@ export default function createProjectVaultRoutes(): Router {
       try {
         // cap + 1 detects the overflow without a second round trip.
         const upRes = await pool.query(
-          `SELECT d.id, d.document_code, d.document_title, d.document_type,
+          `SELECT d.id, d.document_code, d.document_title, d.document_type, d.classification::text AS classification,
                   d.version, d.file_name, d.file_size, d.mime_type, d.content_hash,
                   d.folder_id, d.evidence_kind, d.ctd_section,
                   d.placement_status, d.placement_confidence, d.placement_rationale,
                   d.updated_at,
                   COALESCE(u.name, u.email) AS owner_name
              FROM vault.documents d
-             LEFT JOIN users u ON u.id = d.created_by
+             LEFT JOIN LATERAL public.actor_name(d.created_by) u ON TRUE
             WHERE ${uploadsWhere}
             ORDER BY d.updated_at DESC
             LIMIT $3`,
@@ -1721,6 +1732,42 @@ export default function createProjectVaultRoutes(): Router {
         err: err instanceof Error ? err.message : String(err),
       });
       return res.status(500).json({ success: false, error: 'Failed to record the filing decision' });
+    }
+  });
+
+  /* POST /:id/documents/:documentId/details — Edit details (VR-05, D5).
+     A version's title, type and classification, changed by a person with a
+     reason for change. The writer (vault-metadata-edit.service.ts) checks the
+     role, the reason, the vocabularies and program ownership, and records each
+     field's before and after with the reason in one chained audit row; this
+     route only carries the request to it, behind the same governed-write gate
+     as filing. */
+  router.post('/:id/documents/:documentId/details', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const text = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+    try {
+      const { editVaultDocumentMetadata } = await import('../../services/vault/vault-metadata-edit.service.js');
+      const outcome = await editVaultDocumentMetadata({
+        programId: String(req.params.id),
+        documentId: String(req.params.documentId),
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        documentTitle: text(body.documentTitle),
+        documentType: text(body.documentType),
+        classification: text(body.classification),
+        reason: body.reason,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, unchanged: outcome.unchanged, changes: outcome.changes });
+    } catch (err: unknown) {
+      logger.error('project vault details error', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'The details could not be saved. Nothing was changed.' });
     }
   });
 

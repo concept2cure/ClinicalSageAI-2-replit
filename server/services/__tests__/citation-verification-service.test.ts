@@ -9,6 +9,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { verifyCitation, verifyCitations } from '../citation-verification-service';
+import { runWithTenantScope } from '../../db/tenantStore';
+import { resetOrgPlacementResolver, setOrgPlacementResolver } from '../ai-gateway/providers/org-placement';
 
 const WATSON_CRICK_TITLE =
   'Molecular structure of nucleic acids; a structure for deoxyribose nucleic acid';
@@ -194,5 +196,46 @@ describe('citation-verification-service', () => {
     });
     expect(r.status).toBe('verified');
     expect(r.discrepancies?.join(' ')).toMatch(/different article/i);
+  });
+});
+
+describe('a tenant that turned public-source egress off (D6 review)', () => {
+  // Until 2026-09-26 public_source_egress was stored and audited, and this
+  // service sent the tenant's DOIs, PMIDs and titles to NCBI and CrossRef anyway.
+  const asTenant = <T>(fn: () => Promise<T>) => runWithTenantScope({ tenantId: '42', role: null, source: 'test' }, fn);
+  let fetchSpy: ReturnType<typeof vi.fn>;
+  beforeEach(() => {
+    fetchSpy = vi.fn(mockFetch);
+    vi.stubGlobal('fetch', fetchSpy);
+  });
+  afterEach(() => {
+    resetOrgPlacementResolver();
+    vi.unstubAllGlobals();
+  });
+
+  it('checks nothing outbound and reports unverifiable, never verified', async () => {
+    setOrgPlacementResolver({ resolve: async () => ({ publicSourceEgress: false }) });
+    const results = await asTenant(() => verifyCitations([{ id: 'c1', pmid: '14907713' }, { id: 'c2', doi: '10.1038/171737a0' }]));
+    expect(results.map(r => r.status)).toEqual(['unverifiable', 'unverifiable']);
+    expect(results.every(r => r.exists === null)).toBe(true);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('a policy that cannot be read makes no outbound check and says so', async () => {
+    setOrgPlacementResolver({
+      resolve: async () => {
+        throw new Error('connection reset');
+      },
+    });
+    const results = await asTenant(() => verifyCitations([{ id: 'c1', pmid: '14907713' }]));
+    expect(results[0].status).toBe('error');
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('egress on (or no policy row) checks as before', async () => {
+    setOrgPlacementResolver({ resolve: async () => null });
+    const results = await asTenant(() => verifyCitations([{ id: 'c1', pmid: '14907713' }]));
+    expect(results[0].status).toBe('verified');
+    expect(fetchSpy).toHaveBeenCalled();
   });
 });

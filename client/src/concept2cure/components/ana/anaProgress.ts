@@ -30,6 +30,7 @@ import type {
   AnaPlanChange,
   AnaPlanStep,
   AnaProgressPhase,
+  AnaStoppedReason,
   AnaToolCall,
   AnaTurnRecordStatus,
 } from './useAnaChat.types';
@@ -310,6 +311,38 @@ export function readTurnRecord(raw: unknown): AnaTurnRecordStatus | undefined {
     return { status: 'not_recorded', reason: typeof r.reason === 'string' && r.reason ? r.reason : 'The server did not say why.' };
   }
   return undefined;
+}
+
+/**
+ * The stop reasons the server produces today. The reserved run-policy names in
+ * `AnaStoppedReason` are deliberately absent: nothing writes them yet and no
+ * surface has words for them, so one arriving must not reach a surface whose
+ * last branch reads "Finished". The change that produces each adds it here
+ * together with its copy.
+ */
+const KNOWN_STOPPED_REASONS: ReadonlySet<string> = new Set<AnaStoppedReason>([
+  'no_more_tools',
+  'max_rounds',
+  'duplicate_thrash',
+  'cancelled',
+  'answer_cut_off',
+]);
+
+/**
+ * How the turn's loop ended, from the `done` frame or a stored message's
+ * metadata: the stop reason when it is one the server produces, the rounds
+ * when they are a whole, positive count. Anything else is left out rather than
+ * guessed, so the result spreads onto a message without inventing a field.
+ */
+export function readTurnEnding(raw: unknown): Pick<AnaChatMessage, 'stoppedReason' | 'rounds'> {
+  if (!raw || typeof raw !== 'object') return {};
+  const r = raw as { stoppedReason?: unknown; rounds?: unknown };
+  const out: Pick<AnaChatMessage, 'stoppedReason' | 'rounds'> = {};
+  if (typeof r.stoppedReason === 'string' && KNOWN_STOPPED_REASONS.has(r.stoppedReason)) {
+    out.stoppedReason = r.stoppedReason as AnaStoppedReason;
+  }
+  if (typeof r.rounds === 'number' && Number.isInteger(r.rounds) && r.rounds > 0) out.rounds = r.rounds;
+  return out;
 }
 
 export interface PlanPosition {

@@ -44,3 +44,15 @@ each writer, and the plan row keeps it.
 - `green/browser-sentry-after-fix.txt` — 13/13 across both client suites.
 - `green/org-api-key-mint-after-fix.txt` — 23/23 across the tenants contract test and the bundle-reach test.
 - ESLint: the client `utils/` files are outside the lint set (project ignore); the two server files lint clean.
+
+## Third commit: the server logger masks personal data (DP-26, server half)
+
+The logger redacted secrets by key and left everything else as written, so an e-mail address or an IP address in a
+context object (a refused sign-in, a rate-limited client, a mailed link) reached the log store in clear. GDPR
+Arts. 5(1)(c) and 25 ask for no more personal data than the purpose needs; the log's purpose is correlation, and the
+audit trail holds the full value.
+
+`redactContext` now masks, in every string value at any depth, an e-mail address to its first character and domain
+(`a***@example.test`) and an IP address to its network part (`203.0.113.xxx`, `2001:db8:85a3::xxxx`); strings over
+2 KB are left alone for throughput; a sensitive key is still redacted whole, never merely masked. Tests:
+`server/utils/__tests__/logger.test.ts` (`red/logger-before-fix.txt`, `green/logger-after-fix.txt`).

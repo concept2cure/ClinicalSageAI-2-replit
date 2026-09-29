@@ -43,6 +43,7 @@ import type {
   GatewayServerToolUse,
   StreamCallback,
   ContentBlock,
+  AuditLogEntry,
 } from './types';
 import { GatewayAuditLogger } from './audit';
 import {
@@ -72,6 +73,10 @@ import {
   getOrgPlacementResolver,
   mergeOrgPolicyDefaults,
 } from './providers/org-placement';
+import { governServerTools } from './server-tool-policy';
+import { isTerminalGatewayError } from './gateway-outcome';
+import { assertDeterministicServingAllowed, isDeterministicModeRequested } from './deterministic-mode';
+import { modelCallRefusal, type ModelCallRefusalScope } from './model-call-scope.js';
 import {
   decideSensitivePlacement,
   readProviderPlacementApprovals,
@@ -82,7 +87,7 @@ import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { getTenantScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { getContentClassifier } from '../ai-governance/classification/index.js';
-import { isApprovedForHighRisk, isHighRiskRequest } from '../ai-governance/approved-models.js';
+import { approvedEntryFor, isApprovedForHighRisk, isHighRiskRequest } from '../ai-governance/approved-models.js';
 import {
   extractRequestText,
   getPiiEnforcement,
@@ -90,6 +95,13 @@ import {
 // In-flight concurrency limiter — bounds simultaneous outbound provider calls.
 import { Semaphore, resolveMaxConcurrency } from './concurrency.js';
 import { apiEffortForModel } from './effort.js';
+import { GatewayStreamStalledError, watchStreamForStall } from './stream-stall.js';
+import {
+  PROGRESS_UPDATES_BETA,
+  ProgressNotes,
+  addBetaHeader,
+  wantsProgressUpdates,
+} from './progress-updates.js';
 const log = createScopedLogger('ai-gateway');
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -165,6 +177,10 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     supportsSamplingParams: false,
     supportsInlineSystem: true,
     supportsStructuredOutputs: true,
+    // A note longer than a sentence or two between tool calls — a demo's
+    // talking point — comes back as a progress-update thinking block, not
+    // text (progress-updates.ts).
+    progressUpdatesInThinking: true,
     // 1M window. It read 200000 for every Claude entry, which is the Claude 3
     // figure. Under-declaring it is the harmful direction for the admission
     // gate (see context-budget.ts): the gate refuses a request the model would
@@ -400,51 +416,52 @@ const TASK_PROVIDER_PREFERENCES: Record<TaskType, ProviderName[]> = {
 // Deterministic Mode Responses
 // ─────────────────────────────────────────────────────────────────────────────
 
+// A fixed response makes no claim about the caller's input. It says that nothing
+// was read or produced, and it never uses [KNOWN] or [INFERRED], which are this
+// platform's markers for verified and derived facts. Until 2026-09-28 several
+// did: "[KNOWN] Section headers present and correctly numbered" about a document
+// no model had seen (docs/work-orders/WO-16-fabrication-findings.json #101).
+// [MISSING] remains where it is true: the analysis is missing.
 const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
   chat:
     '## AnA Response (Demo Mode)\n\n' +
-    "I'm AnA — your Audit & Narrative Assistant. I'm currently running in **demo mode** because no AI provider API key is configured.\n\n" +
-    'When connected to Claude, I can:\n' +
-    '- **[KNOWN]** Analyze your regulatory documents against ICH, FDA, and EMA requirements\n' +
-    '- **[KNOWN]** Detect contradictions, assumption drift, and cross-section inconsistencies\n' +
-    '- **[KNOWN]** Guide you through governed promotion (draft → review → approved → locked → submission-ready)\n' +
-    '- **[INFERRED]** Suggest corrections based on body-specific expectations\n\n' +
-    'To enable live AI responses, set `ANTHROPIC_API_KEY` in your `.env` file.\n\n' +
-    '*Evidence discipline: Every claim is tagged [KNOWN], [INFERRED], or [MISSING].*',
+    "I'm AnA — your Audit & Narrative Assistant. I'm running in **demo mode** because no AI provider is configured, so this is a fixed message, not an answer to what you asked.\n\n" +
+    'With a provider connected, I can:\n' +
+    '- Analyze your regulatory documents against ICH, FDA and EMA requirements\n' +
+    '- Detect contradictions, assumption drift and cross-section inconsistencies\n' +
+    '- Guide you through governed promotion (draft → review → approved → locked → submission-ready)\n' +
+    '- Suggest corrections based on body-specific expectations\n\n' +
+    'To enable live AI responses, set `ANTHROPIC_API_KEY` in your `.env` file.',
   document_analysis:
     '## Document Analysis (Demo Mode)\n\n' +
-    '**[KNOWN]** The document structure follows eCTD Module format.\n\n' +
-    '**Findings:**\n' +
-    '- **[KNOWN]** Section headers present and correctly numbered\n' +
-    '- **[INFERRED]** Content completeness appears adequate for initial review\n' +
-    '- **[MISSING]** Cross-references to supporting data not verified (requires live AI)\n\n' +
-    '**Recommendation:** Enable live AI mode for full regulatory analysis with body-specific gap detection.',
+    'No document was analyzed. AnA is running in demo mode without an AI provider, so this is a fixed message.\n\n' +
+    '**[MISSING]** Structure, completeness and cross-reference checks all require a live provider.\n\n' +
+    '**Recommendation:** Configure an AI provider for regulatory analysis with body-specific gap detection.',
   document_drafting:
     '## Document Draft (Demo Mode)\n\n' +
-    '**[KNOWN]** This is a placeholder draft generated in demo mode.\n\n' +
-    'When connected to Claude, AnA generates regulatory-grade document drafts with:\n' +
+    'No draft was written. This is a fixed placeholder served in demo mode, and it must not be accepted into a document.\n\n' +
+    'With a provider connected, AnA generates regulatory drafts with:\n' +
     '- Body-specific language (FDA/EMA/PMDA)\n' +
     '- Evidence-backed claims with citation tracking\n' +
     '- Governed content that flows through the approval pipeline\n\n' +
     'Set `ANTHROPIC_API_KEY` in `.env` to enable real document drafting.',
   structured_output:
-    '{"result": "demo_mode", "status": "success", "message": "Deterministic mode active. Set ANTHROPIC_API_KEY to enable live AI.", "data": {}}',
+    '{"result": "demo_mode", "status": "unavailable", "message": "Deterministic mode active: no provider produced this. Set ANTHROPIC_API_KEY to enable live AI.", "data": {}}',
   regulatory_review:
     '## Regulatory Review (Demo Mode)\n\n' +
-    '**[KNOWN]** AnA is operating in demo mode — no live AI analysis performed.\n\n' +
-    '**When connected, AnA provides:**\n' +
+    'No review was performed. AnA is running in demo mode without an AI provider.\n\n' +
+    '**With a provider connected, AnA provides:**\n' +
     '- **Compliance check** against 21 CFR Part 11, ICH E6(R2), EU MDR, ISO 14155\n' +
     '- **Gap detection** with body-specific expectations (FDA, EMA, PMDA, MHRA)\n' +
     '- **Risk ranking** with severity classification (critical → major → minor)\n' +
     '- **Correction drafts** with governed execution paths\n' +
     '- **Contradiction detection** with overlay-aware authority escalation\n\n' +
-    '**[MISSING]** Live regulatory analysis requires `ANTHROPIC_API_KEY` in `.env`.',
+    '**[MISSING]** Regulatory analysis requires a configured provider (`ANTHROPIC_API_KEY` in `.env`).',
   code_generation:
     '// Demo mode — set ANTHROPIC_API_KEY for live code generation\nfunction demoMode() {\n  return { status: "demo", message: "AI provider not configured" };\n}',
   summarization:
-    '**Summary (Demo Mode):** [KNOWN] This content relates to regulatory submissions. ' +
-    '[INFERRED] The document appears to follow standard eCTD formatting. ' +
-    '[MISSING] Detailed analysis requires live AI — set ANTHROPIC_API_KEY in .env.',
+    '**Summary (Demo Mode):** No content was summarized. AnA is running in demo mode without an AI provider. ' +
+    '[MISSING] A summary requires a configured provider — set ANTHROPIC_API_KEY in .env.',
   embedding: '[]',
   general:
     "**AnA (Demo Mode):** I'm running without an AI provider. " +
@@ -504,7 +521,9 @@ export const resolveSeedForTest = resolveSeed;
  * position when the model accepts one. When it does not, it is folded into the
  * preceding user turn as `[User interjection]: …` — byte-for-byte what the
  * platform sent before this existed, which is what makes the capability safe to
- * land on its own.
+ * land on its own. A message the application authored names itself instead
+ * (GatewayMessage.foldLabel), so an app observation is never passed off as the
+ * person's words.
  *
  * Placement is the API's, not ours: an inline system turn must follow a user
  * turn and cannot be first. A message that would violate that is downgraded
@@ -558,7 +577,7 @@ function partitionSystemMessages(
       if (previous && previous.role === 'user') {
         bodyMessages[bodyMessages.length - 1] = {
           ...previous,
-          content: `${previous.content}\n\n[User interjection]: ${m.content}`,
+          content: `${previous.content}\n\n[${m.foldLabel?.trim() || 'User interjection'}]: ${m.content}`,
         };
       } else {
         systemMessages.push(m);
@@ -895,6 +914,36 @@ function toOpenAIToolChoice(
 }
 
 /**
+ * Whether a self-hosted OpenAI-compatible server (provider 'local': vLLM,
+ * llama.cpp, Ollama, a LiteLLM proxy in front of one) is offered tools.
+ *
+ * Many are not built or launched to take them. Sent `tools`, one answers 400
+ * and the rung fails; another accepts the request and its model prints the
+ * call as JSON in its answer, which reads as a garbled reply and runs nothing.
+ * Either way AnA's turn is lost to a capability the server never claimed. So
+ * tools are withheld unless the operator whose server does take them (vLLM
+ * with --enable-auto-tool-choice, llama.cpp with --jinja) says so with
+ * LOCAL_AI_SUPPORTS_TOOLS=1. Without it the turn still goes, as plain text:
+ * she answers, but cannot navigate or act on a screen.
+ */
+function localServerTakesTools(): boolean {
+  return process.env.LOCAL_AI_SUPPORTS_TOOLS === '1';
+}
+
+/**
+ * Set once the withholding has been reported. Every round of every turn that
+ * lands on the local server would otherwise repeat the same warning; once per
+ * process tells the operator what they need to know.
+ */
+let localToolsWithheldReported = false;
+
+/** Told to the model when this turn's tools were withheld (see above). */
+export const LOCAL_NO_TOOLS_NOTE =
+  'No tools are available on this turn: you cannot navigate, act on a screen, run a ' +
+  'demonstration or call any tool. Do not say or imply that you did any of these. ' +
+  'Answer in text, and where a move would help, tell the person where to go themselves.';
+
+/**
  * Offer the request's tools on an OpenAI-compatible Chat Completions request.
  *
  * These paths used to build their params with no tools and return no tool
@@ -913,6 +962,8 @@ function toOpenAIToolChoice(
  *     this side to execute one, so it is not offered.
  *   - A name this API would reject is not offered, because one bad name
  *     refuses the whole request and every other tool with it.
+ *   - The local provider is offered none unless its operator says it takes
+ *     them — see localServerTakesTools.
  *
  * `tool_choice` goes only alongside tools — the API rejects it without them.
  * Moonshot documents only 'auto' and 'none'; a forced choice ('any', or a
@@ -927,6 +978,52 @@ function applyOpenAIToolParams(
 ): void {
   if (!request.tools || request.tools.length === 0) return;
   const target = `${modelConfig.provider}/${modelConfig.model}`;
+
+  if (modelConfig.provider === 'local' && !localServerTakesTools()) {
+    // A turn that was REQUIRED to call a tool cannot be served as text — that
+    // would be the quiet non-answer the Moonshot note above refuses. A 400 is
+    // what it is: a request this server cannot take. It is not retried, it
+    // does not count against the server's health, and the fallback walk moves
+    // on to a model that can honour it.
+    const forced = toOpenAIToolChoice(request.toolChoice);
+    if (forced !== undefined && forced !== 'none') {
+      throw Object.assign(
+        new Error(
+          `${target} was required to call a tool, and tools are not offered to the local provider ` +
+            '(set LOCAL_AI_SUPPORTS_TOOLS=1 if this server supports OpenAI function calling)'
+        ),
+        { status: 400 }
+      );
+    }
+    // Her prompt still describes her tools, and on a driving turn it tells her
+    // to use them. Without a word here she would say "I've opened the Vault"
+    // on a turn that can open nothing. One line, after the prompt that
+    // promised otherwise — at the end of the leading system prompt, never as a
+    // system message of its own after the conversation. Many self-hosted chat
+    // templates (Mistral's, Gemma's) take a system message only first and
+    // refuse the whole request over one anywhere else: sent last, the note
+    // turned every turn on such a server into the 400 this path exists to
+    // spare it.
+    const wire = params.messages as Array<{ role: string; content: unknown }> | undefined;
+    if (Array.isArray(wire)) {
+      const lead = wire[0];
+      if (lead && lead.role === 'system' && typeof lead.content === 'string') {
+        wire[0] = { ...lead, content: `${lead.content}\n\n${LOCAL_NO_TOOLS_NOTE}` };
+      } else {
+        wire.unshift({ role: 'system', content: LOCAL_NO_TOOLS_NOTE });
+      }
+    }
+    if (!localToolsWithheldReported) {
+      localToolsWithheldReported = true;
+      log.warn(
+        `[AI Gateway] ${target}: tools not offered — the local provider gets none unless ` +
+          'LOCAL_AI_SUPPORTS_TOOLS=1, so AnA answers there as text and cannot navigate or act on a ' +
+          'screen. Set it if this server supports OpenAI function calling (vLLM ' +
+          '--enable-auto-tool-choice, llama.cpp --jinja). Reported once per process.'
+      );
+    }
+    return;
+  }
 
   const functions: OpenAIFunctionTool[] = [];
   const serverTools: string[] = [];
@@ -1044,10 +1141,100 @@ const CONTENT_BLOCK_PROVIDERS: ReadonlySet<ProviderName> = new Set(['anthropic',
  * drops the image can answer this request, so none is tried.
  */
 function assertContentBlocksCarried(modelConfig: ModelConfig, request: GatewayRequest): void {
+  if (modelConfig.provider !== 'anthropic' && usesFilesApiDocument(request)) {
+    throw new FileReferenceNotCarriedError(modelConfig);
+  }
   if (CONTENT_BLOCK_PROVIDERS.has(modelConfig.provider)) return;
   const carriesMedia = request.messages.some(m => m.contentBlocks?.some(b => b.type !== 'text'));
   if (!carriesMedia) return;
   throw new MediaNotCarriedError(modelConfig);
+}
+
+/**
+ * A document given by Anthropic Files-API file id rather than by its bytes.
+ * Only first-party Anthropic can resolve one; the beta header that makes it
+ * readable is sent there alone.
+ */
+function usesFilesApiDocument(request: GatewayRequest): boolean {
+  return (request.messages || []).some(m =>
+    m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file'),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Provider health — what counts against a provider
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The statuses a provider uses to say the REQUEST was wrong: malformed (400),
+ * too large (413), well-formed but unprocessable (422). It is the request that
+ * has to change, not the provider, so they say nothing about the provider's
+ * health.
+ *
+ * 404 is not one of them. It says the model or endpoint was not found — a
+ * retired model id, a wrong base URL, an Azure deployment that does not exist
+ * — which is the provider's configuration failing, and every request sent
+ * there fails the same way until someone fixes it. Exempted, it never tripped
+ * the breaker, so every turn walked into the same 404 before falling over.
+ */
+const REQUEST_SHAPE_STATUSES: ReadonlySet<number> = new Set([400, 413, 422]);
+
+/**
+ * A refusal that says the ACCOUNT cannot be served, whatever status carries
+ * it. Anthropic answers an exhausted credit balance with a 400 ("Your credit
+ * balance is too low to access the Anthropic API…"); quota and billing
+ * refusals from OpenAI-compatible servers and proxies name insufficient_quota,
+ * quota, billing or payment. Every request to that provider fails until
+ * someone pays, which is exactly what the breaker is for — exempted as a 400,
+ * the dead provider stayed first in line on every turn.
+ *
+ * Anthropic sends two more account refusals as the same 400
+ * invalid_request_error, and neither says billing, quota or payment: a spend
+ * cap ("You have reached your specified API usage limits. You will regain
+ * access on …") and a disabled organization ("This organization has been
+ * disabled."). Both fail every request until the date or an administrator, so
+ * both are matched by their own words. Without them the breaker exempted a
+ * spent-out or disabled account, and every turn walked the whole Anthropic
+ * ladder into it before falling over.
+ *
+ * Word-bounded, because a request-shape 400 can quote the request back and AnA
+ * has a tool named get_billing_credits: a refusal that names it is still a
+ * malformed request. `\b` counts `_` as part of a word, so `billing` inside a
+ * snake_case name does not match; insufficient_quota is named outright for
+ * the same reason.
+ */
+const PROVIDER_ACCOUNT_REFUSAL =
+  /credit balance|insufficient_quota|\bbilling\b|\bquota\b|\bpayments?\b|\bapi usage limits?\b|\borganization has been disabled\b/i;
+
+/**
+ * Everything a provider said about a failure, as one string. Both SDKs put the
+ * body's message into `message` (Anthropic's as the whole JSON body, OpenAI's
+ * as its `error.message`), OpenAI's adds `code` and `type`, and both keep the
+ * parsed body on `error` — read too, so a body the message did not quote in
+ * full is not missed.
+ */
+function providerErrorText(error: unknown): string {
+  const e = error as { message?: unknown; code?: unknown; type?: unknown; error?: unknown } | null;
+  const parts: unknown[] = [e?.message, e?.code, e?.type];
+  if (e?.error !== undefined) {
+    try {
+      parts.push(JSON.stringify(e.error));
+    } catch {
+      // A body that will not serialise adds nothing the message did not say.
+    }
+  }
+  return parts.filter((p): p is string => typeof p === 'string').join(' ');
+}
+
+/**
+ * True when a failure says the request was wrong rather than the provider — a
+ * request-shape status whose text does not say the account cannot be served.
+ * Only these are kept off the circuit breaker (recordFailure).
+ */
+function isRequestShapeRefusal(error: unknown): boolean {
+  const status = Number((error as { status?: unknown } | null)?.status);
+  if (!REQUEST_SHAPE_STATUSES.has(status)) return false;
+  return !PROVIDER_ACCOUNT_REFUSAL.test(providerErrorText(error));
 }
 
 export class AIGateway {
@@ -1149,6 +1336,17 @@ export class AIGateway {
     // between agentic rounds. Spend nothing: no classification, no policy
     // pass, no provider call, no audit row for work that was never done.
     if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
+
+    // A sub-agent's tool may not call a model (model-call-scope.ts). Refused
+    // here, before anything is spent: no placement lookup, no classification,
+    // no policy pass or rate bucket, no dispatch — so no ledger row either.
+    const refusal = modelCallRefusal();
+    if (refusal) {
+      log.warn(
+        `[ai-gateway] refused a model call from a sub-agent's tool (${refusal.tool}, run ${refusal.runId}, parent ${refusal.parentRunId}); nothing was sent`,
+      );
+      throw new SubAgentToolModelCallError(refusal);
+    }
 
     // Apply the org's default placement policy (residency / zero-retention) when
     // the request doesn't specify it. Explicit request values always win; if no
@@ -1664,24 +1862,73 @@ export class AIGateway {
   ): Promise<GatewayResponse> {
     assertContentBlocksCarried(modelConfig, request);
     await this.assertTenantPlacement(modelConfig, request, requestId, startTime);
-    await this.assertSensitiveDispatchAllowed(modelConfig, request, requestId, startTime);
+    // Anthropic-hosted tools run only where this lane and this tenant permit
+    // them; the rest are removed here, for the primary and every fallback, so
+    // no door that skipped governedToolsetFor can send one (server-tool-policy.ts).
+    const governed = governServerTools(modelConfig.provider, request);
+    if (governed.withheld.length > 0) {
+      log.info('[ai-gateway] server tools withheld for this lane', {
+        requestId,
+        provider: modelConfig.provider,
+        withheld: governed.withheld,
+      });
+    }
+    const placementReasonCode = await this.assertSensitiveDispatchAllowed(
+      modelConfig,
+      governed.request,
+      requestId,
+      startTime,
+    );
     // Bound concurrent in-flight outbound calls. This is the single chokepoint
     // for every provider invocation (primary + fallback paths), so wrapping it
     // here caps outbound concurrency without touching the retry / circuit-
     // breaker / timeout logic, which all run inside the provider executors.
-    return this.outboundLimiter.run(() =>
-      this.dispatchProvider(modelConfig, request, requestId, startTime)
-    );
+    const response = await this.outboundLimiter
+      .run(() => this.dispatchProvider(modelConfig, governed.request, requestId, startTime))
+      .catch((error: unknown) => {
+        /* A cancel that lands WHILE the call is in flight is still a cancel.
+
+           GatewayAbortedError used to be created only before a call started
+           (route()'s pre-call check), and route() and retryWithBackoff treat
+           only that type as terminal. When the caller aborts mid-call, the SDK
+           throws its own error instead — Anthropic's APIUserAbortError, whose
+           `name` is plain 'Error', so it cannot be recognised by name. It went
+           through as a provider failure: retried, walked down every fallback
+           rung, recorded against the circuit breaker each time. One Stop during
+           a round-2+ call re-ran the request 16 times, told the user every
+           provider had failed, and counted 6 failures against Anthropic — twice
+           the threshold that marks it unhealthy for every tenant.
+
+           So the test is the caller's own signal, not the error's shape: if the
+           caller aborted, whatever came back is that cancel. This is the one
+           chokepoint every primary and fallback call passes through, inside the
+           retry loop, so the retry loop and both route() catches all see the
+           terminal type they already honour. */
+        if (request.signal?.aborted && !(error instanceof GatewayAbortedError)) {
+          throw new GatewayAbortedError('in_flight');
+        }
+        throw error;
+      });
+    return {
+      ...response,
+      ...(governed.withheld.length > 0 ? { withheldServerTools: governed.withheld } : {}),
+      ...(placementReasonCode ? { placementReasonCode } : {}),
+    };
   }
 
   /** Last-mile gate: it runs for the primary and every fallback before an SDK is invoked. */
+  /**
+   * Returns the decision's reason code when the screen decided (ALLOW_… here,
+   * since a refusal throws), `audit_only:<code>` when it only recorded one, and
+   * undefined when it did not run. The served ledger row records it.
+   */
   private async assertSensitiveDispatchAllowed(
     modelConfig: ModelConfig,
     request: GatewayRequest,
     requestId: string,
     startTime: number,
-  ): Promise<void> {
-    if (!this.config.policy.piiDetection) return;
+  ): Promise<string | undefined> {
+    if (!this.config.policy.piiDetection) return undefined;
     const detectedDataClass = request.sensitiveDataClass ?? 'unknown';
     // Development retains audit-only usefulness; production always uses the
     // explicit deployment contract and fails closed on unknown classification.
@@ -1696,7 +1943,7 @@ export class AIGateway {
       // 'off' disables screening entirely. 'audit' exists to make otherwise
       // invisible exposure visible, so it still RECORDS the placement signal
       // (content-free, below) even though it never blocks.
-      if (enforcement !== 'audit' || detectedDataClass === 'none') return;
+      if (enforcement !== 'audit' || detectedDataClass === 'none') return undefined;
     }
     const placement = resolvePlacement(modelConfig.provider);
     let approvals: Record<string, ProviderPlacementApproval>;
@@ -1760,7 +2007,7 @@ export class AIGateway {
         reasonCode: decision.reasonCode,
         enforcement,
       });
-      return;
+      return `audit_only:${decision.reasonCode}`;
     }
     log.info('[ai-gateway] sensitive placement decision', {
       reasonCode: decision.reasonCode,
@@ -1801,6 +2048,7 @@ export class AIGateway {
         'Contact your administrator to review the approved data-placement policy.'
       );
     }
+    return decision.reasonCode;
   }
 
   private async dispatchProvider(
@@ -1999,6 +2247,10 @@ export class AIGateway {
         // that only the legacy surface below consumes. Summarized display keeps
         // the reasoning stream visible to the client on the SSE path.
         params.thinking = { type: 'adaptive', display: 'summarized' };
+      } else if (wantsProgressUpdates(modelConfig, request)) {
+        // Its notes between tool calls come back as thinking blocks, empty
+        // under the default display (progress-updates.ts).
+        params.thinking = { type: 'adaptive', display: 'updates' };
       }
       return;
     }
@@ -2167,14 +2419,15 @@ export class AIGateway {
       }
     }
 
-    const usesFilesApiDoc = (request.messages || []).some(m =>
-      m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
-    );
+    // First-party only: assertContentBlocksCarried refuses a file reference anywhere else.
+    const usesFilesApiDoc = modelConfig.provider === 'anthropic' && usesFilesApiDocument(request);
     // Merged, not replaced: the Files-API beta header rides in the same
     // RequestOptions object, so building one and adding to it is what keeps
     // both from clobbering each other.
     const reqOptions: Record<string, unknown> = {};
     if (usesFilesApiDoc) reqOptions.headers = { 'anthropic-beta': 'files-api-2025-04-14' };
+    const notes = new ProgressNotes(wantsProgressUpdates(modelConfig, request));
+    if (notes.active) addBetaHeader(reqOptions, PROGRESS_UPDATES_BETA);
     if (request.signal) reqOptions.signal = request.signal;
 
     const response = await Promise.race([
@@ -2206,7 +2459,7 @@ export class AIGateway {
 
     for (const block of response.content || []) {
       if (block.type === 'text') {
-        content += block.text;
+        content += notes.text(block.text, content);
         for (const raw of ((block as any).citations || []) as any[]) {
           const citation = normalizeCitation(raw);
           if (citation) nonStreamCitations.push(citation);
@@ -2214,7 +2467,9 @@ export class AIGateway {
       } else if (collectServerToolBlock(block, nonStreamServerTools)) {
         // Recorded by the collector; nothing further to accumulate here.
       } else if (block.type === 'thinking') {
-        thinking += (block as any).thinking || '';
+        // Under display "updates" a thinking block is a note, not reasoning.
+        if (notes.active) content += notes.note((block as any).thinking || '', content);
+        else thinking += (block as any).thinking || '';
       } else if (block.type === 'tool_use') {
         toolUses.push({
           id: (block as any).id,
@@ -2367,9 +2622,7 @@ export class AIGateway {
     }
 
     // Use the Anthropic SDK streaming API
-    const streamUsesFilesApiDoc = (request.messages || []).some(m =>
-      m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
-    );
+    const streamUsesFilesApiDoc = modelConfig.provider === 'anthropic' && usesFilesApiDocument(request);
     // Same structured-output contract as the non-streaming path — including the
     // citations conflict, which must refuse before a token is streamed.
     const structured = resolveStructuredOutputFormat(request, modelConfig);
@@ -2386,6 +2639,10 @@ export class AIGateway {
     if (streamUsesFilesApiDoc) {
       streamOptions.headers = { 'anthropic-beta': 'files-api-2025-04-14' };
     }
+    // Notes between tool calls, on a model that returns them as thinking
+    // blocks, are read out as text (progress-updates.ts).
+    const notes = new ProgressNotes(wantsProgressUpdates(modelConfig, request));
+    if (notes.active) addBetaHeader(streamOptions, PROGRESS_UPDATES_BETA);
     // Aborting the SDK request is what actually stops GENERATION. Without it
     // a stop only stopped us reading, and the model ran to completion at full
     // cost — which is what stream.ts's own comment used to say.
@@ -2417,35 +2674,32 @@ export class AIGateway {
     let stopDetails: unknown = null;
     let resolvedModel: string | undefined;
 
-    // Per-chunk watchdog — detect stalled streams (no data for 30s)
-    let lastChunkTime = Date.now();
-    const chunkTimeoutMs = 30_000;
-    let streamStalled = false;
+    // Stall watch. Silence is a stall only while text is streaming; thinking,
+    // a tool's buffered arguments and the gaps between blocks are the model
+    // working, and the SDK hides the pings that say so (stream-stall.ts).
     let streamAborted = false;
-    const chunkWatchdog = setInterval(() => {
-      if (Date.now() - lastChunkTime > chunkTimeoutMs) {
-        streamStalled = true;
-        clearInterval(chunkWatchdog);
-        log.warn(
-          `[AI Gateway] Stream stalled — no chunk received for ${chunkTimeoutMs / 1000}s. ` +
+    let stalledForMs = 0;
+    const openTextBlocks = new Set<number>();
+    const stall = watchStreamForStall((silentMs, writing) => {
+      stalledForMs = silentMs;
+      log.warn(
+        `[AI Gateway] Stream stalled — no chunk for ${Math.round(silentMs / 1000)}s ` +
+          `${writing ? 'while text was streaming' : 'while the model was working'}. ` +
           `Accumulated ${content.length} chars so far. Aborting stream.`
-        );
-        // If the stream object has a controller/abort method, try to close it
-        try {
-          if (stream && typeof (stream as any).controller?.abort === 'function') {
-            (stream as any).controller.abort();
-          }
-        } catch { /* best-effort abort */ }
-      }
-    }, 5_000);
+      );
+      try {
+        if (stream && typeof (stream as any).controller?.abort === 'function') {
+          (stream as any).controller.abort();
+        }
+      } catch { /* best-effort abort */ }
+    });
 
     try {
       for await (const event of stream as AsyncIterable<any>) {
-        // Update watchdog timestamp on every event
-        lastChunkTime = Date.now();
+        stall.chunk();
 
-        // Break out if watchdog flagged a stall (race between interval and iterator)
-        if (streamStalled) break;
+        // Break out if the watch fired (race between its timer and the iterator)
+        if (stall.stalled) break;
 
         // The caller cancelled. Stop reading and stop generating — the SDK
         // holds the same signal, so the request is already on its way down.
@@ -2460,9 +2714,12 @@ export class AIGateway {
 
         if (event.type === 'content_block_delta') {
           if (event.delta?.type === 'text_delta') {
-            content += event.delta.text;
-            onStream(event.delta.text, { type: 'text' });
-          } else if (event.delta?.type === 'thinking_delta') {
+            const text = notes.text(event.delta.text, content);
+            content += text;
+            onStream(text, { type: 'text' });
+          } else if (event.delta?.type === 'thinking_delta' && !notes.took(event.index, event.delta.thinking)) {
+            // Reasoning. A note's fragment was taken by `notes`, to be shown
+            // as her words when its block closes.
             thinking += event.delta.thinking;
             onStream('', { type: 'thinking', thinkingContent: event.delta.thinking });
           } else if (event.delta?.type === 'citations_delta') {
@@ -2477,7 +2734,18 @@ export class AIGateway {
           }
         } else if (event.type === 'content_block_start') {
           openContentBlock(event, toolUses, toolInputBuffers, serverToolUses);
+          notes.opened(event.index, event.content_block?.type);
+          if (event.content_block?.type === 'text') {
+            openTextBlocks.add(event.index);
+            stall.writing(true);
+          }
         } else if (event.type === 'content_block_stop') {
+          if (openTextBlocks.delete(event.index)) stall.writing(openTextBlocks.size > 0);
+          const note = notes.closed(event.index, content);
+          if (note) {
+            content += note;
+            onStream(note, { type: 'text' });
+          }
           // The block is closed, so its fragments are now a complete JSON
           // document — parse it onto the tool use it belongs to.
           const buffered = toolInputBuffers.get(event.index);
@@ -2506,7 +2774,7 @@ export class AIGateway {
       // Return whatever content was accumulated so far (partial response)
       if (!content) throw streamErr; // Re-throw if nothing was captured
     } finally {
-      clearInterval(chunkWatchdog);
+      stall.stop();
     }
 
     // Any buffer still open never saw its content_block_stop — a stall, an
@@ -2529,8 +2797,14 @@ export class AIGateway {
       stopReason = 'aborted';
     }
 
+    // A stall with nothing produced is a failure, not an empty answer: the
+    // SDK ends an aborted stream without throwing, so this is the one place
+    // that can tell the difference.
+    if (stall.stalled && !content && toolUses.length === 0) {
+      throw new GatewayStreamStalledError(modelConfig.provider, modelConfig.model, stalledForMs);
+    }
     // If stream stalled but we have partial content, mark finish reason accordingly
-    if (streamStalled && content) {
+    if (stall.stalled) {
       stopReason = 'chunk_timeout';
       log.warn(`[AI Gateway] Returning partial response (${content.length} chars) after stream stall`);
     }
@@ -2715,32 +2989,30 @@ export class AIGateway {
     // only thing that says every call's arguments are complete.
     let choiceClosed = false;
 
-    // Per-chunk watchdog — abort a stream that goes silent for 30s (mirrors the
-    // Anthropic path) so a hung provider can't wedge the turn.
-    let lastChunkTime = Date.now();
-    const chunkTimeoutMs = 30_000;
-    let streamStalled = false;
-    const chunkWatchdog = setInterval(() => {
-      if (Date.now() - lastChunkTime > chunkTimeoutMs) {
-        streamStalled = true;
-        clearInterval(chunkWatchdog);
-        log.warn(
-          `[AI Gateway] ${provider} stream stalled — no chunk for ${chunkTimeoutMs / 1000}s. ` +
+    // Stall watch — the same rule as the Anthropic path (stream-stall.ts). No
+    // blocks here: text and a call's arguments stream as they are generated,
+    // so the stream is writing from its first output fragment on, and the
+    // prompt read and any reasoning before it are the model working.
+    let stalledForMs = 0;
+    const stall = watchStreamForStall((silentMs, writing) => {
+      stalledForMs = silentMs;
+      log.warn(
+        `[AI Gateway] ${provider} stream stalled — no chunk for ${Math.round(silentMs / 1000)}s ` +
+          `${writing ? 'while it was writing' : 'before it wrote anything'}. ` +
           `Accumulated ${content.length} chars. Aborting stream.`
-        );
-        try {
-          if (stream && typeof (stream as any).controller?.abort === 'function') {
-            (stream as any).controller.abort();
-          }
-        } catch { /* best-effort abort */ }
-      }
-    }, 5_000);
+      );
+      try {
+        if (stream && typeof (stream as any).controller?.abort === 'function') {
+          (stream as any).controller.abort();
+        }
+      } catch { /* best-effort abort */ }
+    });
 
     let streamAborted = false;
     try {
       for await (const chunk of stream as AsyncIterable<any>) {
-        lastChunkTime = Date.now();
-        if (streamStalled) break;
+        stall.chunk();
+        if (stall.stalled) break;
 
         // Same cancel contract as the Anthropic path: stop reading, stop
         // generating, keep what arrived. AnA falls back across providers, so a
@@ -2769,8 +3041,10 @@ export class AIGateway {
         if (delta.text) {
           content += delta.text;
           onStream(delta.text, { type: 'text' });
+          stall.writing(true);
         }
         for (const fragment of parseOpenAIToolCallFragments(chunk)) {
+          stall.writing(true);
           const buffered = toolInputBuffers.get(fragment.index);
           if (!buffered) {
             toolUses.push({ id: fragment.id, name: fragment.name, input: {} });
@@ -2799,7 +3073,7 @@ export class AIGateway {
       log.error(`[AI Gateway] ${provider} stream interrupted:`, streamErr?.message);
       if (!content) throw streamErr; // nothing captured — surface the failure
     } finally {
-      clearInterval(chunkWatchdog);
+      stall.stop();
     }
 
     // A stream that ended before finish_reason — a stall, a cancel, a dropped
@@ -2821,7 +3095,11 @@ export class AIGateway {
       finishReason = 'aborted';
     }
 
-    if (streamStalled && content) {
+    // Nothing produced before the stall: a failure, never an empty answer.
+    if (stall.stalled && !content && toolUses.length === 0) {
+      throw new GatewayStreamStalledError(provider, modelConfig.model, stalledForMs);
+    }
+    if (stall.stalled) {
       finishReason = 'chunk_timeout';
       log.warn(`[AI Gateway] Returning partial ${provider} response (${content.length} chars) after stall`);
     }
@@ -3133,6 +3411,7 @@ export class AIGateway {
           allowedSubstrates: policy.allowedSubstrates,
           allowedProviders: policy.allowedProviders,
           publicSourceFrontier: policy.publicSourceFrontier,
+          publicSourceEgress: policy.publicSourceEgress,
           residencyConflict: 'residencyConflict' in merged && merged.residencyConflict,
         },
       };
@@ -3252,6 +3531,11 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): GatewayResponse {
+    // Every fixed response passes through here, from the explicit mode and the
+    // development no-provider fallback alike. In production it needs the
+    // written acceptance (deterministic-mode.ts); the boot gate refuses the
+    // same configuration, and this covers setDeterministicMode() at runtime.
+    assertDeterministicServingAllowed();
     const content = DETERMINISTIC_RESPONSES[request.taskType] || DETERMINISTIC_RESPONSES.general;
     if (request.stream && typeof request.onStream === 'function' && content) {
       try {
@@ -3347,12 +3631,13 @@ export class AIGateway {
     const health = this.providerHealth.get(provider);
     if (!health) return;
 
-    // A request the provider refused as malformed (400/404/413/422) says the
-    // REQUEST was wrong, not that the provider is down. Counting it marked a
-    // healthy provider unhealthy for a minute or more after three such turns,
-    // so one bad transcript shape took AnA offline for every tenant.
-    const status = Number((error as { status?: unknown })?.status);
-    if (status === 400 || status === 404 || status === 413 || status === 422) {
+    // A request the provider refused as malformed says the REQUEST was wrong,
+    // not that the provider is down. Counting it marked a healthy provider
+    // unhealthy for a minute or more after three such turns, so one bad
+    // transcript shape took AnA offline for every tenant. What is and is not
+    // such a refusal — a 404 and an account the provider will not serve are
+    // not — is isRequestShapeRefusal's to say.
+    if (isRequestShapeRefusal(error)) {
       health.requestCount++;
       return;
     }
@@ -3483,18 +3768,19 @@ export class AIGateway {
         triedModels: triedModels && triedModels.length > 0 ? triedModels : undefined,
         // Placement / residency evidence.
         substrate: placement.substrate,
-        region:
-          request.dataResidency && request.dataResidency !== 'any'
-            ? request.dataResidency
-            : placement.regions[0],
+        region: servingRegion(placement, request),
         retentionPolicy: placement.zeroDataRetention ? 'zero_retention' : 'standard',
+        ...ledgerProvenance(request, response),
         // Content-policy findings carry only detector names, classes and
         // classifier-redacted excerpts — never raw content (the prompt itself
         // is represented by promptHash alone).
         metadata: {
           ...(request.metadata ?? {}),
           ...(contentPolicy ? { contentPolicy } : {}),
-          tenantPlacement: tenantPlacementAuditMetadata(request),
+          // Audit-only: the classifier's regulatory signal gates nothing yet.
+          ...(request.regulatoryContentDetected !== undefined
+            ? { regulatoryContentDetected: request.regulatoryContentDetected }
+            : {}),
         },
       });
     } catch (auditError: any) {
@@ -3541,6 +3827,7 @@ export class AIGateway {
         cached: false,
         deterministic: false,
         promptHash: this.hashPrompt(request.messages),
+        ...ledgerProvenance(request),
         metadata: {
           ...(request.metadata ?? {}),
           modelGovernance: {
@@ -3589,6 +3876,9 @@ export class AIGateway {
         cached: false,
         deterministic: false,
         promptHash: this.hashPrompt(request.messages),
+        ...ledgerProvenance(request),
+        // A placement refusal's reason code; other content blocks keep theirs in `error`.
+        ...(reason && /^DENY_/.test(reason) ? { placementReasonCode: reason } : {}),
         metadata: {
           ...(request.metadata ?? {}),
           contentPolicy: { action: 'block' as ContentPolicyAction, findings },
@@ -3640,8 +3930,17 @@ export class AIGateway {
   }
 
   /** SHA-256 of the canonicalized prompt messages, for reproducibility audit. */
+  /**
+   * SHA-256 over the prompt: each message's role and text, and — when it has
+   * them — a digest of each image or document block's source. Until 2026-09-26
+   * the blocks were left out, so two requests differing only in the scan or
+   * PDF they carried hashed the same. A text-only prompt hashes exactly as
+   * before, so existing ledger rows stay comparable.
+   */
   private hashPrompt(messages: GatewayMessage[]): string {
-    const canonical = messages.map(m => `${m.role}:${m.content}`).join('\n');
+    const canonical = messages
+      .map(m => `${m.role}:${m.content}${contentBlocksDigest(m.contentBlocks)}`)
+      .join('\n');
     return createHash('sha256').update(canonical, 'utf8').digest('hex');
   }
 
@@ -3668,10 +3967,7 @@ export class AIGateway {
       // AI_GATEWAY_DETERMINISTIC is the canonical switch; DETERMINISTIC_MODE
       // is honored as a legacy alias only — set the canonical var in new
       // environments.
-      deterministicMode:
-        process.env.AI_GATEWAY_DETERMINISTIC === 'true' ||
-        process.env.DETERMINISTIC_MODE === 'true' ||
-        false,
+      deterministicMode: isDeterministicModeRequested(process.env),
       defaultStrategy: (process.env.AI_GATEWAY_STRATEGY as RoutingStrategy) || 'task_based',
       // NOTE: model *selection* is driven by the DEFAULT_MODELS registry above
       // (task/quality strategies over qualityScore), not by these per-provider
@@ -3858,6 +4154,21 @@ export class ModelNotApprovedError extends GatewayPolicyError {
 }
 
 /**
+ * A sub-agent's tool tried to call a model (see model-call-scope.ts).
+ *
+ * A {@link GatewayPolicyError} whose name is not overridden, so it is terminal
+ * on every path (isTerminalGatewayError matches by name): never retried, never
+ * walked down the fallback ladder, never counted against a provider's health.
+ * Thrown before anything is sent.
+ */
+export class SubAgentToolModelCallError extends GatewayPolicyError {
+  readonly code = 'SUB_AGENT_TOOL_MODEL_CALL' as const;
+  constructor(readonly scope: ModelCallRefusalScope) {
+    super(`A sub-agent's tool (${scope.tool}) may not call a model; nothing was sent.`);
+  }
+}
+
+/**
  * The tenant's placement floor — vendor allow-list, substrate allow-list,
  * residency, zero retention, or an unknown policy — excludes every AI service
  * that could have served this request, or the one it reached.
@@ -3965,19 +4276,67 @@ function auditOrganizationId(request: GatewayRequest): string | number | undefin
 }
 
 /**
- * Which tenant floor a call was placed under, and how the tenant was bound.
- * Content-free. The PHI/PII class and the classifier's regulatory signal are
- * recorded here audit-only: they do not gate.
+ * The typed provenance columns of a ledger row (see AuditLogEntry and
+ * db/migrations/20260813_ai_gateway_audit_log.sql): what the call carried, how
+ * its tenant was bound and resolved, and — on a served call — the placement
+ * decision, the approved-models entry that served it, and the hosted tools that
+ * ran or were withheld. Content-free.
  */
-function tenantPlacementAuditMetadata(request: GatewayRequest): Record<string, unknown> {
+function ledgerProvenance(
+  request: GatewayRequest,
+  served?: GatewayResponse,
+): Partial<AuditLogEntry> {
+  const tenant = request.sensitiveTenantPolicy;
+  const approved = served ? approvedEntryFor({ provider: served.provider, model: served.model }) : undefined;
+  const used = (served as { serverToolUses?: Array<{ name: string }> } | undefined)?.serverToolUses;
   return {
-    resolution: request.sensitiveTenantPolicy?.resolution,
-    boundFrom: request.sensitiveTenantPolicy?.boundFrom,
     payloadProvenance: request.payloadProvenance ?? 'tenant_governed',
     dataClass: request.sensitiveDataClass,
-    regulatoryContentDetected: request.regulatoryContentDetected,
+    tenantPolicyResolution: tenant?.resolution,
+    tenantBoundFrom: tenant?.boundFrom,
+    riskTier: request.riskTier,
+    runId: request.runId,
+    parentRunId: request.parentRunId,
+    ...(served
+      ? {
+          placementReasonCode: served.placementReasonCode,
+          approvedModelId: approved?.id,
+          pinnedVersion: approved?.pinnedVersion,
+          pqStatus: approved ? approved.pq.status : 'unregistered',
+          serverToolsUsed: used?.map(u => u.name),
+          serverToolsWithheld: served.withheldServerTools,
+        }
+      : {}),
   };
 }
+
+/**
+ * Where the serving lane processed the request. A self-hosted lane is on-prem;
+ * otherwise the requested residency when the lane serves it, else every region
+ * the lane claims ('global' for a shared API). Until 2026-09-26 the requested
+ * residency was recorded whatever served it, so an on-prem call for an EU
+ * tenant read as 'eu'.
+ */
+function servingRegion(placement: ProviderPlacement, request: GatewayRequest): string {
+  if (placement.substrate === 'self_hosted') return 'on_prem';
+  const requested = request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : null;
+  if (requested && placement.regions.includes(requested)) return requested;
+  return placement.regions.join(',').slice(0, 16);
+}
+
+/** A digest of each non-text block's source, appended to its message in the prompt hash. */
+function contentBlocksDigest(blocks: GatewayMessage['contentBlocks']): string {
+  if (!blocks || blocks.length === 0) return '';
+  return blocks
+    .map(b => {
+      if (b.type === 'text') return `|text:${createHash('sha256').update(b.text, 'utf8').digest('hex')}`;
+      const src = b.source as Record<string, unknown>;
+      const body = String(src.data ?? src.file_id ?? src.url ?? '');
+      return `|${b.type}:${String(src.type)}:${createHash('sha256').update(body, 'utf8').digest('hex')}`;
+    })
+    .join('');
+}
+
 
 export class TenantPlacementError extends GatewayPolicyError {
   constructor(
@@ -4010,6 +4369,23 @@ export class MediaNotCarriedError extends GatewayPolicyError {
 }
 
 /**
+ * The request names a document by Anthropic Files-API file id, and the lane it
+ * reached is not first-party Anthropic. Bedrock, Vertex and every other lane
+ * cannot resolve that id, so the model would answer about a file it was never
+ * given. Terminal like every GatewayPolicyError. Until 2026-09-26 the request
+ * went to Bedrock and Vertex anyway, with the Files-API beta header attached.
+ */
+export class FileReferenceNotCarriedError extends GatewayPolicyError {
+  readonly code = 'FILE_REFERENCE_NOT_CARRIED' as const;
+  constructor(readonly modelConfig: Pick<ModelConfig, 'id' | 'provider'>) {
+    super(
+      `FILE_REFERENCE_NOT_CARRIED: ${modelConfig.id} (${modelConfig.provider}) cannot read a document ` +
+        'referenced by an Anthropic file id, so this request was not sent. Attach the document itself instead.',
+    );
+  }
+}
+
+/**
  * The caller cancelled this request.
  *
  * Terminal in exactly the way {@link GatewayPolicyError} is, and for a related
@@ -4026,7 +4402,7 @@ export class MediaNotCarriedError extends GatewayPolicyError {
  * said is worth keeping.
  */
 export class GatewayAbortedError extends Error {
-  constructor(readonly phase: 'pre_call' | 'pre_stream') {
+  constructor(readonly phase: 'pre_call' | 'pre_stream' | 'in_flight') {
     super(`AI request cancelled by the caller (${phase})`);
     this.name = 'GatewayAbortedError';
   }
@@ -4068,11 +4444,8 @@ export class GatewayModelDeclinedError extends Error {
  * and a classifier decline (the same classifier declines the same request).
  */
 function isNeverRetried(err: unknown): boolean {
-  return (
-    err instanceof GatewayPolicyError ||
-    err instanceof GatewayAbortedError ||
-    err instanceof GatewayModelDeclinedError
-  );
+  // One definition of "final", shared with the callers that wrap the gateway.
+  return isTerminalGatewayError(err);
 }
 
 /** Build the decline for a refusal stop, deciding whether another model may run it. */

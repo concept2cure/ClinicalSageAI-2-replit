@@ -30,6 +30,8 @@ import {
 } from '../services/session-inactivity';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
+import { auditOrganizationOf, membershipsOf, signInMembership } from '../services/sign-in-organisation';
+import { PASSWORD_HASH_COST, padUnknownEmailTiming } from '../services/login-timing-pad';
 import {
   ACCOUNT_INACTIVE_MESSAGE,
   ACCOUNT_STATUS_ACTIVE,
@@ -96,6 +98,7 @@ import {
   ensureOrganizationDefaultWorkspace,
 } from '../services/c2c/organization-default-workspace';
 import { runWithTenantScope } from '../db/tenantStore';
+import { signInLimits } from '../middleware/sign-in-limits';
 
 const router = Router();
 
@@ -114,17 +117,10 @@ function getRefreshTokenSecret(): string {
 // ─── Rate Limiters ──────────────────────────────────────────────────────────
 // Separate limiters for different risk levels.
 
-/** Login: 10 attempts per 15 minutes per IP */
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: { code: 'RATE_LIMIT', message: 'Too many login attempts. Please try again later.' },
-  },
-});
+// Password and second-factor steps: per ACCOUNT, failures only
+// (middleware/sign-in-limits.ts). They were 10 requests per client address,
+// successes included, so the eleventh colleague behind one office address was
+// refused (D6, 2026-09-29).
 
 /** Signup: 5 per hour per IP */
 const signupLimiter = rateLimit({
@@ -162,18 +158,6 @@ const passwordResetLimiter = rateLimit({
       code: 'RATE_LIMIT',
       message: 'Too many password reset requests. Please try again later.',
     },
-  },
-});
-
-/** MFA verify: 10 per 15 minutes per IP */
-const mfaLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: { code: 'RATE_LIMIT', message: 'Too many MFA attempts. Please try again later.' },
   },
 });
 
@@ -404,18 +388,7 @@ router.get('/session', async (req: Request, res: Response) => {
  * POST /api/auth/login
  * Login with email and password
  */
-/**
- * A bcrypt comparison against a hash nobody can sign in with, run when the
- * e-mail is unknown, so an unknown e-mail costs what a wrong password costs
- * (cost 12, the same as the stored hashes). Built once, on first use.
- */
-let unknownEmailTimingHash: string | null = null;
-async function padUnknownEmailTiming(password: string): Promise<void> {
-  unknownEmailTimingHash ??= await bcrypt.hash('unknown-email-timing-pad', 12);
-  await bcrypt.compare(String(password ?? ''), unknownEmailTimingHash);
-}
-
-router.post('/login', loginLimiter, async (req: Request, res: Response) => {
+router.post('/login', signInLimits.login, async (req: Request, res: Response) => {
   try {
     const { email, password, deviceInfo, rememberDevice } = req.body;
 
@@ -433,7 +406,8 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     if (!user.length) {
       // The same bcrypt cost a wrong password pays, so the response time does
-      // not say whether the e-mail is enrolled (audit IAM-18 item 8).
+      // not say whether the e-mail is enrolled (audit IAM-18 item 8; the
+      // enterprise door pays it through the same module).
       await padUnknownEmailTiming(password);
       // Audit: unknown-email login attempt. Log with the attempted email
       // (no userId since none exists) so SOC tooling can correlate
@@ -462,7 +436,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: 'account_locked',
@@ -480,6 +454,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     }
 
     if (!userData.passwordHash) {
+      // An account with no stored password pays the comparison an unknown
+      // e-mail pays, so it is not told apart by timing either (IAM-18 item 8).
+      await padUnknownEmailTiming(password);
       logger.error('User has no password hash', { email: userData.email });
       return res.status(401).json({
         success: false,
@@ -494,7 +471,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: failResult?.locked ? 'wrong_password_threshold_exceeded' : 'wrong_password',
@@ -516,7 +493,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: 'email_unverified',
@@ -537,7 +514,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: 'account_inactive',
@@ -558,18 +535,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // challenge-issued here and session-created there.
 
     const defaultOrganizationId = userData.defaultOrganizationId || null;
-    let organizationId = defaultOrganizationId;
-    let jwtRole = 'user';
 
     // Resolve all memberships and pick default org membership if available.
-    const memberships = await db
-      .select({
-        organizationId: organizationUsers.organizationId,
-        role: organizationUsers.role,
-      })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, userData.id))
-      .limit(25);
+    const memberships = await membershipsOf(userData.id);
 
     if (memberships.length === 0) {
       return res.status(403).json({
@@ -578,13 +546,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    if (!organizationId) {
-      organizationId = memberships[0]?.organizationId || null;
-    }
-    const selectedMembership =
-      memberships.find(m => m.organizationId === organizationId) || memberships[0];
-    organizationId = selectedMembership?.organizationId || null;
-    jwtRole = selectedMembership?.role || 'user';
+    const selectedMembership = signInMembership(memberships, defaultOrganizationId);
+    const organizationId = selectedMembership?.organizationId || null;
+    const jwtRole = selectedMembership?.role || 'user';
 
     if (!organizationId) {
       return res.status(403).json({
@@ -1013,7 +977,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         .values({ name: companyName, slug, industryMode, stripeCustomerId, tier: 'free' })
         .returning();
 
-      const passwordHash = await bcrypt.hash(password, 12);
+      const passwordHash = await bcrypt.hash(password, PASSWORD_HASH_COST);
       const fullName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
       const [user] = await tx
         .insert(users)
@@ -1027,6 +991,15 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         })
         .returning();
 
+      // Enter the new organisation's tenant before its first membership row.
+      // organization_users is written only in the membership's own
+      // organisation (or the platform scope), and signup runs in the pre-auth
+      // scope, so without this every sign-up answered 500 (D3, 2026-09-26;
+      // docs/evidence/D3/2026-09-26-memberships/). The same transaction-local
+      // switch the workspace step below makes, through the same binding; it
+      // stays set for the rest of this transaction.
+      const workspaceStore = drizzleWorkspaceStore(tx);
+      await workspaceStore.enterOrganizationScope(org.id);
       await tx.insert(organizationUsers).values({
         organizationId: org.id,
         userId: user.id,
@@ -1041,7 +1014,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       // Inside the transaction, unlike provisionLaunchModules below: a module
       // grant an administrator can re-run is not the same as the PM spine's
       // NOT NULL parent, which every later write assumes.
-      await ensureOrganizationDefaultWorkspace(drizzleWorkspaceStore(tx), {
+      await ensureOrganizationDefaultWorkspace(workspaceStore, {
         orgId: org.id,
         orgName: org.name,
         orgSlug: org.slug,
@@ -1231,7 +1204,7 @@ router.post('/verify-email', verificationLimiter, async (req: Request, res: Resp
     await recordAuthEvent({
       action: 'email_verified',
       userId: account.id,
-      tenantId: account.defaultOrganizationId,
+      tenantId: await auditOrganizationOf(account),
       email: subject.email,
       outcome: 'success',
       reason: 'link',
@@ -1644,7 +1617,7 @@ router.get('/me', async (req: Request, res: Response) => {
  * Accepts the challenge token (from login response) + TOTP code,
  * and returns the real JWT access/refresh tokens.
  */
-router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
+router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: Response) => {
   try {
     const { challengeId, code, method } = req.body;
 
@@ -1848,10 +1821,11 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/mfa/resend
- * Resend the email OTP code. Requires the active challenge token.
- * Rate limited to prevent abuse.
+ * Re-issue the email OTP code. Requires the active challenge token.
+ * Rate limited per IP, and at most emailOtpService.MAX_RESENDS re-issued codes
+ * per challenge (429 MFA_RESEND_LIMIT beyond it; a new sign-in starts again).
  */
-router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
+router.post('/mfa/resend', signInLimits.secondFactor, async (req: Request, res: Response) => {
   try {
     const { challengeId } = req.body;
 
@@ -1890,8 +1864,32 @@ router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    // Generate a new OTP and send it
-    const otp = await emailOtpService.createEmailOtp(userId);
+    // Re-issue the challenge's code — at most MAX_RESENDS per challenge, counted
+    // on the users row by one conditional UPDATE (IAM-09, plan P1-3). A fresh
+    // budget of codes costs the password: createEmailOtp, at /login, is the
+    // only thing that starts the count again. Refused, the pending code and its
+    // expiry stand and nothing is mailed; the refusal is recorded against the
+    // account, in the organisation the server signed into the challenge.
+    const otp = await emailOtpService.reissueEmailOtp(userId);
+    if (otp === null) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_challenge',
+        userId,
+        tenantId: challenge.organizationId,
+        email: challenge.email,
+        outcome: 'failure',
+        reason: 'resend_limit',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(429).json({
+        success: false,
+        error: {
+          code: 'MFA_RESEND_LIMIT',
+          message: 'This sign-in has already received its limit of emailed codes. Sign in again to request a new one.',
+        },
+      });
+    }
     const maskedEmail = maskEmail(challenge.email);
 
     sendLoginOtpEmail(challenge.email, otp).catch(err => {
@@ -2219,7 +2217,7 @@ async function handleForgotPassword(req: Request, res: Response) {
     };
 
     const user = await db
-      .select({ id: users.id, email: users.email })
+      .select({ id: users.id, email: users.email, defaultOrganizationId: users.defaultOrganizationId })
       .from(users)
       .where(eq(users.email, email.toLowerCase()))
       .limit(1);
@@ -2268,6 +2266,7 @@ async function handleForgotPassword(req: Request, res: Response) {
     await recordAuthEvent({
       action: 'user_password_reset_requested',
       userId: user[0].id,
+      tenantId: await auditOrganizationOf(user[0]),
       email: user[0].email,
       outcome: 'success',
       ipAddress: req.ip,
@@ -2316,6 +2315,7 @@ async function handleResetPassword(req: Request, res: Response) {
         name: users.name,
         resetToken: users.resetToken,
         resetTokenExpiresAt: users.resetTokenExpiresAt,
+        defaultOrganizationId: users.defaultOrganizationId,
       })
       .from(users)
       .where(eq(users.resetToken, tokenHash))
@@ -2341,6 +2341,8 @@ async function handleResetPassword(req: Request, res: Response) {
     }
 
     const userData = user[0];
+    // Every event below names the account, so its organisation's ledger shows it (F-41).
+    const auditOrganizationId = await auditOrganizationOf(userData);
 
     // Check expiry
     if (!userData.resetTokenExpiresAt || new Date() > userData.resetTokenExpiresAt) {
@@ -2353,6 +2355,7 @@ async function handleResetPassword(req: Request, res: Response) {
       await recordAuthEvent({
         action: 'user_password_reset_failed',
         userId: userData.id,
+        tenantId: auditOrganizationId,
         outcome: 'failure',
         reason: 'reset token had expired',
         ipAddress: req.ip,
@@ -2380,7 +2383,7 @@ async function handleResetPassword(req: Request, res: Response) {
       });
     }
 
-    const passwordHash = await bcrypt.hash(newPassword, 12);
+    const passwordHash = await bcrypt.hash(newPassword, PASSWORD_HASH_COST);
 
     // Set the password only if the token is STILL this account's and unexpired,
     // in the same statement that clears it: a reset token is used once. Until
@@ -2410,6 +2413,7 @@ async function handleResetPassword(req: Request, res: Response) {
       await recordAuthEvent({
         action: 'user_password_reset_failed',
         userId: userData.id,
+        tenantId: auditOrganizationId,
         outcome: 'failure',
         reason: 'reset token was used or expired before this request completed',
         ipAddress: req.ip,
@@ -2434,6 +2438,7 @@ async function handleResetPassword(req: Request, res: Response) {
     await recordAuthEvent({
       action: 'user_password_changed',
       userId: userData.id,
+      tenantId: auditOrganizationId,
       outcome: 'success',
       reason: 'password reset via emailed token',
       ipAddress: req.ip,
@@ -2577,7 +2582,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
     }
 
     // Hash and store new password
-    const newHash = await bcrypt.hash(newPassword, 12);
+    const newHash = await bcrypt.hash(newPassword, PASSWORD_HASH_COST);
 
     // Maintain password history (last 5)
     const history = ((userData.passwordHistory as string[]) || []).slice(0, 4);
@@ -2599,7 +2604,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
     await recordAuthEvent({
       action: 'user_password_changed',
       userId: userData.id,
-      tenantId: userData.defaultOrganizationId,
+      tenantId: await auditOrganizationOf(userData),
       email: userData.email,
       outcome: 'success',
       reason: 'changed by the account holder',

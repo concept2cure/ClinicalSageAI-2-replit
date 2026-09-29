@@ -92,9 +92,18 @@ const read = (p) => fs.readFileSync(p, 'utf8');
 const toRel = (abs) => path.relative(repoRoot, abs).split(path.sep).join('/');
 
 /**
- * Every migration .sql the guard reads, comment-stripped. db/migrations/_legacy
- * and _archive are skipped as the table guard skips them; migrations/<subdir>
- * is read and is non-durable (durableSurface decides).
+ * Every migration .sql the guard reads, comment-stripped. _archive is skipped;
+ * every other subdirectory is read and is non-durable (durableSurface decides).
+ *
+ * db/migrations/_legacy was skipped too, "as the table guard skips it" — and a
+ * column added ONLY there is exactly the defect this guard exists for: never
+ * applied, so a query naming it fails on every deployed database. Skipping it
+ * made such a column unknown rather than orphaned, and nothing reported it.
+ * Found 2026-09-23: /api/stability read and wrote five stab_results columns
+ * (status, reviewed_by, reviewed_at, reject_reason, sample_id) that only
+ * _legacy/031 and _legacy/035 add; result review and sample linking 42703'd on
+ * every deployment (docs/evidence/W2/2026-09-23/stability-audited-writes.txt).
+ * Reading _legacy adds only those five findings, so it costs no noise.
  */
 export function migrationSources() {
   const out = [];
@@ -103,7 +112,7 @@ export function migrationSources() {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       const p = path.join(dir, e.name);
       if (e.isDirectory()) {
-        if (!/^(_archive|meta|node_modules)$/.test(e.name) && !(e.name === '_legacy' && toRel(dir) === 'db/migrations')) walk(p);
+        if (!/^(_archive|meta|node_modules)$/.test(e.name)) walk(p);
       } else if (e.name.endsWith('.sql')) out.push({ rel: toRel(p), sql: stripSqlComments(read(p)) });
     }
   };

@@ -1,0 +1,28 @@
+  proname   | prosecdef |                                proconfig                                 |    pg_get_function_result    
+------------+-----------+--------------------------------------------------------------------------+------------------------------
+ actor_name | t         | {"search_path=pg_catalog, public",app.current_user_role=app_super_admin} | TABLE(name text, email text)
+(1 row)
+
+   grantee   | privilege_type 
+-------------+----------------
+ app_service | EXECUTE
+ postgres    | EXECUTE
+(2 rows)
+
+                                                           indexdef                                                           
+------------------------------------------------------------------------------------------------------------------------------
+ CREATE INDEX audit_logs_tenant_actor_idx ON public.audit_logs USING btree (tenant_id, actor_id) WHERE (actor_id IS NOT NULL)
+(1 row)
+
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Function Scan on actor_name  (cost=0.25..10.25 rows=1000 width=64)
+(1 row)
+
+SET
+                                                             QUERY PLAN                                                             
+------------------------------------------------------------------------------------------------------------------------------------
+ Index Only Scan using audit_logs_tenant_actor_idx on audit_logs a  (cost=0.16..8.18 rows=1 width=4)
+   Index Cond: ((tenant_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) AND (actor_id = 5))
+(2 rows)
+

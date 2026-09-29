@@ -16,6 +16,10 @@ import rbacServiceImport from '../../services/roleBasedAccess.js';
 const rbacService = rbacServiceImport;
 import { authenticateToken } from '../../middleware/auth.js';
 import { authedOrgId } from '../../utils/authedOrgId.js';
+import { serverError } from '../../lib/api-response.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('enterprise-routes');
 
 const router = express.Router();
 
@@ -68,8 +72,6 @@ router.post('/regulatory/analyze', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Regulatory analysis error:', error);
-
     await auditService.logAction({
       tenantId: req.tenantId,
       userId: req.userId,
@@ -79,10 +81,7 @@ router.post('/regulatory/analyze', async (req, res) => {
       severity: 'high',
     });
 
-    res.status(500).json({
-      error: 'Analysis failed',
-      details: error.message,
-    });
+    return serverError(res, logger, 'analysing the regulatory text', error);
   }
 });
 
@@ -117,8 +116,7 @@ router.post('/regulatory/generate', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Content generation error:', error);
-    res.status(500).json({ error: 'Generation failed', details: error.message });
+    return serverError(res, logger, 'generating content', error);
   }
 });
 
@@ -154,8 +152,7 @@ router.post('/regulatory/enhance', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Text enhancement error:', error);
-    res.status(500).json({ error: 'Enhancement failed', details: error.message });
+    return serverError(res, logger, 'enhancing text', error);
   }
 });
 

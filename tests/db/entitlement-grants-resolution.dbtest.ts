@@ -854,14 +854,26 @@ describe('resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpo
     return asUser(ORG_OWNER, 'member', NAV, () => masterAdmin.resolveMasterAdmin(fakeReq(u, ORG_OWNER)));
   };
 
-  it('platform_role_grants is not RLS-governed, and the runtime role may read it', async () => {
+  // Since 2026-09-28 the table is RLS-governed for WRITES (platform scope only,
+  // migrations/20260928_platform_role_grants_platform_writes.sql) and its READ
+  // policy is open, so the lookup below still sees the row from a per-user scope.
+  it('platform_role_grants is readable by the runtime role from any scope, and written by the platform only', async () => {
     const { rows } = await owner.query(
       `SELECT c.relrowsecurity, c.relforcerowsecurity,
-              has_table_privilege($1, 'public.platform_role_grants', 'SELECT') AS can_select
+              has_table_privilege($1, 'public.platform_role_grants', 'SELECT') AS can_select,
+              (SELECT array_agg(p.cmd || ':' || COALESCE(p.qual, '-') ORDER BY p.cmd)
+                 FROM pg_policies p
+                WHERE p.schemaname = 'public' AND p.tablename = 'platform_role_grants'
+                  AND p.cmd = 'SELECT') AS read_policies
          FROM pg_class c WHERE c.oid = 'public.platform_role_grants'::regclass`,
       [runtimeRole],
     );
-    expect(rows[0]).toEqual({ relrowsecurity: false, relforcerowsecurity: false, can_select: true });
+    expect(rows[0]).toEqual({
+      relrowsecurity: true,
+      relforcerowsecurity: true,
+      can_select: true,
+      read_policies: ['SELECT:true'],
+    });
   });
 
   it("the designation row is visible to the lookup's exact statement under a per-user scope", async () => {

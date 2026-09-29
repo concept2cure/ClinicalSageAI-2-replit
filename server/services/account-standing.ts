@@ -95,7 +95,7 @@ export async function readAccountStanding(userId: number): Promise<AccountStandi
   // the global identity table.
   const result = await pool.query(
     `SELECT (SELECT status FROM users WHERE id = $1 LIMIT 1) AS status,
-            (SELECT floor(extract(epoch FROM password_changed_at))::bigint FROM users WHERE id = $1 LIMIT 1)
+            (SELECT floor(date_part('epoch', password_changed_at))::bigint FROM users WHERE id = $1 LIMIT 1)
               AS password_changed_at_seconds`,
     [userId],
   );

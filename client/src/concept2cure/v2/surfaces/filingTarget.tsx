@@ -350,10 +350,15 @@ export function PlacementReasonField({
   const kit = REASON_KIT[variant];
   const id = `${idPrefix}-reason`;
   const short = value.trim().length > 0 && !placementReasonOk(value);
+  /* 2026-09-28 (A-0928-1): the field was required only visually. The textarea
+     carried no required state, the "*" was read into its name ("Reason for this
+     placement star"), and the note named the floor only after a too-short
+     value was typed. Now `aria-required` carries it, the marker is decorative
+     (as C2CForm does), and the note states the requirement up front. */
   return (
     <div className={kit.field}>
       <label className={kit.label} htmlFor={id}>
-        Reason for this placement<span className="req">*</span>
+        Reason for this placement<span className="req" aria-hidden="true">*</span>
       </label>
       <textarea
         id={id}
@@ -363,13 +368,14 @@ export function PlacementReasonField({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         placeholder="e.g. Final clinical overview, approved for this sequence"
+        aria-required="true"
         aria-describedby={`${id}-note`}
         aria-invalid={short || undefined}
       />
       <div id={`${id}-note`} className={kit.note}>
         {short
           ? `At least ${GOVERNED_REASON_MIN} characters.`
-          : 'Recorded with the placement in the audit trail.'}
+          : `Required, at least ${GOVERNED_REASON_MIN} characters. Recorded with the placement in the audit trail.`}
       </div>
     </div>
   );

@@ -1,0 +1,101 @@
+# RLS_ENFORCE=on, NODE_ENV=test, real PostgreSQL built by scripts/db/install-fresh.mjs + scripts/db/deploy-migrate.mjs (the CI 'deploy-shaped' recipe), at d57bff619
+ ✓ tests/db/module-access-requests.dbtest.ts > posture > a member request runs as the non-superuser runtime role, RLS on, scoped to their org
+ ✓ tests/db/module-access-requests.dbtest.ts > posture > the platform owner on this prefix is scoped to the owner's own org, not the system scope
+ ✓ tests/db/module-access-requests.dbtest.ts > posture > the platform owner on the Master Administration prefix runs under the system scope, still as the runtime role
+ ✓ tests/db/module-access-requests.dbtest.ts > posture > the table is RLS enabled + FORCED with the tenant policy, and the partial unique index is deployed
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > first ask inserts one row; a repeat updates the SAME open row via the partial unique index
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > five concurrent asks for one module leave exactly one open row, exactly one reported as new
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > a different member of the same org asking for the same module is a separate request
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > once answered, a fresh ask creates a NEW open row beside the answered one
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > the organization comes from the caller, never from the body
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > an unknown module is refused and writes nothing
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > /mine returns the caller's own requests in their workspace only
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > org admin A's queue holds org A's requests and none of org B's
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > org admin A cannot decide org B's request, and nothing is granted to B
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > org admin B sees org B's request and none of A's
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > a member cannot read the queue or answer a request
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > an unauthenticated call is refused before any read
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > approve writes an enabled, unbounded module_subscriptions row for org A, records the decision and audits it
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > approve clears a lapsed trial date instead of re-enabling an already-expired grant
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > decline records the reason, grants nothing, and audits it
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > an answered request cannot be answered again, and a reason under the floor is refused
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > two administrators answering at once produce one decision; the loser is told so
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > a decline that wins a race against an approval leaves no grant behind
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > H1: the owner's queue holds every workspace's open requests, not only the owner's own
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > the per-user route refuses the every-workspace read outright instead of narrowing it
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > H2: the owner approving org B's request writes org B's grant, records it and audits it under org B
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > the owner declining org B's request records the reason and grants nothing
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > the per-user route still cannot reach org B's request for the owner — members stay scoped
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > platform staff without the owner grant are admitted to the console but refused the queue and the decision
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > an org admin who is also platform staff may answer only their own workspace on the console mount
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > an org administrator cannot reach the console mount at all
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > status=approved and status=declined return exactly the workspace's rows in that state
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > a queue longer than one page keeps every open request on the page, first, and says it was cut short
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > a note over 2000 characters is refused and records nothing; one at the limit is kept whole
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > a real token with no workspace is refused with 401 and records nothing
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > the owner answering their own workspace's request is not audited as a cross-workspace decision
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > the migration replays onto the deployed table as a no-op (Rule 1), and the status CHECK holds
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > posture — the connection these tests run on is the production one > server/db talks to Postgres as the non-superuser runtime role, RLS enforcing, scope applied
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > posture — the connection these tests run on is the production one > the db handles the modules under test import (server/db.js `pool` and `query`) are that same runtime pool
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > posture — the connection these tests run on is the production one > module_subscriptions is RLS-enabled and FORCED — the scope is load-bearing, not decorative
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > posture — the connection these tests run on is the production one > an unscoped server/db query fails closed (the instrumented pool refuses it)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='null' actorEmail=null (per-user scope)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='null' actorEmail='dbta-actor@example.invalid' (per-user scope)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='date' actorEmail=null (per-user scope)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='date' actorEmail='dbta-actor@example.invalid' (per-user scope)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='iso' actorEmail=null (per-user scope)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='iso' actorEmail='dbta-actor@example.invalid' (per-user scope)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='null' actorEmail=null (per-user scope)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='null' actorEmail='dbta-actor@example.invalid' (per-user scope)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='date' actorEmail=null (per-user scope)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='date' actorEmail='dbta-actor@example.invalid' (per-user scope)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='iso' actorEmail=null (per-user scope)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='iso' actorEmail='dbta-actor@example.invalid' (per-user scope)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > ON CONFLICT update path, per-user scope (customer toggle / access-request approval)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > ON CONFLICT update path, system scope (master-admin toggle, trials, billing webhook, setup)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > a per-user scope cannot write another tenant's grant — RLS refuses it
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > getLicenseInfo: the plan, and only the LIVE grants as enabled modules
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > getModuleCatalog: each grant shape reads as what it is
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: perpetual grant and live trial are allowed above the plan
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a lapsed trial ABOVE the plan is refused, naming the calendar date, never the instant
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a lapsed trial the plan COVERS is allowed — a lapse removes the override, not the entitlement
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a disabled row with a past expires_at is a revocation, never read as a lapse
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a REVOKED module the plan covers is refused, agreeing with the rail
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule { ignoreRevocation }: the admin toggle still gets the PLAN answer, so a switched-off module can be switched back on
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: no row above the plan is the plain tier refusal
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a revocation as the grant writer produces it (no date) is refused, as a revocation
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a module offered to another industry is refused, and a lapsed trial on one says so
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule fails closed on a missing organization and on an unknown module
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > the rail agrees: live grant subscribed, lapse falls to plan, revocation locked as disabled
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > the rail reports NO verdict (resolved:false) when the organization row cannot be read
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > a per-user scope sees none of another org's grants (the licence cannot leak across tenants)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > archived and soft-deleted programs hold no seat
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > at the limit it refuses
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > a negative entitlement is unlimited; zero is zero seats; NULL is the default of 10
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > fails CLOSED: a read the pool refuses, and a missing organization row, both deny
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProjectQuota / checkUserQuota — the usage-panel statements, per-user scope, real rows > checkProjectQuota counts this org's legacy projects only, against the recorded limit
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProjectQuota / checkUserQuota — the usage-panel statements, per-user scope, real rows > checkUserQuota counts this org's members only, against the recorded limit
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > platform_role_grants is not RLS-governed, and the runtime role may read it
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > the designation row is visible to the lookup's exact statement under a per-user scope
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > none of these identities is the owner by the synchronous signals — the DB decides
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > an active super_admin designation → owner
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > a revoked super_admin designation → not the owner
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > a 'support' designation → not the owner (console access is not a commercial unlock)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > no designation → not the owner
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > a FAILED lookup answers "not the owner" and is not cached — the next scoped read recognises the owner
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > the designation cache is per user: the owner's cached "yes" is never served to anyone else
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > the designated owner sees every catalog module unlocked on the rail, under the per-user scope
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > every launch module id has a catalog row (the grant FK would refuse one that did not)
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > the setup path (system scope) grants exactly the launch catalog, perpetual, with no failures
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > the rail: launch apps resolve available, non-launch modules resolve locked by launch scope
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > a bought module outside the launch scope stays locked; with enforcement off it is subscribed
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > no launch module is deprecated in the replayed catalog
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > the pre-auth scope cannot write a tenant's launch grants — RLS refuses every one
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > GET /api/admin/master/enterprise-requests — the platform owner > lists pending requests by default, and not reviewed ones
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > GET /api/admin/master/enterprise-requests — the platform owner > lists reviewed ones too with ?status=all
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > GET /api/admin/master/enterprise-requests — the platform owner > refuses an unknown status filter rather than guessing
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > everyone else > a customer's organisation admin is refused — other companies' contact details
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > everyone else > no token is refused
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > a read that fails is never shown as "no requests" > answers 500 with no list when the store cannot be read
+ Test Files  3 passed (3)
+      Tests  98 passed (98)

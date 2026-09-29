@@ -2,7 +2,10 @@
  * GET /api/claude/models — model/effort picker projection contract.
  *
  * Verifies the rewritten endpoint:
- *  - projects getGateway().getModels(), filtered to enabled models only
+ *  - projects getGateway().getModels(), filtered to enabled models that are an
+ *    approved-models entry (CLAUDE.md Rule 2; b4cd6874 made the picker list
+ *    approved entries only, so the fixture rows below carry the pinned versions
+ *    of real entries — an unpinned wire model is not one and is not offered)
  *  - derives label + recommendedEffort per option
  *  - includes effortLevels + defaultEffort for the picker
  *  - PRESERVES the legacy `frameworks` array and the `{ success, data }` envelope
@@ -35,7 +38,7 @@ const REGISTRY: ModelConfig[] = [
   {
     id: 'claude-opus-4',
     provider: 'anthropic',
-    model: 'claude-opus-4-7',
+    model: 'claude-opus-5-5',
     contextWindow: 200000,
     qualityScore: 99,
     costPer1kInput: 0.015,
@@ -46,11 +49,23 @@ const REGISTRY: ModelConfig[] = [
   {
     id: 'claude-haiku-4',
     provider: 'anthropic',
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-haiku-4-5',
     contextWindow: 200000,
     qualityScore: 85,
     costPer1kInput: 0.0008,
     costPer1kOutput: 0.004,
+    capabilities: ['chat', 'general'],
+    enabled: true,
+  },
+  {
+    // Enabled, but no approved-models entry pins it: never offered.
+    id: 'claude-sonnet-4',
+    provider: 'anthropic',
+    model: 'claude-sonnet-4-5-unpinned',
+    contextWindow: 200000,
+    qualityScore: 90,
+    costPer1kInput: 0.003,
+    costPer1kOutput: 0.015,
     capabilities: ['chat', 'general'],
     enabled: true,
   },
@@ -81,7 +96,7 @@ function makeApp() {
 }
 
 describe('GET /api/claude/models', () => {
-  it('returns only enabled models with derived label + recommendedEffort', async () => {
+  it('returns only enabled, approved models with derived label + recommendedEffort', async () => {
     const res = await request(makeApp()).get('/api/claude/models');
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -91,12 +106,14 @@ describe('GET /api/claude/models', () => {
     expect(ids).toContain('claude-opus-4');
     expect(ids).toContain('claude-haiku-4');
     expect(ids).not.toContain('disabled-model'); // enabled-filtered
+    expect(ids).not.toContain('claude-sonnet-4'); // enabled, but its wire model is no entry's pin
 
     const opus = models.find((m) => m.id === 'claude-opus-4')!;
     /* The label follows the WIRE model, not the alias id — deriveModelLabel says
        so in as many words: "the label describes what will actually run, and a
        stable alias id does not". This fixture's alias is 'claude-opus-4' and its
-       wire model is 'claude-opus-4-7', so the picker must read "Claude Opus 4.7".
+       wire model is 'claude-opus-5-5' (the entry's pin), so the picker must read
+       "Claude Opus 5.5".
        This asserted 'Claude Opus 4' — the humanized-ALIAS fallback, which is what
        you get only while claudeModelLabel does not recognise the wire model. It
        does now, so the old expectation was pinning the fallback and describing
@@ -106,8 +123,11 @@ describe('GET /api/claude/models', () => {
        must NOT move when the label does. Checking only the label would leave the
        two free to drift apart. */
     expect(opus.id).toBe('claude-opus-4');
-    expect(opus.label).toBe('Claude Opus 4.7');
+    expect(opus.label).toBe('Claude Opus 5.5');
     expect(opus.recommendedEffort).toBe('thorough');
+    // Read from the entry, never asserted by the picker: nothing claims a PQ pass.
+    expect(opus.approvedForHighRisk).toBe(true);
+    expect(opus.pqStatus).toBe('pending');
 
     const haiku = models.find((m) => m.id === 'claude-haiku-4')!;
     expect(haiku.recommendedEffort).toBe('fast');

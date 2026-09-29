@@ -1,0 +1,67 @@
+# Inventory: stored image srcs this change stops showing (run before the behaviour change; re-run now, same result)
+
+$ git grep -nI -i "<img" -- migrations/** db/** scripts/** seeds/** **/seed* **/*seed* **/fixtures/** **/*fixture* **/templates/** **/*template* shared/** server/data/** data/**
+.claude/skills/gstack/browse/test/fixtures/qa-eval.html:40:  <img src="/logo.png">  <!-- BUG 4: missing alt text on image -->
+.claude/skills/gstack/test/fixtures/qa-eval-ground-truth.json:29:      "description": "Logo image (<img src='/logo.png'>) has no alt attribute",
+scripts/visual-qa/a11y-rules.mjs:162:  <img src="a.png">
+scripts/visual-qa/a11y-rules.mjs:163:  <img src="b.png" alt="">
+scripts/visual-qa/check-a11y-semantics.mjs:23: *   1.1.1 Non-text Content — an <img> with no alt attribute at all.
+server/services/templates/templateHtml.ts:68:      ? `<img class="brand-logo" src="data:${brand.logo.mimeType};base64,${brand.logo.dataBase64}" alt="logo" />`
+shared/authoring/captions.ts:36: *     <img data-caption-id="<uuid>" src="…" alt="Chromatogram of batch 21-004">
+tests/fixtures/action-overclaim/RichSectionEditor.pre-fix.tsx.fixture:533:      // out of the record on the next save. <img> is representable now — the
+
+$ git grep -nI -E "src=\\\\?[\"'](https?:)?//" -- *.ts *.tsx *.sql *.json *.mjs  (non-test)
+(none)
+
+$ git grep -n "authoring/images/" (every stored-reference literal in the repo)
+client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts:111:      '<p>before</p><img src="/api/authoring/images/file_1_ab" alt="Chromatogram"><p>after</p>',
+client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts:114:    expect(out).toContain(`${AUTH_IMG_ATTR}="/api/authoring/images/file_1_ab"`);
+client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts:155:    const out = sanitizeAuthoringHtml('<img src="/api/authoring/images/../../tenant-export/full">');
+client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts:167:      '<figure><img src="/api/authoring/images/f1"><figcaption>Figure 1 — stability</figcaption></figure>',
+client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts:197:    sanitizeAuthoringHtml('<img src="/api/authoring/images/f2">');
+client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts:198:    const chat = sanitizeChatHtml('<img src="/api/authoring/images/f2"><p>ok</p>');
+client/src/concept2cure/components/ana/renderSafeMarkdown.ts:66: * references (`<img src="/api/authoring/images/<id>">`), and a read-only view
+client/src/concept2cure/v2/__tests__/imageEditing.test.ts:30:const REF = '/api/authoring/images/file_456_def';
+client/src/concept2cure/v2/__tests__/imageEditing.test.ts:37:  '/api/authoring/images/../../tenant-export/full',
+client/src/concept2cure/v2/__tests__/imageEditing.test.ts:38:  '/api/authoring/images/%2e%2e/%2e%2e/users/me',
+client/src/concept2cure/v2/__tests__/imageEditing.test.ts:39:  '/api/authoring/images/..\\..\\tenant-export\\full',
+client/src/concept2cure/v2/__tests__/imageEditing.test.ts:40:  '/api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export',
+client/src/concept2cure/v2/__tests__/imageEditing.test.ts:41:  '/api/authoring/images/file_1_a?download=1',
+client/src/concept2cure/v2/__tests__/imageEditing.test.ts:159:      '<p>From a web page.</p><img src="https://collector.example/p.png"><img src="/api/authoring/images/../../tenant-export/full">',
+client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx:69:      '<p>Figure 1 — chromatogram.</p><img src="/api/authoring/images/file_1_a" alt="chromatogram">';
+client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx:84:    const stored = '<figure><img src="/api/authoring/images/file_1_a"><figcaption>Fig 1</figcaption></figure>';
+client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx:250:const FIG = '<figure><img src="/api/authoring/images/file_1_a"><figcaption>Fig 1</figcaption></figure>';
+client/src/concept2cure/v2/editor/AuthoredHtml.tsx:5: * The editor's node view (imageNode.ts) fetches `/api/authoring/images/<id>`
+client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:9: * governed reference (`/api/authoring/images/<id>`) cannot load from a bare
+client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:59:    const ref = '/api/authoring/images/file_101_ok';
+client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:84:      <AuthoredHtml html={'<p>text</p><img src="/api/authoring/images/file_102_gone" alt="x">'} />,
+client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:115:    '/api/authoring/images/../../tenant-export/full',
+client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:116:    '/api/authoring/images/%2e%2e/%2e%2e/users/me',
+client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:117:    '/api/authoring/images/..\\..\\tenant-export\\full',
+client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:118:    '/api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export',
+client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:119:    '/api/authoring/images/file_1_a?download=1',
+client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx:69:  `<img ${CAPTION_ID_ATTR}="${CHROMATOGRAM}" src="/api/authoring/images/77" ` +
+client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx:263:      content: '<img src="/api/authoring/images/77">',
+client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts:235:    const stored = '<img src="/api/authoring/images/77" alt="Chromatogram">';
+client/src/concept2cure/v2/editor/imageNode.ts:15: *     HTML stores only the reference (`<img src="/api/authoring/images/<id>">`),
+server/export/__tests__/authoring-captions.test.ts:70:  `<img data-caption-id="${CHROMATOGRAM}" src="/api/authoring/images/77" ` +
+server/export/__tests__/authoring-captions.test.ts:82:    '/api/authoring/images/77',
+server/export/__tests__/authoring-captions.test.ts:276:        '<img src="/api/authoring/images/77" alt="Subject device"></td></tr></tbody></table>' +
+server/export/__tests__/authoring-image-export.test.ts:33:const REF = '/api/authoring/images/file_123_abc';
+server/export/__tests__/authoring-list-depth-export.test.ts:243:const SUBJECT = '/api/authoring/images/subject_1';
+server/export/__tests__/authoring-list-depth-export.test.ts:244:const PREDICATE = '/api/authoring/images/predicate_2';
+server/export/authoring-images.ts:5: * src="/api/authoring/images/<id>">`) so the append-only revision ledger
+server/export/authoring-images.ts:11: *   - `/api/authoring/images/<id>` — resolved through the canonical
+server/export/authoring-images.ts:45:export const AUTHORING_IMAGE_URL_PREFIX = '/api/authoring/images/';
+server/export/authoring-section-content.ts:216:  /** Images only: the stored reference (`/api/authoring/images/<id>`, a data
+server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts:141:            content: '<p>Safe text</p><script>alert(1)</script><img src="/api/authoring/images/x" onerror="steal()"><a href="javascript:alert(2)">link</a>',
+server/routes/authoring.router.ts:1827:         `/api/authoring/images/` out to any API route), or an image on another
+server/routes/authoring.router.ts:6466: * Section HTML stores a figure as a REFERENCE (`/api/authoring/images/<id>`),
+server/routes/authoring.router.ts:6581:          url: `/api/authoring/images/${saved.fileId}`,
+server/services/authoring/authoring-html-sanitizer.ts:33: * every other `<img src>`. That stored `/api/authoring/images/../../tenant-
+
+$ INSERT INTO authoring_sections with <img in migrations/scripts
+scripts/ci/check-lineage-save-gate.mjs:171:    why: 'createSection (POST /sections) and insertDocumentTx (POST /docs template seeding, POST /docs/from-draft and the draft_authoring_document tool) create authoring_sections rows with their content — each in its own BEGIN/COMMIT with the lineage gate enlisted',
+scripts/seed/ga-demo.d/112-ind-authoring-doc.mjs:202:      `INSERT INTO authoring_sections
+scripts/seed/ga-demo.d/99-doc-journey.mjs:110:      `INSERT INTO authoring_sections
+(no seed row carries an <img>)

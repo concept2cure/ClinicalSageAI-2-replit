@@ -1,0 +1,436 @@
+{
+  "protocolId": "OQ-005",
+  "protocolTitle": "Operational Qualification — Submission Readiness",
+  "app": "SUBMISSION-READINESS",
+  "appLabel": "Submission Readiness",
+  "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
+  "executedBy": "automated runner tests/validation/oq/submission-readiness/run.mjs",
+  "executedAt": "2026-09-27T23:54:11.334Z",
+  "finishedAt": "2026-09-27T23:54:35.997Z",
+  "environment": {
+    "baseUrl": "http://localhost:5200",
+    "node": "v22.22.2",
+    "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+    "playwrightCore": "1.63.0",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "d224ecffb056695cfbe05fa785df20f4d404b636"
+    },
+    "testUser": "oq-runner@validation.local",
+    "authentication": "password+totp",
+    "organizationId": "1",
+    "readyz": {
+      "status": 503,
+      "body": {
+        "ready": false,
+        "failed": [
+          "ana"
+        ],
+        "dependencies": {
+          "database": "ok",
+          "schema": "ok",
+          "ana": "down",
+          "storage": "ok",
+          "redis": "skipped",
+          "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "seeded",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY / KIMI_API_KEY) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE."
+      }
+    }
+  },
+  "counts": {
+    "pass": 10,
+    "fail": 0,
+    "deviation": 1,
+    "not-executed": 0
+  },
+  "steps": [
+    {
+      "id": "OQ-SRDY-00",
+      "title": "Prerequisite: program, vault document, submission, sequence with one leaf",
+      "urs": [],
+      "kind": "prerequisite",
+      "action": "POST projects / vault ingest / submissions / sequences / leaves",
+      "expected": "All created through the public API",
+      "status": "pass",
+      "observed": "program 1afec5c1-212c-4aed-b72d-fafbaea6ceca; submission 7; sequence 2; leaf m5.3.5",
+      "startedAt": "2026-09-27T23:54:11.986Z",
+      "finishedAt": "2026-09-27T23:54:13.936Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-00.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/c2c/projects",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SRDY-00.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/vault/ingest",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SRDY-00.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/7",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SRDY-00.api-4.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/7/sequences",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SRDY-00.api-5.json",
+          "method": "PUT",
+          "url": "http://localhost:5200/api/submissions/sequences/2/leaves",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-01",
+      "title": "Anonymous access refused",
+      "urs": [
+        "URS-SRDY-001"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/submissions/sequences/:id/dispatch-readiness without Authorization",
+      "expected": "HTTP 401/403",
+      "status": "pass",
+      "observed": "HTTP 401",
+      "startedAt": "2026-09-27T23:54:13.936Z",
+      "finishedAt": "2026-09-27T23:54:14.191Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-01.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/2/dispatch-readiness",
+          "status": 401
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-02",
+      "title": "Deterministic dispatch-readiness assessment for a sequence",
+      "urs": [
+        "URS-SRDY-002"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/submissions/sequences/:id/dispatch-readiness",
+      "expected": "HTTP 200 with numeric validationErrors / unacknowledgedShadowCriticals and an explicit ready/blocked verdict with reasons",
+      "status": "pass",
+      "observed": "gate.cleared=false; validationErrors=0; shadowCriticals=0; releaseSignature=unsigned; blockers: No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting. | Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked ",
+      "startedAt": "2026-09-27T23:54:14.191Z",
+      "finishedAt": "2026-09-27T23:54:14.528Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-02.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/2/dispatch-readiness",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-03",
+      "title": "Dispatch QC returns the deterministic gate verdict; the model only narrates",
+      "urs": [
+        "URS-SRDY-003"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/submissions/:id/dispatch-qc {region, sequenceId, validationErrors:0, unresolvedShadowCriticals:0, leaves}; GET /sequences/:id/dispatch-readiness",
+      "expected": "HTTP 200 with { clearedToDispatch, blockers, warnings, checklist, verdictSource:\"assess-dispatch-readiness\", narrative, narrativeUnavailable }; clearedToDispatch and blockers EQUAL the GET dispatch-readiness gate (client-supplied zeros do not override it); with no provider narrative is null and narrativeUnavailable.code is PROVIDER_UNAVAILABLE — the verdict is a pass without a provider, the narrative is recorded as not executed",
+      "status": "pass",
+      "observed": "clearedToDispatch=false == gate.cleared; 2 blockers identical to the gate; verdictSource=assess-dispatch-readiness; checklist 7 items; narrative: not executed — no provider (narrativeUnavailable.code PROVIDER_UNAVAILABLE); the verdict did not need one",
+      "startedAt": "2026-09-27T23:54:14.528Z",
+      "finishedAt": "2026-09-27T23:54:15.096Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-03.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/7/dispatch-qc",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SRDY-03.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/2/dispatch-readiness",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "VSR-001 F-9 (fixed 2026-09-21, docs/evidence/WB/2026-09-21/): the QC verdict is computeDispatchQcVerdict over the server-side assessment — the same composed gate freeze/dispatch enforce — and the model's own verdict field is never read. A gateway error on this route is now a FAIL (the verdict must not depend on a model), not a deviation.",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-04",
+      "title": "Readiness review template is registered and execute validates inputs",
+      "urs": [
+        "URS-SRDY-004"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/orchestration/templates; POST /api/orchestration/execute {templateId} without projectId",
+      "expected": "submission_readiness_review listed with 5 steps; execute without projectId → 400",
+      "status": "pass",
+      "observed": "template present (5 steps); execute w/o projectId → 400",
+      "startedAt": "2026-09-27T23:54:15.096Z",
+      "finishedAt": "2026-09-27T23:54:15.626Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-04.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/orchestration/templates",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SRDY-04.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/orchestration/execute",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-05",
+      "title": "The readiness review never assesses a project it cannot read",
+      "urs": [
+        "URS-SRDY-005"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/orchestration/execute {templateId:\"submission_readiness_review\", projectId:<the program id>, module:\"ind\"}. The review reads the integer project spine (projects.id); a program id is a uuid",
+      "expected": "Refused with a 4xx and no run, or a run that ends failed and says why. Never a completed review of a project the engine did not read",
+      "status": "pass",
+      "observed": "refused: HTTP 400 \"projectId must be a positive integer\"",
+      "startedAt": "2026-09-27T23:54:15.627Z",
+      "finishedAt": "2026-09-27T23:54:15.890Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-05.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/orchestration/execute",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": "VSR-001 F-23. Until v0.4 this step executed the review for the program and passed on any 2xx, and the protocol called it unscripted while the record called it a scripted pass. Every read behind the review failed on the program uuid, each failure was swallowed, and the review completed all five steps for \"Project\" with 0 documents, recommending \"No critical issues found\".",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-05b",
+      "title": "The readiness review names the project it assessed",
+      "urs": [
+        "URS-SRDY-005"
+      ],
+      "kind": "scripted",
+      "action": "When intake anchored the program to a project (meta.projectAnchorId): POST /api/orchestration/execute {templateId:\"submission_readiness_review\", projectId:<the anchored project>, module:\"ind\"}",
+      "expected": "The run completes, and its first step (inspect_project_state), read from the execution the response returns, names the program. A program intake did not anchor is a deviation naming the reason intake gave",
+      "status": "pass",
+      "observed": "run f2e65fed-f829-4763-bbe8-4372b67e00be completed for \"OQ-005 Readiness program 20260927235411\" (0 document(s)), status and steps read from the execution returned",
+      "startedAt": "2026-09-27T23:54:15.890Z",
+      "finishedAt": "2026-09-27T23:54:16.177Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-05b.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/orchestration/execute",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "The review reads the integer project spine. A program reaches it only through the anchor intake writes (services/c2c/program-project-anchor.ts), and intake writes one only when the organisation has exactly one client workspace. Signup creates none.",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-06",
+      "title": "A contradiction scan never reports a project it cannot read as clean",
+      "urs": [
+        "URS-SRDY-006"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/governed-intelligence/contradictions/scan/<the program id>; POST /api/governed-intelligence/contradictions/scan/<a project id the organisation does not hold>",
+      "expected": "Neither answers 200 with findings. With launch scope enforced (the posture this protocol runs in) both are refused 403 LAUNCH_SCOPE, because the scan belongs to the Inconsistency board (OQ-SRDY-08). With it off, the program id is refused 400 and the unheld id 404",
+      "status": "pass",
+      "observed": "launch scope enforced: both scans refused 403 LAUNCH_SCOPE, neither answered as clean",
+      "startedAt": "2026-09-27T23:54:16.177Z",
+      "finishedAt": "2026-09-27T23:54:16.971Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-06.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/governed-intelligence/contradictions/scan/1afec5c1-212c-4aed-b72d-fafbaea6ceca",
+          "status": 403
+        },
+        {
+          "file": "steps/OQ-SRDY-06.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/governed-intelligence/contradictions/scan/2147480000",
+          "status": 403
+        },
+        {
+          "file": "steps/OQ-SRDY-06.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/module-subscriptions/navigation",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "VSR-001 F-25. Until v0.5 this step scanned project 1 and passed on 200 with zero findings, in an organisation that holds no project 1: a clean result for a project nothing was read from. A program id arrived as NaN, which the registry searches read as \"no project filter\", so the scan read the whole organisation.",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-06b",
+      "title": "A contradiction scan of the program's project runs",
+      "urs": [
+        "URS-SRDY-006"
+      ],
+      "kind": "scripted",
+      "action": "When intake anchored the program to a project (meta.projectAnchorId): POST /api/governed-intelligence/contradictions/scan/<the anchored project>",
+      "expected": "With launch scope off: HTTP 200 with a deterministic result (possibly zero findings); a program intake did not anchor is a deviation naming the reason intake gave. With launch scope enforced the scan is locked (OQ-SRDY-08) and this positive half cannot be executed in this posture: a deviation that says so",
+      "status": "deviation",
+      "observed": null,
+      "startedAt": "2026-09-27T23:54:16.971Z",
+      "finishedAt": "2026-09-27T23:54:17.305Z",
+      "evidence": [
+        "steps/OQ-SRDY-06b.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-06b.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/module-subscriptions/navigation",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "deviationReason": "launch scope is enforced, and the contradiction scan belongs to the Inconsistency board, which is not in this release (VSR-001 §16.5; OQ-SRDY-08). The positive half of URS-SRDY-006 is executable only with launch scope off",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-07",
+      "title": "Dispatch Readiness surface renders the sequence readiness",
+      "urs": [
+        "URS-SRDY-007"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/dispatch-readiness with the program selected",
+      "expected": "The surface shows the open program's sequence (number 0000) and its gate verdict",
+      "status": "pass",
+      "observed": "sequence 0000 visible",
+      "startedAt": "2026-09-27T23:54:17.305Z",
+      "finishedAt": "2026-09-27T23:54:23.365Z",
+      "evidence": [
+        "steps/OQ-SRDY-07.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-27T23:54:21.622Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": "VSR-001 F-8 (2026-09-20): DispatchReadiness.tsx took the FIRST submission in the organisation, not the open program's. Since 2026-09-21 the surface resolves the open program (shell id → GET /api/c2c/projects/:id), picks its submission by the platform's program↔submission identity convention, and gates that submission's latest sequence; OQ-SRDY-00 builds the sequence on the program's own submission so this step exercises exactly that. The surface prints the sequence NUMBER (0000) beside the row id.",
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-08",
+      "title": "The Orchestration and Inconsistency boards are not in this release",
+      "urs": [
+        "URS-SRDY-008"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/module-subscriptions/navigation; open /concept2cure/orchestration and /concept2cure/inconsistency; POST /api/governed-intelligence/contradictions/scan/1; GET /api/orchestration/executions/<any id> (v0.6)",
+      "expected": "launchScope.enforced=true; \"orchestration\" and \"inconsistency\" are not entitled, source \"launch-scope\", while \"dispatch-readiness\" is entitled; each deep link explains the board is not in this release; and the boards' own APIs answer 403 LAUNCH_SCOPE, so the lock is not only in the navigation (v0.6)",
+      "status": "pass",
+      "observed": "orchestration and inconsistency locked by launch-scope in the navigation, both deep links, and both boards' APIs (403 LAUNCH_SCOPE); dispatch-readiness entitled",
+      "startedAt": "2026-09-27T23:54:23.365Z",
+      "finishedAt": "2026-09-27T23:54:35.919Z",
+      "evidence": [
+        "steps/OQ-SRDY-08.orchestration.png",
+        "steps/OQ-SRDY-08.inconsistency.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-08.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/module-subscriptions/navigation",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SRDY-08.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/governed-intelligence/contradictions/scan/1",
+          "status": 403
+        },
+        {
+          "file": "steps/OQ-SRDY-08.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/orchestration/executions/oq-srdy-08",
+          "status": 403
+        }
+      ],
+      "consoleErrors": [
+        {
+          "at": "2026-09-27T23:54:28.001Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        },
+        {
+          "at": "2026-09-27T23:54:29.002Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+        },
+        {
+          "at": "2026-09-27T23:54:29.017Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+        },
+        {
+          "at": "2026-09-27T23:54:33.904Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        },
+        {
+          "at": "2026-09-27T23:54:34.811Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+        },
+        {
+          "at": "2026-09-27T23:54:34.820Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+        }
+      ],
+      "note": "OQ-005 v0.5. Until then this ad-hoc step rendered both boards. In every organisation signup creates, the Orchestration board found no program and the Inconsistency board refused the program's id: both read the integer project spine, which a program reaches only through an anchor signup never creates (VSR-001 §14.3; decided §16).",
+      "browser429": 0,
+      "rateLimitRetries": 0
+    }
+  ]
+}

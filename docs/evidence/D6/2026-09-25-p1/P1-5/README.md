@@ -37,9 +37,7 @@ tenant scope are doubles; the size-limit case sends 26 MB and gets 413 before an
 
 ## Not done here
 
-- **Wiring.** `package.json` and `.husky/pre-push` were both touched by another lane at 07:23 UTC on 2026-09-25, so the
-  `ci:upload-guards` script and its pre-push line (beside `ci:sign-ceremony`) wait for that window (07:23 UTC on
-  2026-09-26), together with `ci:trivyignore-hygiene` from P0-16a. Until then the gate runs by hand.
+- **Wiring (2026-09-26).** `ci:upload-guards` (and its `:selftest`, `:list`, `:write-baseline` forms) is in `package.json` and runs in `.husky/pre-push` beside `ci:sign-ceremony`, refusing a multer site without `limits.fileSize`, a `fileFilter` or `assertUploadSafe` that is not in the reasoned baseline. `package.json` was inside another lane's window (02:48 UTC 09-26); the change is seven script lines in the `scripts` block and is disclosed on the board.
 - **The 12 files in the baseline.** Ten defects (four in the launch catalog: Authoring's image and DOCX import, AnA
   knowledge sources, Authoring templates, Projects onboarding, the Submission Center's official-form upload) and two
   gate limits. `authoring.router.ts` is inside another lane's window until 01:51 UTC; the rest are cold and are the

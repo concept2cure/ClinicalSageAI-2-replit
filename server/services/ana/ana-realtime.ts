@@ -15,18 +15,20 @@
  * unit-tests without sockets or a model.
  */
 
-import type { Server as SocketIOServer, Socket } from 'socket.io';
+import type { Server as SocketIOServer } from 'socket.io';
 
 import { createScopedLogger } from '../../utils/logger.js';
 import { verifyLiveToken } from '../token-revocation';
 import { requireAccessTokenReason } from '../../middleware/tokenType';
 import { checkOrgMembership } from '../../middleware/orgMembership';
 import { shouldProcessTenantInBackground } from '../tenant/tenant-lifecycle.js';
+import { startSessionRecheck, type RecheckableSocket } from '../../socket/sessionRecheck';
 import type { GatewayRequest } from '../ai-gateway/types.js';
-import { getAllEnabledTools } from './AnaToolDefinitions.js';
+import { governedToolsetFor } from './governed-toolset.js';
+import { getPool } from '../../db.js';
+import { runWithTenantScope } from '../../db/tenantStore.js';
 import { selectToolsForTurn, type ToolSelectionContext } from './tool-selection.js';
 import { executeAgenticLoop } from './AnaToolExecutor.js';
-import { getPool } from '../../db.js';
 import { loopToolCollector, recordLoopTurn } from './turn-record-loop.js';
 import type { TurnRecordStatus } from './turn-record.js';
 
@@ -119,8 +121,21 @@ export class AnaRealtimeSession {
  * streaming tokens and tool progress. Output is suppressed once the turn is
  * aborted so a barged-in turn goes quiet immediately.
  */
-export const runAgenticTurn: RunTurn = async (input, signal, emit) => {
-  const tools = selectToolsForTurn(getAllEnabledTools(), input.message, {
+export const runAgenticTurn: RunTurn = (input, signal, emit) =>
+  // The socket was authenticated for this organization, and the turn runs in
+  // its tenant scope. Without one, every query the turn makes — the tool
+  // policy, each tool's own reads — refuses under RLS_ENFORCE=on, and the
+  // fail-soft policy read degrades to "every tool allowed".
+  runWithTenantScope(
+    { tenantId: String(input.organizationId), role: null, source: 'request', caller: 'ana-realtime:turn' },
+    () => runAgenticTurnInScope(input, signal, emit),
+  );
+
+const runAgenticTurnInScope: RunTurn = async (input, signal, emit) => {
+  // Governed first (tenant deny-list, catalog, Anthropic-hosted tools), then
+  // relevance — the order every chat door uses (governed-toolset.ts).
+  const governed = await governedToolsetFor(getPool(), input.organizationId);
+  const tools = selectToolsForTurn(governed, input.message, {
     pinned: input.selectedTools,
     context: input.context,
   });
@@ -183,10 +198,7 @@ export const runAgenticTurn: RunTurn = async (input, signal, emit) => {
   return { text, turnRecord };
 };
 
-interface AuthedSocket extends Socket {
-  orgId?: string;
-  authUserId?: string;
-}
+type AuthedSocket = RecheckableSocket;
 
 /**
  * Attach the ANA real-time duplex namespace (`/ana`) to the socket.io server.
@@ -252,6 +264,7 @@ export function registerAnaRealtime(io: SocketIOServer, runTurn: RunTurn = runAg
         }
         socket.orgId = String(organizationId);
         socket.authUserId = String(userId);
+        socket.sessionToken = token;
         next();
       } catch (err: any) {
         log.warn(`[ana-realtime] Auth failed for ${socket.id}: ${err?.message}`);
@@ -270,6 +283,14 @@ export function registerAnaRealtime(io: SocketIOServer, runTurn: RunTurn = runAg
 
     const emit: RealtimeEmit = (event, payload) => socket.emit(event, payload);
     const session = new AnaRealtimeSession(emit, runTurn);
+
+    // IAM-19 (P1-33), 2026-09-28: the handshake checks are re-run on a timer,
+    // as on the main namespace. Until now nothing looked again after connect,
+    // so a removed member, an ended session or a suspended tenant kept a live
+    // channel into the tool loop for the token's lifetime. When the session
+    // ends the socket is told why and disconnected, and the disconnect below
+    // disposes the session, which aborts any turn in flight.
+    startSessionRecheck(socket, 'ana-realtime');
 
     socket.on('ana:message', (data: {
       turnId?: string;

@@ -74,6 +74,15 @@ export const UUID_TENANT_ISOLATION_NONPUBLIC =
 export const C48_STAGE1_IDENTITY_ORG_BRIDGE =
   'db/migrations/20260919_c48_stage1_identity_org_bridge.sql';
 
+/**
+ * Parent-scoped RLS for child tables. Runs in the isolation tail, after the uuid
+ * step and before the integer sweep (2026-09-29, D3): its chained list
+ * delegates to parent policies the uuid step creates, and every table the set
+ * creates must exist before it runs. It creates no table, so the sweep stays
+ * last. Evidence docs/evidence/D3/2026-09-29-child-scope-first-deploy/.
+ */
+export const CHILD_TABLE_PARENT_SCOPE = 'db/migrations/20260813_child_table_parent_scoped_rls.sql';
+
 export const C2C_MIGRATION_FILES = [
   // ── Golden-journey prerequisites ────────────────────────────────────────────
   // Seven migrations that tests/golden-journeys provision and depend on, and
@@ -525,12 +534,6 @@ export const C2C_MIGRATION_FILES = [
      idempotent. */
   'db/migrations/20260224_ai_claims_verifier_flags.sql',
 
-  /* source_type / source_atom_id / source_retrieval_chunk_id on
-     ivdr_binder_evidence — the IVDR pack manifest SELECTs all three and
-     ai-claims-routes INSERTs source_type, so attaching evidence to a claim and
-     building the manifest both raised 42703. Same pair of 2026-02-24/25 files
-     that fell off the applier together; same measurement. */
-  'db/migrations/20260224_binder_evidence_source_types.sql',
   'db/migrations/20260730_cmc_projects_reconstruction.sql',
   'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
   'db/migrations/20260730_fk_delete_policies_port.sql',
@@ -658,6 +661,18 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260206_phase5_evidence_fabric.sql',
   'db/migrations/20260207_phase6_6_predicate_intelligence.sql',
   'db/migrations/20260223_ivdr_binder_packs.sql',
+
+  /* source_type / source_atom_id / source_retrieval_chunk_id on
+     ivdr_binder_evidence — the IVDR pack manifest SELECTs all three and
+     ai-claims-routes INSERTs source_type, so attaching evidence to a claim and
+     building the manifest both raised 42703. Same pair of 2026-02-24/25 files
+     that fell off the applier together; same measurement.
+     Moved here, directly after its creator, 2026-09-26 (W2 / D1): it stood 25
+     entries earlier, so on a database the set was building for the first time
+     its to_regclass guard found no table and skipped, and the columns, CHECK and
+     indexes arrived only on the SECOND deploy. ci:replay-rebuilds-nothing
+     measured it (5 objects created by a replay). */
+  'db/migrations/20260224_binder_evidence_source_types.sql',
 
   /* The artifact hashes, sizes and warnings ivdr-pack-worker writes in its
      final promotion step (`UPDATE ivdr_packs SET … manifest_sha256 … zip_sha256,
@@ -1158,23 +1173,11 @@ export const C2C_MIGRATION_FILES = [
   // tenant-facing data.
   'db/migrations/20260813_ai_gateway_audit_log.sql',
 
-  // ── Parent-scoped RLS for child tables (added 2026-08-13) ────────────────
-  // 21 tables held tenant data with NO tenant column, NO RLS and NO policy —
-  // readable by every tenant. Found mechanically against a provisioned
-  // database: of 937 public base tables, 195 have no tenant column, 170 of
-  // those have no RLS at all, 78 of those are referenced by server SQL, and 21
-  // of those carry an FK to a table that IS tenant-keyed. chat_messages is the
-  // sharpest: every tenant's conversation bodies.
-  //
-  // The FK is the evidence of ownership, so these get a PARENT-scoped policy
-  // rather than an organization_id column of their own — a copied tenant key is
-  // a second source of truth that can drift from the parent.
-  //
-  // Placed with the other pre-sweep entries: it only ALTERs, but "the isolation
-  // steps are the tail of the set" is an invariant (C-33), not a case-by-case
-  // judgement. The sweep will not touch these tables anyway — it keys on an
-  // org column they do not have, and it never replaces an existing policy.
-  'db/migrations/20260813_child_table_parent_scoped_rls.sql',
+  // (The parent-scoped child RLS, 20260813_child_table_parent_scoped_rls.sql,
+  // stood here until 2026-09-29. It now runs in the isolation tail — see
+  // CHILD_TABLE_PARENT_SCOPE — because here it ran before the uuid step and
+  // before every table added below it, so a blank database's first deploy left
+  // regulatory_harmonization.export_job_audit_log unscoped.)
   // Export receipts — what turns the purge's `finalExportDigest` precondition
   // from "a non-empty string was supplied" into "an export of THIS tenant was
   // actually produced". Creates one table, so it must precede the isolation
@@ -2617,6 +2620,59 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D3/2026-09-26-organizations-writes/.
   'migrations/20260926_organizations_own_writes.sql',
 
+  // ── public.organization_users: own-org-or-platform writes (D3) ────────────
+  // Memberships decide tenancy (authMiddleware admits a token on one row) and
+  // "platform staff" is a role on that row. No RLS, runtime role may write it:
+  // a member's scope placed its user in another tenant and minted super_admin
+  // in its own. Stays on RLS_ALLOWLIST (reads stay unscoped: the pre-auth
+  // membership check, a user's organization list); writes are own-org or
+  // platform, and a staff role is minted by the platform scope only (trigger).
+  // Signup, persona and tenant-users' cross-org admin writes moved into the
+  // membership's own organization in the same change.
+  // Evidence docs/evidence/D3/2026-09-26-memberships/.
+  'migrations/20260926_organization_users_own_writes.sql',
+
+  // ── public.users: a tenant scope reaches its own members only (D3) ────────
+  // The table holds every account's password hash, MFA secret, backup codes,
+  // reset token and OTP hash, and had no RLS: tenant A's scope read and
+  // rewrote tenant B's. SELECT/UPDATE/DELETE now need a membership
+  // (organization_users, the entry above, whose reads stay open) in the scope's
+  // organization, or a tenant-less scope — pre-auth (sign-in, reset, OTP) and
+  // system (SCIM, platform administration). INSERT from any scope. Plus
+  // user_id_for_email(), id only, for tenant-users' existing-account check.
+  // Not org-keyed, so the sweep below neither covers nor heals it.
+  // Evidence docs/evidence/D3/2026-09-28-users-rls/.
+  'migrations/20260928_users_membership_rls.sql',
+
+  // ── public.platform_role_grants: platform-scope writes only (D3) ─────────
+  // One active row makes a user a platform operator (requirePlatformAdmin,
+  // requireBusinessAdmin, master-admin). No RLS, runtime role may write it: a
+  // plain member's tenant scope wrote itself super_admin and the Access
+  // Management console admitted it. SELECT stays open (the check runs in the
+  // caller's tenant scope); INSERT/UPDATE/DELETE need app_super_admin — the
+  // console runs in the system scope. No tenant column: the sweep skips it.
+  // Evidence docs/evidence/D3/2026-09-28-platform-role-grants/.
+  'migrations/20260928_platform_role_grants_platform_writes.sql',
+
+  // ── organization_invitations: the invitee finds their own (D3) ───────────
+  // An invitation to another organization lives in THAT organization's rows,
+  // behind the FORCEd tenant policy, so an invitee signed into their own
+  // organization saw an empty list and got 404 on accept and decline.
+  // invitations_for_member(user) reads the invitations naming a member of the
+  // calling scope's organization, and nobody else's; accept and decline then
+  // run in the inviting organization's scope (tenant-users.ts). The table's
+  // policy is unchanged. Evidence docs/evidence/D3/2026-09-28-invitation-acceptance/.
+  'migrations/20260928_invitations_for_member.sql',
+
+  // ── actor_name(): the audit trail names people who acted and left (D3) ───
+  // audit_logs keeps an actor id and no name; after the users policy a tenant
+  // scope resolves only current members, so the audit-trail ledger read
+  // `user <id>` for anyone who had left. actor_name returns name and email only,
+  // for members of the calling organization and actors in its own audit trail,
+  // nobody else. Plus audit_logs_tenant_actor_idx, created only when absent.
+  // Evidence docs/evidence/D3/2026-09-29-actor-names/.
+  'migrations/20260929_actor_names.sql',
+
   // ── submissions.program_id: a submission carries its project (LX-22) ─────
   // The project → submission link was guessed from product names; two projects
   // for one product shared a filing spine. Additive column, a composite
@@ -2647,7 +2703,72 @@ export const C2C_MIGRATION_FILES = [
   // below polices it. Evidence docs/evidence/D5-ANA-RECORD/2026-09-26/.
   'migrations/20260926_ana_turn_records.sql',
 
+  // ── Governed decision transition log (2026-09-28) ────────────────────────
+  // This file was on NO applier, so the table existed on no deployed database
+  // — it is on developer boxes only because someone applied it by hand. That
+  // absence was not inert: getProjectReviewQueue reads this table and THROWS on
+  // failure by design (fail closed), so on every deployed database the 42P01
+  // propagated through hasUnresolvedGovernedDecisions to
+  // buildCanonicalGovernedState, and the CMC final-export gate answered
+  // `governedStateEvaluated: false, fabricBlocks: true` — permanently, for
+  // every project. Reproduced by renaming the table away on a working box:
+  // readiness flipped governedStateEvaluated true -> false and the guard
+  // returned canonicalGovernedState {error: "Canonical governed-state
+  // evaluation failed", degraded: true, blocked: true}.
+  //
+  // Public schema, organization_id INTEGER, so the sweep below polices it.
+  // Its project key is project_ref TEXT with no foreign key — see the dated
+  // note in the file for why the integer FK could not hold a Module 3 project.
+  'migrations/0011_governed_decision_transitions.sql',
+
+  // ── Data lineage + evidence chain (2026-09-28) ───────────────────────────
+  // Same class as 0011 above: the only DDL for data_lineage_records and
+  // evidence_chain_records, on NO applier, so neither table existed on a
+  // deployed database. lineage-dossier's loadDataLineage hits 42P01, which
+  // isMissingTable DOES match, so it silently returns [] and
+  // computeLineageConfidence silently withholds its +10 — a sealed lineage
+  // report scoring lower for a table that was never provisioned rather than
+  // for evidence that was never recorded. GET /api/data-lineage/coverage/:type/:id
+  // answers 500.
+  //
+  // Fully IF NOT EXISTS-guarded (13 guarded statements, no unguarded CREATE),
+  // so it is replay-safe as-is and needs no in-place amendment. Public schema,
+  // organization_id INTEGER NOT NULL on both tables, so the sweep below
+  // polices them — which it could not while they were invisible to it.
+  'migrations/20260327_data_lineage_tracking.sql',
+
+  // ── An artifact's signatures and lock snapshots are append-only (2026-09-29)
+  // concept2cure_signatures (the approval and release signatures the
+  // readiness engine, the Artifacts Center and the DOCX signature block read)
+  // and concept2cure_submission_snapshots (each lock's record) were protected
+  // only by triggers in db/migrations/_legacy/ and by a migration on no
+  // applier, so an UPDATE could rewrite a signer's name and a DELETE, or the
+  // ON DELETE CASCADE from the artifact, could remove a signature. UPDATE,
+  // DELETE and TRUNCATE are now refused for every role; no server code does
+  // either (census in the file). Creates no table. Idempotent (CREATE OR
+  // REPLACE FUNCTION, CREATE TRIGGER only when absent, to_regclass guarded);
+  // required at boot by server/services/audit/audit-immutability-triggers.ts.
+  // Evidence docs/evidence/D5/2026-09-29-artifact-signatures-append-only/.
+  'migrations/20260929_concept2cure_signatures_append_only.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
+
+  // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
+  // 21 tables held tenant data with NO tenant column, NO RLS and NO policy —
+  // readable by every tenant (chat_messages the sharpest: every tenant's
+  // conversation bodies). The FK is the evidence of ownership, so these get a
+  // PARENT-scoped policy rather than a tenant column of their own; the list has
+  // grown since (see the file's dated notes).
+  //
+  // Here, not mid-set (D3, 2026-09-29): its chained list delegates to parents'
+  // own policies, and some of those come from the uuid step just above, so run
+  // earlier it logged "the parent is not scoped … skipping" and a blank
+  // database's first deploy left regulatory_harmonization.export_job_audit_log
+  // unscoped until the second. And a child or parent created by any entry
+  // above is now present when it runs. It creates no table, so the sweep below
+  // still sees everything the set creates. ci:migration-set-order pins the
+  // tail. Evidence docs/evidence/D3/2026-09-29-child-scope-first-deploy/.
+  CHILD_TABLE_PARENT_SCOPE,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
   // MUST BE LAST. 0021_enable_rls_everywhere runs once, on install-fresh, and

@@ -61,7 +61,7 @@ describe('an unreadable call is refused, not cleared', () => {
 
   it('UNDECIDABLE is NOT UNGOVERNED — the distinction is the point', () => {
     const blind = classifyToolCall({ name: PLATFORM_COMMAND_TOOL, input: {} });
-    const clear = classifyToolCall({ name: 'search_documents', input: { query: 'x' } });
+    const clear = classifyToolCall({ name: 'search_document', input: { query: 'x' } });
     expect(blind.kind).not.toBe(clear.kind);
     expect(clear.kind).toBe('UNGOVERNED');
   });
@@ -158,17 +158,22 @@ describe('the tier follows part11-governance, not a second opinion', () => {
   });
 });
 
-describe('only the command tool can be governed', () => {
-  it('a tool with its own handler is not classified here', () => {
-    // Not an omission — see the module docstring. Escalating an authoring tool
-    // is a product decision about what AnA may do unaided, taken with the tier
-    // changed in the same commit, not something this translation layer invents.
-    expect(classifyToolCall({ name: 'save_document_to_vault', input: { title: 'x' } }).kind).toBe(
-      'UNGOVERNED',
-    );
+describe('the command tool, and the tools that write on their own handlers', () => {
+  it('a tool that writes on its own handler is a confirm-tier proposal (P0-12)', () => {
+    // Until 2026-09-26 this read "a tool with its own handler is not classified
+    // here": the vault save and TMF seed ran unasked because they are not
+    // commands. They are CONFIRM_TIER_TOOLS now; the full list and the
+    // registry-side gate are pinned in direct-mutator-confirm-gate.test.ts.
+    expect(classifyToolCall({ name: 'save_document_to_vault', input: { title: 'x' } })).toMatchObject({
+      kind: 'NEEDS_APPROVAL',
+      tier: 'confirm',
+    });
   });
 
-  it('a tool named like a governed command is still just a tool', () => {
-    expect(classifyToolCall({ name: 'freeze_document', input: {} }).kind).toBe('UNGOVERNED');
+  it('a tool named like a governed command is judged as a tool, not as that command', () => {
+    // freeze_document is an e-signature command. A TOOL of that name is not
+    // registered, so the tool register fails it closed — proposed at the confirm
+    // tier (P1-34) — and never borrows the command's tier or its clearance.
+    expect(classifyToolCall({ name: 'freeze_document', input: {} })).toMatchObject({ kind: 'NEEDS_APPROVAL', tier: 'confirm' });
   });
 });

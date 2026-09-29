@@ -15,7 +15,7 @@ import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import * as PG from './ProtocolGov';
 import type { PdevDoc } from '../fixtures/protocol-data';
-import { useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveRows, isPendingStore, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { shellProgramName } from '../shellProject';
@@ -47,8 +47,17 @@ interface AnaSurfaceContext {
   availableActions?: string[];
 }
 
+/**
+ * The protocol, the section open on screen and the programme are named HERE,
+ * in the context the server fences as observed screen state, and never in the
+ * text of a request: the AnA buttons on this surface send fixed sentences
+ * ("the protocol open on screen", "the section open on screen") because a
+ * stored name spliced into a person's turn is an instruction channel
+ * (periodic review 2026-09-28, editor family, SEC-C-4).
+ */
 function anaContextFor(
   state: { loading: boolean; error: unknown; empty: boolean }, doc: PdevDoc | undefined,
+  openSectionId: string | null, program: string | null,
 ): AnaSurfaceContext {
   if (state.loading) return { summary: 'The protocol is still loading; nothing on screen is final yet.' };
   if (state.error) {
@@ -62,6 +71,7 @@ function anaContextFor(
   if (state.empty || !doc) {
     return {
       summary: 'Protocol development: this organisation has no protocol in development yet, so there is nothing to author here.',
+      ...(program ? { facts: { programme: program } } : {}),
       availableActions: ['Start a clinical protocol', 'Draft a protocol synopsis for the open programme'],
     };
   }
@@ -69,6 +79,7 @@ function anaContextFor(
   const objs = Array.isArray(doc.objectives) ? doc.objectives : [];
   const len = (v: unknown) => (Array.isArray(v) ? v.length : 0);
   const done = secs.filter((sec) => sec.status === 'complete').length;
+  const open = secs.find((sec) => String(sec.id) === openSectionId);
   /* The design-as-data spine. A protocol with no design bound has been checked
      against no design gate, and AnA must say that rather than let the absence
      read as a pass. */
@@ -95,7 +106,7 @@ function anaContextFor(
       sponsor: doc.sponsor,
       principalInvestigator: doc.pi,
       completenessPercent: doc.completeness,
-      openSection: doc.openSection,
+      openSection: open ? { id: open.id, number: open.num, title: open.title, status: open.status } : null,
       sections: secs.map((sec) => ({ number: sec.num, title: sec.title, status: sec.status, required: sec.required })),
       objectives: objs.map((o) => ({ type: o.type, text: o.text, endpoint: o.endpoint })),
       completenessFindings: Array.isArray(doc.completenessFindings) ? doc.completenessFindings : [],
@@ -140,8 +151,12 @@ function ProtocolEmptyState({ onAsk, onStarted }: { onAsk: (msg: string) => void
   const [starting, setStarting] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const program = shellProgramName();
+  /* The programme's name is shown in the title below and carried in the fenced
+     surface context; the request itself names no stored value, because a
+     programme name is text any member can set (periodic review 2026-09-28,
+     SEC-C-4). */
   const draftPrompt = program
-    ? `Draft a protocol synopsis for ${program}: the study objectives, design, population and primary endpoint, from the evidence already in this programme.`
+    ? 'Draft a protocol synopsis for the programme open in this workspace: the study objectives, design, population and primary endpoint, from the evidence already in this programme.'
     : 'Draft a protocol synopsis: the study objectives, design, population and primary endpoint, from the evidence already in this programme.';
   return (
     <div className="pd-wrap" style={{ padding: 16 }}>
@@ -178,6 +193,22 @@ function ProtocolEmptyState({ onAsk, onStarted }: { onAsk: (msg: string) => void
   );
 }
 
+/**
+ * The read model, or not. A 200 whose rows lack an id, or whose sections or
+ * completeness findings are not arrays, is reported as a failed read. Without
+ * this, a body that was not the read model landed on the empty state ("No
+ * protocol in development"), or on a readiness gate that computed "Ready to
+ * finalize" from findings it never received. An empty array still passes: that
+ * is the honest empty state (periodic review 2026-09-28, HS-C-1).
+ */
+function isProtocolReadModel(value: unknown): value is PdevDoc[] {
+  return Array.isArray(value) && value.every((row) => {
+    if (!row || typeof row !== 'object') return false;
+    const r = row as Record<string, unknown>;
+    return 'id' in r && Array.isArray(r.sections) && Array.isArray(r.completenessFindings);
+  });
+}
+
 export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
   // GET /api/protocol-dev → the org's in-development protocol(s), already shaped
   // to the PdevDoc render contract (server/routes/protocol-dev.routes.ts reads
@@ -186,9 +217,18 @@ export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
   // confirmed register write so the read model refetches and the register
   // renders the server's row; nothing on this surface is appended locally.
   const [reloadKey, setReloadKey] = useState(0);
-  const { rows, loading, error, empty } = useLiveRows<PdevDoc>('/api/protocol-dev', ['/api/protocol-dev', reloadKey]);
+  const { rows, loading, error, empty, meta } = useLiveRows<PdevDoc>(
+    '/api/protocol-dev',
+    ['/api/protocol-dev', reloadKey],
+    isProtocolReadModel,
+  );
   const doc = rows[0];
-  const anaContext = useMemo(() => anaContextFor({ loading, error, empty }, doc), [loading, error, empty, doc]);
+  const [openSectionId, setOpenSectionId] = useState<string | null>(null);
+  const program = shellProgramName();
+  const anaContext = useMemo(
+    () => anaContextFor({ loading, error, empty }, doc, openSectionId, program),
+    [loading, error, empty, doc, openSectionId, program],
+  );
   usePublishSurfaceContext('protocol-dev', anaContext);
 
   /* The honest states are gated on there being NO document, not on `loading`.
@@ -206,7 +246,15 @@ export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
       <div className="pd-wrap" style={{ padding: 16 }}>
         <EmptyState tone="error" icon={I.alertTriangle}
           title="Couldn't load the protocol"
-          hint="The protocol authoring store didn't respond. This is the organization's in-development clinical protocol — sign in and retry, or check that the service is reachable." />
+          hint="The protocol could not be read, so nothing is shown — this is not the same as the organization having no protocol. Sign in and retry, or check that the service is reachable." />
+      </div>);
+  }
+  if (!doc && isPendingStore({ meta })) {
+    return (
+      <div className="pd-wrap" style={{ padding: 16 }}>
+        <EmptyState icon={I.alertTriangle}
+          title="Protocol authoring isn't set up on this installation"
+          hint="The protocol store has not been provisioned here, so there is nothing to show and nothing can be started yet. This is not the same as the organization having no protocol." />
       </div>);
   }
   if (!doc) return <ProtocolEmptyState onAsk={onAsk} onStarted={() => setReloadKey((k) => k + 1)} />;
@@ -218,6 +266,7 @@ export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
       refreshing={loading}
       reloadError={error}
       onChanged={() => setReloadKey((k) => k + 1)}
+      onOpenSection={setOpenSectionId}
     />);
 }
 

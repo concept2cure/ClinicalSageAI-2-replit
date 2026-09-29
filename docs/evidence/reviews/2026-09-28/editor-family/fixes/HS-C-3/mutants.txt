@@ -1,0 +1,52 @@
+## M1: derivation guard removed: a non-object body defaults to five empty buckets again
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevDerivation.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx -t HS-C-3
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > an empty object is reported as a failure, not as an empty derivation 5903ms
+   × client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > an error carried on a 200 is reported as a failure, not as an empty derivation 5232ms
+   × client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > the read model inside an envelope is reported as a failure, not as an empty derivation 5191ms
+   × client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a design id and no derivation is reported as a failure, not as an empty derivation 5224ms
+   × client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a derivation missing its buckets is reported as a failure, not as an empty derivation 5227ms
+   × client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a derivation with one bucket null is reported as a failure, not as an empty derivation 5210ms
+   × client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > an apply whose answer carries no derivation says the diff could not be re-read 414ms
+   Test Files  1 failed | 1 passed (2)
+   Tests  7 failed | 8 passed | 18 skipped (33)
+
+## M2: derivation guard checks only that the body is an object, not its five buckets
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevDerivation.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx -t HS-C-3
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a derivation missing its buckets is reported as a failure, not as an empty derivation 5185ms
+   × client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a derivation with one bucket null is reported as a failure, not as an empty derivation 5187ms
+   Test Files  1 failed | 1 passed (2)
+   Tests  2 failed | 13 passed | 18 skipped (33)
+
+## M3: apply keeps the pre-write buckets when its answer carries no derivation
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevDerivation.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx -t HS-C-3
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > an apply whose answer carries no derivation says the diff could not be re-read 531ms
+   Test Files  1 failed | 1 passed (2)
+   Tests  1 failed | 14 passed | 18 skipped (33)
+
+## M4: design-list guard checks the array only, not each row's id
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevDesign.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx -t HS-C-3
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > a design with no id is a failed read, not an organisation with no design 5464ms
+   Test Files  1 failed | 1 passed (2)
+   Tests  1 failed | 14 passed | 18 skipped (33)
+
+## M5: design list falls back to [] again when the body is not a list
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevDesign.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx -t HS-C-3
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an empty object is a failed read, not an organisation with no design 5708ms
+   × client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an error carried on a 200 is a failed read, not an organisation with no design 5308ms
+   × client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > the list inside an envelope is a failed read, not an organisation with no design 5284ms
+   × client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > designs present but null is a failed read, not an organisation with no design 5232ms
+   × client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > a design with no id is a failed read, not an organisation with no design 5259ms
+   × client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an HTML page on a 200 is a failed read, not an organisation with no design 5304ms
+   Test Files  1 failed | 1 passed (2)
+   Tests  6 failed | 9 passed | 18 skipped (33)
+

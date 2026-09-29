@@ -222,6 +222,53 @@ describe('the second unique constraint', () => {
   });
 });
 
+describe('a same-bytes retry keeps what was recorded (VR-05)', () => {
+  /* The retry's fresh copy, lineage and retention used to replace the recorded
+     ones: the row then named a copy nobody admitted, a retry that omitted the
+     policy or lineage nulled it, and the admitted copy was orphaned. */
+  const PARENT = '22222222-2222-4222-8222-222222222222';
+  const admit = (code: string, hash: string, o: { key: string; versionId: string | null; fileName: string; retention: string | null; parent: string | null }) =>
+    db.query(
+      `INSERT INTO vault.documents (
+         program_id, organization_id, document_code, document_title, document_type, version,
+         s3_bucket, s3_key, file_name, file_size, mime_type, content_hash, classification,
+         retention_policy, parent_document_id, supersedes_id, placement_status, processing_status,
+         storage_version_id, storage_provider
+       ) VALUES ($1,1,$2,'t','CSR','1.0','local',$3,$4,10,'application/pdf',$5,'CONFIDENTIAL',$6,$7,$7,'unfiled','PENDING',$8,'local')
+       ${ON_CONFLICT}
+       RETURNING id`,
+      [PROG, code, o.key, o.fileName, hash, o.retention, o.parent, o.versionId],
+    );
+  const row = async (code: string) =>
+    (
+      await db.query<Record<string, unknown>>(
+        `SELECT s3_key, storage_version_id, file_name, retention_policy, parent_document_id, supersedes_id
+           FROM vault.documents WHERE document_code = $1`,
+        [code],
+      )
+    ).rows[0];
+
+  it('keeps the stored copy it names, its file name, retention policy and lineage', async () => {
+    await admit('Kept.pdf', 'HASH_K', { key: 'uploads/k1.pdf', versionId: 'v1', fileName: 'Kept.pdf', retention: 'GCP-15Y', parent: PARENT });
+    const retry = await admit('Kept.pdf', 'HASH_K', { key: 'uploads/k2.pdf', versionId: 'v2', fileName: 'renamed.pdf', retention: null, parent: null });
+    expect(retry.rows).toHaveLength(1);
+    expect(await row('Kept.pdf')).toMatchObject({
+      s3_key: 'uploads/k1.pdf',
+      storage_version_id: 'v1',
+      file_name: 'Kept.pdf',
+      retention_policy: 'GCP-15Y',
+      parent_document_id: PARENT,
+      supersedes_id: PARENT,
+    });
+  });
+
+  it('a record with no storage handle takes the retry\'s as one unit', async () => {
+    await admit('Legacy.pdf', 'HASH_L', { key: 'uploads/l1.pdf', versionId: null, fileName: 'Legacy.pdf', retention: null, parent: null });
+    await admit('Legacy.pdf', 'HASH_L', { key: 'uploads/l2.pdf', versionId: 'v9', fileName: 'Legacy.pdf', retention: null, parent: null });
+    expect(await row('Legacy.pdf')).toMatchObject({ s3_key: 'uploads/l2.pdf', storage_version_id: 'v9' });
+  });
+});
+
 describe('the defect the predicate prevents is still demonstrable', () => {
   it('WITHOUT the predicate, the same upload overwrites the recorded hash', async () => {
     const destructive = ON_CONFLICT.replace(

@@ -1,0 +1,16 @@
+== ledger24 — BEFORE (upstream sources):
+ × audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > an SOP approval: signed, the declared meaning, the act and the document named, linked to its signature row
+ × audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a document e-sign: signed, by the signature the row records — for that document only
+ × audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > claims nothing it cannot link: no signature row, or another organisation’s, leaves the row unsigned
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 10 passed (13)
+== ledger24 — AFTER (fixed sources):
+      Tests  13 passed (13)
+
+== audit24c — BEFORE (upstream sources):
+ × auditTrailSignedRow.test.tsx > Audit trail — a signed act > the drawer keeps the record’s reference and names the signature record
+ × auditTrailSignedRow.test.tsx > Audit trail — a signed act > finds the row by its record reference, though the table shows its name
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)
+== audit24c — AFTER (fixed sources):
+      Tests  3 passed (3)

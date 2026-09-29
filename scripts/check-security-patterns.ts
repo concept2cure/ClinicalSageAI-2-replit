@@ -32,6 +32,11 @@
  *   5. `?? 1` or `|| 1` following organizationId reads
  *      → never default a tenant id; always 403 instead
  *
+ *   3b. req.headers['x-client-id'] / req.header('x-client-workspace-id') /
+ *      req.get('x-client-workspace') outside the one middleware that reads
+ *      the claim → consume req.tenantContext.clientWorkspaceId and verify it
+ *      against the session's organisation before it is used (IAM-15, P1-7b)
+ *
  *   6. namespace-global Socket.IO publishes (`.broadcast.emit(` and a publish
  *      straight off the server handle, e.g. `io.emit(`)
  *      → use emitToOrgPeers / emitToOrg from server/socket/tenantBroadcast,
@@ -136,6 +141,50 @@ const PATTERNS: Pattern[] = [
       /(?:^|\/)server\/utils\/tenantContext\.ts$/,
       /(?:^|\/)server\/src\/mw\/observability\.ts$/,
       /(?:^|\/)server\/middleware\/deprecation\.ts$/,
+    ],
+  },
+  {
+    // IAM-15 / plan P1-7b, 2026-09-26. The client WORKSPACE header is a claim,
+    // not context. middleware/tenantContext.ts copies X-Client-ID onto
+    // req.tenantContext.clientWorkspaceId under a docblock that called it
+    // "non-sensitive supplemental context", and three consumers used it as if
+    // it were: featureToggleMiddleware handed it to a per-workspace toggle list
+    // (a WIDENING read — a toggle enabled for one organisation's workspace
+    // opened for any caller naming that id), and cerv2-document-routes.ts and
+    // regulatorySubmissions.ts wrote it into documents / regulatory_submissions
+    // .client_workspace_id unverified. client_workspaces belong to
+    // organisations; a workspace counts only once it is shown to be the
+    // session organisation's own. docs/evidence/D6/2026-09-25-p1/P1-7b/.
+    //
+    // Matches req.headers['x-client-…'], req.header('x-client-…') and
+    // req.get('x-client-…') for the three spellings in use (x-client-id,
+    // x-client-workspace-id, x-client-workspace).
+    name: 'workspace-trust-header',
+    regex:
+      /\breq\.(?:headers\s*(?:\?\.)?\s*\[\s*['"]|(?:header|get)\s*\(\s*['"])x-client-(?:id|workspace-id|workspace)['"]/i,
+    message:
+      'Do not read the client workspace from request headers in route code — ' +
+      'X-Client-ID is a claim, not context: the workspace must be one of the ' +
+      "session organisation's own before it scopes a read, opens a feature or " +
+      'lands in a write. Consume req.tenantContext.clientWorkspaceId (set by ' +
+      'server/middleware/tenantContext.ts) and verify it with ' +
+      'FeatureToggleService.workspaceInOrganization or c2c/project-access ' +
+      'resolveClientWorkspaceId. A direct read that IS verified on the lines ' +
+      'that follow carries `// security-allow: workspace-claim …` (IAM-15, P1-7b).',
+    exemptFiles: [
+      // The one reader by design: it puts the claim on req.tenantContext for
+      // its consumers to verify. Its docblock says so.
+      /(?:^|\/)server\/middleware\/tenantContext\.ts$/,
+      // getTenantContext(): its consumers use the value as a narrowing filter
+      // (project-hierarchy.ts, projects-management.ts) or verify it against
+      // the project's own workspace (project-module-bridge.ts). No write.
+      /(?:^|\/)server\/utils\/tenantContext\.ts$/,
+      // DEFERRED, not legitimate: cortex-unified.ts:128 copies
+      // x-client-workspace-id into its router's tenantContext. The file was
+      // inside another lane's 24-hour window when this rule landed
+      // (2026-09-26; window closes 2026-09-27 04:43 UTC). Remove this line
+      // when that read is verified or dropped — P1-7b README, "Left open".
+      /(?:^|\/)server\/routes\/cortex-unified\.ts$/,
     ],
   },
   {

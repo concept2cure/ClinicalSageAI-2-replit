@@ -36,6 +36,11 @@
  * ones signed out elsewhere. Without Redis each task enforces the limit over
  * the sessions it opened, and production runs Redis (plan P1-3).
  *
+ * A connector access token (mcp/auth/platform-token.ts) is a session too,
+ * opened through openConnectorSession (plan P1-38): the same claims,
+ * registration and lifetime rule, with the connector's own idle policy and its
+ * own pool, both explained at that function.
+ *
  * Tokens minted before this change carry no `sid`. Their activity is keyed by
  * the token itself, their refresh tokens can be checked for their lifetime
  * only, until they expire (seven days at most), and they hold no slot.
@@ -53,6 +58,8 @@ export const ABSOLUTE_SESSION_HOURS = 12;
 export const DEFAULT_MAX_CONCURRENT_SESSIONS = 5;
 export const MIN_MAX_CONCURRENT_SESSIONS = 1;
 export const MAX_MAX_CONCURRENT_SESSIONS = 20;
+/** The `token_use` a connector access token carries (mcp/auth/platform-token.ts); its sessions hold slots in the account's connector pool. */
+export const CONNECTOR_TOKEN_USE = 'mcp';
 
 const REDIS_KEY_PREFIX = 'c2c:session-seen:';
 const SESSIONS_KEY_PREFIX = 'c2c:user-sessions:';
@@ -85,6 +92,7 @@ interface SessionClaimLike {
   iat?: unknown;
   userId?: unknown;
   sub?: unknown;
+  token_use?: unknown;
 }
 
 function wholeSeconds(value: unknown): number | null {
@@ -95,12 +103,18 @@ function claimsOf(claims: unknown): SessionClaimLike {
   return claims && typeof claims === 'object' ? (claims as SessionClaimLike) : {};
 }
 
+/** Whole seconds held inside [MIN_IDLE_MINUTES, MAX_IDLE_MINUTES]; the default when the value is not a number. */
+function clampIdleSeconds(seconds: unknown): number {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds)) return DEFAULT_IDLE_MINUTES * 60;
+  return Math.min(MAX_IDLE_MINUTES * 60, Math.max(MIN_IDLE_MINUTES * 60, Math.floor(seconds)));
+}
+
 /** The tenant's idle window in seconds from its settings object, clamped; the default when unset. */
 export function idleWindowSecondsOf(settings: unknown): number {
   const security = (settings as { security?: { sessionTimeoutMinutes?: unknown } } | null | undefined)?.security;
   const minutes = security?.sessionTimeoutMinutes;
   if (typeof minutes !== 'number' || !Number.isFinite(minutes)) return DEFAULT_IDLE_MINUTES * 60;
-  return Math.min(MAX_IDLE_MINUTES, Math.max(MIN_IDLE_MINUTES, Math.floor(minutes))) * 60;
+  return clampIdleSeconds(Math.floor(minutes) * 60);
 }
 
 /** The tenant's concurrent-session limit from its settings object, clamped; the default when unset. */
@@ -168,10 +182,16 @@ function sidOf(claims: SessionClaimLike): string | null {
   return typeof claims.sid === 'string' && claims.sid ? claims.sid : null;
 }
 
-/** The account a token names, as the registry keys it, else null. */
+/** The registry key of an account's connector sessions: a pool of their own (openConnectorSession). */
+function connectorPoolOf(userId: string | number): string {
+  return `connector:${userId}`;
+}
+
+/** The account a token names, as the registry keys it, else null; a connector token names the account's connector pool. */
 function accountKeyOf(claims: SessionClaimLike): string | null {
   const id = claims.userId ?? claims.sub;
-  return typeof id === 'string' || typeof id === 'number' ? String(id) : null;
+  if (typeof id !== 'string' && typeof id !== 'number') return null;
+  return claims.token_use === CONNECTOR_TOKEN_USE ? connectorPoolOf(id) : String(id);
 }
 
 // ── Activity store and session registry: Redis, then memory ─────────────────
@@ -383,11 +403,46 @@ export async function unregisterSession(userId: unknown, sid: unknown): Promise<
 /**
  * A new session at sign-in: its claims, registered against the account's
  * limit read from the same settings as its idle window. The one door every
- * sign-in mints through (routes/__tests__/session-open-contract.test.ts).
+ * sign-in mints through; with openConnectorSession below, the only way an
+ * access token gets its session (routes/__tests__/session-open-contract.test.ts).
  */
 export async function openSession(userId: string | number, organizationSettings?: unknown, now: number = Date.now()): Promise<SessionClaims> {
   const claims = newSessionClaims(organizationSettings, now);
   await registerSession(userId, claims, maxConcurrentSessionsOf(organizationSettings), now);
+  return claims;
+}
+
+/**
+ * A connector access token is a session too (plan P1-38; the IAM-02 / IAM-06
+ * residual of the 2026-09-26 lens): the same claims, the same registration
+ * and the same lifetime rule as a sign-in, with two differences the
+ * connector's semantics require.
+ *
+ * Its idle window is the token's own TTL, held inside the platform window. A
+ * connector is a client acting for a person between tool calls, with no
+ * "walked away" to detect; its access token is short (an hour by default) and
+ * dies on its own, and renewal is the OAuth refresh grant, itself bounded by
+ * the refresh token's TTL, rotation and revocation (mcp/auth/store.ts). So the
+ * tenant's window is not imposed on a client that legitimately goes quiet,
+ * and the claim states what is true: the token is idle when it has expired.
+ *
+ * Its sessions hold slots in the account's connector pool, at the tenant's
+ * limit, not in the sign-in pool: every refresh mints a new access token and
+ * so a new session, and a connector refreshing every hour would otherwise
+ * sign the person out of the browser by noon. Beyond the limit the oldest
+ * connector token is superseded, as a sign-in's would be.
+ *
+ * A connector token presented to a platform authenticator is checked like any
+ * other token (verifyLiveToken). The connector's own verifier is IAM-02's.
+ */
+export async function openConnectorSession(
+  userId: string | number,
+  accessTtlSeconds: number,
+  organizationSettings?: unknown,
+  now: number = Date.now(),
+): Promise<SessionClaims> {
+  const claims: SessionClaims = { sid: randomUUID(), sst: Math.floor(now / 1000), idl: clampIdleSeconds(accessTtlSeconds) };
+  await registerSession(connectorPoolOf(userId), claims, maxConcurrentSessionsOf(organizationSettings), now);
   return claims;
 }
 

@@ -1,0 +1,1443 @@
+$ npx vitest run shared/__tests__/figure-refs.test.ts client/src/concept2cure/v2/__tests__/imageEditing.test.ts client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx server/services/authoring/__tests__/authoring-html-sanitizer.test.ts server/routes/__tests__/authoring-section-figure-refs.test.ts
+# Run against the UNFIXED code: the six test files are written, no source file is changed yet.
+# git diff --stat at this point:
+# (empty above = the four source files are untouched; authoring.router.ts carries only lane FA's in-progress edits)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > renders sanitized prose and keeps a governed figure, resolved to displayable bytes 117ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > states a failed reference instead of leaving a broken glyph 31ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > figures in the section schema > a stored <img> reference survives parse → serialize untouched 381ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > figures in the section schema > insertAuthoringImage writes the store reference at the caret 47ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > figures in the section schema > an inline PNG parses and round-trips as it is 70ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > fetches a governed reference with the viewer’s credentials 2ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > displays an inline PNG as it is, without a request 0ms
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/../../tenant-export/full 5ms
+   → promise resolved "'blob:test/1'" instead of rejecting
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/%2e%2e/%2e%2e/users/me 1ms
+   → promise resolved "'blob:test/1'" instead of rejecting
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/..\..\tenant-export\full 8ms
+   → promise resolved "'blob:test/1'" instead of rejecting
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export 3ms
+   → promise resolved "'blob:test/1'" instead of rejecting
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a?download=1 1ms
+   → promise resolved "'blob:test/1'" instead of rejecting
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: https://collector.example/p.png?d=secret 1ms
+   → promise resolved "'https://collector.example/p.png?d=sec…'" instead of rejecting
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: //collector.example/p.png 2ms
+   → promise resolved "'//collector.example/p.png'" instead of rejecting
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: data:image/svg+xml;base64,PHN2Zz4= 1ms
+   → promise resolved "'data:image/svg+xml;base64,PHN2Zz4='" instead of rejecting
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: data:text/html;base64,PHNjcmlwdD4= 1ms
+   → promise resolved "'data:text/html;base64,PHNjcmlwdD4='" instead of rejecting
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: data:image/webp;base64,UklGRg== 1ms
+   → promise resolved "'data:image/webp;base64,UklGRg=='" instead of rejecting
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: /api/c2c/projects 5ms
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/../../tenant-export/full 72ms
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/%2e%2e/%2e%2e/users/me 23ms
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/..\..\tenant-export\full 35ms
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export 57ms
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/file_1_a?download=1 27ms
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: https://collector.example/p.png?d=secret 45ms
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: //collector.example/p.png 7ms
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: data:image/svg+xml;base64,PHN2Zz4= 9ms
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: data:text/html;base64,PHNjcmlwdD4= 6ms
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: data:image/webp;base64,UklGRg== 18ms
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/c2c/projects 37ms
+   → expected 1 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not take one in from pasted or inserted HTML 61ms
+   → expected 2 to be +0 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > a node that arrives without a parse (JSON, live sync) is not fetched and says the figure must be uploaded 1027ms
+   → expected 'Loading image…' to match /Upload the image to include it/
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > renders ordinary markdown into HTML 37ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > returns empty string for empty input 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > strips <script> tags inside raw HTML 16ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > strips inline event handlers 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > strips javascript: URLs from anchors 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > strips <iframe> and <object> entirely 14ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > strips <style> tags (CSS injection vector) 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > keeps safe formatting tags from the allowlist 13ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > keeps href on <a> but strips other attributes 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > caches identical inputs (idempotent return value) 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeChatHtml > returns empty string for empty input 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeChatHtml > strips <script> tags from HTML input 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeChatHtml > strips inline event handlers from HTML input 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeChatHtml > still strips <img> — chat stays image-free by design 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > returns empty string for empty input 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > keeps a governed figure reference, moved off src so injection cannot fire an unauthenticated request 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves a same-app API src OUTSIDE the governed images route on a live src 6ms
+ × client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves an external address on a live src 16ms
+   → expected '<p>text</p><img src="https://collecto…' not to match /\ssrc=/
+ × client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves a protocol-relative address on a live src 6ms
+   → expected '<p>text</p><img src="//collector.exam…' not to match /\ssrc=/
+ × client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves an inline SVG on a live src 5ms
+   → expected '<p>text</p><img src="data:image/svg+x…' not to match /\ssrc=/
+ × client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves an inline HTML document on a live src 9ms
+   → expected '<p>text</p><img src="data:text/html;b…' not to match /\ssrc=/
+ × client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves an inline WebP, which the Word export cannot file on a live src 2ms
+   → expected '<p>text</p><img src="data:image/webp;…' not to match /\ssrc=/
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves a reference that walks out of the image store on a live src 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > keeps an inline PNG on src: nothing is fetched, and the export files it as it is 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > keeps figure/figcaption structure 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > keeps merged-cell and track-change markup the editor serializes 36ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > strips script, event handlers, and javascript: src exactly like the chat path 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > does not leak the img allowance back into the chat config (hook is scoped) 16ms
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > dot segments: 400, names the image, writes nothing
+{
+  "timestamp": "2026-09-28T04:18:21.920Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > percent-encoded dot segments: 400, names the image, writes nothing
+{
+  "timestamp": "2026-09-28T04:18:21.997Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > backslash segments: 400, names the image, writes nothing
+{
+  "timestamp": "2026-09-28T04:18:22.026Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > refuses a reference OUTSIDE the governed images route — no authenticated fetch fires 5051ms
+   → expected 'Couldn’t load this figure — its refer…' to match /Upload the image to include it/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div>
+        <p
+          class="ed-figure-missing"
+        >
+          Couldn’t load this figure — its reference points outside the image store. Its reference is kept in the section.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a query: 400, names the image, writes nothing
+{
+  "timestamp": "2026-09-28T04:18:22.052Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > another API route: 400, names the image, writes nothing
+{
+  "timestamp": "2026-09-28T04:18:22.070Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > dot segments: 400, names the image, writes nothing 129ms
+   → {"success":true,"section":{"id":"S1","doc_id":"D1","content":"saved"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"unbound"}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > percent-encoded dot segments: 400, names the image, writes nothing 30ms
+   → {"success":true,"section":{"id":"S1","doc_id":"D1","content":"saved"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"unbound"}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > backslash segments: 400, names the image, writes nothing 31ms
+   → {"success":true,"section":{"id":"S1","doc_id":"D1","content":"saved"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"unbound"}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a query: 400, names the image, writes nothing 21ms
+   → {"success":true,"section":{"id":"S1","doc_id":"D1","content":"saved"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"unbound"}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > another API route: 400, names the image, writes nothing 11ms
+   → {"success":true,"section":{"id":"S1","doc_id":"D1","content":"saved"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"unbound"}}: expected 200 to be 400 // Object.is equality
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an external address: 400, names the image, writes nothing
+{
+  "timestamp": "2026-09-28T04:18:22.085Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a protocol-relative address: 400, names the image, writes nothing
+{
+  "timestamp": "2026-09-28T04:18:22.098Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline SVG: 400, names the image, writes nothing
+{
+  "timestamp": "2026-09-28T04:18:22.107Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/../../tenant-export/full 58ms
+   → expected '<p>Before.</p><img src="/api/authorin…' not to contain '<img'
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/%2e%2e/%2e%2e/users/me 14ms
+   → expected '<p>Before.</p><img src="/api/authorin…' not to contain '<img'
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/..\..\tenant-export\full 5ms
+   → expected '<p>Before.</p><img src="/api/authorin…' not to contain '<img'
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/file_1_a?download=1 3ms
+   → expected '<p>Before.</p><img src="/api/authorin…' not to contain '<img'
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: https://collector.example/p.png?d=secret 11ms
+   → expected '<p>Before.</p><img src="https://colle…' not to contain '<img'
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: //collector.example/p.png 3ms
+   → expected '<p>Before.</p><img src="//collector.e…' not to contain '<img'
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/svg+xml;base64,PHN2Zz4= 2ms
+   → expected '<p>Before.</p><img src="data:image/sv…' not to contain '<img'
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline WebP: 400, names the image, writes nothing
+{
+  "timestamp": "2026-09-28T04:18:22.170Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > names only the images that are not figures, by their position in the section
+{
+  "timestamp": "2026-09-28T04:18:22.189Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > saves a governed reference and an inline PNG, exactly as sent
+{
+  "timestamp": "2026-09-28T04:18:22.205Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > leaves a metadata-only save alone
+{
+  "timestamp": "2026-09-28T04:18:22.223Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an external address: 400, names the image, writes nothing 18ms
+   → {"success":true,"section":{"id":"S1","doc_id":"D1","content":"saved"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"unbound"}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a protocol-relative address: 400, names the image, writes nothing 8ms
+   → {"success":true,"section":{"id":"S1","doc_id":"D1","content":"saved"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"unbound"}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline SVG: 400, names the image, writes nothing 10ms
+   → {"success":true,"section":{"id":"S1","doc_id":"D1","content":"saved"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"unbound"}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline WebP: 400, names the image, writes nothing 64ms
+   → {"success":true,"section":{"id":"S1","doc_id":"D1","content":"saved"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"unbound"}}: expected 200 to be 400 // Object.is equality
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:text/html;base64,PHNjcmlwdD4= 8ms
+   → expected '<p>Before.</p><img src="data:text/htm…' not to contain '<img'
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/webp;base64,UklGRg== 3ms
+   → expected '<p>Before.</p><img src="data:image/we…' not to contain '<img'
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: javascript:alert(1) 9ms
+   → expected '<p>Before.</p><img alt="planted"><p>A…' not to contain '<img'
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > keeps a governed reference and an inline PNG exactly as written 2ms
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > finds the image wherever the parse puts it: inside a table cell, and in upper case 18ms
+   → expected '<table><tbody><tr><td>Cell <img src="…' not to contain '<img'
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > still strips scripts and handlers, and leaves the chat-safe rest alone 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > does not leave its image rule on the shared DOMPurify instance 12ms
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names nothing in prose, a governed reference, an inline PNG, or an image with no src 1ms
+   → refusedFigures is not a function
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/../../tenant-export/full 0ms
+   → refusedFigures is not a function
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/%2e%2e/%2e%2e/users/me 0ms
+   → refusedFigures is not a function
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/..\..\tenant-export\full 0ms
+   → refusedFigures is not a function
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/file_1_a?download=1 0ms
+   → refusedFigures is not a function
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: https://collector.example/p.png?d=secret 31ms
+   → refusedFigures is not a function
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: //collector.example/p.png 0ms
+   → refusedFigures is not a function
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:image/svg+xml;base64,PHN2Zz4= 0ms
+   → refusedFigures is not a function
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:text/html;base64,PHNjcmlwdD4= 0ms
+   → refusedFigures is not a function
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:image/webp;base64,UklGRg== 0ms
+   → refusedFigures is not a function
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: javascript:alert(1) 0ms
+   → refusedFigures is not a function
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > reads the markup the way a browser does 0ms
+   → refusedFigures is not a function
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > says which images, by position and kind, without echoing an application path 0ms
+   → describeRefusedFigures is not a function
+ × server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > names only the images that are not figures, by their position in the section 22ms
+   → {"success":true,"section":{"id":"S1","doc_id":"D1","content":"saved"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"unbound"}}: expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > saves a governed reference and an inline PNG, exactly as sent 23ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > leaves a metadata-only save alone 6ms
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T04:18:22.384Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790569102384_4fzzzx",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T04:18:22.387Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T04:18:22.389Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790569102389_i",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T04:18:22.391Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T04:18:22.392Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790569102392_9",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T04:18:22.395Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T04:18:22.395Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790569102395_",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T04:18:22.398Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload) 175ms
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/../../tenant-export/full 5017ms
+   → expected  to have a length of 2 but got +0
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div>
+        <p>
+          text
+        </p>
+        <img
+          alt="a"
+          data-authsrc="/api/authoring/images/../../tenant-export/full"
+          src="blob:test/2"
+        />
+        <img
+          alt="b"
+          data-authsrc="/api/authoring/images/../../tenant-export/full"
+          src="blob:test/2"
+        />
+      </div>
+    </div>
+  </body>
+</html>
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/%2e%2e/%2e%2e/users/me 5026ms
+   → expected  to have a length of 2 but got +0
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div>
+        <p>
+          text
+        </p>
+        <img
+          alt="a"
+          data-authsrc="/api/authoring/images/%2e%2e/%2e%2e/users/me"
+          src="blob:test/3"
+        />
+        <img
+          alt="b"
+          data-authsrc="/api/authoring/images/%2e%2e/%2e%2e/users/me"
+          src="blob:test/3"
+        />
+      </div>
+    </div>
+  </body>
+</html>
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/..\..\tenant-export\full 5015ms
+   → expected  to have a length of 2 but got +0
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div>
+        <p>
+          text
+        </p>
+        <img
+          alt="a"
+          data-authsrc="/api/authoring/images/..\\..\\tenant-export\\full"
+          src="blob:test/4"
+        />
+        <img
+          alt="b"
+          data-authsrc="/api/authoring/images/..\\..\\tenant-export\\full"
+          src="blob:test/4"
+        />
+      </div>
+    </div>
+  </body>
+</html>
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export 5009ms
+   → expected  to have a length of 2 but got +0
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div>
+        <p>
+          text
+        </p>
+        <img
+          alt="a"
+          data-authsrc="/api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export"
+          src="blob:test/5"
+        />
+        <img
+          alt="b"
+          data-authsrc="/api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export"
+          src="blob:test/5"
+        />
+      </div>
+    </div>
+  </body>
+</html>
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a?download=1 5012ms
+   → expected  to have a length of 2 but got +0
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div>
+        <p>
+          text
+        </p>
+        <img
+          alt="a"
+          data-authsrc="/api/authoring/images/file_1_a?download=1"
+          src="blob:test/6"
+        />
+        <img
+          alt="b"
+          data-authsrc="/api/authoring/images/file_1_a?download=1"
+          src="blob:test/6"
+        />
+      </div>
+    </div>
+  </body>
+</html>
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: https://collector.example/p.png?d=secret 12ms
+   → expected 'https://collector.example/p.png?d=sec…' to be null
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: //collector.example/p.png 25ms
+   → expected '//collector.example/p.png' to be null
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: data:image/svg+xml;base64,PHN2Zz4= 5ms
+   → expected 'data:image/svg+xml;base64,PHN2Zz4=' to be null
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: data:image/webp;base64,UklGRg== 11ms
+   → expected 'data:image/webp;base64,UklGRg==' to be null
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > displays an inline PNG as it is, with no request and no statement 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/__tests__/figure-refs.test.ts [ shared/__tests__/figure-refs.test.ts ]
+Error: Cannot find module '../authoring/figure-refs' imported from <repo>/shared/__tests__/figure-refs.test.ts
+ ❯ shared/__tests__/figure-refs.test.ts:13:1
+     11| import { describe, expect, it } from 'vitest';
+     12|
+     13| import {
+       | ^
+     14|   AUTHORING_IMAGE_URL_PREFIX,
+     15|   isFigureSrc,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/73]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 72 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > dot segments: 400, names the image, writes nothing
+ FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > percent-encoded dot segments: 400, names the image, writes nothing
+ FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > backslash segments: 400, names the image, writes nothing
+ FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a query: 400, names the image, writes nothing
+ FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > another API route: 400, names the image, writes nothing
+ FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an external address: 400, names the image, writes nothing
+ FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a protocol-relative address: 400, names the image, writes nothing
+ FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline SVG: 400, names the image, writes nothing
+ FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline WebP: 400, names the image, writes nothing
+AssertionError: {"success":true,"section":{"id":"S1","doc_id":"D1","content":"saved"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"unbound"}}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/authoring-section-figure-refs.test.ts:132:50
+    130|     const res = await save(`<p>Stability results.</p><img src="${src}"…
+    131|
+    132|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    133|     expect(res.body.error?.code).toBe('FIGURE_NOT_UPLOADED');
+    134|     expect(res.body.field).toBe('content');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/73]⎯
+
+ FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > names only the images that are not figures, by their position in the section
+AssertionError: {"success":true,"section":{"id":"S1","doc_id":"D1","content":"saved"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"unbound"}}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/authoring-section-figure-refs.test.ts:149:50
+    147|         `<table><tbody><tr><td><IMG SRC=https://collector.example/b.pn…
+    148|     );
+    149|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    150|     expect(res.body.refusedImages).toEqual([
+    151|       { position: 2, src: 'https://collector.example/a.png' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/../../tenant-export/full
+AssertionError: expected '<p>Before.</p><img src="/api/authorin…' not to contain '<img'
+
+Expected: "<img"
+Received: "<p>Before.</p><img src="/api/authoring/images/../../tenant-export/full" alt="planted"><p>After.</p>"
+
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:44:21
+     42|       `<p>Before.</p><img src="${src}" alt="planted"><p>After.</p>`,
+     43|     );
+     44|     expect(out).not.toContain('<img');
+       |                     ^
+     45|     expect(out).not.toContain('planted');
+     46|     expect(out).toContain('<p>Before.</p>');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/%2e%2e/%2e%2e/users/me
+AssertionError: expected '<p>Before.</p><img src="/api/authorin…' not to contain '<img'
+
+Expected: "<img"
+Received: "<p>Before.</p><img src="/api/authoring/images/%2e%2e/%2e%2e/users/me" alt="planted"><p>After.</p>"
+
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:44:21
+     42|       `<p>Before.</p><img src="${src}" alt="planted"><p>After.</p>`,
+     43|     );
+     44|     expect(out).not.toContain('<img');
+       |                     ^
+     45|     expect(out).not.toContain('planted');
+     46|     expect(out).toContain('<p>Before.</p>');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/..\..\tenant-export\full
+AssertionError: expected '<p>Before.</p><img src="/api/authorin…' not to contain '<img'
+
+Expected: "<img"
+Received: "<p>Before.</p><img src="/api/authoring/images/..\..\tenant-export\full" alt="planted"><p>After.</p>"
+
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:44:21
+     42|       `<p>Before.</p><img src="${src}" alt="planted"><p>After.</p>`,
+     43|     );
+     44|     expect(out).not.toContain('<img');
+       |                     ^
+     45|     expect(out).not.toContain('planted');
+     46|     expect(out).toContain('<p>Before.</p>');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/file_1_a?download=1
+AssertionError: expected '<p>Before.</p><img src="/api/authorin…' not to contain '<img'
+
+Expected: "<img"
+Received: "<p>Before.</p><img src="/api/authoring/images/file_1_a?download=1" alt="planted"><p>After.</p>"
+
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:44:21
+     42|       `<p>Before.</p><img src="${src}" alt="planted"><p>After.</p>`,
+     43|     );
+     44|     expect(out).not.toContain('<img');
+       |                     ^
+     45|     expect(out).not.toContain('planted');
+     46|     expect(out).toContain('<p>Before.</p>');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: https://collector.example/p.png?d=secret
+AssertionError: expected '<p>Before.</p><img src="https://colle…' not to contain '<img'
+
+Expected: "<img"
+Received: "<p>Before.</p><img src="https://collector.example/p.png?d=secret" alt="planted"><p>After.</p>"
+
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:44:21
+     42|       `<p>Before.</p><img src="${src}" alt="planted"><p>After.</p>`,
+     43|     );
+     44|     expect(out).not.toContain('<img');
+       |                     ^
+     45|     expect(out).not.toContain('planted');
+     46|     expect(out).toContain('<p>Before.</p>');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: //collector.example/p.png
+AssertionError: expected '<p>Before.</p><img src="//collector.e…' not to contain '<img'
+
+Expected: "<img"
+Received: "<p>Before.</p><img src="//collector.example/p.png" alt="planted"><p>After.</p>"
+
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:44:21
+     42|       `<p>Before.</p><img src="${src}" alt="planted"><p>After.</p>`,
+     43|     );
+     44|     expect(out).not.toContain('<img');
+       |                     ^
+     45|     expect(out).not.toContain('planted');
+     46|     expect(out).toContain('<p>Before.</p>');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/svg+xml;base64,PHN2Zz4=
+AssertionError: expected '<p>Before.</p><img src="data:image/sv…' not to contain '<img'
+
+Expected: "<img"
+Received: "<p>Before.</p><img src="data:image/svg+xml;base64,PHN2Zz4=" alt="planted"><p>After.</p>"
+
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:44:21
+     42|       `<p>Before.</p><img src="${src}" alt="planted"><p>After.</p>`,
+     43|     );
+     44|     expect(out).not.toContain('<img');
+       |                     ^
+     45|     expect(out).not.toContain('planted');
+     46|     expect(out).toContain('<p>Before.</p>');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:text/html;base64,PHNjcmlwdD4=
+AssertionError: expected '<p>Before.</p><img src="data:text/htm…' not to contain '<img'
+
+Expected: "<img"
+Received: "<p>Before.</p><img src="data:text/html;base64,PHNjcmlwdD4=" alt="planted"><p>After.</p>"
+
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:44:21
+     42|       `<p>Before.</p><img src="${src}" alt="planted"><p>After.</p>`,
+     43|     );
+     44|     expect(out).not.toContain('<img');
+       |                     ^
+     45|     expect(out).not.toContain('planted');
+     46|     expect(out).toContain('<p>Before.</p>');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/webp;base64,UklGRg==
+AssertionError: expected '<p>Before.</p><img src="data:image/we…' not to contain '<img'
+
+Expected: "<img"
+Received: "<p>Before.</p><img src="data:image/webp;base64,UklGRg==" alt="planted"><p>After.</p>"
+
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:44:21
+     42|       `<p>Before.</p><img src="${src}" alt="planted"><p>After.</p>`,
+     43|     );
+     44|     expect(out).not.toContain('<img');
+       |                     ^
+     45|     expect(out).not.toContain('planted');
+     46|     expect(out).toContain('<p>Before.</p>');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: javascript:alert(1)
+AssertionError: expected '<p>Before.</p><img alt="planted"><p>A…' not to contain '<img'
+
+Expected: "<img"
+Received: "<p>Before.</p><img alt="planted"><p>After.</p>"
+
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:44:21
+     42|       `<p>Before.</p><img src="${src}" alt="planted"><p>After.</p>`,
+     43|     );
+     44|     expect(out).not.toContain('<img');
+       |                     ^
+     45|     expect(out).not.toContain('planted');
+     46|     expect(out).toContain('<p>Before.</p>');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > finds the image wherever the parse puts it: inside a table cell, and in upper case
+AssertionError: expected '<table><tbody><tr><td>Cell <img src="…' not to contain '<img'
+
+Expected: "<img"
+Received: "<table><tbody><tr><td>Cell <img src="https://collector.example/p.png"></td></tr></tbody></table>"
+
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:62:21
+     60|       '<table><tbody><tr><td>Cell <IMG SRC=https://collector.example/p…
+     61|     );
+     62|     expect(out).not.toContain('<img');
+       |                     ^
+     63|     expect(out).toContain('Cell');
+     64|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names nothing in prose, a governed reference, an inline PNG, or an image with no src
+TypeError: refusedFigures is not a function
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:88:18
+     86| describe('refusedFigures — what the section save refuses', () => {
+     87|   it('names nothing in prose, a governed reference, an inline PNG, or …
+     88|     expect(await refusedFigures('')).toEqual([]);
+       |                  ^
+     89|     expect(await refusedFigures('<p>A figure is described here.</p>'))…
+     90|     expect(await refusedFigures(`<img src="${REF}"><img src="${PNG}"><…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/../../tenant-export/full
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/%2e%2e/%2e%2e/users/me
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/..\..\tenant-export\full
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/file_1_a?download=1
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: https://collector.example/p.png?d=secret
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: //collector.example/p.png
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:image/svg+xml;base64,PHN2Zz4=
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:text/html;base64,PHNjcmlwdD4=
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:image/webp;base64,UklGRg==
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: javascript:alert(1)
+TypeError: refusedFigures is not a function
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:95:18
+     93|   it.each(NOT_FIGURES)('names an image that is not a figure: %s', asyn…
+     94|     const html = `<p>x</p><img src="${REF}"><img src="${src.replace(/"…
+     95|     expect(await refusedFigures(html)).toEqual([{ position: 2, src }]);
+       |                  ^
+     96|   });
+     97|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > reads the markup the way a browser does
+TypeError: refusedFigures is not a function
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:113:20
+    111|     ];
+    112|     for (const [html, src] of cases) {
+    113|       expect(await refusedFigures(html), html).toEqual([{ position: 1,…
+       |                    ^
+    114|     }
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/73]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > says which images, by position and kind, without echoing an application path
+TypeError: describeRefusedFigures is not a function
+ ❯ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts:118:21
+    116|
+    117|   it('says which images, by position and kind, without echoing an appl…
+    118|     const message = describeRefusedFigures([
+       |                     ^
+    119|       { position: 2, src: 'https://collector.example/p.png' },
+    120|       { position: 3, src: '/api/authoring/images/../../tenant-export/f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/73]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/../../tenant-export/full
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/%2e%2e/%2e%2e/users/me
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/..\..\tenant-export\full
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a?download=1
+AssertionError: promise resolved "'blob:test/1'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"blob:test/1"
+
+ ❯ client/src/concept2cure/v2/__tests__/imageEditing.test.ts:128:40
+    126|     'never fetches a reference that walks out of the image store: %s',
+    127|     async (src) => {
+    128|       await expect(resolveImageSrc(src)).rejects.toThrow(NOT_A_FIGURE_…
+       |                                        ^
+    129|       expect(apiRequest).not.toHaveBeenCalled();
+    130|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/73]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: https://collector.example/p.png?d=secret
+AssertionError: promise resolved "'https://collector.example/p.png?d=sec…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"https://collector.example/p.png?d=secret"
+
+ ❯ client/src/concept2cure/v2/__tests__/imageEditing.test.ts:134:38
+    132|
+    133|   it.each(NOT_FIGURES)('never hands a src that is not a figure to the …
+    134|     await expect(resolveImageSrc(src)).rejects.toThrow(NOT_A_FIGURE_RE…
+       |                                      ^
+    135|     expect(apiRequest).not.toHaveBeenCalled();
+    136|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/73]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: //collector.example/p.png
+AssertionError: promise resolved "'//collector.example/p.png'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"//collector.example/p.png"
+
+ ❯ client/src/concept2cure/v2/__tests__/imageEditing.test.ts:134:38
+    132|
+    133|   it.each(NOT_FIGURES)('never hands a src that is not a figure to the …
+    134|     await expect(resolveImageSrc(src)).rejects.toThrow(NOT_A_FIGURE_RE…
+       |                                      ^
+    135|     expect(apiRequest).not.toHaveBeenCalled();
+    136|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/73]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: data:image/svg+xml;base64,PHN2Zz4=
+AssertionError: promise resolved "'data:image/svg+xml;base64,PHN2Zz4='" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"data:image/svg+xml;base64,PHN2Zz4="
+
+ ❯ client/src/concept2cure/v2/__tests__/imageEditing.test.ts:134:38
+    132|
+    133|   it.each(NOT_FIGURES)('never hands a src that is not a figure to the …
+    134|     await expect(resolveImageSrc(src)).rejects.toThrow(NOT_A_FIGURE_RE…
+       |                                      ^
+    135|     expect(apiRequest).not.toHaveBeenCalled();
+    136|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/73]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: data:text/html;base64,PHNjcmlwdD4=
+AssertionError: promise resolved "'data:text/html;base64,PHNjcmlwdD4='" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"data:text/html;base64,PHNjcmlwdD4="
+
+ ❯ client/src/concept2cure/v2/__tests__/imageEditing.test.ts:134:38
+    132|
+    133|   it.each(NOT_FIGURES)('never hands a src that is not a figure to the …
+    134|     await expect(resolveImageSrc(src)).rejects.toThrow(NOT_A_FIGURE_RE…
+       |                                      ^
+    135|     expect(apiRequest).not.toHaveBeenCalled();
+    136|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/73]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: data:image/webp;base64,UklGRg==
+AssertionError: promise resolved "'data:image/webp;base64,UklGRg=='" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"data:image/webp;base64,UklGRg=="
+
+ ❯ client/src/concept2cure/v2/__tests__/imageEditing.test.ts:134:38
+    132|
+    133|   it.each(NOT_FIGURES)('never hands a src that is not a figure to the …
+    134|     await expect(resolveImageSrc(src)).rejects.toThrow(NOT_A_FIGURE_RE…
+       |                                      ^
+    135|     expect(apiRequest).not.toHaveBeenCalled();
+    136|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/73]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/../../tenant-export/full
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/%2e%2e/%2e%2e/users/me
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/..\..\tenant-export\full
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/file_1_a?download=1
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: https://collector.example/p.png?d=secret
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: //collector.example/p.png
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: data:image/svg+xml;base64,PHN2Zz4=
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: data:text/html;base64,PHNjcmlwdD4=
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: data:image/webp;base64,UklGRg==
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/c2c/projects
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/v2/__tests__/imageEditing.test.ts:140:28
+    138|   it.each([...WALKS_OUT, ...NOT_FIGURES])('does not parse in stored or…
+    139|     const ed = makeEditor(`<p>Before.</p><img src="${src.replace(/"/g,…
+    140|     expect(imageCount(ed)).toBe(0);
+       |                            ^
+    141|     expect(ed.getHTML()).not.toContain('<img');
+    142|     ed.destroy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/73]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not take one in from pasted or inserted HTML
+AssertionError: expected 2 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 2
+
+ ❯ client/src/concept2cure/v2/__tests__/imageEditing.test.ts:150:28
+    148|       '<p>From a web page.</p><img src="https://collector.example/p.pn…
+    149|     );
+    150|     expect(imageCount(ed)).toBe(0);
+       |                            ^
+    151|     expect(ed.getHTML()).toContain('From a web page.');
+    152|     ed.destroy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/73]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > a node that arrives without a parse (JSON, live sync) is not fetched and says the figure must be uploaded
+AssertionError: expected 'Loading image…' to match /Upload the image to include it/
+
+- Expected:
+/Upload the image to include it/
+
++ Received:
+"Loading image…"
+
+ ❯ client/src/concept2cure/v2/__tests__/imageEditing.test.ts:167:66
+    165|     });
+    166|     await vi.waitFor(() => {
+    167|       expect(host.querySelector('.rse-img-status')?.textContent).toMat…
+       |                                                                  ^
+    168|     });
+    169|     const figure = host.querySelector('figure.rse-img') as HTMLElement;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/73]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves an external address on a live src
+AssertionError: expected '<p>text</p><img src="https://collecto…' not to match /\ssrc=/
+
+- Expected:
+/\ssrc=/
+
++ Received:
+"<p>text</p><img src=\"https://collector.example/p.png?d=secret\" alt=\"x\">"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts:148:21
+    146|   ])('never leaves %s on a live src', (_label, src) => {
+    147|     const out = sanitizeAuthoringHtml(`<p>text</p><img src="${src}" al…
+    148|     expect(out).not.toMatch(/\ssrc=/);
+       |                     ^
+    149|     // Handed to AuthoredHtml's resolver, which refuses it and says so.
+    150|     expect(out).toContain(AUTH_IMG_ATTR);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/73]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves a protocol-relative address on a live src
+AssertionError: expected '<p>text</p><img src="//collector.exam…' not to match /\ssrc=/
+
+- Expected:
+/\ssrc=/
+
++ Received:
+"<p>text</p><img src=\"//collector.example/p.png\" alt=\"x\">"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts:148:21
+    146|   ])('never leaves %s on a live src', (_label, src) => {
+    147|     const out = sanitizeAuthoringHtml(`<p>text</p><img src="${src}" al…
+    148|     expect(out).not.toMatch(/\ssrc=/);
+       |                     ^
+    149|     // Handed to AuthoredHtml's resolver, which refuses it and says so.
+    150|     expect(out).toContain(AUTH_IMG_ATTR);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/73]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves an inline SVG on a live src
+AssertionError: expected '<p>text</p><img src="data:image/svg+x…' not to match /\ssrc=/
+
+- Expected:
+/\ssrc=/
+
++ Received:
+"<p>text</p><img src=\"data:image/svg+xml;base64,PHN2Zz4=\" alt=\"x\">"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts:148:21
+    146|   ])('never leaves %s on a live src', (_label, src) => {
+    147|     const out = sanitizeAuthoringHtml(`<p>text</p><img src="${src}" al…
+    148|     expect(out).not.toMatch(/\ssrc=/);
+       |                     ^
+    149|     // Handed to AuthoredHtml's resolver, which refuses it and says so.
+    150|     expect(out).toContain(AUTH_IMG_ATTR);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/73]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves an inline HTML document on a live src
+AssertionError: expected '<p>text</p><img src="data:text/html;b…' not to match /\ssrc=/
+
+- Expected:
+/\ssrc=/
+
++ Received:
+"<p>text</p><img src=\"data:text/html;base64,PHNjcmlwdD4=\" alt=\"x\">"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts:148:21
+    146|   ])('never leaves %s on a live src', (_label, src) => {
+    147|     const out = sanitizeAuthoringHtml(`<p>text</p><img src="${src}" al…
+    148|     expect(out).not.toMatch(/\ssrc=/);
+       |                     ^
+    149|     // Handed to AuthoredHtml's resolver, which refuses it and says so.
+    150|     expect(out).toContain(AUTH_IMG_ATTR);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/73]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves an inline WebP, which the Word export cannot file on a live src
+AssertionError: expected '<p>text</p><img src="data:image/webp;…' not to match /\ssrc=/
+
+- Expected:
+/\ssrc=/
+
++ Received:
+"<p>text</p><img src=\"data:image/webp;base64,UklGRg==\" alt=\"x\">"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts:148:21
+    146|   ])('never leaves %s on a live src', (_label, src) => {
+    147|     const out = sanitizeAuthoringHtml(`<p>text</p><img src="${src}" al…
+    148|     expect(out).not.toMatch(/\ssrc=/);
+       |                     ^
+    149|     // Handed to AuthoredHtml's resolver, which refuses it and says so.
+    150|     expect(out).toContain(AUTH_IMG_ATTR);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/73]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > refuses a reference OUTSIDE the governed images route — no authenticated fetch fires
+AssertionError: expected 'Couldn’t load this figure — its refer…' to match /Upload the image to include it/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div>
+        <p
+          class="ed-figure-missing"
+        >
+          Couldn’t load this figure — its reference points outside the image store. Its reference is kept in the section.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
+
+- Expected:
+/Upload the image to include it/
+
++ Received:
+"Couldn’t load this figure — its reference points outside the image store. Its reference is kept in the section."
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:109:74
+    107|     );
+    108|     await waitFor(() => {
+    109|       expect(container.querySelector('.ed-figure-missing')?.textConten…
+       |                                                                          ^
+    110|     });
+    111|     expect(apiRequest).not.toHaveBeenCalled();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/73]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/../../tenant-export/full
+AssertionError: expected  to have a length of 2 but got +0
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div>
+        <p>
+          text
+        </p>
+        <img
+          alt="a"
+          data-authsrc="/api/authoring/images/../../tenant-export/full"
+          src="blob:test/2"
+        />
+        <img
+          alt="b"
+          data-authsrc="/api/authoring/images/../../tenant-export/full"
+          src="blob:test/2"
+        />
+      </div>
+    </div>
+  </body>
+</html>
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:130:64
+    128|     );
+    129|     await waitFor(() => {
+    130|       expect(container.querySelectorAll('.ed-figure-missing')).toHaveL…
+       |                                                                ^
+    131|     });
+    132|     for (const note of Array.from(container.querySelectorAll('.ed-figu…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/73]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/%2e%2e/%2e%2e/users/me
+AssertionError: expected  to have a length of 2 but got +0
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div>
+        <p>
+          text
+        </p>
+        <img
+          alt="a"
+          data-authsrc="/api/authoring/images/%2e%2e/%2e%2e/users/me"
+          src="blob:test/3"
+        />
+        <img
+          alt="b"
+          data-authsrc="/api/authoring/images/%2e%2e/%2e%2e/users/me"
+          src="blob:test/3"
+        />
+      </div>
+    </div>
+  </body>
+</html>
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:130:64
+    128|     );
+    129|     await waitFor(() => {
+    130|       expect(container.querySelectorAll('.ed-figure-missing')).toHaveL…
+       |                                                                ^
+    131|     });
+    132|     for (const note of Array.from(container.querySelectorAll('.ed-figu…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/73]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/..\..\tenant-export\full
+AssertionError: expected  to have a length of 2 but got +0
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div>
+        <p>
+          text
+        </p>
+        <img
+          alt="a"
+          data-authsrc="/api/authoring/images/..\\..\\tenant-export\\full"
+          src="blob:test/4"
+        />
+        <img
+          alt="b"
+          data-authsrc="/api/authoring/images/..\\..\\tenant-export\\full"
+          src="blob:test/4"
+        />
+      </div>
+    </div>
+  </body>
+</html>
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:130:64
+    128|     );
+    129|     await waitFor(() => {
+    130|       expect(container.querySelectorAll('.ed-figure-missing')).toHaveL…
+       |                                                                ^
+    131|     });
+    132|     for (const note of Array.from(container.querySelectorAll('.ed-figu…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/73]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export
+AssertionError: expected  to have a length of 2 but got +0
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div>
+        <p>
+          text
+        </p>
+        <img
+          alt="a"
+          data-authsrc="/api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export"
+          src="blob:test/5"
+        />
+        <img
+          alt="b"
+          data-authsrc="/api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export"
+          src="blob:test/5"
+        />
+      </div>
+    </div>
+  </body>
+</html>
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:130:64
+    128|     );
+    129|     await waitFor(() => {
+    130|       expect(container.querySelectorAll('.ed-figure-missing')).toHaveL…
+       |                                                                ^
+    131|     });
+    132|     for (const note of Array.from(container.querySelectorAll('.ed-figu…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/73]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a?download=1
+AssertionError: expected  to have a length of 2 but got +0
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div>
+        <p>
+          text
+        </p>
+        <img
+          alt="a"
+          data-authsrc="/api/authoring/images/file_1_a?download=1"
+          src="blob:test/6"
+        />
+        <img
+          alt="b"
+          data-authsrc="/api/authoring/images/file_1_a?download=1"
+          src="blob:test/6"
+        />
+      </div>
+    </div>
+  </body>
+</html>
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:130:64
+    128|     );
+    129|     await waitFor(() => {
+    130|       expect(container.querySelectorAll('.ed-figure-missing')).toHaveL…
+       |                                                                ^
+    131|     });
+    132|     for (const note of Array.from(container.querySelectorAll('.ed-figu…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/73]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: https://collector.example/p.png?d=secret
+AssertionError: expected 'https://collector.example/p.png?d=sec…' to be null
+
+- Expected:
+null
+
++ Received:
+"https://collector.example/p.png?d=secret"
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:148:65
+    146|     const { container } = render(<AuthoredHtml html={`<img src="${src}…
+    147|     // Not live on the FIRST paint either: the placeholder carries no …
+    148|     expect(container.querySelector('img')?.getAttribute('src')).toBeNu…
+       |                                                                 ^
+    149|     await waitFor(() => {
+    150|       expect(container.querySelector('.ed-figure-missing')?.textConten…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/73]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: //collector.example/p.png
+AssertionError: expected '//collector.example/p.png' to be null
+
+- Expected:
+null
+
++ Received:
+"//collector.example/p.png"
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:148:65
+    146|     const { container } = render(<AuthoredHtml html={`<img src="${src}…
+    147|     // Not live on the FIRST paint either: the placeholder carries no …
+    148|     expect(container.querySelector('img')?.getAttribute('src')).toBeNu…
+       |                                                                 ^
+    149|     await waitFor(() => {
+    150|       expect(container.querySelector('.ed-figure-missing')?.textConten…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/73]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: data:image/svg+xml;base64,PHN2Zz4=
+AssertionError: expected 'data:image/svg+xml;base64,PHN2Zz4=' to be null
+
+- Expected:
+null
+
++ Received:
+"data:image/svg+xml;base64,PHN2Zz4="
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:148:65
+    146|     const { container } = render(<AuthoredHtml html={`<img src="${src}…
+    147|     // Not live on the FIRST paint either: the placeholder carries no …
+    148|     expect(container.querySelector('img')?.getAttribute('src')).toBeNu…
+       |                                                                 ^
+    149|     await waitFor(() => {
+    150|       expect(container.querySelector('.ed-figure-missing')?.textConten…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/73]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: data:image/webp;base64,UklGRg==
+AssertionError: expected 'data:image/webp;base64,UklGRg==' to be null
+
+- Expected:
+null
+
++ Received:
+"data:image/webp;base64,UklGRg=="
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx:148:65
+    146|     const { container } = render(<AuthoredHtml html={`<img src="${src}…
+    147|     // Not live on the FIRST paint either: the placeholder carries no …
+    148|     expect(container.querySelector('img')?.getAttribute('src')).toBeNu…
+       |                                                                 ^
+    149|     await waitFor(() => {
+    150|       expect(container.querySelector('.ed-figure-missing')?.textConten…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/73]⎯
+
+
+ Test Files  6 failed (6)
+      Tests  72 failed | 38 passed (110)
+   Start at  04:18:11
+   Duration  36.10s (transform 5.22s, setup 1.54s, import 13.84s, tests 33.34s, environment 7.46s)
+

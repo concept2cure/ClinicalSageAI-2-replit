@@ -18,9 +18,17 @@ import { getPool } from '../../db';
 import type { StatisticalInput } from '../ana-biostats/types';
 import type { PoolClient } from 'pg';
 import type { AuditTaskActionParams } from '../tasking/task-audit.js';
+import type { TaskEventNotice } from '../tasking/task-side-effects.js';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
 import { executeGovernedAnaOperation } from '../governed-ana-execution.js';
-import { recordArtifactProvenanceBestEffort } from '../provenance/artifact-provenance';
+import type { ArtifactWriteHook } from '../artifact-tagger.js';
+import {
+  artifactVersionContentBinding,
+  assertVerifiedSignoff,
+  ledgerBinding,
+  sha256OfContent,
+  signGovernedCommand,
+} from './governed-command-signature.js';
 import { artifactApproval } from '../ectd/package-content-fingerprint';
 import {
   approvalRecordedOnlyByGovernedAct,
@@ -122,6 +130,13 @@ export interface CommandContext {
    */
   chatMessageId?: string;
   /**
+   * The model call whose response proposed this command: provider, model and
+   * the gateway request id. Written into every agent mutation's audit row
+   * (agentAuditDetails) so a Part 11 record traces to its ai.gateway_audit_log
+   * row. Absent for a command a person typed.
+   */
+  servingModel?: { provider?: string | null; model?: string | null; requestId?: string | null } | null;
+  /**
    * Per-tenant AnA tool policy. Stamped by `executeCommands` once per
    * dispatch from `organizations.settings.anaToolPolicy`. Read by the
    * shared gate in mdx-tool-policy.ts. Undefined = default = all tools
@@ -195,6 +210,8 @@ async function persistGovernedCommandArtifact(
     intendedAction: 'create' | 'update' | 'rollback';
     originSurface: string;
     metadata?: Record<string, unknown>;
+    /** Runs inside the artifact write's transaction (see tagArtifact). */
+    inTransaction?: ArtifactWriteHook;
   }
 ) {
   const qualityResult = validateArtifactQuality(params.content, params.documentType || 'general');
@@ -247,6 +264,7 @@ async function persistGovernedCommandArtifact(
       },
       versioningMode: params.artifactId ? 'update' : 'create',
     },
+    inTransaction: params.inTransaction,
   });
 
   if (execution.persistenceStatus !== 'persisted' || !execution.artifactMutation) {
@@ -864,7 +882,35 @@ function notFilableNote(
     : ` It cannot be filed yet: ${approval.problem}. ${lockRecordedOnlyByGovernedAct('command')}`;
 }
 
-/** Place artifact in CTD dossier section */
+/**
+ * The artifact a placement signs, locked in the signing transaction. Scoped by
+ * artifact, project AND organization: an artifact that is not this caller's
+ * is not found, and nothing is written.
+ */
+async function lockArtifactForSigning(
+  client: PoolClient,
+  ctx: CommandContext,
+  params: { projectId: number; artifactId: number | string }
+): Promise<{ artifact_id: string; version: number; content: string; title: string | null } | null> {
+  const found = await client.query(
+    `SELECT artifact_id, version, content, title
+       FROM concept2cure_artifacts
+      WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3
+      FOR UPDATE`,
+    [params.artifactId, params.projectId, ctx.organizationId]
+  );
+  return found.rows[0] ?? null;
+}
+
+/**
+ * Place artifact in CTD dossier section.
+ *
+ * An e-signature-tier command (PART11_ESIGN_COMMANDS): the placement and its
+ * electronic signature commit in ONE transaction, or neither does. The signer
+ * signs "this content, at this version, placed here" — a content binding over
+ * the artifact as it stands under the row lock (2026-09-28; until then a person
+ * re-authenticated for this command and no signature was recorded).
+ */
 export async function placeInDossier(
   ctx: CommandContext,
   params: {
@@ -874,39 +920,57 @@ export async function placeInDossier(
     dossierModule?: string;
   }
 ): Promise<CommandResult> {
+  const client = await pool.connect();
   try {
-    const placeResult = await pool.query(
-      `UPDATE concept2cure_artifacts
-       SET ctd_section = $4, updated_at = NOW()
-       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
-      [params.artifactId, params.projectId, ctx.organizationId, params.ctdSection]
-    );
+    await client.query('BEGIN');
+    const artifact = await lockArtifactForSigning(client, ctx, params);
     // Fail closed: don't report a placement that didn't happen (artifact not in
     // this project/org). AnA must never confirm work it didn't perform.
-    if (!placeResult.rowCount) {
+    if (!artifact) {
+      await client.query('ROLLBACK');
       return {
         success: false,
         action: 'place_in_dossier',
         message: `Artifact ${params.artifactId} was not found in this project, so nothing was placed.`,
       };
     }
-    // Fetch title for human-readable message
-    const artInfo = await pool
-      .query(
-        `SELECT title FROM concept2cure_artifacts WHERE artifact_id = $1 AND organization_id = $2`,
-        [params.artifactId, ctx.organizationId]
-      )
-      .catch(() => ({ rows: [] as any[] }));
-    const artTitle = artInfo.rows[0]?.title || `Artifact ${params.artifactId}`;
-    const moduleLabel = params.dossierModule ? ` (Module ${params.dossierModule})` : '';
+    await client.query(
+      `UPDATE concept2cure_artifacts
+       SET ctd_section = $4, updated_at = NOW()
+       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
+      [artifact.artifact_id, params.projectId, ctx.organizationId, params.ctdSection]
+    );
+    const binding = artifactVersionContentBinding({
+      artifactId: artifact.artifact_id,
+      version: Number(artifact.version),
+      content: artifact.content,
+      ctdSection: params.ctdSection,
+    });
+    const { signatureId } = await signGovernedCommand(client, ctx, {
+      command: 'place_in_dossier',
+      target: `artifact:${artifact.artifact_id}`,
+      payload: {
+        projectId: params.projectId,
+        artifactId: artifact.artifact_id,
+        version: Number(artifact.version),
+        ctdSection: params.ctdSection,
+        contentSha256: binding.contentSha256,
+      },
+      binding,
+      extraManifest: { version: Number(artifact.version), ctdSection: params.ctdSection, contentSha256: binding.contentSha256 },
+    });
+    await client.query('COMMIT');
 
+    const artTitle = artifact.title || `Artifact ${params.artifactId}`;
+    const moduleLabel = params.dossierModule ? ` (Module ${params.dossierModule})` : '';
     return {
       success: true,
       action: 'place_in_dossier',
-      data: { artifactId: params.artifactId, ctdSection: params.ctdSection, title: artTitle },
+      data: { artifactId: params.artifactId, ctdSection: params.ctdSection, title: artTitle, signatureId },
       message: `Placed "${artTitle}" in CTD section ${params.ctdSection}${moduleLabel}.`,
     };
   } catch (err: unknown) {
+    await client.query('ROLLBACK').catch(() => undefined);
     return {
       success: false,
       action: 'place_in_dossier',
@@ -915,6 +979,8 @@ export async function placeInDossier(
       }.`,
       error: err instanceof Error ? err.message : String(err),
     };
+  } finally {
+    client.release();
   }
 }
 
@@ -982,20 +1048,26 @@ export async function listArtifacts(
  */
 async function boardWriteWithLineage(
   label: string,
-  write: (client: PoolClient) => Promise<AuditTaskActionParams | null>,
+  write: (client: PoolClient) => Promise<AuditTaskActionParams | BoardWriteRecord | null>,
 ): Promise<boolean> {
   let client: PoolClient | undefined;
+  let notices: TaskEventNotice[] = [];
   try {
     client = (await pool.connect()) as PoolClient;
     await client.query('BEGIN');
-    const lineage = await write(client);
-    if (lineage) {
+    const written = await write(client);
+    const record: BoardWriteRecord | null =
+      written === null ? null : 'lineage' in written ? written : { lineage: [written] };
+    if (record) {
       const { auditTaskAction, TaskAuditNotRecordedError } = await import('../tasking/task-audit.js');
-      const outcome = await auditTaskAction(lineage, client);
-      if (!outcome.recorded) throw new TaskAuditNotRecordedError(outcome.reason);
+      // In order: the change's own row, then the rows of what it caused.
+      for (const row of record.lineage) {
+        const outcome = await auditTaskAction(row, client);
+        if (!outcome.recorded) throw new TaskAuditNotRecordedError(outcome.reason);
+      }
+      notices = record.notices ?? [];
     }
     await client.query('COMMIT');
-    return true;
   } catch (err) {
     await client?.query('ROLLBACK').catch(() => undefined);
     console.warn(`[ana-ri] ${label} failed (non-fatal):`, err instanceof Error ? err.message : err);
@@ -1003,6 +1075,20 @@ async function boardWriteWithLineage(
   } finally {
     client?.release();
   }
+  // Only for what committed.
+  if (notices.length > 0) {
+    const { notifyTaskEvent } = await import('../tasking/task-side-effects.js');
+    for (const notice of notices) notifyTaskEvent(notice);
+  }
+  return true;
+}
+
+/** What a board write records when it caused more than its own change: its own
+ *  row first, then one per record it moved (a completion's unblocked
+ *  dependents), and the notices to send once all of it has committed. */
+interface BoardWriteRecord {
+  lineage: AuditTaskActionParams[];
+  notices?: TaskEventNotice[];
 }
 
 /**
@@ -1346,7 +1432,7 @@ export async function updateTask(
           // Governed lineage only for a status change that actually landed.
           transitioned = Boolean(mirrored.rowCount) && Boolean(newStatus) && newStatus !== mirrorFrom;
           if (!transitioned) return null;
-          return {
+          const own: AuditTaskActionParams = {
             orgId: ctx.organizationId,
             userId: ctx.userId,
             command: 'task.transition',
@@ -1354,21 +1440,18 @@ export async function updateTask(
             payload: { from: mirrorFrom, to: newStatus },
             reason: 'Task status changed by AnA',
           };
+          if (newStatus !== 'completed') return own;
+          // Completing a task wakes its dependents on every write path — here
+          // on this transaction, locking them after the completed row and
+          // before any ledger row, so the completion, the dependents' moves and
+          // every row recording them commit together or not at all.
+          const { cascadeUnblockOnCompletionOnClient } = await import('../tasking/task-side-effects.js');
+          const cascade = await cascadeUnblockOnCompletionOnClient(ctx.organizationId, mirroredTaskId, {
+            client,
+            actorUserId: ctx.userId,
+          });
+          return { lineage: [own, ...cascade.ledger], notices: cascade.notices };
         });
-      }
-    }
-
-    // Completing a task wakes its dependents on every write path — once the
-    // completion has committed, so the cascade reads the state it acts on.
-    if (boardUpdated && transitioned && newStatus === 'completed') {
-      try {
-        const { cascadeUnblockOnCompletion } = await import('../tasking/task-side-effects.js');
-        await cascadeUnblockOnCompletion(ctx.organizationId, mirroredTaskId);
-      } catch (err) {
-        console.warn(
-          '[ana-ri] unblock cascade failed (non-fatal):',
-          err instanceof Error ? err.message : err
-        );
       }
     }
 
@@ -1700,7 +1783,136 @@ export async function exportPersonalData(
   }
 }
 
-/** Erase/redact user-generated personal data (GDPR Art. 17 support). */
+/**
+ * Why the erasure retains regulated artifacts, stated wherever the result says
+ * it did (2026-09-28).
+ */
+const GDPR_RETENTION_LEGAL_BASIS =
+  'GDPR Art. 17(3)(b): erasure does not apply where processing is necessary to comply with a legal obligation. ' +
+  'concept2cure_artifacts are regulated records under GxP record retention and 21 CFR 11.10(c); ' +
+  "the subject's identity on them is pseudonymised by the redaction of their user record.";
+
+/** The tables the AnA erasure writes. concept2cure_artifacts is read (retained), never written. */
+const ERASURE_SCOPE = [
+  'users',
+  'concept2cure_conversations',
+  'concept2cure_thread_comments',
+  'gdpr_data_subject_requests',
+] as const;
+
+/**
+ * One erasure statement against a table this environment may not have. Under a
+ * SAVEPOINT, so an absent table (42P01) rolls back only itself and is reported
+ * as NOT APPLICABLE — never as zero rows erased. Any other error propagates and
+ * the whole erasure rolls back.
+ *
+ * This replaces `.catch(() => ({ rows: [] }))` on each statement, which turned
+ * a failure into "0 redacted" and left the transaction aborted: every later
+ * statement failed too, COMMIT silently rolled everything back, and the handler
+ * reported a completed erasure that had not happened.
+ */
+async function runIfTablePresent(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<{ applicable: boolean; rows: any[] }> {
+  await client.query('SAVEPOINT gdpr_erase_table');
+  try {
+    const result = await client.query(sql, values);
+    await client.query('RELEASE SAVEPOINT gdpr_erase_table');
+    return { applicable: true, rows: result.rows };
+  } catch (err: unknown) {
+    if ((err as { code?: string } | null)?.code !== '42P01') throw err;
+    await client.query('ROLLBACK TO SAVEPOINT gdpr_erase_table');
+    await client.query('RELEASE SAVEPOINT gdpr_erase_table');
+    return { applicable: false, rows: [] };
+  }
+}
+
+interface ErasureOutcome {
+  redactedUser: boolean;
+  /** null ⇒ the table is not present here (listed in notApplicable), not zero. */
+  redactedConversations: number | null;
+  redactedComments: number | null;
+  retainedRegulatedArtifacts: number | null;
+  notApplicable: string[];
+}
+
+/** The redactions, on the erasure's transaction client. Throws on any real failure. */
+async function redactDataSubject(client: PoolClient, orgId: number, dataSubjectId: number): Promise<ErasureOutcome> {
+  const scope = [orgId, dataSubjectId];
+  const userResult = await client.query(
+    `UPDATE users
+     SET email = CONCAT('erased+', id, '@redacted.local'),
+         name = CONCAT('[ERASED USER ', id, ']'),
+         title = NULL,
+         department = NULL,
+         preferences = '{}'::jsonb,
+         updated_at = NOW()
+     WHERE id = $2
+       AND EXISTS (SELECT 1 FROM organization_users ou
+                    WHERE ou.user_id = users.id AND ou.organization_id = $1)
+     RETURNING id`,
+    scope
+  );
+  const conversations = await runIfTablePresent(
+    client,
+    `UPDATE concept2cure_conversations
+     SET title = '[ERASED CONVERSATION]',
+         summary = '[REDACTED PER GDPR ART.17]',
+         updated_at = NOW()
+     WHERE organization_id = $1 AND created_by_id = $2
+     RETURNING id`,
+    scope
+  );
+  // Regulated records: counted, NOT overwritten (GDPR_RETENTION_LEGAL_BASIS).
+  // Until 2026-09-28 this overwrote their title and content, and recorded a
+  // provenance 'transformation' per artifact. Nothing is done to them now, so
+  // no artifact provenance event is written: one would record an act that did
+  // not happen. The retention is recorded on the signature and the request row.
+  const artifacts = await runIfTablePresent(
+    client,
+    `SELECT count(*)::int AS n FROM concept2cure_artifacts WHERE organization_id = $1 AND created_by_id = $2`,
+    scope
+  );
+  const comments = await runIfTablePresent(
+    client,
+    `UPDATE concept2cure_thread_comments
+     SET body = '[REDACTED PER GDPR ART.17]',
+         updated_at = NOW()
+     WHERE org_id = $1 AND author_id = $2
+     RETURNING id`,
+    scope
+  );
+  const count = (r: { applicable: boolean; rows: any[] }) => (r.applicable ? r.rows.length : null);
+  return {
+    redactedUser: userResult.rows.length > 0,
+    redactedConversations: count(conversations),
+    redactedComments: count(comments),
+    retainedRegulatedArtifacts: artifacts.applicable ? Number(artifacts.rows[0]?.n ?? 0) : null,
+    notApplicable: [
+      ...(conversations.applicable ? [] : ['concept2cure_conversations']),
+      ...(artifacts.applicable ? [] : ['concept2cure_artifacts']),
+      ...(comments.applicable ? [] : ['concept2cure_thread_comments']),
+    ],
+  };
+}
+
+function erasureMessage(dataSubjectId: number, o: ErasureOutcome): string {
+  const n = (v: number | null, what: string) => (v === null ? `${what}: not applicable` : `${v} ${what}`);
+  return (
+    `Erasure completed for subject ${dataSubjectId}: user record ${o.redactedUser ? 'redacted' : 'not found in this organization'}, ` +
+    `${n(o.redactedConversations, 'conversation(s) redacted')}, ${n(o.redactedComments, 'comment(s) redacted')}. ` +
+    `${n(o.retainedRegulatedArtifacts, 'regulated artifact(s) retained')} under GDPR Art. 17(3)(b) (GxP record retention).`
+  );
+}
+
+/**
+ * Erase/redact user-generated personal data (GDPR Art. 17 support).
+ *
+ * An e-signature-tier command: the erasure, its electronic signature and the
+ * gdpr_data_subject_requests record commit in ONE transaction, or nothing does.
+ */
 export async function erasePersonalData(
   ctx: CommandContext,
   params: { dataSubjectId?: number; reason?: string }
@@ -1721,109 +1933,51 @@ export async function erasePersonalData(
     const reason = params?.reason || 'GDPR Art. 17 erasure request';
     await client.query('BEGIN');
 
-    const userResult = await client.query(
-      `UPDATE users
-       SET email = CONCAT('erased+', id, '@redacted.local'),
-           name = CONCAT('[ERASED USER ', id, ']'),
-           title = NULL,
-           department = NULL,
-           preferences = '{}'::jsonb,
-           updated_at = NOW()
-       WHERE id = $2
-         AND EXISTS (SELECT 1 FROM organization_users ou
-                      WHERE ou.user_id = users.id AND ou.organization_id = $1)
-       RETURNING id`,
-      [ctx.organizationId, dataSubjectId]
-    );
+    // The signature FIRST, before any redaction. persistGovernedActionSignature
+    // resolves the signer's printed name (21 CFR 11.50(a)(1)) inside this
+    // transaction; on a self-erasure, the users UPDATE below would already have
+    // replaced it with "[ERASED USER n]", and the signature would name nobody.
+    // Keeping the signer's real name and email on the electronic_signatures row
+    // is lawful: GDPR Art. 17(3)(b) exempts processing required by a legal
+    // obligation, and Part 11 requires the signed record to name its signer.
+    const { signatureId } = await signGovernedCommand(client, ctx, {
+      command: 'erase_personal_data',
+      target: `data-subject:${dataSubjectId}`,
+      payload: { dataSubjectId, scope: [...ERASURE_SCOPE] },
+      binding: ledgerBinding('An erasure destroys the content it acts on, so there is no content to bind: the signer attests to the decision to erase.'),
+      extraManifest: { retainedTables: ['concept2cure_artifacts'], retentionLegalBasis: GDPR_RETENTION_LEGAL_BASIS },
+    });
 
-    const convResult = await client
-      .query(
-        `UPDATE concept2cure_conversations
-       SET title = '[ERASED CONVERSATION]',
-           summary = '[REDACTED PER GDPR ART.17]',
-           updated_at = NOW()
-       WHERE organization_id = $1 AND created_by_id = $2
-       RETURNING id`,
-        [ctx.organizationId, dataSubjectId]
-      )
-      .catch(() => ({ rows: [] as any[] }));
+    const outcome = await redactDataSubject(client, ctx.organizationId, dataSubjectId);
 
-    const artResult = await client
-      .query(
-        `UPDATE concept2cure_artifacts
-       SET title = CONCAT('[ERASED] ', COALESCE(title, 'artifact')),
-           content = '[REDACTED PER GDPR ART.17]',
-           metadata = COALESCE(metadata, '{}'::jsonb) || '{"gdpr_erased": true}'::jsonb,
-           updated_at = NOW()
-       WHERE organization_id = $1 AND created_by_id = $2
-       RETURNING id, artifact_id`,
-        [ctx.organizationId, dataSubjectId]
-      )
-      .catch(() => ({ rows: [] as any[] }));
-
-    // Uniform provenance: erasing an artifact's content is a lifecycle
-    // 'transformation' event, recorded per erased artifact in this transaction.
-    // Best-effort — a GDPR Art. 17 erasure is legally mandated and must not fail
-    // because a provenance row could not be written.
-    // Best-effort via SAVEPOINT: a failed provenance write rolls back only
-    // itself, so it can neither block the legally-mandated erasure nor poison the
-    // transaction the subsequent redaction statements run in.
-    for (const erased of (artResult.rows as Array<{ id: number }>)) {
-      await recordArtifactProvenanceBestEffort(client, {
-        artifactId: erased.id,
-        organizationId: ctx.organizationId,
-        eventType: 'transformation',
-        eventAction: 'gdpr_erase',
-        actorId: ctx.userId,
-        details: { reason, gdprErased: true, dataSubjectId: String(dataSubjectId) },
-        backendService: 'ana-ri/command-executor',
-      });
-    }
-
-    const commentResult = await client
-      .query(
-        `UPDATE concept2cure_thread_comments
-       SET body = '[REDACTED PER GDPR ART.17]',
-           updated_at = NOW()
-       WHERE org_id = $1 AND author_id = $2
-       RETURNING id`,
-        [ctx.organizationId, dataSubjectId]
-      )
-      .catch(() => ({ rows: [] as any[] }));
-
-    await client
-      .query(
-        `INSERT INTO gdpr_data_subject_requests
+    // The record of the erasure. Not optional: without it there is no evidence
+    // the request was honoured, so a failure here fails the erasure.
+    await client.query(
+      `INSERT INTO gdpr_data_subject_requests
         (organization_id, data_subject_id, request_type, status, response_deadline, completed_at, response_details)
        VALUES ($1, $2, 'erasure', 'completed', NOW(), NOW(), $3)`,
-        [
-          ctx.organizationId,
-          String(dataSubjectId),
-          `AnA erasure workflow completed. Reason: ${reason}`,
-        ]
-      )
-      .catch(() => undefined);
+      [
+        ctx.organizationId,
+        String(dataSubjectId),
+        `AnA erasure workflow completed. Reason: ${reason}. ${erasureMessage(dataSubjectId, outcome)} ` +
+          `Electronic signature ${signatureId}.`,
+      ]
+    );
 
     await client.query('COMMIT');
 
     return {
       success: true,
       action: 'erase_personal_data',
-      data: {
-        dataSubjectId,
-        redactedUser: userResult.rows.length > 0,
-        redactedConversations: convResult.rows.length,
-        redactedArtifacts: artResult.rows.length,
-        redactedComments: commentResult.rows.length,
-      },
-      message: `Erasure workflow completed for subject ${dataSubjectId}.`,
+      data: { dataSubjectId, ...outcome, retentionLegalBasis: GDPR_RETENTION_LEGAL_BASIS, signatureId },
+      message: erasureMessage(dataSubjectId, outcome),
     };
   } catch (err: unknown) {
     await client.query('ROLLBACK').catch(() => undefined);
     return {
       success: false,
       action: 'erase_personal_data',
-      message: 'Erasure workflow failed.',
+      message: 'Erasure workflow failed. Nothing was erased.',
       error: err instanceof Error ? err.message : String(err),
     };
   } finally {
@@ -1835,7 +1989,16 @@ export async function erasePersonalData(
 // 6. SUBMISSION PACKAGING
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Create a submission package for a project */
+/**
+ * Create a submission package for a project.
+ *
+ * An e-signature-tier command: the INSERT and the creator's electronic
+ * signature commit in ONE transaction, or neither does. A new package has no
+ * content yet, so the signer attests to the creation DECISION — the package
+ * definition in the payload — and the signature binds the ledger chain hash
+ * under the governed-action-ledger basis. It claims no content hash
+ * (2026-09-28; until then no signature was recorded at all).
+ */
 export async function createSubmissionPackage(
   ctx: CommandContext,
   params: {
@@ -1846,8 +2009,10 @@ export async function createSubmissionPackage(
     targetDate?: string;
   }
 ): Promise<CommandResult> {
+  const client = await pool.connect();
   try {
-    const result = await pool.query(
+    await client.query('BEGIN');
+    const result = await client.query(
       `INSERT INTO c2c_submission_packages
          (package_id, org_id, project_id, package_family, title, description,
           target_date, status, created_at, updated_at)
@@ -1863,21 +2028,36 @@ export async function createSubmissionPackage(
       ]
     );
     const pkg = result.rows[0];
+    const { signatureId } = await signGovernedCommand(client, ctx, {
+      command: 'create_submission_package',
+      target: `submission-package:${pkg.package_id}`,
+      payload: {
+        projectId: params.projectId,
+        packageFamily: params.packageFamily,
+        title: params.title,
+        targetDate: params.targetDate ?? null,
+      },
+      binding: ledgerBinding('A new submission package has no content to bind: the signer attests to the decision to create it, as defined in the signed payload.'),
+    });
+    await client.query('COMMIT');
     return {
       success: true,
       action: 'create_submission_package',
-      data: { packageId: pkg.package_id, title: pkg.title, family: pkg.package_family },
+      data: { packageId: pkg.package_id, title: pkg.title, family: pkg.package_family, signatureId },
       message: `Submission package "${
         params.title
       }" created (${params.packageFamily.toUpperCase()}).`,
     };
   } catch (err: unknown) {
+    await client.query('ROLLBACK').catch(() => undefined);
     return {
       success: false,
       action: 'create_submission_package',
       message: 'Failed to create submission package.',
       error: err instanceof Error ? err.message : String(err),
     };
+  } finally {
+    client.release();
   }
 }
 
@@ -2105,7 +2285,7 @@ export async function listArtifactVersions(
               u.name as created_by_name
        FROM concept2cure_artifact_versions v
        JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $2
-       LEFT JOIN users u ON u.id = v.created_by_id
+       LEFT JOIN LATERAL public.actor_name(v.created_by_id) u ON TRUE
        WHERE v.artifact_id = $1
        ORDER BY v.version DESC`,
       [params.artifactId, ctx.organizationId]
@@ -2377,10 +2557,10 @@ export async function compareVersions(
   try {
     const versions = await pool.query(
       `SELECT v.version, v.content, v.change_description, v.created_at,
-              u.name as author
+              COALESCE(u.name, 'user ' || v.created_by_id) as author
        FROM concept2cure_artifact_versions v
        JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4
-       LEFT JOIN users u ON u.id = v.created_by_id
+       LEFT JOIN LATERAL public.actor_name(v.created_by_id) u ON TRUE
        WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
        ORDER BY v.version`,
       [params.artifactId, params.versionA, params.versionB, ctx.organizationId]
@@ -2484,10 +2664,10 @@ export async function reviewVersionImpact(
     // 1. Load both versions
     const versions = await pool.query(
       `SELECT v.version, v.content, v.change_description, v.created_at,
-              u.name as author
+              COALESCE(u.name, 'user ' || v.created_by_id) as author
        FROM concept2cure_artifact_versions v
        JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4
-       LEFT JOIN users u ON u.id = v.created_by_id
+       LEFT JOIN LATERAL public.actor_name(v.created_by_id) u ON TRUE
        WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
        ORDER BY v.version`,
       [params.artifactId, params.versionA, params.versionB, ctx.organizationId]
@@ -2616,6 +2796,9 @@ What should be done BEFORE this version is submitted? Be specific.`;
       maxTokens: 4096,
       temperature: 0.2,
       strategy: 'quality_optimized' as any,
+      // The tenant's placement policy governs where this review is sent (D6).
+      organizationId: ctx.organizationId,
+      callerModule: 'ana-ri/review-version-impact',
     });
 
     if (!response.content) {
@@ -2857,10 +3040,75 @@ export async function listMilestones(
 // 15. SAFE VERSION REVERT
 // ─────────────────────────────────────────────────────────────────────────────
 
+type RevertSource =
+  | { ok: true; artifact: { id: number; artifact_id: string; version: number; ctd_section: string | null; title: string | null }; oldContent: string }
+  | { ok: false; message: string };
+
+/** The artifact and the content of the version it reverts to, or why not. */
+async function loadRevertSource(
+  ctx: CommandContext,
+  params: { artifactId: number; targetVersion: number }
+): Promise<RevertSource> {
+  const artifactResult = await pool.query(
+    `SELECT id, artifact_id, version, status, ctd_section, title FROM concept2cure_artifacts
+     WHERE artifact_id = $1 AND organization_id = $2`,
+    [params.artifactId, ctx.organizationId]
+  );
+  const artifact = artifactResult.rows[0];
+  if (!artifact) return { ok: false, message: `Artifact ${params.artifactId} not found.` };
+  if (artifact.status === 'locked') {
+    return { ok: false, message: 'Document is locked. Change status to draft or review before reverting.' };
+  }
+  if (params.targetVersion >= artifact.version) {
+    return { ok: false, message: `Cannot revert to version ${params.targetVersion} — current version is ${artifact.version}.` };
+  }
+  const versionResult = await pool.query(
+    `SELECT content, version FROM concept2cure_artifact_versions
+     WHERE artifact_id = $1 AND version = $2 AND organization_id = $3`,
+    [artifact.id, params.targetVersion, ctx.organizationId]
+  );
+  if (versionResult.rows.length === 0) return { ok: false, message: `Version ${params.targetVersion} not found.` };
+  return { ok: true, artifact, oldContent: versionResult.rows[0].content };
+}
+
+/**
+ * The revert's electronic signature, written by artifact-tagger INSIDE the
+ * transaction that writes the new version, over that version as persisted:
+ * "this content, at this new version". Refuses to sign a version whose content
+ * is not the content reverted to.
+ */
+function signRevertInTransaction(
+  ctx: CommandContext,
+  params: { projectId: number; targetVersion: number },
+  oldContent: string,
+  signed: { signatureId?: number; newVersion?: number }
+): ArtifactWriteHook {
+  return async (client, persisted) => {
+    const binding = artifactVersionContentBinding(persisted);
+    if (binding.contentSha256 !== sha256OfContent(oldContent)) {
+      throw new Error('revert_to_version: the version written is not the content of the version reverted to; not signing it.');
+    }
+    const facts = { targetVersion: params.targetVersion, newVersion: persisted.version, contentSha256: binding.contentSha256 };
+    const { signatureId } = await signGovernedCommand(client as PoolClient, ctx, {
+      command: 'revert_to_version',
+      target: `artifact:${persisted.artifactId}`,
+      payload: { projectId: params.projectId, artifactId: persisted.artifactId, ...facts },
+      binding,
+      extraManifest: facts,
+    });
+    signed.signatureId = signatureId;
+    signed.newVersion = persisted.version;
+  };
+}
+
 /**
  * Revert an artifact to a previous version (non-destructive).
  * Uses the same logic as POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback
  * which creates a NEW version with old content — nothing is deleted.
+ *
+ * An e-signature-tier command: the new version and its electronic signature
+ * commit in ONE transaction — artifact-tagger's, via its in-transaction hook —
+ * or neither does (2026-09-28).
  */
 export async function revertToVersion(
   ctx: CommandContext,
@@ -2880,59 +3128,21 @@ export async function revertToVersion(
   }
 
   try {
-    // Verify artifact exists and is not locked
-    const artifactResult = await pool.query(
-      `SELECT id, artifact_id, version, status, ctd_section, title FROM concept2cure_artifacts
-       WHERE artifact_id = $1 AND organization_id = $2`,
-      [params.artifactId, ctx.organizationId]
-    );
+    // Refuse before the governance evaluation runs: the signature is checked
+    // again, inside the transaction, where it is written.
+    assertVerifiedSignoff('revert_to_version', ctx.signoff);
+    const source = await loadRevertSource(ctx, params);
+    if (!source.ok) return { success: false, action: 'revert_to_version', message: source.message };
+    const { artifact, oldContent } = source;
 
-    if (artifactResult.rows.length === 0) {
-      return {
-        success: false,
-        action: 'revert_to_version',
-        message: `Artifact ${params.artifactId} not found.`,
-      };
-    }
-
-    const artifact = artifactResult.rows[0];
-    if (artifact.status === 'locked') {
-      return {
-        success: false,
-        action: 'revert_to_version',
-        message: 'Document is locked. Change status to draft or review before reverting.',
-      };
-    }
-
-    if (params.targetVersion >= artifact.version) {
-      return {
-        success: false,
-        action: 'revert_to_version',
-        message: `Cannot revert to version ${params.targetVersion} — current version is ${artifact.version}.`,
-      };
-    }
-
-    // Load the target version content
-    const versionResult = await pool.query(
-      `SELECT content, version FROM concept2cure_artifact_versions
-       WHERE artifact_id = $1 AND version = $2`,
-      [artifact.id, params.targetVersion]
-    );
-
-    if (versionResult.rows.length === 0) {
-      return {
-        success: false,
-        action: 'revert_to_version',
-        message: `Version ${params.targetVersion} not found.`,
-      };
-    }
-
-    const oldContent = versionResult.rows[0].content;
-
-    // Create new version with old content (same pattern as concept2cure.ts rollback endpoint)
+    // Create new version with old content (same pattern as concept2cure.ts rollback endpoint).
+    // artifactId is the EXTERNAL id: artifact-tagger's update branch keys on
+    // concept2cure_artifacts.artifact_id. This passed the integer primary key,
+    // which matched no row, so the revert could never have written anything.
+    const signed: { signatureId?: number; newVersion?: number } = {};
     const result = await persistGovernedCommandArtifact(ctx, {
       projectId: params.projectId,
-      artifactId: artifact.id,
+      artifactId: artifact.artifact_id as unknown as number,
       sectionCode: artifact.ctd_section || undefined,
       title: artifact.title || `Artifact ${params.artifactId}`,
       content: oldContent,
@@ -2947,6 +3157,7 @@ export async function revertToVersion(
         revertedAt: new Date().toISOString(),
         revertReason: `Reverted to version ${params.targetVersion} via AnA RI`,
       },
+      inTransaction: signRevertInTransaction(ctx, params, oldContent, signed),
     });
 
     return {
@@ -2955,9 +3166,11 @@ export async function revertToVersion(
       data: {
         artifactId: params.artifactId,
         revertedToVersion: params.targetVersion,
+        newVersion: signed.newVersion,
         newVersionId: result.versionId,
+        signatureId: signed.signatureId,
       },
-      message: `Artifact ${params.artifactId} reverted to version ${params.targetVersion} content (created as new version ${result.versionId}).`,
+      message: `Artifact ${params.artifactId} reverted to version ${params.targetVersion} content (created as new version ${signed.newVersion}).`,
     };
   } catch (err: unknown) {
     return {

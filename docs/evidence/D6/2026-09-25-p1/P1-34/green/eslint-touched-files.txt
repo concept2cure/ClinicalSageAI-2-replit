@@ -1,0 +1,7 @@
+# ESLint on every touched file (2026-09-26); existing files compared with HEAD 7fbe51c5 via --stdin
+server/services/ana/governed-tool-gate.ts: HEAD=[0 problems] now=[0 problems]
+server/services/ana/__tests__/governed-tool-gate.test.ts: HEAD=[0 problems] now=[0 problems]
+server/mcp/tools/runtime.ts: HEAD=[0 problems] now=[0 problems]
+server/services/ana/propose-only-tools.ts (new): [clean]
+server/services/ana/__tests__/propose-only-tools.test.ts (new): [clean]
+server/mcp/__tests__/mcp-runtime-propose-only.test.ts (new): [clean]

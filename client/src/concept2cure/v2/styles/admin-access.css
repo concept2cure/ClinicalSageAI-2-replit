@@ -14,7 +14,7 @@
 .adm-access .small { font-size: 12px; }
 .adm-access .adm-sub { color: var(--text-400); font-size: 12px; }
 .adm-access .adm-muted { color: var(--text-400); }
-.adm-access .adm-ok { color: var(--success); display: inline-flex; }
+.adm-access .adm-ok { color: var(--success); display: inline-flex; align-items: center; gap: 3px; font-size: 11px; }
 .adm-access .adm-warn { color: var(--warning); display: inline-flex; }
 .adm-access .adm-overdue { color: var(--error); font-weight: 600; }
 
@@ -70,6 +70,9 @@
 .adm-access .section-sub { font-size: 11px; color: var(--text-400); }
 .adm-access .section-head .seg { margin-left: auto; }
 .adm-access .adm-empty { margin: 0 32px 20px; padding: 20px; border: 1px dashed var(--border); border-radius: var(--radius-md); color: var(--text-400); font-size: 13px; }
+/* A facet whose read failed (meta.unavailable) — aligned with the tables it stands in for. */
+.adm-access .adm-facet-error { margin: 0 32px 20px; }
+.adm-access .adm-tabs + .adm-facet-error { margin-top: 24px; }
 
 /* Segmented control */
 .adm-access .seg { display: inline-flex; gap: 2px; padding: 2px; background: var(--bg-050); border-radius: var(--radius-sm, 8px); }
@@ -158,18 +161,26 @@
 .adm-access .adm-setting-desc { font-size: 11px; color: var(--text-400); margin-top: 2px; }
 .adm-access .adm-setting-val { display: inline-flex; align-items: center; gap: 8px; color: var(--text-200); font-size: 13px; }
 .adm-access .adm-setting-chev { color: var(--text-400); display: inline-flex; }
+/* A deployment fact (kind: 'policy') is shown, not offered for change. */
+.adm-access .adm-setting-fixed { cursor: default; }
+.adm-access .adm-setting-fixed:hover { background: var(--bg-000); }
 
 /* Audit band */
 .adm-access .adm-audit { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-000); overflow: hidden; margin: 0 32px 24px; }
-.adm-access .adm-audit-row { display: grid; grid-template-columns: 100px 80px 90px 130px 1fr 90px; gap: 12px; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--border); font-size: 12px; }
+/* when · actor · event · target · chain hash. The when column fits a
+   locale-formatted instant ("Sep 23, 2026, 2:28 PM"); every text cell clips
+   with an ellipsis inside its own track (full text in its title) so no cell
+   can print over its neighbour, as an 80px column fed a 24-character ISO
+   string did. */
+.adm-access .adm-audit-row { display: grid; grid-template-columns: 150px minmax(0, 150px) minmax(0, 2fr) minmax(0, 1fr) 90px; gap: 12px; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--border); font-size: 12px; }
 .adm-access .adm-audit-row:last-child { border-bottom: none; }
-.adm-access .adm-audit-id { color: var(--text-300); }
+.adm-access .adm-audit-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adm-access .adm-audit-when { color: var(--text-400); font-size: 11px; }
 .adm-access .adm-audit-actor { color: var(--text-200); }
-.adm-access .adm-audit-action { color: var(--accent-200, var(--text-200)); }
-.adm-access .adm-audit-target { color: var(--text-200); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-access .adm-audit-action { color: var(--text-100); }
+.adm-access .adm-audit-target { color: var(--text-200); }
 .adm-access .adm-audit-sha { color: var(--text-400); text-align: right; }
 @media (max-width: 900px) {
   .adm-access .adm-audit-row { grid-template-columns: 1fr 1fr; }
-  .adm-access .adm-audit-target { white-space: normal; }
+  .adm-access .adm-audit-row > span { white-space: normal; }
 }

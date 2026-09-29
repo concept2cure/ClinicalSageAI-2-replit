@@ -461,6 +461,23 @@ jobs:
             echo "::error::The task definition carries production override flag(s): ${ACCEPT_OVERRIDES% }. Each switches a production refusal off; remove it from terraform/stack."
             FAIL=1
           fi
+          # AI_GATEWAY_DETERMINISTIC (legacy alias DETERMINISTIC_MODE) makes AnA
+          # answer with fixed responses instead of model output, and those can be
+          # accepted into a governed draft. The server refuses to boot on it in
+          # production without AI_GATEWAY_ACCEPT_DETERMINISTIC, which the check
+          # above refuses. This names the cause before the task rolls rather than
+          # after it crash-loops (server/startup/ai-governance-posture.ts; D2,
+          # docs/evidence/D2-DETERMINISTIC-PROD/2026-09-28/). Refused by name, set
+          # to anything, as the overrides are.
+          DETERMINISTIC_FLAGS=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | ((.environment // []) + (.secrets // [])) | map(.name)
+            | map(select(. == "AI_GATEWAY_DETERMINISTIC" or . == "DETERMINISTIC_MODE")) | .[]
+          ' /tmp/api-td-preflight.json | sort -u | tr '\n' ' ')
+          if [[ -n "${DETERMINISTIC_FLAGS// /}" ]]; then
+            echo "::error::The task definition carries ${DETERMINISTIC_FLAGS% }: AnA would serve fixed responses in place of model output. Remove it from terraform/stack."
+            FAIL=1
+          fi
           # APP_URL is the only origin emailed reset and invitation links are
           # built on in production (server/services/password-setup-token.ts).
           # Without it those flows refuse every request rather than put the

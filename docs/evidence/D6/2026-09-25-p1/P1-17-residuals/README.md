@@ -51,3 +51,85 @@ Tests: `server/startup/__tests__/tenant-impersonation-detector.test.ts`,
 - **(6)** the SAML token in the query string and `InResponseTo` `ifPresent`, **(8)** the login timing oracle
   (`routes/auth.ts`, inside another lane's window until 01:07 UTC), and the bare `/api` mount of the RTM export with
   `authenticateToken` (correct, if broad; left as is).
+
+## 2026-09-26 — re-check of (4): the dead skip list, the audited path, and the end-to-end proof
+
+A re-verification of (4) at HEAD `7fbe51c5` found the fix of `50b04d99` in place — the detector mounts once, in
+`applyAuthBoundary`, behind the boundary — and three residuals in cold, own-lane files. This section closes them.
+
+### What was wrong
+
+- `server/middleware/enterprise-security.ts:543-554` — the detector's `publicPaths` skip list held full paths
+  (`/api/health`, `/api/auth/login`, …) and tested them with `req.path.startsWith`. Mounted on `/api`, the detector receives
+  a mount-relative `req.path` from Express 5 (`/auth/login`), so no entry ever matched. Dead, and harmless: every `/api`
+  entry is on the boundary's `PUBLIC_API_ALLOWLIST` (`server/middleware/public-api-allowlist.ts`), which the boundary
+  consults before it authenticates (`authBoundary.ts:159-160`), so such a request reaches the detector with no `req.user`
+  and takes the no-session branch; `/healthz` and `/readyz` are not under `/api` at all. It was a second list of public
+  paths beside the boundary's.
+- `server/middleware/enterprise-security.ts:574` — the audit detail recorded `path: req.path`, so the
+  `tenant_impersonation_attempt` row named `/vault/documents`, not the `/api/vault/documents` the client sent. The unit
+  fixture faked `path: '/api/vault/documents'` with no `baseUrl` and could not see it.
+- `server/bootstrap/register-platform-routes.ts:19` — the comment said the CSP report route "survives the
+  validateTenantContext skip list"; the route is public because `CSP_REPORT_URI` is on `PUBLIC_API_ALLOWLIST`.
+- The end-to-end proof the item named — a real token through the real boundary — did not exist; the unit test drove
+  `validateTenantContext` with a hand-built request.
+- The expression `` `${req.baseUrl || ''}${req.path || ''}` `` was written out in `authBoundary.ts:159`,
+  `tenantLifecycleGuard.ts:128` and `storageQuotaGuard.ts:117`; recording the full path in the detector would have been
+  a fourth copy.
+
+### What is true now
+
+- The skip list is **deleted**, with the reason in the code. Decided by reading, not rewritten: rewriting it against the
+  full path would have revived a second copy of the boundary's allowlist, every entry of which the boundary already
+  answers before the detector runs (`/api/auth/login`, `/api/auth/register`, `/api/auth/signup` under the `/api/auth`
+  prefix entry; `/api/health` and `/api/csp-report` as prefix entries), and a session that presents another
+  organisation's id is an impersonation attempt on any path — there is no public path on which the detector should
+  stand down.
+- The audit detail records `requestFullPath(req)`; the row names `/api/vault/documents`.
+- `server/middleware/request-path.ts` (`requestFullPath`) is the one implementation. The detector,
+  `tenantLifecycleGuard.ts` and `storageQuotaGuard.ts` import it; their private `fullPath` copies are gone (2 + 4 call
+  sites). `authBoundary.ts:159` keeps its inline copy until that file is cold (lane `01E8btkB…`, window ends 2026-09-26
+  23:56 UTC).
+- `register-platform-routes.ts` names the real reason the CSP route is reachable without a session.
+- `server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts` builds `express()`, calls `applyAuthBoundary(app)`
+  as `server/index.ts` does, sets `AUTH_BOUNDARY_MODE=enforce`, mints a real `jwt.sign` access token (organizationId 7,
+  session claims `sid`/`sst`/`idl`) against the test `JWT_SECRET`, and doubles the pool, membership, tenant scope,
+  lifecycle and quota guards exactly as `server/middleware/__tests__/auth-session-currency.test.ts` does. Four cases:
+  Bearer(org 7) + `x-organization-id: 9` → 403 `TENANT_MISMATCH` and one `tenant_impersonation_attempt` row with
+  `tenantId 7`, `resourceId '9'`, `details.path '/api/vault/documents'`; Bearer(org 7) + header 7 → 200 with
+  `req.organizationId` 7 from the session; no token + header 9 → the boundary's 401 `AUTH_001`, no audit row; a
+  `PUBLIC_API_ALLOWLIST` path with Bearer + header 9 → 200, no audit row (the boundary established no session, which is
+  why the detector needs no list of its own).
+- The unit fixture models the mount (`baseUrl: '/api'`, `path: '/vault/documents'`) and asserts the audited path.
+
+| | File | Result |
+|---|---|---|
+| red | `red/impersonation-audit-path-before-fix.txt` | code unchanged: **2 failed / 7 passed** — e2e case 1 "the audited path lost its /api prefix: expected '/vault/documents' to be '/api/vault/documents'"; the unit case the same way; the other three e2e cases (200, 401 `AUTH_001`, public path) already pass, so the refusal itself was never in doubt |
+| green | `green/impersonation-e2e-after-fix.txt` | **119 / 119** across 10 files: both detector suites, `tenantLifecycleGuard` (21), `storageQuotaGuard` (19), `authBoundary` (17), `csp-nonce`, `csrf-webhook-exemption`, `enterprise-security-dev-origins`, `audit-outcome-headers-exposed`, `api-auth-gate` |
+| green | `green/gates-2026-09-26.txt` | `ci:column-reachability` OK; `ci:migration-set-order` OK (315 migrations); `ci:migration-drop-safety` OK; `check:security-patterns` 0 violations across 2855 files (no migration is touched; the gates ran because the lane's brief asks for them) |
+
+Lint, HEAD → working tree: `enterprise-security.ts` 4 → 4 warnings, `register-platform-routes.ts` 4 → 4,
+`tenantLifecycleGuard.ts` 0 → 0, `storageQuotaGuard.ts` 0 → 0, `tenant-impersonation-detector.test.ts` 0 → 0;
+`request-path.ts` and the e2e test lint clean.
+
+Re-run:
+
+```
+NODE_OPTIONS=--max-old-space-size=1536 npx vitest run \
+  server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts \
+  server/startup/__tests__/tenant-impersonation-detector.test.ts \
+  server/middleware/__tests__/tenantLifecycleGuard.test.ts server/middleware/__tests__/storageQuotaGuard.test.ts
+npm run --silent ci:column-reachability && npm run --silent ci:migration-set-order && npm run --silent ci:migration-drop-safety
+npm run --silent check:security-patterns
+```
+
+### Left open
+
+- `authBoundary.ts:159` computes the full path inline; it joins `request-path.ts` once its lane's window closes.
+- The register (`docs/security/SECURITY_AUDIT_2026-09-24.md:132`) dates the closing commit "2026-09-26"; `50b04d99` is
+  2026-09-25T23:47Z. Shared document — the corrected wording is returned to the control tower, not edited here.
+- The e2e test runs enforce mode only. In warn mode an anonymous request passes the boundary with no `req.user` and the
+  detector takes the no-session branch, which unit case 4 covers; a valid token is authenticated identically in both
+  modes (`authBoundary.ts:176-190`).
+- `applyAuditTrailMiddleware`, mounted before the boundary, additionally records the 403 as `UNAUTHORIZED_ACCESS`
+  (`server/startup/audit-trail.ts`); unchanged and not asserted here.

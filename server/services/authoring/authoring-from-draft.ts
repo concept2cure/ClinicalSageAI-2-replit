@@ -14,6 +14,7 @@
  * authored this through the editor".
  */
 
+import { programInOrganization } from '../c2c/program-access';
 import crypto from 'crypto';
 import { ANA_MACHINE_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
 import { columnState, type Queryable } from './authoring-evidence';
@@ -200,6 +201,12 @@ export async function createDocumentFromDraft(
   ctx: CreateContext,
   input: CreateDocumentFromDraftInput,
 ): Promise<CreateDocumentFromDraftOutcome> {
+  // The project must be a live one this organization owns (LX-20 / PF-02): the
+  // route checked only that programId looked like a UUID, so a draft could be
+  // filed in another organization's project. 404, as POST /docs answers.
+  if (!(await programInOrganization(ctx.pool, input.programId, ctx.tenantId))) {
+    return { kind: 'refused', status: 404, error: 'Project not found' };
+  }
   const provenanceState = await columnState(ctx.pool, 'provenance');
   if (provenanceState !== 'present') {
     return {

@@ -1,0 +1,70 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T01:11:42.948Z","pid":7603,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:11:42.950Z","pid":7603,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:11:42.950Z","pid":7603,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-names.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-09-29T01:11:43.330Z","pid":7603,"hostname":"vm","context":{"userId":961,"tenantId":90301,"resourceId":"wo03_7603_mulzdv38-actor-names-record"},"msg":"[audit-service] [AUDIT] data_modify actor_names_contract"}
+ × tests/db/actor-names.dbtest.ts > the audit trail after someone leaves the organization (D3) > names the person who acted, not only their id 16ms
+   → expected [ 'user 961' ] to deeply equal [ 'WO03 actor-names-leaver' ]
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers nothing about an account that never belonged to or acted in A 2ms
+ × tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers name and email only — no credential column exists on it 3ms
+   → expected [] to deeply equal [ [ 'email', 'name' ] ]
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > the users table itself still refuses the leaver's row to A 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/actor-names.dbtest.ts > the audit trail after someone leaves the organization (D3) > names the person who acted, not only their id
+AssertionError: expected [ 'user 961' ] to deeply equal [ 'WO03 actor-names-leaver' ]
+
+- Expected
++ Received
+
+  [
+-   "WO03 actor-names-leaver",
++   "user 961",
+  ]
+
+ ❯ tests/db/actor-names.dbtest.ts:79:44
+     77|     );
+     78|     expect(history.data.length, 'the audit row was not found').toBeGre…
+     79|     expect(history.data.map(e => e.actor)).toEqual(history.data.map(()…
+       |                                            ^
+     80|     expect(history.data.map(e => e.actorRef)).toEqual(history.data.map…
+     81|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers name and email only — no credential column exists on it
+AssertionError: expected [] to deeply equal [ [ 'email', 'name' ] ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "email",
+-     "name",
+-   ],
+- ]
++ []
+
+ ❯ tests/db/actor-names.dbtest.ts:94:50
+     92|   it('answers name and email only — no credential column exists on it'…
+     93|     const { rows } = await inA(() => getPool().query('SELECT * FROM pu…
+     94|     expect(rows.map(r => Object.keys(r).sort())).toEqual([['email', 'n…
+       |                                                  ^
+     95|   });
+     96|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  01:11:41
+   Duration  2.35s (transform 908ms, setup 71ms, import 1.70s, tests 304ms, environment 0ms)
+

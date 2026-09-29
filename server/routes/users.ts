@@ -8,6 +8,7 @@
 
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
+import { runWithTenantScope } from '../db/tenantStore';
 import { and, eq } from 'drizzle-orm';
 import { users, organizations, organizationUsers, notificationPreferences } from '../../shared/schema';
 import {
@@ -544,11 +545,21 @@ router.put('/me/persona', async (req: Request, res: Response) => {
       });
     }
 
-    const [updated] = await db
-      .update(organizationUsers)
-      .set({ persona: (persona as string | null), updatedAt: new Date() })
-      .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, organizationId)))
-      .returning({ persona: organizationUsers.persona, role: organizationUsers.role });
+    // /api/users runs in the pre-auth scope. A membership row is written only in
+    // its own organisation's scope (D3, 2026-09-26;
+    // docs/evidence/D3/2026-09-26-memberships/), so this write runs in the
+    // verified token's organisation — the one the WHERE clause names. Awaited
+    // inside the scope: a Drizzle builder is lazy, and one returned unawaited
+    // would start after the scope had exited.
+    const [updated] = await runWithTenantScope(
+      { tenantId: String(organizationId), role: null, source: 'request', caller: 'users:PUT /me/persona' },
+      async () =>
+        await db
+          .update(organizationUsers)
+          .set({ persona: (persona as string | null), updatedAt: new Date() })
+          .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, organizationId)))
+          .returning({ persona: organizationUsers.persona, role: organizationUsers.role })
+    );
 
     if (!updated) {
       return res.status(404).json({ error: { code: 'MEMBERSHIP_NOT_FOUND', message: 'No membership in this organization' } });
@@ -690,7 +701,7 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
 /**
  * GET /api/users/:id
  * Get user by ID (only matches numeric IDs)
- * Requires authentication — user can only fetch users within their own org
+ * Requires authentication — a member of the caller's organisation, by membership
  */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
@@ -714,12 +725,26 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     const idRaw = req.params.id;
     const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? '');
+    const organizationId = parseInt(String(decoded.organizationId ?? ''));
+    if (!Number.isFinite(organizationId)) {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
 
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, parseInt(String(id))))
-      .limit(1);
+    // /api/users runs in the pre-auth scope, which reads every account. The
+    // lookup runs in the verified token's organisation instead, where the users
+    // policy admits only that organisation's members (D3, 2026-09-29;
+    // docs/evidence/D3/2026-09-29-pre-auth-scope/): membership decides, not
+    // default_organization_id, which is a preference. Only the columns the
+    // response uses are read.
+    const user = await runWithTenantScope(
+      { tenantId: String(organizationId), role: null, source: 'request', caller: 'users:GET /:id' },
+      async () =>
+        await db
+          .select({ id: users.id, email: users.email, name: users.name })
+          .from(users)
+          .where(eq(users.id, parseInt(String(id))))
+          .limit(1)
+    );
 
     if (!user.length) {
       return res.status(404).json({
@@ -730,15 +755,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     const userData = user[0];
     const [firstName = '', ...lastNameParts] = (userData.name || '').split(' ');
     const lastName = lastNameParts.join(' ');
-
-    // Tenant isolation: only return user if they belong to the same org
-    const requestorOrgId = decoded.organizationId;
-    const targetOrgId = userData.defaultOrganizationId?.toString();
-    if (requestorOrgId !== targetOrgId) {
-      return res.status(404).json({
-        error: { code: 'USER_NOT_FOUND', message: 'User not found' },
-      });
-    }
+    const targetOrgId = String(organizationId);
 
     res.json({
       id: userData.id.toString(),

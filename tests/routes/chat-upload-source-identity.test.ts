@@ -165,6 +165,17 @@ beforeEach(() => {
   mockCreateSupersedingSource.mockResolvedValue({ source: { id: 4242 } });
 });
 
+/** regulatory_programs as the database holds it: `uuid` is org 5's project. */
+function programsOfOrg5(...uuids: string[]) {
+  mockPoolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+    if (/FROM regulatory_programs/i.test(sql)) {
+      const [id, org] = params as [string, number];
+      return { rows: uuids.includes(id) && org === 5 ? [{ id }] : [] };
+    }
+    return { rows: [] };
+  });
+}
+
 describe('chat upload → canonical source identity', () => {
   it('creates one client_document source and returns its id', async () => {
     const res = await runUpload();
@@ -185,17 +196,6 @@ describe('chat upload → canonical source identity', () => {
     expect(params.clientProgramId).toBeNull();
   });
 
-  /** regulatory_programs as the database holds it: `uuid` is org 5's project. */
-  function programsOfOrg5(...uuids: string[]) {
-    mockPoolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
-      if (/FROM regulatory_programs/i.test(sql)) {
-        const [id, org] = params as [string, number];
-        return { rows: uuids.includes(id) && org === 5 ? [{ id }] : [] };
-      }
-      return { rows: [] };
-    });
-  }
-
   it('scopes a UUID-keyed program upload instead of rejecting it', async () => {
     // The project management module is keyed on regulatory_programs UUIDs.
     // upload.ts used to parseInt every projectId and return 400
@@ -211,28 +211,6 @@ describe('chat upload → canonical source identity', () => {
     expect(params.clientWorkspaceId).toBeNull();
     expect(params.visibilityClass).toBe('project_private');
     expect(payload(res).status).toBe('ready');
-  });
-
-  it('refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written', async () => {
-    // PF-02 / LX-20: a Data Room file is anchored to a project of the
-    // uploader's organization, or it is not captured. The id was checked for
-    // UUID SHAPE only, so a file could be anchored to another organization's
-    // project, or to none that exists.
-    programsOfOrg5('11111111-1111-4111-8111-111111111111');
-    const res = await runUpload({ projectId: '22222222-2222-4222-8222-222222222222' });
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(payload(res)).toMatchObject({ code: 'PROJECT_NOT_FOUND' });
-    expect(mockCreateSource).not.toHaveBeenCalled();
-    const writes = mockPoolQuery.mock.calls.filter(([sql]) => /^\s*(INSERT|UPDATE|DELETE)\b/i.test(String(sql)));
-    expect(writes).toEqual([]);
-  });
-
-  it('keeps an unscoped chat attachment tenant-private, not project-wide', async () => {
-    await runUpload({ projectId: null });
-    expect(mockCreateSource).toHaveBeenCalledTimes(1);
-    const [, params] = mockCreateSource.mock.calls[0];
-    expect(params.visibilityClass).toBe('tenant_private');
-    expect(params.clientWorkspaceId).toBeNull();
   });
 
   it('records that the document was stored and read, not left pending', async () => {
@@ -275,19 +253,6 @@ describe('chat upload → canonical source identity', () => {
     expect(payload(res).sourceId).toBe(777);
   });
 
-  it('does not fail the upload when identity resolution errors', async () => {
-    // The user's file is already stored; losing the identity is a real gap but
-    // must not turn a completed upload into a 500.
-    mockCreateSource.mockRejectedValue(new Error('cre tables missing'));
-
-    const res = await runUpload();
-
-    expect(res.status).not.toHaveBeenCalledWith(500);
-    const body = payload(res);
-    expect(body.status).toBe('ready');
-    expect(body.sourceId).toBeNull();
-  });
-
   it('skips identity resolution when the org does not resolve to a numeric id', async () => {
     // `tenantContext.organizationId` is not guaranteed numeric (the shared mock
     // request supplies a string id). Passing NaN through would stamp a garbage
@@ -296,6 +261,64 @@ describe('chat upload → canonical source identity', () => {
     expect(mockFindSourceByChecksum).not.toHaveBeenCalled();
     expect(mockCreateSource).not.toHaveBeenCalled();
     expect(payload(res).sourceId).toBeNull();
+  });
+});
+
+describe('chat upload → a Data Room source belongs to a project (PF-02, PF-07)', () => {
+  it('refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written', async () => {
+    // PF-02 / LX-20: a Data Room file is anchored to a project of the
+    // uploader's organization, or it is not captured. The id was checked for
+    // UUID SHAPE only, so a file could be anchored to another organization's
+    // project, or to none that exists.
+    programsOfOrg5('11111111-1111-4111-8111-111111111111');
+    const res = await runUpload({ projectId: '22222222-2222-4222-8222-222222222222' });
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(payload(res)).toMatchObject({ code: 'PROJECT_NOT_FOUND' });
+    expect(mockCreateSource).not.toHaveBeenCalled();
+    const writes = mockPoolQuery.mock.calls.filter(([sql]) => /^\s*(INSERT|UPDATE|DELETE)\b/i.test(String(sql)));
+    expect(writes).toEqual([]);
+  });
+
+  it('with no project open, the file stays a conversation file: no Data Room source (PF-07)', async () => {
+    // Founder decision 2026-09-26: every governed record belongs to a project.
+    // An unscoped chat attachment used to become an org-wide source that no
+    // project listed.
+    const res = await runUpload({ projectId: null });
+    expect(mockFindSourceByChecksum).not.toHaveBeenCalled();
+    expect(mockCreateSource).not.toHaveBeenCalled();
+    const body = payload(res);
+    expect(body.sourceId).toBeNull();
+    expect(body.dataRoom).toMatchObject({ recorded: false });
+    expect(String(body.dataRoom.reason)).toMatch(/No project was open/);
+  });
+
+  it('resolves identity within the project, never across the organization (PF-07 / VR-10)', async () => {
+    await runUpload({ projectId: 'proj_12' });
+    expect(mockFindSourceByChecksum.mock.calls[0][2]).toMatchObject({ clientWorkspaceId: 12, clientProgramId: null });
+    vi.clearAllMocks();
+    mockFindSourceByChecksum.mockResolvedValue(null);
+    mockCreateSource.mockResolvedValue({ id: 4243 });
+    programsOfOrg5('11111111-1111-4111-8111-111111111111');
+    const res = await runUpload({ projectId: '11111111-1111-4111-8111-111111111111' });
+    expect(mockFindSourceByChecksum.mock.calls[0][2]).toMatchObject({
+      clientProgramId: '11111111-1111-4111-8111-111111111111',
+      clientWorkspaceId: null,
+    });
+    expect(payload(res).dataRoom).toEqual({ recorded: true });
+  });
+
+  it('a project-scoped source that cannot be written answers 503 — never 200 "ready" (PF-07)', async () => {
+    // The user's file is stored; the Data Room does not hold it, and the answer
+    // says so instead of reporting a completed upload.
+    mockCreateSource.mockRejectedValue(new Error('cre tables missing'));
+
+    const res = await runUpload();
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    const body = payload(res);
+    expect(body.code).toBe('SOURCE_NOT_RECORDED');
+    expect(body.fileId).toBeTruthy();
+    expect(body.status).not.toBe('ready');
   });
 });
 

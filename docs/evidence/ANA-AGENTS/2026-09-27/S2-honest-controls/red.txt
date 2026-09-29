@@ -1,0 +1,156 @@
+# RED re-record 2026-09-28T06:19:26Z: the S2 test files AS THEY ARE IN THE TREE, run against HEAD (1a4b1893f) for all six S2 source files:
+#   server/services/ai-gateway/effort.ts server/routes/ana-ri/stream.ts client/src/concept2cure/v2/surfaces/Surfaces.tsx client/src/concept2cure/v2/V2App.tsx client/src/concept2cure/components/ana/useAnaChat.types.ts server/services/ai-gateway/reasoning.ts
+# (each copied over with git show HEAD:<path> > <path>, then restored from a backup and its sha256 verified). No stubs: every name the tests import exists at HEAD.
+# Trimmed to the per-test lines, each failure's first assertion and the summary (vitest's stack traces and the carriage checks' source dumps omitted).
+# Test-file sha256 (the tree's):
+#   e047450a57585ab59632e4038e4fff97eab00e09b01fb11667fb09b28324a754  client/src/concept2cure/v2/__tests__/homeEngine.test.tsx
+#   df5d6a80b971d5131beabc7e66a671af66a4c949e9d0e8318fe98d133f32d916  server/services/ai-gateway/__tests__/effort.test.ts
+#   1dfc532977d9f14320cb51bf63d0cdc11faac8800c7b76ee12c80ce2580a305b  server/routes/ana-ri/__tests__/stream-model-override.test.ts
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/homeEngine.test.tsx server/services/ai-gateway/__tests__/effort.test.ts server/routes/ana-ri/__tests__/stream-model-override.test.ts
+
+ × server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > passes a highRisk option to resolveModelOverride
+ × server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > computes it with isHighRiskRequest from the routing plan’s taskType and riskTier
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > the gateway is sent that same taskType and riskTier on every call that carries the pin
+ × server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > writes the frame in exactly one place
+ × server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message
+ × server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is written after the pin is resolved and before the model is first called
+ × server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelled
+ × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > shows the mode its host gives it, not a local default
+ × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > reports a choice to its host instead of keeping it
+ × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > follows the host when the host changes the mode
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > without a host binding, still renders and switches on local state
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > a mode with no setter is not a binding: the menu still works (review objection 17)
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > sends the question to the conversation screen, not the rail
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > the shell chat, `anaChat`, sends effortForMode(prefs.anaMode)
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > the conversation screen is mounted on that chat (review objection 4)
+ × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > Home is rendered with mode={prefs.anaMode} and setMode writing anaMode
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > EFFORT_TO_STRATEGY mapping > maps each effort to the documented routing strategy
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > EFFORT_TO_STRATEGY mapping > resolveEffortStrategy returns the mapped strategy
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > EFFORT_TO_STRATEGY mapping > exposes the three levels and a balanced default
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveEffortLevel — defaults to balanced on bad input > passes through the three valid levels
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveEffortLevel — defaults to balanced on bad input > resolves 'garbage' to balanced
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveEffortLevel — defaults to balanced on bad input > resolves undefined / null / wrong-type to balanced
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveEffortLevel — defaults to balanced on bad input > isEffortLevel narrows correctly
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveStrategyWithPrecedence — governance-safe > lets the user effort strategy take effect when no policy hint is pinned
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveStrategyWithPrecedence — governance-safe > a governance-pinned policyHint ALWAYS wins over user effort
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveStrategyWithPrecedence — governance-safe > falls back to the routing plan when neither policy nor effort is present
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > resolves a valid override by registry id
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > resolves a valid override by wire model string
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > drops an unknown override (returns null)
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > drops a disabled model even if the id matches
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > drops empty / non-string overrides
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > filters to enabled models only
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > derives label + recommendedEffort and sorts by quality desc
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > deriveRecommendedEffort heuristic
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > humanizes unknown registry ids for the label
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the governed data is what these cases assume
+ × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an enabled model with no approved entry — by id and by wire model
+ × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an approved alias whose wire model is not the pinned version
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > resolves an approved entry — by id and by wire model
+ × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, refuses an approved model not approved for high risk
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, resolves an approvedForHighRisk entry — by id and by wire model
+ × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, still refuses the unapproved model
+ × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the high-risk question has no default, and an unanswered one is the strict case
+ × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses a row whose wire model is the alias id, not the pinned version
+ × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses the pinned version under an id the entry does not carry — the gateway would refuse it on high-risk work
+ × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes an enabled model with no approved entry
+ × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes an approved alias drifted off its pinned version
+ × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes a row that is not exactly its approved entry
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > offers every enabled model in today's registry — the drift gate keeps each one its own entry
+ × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > carries approvedForHighRisk and pqStatus from the approved entry
+ × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > claims no PQ pass the governed data does not record
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveApiEffort > maps the three levels onto API effort, in order
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveApiEffort > is a different question from which model to route to
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveApiEffort > sends no value the pinned SDK does not know
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > claudeModelLabel > reads the version out of the wire model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > claudeModelLabel > strips a provider prefix
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > claudeModelLabel > declines anything that is not a Claude model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > deriveModelLabel > names the model that will run, not the alias that points at it
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > deriveModelLabel > marks a fallback rung as one
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > deriveModelLabel > still hand-labels the non-Claude entries
+
+## Why each failed
+FAIL  server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > passes a highRisk option to resolveModelOverride
+    AssertionError: resolveModelOverride is not called with { highRisk }: expected null not to be null
+FAIL  server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > computes it with isHighRiskRequest from the routing plan’s taskType and riskTier
+    AssertionError: resolveModelOverride is not called with { highRisk }: expected null not to be null
+FAIL  server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > writes the frame in exactly one place
+    AssertionError: no MODEL_OVERRIDE_REFUSED frame: expected -1 to be greater than -1
+FAIL  server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message
+    AssertionError: frame literal not found: expected null not to be null
+FAIL  server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is written after the pin is resolved and before the model is first called
+    AssertionError: expected -1 to be greater than 63939
+FAIL  server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelled
+    AssertionError: the frame is not written directly under an if: expected null not to be null
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an enabled model with no approved entry — by id and by wire model
+    AssertionError: expected { id: 'claude-opus-9-preview', …(2) } to be null
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an approved alias whose wire model is not the pinned version
+    AssertionError: expected { id: 'claude-opus-4', …(2) } to be null
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, refuses an approved model not approved for high risk
+    AssertionError: expected { id: 'claude-sonnet-4', …(2) } to be null
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, still refuses the unapproved model
+    AssertionError: expected { id: 'claude-opus-9-preview', …(2) } to be null
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the high-risk question has no default, and an unanswered one is the strict case
+    AssertionError: expected { id: 'claude-sonnet-4', …(2) } to be null
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses a row whose wire model is the alias id, not the pinned version
+    AssertionError: expected { id: 'claude-opus-4', …(2) } to be null
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses the pinned version under an id the entry does not carry — the gateway would refuse it on high-risk work
+    AssertionError: claude-opus-house: expected { id: 'claude-opus-house', …(2) } to be null
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes an enabled model with no approved entry
+    AssertionError: expected [ 'claude-opus-9-preview', …(1) ] to deeply equal [ 'claude-sonnet-4' ]
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes an approved alias drifted off its pinned version
+    AssertionError: expected [ { id: 'claude-opus-4', …(6) } ] to deeply equal []
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes a row that is not exactly its approved entry
+    AssertionError: expected [ { id: 'claude-opus-4', …(6) }, …(1) ] to deeply equal []
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > carries approvedForHighRisk and pqStatus from the approved entry
+    AssertionError: claude-opus-4: expected undefined to be true // Object.is equality
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > claims no PQ pass the governed data does not record
+    AssertionError: claude-opus-4: expected undefined to be 'pending' // Object.is equality
+FAIL  client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > shows the mode its host gives it, not a local default
+    AssertionError: expected 'AnABalancedStandard' to contain 'Deep research'
+FAIL  client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > reports a choice to its host instead of keeping it
+    AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+FAIL  client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > follows the host when the host changes the mode
+    AssertionError: expected 'AnABalancedStandard' to contain 'Deep research'
+FAIL  client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > Home is rendered with mode={prefs.anaMode} and setMode writing anaMode
+    AssertionError: expected '<Home onNav={nav} onAsk={ask} segment…' to match /\bmode=\{prefs\.anaMode\}/
+
+Test Files  3 failed (3)
+Tests  22 failed | 38 passed (60)
+exit=1
+
+# Every failure is the missing behaviour (a pill that ignores its prop, a setter never called, an unapproved or unpinned model resolving, a picker option without the governed fields, a stream with no highRisk option and no frame). None is an import or harness error.
+# The 38 that pass against HEAD pin what HEAD already did right, so they cannot fail on it: the pre-existing effort cases; the preconditions on the governed data; an approved model resolving; the registry overcorrection check; carriage of wiring HEAD already had (the shell chat's effort, the conversation screen on the shell chat, gw.route's taskType/riskTier); Home seeding conversation-thread; Home's no-props and half-bound fallbacks (HEAD ignored its props entirely). Each is shown red in part B or in mutations.txt.
+
+====================================================================================================
+# PART B. Review follow-through, test-first, 2026-09-28T05:54:04Z (log written): the review-fix tests, run against the S2 build AS IT WAS BEFORE THE REVIEW FIXES (same HEAD; the pre-review S2 source sha256 are in the README).
+# Only the failures are listed; the 53 passes are the build pass's tests plus the review tests that pin wiring the build already had right (objection 4's three carriage and send checks; objection 20's case sits inside the guard test, which failed on its objection-5 case first). Since this run the guard test was renamed (it was "a non-empty override resolved to null") and the file's header comment edited; its cases are unchanged.
+# The frame-shape failure is the message text: the pre-review frame said "so AnA used the governed default." (objections 1 and 2). The guard failure is guard(null, false) === true (objection 5).
+$ npx vitest run --config vitest.config.ts server/routes/ana-ri/__tests__/stream-model-override.test.ts server/services/ai-gateway/__tests__/effort.test.ts client/src/concept2cure/v2/__tests__/homeEngine.test.tsx
+
+ × server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message
+ × server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a non-empty override resolved to null" — evaluated, not spelled
+ × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > a mode with no setter is not a binding: the menu still works (review objection 17)
+ × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the high-risk question has no default, and an unanswered one is the strict case
+ × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses a row whose wire model is the alias id, not the pinned version
+ × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses the pinned version under an id the entry does not carry — the gateway would refuse it on high-risk work
+ × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes a row that is not exactly its approved entry
+
+## Why each failed
+FAIL  server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message
+    AssertionError: expected { type: 'warning', …(2) } to deeply equal { type: 'warning', …(2) }
+FAIL  server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a non-empty override resolved to null" — evaluated, not spelled
+    AssertionError: expected true to be false // Object.is equality
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the high-risk question has no default, and an unanswered one is the strict case
+    AssertionError: expected { id: 'claude-sonnet-4', …(2) } to be null
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses a row whose wire model is the alias id, not the pinned version
+    AssertionError: expected { id: 'claude-opus-4', …(2) } to be null
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses the pinned version under an id the entry does not carry — the gateway would refuse it on high-risk work
+    AssertionError: claude-opus-house: expected { id: 'claude-opus-house', …(2) } to be null
+FAIL  server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes a row that is not exactly its approved entry
+    AssertionError: expected [ { id: 'claude-opus-4', …(8) }, …(1) ] to deeply equal []
+FAIL  client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > a mode with no setter is not a binding: the menu still works (review objection 17)
+    AssertionError: expected 'AnAMaximumDeep research' to contain 'Quick ask'
+
+Test Files  3 failed (3)
+Tests  7 failed | 53 passed (60)

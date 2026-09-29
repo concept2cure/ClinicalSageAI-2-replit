@@ -1,8 +1,5 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { eq } from 'drizzle-orm';
-import { draftingTasks } from '@shared/schema';
 import { fallbackTemplates } from '../services/templates/ectd-fallback-templates';
 import { getSecureOrgId } from '../utils/tenantContext';
 
@@ -72,7 +69,6 @@ Date: ${new Date().toISOString()}
 
 export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router {
   const router = Router();
-  const db = drizzle(pool);
 
   // GET /api/templates — returns fallbackTemplates
   router.get('/templates', async (req: Request, res: Response) => {
@@ -405,99 +401,89 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
     }
   });
 
-  // POST /api/v1/drafting/start_task — creates drafting task (DB-persisted)
+  // POST /api/v1/drafting/start_task — records a drafting task for one of the
+  // organisation's own programs.
   //
   // Both /v1/drafting routes sit under /api/v1, which the global /api gate
   // leaves to the public API's X-API-Key check (routes/public-api.ts runs it
-  // first). Neither handler filters by tenant, so each also requires a
-  // session, here. Until 2026-09-23 a session was required only because the
-  // Doc Orchestration gate covered every /api path; that gate now covers its
-  // own paths (VSR-001 F-32), and this keeps what these two accept unchanged
-  // (audit finding API-01).
+  // first), so each requires a session here (audit finding API-01). Ownership
+  // is the program's: drafting_tasks carries no organisation column, its
+  // project_id names a regulatory_programs row, and that row carries the
+  // organisation (audit finding IAM-11, plan P1-8). A task is written and read
+  // only through that ownership. There is no in-memory fallback: a task that
+  // could not be recorded is an error, not a success held in process memory
+  // that any caller could then read.
   router.post('/v1/drafting/start_task', authMiddleware as any, async (req: Request, res: Response) => {
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const { project_id, ectd_section, document_title, template } = req.body ?? {};
+    if (!project_id || !ectd_section || !document_title) {
+      return res.status(400).json({
+        error: 'project_id, ectd_section, and document_title are required',
+      });
+    }
     try {
-      const { project_id, ectd_section, document_title, template } = req.body;
-
-      if (!project_id || !ectd_section || !document_title) {
-        return res.status(400).json({
-          error: 'project_id, ectd_section, and document_title are required',
-        });
+      // tenant-isolation-safe: the program is read with the session's organisation as a predicate.
+      const program = await pool.query(
+        'SELECT id FROM regulatory_programs WHERE id::text = $1 AND organization_id = $2 LIMIT 1',
+        [String(project_id), organizationId]
+      );
+      if (program.rows.length !== 1) {
+        return res.status(404).json({ error: 'Project not found' });
       }
-
-      const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      const generatedContent = await generateDocumentContent(ectd_section, document_title, template);
-
-      try {
-        await db.insert(draftingTasks).values({
-          taskId,
-          projectId: project_id,
-          ectdSection: ectd_section,
-          documentTitle: document_title,
-          template: template || null,
-          status: 'COMPLETED',
-          draftContent: generatedContent,
-          createdById: (req as any).user?.id || null,
-        });
-      } catch (dbError) {
-        // Fallback: if table doesn't exist yet (pre-migration), use in-memory
-        console.warn(
-          '[drafting] DB insert failed, using in-memory fallback:',
-          (dbError as Error).message
-        );
-        (global as any).draftingTasks = (global as any).draftingTasks || {};
-        (global as any).draftingTasks[taskId] = {
-          id: taskId,
-          project_id,
-          ectd_section,
-          document_title,
-          template,
-          status: 'COMPLETED',
-          draft_content: generatedContent,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-      }
-
+      const taskId = `task_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+      const templateName = template ? String(template) : '';
+      const generatedContent = await generateDocumentContent(String(ectd_section), String(document_title), templateName);
+      await pool.query(
+        `INSERT INTO drafting_tasks (task_id, project_id, ectd_section, document_title, template, status, draft_content, created_by_id)
+         VALUES ($1, $2, $3, $4, $5, 'COMPLETED', $6, $7)`,
+        [taskId, String(project_id), String(ectd_section), String(document_title), templateName || null, generatedContent, (req as any).user?.id ?? null]
+      );
       res.status(202).json({ task_id: taskId });
     } catch (error) {
-      console.error('Document creation error:', error);
-      res.status(500).json({ error: 'Failed to create document' });
+      console.error('[drafting] task could not be recorded:', error instanceof Error ? error.message : String(error));
+      res.status(503).json({ error: 'Drafting task could not be recorded' });
     }
   });
 
-  // GET /api/v1/drafting/task_status/:task_id — DB-backed with in-memory fallback
+  // GET /api/v1/drafting/task_status/:task_id — the task, read within the organisation.
   router.get('/v1/drafting/task_status/:task_id', authMiddleware as any, async (req: Request, res: Response) => {
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const taskId = String(req.params.task_id);
     try {
-      const task_id = String(req.params.task_id);
-
-      try {
-        const [task] = await db.select().from(draftingTasks).where(eq(draftingTasks.taskId, task_id));
-        if (task) {
-          return res.json({
-            id: task.taskId,
-            project_id: task.projectId,
-            ectd_section: task.ectdSection,
-            document_title: task.documentTitle,
-            template: task.template,
-            status: task.status,
-            draft_content: task.draftContent,
-            created_at: task.createdAt?.toISOString(),
-            updated_at: task.updatedAt?.toISOString(),
-          });
-        }
-      } catch {
-        // DB query failed — fall through to in-memory
-      }
-
-      const memTask = (global as any).draftingTasks?.[task_id as any];
-      if (!memTask) {
+      // tenant-isolation-safe: the task is read through its program, with the session's organisation as a predicate.
+      const { rows } = await pool.query(
+        `SELECT t.task_id, t.project_id, t.ectd_section, t.document_title, t.template, t.status, t.draft_content, t.created_at, t.updated_at
+           FROM drafting_tasks t
+           JOIN regulatory_programs p ON p.id::text = t.project_id
+          WHERE t.task_id = $1 AND p.organization_id = $2
+          LIMIT 1`,
+        [taskId, organizationId]
+      );
+      const task = rows[0];
+      if (!task) {
         return res.status(404).json({ error: 'Task not found' });
       }
-      res.json(memTask);
+      const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : v ?? null);
+      res.json({
+        id: task.task_id,
+        project_id: task.project_id,
+        ectd_section: task.ectd_section,
+        document_title: task.document_title,
+        template: task.template,
+        status: task.status,
+        draft_content: task.draft_content,
+        created_at: iso(task.created_at),
+        updated_at: iso(task.updated_at),
+      });
     } catch (error) {
-      console.error('Get task status error:', error);
-      res.status(500).json({ error: 'Failed to get task status' });
+      console.error('[drafting] task status could not be read:', error instanceof Error ? error.message : String(error));
+      res.status(503).json({ error: 'Drafting task could not be read' });
     }
   });
 

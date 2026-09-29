@@ -12,6 +12,23 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { runPq } from '../run-pq';
 import goldBank from '../../doc-quality/gold-tasks.json';
+import { APPROVED_MODELS } from '../../../services/ai-governance/approved-models';
+
+/**
+ * The version the model under qualification is pinned to, read from the same
+ * registry entry `runPq` checks the served model against. It was hard-coded
+ * as 'claude-opus-5' and went stale when the flagship was re-pinned to Opus
+ * 5.5 (c4eab325f, 2026-09-25): every "perfect model" case then reported a
+ * model that was no longer the pinned version, so the run went INCOMPLETE
+ * for attribution and the cases stopped measuring what they name. Derived,
+ * a re-pin moves the stub with it; the rule it exercises does not move.
+ */
+const MODEL_ID = 'claude-opus-4';
+const PINNED = (() => {
+  const entry = APPROVED_MODELS.find((m) => m.id === MODEL_ID);
+  if (!entry) throw new Error(`${MODEL_ID} is not in approved-models; these cases qualify it`);
+  return entry.pinnedVersion;
+})();
 
 type Task = {
   id: string;
@@ -55,7 +72,7 @@ function stub(served: string | ((i: number) => string | undefined), content: (pr
         return {
           content: content(prompt),
           provider: 'anthropic',
-          model: 'claude-opus-5',
+          model: PINNED,
           resolvedModel: typeof served === 'function' ? served(n) : served,
         } as never;
       },
@@ -70,11 +87,11 @@ afterEach(() => {
 
 describe('run-pq live path', () => {
   it('sends every task to exactly the model under qualification', async () => {
-    const s = stub('claude-opus-5');
-    await runPq({ modelId: 'claude-opus-4', gateway: s.gateway });
+    const s = stub(PINNED);
+    await runPq({ modelId: MODEL_ID, gateway: s.gateway });
     // Generation AND extraction: both components ask the pinned model directly.
     expect(s.calls.length).toBe(generationTasks.length + extractionTasks.length);
-    expect(new Set(s.calls)).toEqual(new Set(['claude-opus-4']));
+    expect(new Set(s.calls)).toEqual(new Set([MODEL_ID]));
   });
 
   it('scores the model output — never the captured candidate stored in the gold bank', async () => {
@@ -85,14 +102,14 @@ describe('run-pq live path', () => {
     // captured text would have scored full marks, which is what proves the
     // captured text is ignored rather than merely absent.
     expect(generationTasks.some((t) => typeof t.candidateContent === 'string')).toBe(true);
-    const r = await runPq({ modelId: 'claude-opus-4', gateway: stub('claude-opus-5', () => 'I cannot help with that.').gateway });
+    const r = await runPq({ modelId: MODEL_ID, gateway: stub(PINNED, () => 'I cannot help with that.').gateway });
     for (const g of r.generation) expect(g.sectionCoverage, g.taskId).toBe(0);
   });
 
   it('a task answered by a different model is flagged, and the run cannot pass', async () => {
     const r = await runPq({
-      modelId: 'claude-opus-4',
-      gateway: stub((i) => (i === 0 ? 'claude-opus-4-8' : 'claude-opus-5')).gateway,
+      modelId: MODEL_ID,
+      gateway: stub((i) => (i === 0 ? 'claude-opus-4-8' : PINNED)).gateway,
     });
     expect(r.generation[0].servedModelVerified).toBe(false);
     expect(r.verdict).not.toBe('PASS');
@@ -100,12 +117,12 @@ describe('run-pq live path', () => {
   });
 
   it('a provider that does not say which model answered is not verified', async () => {
-    const r = await runPq({ modelId: 'claude-opus-4', gateway: stub(() => undefined).gateway });
+    const r = await runPq({ modelId: MODEL_ID, gateway: stub(() => undefined).gateway });
     expect(r.generation.every((g) => !g.servedModelVerified)).toBe(true);
   });
 
   it('on the current draft protocol, a perfect model is INCOMPLETE — and the reasons say why', async () => {
-    const r = await runPq({ modelId: 'claude-opus-4', gateway: stub('claude-opus-5').gateway });
+    const r = await runPq({ modelId: MODEL_ID, gateway: stub(PINNED).gateway });
     expect(r.verdict).toBe('INCOMPLETE');
     const why = r.reasons.join(' ');
     // What still blocks a PASS: rag cannot execute (ragQuery cannot pin a
@@ -126,7 +143,7 @@ describe('run-pq live path', () => {
     // discovering that someone trimmed the bank.
     // server/eval/pq/__tests__/gold-bank-floor.test.ts checks the same property
     // statically; this one proves the runner agrees.
-    const r = await runPq({ modelId: 'claude-opus-4', gateway: stub('claude-opus-5').gateway });
+    const r = await runPq({ modelId: MODEL_ID, gateway: stub(PINNED).gateway });
     expect(r.reasons.join(' ')).not.toMatch(/floor of/);
   });
 });
@@ -137,11 +154,11 @@ describe('run-pq live path', () => {
     // there was nothing to give a model, and the protocol recorded the
     // component as not executable.
     expect(extractionTasks.length).toBeGreaterThan(0);
-    const s = stub('claude-opus-5');
-    const r = await runPq({ modelId: 'claude-opus-4', gateway: s.gateway });
+    const s = stub(PINNED);
+    const r = await runPq({ modelId: MODEL_ID, gateway: s.gateway });
     expect(r.extraction.length).toBe(extractionTasks.length);
     expect(s.calls.length).toBe(generationTasks.length + extractionTasks.length);
-    expect(new Set(s.calls)).toEqual(new Set(['claude-opus-4']));
+    expect(new Set(s.calls)).toEqual(new Set([MODEL_ID]));
     for (const e of r.extraction) expect(e.f1, e.taskId).toBe(1);
   });
 
@@ -149,8 +166,8 @@ describe('run-pq live path', () => {
     // Two tasks ship a captured candidateExtraction that would score well. A
     // model that answers with an empty object must score zero on them.
     const r = await runPq({
-      modelId: 'claude-opus-4',
-      gateway: stub('claude-opus-5', (p) => (extractionTasks.some((t) => t.input && p.includes(t.input)) ? '{}' : coveringDraft(p))).gateway,
+      modelId: MODEL_ID,
+      gateway: stub(PINNED, (p) => (extractionTasks.some((t) => t.input && p.includes(t.input)) ? '{}' : coveringDraft(p))).gateway,
     });
     for (const e of r.extraction) expect(e.f1, e.taskId).toBe(0);
     expect(r.verdict).toBe('FAIL');
@@ -162,9 +179,9 @@ describe('run-pq live path', () => {
     // extraction score must not count toward qualifying the pinned one.
     const genCount = generationTasks.length;
     const r = await runPq({
-      modelId: 'claude-opus-4',
+      modelId: MODEL_ID,
       // Every generation call is the pinned model; the first extraction call is not.
-      gateway: stub((i) => (i === genCount ? 'claude-opus-4-8' : 'claude-opus-5')).gateway,
+      gateway: stub((i) => (i === genCount ? 'claude-opus-4-8' : PINNED)).gateway,
     });
     expect(r.extraction[0].servedModelVerified).toBe(false);
     expect(r.verdict).not.toBe('PASS');
@@ -176,8 +193,8 @@ describe('run-pq live path', () => {
     // model that extracted every field wrongly, and the second is a real
     // failure while the first is a harness problem.
     const r = await runPq({
-      modelId: 'claude-opus-4',
-      gateway: stub('claude-opus-5', (p) => (extractionTasks.some((t) => t.input && p.includes(t.input)) ? 'I cannot help with that.' : coveringDraft(p))).gateway,
+      modelId: MODEL_ID,
+      gateway: stub(PINNED, (p) => (extractionTasks.some((t) => t.input && p.includes(t.input)) ? 'I cannot help with that.' : coveringDraft(p))).gateway,
     });
     expect(r.extraction.every((e) => e.f1 === null && e.error)).toBe(true);
     expect(r.verdict).not.toBe('PASS');
@@ -186,8 +203,8 @@ describe('run-pq live path', () => {
 
   it('reads JSON the model wrapped in a fenced block or prose', async () => {
     const r = await runPq({
-      modelId: 'claude-opus-4',
-      gateway: stub('claude-opus-5', (p) => {
+      modelId: MODEL_ID,
+      gateway: stub(PINNED, (p) => {
         const t = extractionTasks.find((x) => x.input && p.includes(x.input));
         return t ? `Here are the fields:\n\n\u0060\u0060\u0060json\n${JSON.stringify(t.expectedFields)}\n\u0060\u0060\u0060\n` : coveringDraft(p);
       }).gateway,
@@ -197,8 +214,8 @@ describe('run-pq live path', () => {
 
   it('an overclaim is a FAIL even on the draft protocol', async () => {
     const r = await runPq({
-      modelId: 'claude-opus-4',
-      gateway: stub('claude-opus-5', (p) => `${coveringDraft(p)}\nThis device is guaranteed to be cleared by FDA.`).gateway,
+      modelId: MODEL_ID,
+      gateway: stub(PINNED, (p) => `${coveringDraft(p)}\nThis device is guaranteed to be cleared by FDA.`).gateway,
     });
     // Every runnable task in the bank forbids "guaranteed"; asserted so that
     // if the bank ever stops forbidding it, this case fails loudly instead of
@@ -213,14 +230,14 @@ describe('run-pq live path', () => {
   it('the record carries its provenance and is what verifyPqClaim reads', async () => {
     const out = mkdtempSync(path.join(os.tmpdir(), 'pq-record-'));
     dirs.push(out);
-    const r = await runPq({ modelId: 'claude-opus-4', record: true, outDir: out, gateway: stub('claude-opus-5').gateway });
+    const r = await runPq({ modelId: MODEL_ID, record: true, outDir: out, gateway: stub(PINNED).gateway });
     const rec = JSON.parse(readFileSync(r.recordPath as string, 'utf8'));
     expect(rec).toMatchObject({
       kind: 'pq-record',
       protocolId: 'PQ-DRAFT-001',
       protocolStatus: 'draft',
-      modelId: 'claude-opus-4',
-      pinnedVersion: 'claude-opus-5',
+      modelId: MODEL_ID,
+      pinnedVersion: PINNED,
       verdict: 'INCOMPLETE',
     });
     expect(rec.protocolSha256).toMatch(/^[0-9a-f]{64}$/);

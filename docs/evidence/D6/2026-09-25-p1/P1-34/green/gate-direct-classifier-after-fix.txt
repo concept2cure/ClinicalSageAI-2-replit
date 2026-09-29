@@ -1,0 +1,35 @@
+# green: governed-tool-gate.test.ts with classifyDirectToolCall added (HEAD 7fbe51c5 + this change, 2026-09-26); the classifyToolCall pin at the old :161-174 stays and passes
+# command: NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/services/ana/__tests__/governed-tool-gate.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE when the input carries no command — the streamed-empty-input case 2ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE is NOT UNGOVERNED — the distinction is the point 1ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE when the arguments failed to parse mid-stream 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE for a non-object input, however it arrived 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE for a blank or whitespace command 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > asks for approval on every propose-only command 1ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > leaves reads alone and asks for a confirmation on ordinary writes 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > carries the command and params forward for the person to read 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > defaults params to an empty object rather than undefined 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > demands a signature for the e-sign tier 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > demands a signature for the GDPR erasure (audit 2026-09-24 DP-08/DP-09, P0-12) 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > demands only a reason for the reason tier, and only a confirmation below it 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > every e-sign command in the partition is classified as the signature tier 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > classifyToolCall still speaks only for the command tool > a tool with its own handler is UNGOVERNED to classifyToolCall — until the stream door consults classifyDirectToolCall 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > classifyToolCall still speaks only for the command tool > a tool named like a governed command is still just a tool 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > classifyDirectToolCall: the tool registry, with the same discipline > UNDECIDABLE when the arguments failed to parse, whatever the tool 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > classifyDirectToolCall: the tool registry, with the same discipline > UNDECIDABLE for a governed tool whose input is not an object — refused, not cleared 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > classifyDirectToolCall: the tool registry, with the same discipline > NEEDS_APPROVAL, with the registry’s tier and a {tool, input} payload, for every propose-only tool 4ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > classifyDirectToolCall: the tool registry, with the same discipline > REFUSE_IN_CHAT, naming the act and where a person takes it, for every unconditional refusal 1ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > classifyDirectToolCall: the tool registry, with the same discipline > qms_change_transition: a refusal for approved, a reason-tier proposal for under_assessment, UNDECIDABLE with no target 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > classifyDirectToolCall: the tool registry, with the same discipline > UNGOVERNED for a read, and for the command tool, which classifyToolCall owns 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > classifyDirectToolCall: the tool registry, with the same discipline > the finding's exemplars (DP-36) 0ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  13:21:35
+   Duration  799ms (transform 189ms, setup 90ms, import 366ms, tests 17ms, environment 0ms)
+
+exit=0

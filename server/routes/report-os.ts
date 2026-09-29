@@ -873,10 +873,15 @@ router.get('/portfolio/org', async (req: Request, res: Response) => {
       });
     }
     const summary = await fetchOrgPortfolioSummary(organizationId);
-    if (!summary) {
-      return res.status(404).json({ error: 'No programs found for this organization' });
-    }
-    return res.json({ data: summary });
+    /* An entitled organisation with no top-level programs is a real, empty
+       answer, not a missing resource. This was a 404 with no machine code, and
+       AnA Command rendered it as "the rollup didn't respond … sign in and
+       retry, or check your plan" to a signed-in, entitled admin whose org is
+       simply new (launch sweep findings 42, 6, 7). `data: null` — never an
+       aggregate over no rows, which would compute a 0% "average readiness" —
+       as /insights-canvas already folds the same null summary. The only other
+       path to null is none: a database error throws to the 500 below. */
+    return res.json({ data: summary ?? null });
   } catch (error: any) {
     return serverError(res, logger, 'loading org', error);
   }

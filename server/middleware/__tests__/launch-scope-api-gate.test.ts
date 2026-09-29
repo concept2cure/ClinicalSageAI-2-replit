@@ -139,6 +139,29 @@ describe('the real registry, launch scope on', () => {
     }
   });
 
+  /* `gateway-transmittals` claimed all of /api/mdx from 2026-07-21 (its own
+     note says its routes are /api/mdx/gateways), so every device-kit API
+     answered as launch: risk items, clinical studies, IVD, labeling. Found by
+     the AnA tool measurement (2026-09-26); the device kit is outside the launch
+     catalog. */
+  it('refuses the device kit under /api/mdx, and passes the launch apps that live there', async () => {
+    for (const p of ['/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents', '/api/mdx/rbm-kris']) {
+      expect(await refused(p), p).toBe(true);
+    }
+    for (const p of [
+      '/api/mdx/gateways/transmittals',
+      '/api/mdx/vault',
+      '/api/mdx/vault/7/versions',
+      '/api/mdx/qms/documents',
+      '/api/mdx/admin/users',
+      '/api/mdx/industry-profile',
+      '/api/mdx/notifications/unread-count',
+      '/api/mdx/ana/memory',
+    ]) {
+      expect(await refused(p), p).toBe(false);
+    }
+  });
+
   it('refuses a surface outside the catalog, and leaves the public API and webhooks alone', async () => {
     expect(await refused('/api/pharmacovigilance/cases')).toBe(true);
     expect(await refused('/api/v1/documents')).toBe(false);

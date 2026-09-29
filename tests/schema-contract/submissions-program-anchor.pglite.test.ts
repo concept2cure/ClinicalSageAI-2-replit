@@ -20,6 +20,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../server/db/pglite-harness';
 
 const ROOT = join(__dirname, '..', '..');
 const sql = (rel: string) => readFileSync(join(ROOT, rel), 'utf8');
@@ -46,8 +47,9 @@ beforeAll(async () => {
     CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT, email TEXT);
     INSERT INTO organizations (id, name) VALUES (1, 'acme'), (2, 'other');
     INSERT INTO users (id, name, email) VALUES (7, 'u', 'u@x');
-    -- The columns of audit_logs the backfill reads.
-    CREATE TABLE audit_logs (id TEXT PRIMARY KEY, tenant_id INTEGER, action TEXT, table_name TEXT, record_id TEXT, new_values JSON);
+    -- The backfill reads tenant_id, action, table_name, record_id and new_values.
+    -- The table is the full one the audit writer writes (ci:audit-logs-fixture).
+    ${AUDIT_LOGS_PGLITE_DDL}
   `);
   await db.exec(sql(PROGRAMS_DDL));
   await db.exec(sql(SUBMISSIONS_DDL));

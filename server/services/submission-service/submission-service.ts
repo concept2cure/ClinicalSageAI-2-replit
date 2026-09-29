@@ -1841,8 +1841,16 @@ type LeafRef = { documentId: number | null; documentUuid: string | null };
 
 /** Per store that records a project: the read of a document's project. */
 const LEAF_PROGRAM_READS: Record<string, (ref: LeafRef, organizationId: number) => ReturnType<typeof sql> | null> = {
-  vault_documents: (ref) =>
-    ref.documentUuid ? sql`SELECT program_id::text AS program_id FROM vault.documents WHERE id = ${ref.documentUuid}::uuid` : null,
+  /* Through the program, as the tenancy verifier scopes it: organization_id is
+     nullable on vault.documents, and filtering on it would read an unattributed
+     document as having no project, which skips the cross-project check. */
+  vault_documents: (ref, organizationId) =>
+    ref.documentUuid
+      ? sql`
+      SELECT d.program_id::text AS program_id
+        FROM vault.documents d JOIN regulatory_programs rp ON rp.id = d.program_id
+       WHERE d.id = ${ref.documentUuid}::uuid AND rp.organization_id = ${organizationId}`
+      : null,
   c2c_document_sections: (ref, organizationId) =>
     ref.documentId
       ? sql`

@@ -93,7 +93,7 @@ green runs used this change on `origin/concept2cure-v2` `038b41d5`.
 
 | What | Red | Green |
 |---|---|---|
-| Boundary, floor and resolver: `tenant-placement-boundary.test.ts` (20), `org-placement.test.ts`, `org-placement-db.test.ts` | `red/boundary-floor-resolver.txt`: 22 of 34 fail | `green/boundary-floor-resolver.txt`: 34 pass |
+| Boundary, floor and resolver: `tenant-placement-boundary.test.ts` (18 as committed), `org-placement.test.ts`, `org-placement-db.test.ts` | `red/boundary-floor-resolver.txt`: 23 of 34 fail. These are the tests as committed in `794c9b6c`, run against a `git archive` export of `bfbf0ee8`; regenerated 2026-09-26, see below | `green/boundary-floor-resolver.txt`: 34 pass |
 | Private-cloud placement: `placement.test.ts` | `red/private-cloud-placement.txt`: 11 of 19 fail (Vertex `['us','eu']` on us-east5; no boot check) | `green/private-cloud-placement.txt`: 19 pass |
 | AnA dispatch binding: `ci:ai-tenant-binding` | `red/tenant-binding-gate.txt`: the four unbound sites | `green/tenant-binding-gate.txt`: self-test 13/13, gate clean |
 | Migration reaches deployed databases: `org-placement-migration.test.ts` | `red/migration-guard.txt`: each assertion fails with its half removed | `green/migration-guard.txt`: 2 pass |
@@ -115,6 +115,12 @@ each with a note.
 - **Lookup failures refuse where enforced.** A policy lookup failure refuses tenant payloads wherever enforcement is on.
   A database outage therefore stops AI for tenants rather than lifting their floor.
 - **AnA stream turns count against the per-org rate limit** (100 per minute per process), as send-message already did.
+- **AnA stream turns are now metered.** The gateway records usage only for a bound `organizationId`
+  (`recordTenantUsage`), so every AnA round now writes an `api_usage_logs` row with `request_count = 1`. A balanced
+  turn is about 7–9 units. That table feeds the weekly `requests` limit (`weekly-usage-limits.ts`), enforced in front
+  of `/api/ana`, `/api/ana-ri` and `/api/chat`. Re-baseline any configured weekly `requests` or `cost_cents` limit
+  before deploy, since they were sized when AnA's usage was invisible. Whether a turn or a round is the metered unit
+  is a product decision; it is not changed here.
 - **Private-cloud configuration is checked at boot.**
   - A production boot with Vertex enabled and `AI_VERTEX_RESIDENCY=us,eu` on `us-east5` now refuses to start.
   - Vertex and Azure lose zero-retention status until `AI_VERTEX_ZERO_RETENTION=true` / `AI_AZURE_ZERO_RETENTION=true` is
@@ -122,6 +128,19 @@ each with a note.
   - Neither lane is deployed for launch (DPA §6.1).
 - **Policy rows are set through the API.** Set them with `PUT /api/ai-placement-policy` as a step in tenant onboarding.
   An org with no row is unconstrained, as before.
+
+## Adversarial review, 2026-09-26
+
+An independent five-lens review of `794c9b6c` and `3e4f9f5f` confirmed eight findings; eleven more were kept at low
+severity. Two were refuted. The fixes, their red and green runs, and the triage of every finding are in
+`../2026-09-26-refusals-are-final/`. Two corrections to this file came out of it:
+
+- **The red file was not produced with the committed tests.** It used a work-in-progress mix: the old "request wins"
+  cases plus the new floor cases. It is replaced by the committed tests run against an export of `bfbf0ee8`, which
+  fail 23 of 34, not 22. The boundary suite had 18 cases as committed, not 20.
+- **"A policy no service could satisfy is refused" was only partly true.** The writer caught disjoint allow-lists and
+  on-prem residency, but accepted a residency on the shared frontier lanes and zero retention on Kimi. Neither can
+  ever be served. It refuses those now.
 
 ## Not done, and why
 

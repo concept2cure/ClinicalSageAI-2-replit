@@ -8,14 +8,15 @@
  * The policy decides which AI services may receive this organization's data —
  * residency, zero retention, substrate and vendor allow-lists — and the gateway
  * enforces it on every dispatch. Organization admin or owner only. A change and
- * its chained audit row (before, after, reason) commit together.
+ * its chained audit row (before, after, reason) commit together, on the
+ * request's own tenant-scoped connection (never the shared pool).
  */
 
 import { Router, type Request, type Response } from 'express';
 
 import { authenticateToken, requireRole } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
-import { pool } from '../db';
+import { requestConnectable, requestPgClient } from '../db/requestDb';
 import { clientIpOf } from '../utils/client-ip';
 import { createScopedLogger } from '../utils/logger';
 import {
@@ -41,7 +42,7 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'NO_ORGANIZATION', message: 'Organization context required.' } });
   }
   try {
-    const policy = await readOrgPlacementPolicy(pool, orgId);
+    const policy = await readOrgPlacementPolicy(requestPgClient(req), orgId);
     return res.json({ organizationId: orgId, policy });
   } catch (err) {
     log.error('placement policy read failed', { err: err instanceof Error ? err.message : String(err) });
@@ -63,7 +64,7 @@ router.put('/', async (req: Request, res: Response) => {
     return res.status(422).json({ error: { code: 'INVALID_POLICY', message: input.message } });
   }
   try {
-    const result = await writeOrgPlacementPolicy(pool, orgId, input.policy, input.reasonForChange, {
+    const result = await writeOrgPlacementPolicy(requestConnectable(req), orgId, input.policy, input.reasonForChange, {
       userId,
       ipAddress: clientIpOf(req),
       userAgent: req.headers['user-agent'] as string | undefined,

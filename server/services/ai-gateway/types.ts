@@ -345,6 +345,17 @@ export interface GatewayMessage {
   inlineSystem?: boolean;
 
   /**
+   * What an `inlineSystem` message is called when a model without inline
+   * system support gets it folded into the preceding user turn — the bracketed
+   * label in `[<label>]: …`. Unset means "User interjection", which is true
+   * only of words a person typed (a steer). Anything the application authored
+   * or observed must say so: a screen report or a mode switch folded as a
+   * "User interjection" tells the model the person wrote it, and she answers
+   * the person for something they never said.
+   */
+  foldLabel?: string;
+
+  /**
    * Mark this message with a prompt-cache breakpoint (Claude only).
    * When `promptCache.enabled` is set on the request, system messages
    * with `cacheControl: true` will carry `cache_control` markers in the
@@ -375,6 +386,14 @@ export interface GatewayRequest {
    * treated as high-risk.
    */
   riskTier?: 'low' | 'medium' | 'high';
+
+  /**
+   * The AnA run this call belongs to (ana_runs.id), and the run that spawned
+   * it. Recorded on the ledger row so a run's calls can be listed from the
+   * ledger; the gateway does not act on them.
+   */
+  runId?: string;
+  parentRunId?: string;
 
   /** Conversation messages (system + user + assistant history) */
   messages: GatewayMessage[];
@@ -418,8 +437,13 @@ export interface GatewayRequest {
     allowedSubstrates?: SubstrateClass[];
     /** Per-tenant vendor allow-list; absent = no vendor constraint, empty = none allowed. */
     allowedProviders?: ProviderName[];
-    /** Tenant opted in to `public` payloads reaching a shared frontier API. */
+    /**
+     * Tenant opted in to `public` payloads reaching a shared frontier API, and to
+     * Anthropic-hosted research tools (server-tool-policy.ts).
+     */
     publicSourceFrontier?: boolean;
+    /** Tenant allows outbound public-source requests at all (default on). */
+    publicSourceEgress?: boolean;
     /** The request asked for a residency that contradicts the tenant's. */
     residencyConflict?: boolean;
   };
@@ -615,6 +639,22 @@ export interface GatewayResponse {
 
   /** Finish reason from provider */
   finishReason?: string;
+
+  /**
+   * Anthropic-hosted tools the request offered that were not sent to the
+   * serving lane, and why (server-tool-policy.ts). Absent when none were
+   * withheld. Recorded in the ledger row so a turn that ran without web search
+   * says so, rather than looking like one that chose not to search.
+   */
+  withheldServerTools?: Array<{ name: string; reason: string }>;
+
+  /**
+   * The sensitive-placement decision's reason code for the lane that served
+   * the call (ALLOW_…), when the screen ran. Until 2026-09-26 an allowed call's
+   * decision went only to a log line, so the ledger could not show why a
+   * payload was permitted where it went.
+   */
+  placementReasonCode?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -694,6 +734,15 @@ export interface ModelConfig {
    * entry is one we do not use for it.
    */
   supportsInlineSystem?: boolean;
+
+  /**
+   * Whether this model returns the notes it writes between tool calls as
+   * progress-update `thinking` blocks rather than `text` (Opus 5.5, Fable 5.1,
+   * Mythos 5.1, Fable 5). Under the default display those blocks are empty, so
+   * the gateway asks for display "updates" and returns the notes as text (see
+   * progress-updates.ts). Omitted means false: the model writes them as text.
+   */
+  progressUpdatesInThinking?: boolean;
 
   /**
    * The highest `output_config.effort` this entry accepts, or `null` for none.
@@ -865,5 +914,34 @@ export interface AuditLogEntry {
   region?: string;
   /** Retention posture honored for this request. */
   retentionPolicy?: RetentionPolicy;
+  // ── Provenance and governance (D6, 2026-09-26) ─────────────────────────────
+  // Typed columns, not metadata keys, so the ledger can be queried for "every
+  // tenant payload served on a shared lane" without parsing JSON. See
+  // db/migrations/20260813_ai_gateway_audit_log.sql.
+  /** Provenance class of the payload: tenant_governed (default), tenant_derived or public. */
+  payloadProvenance?: PayloadProvenance;
+  /** The PHI/PII classifier's class for the request (none, pii, phi, unknown …). */
+  dataClass?: string;
+  /** How the tenant's placement policy resolved: resolved, absent or unknown. */
+  tenantPolicyResolution?: 'resolved' | 'absent' | 'unknown';
+  /** How the request was bound to its tenant. */
+  tenantBoundFrom?: 'explicit' | 'ambient_scope' | 'platform_scope' | 'none';
+  /** The placement decision's reason code (ALLOW_… on a served call, DENY_… on a refusal). */
+  placementReasonCode?: string;
+  /** The approved-models registry entry that served the call; absent when none matches. */
+  approvedModelId?: string;
+  /** That entry's pinned provider version. */
+  pinnedVersion?: string;
+  /** That entry's performance-qualification status, or 'unregistered' when no entry matches. */
+  pqStatus?: string;
+  /** The risk tier the caller declared. */
+  riskTier?: 'low' | 'medium' | 'high';
+  /** The AnA run this call belongs to, and its parent run. */
+  runId?: string;
+  parentRunId?: string;
+  /** Anthropic-hosted tools that ran inside the call (names only). */
+  serverToolsUsed?: string[];
+  /** Anthropic-hosted tools withheld from the lane, and why. */
+  serverToolsWithheld?: Array<{ name: string; reason: string }>;
   metadata?: Record<string, unknown>;
 }

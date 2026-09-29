@@ -14,7 +14,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
 
-const audit = vi.hoisted(() => ({ logAction: vi.fn(async () => undefined) }));
+const audit = vi.hoisted(() => ({ logAction: vi.fn(async (..._args: any[]) => undefined) }));
 vi.mock('../../services/auditService', () => ({ default: audit }));
 
 import { validateTenantContext } from '../../middleware/enterprise-security';
@@ -22,7 +22,10 @@ import { applyAuthBoundary } from '../middleware';
 
 function call(user: unknown, headerOrg?: string) {
   const req = {
-    path: '/api/vault/documents',
+    // As the '/api' mount hands the request over: Express 5 makes req.path
+    // mount-relative and puts the mount point in req.baseUrl.
+    baseUrl: '/api',
+    path: '/vault/documents',
     method: 'GET',
     ip: '203.0.113.5',
     headers: headerOrg ? { 'x-organization-id': headerOrg } : {},
@@ -52,6 +55,8 @@ describe('validateTenantContext, given a session', () => {
     expect(next).not.toHaveBeenCalled();
     await new Promise(r => setTimeout(r, 0)); // the audit is fire-and-forget
     expect(audit.logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'tenant_impersonation_attempt', tenantId: 7 }));
+    // The row names the path the client sent, /api prefix included.
+    expect(audit.logAction.mock.calls[0][0]).toMatchObject({ details: expect.objectContaining({ path: '/api/vault/documents' }) });
   });
 
   it('passes a header naming the session\'s own organisation', () => {

@@ -31,6 +31,7 @@ import { AppMentionMenu, useAppMentions } from './appMentions';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
+import { CONTINUE_PROMPT, continueTurnIndex } from './anaWorkModel';
 import { AnaProgressChip, AnaWorkPanel } from './AnaWorkPanel';
 import { AnaOutputCards, type AnaOutput } from './AnaOutputs';
 import { useAgentActivity } from './useAgentActivity';
@@ -48,16 +49,14 @@ import {
   AI_ACTIONS,
   ANA_MODES,
   CLIENT_CATEGORIES,
-  NAV_TIERS_V2,
-  NAV_GROUP_OF,
   PRIMARY_SEGMENTS,
   RAIL_CORE,
   RAIL_EXPLORE,
   RAIL_QUICK,
   RAIL_SPECIALIST,
   SEGMENTS,
+  breadcrumbTierOf,
   getAnaContext,
-  getCoauthor,
   getSegment,
   type AnaContext,
 } from './registryModel';
@@ -129,7 +128,7 @@ export interface AnaMessage {
  * Does this viewer hold an organization-administrator role?
  *
  * One implementation, because two entry points now consume it. It began inline
- * in `Rail` — the account menu offers Admin and Licensing only to admins — and
+ * in `Rail` — the account menu offers Admin and Access requests only to admins — and
  * ⌘K needs the same answer: both open {@link NavUnlockPanel} for a locked
  * destination, and that panel's copy branches on it (an admin is offered the
  * Apps catalog or workspace setup; a member is told to ask an administrator).
@@ -146,7 +145,12 @@ function isOrgAdminRole(roles: readonly string[] | undefined): boolean {
   );
 }
 
+/** Where "Get help" goes, from the account menu and the header alike: AnA, which answers
+ *  questions about the product in the governed conversation. */
+const HELP_SURFACE = 'conversation-thread';
+
 /* ── Left rail ─────────────────────────────────────────────────────────── */
+
 export function Rail({
   activeId,
   onNav,
@@ -169,7 +173,7 @@ export function Rail({
      the rail renders exactly as it did before: a lock badge is a claim about a
      customer's contract, and inventing one from a failed fetch is the failure
      mode worth avoiding here, not an unlocked rail. */
-  const { verdictFor } = useNavEntitlements();
+  const { verdictFor, platformAdmin } = useNavEntitlements();
   /** The locked destination the human just activated, if any. */
   const [lockedFor, setLockedFor] = React.useState<NavSurfaceEntitlement | null>(null);
   const name = user?.displayName || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Signed in';
@@ -187,10 +191,13 @@ export function Rail({
     // itself renders a non-leaky denied state, but we hide the entry entirely
     // for non-admins to mirror Claude exactly.
     ...(isOrgAdmin ? [{ label: 'Admin', ic: 'shieldCheck', to: 'admin-console' }] : []),
-    // Licensing control sits beside Admin, same gate. The surface itself
-    // re-checks platform-admin server-side on every read and write; this only
-    // decides whether the entry is offered.
-    ...(isOrgAdmin ? [{ label: 'Licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
+    // Licensing is the PLATFORM operator's console, not the customer's plan
+    // page (that is "View all plans" below). It is offered only when the server
+    // says its guard admits this viewer — `platformAdmin` is that guard's own
+    // function (resolvePlatformAdmin). It used to be offered on `isOrgAdmin`, so
+    // every customer org admin opened seven tabs that each refused them. The
+    // guard still re-checks every read and write; this only decides the offer.
+    ...(platformAdmin ? [{ label: 'Licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
     /* Where a member's request for a locked module lands. Without this entry the
        lock panel's one instruction — "ask an administrator" — points at nobody:
        the request is recorded, and the person who can approve it has no way to
@@ -203,7 +210,7 @@ export function Rail({
     { label: 'View all plans', ic: 'checkSquare', to: 'licensing' },
     { label: 'Set up a workspace', ic: 'rocket', to: 'onboarding' },
     { label: 'Codebase coverage', ic: 'grid', to: 'coverage' },
-    { label: 'Get help', ic: 'help', to: 'conversation-thread' },
+    { label: 'Get help', ic: 'help', to: HELP_SURFACE },
     { sep: true },
     { label: 'Log out', ic: 'logOut', action: 'logout' },
   ];
@@ -222,9 +229,9 @@ export function Rail({
   const navItem = (s: { id: string; label: string; icon: string; badge?: string; count?: number; target?: string }) => {
     const target = s.target ?? s.id;
     /* Entitlement is keyed on the DESTINATION, not the rail entry: "Recent
-       Documents" and "Starred Items" are shortcuts onto document-authoring and
-       projects, so they inherit those modules' verdicts rather than looking up
-       ids the catalog has never heard of. */
+       Documents" is a shortcut onto document-authoring, so it inherits that
+       module's verdict rather than looking up an id the catalog has never
+       heard of. */
     const verdict = verdictFor(target);
     const locked = isLocked(verdict);
     return (
@@ -263,6 +270,20 @@ export function Rail({
       </button>
     );
   };
+  /* The collapsed rail is 56px: the 24px brand mark and this 26px toggle side
+     by side inside its padding left the mark 5px wide — a sliver, and a 5px
+     click target for the Document workspace (launch sweep finding 135). So
+     collapsed, the mark keeps the top and the toggle moves to the foot. */
+  const collapseToggle = (
+    <button
+      type="button"
+      className="rail-collapse"
+      onClick={() => setCollapsed(!collapsed)}
+      title={collapsed ? 'Expand' : 'Collapse'} aria-label={collapsed ? 'Expand' : 'Collapse'}
+    >
+      {I.panelLeft}
+    </button>
+  );
   return (
     <nav className="rail" aria-label="Primary">
       <div className="rail-top">
@@ -279,14 +300,7 @@ export function Rail({
             Concept2Cure<span>.RI</span>
           </div>
         </button>
-        <button
-          type="button"
-          className="rail-collapse"
-          onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? 'Expand' : 'Collapse'} aria-label={collapsed ? 'Expand' : 'Collapse'}
-        >
-          {I.panelLeft}
-        </button>
+        {!collapsed && collapseToggle}
       </div>
       <div className="rail-scroll">
         <div className="rail-section">Client categories</div>
@@ -297,7 +311,12 @@ export function Rail({
               type="button"
               className="nav-item"
               data-on={segment === c.id || undefined}
-              aria-current={segment === c.id ? 'true' : undefined}
+              /* A chosen client category is a setting, not where the user is.
+                 It said aria-current="true", which the stylesheet drew as the
+                 current page — while the surface actually open carried
+                 aria-current="page", which nothing drew. So the category was
+                 the only thing ever highlighted (launch sweep finding 130). */
+              aria-pressed={segment === c.id}
               onClick={() => setSegment(c.id)}
               title={c.label}
             >
@@ -318,6 +337,7 @@ export function Rail({
         <div className="rail-nav">{RAIL_QUICK.filter(railVisible).map(navItem)}</div>
       </div>
       <div className="rail-foot">
+        {collapsed && collapseToggle}
         <button
           type="button"
           className="rail-account"
@@ -406,7 +426,7 @@ export function TopBar({
     .join('')
     .slice(0, 2)
     .toUpperCase();
-  const tier = NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[surface.id] ?? 'biopharma'));
+  const tier = breadcrumbTierOf(surface);
   const [segOpen, setSegOpen] = React.useState(false);
   /* The segment the label shows follows the OPEN PROGRAM's product type (or
      the workstream it was opened from) and falls back to the stored preference
@@ -439,10 +459,17 @@ export function TopBar({
   return (
     <header className="topbar">
       <div className="crumbs">
-        <span>Concept2Cure.RI</span>
-        <span className="sep" aria-hidden="true">›</span>
-        <span>{tier ? tier.label : ''}</span>
-        <span className="sep" aria-hidden="true">›</span>
+        <span className="crumb-root">Concept2Cure.RI</span>
+        <span className="sep crumb-root-sep" aria-hidden="true">›</span>
+        {/* A surface in both client categories has no tier crumb; this drew an
+            empty one between two separators ("Concept2Cure.RI › › Quality"),
+            launch sweep finding 129. */}
+        {tier && (
+          <>
+            <span className="crumb-tier">{tier.label}</span>
+            <span className="sep" aria-hidden="true">›</span>
+          </>
+        )}
         <span className="here">{surface.label}</span>
       </div>
       <div className="tb-spacer" />
@@ -476,12 +503,16 @@ export function TopBar({
           )}
         </div>
       )}
-      <button type="button" className="tb-org" title="Organization (switcher lands with the auth flow phase)">
-        <span className="tb-org-mark">{orgMark}</span>
+      {/* The organisation this session is scoped to — a label, not a control.
+          It was a button with a dropdown chevron, no handler and the tooltip
+          "switcher lands with the auth flow phase" (launch sweep finding 131).
+          A session's token carries one organisation; there is no switch to
+          offer until the server has one. */}
+      <div className="tb-org" title={orgName}>
+        <span className="tb-org-mark" aria-hidden="true">{orgMark}</span>
         <span className="tb-org-name">{orgName}</span>
-        <span className="tb-org-chev">{I.down}</span>
-      </button>
-      <button type="button" className="tb-cmdk" onClick={onPalette}>
+      </div>
+      <button type="button" className="tb-cmdk" onClick={onPalette} aria-label="Search, jump, or run a command" title="Search, jump, or run a command (⌘K)">
         <span className="ico">{I.search}</span>
         <span className="lbl">Search, jump, or run a command</span>
         <span className="kbd">⌘K</span>
@@ -507,7 +538,15 @@ export function TopBar({
         {I.messageSquare}
       </button>
       <TaskTray onNav={onNav} onAsk={onAsk} />
-      <button type="button" className="tb-btn" title="Help" aria-label="Help">
+      {/* Where the account menu's "Get help" goes. It had no handler at all
+          (launch sweep finding 132). */}
+      <button
+        type="button"
+        className="tb-btn"
+        title="Get help"
+        aria-label="Get help"
+        onClick={() => onNav?.(HELP_SURFACE)}
+      >
         {I.help}
       </button>
     </header>
@@ -672,7 +711,16 @@ export function AnaRail({
      say something rather than look like a send. */
   const [steerBusy, setSteerBusy] = React.useState(false);
   const [steerRefused, setSteerRefused] = React.useState(false);
-  const [agent, setAgent] = React.useState(false);
+  /* Ask / Agent IS the Live Drive preference, said as what it means for the
+     person. It used to be its own local flag that prefixed "[Agent] " to the
+     message — which the shell stripped before sending (V2App ask), so the two
+     modes behaved identically: "Agent — AnA takes governed actions" changed
+     nothing, and "Ask — you act" was untrue whenever Live Drive was on, which
+     is the default. Someone trying AnA's agentic mode saw exactly nothing
+     happen. Now Agent is AnA operating the screens (Live Drive on, not locked)
+     and Ask is AnA answering with the moves offered as buttons. One
+     preference, the same one the composer's "AnA drives" switch sets. */
+  const agent = Boolean(liveDrive?.on && !liveDrive.locked);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
   /* The progress panel: shown by default, hidden by one shared per-browser
@@ -714,7 +762,6 @@ export function AnaRail({
   const uploadingAttachments = attachments.filter((a) => a.status === 'uploading');
   const failedAttachments = attachments.filter((a) => a.status === 'error');
   const model = ANA_MODES.find((m) => m.id === mode)?.model ?? 'Balanced';
-  const co = getCoauthor(segment);
   /* AnA's per-surface context is local, and no longer claims otherwise.
    *
    * This used to fetch `GET /api/coauthor?surface=…&segment=…` under a comment
@@ -756,10 +803,14 @@ export function AnaRail({
     // themselves go by id, so the stream opens them and says it did.
     const { body: bodyText, files } = composeTurn(t, attachments);
 
-    onSend(agent ? `[Agent] ${bodyText}` : bodyText, files);
+    onSend(bodyText, files);
     setDraft('');
     clearAttachments();
   };
+
+  /* Continue is offered on the latest settled turn only, through the rail's
+     own send path, as a new turn (anaWorkModel.continueTurnIndex). */
+  const continueAt = continueTurnIndex(messages.map((t) => ({ role: t.role, streaming: t.activity?.streaming })), streaming);
 
   if (!open) {
     return (
@@ -988,7 +1039,7 @@ export function AnaRail({
                   plain: it is never parsed as markup. */}
               {/* Her work first, then the answer it produced, then the output —
                   the order every host renders a turn in, and the reference's. */}
-              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
+              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} onContinue={i === continueAt ? () => onSend(CONTINUE_PROMPT) : undefined} />}
               {m.role === 'ana' ? (
                 <div className="ana-msg-bd ana-md" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(m.body ?? '') }} />
               ) : (
@@ -1489,40 +1540,33 @@ export function AnaRail({
                 className="ana-menu-item"
                 data-on={!agent || undefined}
                 onClick={() => {
-                  setAgent(false);
+                  if (liveDrive?.on) liveDrive.setOn(false);
                   setModeOpen(false);
                 }}
               >
-                <span className="ico">{I.sparkles}</span>Ask<span className="mh">AnA answers; you act</span>
-              </button>
-              <button
-                type="button"
-                className="ana-menu-item"
-                data-on={agent || undefined}
-                onClick={() => {
-                  setAgent(true);
-                  setModeOpen(false);
-                }}
-              >
-                <span className="ico">{I.wand}</span>Agent<span className="mh">AnA takes governed actions</span>
+                <span className="ico">{I.sparkles}</span>Ask
+                <span className="mh">AnA answers; screen moves come as buttons you press</span>
               </button>
               {liveDrive && (
                 <button
                   type="button"
                   className="ana-menu-item"
-                  data-on={liveDrive.on || undefined}
+                  data-on={agent || undefined}
+                  aria-disabled={liveDrive.locked ? true : undefined}
                   onClick={() => {
-                    liveDrive.setOn(!liveDrive.on);
+                    // A locked workspace keeps the item visible for its reason;
+                    // it does not pretend to switch anything on.
+                    if (!liveDrive.locked && !liveDrive.on) liveDrive.setOn(true);
                     setModeOpen(false);
                   }}
                 >
-                  <span className="ico">{I.play}</span>Live Drive
+                  <span className="ico">{I.wand}</span>Agent
                   <span className="mh">
                     {liveDrive.locked
                       ? liveDrive.locked.requiredTier
                         ? `Requires the ${liveDrive.locked.requiredTier} plan`
                         : 'Not available for this workspace'
-                      : 'AnA navigates the screens; you watch and can take over'}
+                      : 'AnA operates the screens as she works; you can take over'}
                   </span>
                 </button>
               )}
@@ -1585,12 +1629,6 @@ export function AnaRail({
               ))}
             </div>
           )}
-          {agent && (
-            <div className="ana-agent-note">
-              <span className="ico">{I.shieldCheck}</span>Agent mode — AnA runs tools &amp; drafts
-              governed actions. Changes require your e-signature.
-            </div>
-          )}
           {liveDrive?.on && (
             <div className="ana-agent-note">
               <span className="ico">{I.play}</span>
@@ -1598,7 +1636,7 @@ export function AnaRail({
                 ? liveDrive.locked.requiredTier
                   ? `Live Drive requires the ${liveDrive.locked.requiredTier} plan — AnA will offer destinations as chips instead.`
                   : 'Live Drive is not available for this workspace — AnA will offer destinations as chips instead.'
-                : 'Live Drive — AnA navigates your screens as she works. Take over any time (Esc).'}
+                : 'Agent — AnA operates your screens as she works. Take over any time (Esc). Changes to the official record still wait for you to confirm them.'}
             </div>
           )}
         </div>
@@ -1700,7 +1738,7 @@ export function CmdK({
            or one outside the workspace's industry mode (no plan fixes it). */
         hint: lock
           ? lockShortReason(lock)
-          : NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
+          : breadcrumbTierOf(s)?.label,
         icon: s.icon,
         lock,
       };

@@ -141,6 +141,7 @@ const R = new JourneyRecorder(
     'server/db/pglite-harness.ts#SUBMISSION_CORE_PGLITE_DDL',
     'server/db/pglite-harness.ts#LEAF_SOURCE_PGLITE_DDL',
     'migrations/20260527_mutation_primitives.sql',
+    'migrations/20260929_actor_names.sql',
     'migrations/20260609_audit_hmac_seal.sql',
     'migrations/20260524_program_workbench_schema.sql',
     // regulatory_programs.application_number (WO-9 Click 1): the column the
@@ -195,6 +196,10 @@ beforeAll(async () => {
       // REAUTH_MFA_STATE_UNKNOWN. The real migration, not a hand copy.
       'db/migrations/20260725_users_signing_lockout_columns.sql',
       'migrations/20260527_mutation_primitives.sql',
+      // public.actor_name (D3, 2026-09-29): the program list names its lead
+      // through it since users took row-level security; after mutation
+      // primitives, which adds the audit_logs.actor_id it reads.
+      'migrations/20260929_actor_names.sql',
       'migrations/20260609_audit_hmac_seal.sql',
       'migrations/20260524_program_workbench_schema.sql',
       // regulatory_programs.application_number (WO-9 Click 1): the column the

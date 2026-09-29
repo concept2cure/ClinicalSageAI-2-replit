@@ -70,6 +70,22 @@ function toRef(row: Record<string, unknown>): ProgramRef | null {
 }
 
 /**
+ * Every program read: this organisation's live programs, most recently touched
+ * first. The tenant predicate is written once, here, so no read can leave it
+ * out; a read adds its own match on `$2` after it.
+ */
+const PROGRAMS_OF_ORG = `SELECT id, name, code FROM regulatory_programs
+        WHERE organization_id = $1 AND deleted_at IS NULL`;
+const MOST_RECENT_FIRST = `ORDER BY updated_at DESC NULLS LAST, name`;
+
+/** How many of several matches a caller is shown; one more is read to know there are more. */
+const MAX_MATCHES_SHOWN = 10;
+
+function toRefs(rows: Array<Record<string, unknown>>): ProgramRef[] {
+  return rows.map(toRef).filter((p): p is ProgramRef => p !== null);
+}
+
+/**
  * The organisation's programs, most recently touched first — the candidates
  * AnA offers or picks from. Empty on any read failure (the caller says so;
  * an empty list is never presented as "you have no programs" unless it came
@@ -83,13 +99,12 @@ export async function listProgramCandidates(
   if (!organizationId) return { ok: false, programs: [] };
   try {
     const { rows } = await query(
-      `SELECT id, name, code FROM regulatory_programs
-        WHERE organization_id = $1 AND deleted_at IS NULL
-        ORDER BY updated_at DESC NULLS LAST, name
+      `${PROGRAMS_OF_ORG}
+        ${MOST_RECENT_FIRST}
         LIMIT $2`,
       [organizationId, Math.max(1, Math.min(100, limit))]
     );
-    return { ok: true, programs: rows.map(toRef).filter((p): p is ProgramRef => p !== null) };
+    return { ok: true, programs: toRefs(rows) };
   } catch {
     return { ok: false, programs: [] };
   }
@@ -97,14 +112,47 @@ export async function listProgramCandidates(
 
 export type ProgramResolution =
   | { status: 'found'; program: ProgramRef }
-  | { status: 'ambiguous'; matches: ProgramRef[] }
+  /** `truncated`: more matched than the ten most recent listed in `matches`. */
+  | { status: 'ambiguous'; matches: ProgramRef[]; truncated: boolean }
   | { status: 'not_found'; candidates: ProgramRef[] }
   | { status: 'unavailable' };
+
+/** `ref` as a LIKE literal: its own `\`, `%` and `_` match themselves, not anything. */
+function likeLiteral(ref: string): string {
+  return ref.replace(/[\\%_]/g, ch => `\\${ch}`);
+}
+
+/**
+ * Exact: the id, or the name or code case-insensitively. The id column is a
+ * uuid, and comparing it as one would make Postgres throw on every reference
+ * that is not a uuid — "BX-301", a name — so it is compared as text (a uuid's
+ * text form is lower-case, hence `lower($2)`). The code is trimmed, as `toRef`
+ * trims it, so the code AnA was shown is the code that opens the program.
+ */
+const EXACT_MATCH = `${PROGRAMS_OF_ORG}
+          AND (id::text = lower($2) OR lower(name) = lower($2) OR lower(btrim(code)) = lower($2))
+        ${MOST_RECENT_FIRST}
+        LIMIT ${MAX_MATCHES_SHOWN + 1}`;
+
+/** Partial: `$2` is a `%…%` pattern built from `likeLiteral`, so a `%` the person typed is literal. */
+const PARTIAL_MATCH = `${PROGRAMS_OF_ORG}
+          AND (name ILIKE $2 ESCAPE '\\' OR code ILIKE $2 ESCAPE '\\')
+        ${MOST_RECENT_FIRST}
+        LIMIT ${MAX_MATCHES_SHOWN + 1}`;
 
 /**
  * Resolve a person's reference to one of THEIR programs: an exact id, an exact
  * code or name (case-insensitive), else a unique partial match on code or
  * name. Never crosses organisations; never guesses between several matches.
+ *
+ * The matching happens in the database, over every program the organisation
+ * has. It used to read the 100 most recently touched and match those in
+ * memory, so in a larger workspace an older program could not be opened even
+ * by its exact code — it was reported as not existing — and "ambiguous" was
+ * judged over whichever hundred happened to be recent.
+ *
+ * Any failed read is `unavailable`, never `not_found`: a read that errored has
+ * not shown that the program is absent.
  */
 export async function resolveProgramRef(
   organizationId: number | null | undefined,
@@ -113,21 +161,31 @@ export async function resolveProgramRef(
 ): Promise<ProgramResolution> {
   const wanted = ref.trim();
   if (!organizationId || !wanted) return { status: 'unavailable' };
-  const listed = await listProgramCandidates(organizationId, 100, query);
+  const decide = (matches: ProgramRef[]): ProgramResolution | null =>
+    matches.length === 1
+      ? { status: 'found', program: matches[0] }
+      : matches.length > 1
+        ? {
+            status: 'ambiguous',
+            matches: matches.slice(0, MAX_MATCHES_SHOWN),
+            truncated: matches.length > MAX_MATCHES_SHOWN,
+          }
+        : null;
+  try {
+    // An exact match wins over the partial ones it also satisfies: "BX-30" is
+    // one program's code and a prefix of others', and must open that one.
+    const exact = decide(toRefs((await query(EXACT_MATCH, [organizationId, wanted])).rows));
+    if (exact) return exact;
+    const partial = decide(
+      toRefs((await query(PARTIAL_MATCH, [organizationId, `%${likeLiteral(wanted)}%`])).rows)
+    );
+    if (partial) return partial;
+  } catch {
+    return { status: 'unavailable' };
+  }
+  const listed = await listProgramCandidates(organizationId, 25, query);
   if (!listed.ok) return { status: 'unavailable' };
-  const programs = listed.programs;
-  const lower = wanted.toLowerCase();
-  const exact = programs.filter(
-    p => p.id === wanted || p.name.toLowerCase() === lower || (p.code ?? '').toLowerCase() === lower
-  );
-  if (exact.length === 1) return { status: 'found', program: exact[0] };
-  if (exact.length > 1) return { status: 'ambiguous', matches: exact.slice(0, 10) };
-  const partial = programs.filter(
-    p => p.name.toLowerCase().includes(lower) || (p.code ?? '').toLowerCase().includes(lower)
-  );
-  if (partial.length === 1) return { status: 'found', program: partial[0] };
-  if (partial.length > 1) return { status: 'ambiguous', matches: partial.slice(0, 10) };
-  return { status: 'not_found', candidates: programs.slice(0, 25) };
+  return { status: 'not_found', candidates: listed.programs };
 }
 
 /** Compact program list for a tool result the model reads. */

@@ -434,7 +434,7 @@ describe('4 — a decision is filed only against a section of its own document',
       sectionId: other.sectionId,
     });
     expect(one.status).toBe(400);
-    expect(String(one.body.error)).toMatch(/not in this document/);
+    expect(one.body.error?.code).toBe('SECTION_NOT_IN_DOCUMENT');
 
     const many = await bulk(docId).send({
       decision: 'accept',

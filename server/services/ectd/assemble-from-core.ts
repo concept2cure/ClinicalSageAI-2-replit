@@ -27,7 +27,9 @@ import path from 'path';
 import { eq, and, isNull, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
-import { packageSequenceFromCore, type PackageFromCoreResult } from './package-from-core';
+import { regulatoryPrograms } from '../../../shared/schema/programs';
+import { recordedApplicationId, usableIdentifier } from './regulatory-identifiers';
+import { packageSequenceFromCore, type PackageFromCoreResult, type PriorState } from './package-from-core';
 import { materializeLeafSources, leafSourceKey, type UnresolvedLeaf } from './leaf-source-resolver';
 import { validateLeafPaths } from './leaf-path-safety';
 import { toPackagerRegion, type LeafFileResolver } from './core-to-packager';
@@ -55,6 +57,9 @@ export interface AssembleSequenceParams {
   sponsorId: string;
   sponsorName: string;
   emitUnzipped?: boolean;
+  /** What lifecycle acts bind against; 'filed' unless a caller asks for a
+   *  rehearsal (package-from-core PriorState). Transmit never does. */
+  priorState?: PriorState;
 }
 
 export interface AssembleSequenceResult extends PackageFromCoreResult {
@@ -299,6 +304,7 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     sponsorName: params.sponsorName,
     resolveFile,
     emitUnzipped: params.emitUnzipped,
+    priorState: params.priorState,
   });
 
   if (unresolvedLeaves.length > 0) {
@@ -461,6 +467,9 @@ export interface AssembleSubmissionParams {
    * actual filing.
    */
   requireComplete?: boolean;
+  /** What a follow-up sequence's acts bind against; 'filed' unless asked for
+   *  a rehearsal, whose package is named so (see package-from-core). */
+  priorState?: PriorState;
 }
 
 export interface AssembleSubmissionResult {
@@ -475,6 +484,14 @@ export interface AssembleSubmissionResult {
   materialized: number;
   unresolvedLeaves: UnresolvedLeaf[];
   skipped: Array<{ sectionCode: string; reason: string }>;
+  /** The prior state the acts were bound against, and — for a rehearsal — the
+   *  earlier sequences bound against that were never filed. */
+  priorState: PriorState;
+  unfiledPriorSequences: string[];
+  /** The submission's program (submissions.program_id), or null for a
+   *  submission not anchored to one. The export route records a governed
+   *  export against the project that anchors this program (W5/D7). */
+  programId: string | null;
   /** The assembly's §11.10(e) outcome (both rows), from assembleSequence. */
   auditTrail: AuditRowOutcome;
   /** DTD self-containment status from the packager. */
@@ -495,6 +512,59 @@ export interface AssembleSubmissionResult {
     generatedAt: string;
     completeness: CompletenessReport;
   };
+}
+
+/**
+ * The application number a submission's package carries, from its program's
+ * record (recordedApplicationId): the recorded agency number, else the
+ * program's code, else a handle that says it is unassigned. The record is
+ * authoritative, as it is for the region: a caller-supplied number must be a
+ * usable identifier and must not contradict a recorded agency number.
+ *
+ * 2026-09-29 (W5/D7, WO-9 Click 6): the number came only from the caller, which
+ * the compile surface never sends — BX-512 compiled as IND 000512 and exported
+ * as UNASSIGNED-SEQ-6 — and a supplied one went unvalidated into a filename
+ * and the backbone.
+ */
+async function exportApplicationId(
+  submission: { programId: string | null },
+  sequenceId: number,
+  organizationId: number,
+  supplied: string | undefined,
+): Promise<string> {
+  const [program] = submission.programId
+    ? await db
+        .select({ applicationNumber: regulatoryPrograms.applicationNumber, code: regulatoryPrograms.code })
+        .from(regulatoryPrograms)
+        .where(
+          and(
+            eq(regulatoryPrograms.id, submission.programId),
+            eq(regulatoryPrograms.organizationId, organizationId),
+            isNull(regulatoryPrograms.deletedAt),
+          ),
+        )
+        .limit(1)
+    : [];
+  const recorded = recordedApplicationId(
+    { applicationNumber: program?.applicationNumber ?? null, programCode: program?.code ?? null },
+    `UNASSIGNED-SEQ-${sequenceId}`,
+  );
+  if (supplied === undefined) return recorded;
+  const usable = usableIdentifier('applicationNumber', supplied);
+  if (usable === null) {
+    throw new Error(
+      `"${supplied}" is not a usable application number: it must start with a letter or digit and hold only ` +
+        'letters, digits, ".", "_" or "-" (up to 64).',
+    );
+  }
+  const recordedNumber = usableIdentifier('applicationNumber', program?.applicationNumber);
+  if (recordedNumber !== null && usable !== recordedNumber) {
+    throw new Error(
+      `Application number "${usable}" does not match the program's recorded application number "${recordedNumber}". ` +
+        'The record is authoritative; omit the number to package as recorded.',
+    );
+  }
+  return usable;
 }
 
 /**
@@ -567,16 +637,20 @@ export async function assembleSubmissionEctd(
     }
   }
 
+  const applicationId = await exportApplicationId(submission, sequence.id, organizationId, params.applicationNumber);
+
   const assembled = await assembleSequence({
     sequenceId: sequence.id,
     organizationId,
     userId,
-    // Never fabricate an agency identifier. An unassigned value says so, in the
-    // same wording the transmit path already uses (submission-ops), so a
-    // reviewer reading the backbone sees a gap instead of a plausible applicant.
-    applicationId: params.applicationNumber ?? `UNASSIGNED-SEQ-${sequence.id}`,
+    // Never fabricate an agency identifier. The program's record decides it
+    // (exportApplicationId); an unassigned value says so, in the same wording
+    // the transmit path already uses (submission-ops), so a reviewer reading
+    // the backbone sees a gap instead of a plausible applicant.
+    applicationId,
     sponsorId: params.applicantId ?? `UNASSIGNED-ORG-${organizationId}`,
     sponsorName: params.applicantName ?? `UNASSIGNED (organization ${organizationId})`,
+    priorState: params.priorState,
   });
 
   try {
@@ -618,9 +692,12 @@ export async function assembleSubmissionEctd(
       entries.map((f) => f.split('/')[0]).filter((top) => /^m[1-5]$/.test(top)),
     );
 
+    // A rehearsal's download says so in its name: it is for an agency
+    // validator, bound against sequences that were never filed.
+    const baseName = path.basename(assembled.bundle.path);
     return {
       buffer,
-      filename: path.basename(assembled.bundle.path),
+      filename: assembled.priorState === 'rehearsal' ? baseName.replace(/(\.zip)?$/i, '-rehearsal$1') : baseName,
       sequenceId: sequence.id,
       sequenceNumber: sequence.sequenceNumber,
       region: sequence.region,
@@ -628,6 +705,9 @@ export async function assembleSubmissionEctd(
       materialized: assembled.materialized,
       unresolvedLeaves: assembled.unresolvedLeaves,
       skipped: assembled.skipped,
+      priorState: assembled.priorState,
+      unfiledPriorSequences: assembled.unfiledPriorSequences,
+      programId: submission.programId ?? null,
       // The assembly's §11.10(e) outcome; the export route answers it as headers.
       auditTrail: assembled.auditTrail,
       dtdStatus: assembled.bundle.dtdStatus,

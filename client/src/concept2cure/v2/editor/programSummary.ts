@@ -42,28 +42,58 @@ export function programFromBody(body: unknown, id: string): ProgramSummary | nul
   };
 }
 
-export function useProgramSummary(programId: string | null): ProgramSummary | null {
+/**
+ * The program and the state of its read. 2026-09-28 (GE-H-2, coverage-gap
+ * sweep): the state this module declares was never returned, so a failed read
+ * left `program` null exactly as a read in flight does, and the canvas said
+ * "Reading the program…" forever after a 500, a 404 or an expired session.
+ */
+export function useProgramRead(programId: string | null): { program: ProgramSummary | null; state: ProgramSummaryState } {
   const [program, setProgram] = useState<ProgramSummary | null>(null);
+  const [state, setState] = useState<ProgramSummaryState>('idle');
   useEffect(() => {
     let alive = true;
     setProgram(null);
-    if (!programId) return undefined;
+    if (!programId) {
+      setState('idle');
+      return undefined;
+    }
+    setState('loading');
     void (async () => {
       try {
         const res = await apiRequest('GET', `/api/c2c/projects/${encodeURIComponent(programId)}`);
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (alive) setState('error');
+          return;
+        }
         const body = await res.json().catch(() => null);
         if (!alive) return;
-        setProgram(programFromBody(body, programId));
+        const read = programFromBody(body, programId);
+        setProgram(read);
+        setState(read ? 'ready' : 'error');
       } catch {
-        /* A failed read names no program. The header then shows none. */
+        if (alive) setState('error');
       }
     })();
     return () => {
       alive = false;
     };
   }, [programId]);
-  return program;
+  return { program, state };
+}
+
+/** The program alone, for headers that show nothing until it is read. */
+export function useProgramSummary(programId: string | null): ProgramSummary | null {
+  return useProgramRead(programId).program;
+}
+
+/** The canvas's program line: the program, a read in flight, or a read that failed — never one for another. */
+export function programLineFor(program: ProgramSummary | null, state: ProgramSummaryState): string | null {
+  const line = programHeadline(program);
+  if (line) return line;
+  if (state === 'loading') return 'Reading the program…';
+  if (state === 'error') return 'Program details could not be read';
+  return null;
 }
 
 /** The program's name as a person says it — name, else code. */

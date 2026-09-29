@@ -26,6 +26,9 @@ const { database, answer } = vi.hoisted(() => {
     up: true,
     searchRows: [] as unknown[],
     byId: null as unknown,
+    /** What a lookup by `decision_code` finds; `lookups` records every lookup, in order. */
+    byCode: null as unknown,
+    lookups: [] as string[],
     queryRows: [] as unknown[],
   };
   /** What the database gives back: `value`, or a rejection while it is down. */
@@ -34,10 +37,21 @@ const { database, answer } = vi.hoisted(() => {
   return { database, answer };
 });
 
+/* resolveGovernedDecisionRow (governed-decision-ledger.ts) looks a decision up
+   by its decision_code first — the id every caller holds is stored only there —
+   then by primary key. Both lookups go through the same door, so both are held
+   to the same rule: while the database is down, each rejects. */
 vi.mock('../server/services/decision-record-service', () => ({
   decisionRecordService: {
     search: () => answer(() => database.searchRows),
-    getById: () => answer(() => database.byId),
+    getByDecisionCode: (code: string) => {
+      database.lookups.push(`code:${code}`);
+      return answer(() => database.byCode);
+    },
+    getById: (id: string) => {
+      database.lookups.push(`id:${id}`);
+      return answer(() => database.byId);
+    },
   },
 }));
 vi.mock('../server/db.js', () => ({ pool: { query: () => answer(() => ({ rows: database.queryRows })) }, db: {} }));
@@ -60,6 +74,8 @@ beforeEach(() => {
   database.up = true;
   database.searchRows = [];
   database.byId = null;
+  database.byCode = null;
+  database.lookups = [];
   database.queryRows = [];
 });
 
@@ -111,6 +127,12 @@ describe('Governed decision reads: a database that answers is reported as it is'
 
   it('a decision that does not exist is null', async () => {
     expect(await getGovernedDecision('d-1', 7)).toBeNull();
+  });
+
+  it('a decision is found by the code its caller holds, before the primary key is tried', async () => {
+    database.byCode = { id: 'pk-1', decisionCode: 'governed-fabric:d-1' };
+    expect(await getGovernedDecision('d-1', 7)).not.toBeNull();
+    expect(database.lookups).toEqual(['code:governed-fabric:d-1']);
   });
 
   it('decisions under review or escalated are unresolved, and counted', async () => {

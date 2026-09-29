@@ -203,6 +203,24 @@ describe('MultiAgentCouncilService — task routing and governance refusals', ()
     expect(h.auditLog).not.toHaveBeenCalledWith('CIRCUIT_BREAKER_OPENED', expect.anything(), expect.anything(), expect.anything());
   });
 
+  it('a tenant placement refusal is final, named for what it is, and not audited as an outage (D6)', async () => {
+    // Until 2026-09-26 it fell through to the outage branch: three retries, three
+    // "All LLM providers unavailable" records, and "the system will retry".
+    const refusal = Object.assign(
+      new Error("DENY_TENANT_POLICY: this request was not sent to any AI service, because your organization's data-placement policy does not permit it (no self-hosted lane)."),
+      { name: 'GatewayPolicyError', reasonCode: 'DENY_TENANT_POLICY', stage: 'selection' },
+    );
+    h.route.mockImplementation(async () => {
+      throw refusal;
+    });
+    (svc as any).RETRY_DELAY_MS = 0;
+    await expect(
+      (svc as any).withRetry(() => call('DRAFTER', { responseFormat: 'text' }), 'DRAFTER'),
+    ).rejects.toMatchObject({ code: 'TENANT_PLACEMENT_DENIED', recoverable: false, message: refusal.message });
+    expect(h.route).toHaveBeenCalledTimes(1);
+    expect(h.auditLog).not.toHaveBeenCalledWith('CIRCUIT_BREAKER_OPENED', expect.anything(), expect.anything(), expect.anything());
+  });
+
   it('withRetry does not retry an error marked unrecoverable, and does retry a recoverable one', async () => {
     const { CouncilError } = await import('../multi-agent-council');
     (svc as any).RETRY_DELAY_MS = 0;

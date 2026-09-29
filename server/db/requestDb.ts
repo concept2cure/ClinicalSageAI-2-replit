@@ -82,6 +82,38 @@ export function requestPgClient(req: Request): RequestSqlClient {
   return client as unknown as RequestSqlClient;
 }
 
+/**
+ * The request-scoped client in the shape a writer that opens its own
+ * transaction asks for: `connect()` gives a client with `release()`. The
+ * turn-record writer, the placement-policy writer and the turn-record export's
+ * chained audit row each BEGIN, write and COMMIT on a client they connect.
+ *
+ * Every `connect()` returns the request's one pinned connection, which carries
+ * the request's tenant session variables. `release` does nothing: the request
+ * owns that connection and returns it to the pool when the response ends. A
+ * writer that failed has already issued its ROLLBACK, which leaves the
+ * connection idle for the next statement.
+ *
+ * The client is resolved when it is used, not here, so a request without one
+ * fails inside the writer's own error handling (the turn writer's "not
+ * recorded", a route's catch) instead of at the call site. The same fail-closed
+ * contract as `requestPgClient`: never a fallback to the shared pool.
+ */
+export interface RequestConnectable extends RequestSqlClient {
+  connect(): Promise<RequestSqlClient & { release: (err?: Error) => void }>;
+}
+
+export function requestConnectable(req: Request): RequestConnectable {
+  const query = (text: string, params?: unknown[]) => requestPgClient(req).query(text, params);
+  return {
+    query,
+    async connect() {
+      requestPgClient(req);
+      return { query, release: () => undefined };
+    },
+  };
+}
+
 export function requestDb(req: Request): RequestDb {
   // A bad merge left two copies of this function body here, so `client` was
   // declared twice (TS2451) and the file did not compile. The canonical shape is

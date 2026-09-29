@@ -61,7 +61,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from '../golden-journeys/harness';
 import { T, buildWorld, baselineProblems, type World } from './founder-path-lineage.world';
-import { hopProject, hopCapture, hopAnaDraft, hopEditSave, hopSeal, hopFileToVault } from './founder-path-lineage.hops-authoring';
+import { hopProject, hopCapture, hopAnaDraft, hopEditSave, hopSeal, hopFileToVault, hopAdopt } from './founder-path-lineage.hops-authoring';
 import { hopPlace, hopTransmit, walkBack, walkForward, hopRetention } from './founder-path-lineage.hops-filing';
 
 const h = vi.hoisted(() => ({
@@ -183,6 +183,8 @@ const MIGRATIONS = [
   'migrations/20260527_mutation_primitives.sql',
   'migrations/20260609_audit_hmac_seal.sql',
   'migrations/20260921_audit_logs_chain_seq.sql',
+  // public.actor_name (D3, 2026-09-29): project reads name people through it.
+  'migrations/20260929_actor_names.sql',
   // The project: the program, its filing scaffold, its PM-spine anchor.
   'migrations/20260524_program_workbench_schema.sql',
   'migrations/20260907_regulatory_programs_application_number.sql',
@@ -247,6 +249,7 @@ describe('LX-00 — the founder path: project → Data Room → AnA → editor �
   it('hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)', () => hopTransmit(world), T);
   it('walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project', () => walkBack(world), T);
   it('walk forward · from the project and from the source to the transmittal', () => walkForward(world), T);
+  it('adopt · a conversation file becomes a project’s source only through one audited adopt', () => hopAdopt(world), T);
   it('retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted', () => hopRetention(world), T);
 
   it('the database the walk ran on held every table and column the code asked for', async () => {

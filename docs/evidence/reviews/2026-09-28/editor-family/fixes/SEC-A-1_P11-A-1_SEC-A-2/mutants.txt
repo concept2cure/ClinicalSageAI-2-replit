@@ -1,0 +1,210 @@
+# MUTANTS — lane FA. Runner: SCRATCH/mutants.py (exact unique string swap, run, reverse swap).
+# Each mutant runs the route suite (and the service suite for service mutants) against the final test files.
+# 27 of 28 caught. M29 (FOR UPDATE) not caught: PGlite is one session, so no concurrent writer can be staged; the
+# row lock keeps the audit before-image exact under concurrent re-reads, as PATCH /comments/:id's FOR UPDATE does.
+# M23 (revert audit on the pool) was withdrawn with SEC-A-9: that fix is 59b0d8f9, not this lane; the handler is HEAD's.
+
+## M1 service: refresh lookup no longer bound to section_id (SEC-A-1 binding reverted)
+   file: server/services/clinical-regulatory-evidence/source-usage.service.ts
+   Test Files  2 failed (2) | Tests  3 failed | 50 passed (53)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses a citation on another section of the same document
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses, as not found, a citation on another document that is FROZEN and not granted to the caller; nothing is written
+   - server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > cannot re-resolve a citation through a section it does not belong to (SEC-A-1)
+
+## M2 router refresh-token: audit row not written
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  2 failed | 18 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token
+
+## M3 router refresh-token: service called without the transaction client
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction
+
+## M4 service: re-cite re-baselines the checksum again (old behaviour)
+   file: server/services/clinical-regulatory-evidence/source-usage.service.ts
+   Test Files  2 failed (2) | Tests  3 failed | 50 passed (53)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+   - server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > citing it again does not re-baseline the checksum recorded at cite time (SEC-A-8)
+
+## M5 router cite-source: audit row not written
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  4 failed | 16 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source
+
+## M6 router cite-source: service called without the transaction client
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction
+
+## M7 router uncite: audit rows not written
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  2 failed | 18 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite
+
+## M8 service uncite: RETURNING drops the checksum/author (no before-image)
+   file: server/services/clinical-regulatory-evidence/source-usage.service.ts
+   Test Files  2 failed (2) | Tests  2 failed | 51 passed (53)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+   - server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > removing a citation > removes an unfrozen citation and leaves frozen ones alone
+
+## M9 router uncite: service called without the transaction client
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+
+## M10 router free-text cite: audit row not written
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction
+
+## M11 router free-text cite: INSERT on the pool, outside the transaction
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction
+
+## M12 router refresh-all: audit rows not written
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  2 failed | 18 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure
+
+## M13 router refresh-all: sealed-document lock check removed
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all refuses a FROZEN document and re-reads nothing
+
+## M14 router refresh-all: service called without the transaction client
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section
+
+## M15 router auditCitationWrite: audit row written on the pool, not the transaction client
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  8 failed | 12 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite
+
+## M16 router auditCitationWrite: doc id not taken from the section row
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  7 failed | 13 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction
+
+## M17 router auditCitationWrite: before-image dropped
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  4 failed | 16 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction
+
+## M18 router comment: body doc_id mismatch no longer refused
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a body doc_id naming another document, and writes nothing
+
+## M19 router comment: doc_id inserted from the body again (check kept)
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction
+
+## M20 router comment: parent on another section no longer refused
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing
+
+## M21 router comment: audit row on the pool, not the transaction client
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  2 failed | 18 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction
+
+## M22 router comment: INSERT on the pool, outside the transaction
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction
+
+## M24 service citeSource: INSERT ignores the executor (runs on the pool)
+   file: server/services/clinical-regulatory-evidence/source-usage.service.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction
+
+## M25 service refresh: UPDATE ignores the executor (runs on the pool)
+   file: server/services/clinical-regulatory-evidence/source-usage.service.ts
+   Test Files  1 failed (1) | Tests  2 failed | 18 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction
+
+## M26 service uncite: DELETE ignores the executor (runs on the pool)
+   file: server/services/clinical-regulatory-evidence/source-usage.service.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+
+## M27 service recite: new citation text written without an audit-able change (change: null)
+   file: server/services/clinical-regulatory-evidence/source-usage.service.ts
+   Test Files  1 failed (1) | Tests  1 failed | 19 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+
+## M28 router inTransaction: no ROLLBACK on failure
+   file: server/routes/authoring.router.ts
+   Test Files  1 failed (1) | Tests  9 failed | 11 passed (20)
+   CAUGHT
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a body doc_id naming another document, and writes nothing
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token
+   - server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite
+
+## M29 service refresh: FOR UPDATE removed from the section-bound lookup
+   file: server/services/clinical-regulatory-evidence/source-usage.service.ts
+   Test Files  2 passed (2) | Tests  53 passed (53)
+   NOT CAUGHT
+

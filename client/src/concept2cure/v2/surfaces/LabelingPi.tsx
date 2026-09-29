@@ -457,8 +457,8 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
     },
   });
   React.useEffect(() => {
-    if (!loading && !error) notifySurfaceActionReady('labeling-pi');
-  }, [loading, error]);
+    if (!loading) notifySurfaceActionReady('labeling-pi');
+  }, [loading]);
 
   usePublishSurfaceContext('labeling-pi', anaContext);
 

@@ -311,7 +311,9 @@ function analyzeModuleGaps(
           evidence: [
             `Current documents: ${m.documentCount}`,
             `Expected minimum: ${expected}`,
-            `Completeness: ${m.completenessPercent}%`,
+            m.completenessPercent === null
+              ? 'Completeness: not assessed — no required-section list for this module'
+              : `Completeness: ${m.completenessPercent}%`,
             ...m.missingItems.slice(0, 3),
           ],
           suggestedAction: `Draft or assign content to ${m.module}`,

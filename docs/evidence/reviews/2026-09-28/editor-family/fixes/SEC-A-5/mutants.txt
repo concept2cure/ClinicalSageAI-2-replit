@@ -1,0 +1,11 @@
+# Mutants, each run against deviceDraftCacheOwner.test.tsx; files restored after each (cmp)
+## mutant: the key is the section alone (the old key)
+ × a cached draft is offered only to the person who typed it (SEC-A-5) > another person on the same browser is not 107ms
+      Tests  1 failed | 4 passed (5)
+## mutant: the offer is shown on a read-only canvas
+ × a cached draft is offered only to the person who typed it (SEC-A-5) > a read-only section offers no draft, even its author’s 104ms
+ × a cached draft is offered only to the person who typed it (SEC-A-5) > the offer goes when the section becomes read-only while open 5109ms
+      Tests  2 failed | 3 passed (5)
+## mutant: sign-out does not purge device drafts
+ × signing out removes every device draft (SEC-A-5) > drafts under any key shape are purged; other storage is kept 65ms
+      Tests  1 failed | 4 passed (5)

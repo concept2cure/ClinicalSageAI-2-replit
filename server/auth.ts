@@ -5,12 +5,10 @@
  *
  */
 import { Request, Response, NextFunction } from 'express';
-import { and, asc, eq } from 'drizzle-orm';
-import { organizationUsers, users } from '../shared/schema';
+import { and, eq } from 'drizzle-orm';
+import { organizationUsers } from '../shared/schema';
 import { createScopedLogger } from './utils/logger';
 import { db } from './db';
-import jwt from 'jsonwebtoken';
-import { config } from './config/environment';
 import { verifyJwtWithRotation } from './utils/jwtVerify';
 import { isTokenRevoked, revokeToken } from './services/token-revocation';
 import { sessionEndCodeOf, sessionEndMessageOf, sessionInactivityReason } from './services/session-inactivity';
@@ -364,90 +362,6 @@ export function requireSuperAdminRole(req: Request, res: Response, next: NextFun
 }
 
 /**
- * Login function
- * Authenticates user and returns JWT bearer token
- */
-export async function login(email: string, password: string) {
-  try {
-    // CRIT-03 FIX: Removed hardcoded dev@example.com/password bypass.
-    // All logins now go through the database.
-
-    if (!db) {
-      throw new Error('Database connection not available');
-    }
-
-    // Find user by email
-    const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
-
-    if (user.length === 0) {
-      throw new Error('User not found');
-    }
-
-    // CRIT-04 FIX: Use bcrypt for password verification
-    const passwordIsValid = await verifyPassword(password, user[0].passwordHash || '');
-
-    if (!passwordIsValid) {
-      throw new Error('Invalid password');
-    }
-
-    // Load ALL memberships in a deterministic order. Selection is explicit:
-    // the user's defaultOrganizationId wins when a membership for it exists;
-    // otherwise the lowest organizationId. Previously an unordered `.limit(1)`
-    // let the database pick whichever row it returned first, so a
-    // multi-organization user could land in a different tenant per login.
-    const memberships = await db
-      .select({
-        organizationId: organizationUsers.organizationId,
-        role: organizationUsers.role,
-      })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, user[0].id))
-      .orderBy(asc(organizationUsers.organizationId));
-
-    if (memberships.length === 0) {
-      throw new Error('User has no organization membership');
-    }
-
-    const membership =
-      (user[0].defaultOrganizationId != null
-        ? memberships.find(m => m.organizationId === user[0].defaultOrganizationId)
-        : undefined) ?? memberships[0];
-
-    const token = jwt.sign(
-      {
-        userId: String(user[0].id),
-        email: user[0].email,
-        organizationId: String(membership.organizationId),
-        role: membership.role,
-        type: 'access',
-      },
-      config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
-    );
-
-    return {
-      token,
-      user: {
-        id: user[0].id,
-        name: user[0].name || '',
-        email: user[0].email,
-        role: membership.role,
-      },
-      organizationId: membership.organizationId,
-      // Surfaced so callers can offer an explicit organization switch instead
-      // of silently accepting the default selection.
-      availableOrganizations: memberships.map(m => ({
-        organizationId: m.organizationId,
-        role: m.role,
-      })),
-    };
-  } catch (error) {
-    logger.error('Login error', error);
-    throw error;
-  }
-}
-
-/**
  * Get user's role in an organization
  * Queries the organizationUsers junction table for the actual role
  */
@@ -475,34 +389,3 @@ async function getUserRole(userId: number, organizationId: number): Promise<stri
   }
 }
 
-/**
- * Verify password using bcrypt
- * CRIT-04 FIX: Replaced plaintext comparison with bcrypt.compare
- */
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  // Reject empty hashes (previously returned true — security hole)
-  if (!hash || hash === '') {
-    logger.warn('Login attempt against empty password hash — rejected');
-    return false;
-  }
-
-  try {
-    const bcrypt = await import('bcryptjs');
-
-    // SECURITY FIX: Reject legacy temp_ prefix passwords entirely.
-    // Plaintext comparison was a security hole. Users with temp_ passwords
-    // must reset their password via the forgot-password flow.
-    if (hash.startsWith('temp_')) {
-      logger.warn(
-        'Legacy temp_ password rejected — user must reset password via forgot-password flow'
-      );
-      return false;
-    }
-
-    // Standard bcrypt comparison
-    return await bcrypt.compare(password, hash);
-  } catch (error) {
-    logger.error('Password verification failed', error);
-    return false;
-  }
-}

@@ -13,8 +13,8 @@
 import type { Response } from 'express';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import type { UserRole } from '../../services/ana-ri/persona.js';
-import { buildAssistantMetadata, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
-import type { HumanControlEvent } from '../../services/ana/run-status.js';
+import { buildAssistantMetadata, withTurnEnding, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
+import type { HumanControlEvent, TurnStoppedReason } from '../../services/ana/run-status.js';
 import {
   checkEvidenceDiscipline,
   validateResponseStructure,
@@ -72,6 +72,13 @@ export interface StreamPostProcessingContext {
   humanControls?: HumanControlEvent[];
   /** The plan AnA last declared this turn, validated; persisted with the message. */
   plan?: TurnPlanStep[];
+  /**
+   * Why the turn's agentic loop stopped, and how many tool rounds it ran —
+   * persisted with the message so a turn the round cap cut short is not read
+   * back, by the person or by the next turn, as a finished one.
+   */
+  stoppedReason?: TurnStoppedReason;
+  rounds?: number;
   /** Raw tool output this turn — evidence corpus for the grounding round. */
   toolEvidenceCorpus: string[];
   /** Provenance envelopes from evidence tools this turn — persisted to the lineage trail. */
@@ -100,6 +107,8 @@ export interface StreamPostProcessingContext {
   messages: GatewayMessage[];
   model: string | undefined;
   provider: string | undefined;
+  /** The model call whose answer carried the turn's command blocks, for their audit rows. */
+  servingModel?: { provider?: string | null; model?: string | null; requestId?: string | null } | null;
   enrichment: { sources: unknown[]; enrichmentMeta?: unknown };
   /**
    * The turn's retained record (services/ana/turn-record.ts), completed here
@@ -286,6 +295,8 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     reasoning,
     humanControls,
     plan,
+    stoppedReason,
+    rounds,
     toolEvidenceCorpus,
     collectedProvenance,
     collectedNavigation,
@@ -295,6 +306,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     messages,
     model,
     provider,
+    servingModel,
     enrichment,
     turnRecorder,
     stopped,
@@ -367,6 +379,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
             : undefined,
           userName,
           userRole: effectiveRole,
+          servingModel: servingModel ?? null,
         };
         const { processCommandsInResponse } =
           await import('../../services/ana-ri/command-executor.js');
@@ -409,7 +422,10 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       orgId && threadId && fullContent
         ? saveMessage(
             threadId, 'assistant', finalAssistantContent, undefined, undefined,
-            buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls, plan) as Record<string, unknown> | undefined,
+            withTurnEnding(
+              buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls, plan),
+              { stoppedReason, rounds },
+            ) as Record<string, unknown> | undefined,
           )
             .then((id) => {
               assistantMessageId = id;

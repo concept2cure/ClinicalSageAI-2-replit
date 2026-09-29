@@ -73,6 +73,19 @@ export async function transitionDocument(orgId: number, id: number, to: string) 
       'Making a controlled document effective is an electronic signature. Approve it with POST /api/mdx/qms/documents/:id/approve, which re-verifies the signer; nothing was changed.',
     );
   }
+  /* Retiring is the other signed transition (security review 2026-09-24,
+     DP-32 / P1-29): the terminal state of an effective procedure, reached only
+     through POST /api/mdx/qms/documents/:id/retire, which runs the same
+     ceremony and writes the signature with the UPDATE. This door took it with
+     no reason, no role gate and no ceremony. Refused here, in the service, so no
+     caller of this function can reach 'retired' unsigned. P1-31 (DP-34) deletes
+     the router that is this function's only caller; until then this is the
+     refusal. */
+  if (to === 'retired') {
+    throw new InvalidTransitionError(
+      'Retiring a controlled document is an electronic signature. Retire it with POST /api/mdx/qms/documents/:id/retire, which re-verifies the signer; nothing was changed.',
+    );
+  }
   const allowed = DOC_TRANSITIONS[doc.status] ?? [];
   if (!allowed.includes(to)) {
     throw new InvalidTransitionError(`Cannot move document from ${doc.status} to ${to}`);

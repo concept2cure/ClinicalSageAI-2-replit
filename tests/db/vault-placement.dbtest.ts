@@ -232,6 +232,9 @@ const filingAuditCount = async () =>
 /* The provenance the chat stream hands a tool, tagged so a row it leaves is
    recognisably this suite's. */
 const ANA_CTX = {
+  // place_project_document is a write in the tool register (P1-34); these
+  // cases pin the handler as it runs on a person's yes.
+  humanConfirmed: true,
   servingModel: { provider: 'anthropic', model: 'dbtest-place-model' },
   threadId: 'dbtest-place-thread',
   turnId: 'dbtest-place-turn',
@@ -308,6 +311,16 @@ describe('filing a document where its own taxonomy allows', () => {
     expect(details.to.folderId).toBe('qms');
     expect(details.to.placementStatus).toBe('confirmed');
     expect(details.rationale).toBe('Quality system record.');
+  });
+
+  it('the filing row records the evidence kind before and after (VR-05)', async () => {
+    // A move that changes what the document is taken to be must say so: the
+    // row named the folder and status on both ends and not the evidence kind.
+    await place({ folderId: 'eng', evidenceKind: 'report', note: 'Filed as a report.' });
+    await place({ folderId: 'qms', evidenceKind: 'cert', note: 'It is the supplier certificate.' });
+    const audit = await lastFilingAudit();
+    expect(audit?.details.from.evidenceKind).toBe('report');
+    expect(audit?.details.to.evidenceKind).toBe('cert');
   });
 
   it('honours an explicit unfile — the Unfiled queue is a real answer', async () => {

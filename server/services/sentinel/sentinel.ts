@@ -326,14 +326,16 @@ export class AISentinel {
 
     // Find resource over-allocation (users assigned to too many active projects)
     const resourceResult = await this.pool.query(
-      `SELECT u.id as user_id, u.name as user_name,
+      `SELECT t.assignee_id as user_id, u.name as user_name,
               COUNT(DISTINCT t.project_id)::int as active_projects,
               COUNT(t.id)::int as open_tasks,
               ARRAY_AGG(DISTINCT p.name) as project_names,
               ARRAY_AGG(DISTINCT p.id) as project_ids
-       FROM users u
-       JOIN unified_tasks t ON t.assignee_id = u.id
+       FROM unified_tasks t
        JOIN projects p ON t.project_id = p.id
+       -- The assignee's name through actor_name: someone who has left still
+       -- holds the work, and is still over-allocated (D3, 2026-09-29).
+       LEFT JOIN LATERAL public.actor_name(t.assignee_id) u ON TRUE
        WHERE p.organization_id = $1
          AND p.status = 'active'
          AND t.deleted_at IS NULL
@@ -341,7 +343,8 @@ export class AISentinel {
          -- user's whole task history counted as open work, so this reported
          -- people as over-allocated on projects they had already finished.
          AND t.status NOT IN ('completed', 'cancelled')
-       GROUP BY u.id, u.name
+         AND t.assignee_id IS NOT NULL
+       GROUP BY t.assignee_id, u.name
        HAVING COUNT(DISTINCT t.project_id) > 3
        ORDER BY active_projects DESC`,
       [orgId]

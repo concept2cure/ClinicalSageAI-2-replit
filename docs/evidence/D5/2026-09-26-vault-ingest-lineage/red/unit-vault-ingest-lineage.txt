@@ -1,0 +1,27 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > refuses parentDocumentId with 400, before anything is stored 45ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > refuses supersedesId with 400, before anything is stored 9ms
+   → expected 201 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > admits an upload that names no lineage, as before 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > refuses parentDocumentId with 400, before anything is stored
+ FAIL  server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > refuses supersedesId with 400, before anything is stored
+AssertionError: expected 201 to be 400 // Object.is equality
+- Expected
++ Received
+- 400
++ 201
+ ❯ server/routes/__tests__/vault-ingest-lineage.test.ts:71:24
+     69|   it.each(['parentDocumentId', 'supersedesId'])('refuses %s with 400, …
+     70|     const res = await upload({ [field]: OTHER_DOC });
+     71|     expect(res.status).toBe(400);
+       |                        ^
+     72|     expect(res.body.error.code).toBe('LINEAGE_NOT_ACCEPTED');
+     73|     expect(res.body.error.message).toMatch(/Nothing was saved/);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  19:07:58
+   Duration  862ms (transform 259ms, setup 93ms, import 377ms, tests 66ms, environment 0ms)

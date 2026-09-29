@@ -1,0 +1,57 @@
+
+ RUN  v4.1.7 <repo>
+
+ ✓ tests/schema-contract/submission-core-reachability.contract.test.ts > canonical submission core reachability > is on the deploy path (C2C_MIGRATION_FILES) 3ms
+ ✓ tests/schema-contract/submission-core-reachability.contract.test.ts > canonical submission core reachability > still creates every table the submissions API queries 1ms
+ ✓ tests/schema-contract/submission-core-reachability.contract.test.ts > canonical submission core reachability > is idempotent, because deploy-migrate re-runs the whole set every deploy 1ms
+ ✓ tests/schema-contract/submission-core-reachability.contract.test.ts > canonical submission core reachability > is ordered after the tables it references and before its consumers 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: table identity is schema-aware > normalizes public and unqualified names to the same identity 2ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: table identity is schema-aware > keeps a non-public schema, so same-named tables never collide 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: CREATE parsing captures the table, not the schema > reads schema-qualified CREATE TABLE correctly 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: CREATE parsing captures the table, not the schema > handles unqualified, public-qualified, quoted and IF NOT EXISTS forms 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: CREATE parsing captures the table, not the schema > does NOT treat DDL inside comments as a creator 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-39: the reference scan reads SQL, not English > ignores prose that merely contains the word FROM 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-39: the reference scan reads SQL, not English > still captures genuine queries in every quoting style 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a qualified name whose object half is composed at runtime > is skipped, not reported as a table named after its schema 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a qualified name whose object half is composed at runtime > does not settle for a shorter name to satisfy the rejection 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a qualified name whose object half is composed at runtime > still reads the same schema when the object half is written out 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: the reference scan ignores non-relations > excludes SQL keywords and prose words that follow FROM/UPDATE 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds MATERIALIZED and NOT MATERIALIZED CTEs 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > does not bind a table merely named after a CTE keyword 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds a CTE that names its columns 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds RECURSIVE and later column-list CTEs, however they are spaced 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > still reports the storage a column-list CTE reads 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > does not bind a function call or a column alias 0ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a migration ADDS > reads every action of a multi-clause ALTER, not only the first 3ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a migration ADDS > keeps a non-public schema and normalizes public away 1ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a migration ADDS > counts a column rename as creating the new name, and a table rename as nothing 1ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a migration ADDS > joins static DDL split across concatenated literals 0ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a migration CREATES > reads two columns on one line and a quoted keyword column 1ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a migration CREATES > stops at the balanced paren, so a PARTITION BY cannot run into the next statement 0ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a migration CREATES > does not count a TEMP table as schema 0ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a migration CREATES > ignores a CREATE TABLE that only a comment describes 0ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what drizzle DECLARES > reads property-position builders only, through a multi-line $type, and pgSchema tables 1ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what drizzle DECLARES > reads the push surface from drizzle.config.ts, not an assumed single entry 9ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > catalog sweeps in DO blocks > resolves a LIKE sweep with an escaped underscore 2ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > catalog sweeps in DO blocks > resolves IN lists, ARRAY lists and VALUES (table, column) tuples 1ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > catalog sweeps in DO blocks > does not mistake an ADD CONSTRAINT sweep for a column sweep 0ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > catalog sweeps in DO blocks > reports, and does not believe, a sweep whose table set cannot be resolved 1ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > catalog sweeps in DO blocks > vouches only for tables created BEFORE the sweep runs 1ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a statement REFERENCES > does not read an output alias as a table (documents.tags) 2ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a statement REFERENCES > resolves an alias to its own relation and schema (documents.summary) 1ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a statement REFERENCES > does not count a CTE that shadows a table name 0ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a statement REFERENCES > counts INSERT column lists, ON CONFLICT targets and UPDATE SET targets 0ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a statement REFERENCES > resolves a bare column in a join the way Postgres does 0ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > what a statement REFERENCES > lets an outer relation satisfy a bare column in a correlated subquery 0ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > the table guard sees what the column guard defers to it > reads .js and .mjs server files, not only .ts 3ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > the table guard sees what the column guard defers to it > binds a table only in relation position 0ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > the table guard sees what the column guard defers to it > agrees with the column guard on which tables are durable (one surface, not two) 451ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > the guard fails on the defects it was built for > reports every historical column once its migration is off the set 1708ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > the guard fails on the defects it was built for > knows a column added only by db/migrations/_legacy as never applied 163ms
+ ✓ tests/schema-contract/column-reachability-guard.contract.test.ts > the guard fails on the defects it was built for > reports none of them while they are wired 1229ms
+
+ Test Files  3 passed (3)
+      Tests  48 passed (48)
+   Start at  02:13:35
+   Duration  3.98s (transform 429ms, setup 257ms, import 400ms, tests 3.61s, environment 0ms)
+

@@ -111,6 +111,8 @@ describe('POST /api/claude/agent', () => {
     a.use((req: Request, _res: Response, next: NextFunction) => {
       (req as any).organizationId = ORG;
       (req as any).userId = 1;
+      // The request-scoped client the global auth gate attaches.
+      (req as any).dbClient = { query: (q: string, p?: unknown[]) => h.pg.query(q, p) };
       next();
     });
     a.use('/api/claude', router);
@@ -135,6 +137,7 @@ describe('POST /api/claude/agent', () => {
     real.use((req: Request, _res: Response, next: NextFunction) => {
       (req as any).tenantContext = { organizationId: ORG };
       (req as any).user = { id: 1 };
+      (req as any).dbClient = { query: (q: string, p?: unknown[]) => h.pg.query(q, p) };
       next();
     });
     real.use('/api/claude', router);
@@ -143,6 +146,25 @@ describe('POST /api/claude/agent', () => {
     expect(res.body.data.turnRecord.status).toBe('recorded');
     const body = JSON.parse((await loadTurnRecord(h.pg, ORG, res.body.data.turnRecord.id))!.recordText);
     expect([body.turn.organizationId, body.turn.actorUserId]).toEqual([ORG, 1]);
+  });
+
+  it('files the turn on the request’s own connection, never the shared pool', async () => {
+    // The shared pool is mocked and would accept the write; a request without
+    // its scoped client must still file nothing and say so.
+    const bare = express();
+    bare.use(express.json());
+    bare.use((req: Request, _res: Response, next: NextFunction) => {
+      (req as any).organizationId = ORG;
+      (req as any).userId = 1;
+      next();
+    });
+    bare.use('/api/claude', router);
+    h.loop = twoToolLoop;
+    const before = (await h.pg.query(`SELECT count(*)::int AS n FROM ana_turn_records`)).rows[0].n;
+    const res = await request(bare).post('/api/claude/agent').send({ prompt: 'no request client' });
+    expect(res.status).toBe(200);
+    expect(res.body.data.turnRecord.status).toBe('not_recorded');
+    expect((await h.pg.query(`SELECT count(*)::int AS n FROM ana_turn_records`)).rows[0].n).toBe(before);
   });
 
   it('records a failed turn', async () => {

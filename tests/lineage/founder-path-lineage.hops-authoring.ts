@@ -141,6 +141,9 @@ async function draftUnderStreamCtx(w: World): Promise<Record<string, unknown>> {
     lockedScreens: [],
     turnState: {},
     signal: new AbortController().signal,
+    // draft_authoring_document is a write in the tool register (P1-34): on the
+    // founder path it runs when the person confirms the draft AnA proposed.
+    humanConfirmed: true,
   };
   return JSON.parse(await handler!(input, ctx as never));
 }
@@ -328,6 +331,57 @@ export async function hopFileToVault(w: World): Promise<void> {
     ]);
     observe(recorded.includes(k.approvedSealHash!));
     expect(recorded).toContain(k.approvedSealHash);
+  });
+  hop.verdict();
+}
+
+/**
+ * A conversation file is adopted into a project (PF-07; founder decision
+ * 2026-09-26): an upload with no project open records no Data Room source; one
+ * audited adopt (POST /api/c2c/projects/:id/adopt) makes it the project's source,
+ * once; a second adopt of the same file is not a second source.
+ */
+export async function hopAdopt(w: World): Promise<void> {
+  const { k, q } = w;
+  const hop = new Hop('adopt');
+  const bytes = Buffer.from('C2C-101 investigator brochure — conversation attachment.\n', 'utf8');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'founder-lineage-adopt-'));
+  w.tmpDirs.push(tmp);
+  const cwd = vi.spyOn(process, 'cwd').mockReturnValue(tmp);
+  let upload: request.Response;
+  try {
+    upload = await asPrincipal(ORG_A, 3)(request(w.app).post('/api/chat/upload'))
+      .attach('file', bytes, { filename: 'ib-attachment.txt', contentType: 'text/plain' });
+  } finally {
+    cwd.mockRestore();
+  }
+  const fileId = String(upload.body?.fileId);
+
+  await hop.check('unscoped-upload-is-a-conversation-file', 'an upload with no project open records no Data Room source', async (observe) => {
+    const sources = await q(`SELECT id FROM cre_evidence_sources WHERE provenance->>'fileUploadId' = $1`, [fileId]);
+    observe({ status: upload.status, recorded: upload.body?.dataRoom?.recorded, sources: sources.length });
+    expect(upload.status).toBe(200);
+    expect(upload.body.dataRoom.recorded).toBe(false);
+    expect(sources).toHaveLength(0);
+  });
+  await hop.check('adopt-makes-it-the-projects-source', 'one audited adopt makes the file a source of the project, keyed to it', async (observe) => {
+    const res = await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
+    const [src] = await q<{ client_program_id: string; organization_id: number; checksum: string }>(
+      'SELECT client_program_id, organization_id, checksum FROM cre_evidence_sources WHERE id = $1', [res.body?.sourceId]);
+    const audit = await q(`SELECT 1 FROM audit_logs WHERE action = 'c2c.project.adopt' AND record_id = $1`, [k.programId]);
+    observe({ status: res.status, program: src?.client_program_id === k.programId, audited: audit.length });
+    expect(res.status).toBe(201);
+    expect(src).toMatchObject({ client_program_id: k.programId, organization_id: ORG_A, checksum: sha256(bytes) });
+    expect(audit).toHaveLength(1);
+  });
+  await hop.check('adopt-is-once', 'adopting the same file again is not a second source and writes no second audit row', async (observe) => {
+    const again = await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
+    const sources = await q(`SELECT id FROM cre_evidence_sources WHERE client_program_id = $1 AND checksum = $2`, [k.programId, sha256(bytes)]);
+    const audit = await q(`SELECT 1 FROM audit_logs WHERE action = 'c2c.project.adopt' AND record_id = $1`, [k.programId]);
+    observe({ status: again.status, sources: sources.length, audited: audit.length });
+    expect(again.status).toBe(200);
+    expect(sources).toHaveLength(1);
+    expect(audit).toHaveLength(1);
   });
   hop.verdict();
 }

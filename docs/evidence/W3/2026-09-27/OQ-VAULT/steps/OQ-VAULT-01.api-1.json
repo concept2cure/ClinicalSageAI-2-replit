@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/72994d45-0062-4b98-9084-0ee15134139c",
+    "anonymous": true,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 3,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "AUTH_001",
+        "message": "No authentication token provided"
+      }
+    }
+  }
+}

@@ -31,9 +31,10 @@
  *    would punch path-shaped unauthenticated holes ('/health', '/auth/login',
  *    …) into every router that mounts canonical auth. Fail closed.
  *  - verifyJwt / hasPermission / isPublicRoute exports: no importer anywhere
- *    in the live tree (the @server/auth barrel takes hasPermission from
- *    middleware/tenantIsolation.ts; the routes that used verifyJwt were
- *    deleted before this consolidation). Dropped rather than re-aliased.
+ *    in the live tree (the @server/auth barrel took hasPermission from
+ *    middleware/tenantIsolation.ts until both went on 2026-09-26; the routes
+ *    that used verifyJwt were deleted before this consolidation). Dropped
+ *    rather than re-aliased.
  *  - requireSameOrganization (req.organizationId comparison): production
  *    always ran auth.ts's alias (= requireOrgAccess) via the bare specifier;
  *    the .js semantics were only ever reachable under vitest. No route

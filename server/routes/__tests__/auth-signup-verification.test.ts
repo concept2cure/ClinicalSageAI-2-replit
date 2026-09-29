@@ -161,7 +161,9 @@ vi.mock('../../auth/dev-auth-policy', () => ({ isDevAuthAllowed: () => state.dev
 vi.mock('../../services/entitlements/launch-scope.js', () => ({ provisionLaunchModules: vi.fn(async () => undefined) }));
 vi.mock('../../services/c2c/organization-default-workspace', () => ({
   ensureOrganizationDefaultWorkspace: vi.fn(async () => undefined),
-  drizzleWorkspaceStore: () => ({}),
+  // Signup enters the new organisation's scope through this binding before its
+  // first membership row (D3, 2026-09-26); the mock carries that one method.
+  drizzleWorkspaceStore: () => ({ enterOrganizationScope: async () => undefined }),
 }));
 vi.mock('../../db/tenantStore', () => ({
   runWithTenantScope: (_scope: unknown, fn: () => Promise<unknown>) => fn(),

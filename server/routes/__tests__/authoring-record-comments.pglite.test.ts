@@ -313,24 +313,29 @@ describe('(2) the comment and its record commit together or not at all', () => {
 });
 
 describe('(3) the document is the section’s', () => {
-  it('a body naming another document is ignored: comment and record are filed under the section’s own document', async () => {
+  it('a body naming another document is refused: 400, and nothing is filed under either document', async () => {
+    const before = await jdb.pglite.query<{ n: number }>('SELECT count(*)::int AS n FROM authoring_comments');
     const res = await comment(author, SEC_A1, { body: 'Filed where it was made.', doc_id: DOC_B });
-    expect(res.status, JSON.stringify(res.body)).toBe(201);
-    expect(res.body.comment.doc_id).toBe(DOC_A);
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(res.body.error).toMatch(/not the document this section belongs to/);
 
-    const row = await jdb.pglite.query<{ doc_id: string }>('SELECT doc_id FROM authoring_comments WHERE id = $1', [res.body.comment.id]);
-    expect(row.rows[0].doc_id).toBe(DOC_A);
-    const trail = await trailFor(res.body.comment.id);
-    expect(trail).toHaveLength(1);
-    expect(trail[0].doc_id).toBe(DOC_A);
-    expect((await chainFor(trail[0].id))[0].new_values.docId).toBe(DOC_A);
-
-    // Nothing was filed against the document the body named.
+    const after = await jdb.pglite.query<{ n: number }>('SELECT count(*)::int AS n FROM authoring_comments');
+    expect(after.rows[0].n).toBe(before.rows[0].n);
     const onB = await jdb.pglite.query('SELECT 1 FROM authoring_audit_trail WHERE doc_id = $1', [DOC_B]);
     expect(onB.rows).toHaveLength(0);
     const bAudit = await author(request(app).get(`/api/authoring/docs/${DOC_B}/audit`));
     expect(bAudit.status).toBe(200);
     expect(bAudit.body.events).toHaveLength(0);
+  }, T);
+
+  it('a body naming the section’s own document, in any case, is accepted and filed there', async () => {
+    const res = await comment(author, SEC_A1, { body: 'Filed where it was made.', doc_id: DOC_A.toUpperCase() });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.comment.doc_id).toBe(DOC_A);
+    const trail = await trailFor(res.body.comment.id);
+    expect(trail).toHaveLength(1);
+    expect(trail[0].doc_id).toBe(DOC_A);
+    expect((await chainFor(trail[0].id))[0].new_values.docId).toBe(DOC_A);
   }, T);
 });
 
@@ -463,9 +468,10 @@ describe('(7) GET /docs/:docId/audit verifies every row against its chain entry'
 
   it('every row written through the routes above reads intact', async () => {
     const events = await audit();
-    // On this document: the quoted comment, the doc_id-override comment, the
-    // parent on 2.5.2, the reply, the resolve and the reopen. The refused
-    // reply (4) and the rolled-back comment (2) left nothing.
+    // On this document: the quoted comment, the comment naming its own
+    // document (3), the parent on 2.5.2, the reply, the resolve and the
+    // reopen. The refused doc_id (3), the refused reply (4) and the
+    // rolled-back comment (2) left nothing.
     expect(events.length).toBe(6);
     for (const e of events) {
       expect(e.integrity, `${e.event_type} ${e.id}`).toEqual({ chained: true, intact: true, mismatches: [], chainPayloadIntact: true });

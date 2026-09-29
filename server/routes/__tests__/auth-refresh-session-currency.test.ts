@@ -166,7 +166,8 @@ describe('POST /api/auth/refresh after a password change', () => {
   });
 
   it('mints for an account that never changed its password', async () => {
-    const res = await request(app()).post('/api/auth/refresh').send({ refreshToken: refreshTokenIssuedAt(nowSeconds() - 86_000) });
+    // Within the 12-hour session lifetime (P1-1); the age is not what this case is about.
+    const res = await request(app()).post('/api/auth/refresh').send({ refreshToken: refreshTokenIssuedAt(nowSeconds() - 3600) });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
   });
 });

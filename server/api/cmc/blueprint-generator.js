@@ -13,6 +13,11 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
+import { serverError } from '../../lib/api-response.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('cmc-blueprint-generator');
+
 // Rate limiter for document generation (more permissive)
 const docGenerationLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -93,11 +98,7 @@ router.post('/generate', checkForOpenAIKey, docGenerationLimiter, async (req, re
       documentDetails: result.documentDetails,
     });
   } catch (error) {
-    console.error('Error in document generation:', error);
-    return res.status(500).json({
-      error: 'An error occurred while generating the document',
-      details: error.message,
-    });
+    return serverError(res, logger, 'generating the document', error);
   }
 });
 
@@ -149,11 +150,7 @@ router.post('/diagram', checkForOpenAIKey, imageGenerationLimiter, async (req, r
       diagramDetails: result.diagramDetails,
     });
   } catch (error) {
-    console.error('Error in diagram generation:', error);
-    return res.status(500).json({
-      error: 'An error occurred while generating the diagram',
-      details: error.message,
-    });
+    return serverError(res, logger, 'generating the diagram', error);
   }
 });
 
@@ -206,11 +203,7 @@ router.get('/download/:documentId', (req, res) => {
     // Return the file
     return res.sendFile(filePath);
   } catch (error) {
-    console.error('Error in document download:', error);
-    return res.status(500).json({
-      error: 'An error occurred while downloading the document',
-      details: error.message,
-    });
+    return serverError(res, logger, 'downloading the document', error);
   }
 });
 
@@ -260,11 +253,7 @@ router.get('/download/diagram/:diagramId', (req, res) => {
     // Return the file
     return res.sendFile(filePath);
   } catch (error) {
-    console.error('Error in diagram download:', error);
-    return res.status(500).json({
-      error: 'An error occurred while downloading the diagram',
-      details: error.message,
-    });
+    return serverError(res, logger, 'downloading the diagram', error);
   }
 });
 

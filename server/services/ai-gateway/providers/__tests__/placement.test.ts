@@ -78,6 +78,8 @@ describe('placement compliance', () => {
 
 const PLACEMENT_ENV = [
   'NODE_ENV',
+  'ANTHROPIC_BEDROCK_BASE_URL',
+  'ANTHROPIC_VERTEX_BASE_URL',
   'AWS_REGION',
   'AI_BEDROCK_REGION',
   'AI_BEDROCK_ENABLED',
@@ -202,5 +204,40 @@ describe('assertPlacementRegistryConsistency — production boot (D6)', () => {
       expect(() => assertPlacementRegistryConsistency()).not.toThrow();
       expect(placementConfigurationProblems()).toHaveLength(1);
     });
+  });
+});
+
+describe('what the region and the SDK say about residency (D6 review)', () => {
+  it('London and Zurich are not EU residency; the EU regions are', () => {
+    for (const r of ['eu-west-2', 'eu-central-2', 'europe-west2', 'europe-west6']) {
+      expect(residencyOfCloudRegion(r)).toBeNull();
+    }
+    for (const r of ['eu-central-1', 'eu-west-1', 'eu-north-1', 'europe-west1', 'europe-west4', 'eu']) {
+      expect(residencyOfCloudRegion(r)).toBe('eu');
+    }
+    withEnv({ AI_BEDROCK_REGION: 'eu-west-2' }, () => {
+      expect(buildPlacementRegistry().bedrock.regions).toEqual(['global']);
+    });
+  });
+
+  it('an SDK base-URL override means the region no longer says where requests go', () => {
+    withEnv({ AI_BEDROCK_REGION: 'eu-central-1', ANTHROPIC_BEDROCK_BASE_URL: 'https://bedrock-runtime.us-east-1.amazonaws.com' }, () => {
+      expect(buildPlacementRegistry().bedrock.regions).toEqual(['global']);
+    });
+    withEnv(
+      { NODE_ENV: 'production', AI_BEDROCK_ENABLED: 'true', AWS_REGION: 'eu-central-1', ANTHROPIC_BEDROCK_BASE_URL: 'https://proxy.example' },
+      () => expect(() => assertPlacementRegistryConsistency()).toThrow(/ANTHROPIC_BEDROCK_BASE_URL is set/),
+    );
+  });
+
+  it('Bedrock zero retention is claimed only for unset or true', () => {
+    for (const v of ['FALSE', '0', 'no', 'off', 'False']) {
+      withEnv({ AI_BEDROCK_ZERO_RETENTION: v }, () => expect(buildPlacementRegistry().bedrock.zeroDataRetention).toBe(false));
+    }
+    withEnv({ AI_BEDROCK_ZERO_RETENTION: 'TRUE' }, () => expect(buildPlacementRegistry().bedrock.zeroDataRetention).toBe(true));
+    withEnv(
+      { NODE_ENV: 'production', AI_BEDROCK_ENABLED: 'true', AI_BEDROCK_ZERO_RETENTION: 'no' },
+      () => expect(() => assertPlacementRegistryConsistency()).toThrow(/AI_BEDROCK_ZERO_RETENTION=no is neither true nor false/),
+    );
   });
 });

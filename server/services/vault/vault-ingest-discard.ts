@@ -1,5 +1,6 @@
 /**
- * The stored copy of an upload the vault refused.
+ * The stored copy of an upload the vault refused, or of a same-bytes retry
+ * whose record keeps the copy it already names (vault-reupload.ts).
  *
  * `ingestVaultDocument` stores the bytes before it writes the record — the
  * record carries the storage version id, so it cannot come first — and every
@@ -102,7 +103,7 @@ export async function discardUnrecordedBytes(
     logger.error('Vault ingest could not remove refused bytes from storage', { versionId, orgId });
     return 'retained';
   }
-  logger.info('Vault ingest refused — its stored bytes were removed', { versionId, orgId });
+  logger.info('Vault ingest: a stored copy no record holds was removed', { versionId, orgId });
   return 'discarded';
 }
 

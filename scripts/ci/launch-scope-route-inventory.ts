@@ -21,7 +21,8 @@
  *
  * Usage (a throwaway database; never a shared one):
  *   NODE_ENV=production DATABASE_URL=... <production boot secrets> \
- *     npx tsx scripts/ci/launch-scope-route-inventory.ts --out <file.json>
+ *     npx tsx scripts/ci/launch-scope-route-inventory.ts --out <file.json> [--rows]
+ * `--rows` adds every route with its verdict (large; for a before/after diff).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -118,7 +119,15 @@ async function main() {
         sample: rs.slice(0, 3).map((r) => `${r.methods.join(',').toUpperCase()} ${r.path}`),
       };
     });
-  const report = { flags, routes: rows.length, counts, unmappedNamespaces: unmapped.length, unmappedCalledByLaunch: unmapped.filter((u) => u.launchCallers.length), unmapped };
+  const report = {
+    flags,
+    routes: rows.length,
+    counts,
+    unmappedNamespaces: unmapped.length,
+    unmappedCalledByLaunch: unmapped.filter((u) => u.launchCallers.length),
+    unmapped,
+    ...(process.argv.includes('--rows') ? { rows } : {}),
+  };
   fs.writeFileSync(outFile, JSON.stringify(report, null, 1));
   console.log(JSON.stringify({ routes: rows.length, counts, unmappedNamespaces: unmapped.length, calledByLaunch: report.unmappedCalledByLaunch.length }));
 }

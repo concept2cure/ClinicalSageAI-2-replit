@@ -1,0 +1,23 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 .
+ × tests/routes/ana-models-endpoint.test.ts > GET /api/claude/models > returns only enabled, approved models with derived label + recommendedEffort 29ms
+   → expected 'passed' to be 'pending' // Object.is equality
+ ✓ tests/routes/ana-models-endpoint.test.ts > GET /api/claude/models > includes effortLevels + defaultEffort 4ms
+ ✓ tests/routes/ana-models-endpoint.test.ts > GET /api/claude/models > preserves the frameworks array and the {success,data} envelope 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/routes/ana-models-endpoint.test.ts > GET /api/claude/models > returns only enabled, approved models with derived label + recommendedEffort
+AssertionError: expected 'passed' to be 'pending' // Object.is equality
+Expected: "pending"
+Received: "passed"
+ ❯ tests/routes/ana-models-endpoint.test.ts:130:27
+    128|     // Read from the entry, never asserted by the picker: nothing clai…
+    129|     expect(opus.approvedForHighRisk).toBe(true);
+    130|     expect(opus.pqStatus).toBe('pending');
+       |                           ^
+    131|
+    132|     const haiku = models.find((m) => m.id === 'claude-haiku-4')!;
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  17:40:22
+   Duration  1.93s (transform 892ms, setup 86ms, import 1.62s, tests 41ms, environment 0ms)

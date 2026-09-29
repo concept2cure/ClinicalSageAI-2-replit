@@ -81,6 +81,32 @@ async function ensureSpine(client, org, userId, program) {
   );
   let submissionId = existing.rows[0]?.id ?? null;
   let created = false;
+  let anchored = false;
+  // 2026-09-28 (W5/D7, WO-9): the submission this seed created BEFORE
+  // submissions.program_id existed is this program's, unanchored — the
+  // migration backfills the anchor only from product-created projects' audit
+  // rows. Finding only anchored rows, every later run inserted a second, empty
+  // IND submission, and the spine resolver preferred it: the program's filed
+  // sequence 0000 vanished from compile and readiness. Anchor the one this seed
+  // wrote (its title and product name, still unanchored) — only when exactly
+  // one matches; two look-alikes are not told apart by guessing.
+  if (submissionId == null) {
+    const legacy = await client.query(
+      `SELECT id FROM submissions
+        WHERE organization_id = $1 AND program_id IS NULL AND deleted_at IS NULL
+          AND lower(application_type) = 'ind' AND title = $2 AND product_name = $3
+        ORDER BY id LIMIT 2`,
+      [org.id, program.name, program.product_name],
+    );
+    if (legacy.rows.length === 1) {
+      await client.query(
+        `UPDATE submissions SET program_id = $1 WHERE id = $2 AND organization_id = $3 AND program_id IS NULL`,
+        [program.id, legacy.rows[0].id, org.id],
+      );
+      submissionId = legacy.rows[0].id;
+      anchored = true;
+    }
+  }
   if (submissionId == null) {
     const ins = await client.query(
       `INSERT INTO submissions
@@ -99,15 +125,16 @@ async function ensureSpine(client, org, userId, program) {
       ORDER BY sequence_number DESC, id DESC LIMIT 1`,
     [submissionId, org.id],
   );
+  const how = created ? ' (created)' : anchored ? ' (anchored to its program)' : '';
   if (seq.rows[0]) {
-    return `submission ${submissionId}${created ? ' (created)' : ''}, sequence ${seq.rows[0].sequence_number} already present`;
+    return `submission ${submissionId}${how}, sequence ${seq.rows[0].sequence_number} already present`;
   }
   const newSeq = await client.query(
     `INSERT INTO ectd_sequences (submission_id, region, sequence_number, type, status, organization_id, created_by)
      VALUES ($1, 'fda', '0000', 'original', 'draft', $2, $3) RETURNING id`,
     [submissionId, org.id, userId],
   );
-  return `submission ${submissionId}${created ? ' (created)' : ''}, sequence 0000 created (${newSeq.rows[0].id})`;
+  return `submission ${submissionId}${how}, sequence 0000 created (${newSeq.rows[0].id})`;
 }
 
 export default async function seedIndProgramNumbers(client, { org, admin }) {

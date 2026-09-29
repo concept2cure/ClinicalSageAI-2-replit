@@ -1,0 +1,4 @@
+oq-runner@validation.local {"login":200,"methods":["email"],"verify":200,"setup":200,"enable":200,"success":true,"backupCodes":10,"error":null}
+oq-signer@validation.local {"login":200,"methods":["email"],"verify":200,"setup":200,"enable":200,"success":true,"backupCodes":10,"error":null}
+oq-platform@validation.local {"login":200,"methods":["email"],"verify":200,"setup":200,"enable":200,"success":true,"backupCodes":10,"error":null}
+oq-standing@validation.local {"login":200,"methods":["email"],"verify":200,"setup":200,"enable":200,"success":true,"backupCodes":10,"error":null}

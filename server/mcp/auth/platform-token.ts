@@ -22,10 +22,12 @@ import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { InvalidTokenError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
 import { verifyJwtWithRotation, activeJwtSecret } from '../../utils/jwtVerify';
 import { requireAccessTokenReason } from '../../middleware/tokenType';
+import { CONNECTOR_TOKEN_USE, openConnectorSession } from '../../services/session-inactivity';
 import { ALL_MCP_SCOPES, type McpConfig } from '../config';
 import { findMembership, type Membership } from './store';
 
-export const MCP_TOKEN_USE = 'mcp';
+/** The session registry knows connector tokens by this claim (services/session-inactivity.ts). */
+export const MCP_TOKEN_USE = CONNECTOR_TOKEN_USE;
 
 interface PlatformClaims {
   userId?: number | string;
@@ -148,12 +150,17 @@ export interface MintAccessTokenInput {
 /**
  * Mint a connector access token. Same claim shape and signing secret as the
  * login route's access token (so the ONE verifier accepts it), plus the OAuth
- * binding claims. `activeJwtSecret()` rather than the config snapshot, for the
- * reason that function documents: minting and verifying must read the same
- * secret at the same moment.
+ * binding claims, plus the session claims every access token carries (P1-38):
+ * the token is a session opened through openConnectorSession — registered in
+ * the account's connector pool at the organisation's limit, idle at its own
+ * TTL, over at the platform lifetime; that function explains the policy.
+ * `activeJwtSecret()` rather than the config snapshot, for the reason that
+ * function documents: minting and verifying must read the same secret at the
+ * same moment.
  */
-export function mintAccessToken(input: MintAccessTokenInput): { token: string; expiresIn: number } {
+export async function mintAccessToken(input: MintAccessTokenInput): Promise<{ token: string; expiresIn: number }> {
   const m = input.membership;
+  const session = await openConnectorSession(m.userId, input.ttlSeconds, m.organizationSettings);
   const token = jwt.sign(
     {
       userId: String(m.userId),
@@ -165,6 +172,7 @@ export function mintAccessToken(input: MintAccessTokenInput): { token: string; e
       token_use: MCP_TOKEN_USE,
       client_id: input.clientId,
       scope: input.scopes.join(' '),
+      ...session,
     },
     activeJwtSecret(),
     { expiresIn: input.ttlSeconds, audience: input.resource, algorithm: 'HS256' },

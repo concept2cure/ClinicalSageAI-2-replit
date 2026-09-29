@@ -33,7 +33,7 @@ import {
 } from '../services/ai-gateway/gateway-error-map';
 import { isBatchDraftFailure } from '../services/ana/batch-draft-result';
 import type { DocumentDraftResponse } from '../services/ana/AnaDocumentDraftingService';
-import { getPool } from '../db.js';
+import { requestConnectable } from '../db/requestDb.js';
 import { loopToolCollector, recordLoopTurn, type LoopToolCall } from '../services/ana/turn-record-loop.js';
 import { resolveOrgId, resolveUserId } from '../types/auth-request.js';
 
@@ -564,7 +564,7 @@ router.post('/agent', async (req: Request, res: Response) => {
     const collected = loopToolCollector();
     recordTurn = (outcome, response, error) =>
       recordLoopTurn(
-        getPool(),
+        requestConnectable(req),
         {
           orgId: organizationId,
           userId,

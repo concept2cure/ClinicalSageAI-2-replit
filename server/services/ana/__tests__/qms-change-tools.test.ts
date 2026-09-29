@@ -44,6 +44,11 @@ vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async (..._a:
 vi.mock('../../../routes/c2c/actions', () => ({
   recordGovernedAction: vi.fn(async () => ({ actionId: 'act_test', auditId: 'aud_test', sha256Chain: '' })),
 }));
+// 2026-09-28 (Q-0928-2): revise_qms_document now reads the caller's org role
+// from organization_users (resolveSignerOrgRole), which this suite's DDL does
+// not create. An editor-capable role here; the refusal is pinned in
+// revise-qms-document-role.test.ts.
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: vi.fn(async () => 'member') }));
 
 import { getToolHandler } from '../AnaToolExecutor';
 import auditService from '../../auditService';
@@ -75,7 +80,7 @@ CREATE TABLE qms_change_links (
 );
 `;
 
-const CTX = { organizationId: 1, userId: 10 };
+const CTX = { organizationId: 1, userId: 10, humanConfirmed: true };
 
 beforeAll(async () => {
   pglite = new PGlite();
@@ -132,7 +137,7 @@ describe('qms_change_transition', () => {
   it('cannot approve a change from chat, and the change stays under assessment', async () => {
     const created = await call('qms_change_create', { change_number: 'CC-2026-053', title: 'y', reason: 'r' }); // proposed_by = 10
     await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', reason: 'assess' });
-    const res = await call('qms_change_transition', { change_id: created.id, to: 'approved', reason: 'approve' }, { organizationId: 1, userId: 11 });
+    const res = await call('qms_change_transition', { change_id: created.id, to: 'approved', reason: 'approve' }, { organizationId: 1, userId: 11, humanConfirmed: true });
     expect(res.error).toMatch(/electronic signature/i);
     // AnA tells the person what to do, so it needs the kind of refusal and a
     // place a person can go: the Approve button, not an API path.
@@ -159,7 +164,10 @@ describe('qms_change_transition', () => {
 
   it('rejects an illegal transition', async () => {
     const created = await call('qms_change_create', { change_number: 'CC-2026-054', title: 'y', reason: 'r' });
-    const res = await call('qms_change_transition', { change_id: created.id, to: 'closed', reason: 'skip ahead' });
+    // Not 'closed': AnA may not close a change at all (the tool register refuses
+    // it before the state machine is asked — tool-authorization.test.ts). This
+    // pins the state machine on a target she may otherwise request.
+    const res = await call('qms_change_transition', { change_id: created.id, to: 'in_implementation', reason: 'skip ahead' });
     expect(res.error).toMatch(/cannot move change/i);
   });
 });
@@ -238,25 +246,42 @@ describe('revise_qms_document / retire_qms_document (SOP register)', () => {
     expect(res.error).toMatch(/reason for change is required/i);
   });
 
-  it('requires a reason to retire — nothing is written and no placeholder reaches the ledger', async () => {
-    const id = await effectiveDoc('SOP-903');
+  it('a revision reason under 8 characters is refused and nothing is written', async () => {
+    // 2026-09-28 (Q-0928-2): the floor was 3, not QMS_REASON_MIN.
+    const id = await effectiveDoc('SOP-904');
     vi.mocked(recordGovernedAction).mockClear();
-    const res = await call('retire_qms_document', { document_id: id });
-    expect(res.error).toMatch(/reason for change of at least 8 characters/i);
-    const db = await pglite.query(`SELECT status FROM qms_documents WHERE id = $1`, [id]);
-    expect((db.rows[0] as { status: string }).status).toBe('effective');
-    // The ledger writer is mocked in this suite; the refusal happens before it
-    // would be asked, so it is never called — no placeholder reason, no row.
+    const res = await call('revise_qms_document', { document_id: id, reason: 'fix' });
+    expect(res.error).toMatch(/at least 8 characters/i);
+    const db = await pglite.query(`SELECT status, version FROM qms_documents WHERE id = $1`, [id]);
+    expect(db.rows[0]).toMatchObject({ status: 'effective', version: '3.1' });
     expect(vi.mocked(recordGovernedAction)).not.toHaveBeenCalled();
   });
 
-  it('retires a document (terminal)', async () => {
+  /* 2026-09-28 (Q-0928-1 / SEC-0928-1): these two cases pinned that the tool
+     retired the document, given a reason. Retirement is an electronic
+     signature on the route (verifyApprovalSigner + retireQmsDocumentSigned);
+     the tool now refuses with or without a reason, and writes nothing. */
+  it('without a reason: refuses, nothing is written and no placeholder reaches the ledger', async () => {
+    const id = await effectiveDoc('SOP-903');
+    vi.mocked(recordGovernedAction).mockClear();
+    const res = await call('retire_qms_document', { document_id: id });
+    expect(res.ok).toBe(false);
+    expect(res.signatureRequired).toBe(true);
+    const db = await pglite.query(`SELECT status FROM qms_documents WHERE id = $1`, [id]);
+    expect((db.rows[0] as { status: string }).status).toBe('effective');
+    expect(vi.mocked(recordGovernedAction)).not.toHaveBeenCalled();
+  });
+
+  it('with a reason: still refuses — retirement is signed from the Quality register', async () => {
     const id = await effectiveDoc('SOP-902');
-    const res = await call('retire_qms_document', { document_id: id, reason: 'Superseded.' });
-    expect(res.ok).toBe(true);
-    expect(res.status).toBe('retired');
-    // Retiring an already-retired doc is refused.
-    const again = await call('retire_qms_document', { document_id: id, reason: 'Superseded.' });
-    expect(again.error).toMatch(/already retired/i);
+    vi.mocked(recordGovernedAction).mockClear();
+    const res = await call('retire_qms_document', { document_id: id, reason: 'Superseded by SOP-905.' });
+    expect(res.ok).toBe(false);
+    expect(res.signatureRequired).toBe(true);
+    expect(res.message).toMatch(/electronic signature/i);
+    const db = await pglite.query(`SELECT status, metadata FROM qms_documents WHERE id = $1`, [id]);
+    expect((db.rows[0] as { status: string }).status).toBe('effective');
+    expect((db.rows[0] as { metadata: Record<string, unknown> }).metadata?.retired).toBeUndefined();
+    expect(vi.mocked(recordGovernedAction)).not.toHaveBeenCalled();
   });
 });

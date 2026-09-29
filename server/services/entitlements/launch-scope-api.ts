@@ -64,6 +64,8 @@ export const LAUNCH_PLATFORM_API: Readonly<Record<string, string>> = {
   '/api/clients': 'the client workspace list tenant context reads on load',
   '/api/organizations': "the shell's organisation read (V2App.tsx), Setup's profile and settings, onboarding",
   '/api/user': 'identity: the users router mounted a second time (register-platform-routes.ts), beside /api/users, which NEVER_GATED already passes',
+  '/api/mdx/industry-profile': "the organisation's industry profile (useIndustryProfile.ts), read by the shell's surfaces and written by Setup and onboarding",
+  '/api/mdx/notifications': "the shell's task tray (TaskTray.tsx): the list, the unread count, mark read",
 };
 
 /**

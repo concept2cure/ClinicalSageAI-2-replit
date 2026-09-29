@@ -195,20 +195,30 @@ function SoaGrid({ visits, assessments, cells, saving, editable, onToggle, onEdi
               {visits.map((v) => {
                 const vid = str(v.id);
                 const on = cells[aid]?.has(vid) ?? false;
+                /* The cell stays a cell and the checkbox sits inside it. As
+                   `role="checkbox"` on the <td> it overrode the cell's role, and
+                   a ticked one was named by its glyph, "✕". The click stays on
+                   the whole cell, so the pointer target does not shrink
+                   (periodic review 2026-09-28, editor family, A-C-5). */
                 return (
                   <td
                     key={vid}
                     className={'pd-soa-cell' + (on ? ' on' : '') + (editable ? '' : ' ro')}
                     onClick={() => onToggle(aid, vid)}
-                    onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); onToggle(aid, vid); } }}
-                    role="checkbox"
-                    aria-checked={on}
-                    aria-disabled={!editable}
                     aria-busy={saving === aid + ':' + vid}
-                    tabIndex={editable ? 0 : -1}
-                    title={str(a.label) + ' · ' + str(v.label) + (editable ? '' : ' — enter a reason for change to edit')}
                   >
-                    {on ? <span className="pd-soa-x">{'✕'}</span> : null}
+                    <span
+                      className="pde-soa-tick"
+                      role="checkbox"
+                      aria-checked={on}
+                      aria-disabled={!editable}
+                      aria-label={str(a.label) + ', ' + str(v.label)}
+                      tabIndex={editable ? 0 : -1}
+                      title={str(a.label) + ' · ' + str(v.label) + (editable ? '' : ' — enter a reason for change to edit')}
+                      onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); onToggle(aid, vid); } }}
+                    >
+                      {on ? <span className="pd-soa-x" aria-hidden="true">{'✕'}</span> : null}
+                    </span>
                   </td>
                 );
               })}

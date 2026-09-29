@@ -24,11 +24,28 @@
 
 import type { NavigationDirective } from '@shared/navigation';
 import type { SurfaceActionDirective } from '@shared/navigation/surface-actions';
+import type { DriveTurnControls } from '../components/ana/useAnaChat';
 import type { SurfaceActionOutcome } from './surfaceActions';
 
+/**
+ * A move, with the turn that MADE it: its controls, and the shell's number for
+ * it (`turn`). The queue reads neither; it hands the move back to
+ * onApplied/onFailed as pushed. A move settles late — an operation may wait
+ * ACTION_OUTCOME_TIMEOUT_MS for its screen — and by then a newer turn may be
+ * driving: a report sent to "whoever is driving now" told that run about a
+ * move it never made, and a landing recorded as "now" was claimed for a turn
+ * that never made it.
+ */
+type MoveOrigin = {
+  round?: number;
+  controls?: DriveTurnControls;
+  turn?: number;
+  /** The server's id for the move, named when its outcome is reported back. */
+  moveId?: string;
+};
 export type DriveMove =
-  | { kind: 'navigate'; directive: NavigationDirective; round?: number }
-  | { kind: 'act'; directive: SurfaceActionDirective; round?: number };
+  | ({ kind: 'navigate'; directive: NavigationDirective } & MoveOrigin)
+  | ({ kind: 'act'; directive: SurfaceActionDirective } & MoveOrigin);
 
 export interface DriveQueueDeps {
   /** Start the navigation (stash params, open a program, move the shell). */
@@ -51,6 +68,14 @@ export interface DriveQueueDeps {
   onApplied: (move: DriveMove, detail?: string) => void;
   /** A move could not be made — the reason is the screen's own. */
   onFailed: (move: DriveMove, reason: string) => void;
+  /**
+   * A move was never attempted: cleared (take over, a newer turn) before its
+   * turn came, the person took over while it waited, or the queue itself
+   * failed on it. Not a screen outcome, so nothing is shown — but it is still
+   * an outcome: the server holds AnA's next round until every move she made is
+   * settled, and one that vanished silently held it to the ceiling.
+   */
+  onDropped?: (move: DriveMove, reason: string) => void;
   sleep: (ms: number) => Promise<void>;
 }
 
@@ -69,18 +94,28 @@ export const ACTION_OUTCOME_TIMEOUT_MS = 22_000;
 
 export interface DriveQueue {
   push: (move: DriveMove) => void;
-  /** Drop every move not yet started (take over). */
-  clear: () => void;
+  /**
+   * Drop every move not yet started — take over, switch-off, and any point a
+   * turn's leftover moves would otherwise play into the next one. A move in
+   * flight finishes and reports its own outcome. `reason` is what each dropped
+   * move is settled with (onDropped): AnA reads it, so it says why.
+   */
+  clear: (reason?: string) => void;
   /** Resolves once every queued move has finished. */
   whenIdle: () => Promise<void>;
   /** Moves queued or in flight. */
   size: () => number;
 }
 
+/** What a move dropped by clear() is settled with when no reason is given. */
+export const CLEARED_REASON = 'It was cancelled before it could be made.';
+
 export function createDriveQueue(deps: DriveQueueDeps): DriveQueue {
   let chain: Promise<void> = Promise.resolve();
   let generation = 0;
   let inFlight = 0;
+  /** Why each cleared generation was cleared, for the moves it dropped. */
+  const clearedBecause = new Map<number, string>();
 
   const runNavigate = async (move: Extract<DriveMove, { kind: 'navigate' }>) => {
     deps.navigate(move.directive);
@@ -130,7 +165,14 @@ export function createDriveQueue(deps: DriveQueueDeps): DriveQueue {
       inFlight += 1;
       chain = chain
         .then(async () => {
-          if (mine !== generation || !deps.canApply()) return;
+          if (mine !== generation) {
+            deps.onDropped?.(move, clearedBecause.get(mine) ?? CLEARED_REASON);
+            return;
+          }
+          if (!deps.canApply()) {
+            deps.onDropped?.(move, 'The person took over the screen, so it was not made.');
+            return;
+          }
           const refused = deps.refuse?.(move) ?? null;
           if (refused) {
             deps.onFailed(move, refused);
@@ -140,13 +182,17 @@ export function createDriveQueue(deps: DriveQueueDeps): DriveQueue {
           else await runAct(move);
         })
         .catch(() => {
-          /* one move's failure must not stall the ones behind it */
+          /* One move's failure must not stall the ones behind it — and must
+             still be settled. The shell settles each move once, so a move
+             that already reported its outcome is not reported again. */
+          deps.onDropped?.(move, 'The move could not be made.');
         })
         .finally(() => {
           inFlight -= 1;
         });
     },
-    clear() {
+    clear(reason) {
+      clearedBecause.set(generation, reason ?? CLEARED_REASON);
       generation += 1;
     },
     whenIdle() {

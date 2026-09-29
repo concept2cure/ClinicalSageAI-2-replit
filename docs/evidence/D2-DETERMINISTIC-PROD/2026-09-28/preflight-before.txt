@@ -1,0 +1,5 @@
+=== BEFORE (deploy-aws.yml without the check): task definition carrying AI_GATEWAY_DETERMINISTIC=true ===
+[terraform-preflight-proof] ok — deploy-aws.yml's preflight accepted the task definition
+[terraform-preflight-proof] ok — the preflight published the revision it checked (arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-api:1)
+
+[terraform-preflight-proof] every check holds.

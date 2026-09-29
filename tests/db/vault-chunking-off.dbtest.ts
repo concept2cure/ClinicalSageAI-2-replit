@@ -76,7 +76,7 @@ async function callTool(name: string, input: Record<string, unknown>) {
   const handler = getToolHandler(name);
   if (!handler) throw new Error(`${name} is not registered`);
   const raw = await inTenantScope(() =>
-    handler(input, { organizationId: orgId, organizationUuid: orgUuid, userId }),
+    handler(input, { organizationId: orgId, organizationUuid: orgUuid, userId, humanConfirmed: true }),
   );
   return JSON.parse(raw);
 }

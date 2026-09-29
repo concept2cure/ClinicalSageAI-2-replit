@@ -62,6 +62,11 @@ export const EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS: readonly ExpectedImmutability
   { schema: 'public', table: 'authoring_comments', trigger: 'trg_authoring_comments_content_fixed', source: 'db/migrations/20260730_authoring_comments_router_columns.sql' },
   { schema: 'public', table: 'doc_revisions', trigger: 'trg_doc_revisions_append_only', source: 'db/migrations/20260817_doc_revisions_immutable_ledger.sql' },
   { schema: 'public', table: 'doc_revisions', trigger: 'trg_doc_revisions_no_truncate', source: 'db/migrations/20260817_doc_revisions_immutable_ledger.sql' },
+  // An artifact's approval and release signatures, and each lock's snapshot (2026-09-29, D5).
+  { schema: 'public', table: 'concept2cure_signatures', trigger: 'trg_concept2cure_signatures_append_only', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
+  { schema: 'public', table: 'concept2cure_signatures', trigger: 'trg_concept2cure_signatures_no_truncate', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
+  { schema: 'public', table: 'concept2cure_submission_snapshots', trigger: 'trg_concept2cure_submission_snapshots_append_only', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
+  { schema: 'public', table: 'concept2cure_submission_snapshots', trigger: 'trg_concept2cure_submission_snapshots_no_truncate', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
 ];
 
 /** Anything with a `.query` — a pg Pool, a PoolClient, a PGlite instance. */

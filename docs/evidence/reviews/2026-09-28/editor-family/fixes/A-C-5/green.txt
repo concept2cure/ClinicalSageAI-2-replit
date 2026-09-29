@@ -1,0 +1,60 @@
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx tests/ui/surface-honesty.contract.test.ts   (after the fix)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+ ✓ tests/ui/surface-honesty.contract.test.ts > no surface mints its own audit identifier > audit ids come from the server or not at all 411ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > AnaDrafter does not claim a regulatory transmission > has no network call — the premise of every assertion below 2ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > AnaDrafter does not claim a regulatory transmission > no control reports the response was sent to an agency 8ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > AnaDrafter does not claim a regulatory transmission > never sets a draft to a transmitted state 2ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > AnaDrafter does not claim a regulatory transmission > states that the draft is not persisted 1ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > DocJourney does not claim to autosave > the page is not editable — it has no save path 1ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > DocJourney does not claim to autosave > the toolbar does not display an autosave confirmation 1ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > DocJourney does not claim to autosave > says what it actually is 0ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > its governed acts reach the server — the no-op dialog and its disclosure are gone together 17ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > the write path fails closed: reason floor, no success without the server 1ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > builds no signature ceremony of its own — its two signed acts use the shared EsignModal, verified by the server 25ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > does not claim the document body autosaves 21ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > is inert until a governed reason for change is entered 272ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > sets a cell through POST /api/protocol-soa/cells, carrying the numeric ids and the reason 127ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > clearing an already-set cell goes to /cells/clear, not back to /cells 51ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > reverts the tick when the server refuses — the grid never shows a cell the record lacks 58ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > says the grid is read-only when the protocol has no governed id 11ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > names a ticked cell by its assessment and visit, not by its glyph 34ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > names an unticked cell the same way 28ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > keeps every grid cell a table cell, with the checkbox inside it 45ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > still takes a click anywhere in the cell, and Space on the focused checkbox 74ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > gives the checkbox the whole cell and the focus ring the cell had 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds a visit through the governed visit route and re-reads the protocol 920ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renames a visit through the visit PATCH, carrying the visit id 411ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes a visit through the governed remove route 425ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds an assessment through the SoA router 375ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes an assessment through the governed remove route 375ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renders the assembler’s findings rather than an empty list 214ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > risk register — residual rating, owner and mitigation > writes the residual rating through the risk PATCH 624ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > says plainly that no budget has been entered instead of printing a verdict 195ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > adds a line item through the budget router 317ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > sets the feasibility parameters through the params PUT 352ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > requests a review through the reviewers route 411ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > assigns the review to a member's account, so the reviewer signs their own review 353ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > when the member list cannot be read it says so, and a reviewer can still be named without an account 324ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > neither an account nor a name: nothing is sent 345ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > a disposition is signed, not submitted: nothing is sent until the signer re-authenticates 455ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > finalize — the replacement for the deleted reason-only drawer is reachable > Finalize protocol opens the e-signature and posts the signed finalization 407ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > cover page — sponsor and principal investigator > writes both through the cover-page PATCH and re-reads 293ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > consent — the tab shows what the read model returns > reports the element the assembled consent form holds 209ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a governed write does not take the protocol off screen > stays on the register being edited while the record is re-read 439ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an empty object reads as a failed load 9ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an envelope around an object reads as a failed load 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an error carried on a 200 reads as a failed load 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > rows with no fields reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row with an id and nothing else reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row whose fields are present but null reads as a failed load 4ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a store that is not provisioned says so, and offers no start 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > empty state > names the open project and offers both a start and an AnA draft 36ms
+
+ Test Files  3 passed (3)
+      Tests  49 passed (49)
+   Start at  05:06:06
+   Duration  10.31s (transform 2.62s, setup 481ms, import 3.50s, tests 8.73s, environment 1.47s)
+

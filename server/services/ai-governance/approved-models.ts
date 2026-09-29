@@ -330,12 +330,22 @@ export function isApprovedForHighRisk(modelId: string): boolean {
 export function isServedModelApprovedForHighRisk(
   served: { provider?: string | null; model?: string | null } | null | undefined,
 ): boolean {
-  if (!served?.provider || !served.model) return false;
-  return APPROVED_MODELS.some(
-    (m) =>
-      m.approvedForHighRisk &&
-      m.provider === served.provider &&
-      (m.pinnedVersion === served.model || m.id === served.model),
+  return approvedEntryFor(served)?.approvedForHighRisk === true;
+}
+
+/**
+ * The registry entry for the model that served a request, identified the way a
+ * gateway response reports it: provider plus the wire model (the pinned
+ * version) or the registry id. Undefined when no entry matches — the ledger
+ * then records the call as served by an unregistered model rather than
+ * guessing an entry for it.
+ */
+export function approvedEntryFor(
+  served: { provider?: string | null; model?: string | null } | null | undefined,
+): ApprovedModel | undefined {
+  if (!served?.provider || !served.model) return undefined;
+  return APPROVED_MODELS.find(
+    (m) => m.provider === served.provider && (m.pinnedVersion === served.model || m.id === served.model),
   );
 }
 

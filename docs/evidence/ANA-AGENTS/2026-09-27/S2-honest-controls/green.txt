@@ -1,0 +1,176 @@
+# GREEN, HEAD 1a4b1893f + the S2 working tree after the review fixes (sha256 of every S2 file in tree.sha256): the three S2 test files and their neighbours.
+# Neighbours: every client test that imports Home / reads V2App.tsx, surfaceViews.ts or stream.ts; every server test that imports effort.ts or reasoning.ts, reads stream.ts, or exercises approved-models / isHighRiskRequest / the ana-intelligence routes; plus every neighbour the build pass ran.
+# Run as two invocations (client, then server), on the same bytes as tree.sha256.
+# Trimmed: every test line of the three S2 files; each neighbour file as its count of passing tests.
+
+$ npx vitest run --config vitest.config.ts client/src/__tests__/shellTruthRoutes.test.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx client/src/concept2cure/mdx/__tests__/mdxKeyboardReachable.test.tsx client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx client/src/concept2cure/v2/__tests__/appMentions.test.tsx client/src/concept2cure/v2/__tests__/clientPortalLive.test.tsx client/src/concept2cure/v2/__tests__/cmcPoolability.test.tsx client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx client/src/concept2cure/v2/__tests__/crlLibrarySurfaceContext.test.tsx client/src/concept2cure/v2/__tests__/croPortfolioSurfaceContext.test.tsx client/src/concept2cure/v2/__tests__/designControlsPendingStore.test.tsx client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx client/src/concept2cure/v2/__tests__/guardsPreserveContent.test.tsx client/src/concept2cure/v2/__tests__/homeEngine.test.tsx client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx client/src/concept2cure/v2/__tests__/missionControlSurfaceContext.test.tsx client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts client/src/concept2cure/v2/__tests__/navParams.test.ts client/src/concept2cure/v2/__tests__/navTargets.test.tsx client/src/concept2cure/v2/__tests__/navigationReachability.test.ts client/src/concept2cure/v2/__tests__/ndaCockpitSurfaceContext.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx client/src/concept2cure/v2/__tests__/surfaceContextIds.test.ts client/src/concept2cure/v2/__tests__/surfaceContextLoop.test.tsx client/src/concept2cure/v2/__tests__/surfaceReachability.test.ts client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx
+$ npx vitest run --config vitest.config.ts server/__tests__/routes/smoke.test.ts server/eval/pq/__tests__/run-pq.test.ts server/middleware/__tests__/redisRateLimiter-category.test.ts server/routes/__tests__/ana-intelligence-gateway-errors.test.ts server/routes/__tests__/ana-intelligence-identity.test.ts server/routes/__tests__/ana-intelligence-quick-provenance.test.ts server/routes/__tests__/chat-path-parity.test.ts server/routes/ana-ri/__tests__/live-drive-turn.test.ts server/routes/ana-ri/__tests__/stream-model-override.test.ts server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts server/routes/c2c/__tests__/promote-generation-provenance.test.ts server/services/__tests__/ana-capability-registry-seed-scope.test.ts server/services/__tests__/chat-thread-program-key.test.ts server/services/__tests__/memory-consolidation.pglite.integration.test.ts server/services/__tests__/memory-context-assembler-mode.test.ts server/services/ai-gateway/__tests__/drive-regressions.test.ts server/services/ai-gateway/__tests__/effort.test.ts server/services/ai-gateway/__tests__/flagship-opus-5-5.test.ts server/services/ai-gateway/__tests__/gateway-stream-tool-input.test.ts server/services/ai-gateway/__tests__/gateway-terminal-round-cache.test.ts server/services/ai-gateway/__tests__/gateway.test.ts server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts server/services/ai-gateway/__tests__/ledger-provenance.test.ts server/services/ai-gateway/__tests__/openai-tool-calls.test.ts server/services/ai-gateway/__tests__/reasoning.test.ts server/services/ai-governance/__tests__/approved-models.test.ts server/services/ai-governance/__tests__/model-cards.test.ts server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts server/services/ana-ri/__tests__/document-action-labels.test.ts server/services/ana-ri/__tests__/response-register.test.ts server/services/ana/__tests__/drive-program-resolution.test.ts server/services/ana/__tests__/governed-write-gate.test.ts server/services/ana/__tests__/model-call-linkage.test.ts server/services/ana/__tests__/run-control-tenant-scope.test.ts server/services/ana/__tests__/run-status.test.ts server/services/ana/__tests__/self-drive-regressions.test.ts server/services/ana/__tests__/server-tool-steps.test.ts server/services/ana/__tests__/turn-record-loop.test.ts server/services/cmc/__tests__/module3-narrative-governance-refusal.test.ts
+
+## The S2 files
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > shows the mode its host gives it, not a local default
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > reports a choice to its host instead of keeping it
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > follows the host when the host changes the mode
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > without a host binding, still renders and switches on local state
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > a mode with no setter is not a binding: the menu still works (review objection 17)
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > sends the question to the conversation screen, not the rail
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > the shell chat, `anaChat`, sends effortForMode(prefs.anaMode)
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > the conversation screen is mounted on that chat (review objection 4)
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > Home is rendered with mode={prefs.anaMode} and setMode writing anaMode
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > passes a highRisk option to resolveModelOverride
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > computes it with isHighRiskRequest from the routing plan’s taskType and riskTier
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > the gateway is sent that same taskType and riskTier on every call that carries the pin
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > writes the frame in exactly one place
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is written after the pin is resolved and before the model is first called
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelled
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > EFFORT_TO_STRATEGY mapping > maps each effort to the documented routing strategy
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > EFFORT_TO_STRATEGY mapping > resolveEffortStrategy returns the mapped strategy
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > EFFORT_TO_STRATEGY mapping > exposes the three levels and a balanced default
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveEffortLevel — defaults to balanced on bad input > passes through the three valid levels
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveEffortLevel — defaults to balanced on bad input > resolves 'garbage' to balanced
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveEffortLevel — defaults to balanced on bad input > resolves undefined / null / wrong-type to balanced
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveEffortLevel — defaults to balanced on bad input > isEffortLevel narrows correctly
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveStrategyWithPrecedence — governance-safe > lets the user effort strategy take effect when no policy hint is pinned
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveStrategyWithPrecedence — governance-safe > a governance-pinned policyHint ALWAYS wins over user effort
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveStrategyWithPrecedence — governance-safe > falls back to the routing plan when neither policy nor effort is present
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > resolves a valid override by registry id
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > resolves a valid override by wire model string
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > drops an unknown override (returns null)
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > drops a disabled model even if the id matches
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > drops empty / non-string overrides
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > filters to enabled models only
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > derives label + recommendedEffort and sorts by quality desc
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > deriveRecommendedEffort heuristic
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > humanizes unknown registry ids for the label
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the governed data is what these cases assume
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an enabled model with no approved entry — by id and by wire model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an approved alias whose wire model is not the pinned version
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > resolves an approved entry — by id and by wire model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, refuses an approved model not approved for high risk
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, resolves an approvedForHighRisk entry — by id and by wire model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, still refuses the unapproved model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the high-risk question has no default, and an unanswered one is the strict case
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses a row whose wire model is the alias id, not the pinned version
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses the pinned version under an id the entry does not carry — the gateway would refuse it on high-risk work
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes an enabled model with no approved entry
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes an approved alias drifted off its pinned version
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes a row that is not exactly its approved entry
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > offers every enabled model in today's registry — the drift gate keeps each one its own entry
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > carries approvedForHighRisk and pqStatus from the approved entry
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > claims no PQ pass the governed data does not record
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveApiEffort > maps the three levels onto API effort, in order
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveApiEffort > is a different question from which model to route to
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveApiEffort > sends no value the pinned SDK does not know
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > claudeModelLabel > reads the version out of the wire model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > claudeModelLabel > strips a provider prefix
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > claudeModelLabel > declines anything that is not a Claude model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > deriveModelLabel > names the model that will run, not the alias that points at it
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > deriveModelLabel > marks a fallback rung as one
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > deriveModelLabel > still hand-labels the non-Claude entries
+
+## Neighbours (passing tests per file)
+     5 passed  0 failed  client/src/__tests__/shellTruthRoutes.test.ts
+     4 passed  0 failed  client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts
+     7 passed  0 failed  client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts
+    10 passed  0 failed  client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts
+     4 passed  0 failed  client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx
+     9 passed  0 failed  client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx
+     2 passed  0 failed  client/src/concept2cure/mdx/__tests__/mdxKeyboardReachable.test.tsx
+     3 passed  0 failed  client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx
+    18 passed  0 failed  client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx
+   124 passed  0 failed  client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx
+    15 passed  0 failed  client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx
+     6 passed  0 failed  client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx
+     8 passed  0 failed  client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx
+     8 passed  0 failed  client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx
+     6 passed  0 failed  client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx
+     6 passed  0 failed  client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx
+     6 passed  0 failed  client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts
+    10 passed  0 failed  client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts
+    19 passed  0 failed  client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx
+    14 passed  0 failed  client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx
+    10 passed  0 failed  client/src/concept2cure/v2/__tests__/appMentions.test.tsx
+     6 passed  0 failed  client/src/concept2cure/v2/__tests__/clientPortalLive.test.tsx
+     7 passed  0 failed  client/src/concept2cure/v2/__tests__/cmcPoolability.test.tsx
+     8 passed  0 failed  client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx
+     7 passed  0 failed  client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx
+    13 passed  0 failed  client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx
+     4 passed  0 failed  client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx
+     1 passed  0 failed  client/src/concept2cure/v2/__tests__/crlLibrarySurfaceContext.test.tsx
+     2 passed  0 failed  client/src/concept2cure/v2/__tests__/croPortfolioSurfaceContext.test.tsx
+     6 passed  0 failed  client/src/concept2cure/v2/__tests__/designControlsPendingStore.test.tsx
+    13 passed  0 failed  client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx
+     7 passed  0 failed  client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx
+     1 passed  0 failed  client/src/concept2cure/v2/__tests__/guardsPreserveContent.test.tsx
+     6 passed  0 failed  client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx
+   123 passed  0 failed  client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx
+     5 passed  0 failed  client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx
+     3 passed  0 failed  client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx
+   122 passed  0 failed  client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx
+    13 passed  0 failed  client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx
+    20 passed  0 failed  client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx
+     4 passed  0 failed  client/src/concept2cure/v2/__tests__/missionControlSurfaceContext.test.tsx
+     9 passed  0 failed  client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts
+     9 passed  0 failed  client/src/concept2cure/v2/__tests__/navParams.test.ts
+     2 passed  0 failed  client/src/concept2cure/v2/__tests__/navTargets.test.tsx
+     2 passed  0 failed  client/src/concept2cure/v2/__tests__/navigationReachability.test.ts
+     5 passed  0 failed  client/src/concept2cure/v2/__tests__/ndaCockpitSurfaceContext.test.tsx
+    10 passed  0 failed  client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx
+     5 passed  0 failed  client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx
+     2 passed  0 failed  client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx
+    10 passed  0 failed  client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx
+     8 passed  0 failed  client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx
+    10 passed  0 failed  client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx
+     5 passed  0 failed  client/src/concept2cure/v2/__tests__/surfaceContextIds.test.ts
+     2 passed  0 failed  client/src/concept2cure/v2/__tests__/surfaceContextLoop.test.tsx
+     1 passed  0 failed  client/src/concept2cure/v2/__tests__/surfaceReachability.test.ts
+   259 passed  0 failed  client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx
+     3 passed  0 failed  client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx
+   123 passed  0 failed  client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx
+    18 passed  0 failed  server/__tests__/routes/smoke.test.ts
+    14 passed  0 failed  server/eval/pq/__tests__/run-pq.test.ts
+    11 passed  0 failed  server/middleware/__tests__/redisRateLimiter-category.test.ts
+     4 passed  0 failed  server/routes/__tests__/ana-intelligence-gateway-errors.test.ts
+     3 passed  0 failed  server/routes/__tests__/ana-intelligence-identity.test.ts
+     1 passed  0 failed  server/routes/__tests__/ana-intelligence-quick-provenance.test.ts
+    13 passed  0 failed  server/routes/__tests__/chat-path-parity.test.ts
+    27 passed  0 failed  server/routes/ana-ri/__tests__/live-drive-turn.test.ts
+     7 passed  0 failed  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts
+     7 passed  0 failed  server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts
+     6 passed  0 failed  server/routes/c2c/__tests__/promote-generation-provenance.test.ts
+     5 passed  0 failed  server/services/__tests__/ana-capability-registry-seed-scope.test.ts
+     5 passed  0 failed  server/services/__tests__/chat-thread-program-key.test.ts
+     8 passed  0 failed  server/services/__tests__/memory-consolidation.pglite.integration.test.ts
+     6 passed  0 failed  server/services/__tests__/memory-context-assembler-mode.test.ts
+    32 passed  0 failed  server/services/ai-gateway/__tests__/drive-regressions.test.ts
+     9 passed  0 failed  server/services/ai-gateway/__tests__/flagship-opus-5-5.test.ts
+     5 passed  0 failed  server/services/ai-gateway/__tests__/gateway-stream-tool-input.test.ts
+     6 passed  0 failed  server/services/ai-gateway/__tests__/gateway-terminal-round-cache.test.ts
+    37 passed  0 failed  server/services/ai-gateway/__tests__/gateway.test.ts
+    25 passed  0 failed  server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts
+     9 passed  0 failed  server/services/ai-gateway/__tests__/ledger-provenance.test.ts
+    27 passed  0 failed  server/services/ai-gateway/__tests__/openai-tool-calls.test.ts
+    31 passed  0 failed  server/services/ai-gateway/__tests__/reasoning.test.ts
+     5 passed  0 failed  server/services/ai-governance/__tests__/approved-models.test.ts
+     4 passed  0 failed  server/services/ai-governance/__tests__/model-cards.test.ts
+     6 passed  0 failed  server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+     1 passed  0 failed  server/services/ana-ri/__tests__/document-action-labels.test.ts
+    42 passed  0 failed  server/services/ana-ri/__tests__/response-register.test.ts
+    25 passed  0 failed  server/services/ana/__tests__/drive-program-resolution.test.ts
+    41 passed  0 failed  server/services/ana/__tests__/governed-write-gate.test.ts
+     8 passed  0 failed  server/services/ana/__tests__/model-call-linkage.test.ts
+     5 passed  0 failed  server/services/ana/__tests__/run-control-tenant-scope.test.ts
+    14 passed  0 failed  server/services/ana/__tests__/run-status.test.ts
+    32 passed  0 failed  server/services/ana/__tests__/self-drive-regressions.test.ts
+    20 passed  0 failed  server/services/ana/__tests__/server-tool-steps.test.ts
+     9 passed  0 failed  server/services/ana/__tests__/turn-record-loop.test.ts
+     5 passed  0 failed  server/services/cmc/__tests__/module3-narrative-governance-refusal.test.ts
+
+## Client run
+Test Files  59 passed (59)
+Tests  1139 passed (1139)
+exit=0
+## Server run
+Test Files  40 passed (40)
+Tests  584 passed (584)
+exit=0

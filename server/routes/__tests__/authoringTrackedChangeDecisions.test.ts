@@ -67,6 +67,13 @@ function auditSectionId(): unknown {
   return call ? (call[1] as unknown[])[1] : undefined;
 }
 
+/* A document and one of its sections. Ids are uuid, as the columns are: a
+   decision's sectionId is now checked against the document (SEC-A-7, below),
+   and a non-uuid id cannot be a row of either. The default mock answers every
+   query with one row, so the section is found. */
+const DOC = '6f1c2a3b-4d5e-4f60-8a71-92b3c4d5e6f7';
+const SEC = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
+
 beforeEach(() => {
   mockQuery.mockReset();
   mockQuery.mockImplementation(async () => ({ rowCount: 1, rows: [{ id: 'row-1' }] }));
@@ -75,7 +82,7 @@ beforeEach(() => {
 describe('POST /documents/:id/tracked-change-decisions', () => {
   it('records the refused TEXT, not just an id the document no longer holds', async () => {
     const res = await request(makeApp())
-      .post('/api/authoring/documents/D1/tracked-change-decisions')
+      .post(`/api/authoring/documents/${DOC}/tracked-change-decisions`)
       .set('Authorization', await bearer())
       .send({
         changeId: 'deletion:abc123',
@@ -84,7 +91,7 @@ describe('POST /documents/:id/tracked-change-decisions', () => {
         text: 'Patients with hepatic impairment were excluded.',
         authorName: 'R. Author',
         at: '2026-08-24T16:30:00Z',
-        sectionId: 'S1',
+        sectionId: SEC,
       });
 
     expect(res.status).toBe(200);
@@ -93,7 +100,7 @@ describe('POST /documents/:id/tracked-change-decisions', () => {
     expect(md.changeType).toBe('deletion');
     expect(md.text).toBe('Patients with hepatic impairment were excluded.');
     // The row is filed against the section (verified to be in the document).
-    expect(auditSectionId()).toBe('S1');
+    expect(auditSectionId()).toBe(SEC);
     // Who PROPOSED it — distinct from the actor who decided it.
     expect(md.proposedBy).toBe('R. Author');
   });
@@ -282,12 +289,12 @@ describe('the FROZEN/APPROVED document lock — accept/reject must not write pas
 describe('bulk audit metadata carries what the single route already carries', () => {
   it('records sectionId and each change\'s proposedAt, mirroring the single route', async () => {
     const res = await request(makeApp())
-      .post('/api/authoring/documents/D1/tracked-change-decisions/bulk')
+      .post(`/api/authoring/documents/${DOC}/tracked-change-decisions/bulk`)
       .set('Authorization', await bearer())
       .send({
         decision: 'accept',
         changeIds: ['a', 'b'],
-        sectionId: 'S9',
+        sectionId: SEC,
         changes: [
           { changeId: 'a', changeType: 'insertion', text: 'first', at: '2026-08-24T16:30:00Z' },
           { changeId: 'b', changeType: 'insertion', text: 'second', at: '2026-08-24T16:31:00Z' },
@@ -297,7 +304,7 @@ describe('bulk audit metadata carries what the single route already carries', ()
     expect(res.status).toBe(200);
     const md = auditMetadata();
     // Filed against the section, as the single route is.
-    expect(auditSectionId()).toBe('S9');
+    expect(auditSectionId()).toBe(SEC);
     expect(md.changes[0].proposedAt).toBe('2026-08-24T16:30:00Z');
     expect(md.changes[1].proposedAt).toBe('2026-08-24T16:31:00Z');
   });
@@ -387,5 +394,125 @@ describe('proposedBy — a machine author is canonicalised, everything else is c
     const md = auditMetadata();
     expect(md.changes[0]).toMatchObject({ proposedBy: 'AnA (AI draft)', proposedByVerified: true });
     expect(md.changes[1]).toMatchObject({ proposedBy: 'R. Human', proposedByVerified: false });
+  });
+});
+
+describe('SEC-A-7: a decision names a section of its own document, and a change type the editor has', () => {
+  /**
+   * Editor-family review 2026-09-28, SEC-A-7 second half. Both decision routes
+   * resolved only the document's lock, then recorded the body's sectionId,
+   * changeType and text as given, into the hash-chained audit trail. A
+   * decision could therefore be recorded, on this document's trail, against a
+   * section of ANOTHER document, or of another tenant's, and the rail reads it
+   * back as a decision on that section. The workbench always sends the open
+   * document's active section (DocumentWorkbench.tsx flushDecisions), so the
+   * only callers refused are forged or stale ones.
+   */
+  const OTHER_DOCS_SECTION = '9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a';
+
+  /** The section lookup finds SEC in DOC for tenant 7, and nothing else. */
+  function sectionsOfDoc() {
+    mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (/FROM authoring_sections/.test(sql)) {
+        const [id, docId, tenant] = params ?? [];
+        return id === SEC && docId === DOC && Number(tenant) === 7 ? { rowCount: 1, rows: [{ ok: 1 }] } : { rowCount: 0, rows: [] };
+      }
+      return { rowCount: 1, rows: [{ id: 'row-1' }] };
+    });
+  }
+  const wrote = (table: RegExp) => mockQuery.mock.calls.some(c => table.test(String(c[0])));
+  const sectionLookups = () => mockQuery.mock.calls.filter(c => /FROM authoring_sections/.test(String(c[0])));
+
+  it('single: another document\'s section is refused 400 SECTION_NOT_IN_DOCUMENT — no row, no audit event', async () => {
+    sectionsOfDoc();
+    const res = await request(makeApp())
+      .post(`/api/authoring/documents/${DOC}/tracked-change-decisions`)
+      .set('Authorization', await bearer())
+      .send({ changeId: 'deletion:x', decision: 'reject', changeType: 'deletion', text: 'Dose is 10 mg.', sectionId: OTHER_DOCS_SECTION });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error?.code).toBe('SECTION_NOT_IN_DOCUMENT');
+    expect(wrote(/INSERT INTO authoring_tracked_change_decisions/)).toBe(false);
+    expect(wrote(/INSERT INTO authoring_audit_trail/)).toBe(false);
+  });
+
+  it('the lookup is scoped to this document AND this tenant', async () => {
+    sectionsOfDoc();
+    await request(makeApp())
+      .post(`/api/authoring/documents/${DOC}/tracked-change-decisions`)
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'accept', sectionId: SEC });
+
+    const [sql, params] = sectionLookups()[0] ?? [];
+    expect(String(sql)).toMatch(/doc_id\s*=\s*\$2/);
+    expect(String(sql)).toMatch(/tenant_id\s*=\s*\$3/);
+    expect(params).toEqual([SEC, DOC, 7]);
+  });
+
+  it('single: a section of this document is recorded, as before', async () => {
+    sectionsOfDoc();
+    const res = await request(makeApp())
+      .post(`/api/authoring/documents/${DOC}/tracked-change-decisions`)
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'accept', changeType: 'insertion', sectionId: SEC });
+
+    expect(res.status).toBe(200);
+    expect(auditMetadata()).toMatchObject({ sectionId: SEC, changeType: 'insertion' });
+  });
+
+  it('a sectionId that is not a uuid is refused without a query — Postgres would answer 22P02, a 500', async () => {
+    sectionsOfDoc();
+    const res = await request(makeApp())
+      .post(`/api/authoring/documents/${DOC}/tracked-change-decisions`)
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'accept', sectionId: 'S1' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error?.code).toBe('SECTION_NOT_IN_DOCUMENT');
+    expect(sectionLookups()).toHaveLength(0);
+    expect(wrote(/INSERT INTO authoring_audit_trail/)).toBe(false);
+  });
+
+  it('bulk: another document\'s section is refused — no rows, no audit event', async () => {
+    sectionsOfDoc();
+    const res = await request(makeApp())
+      .post(`/api/authoring/documents/${DOC}/tracked-change-decisions/bulk`)
+      .set('Authorization', await bearer())
+      .send({ decision: 'accept', changeIds: ['a', 'b'], sectionId: OTHER_DOCS_SECTION, changes: [{ changeId: 'a', text: 'x' }] });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error?.code).toBe('SECTION_NOT_IN_DOCUMENT');
+    expect(wrote(/INSERT INTO authoring_tracked_change_decisions/)).toBe(false);
+    expect(wrote(/INSERT INTO authoring_audit_trail/)).toBe(false);
+  });
+
+  it('a decision that names no section is recorded, as before', async () => {
+    sectionsOfDoc();
+    const res = await request(makeApp())
+      .post(`/api/authoring/documents/${DOC}/tracked-change-decisions`)
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'accept' });
+    expect(res.status).toBe(200);
+    expect(sectionLookups()).toHaveLength(0);
+  });
+
+  // Both routes now describe a change with one shape (recordTrackedChangeAct),
+  // so a type the editor does not have reads null in each, never the text sent.
+  it('a changeType the editor does not have is not recorded (null, single and bulk)', async () => {
+    sectionsOfDoc();
+    await request(makeApp())
+      .post(`/api/authoring/documents/${DOC}/tracked-change-decisions`)
+      .set('Authorization', await bearer())
+      .send({ changeId: 'x', decision: 'accept', changeType: 'approved-by-QA' });
+    expect(auditMetadata().changeType).toBeNull();
+
+    mockQuery.mockClear();
+    await request(makeApp())
+      .post(`/api/authoring/documents/${DOC}/tracked-change-decisions/bulk`)
+      .set('Authorization', await bearer())
+      .send({ decision: 'accept', changeIds: ['a', 'b'], changes: [{ changeId: 'a', changeType: 'approved-by-QA' }, { changeId: 'b', changeType: 'deletion' }] });
+    const md = auditMetadata();
+    expect(md.changes[0].changeType).toBeNull();
+    expect(md.changes[1].changeType).toBe('deletion');
   });
 });

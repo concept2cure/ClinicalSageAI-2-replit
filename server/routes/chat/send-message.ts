@@ -30,7 +30,7 @@ import {
 } from '../../services/kernel-adaptive-policy.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
 import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
-import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
+import { selectToolsForTurn, SELF_DRIVE_TOOLS } from '../../services/ana/tool-selection.js';
 import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
 import { loopToolCollector, recordLoopTurn } from '../../services/ana/turn-record-loop.js';
 import type { TurnRecordStatus } from '../../services/ana/turn-record.js';
@@ -798,7 +798,18 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
            the streaming endpoint honoured the setting — a governance control
            holding on one of two doors. */
         tools: selectToolsForTurn(governedTools, typeof message === 'string' ? message : '', {
-          pinned: Array.isArray(selected_tools) ? selected_tools.filter((t: unknown): t is string => typeof t === 'string') : undefined,
+          pinned: [
+            ...(Array.isArray(selected_tools)
+              ? selected_tools.filter((t: unknown): t is string => typeof t === 'string')
+              : []),
+            /* This route turns navigate_to / act_on_screen / start_product_demo
+               results into offer-chips on the response (collectedNavigation
+               and its siblings below), so the tools have to reach the model
+               whatever the wording scores. They are not always-on in the
+               selector — voice and deep investigations share it and can
+               render no chip — so a caller that can offer a move pins them. */
+            ...SELF_DRIVE_TOOLS,
+          ],
           context: tool_context && typeof tool_context === 'object' ? tool_context : undefined,
         }),
         toolChoice: 'auto' as const,

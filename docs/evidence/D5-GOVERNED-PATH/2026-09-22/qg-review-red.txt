@@ -1,0 +1,59 @@
+# The adversarial review (2026-09-28) of the first round of this fix found it still let an empty collection choose
+# the verdict one level down, and more. The same suites against that first round (a snapshot of its files):
+   → expected 200 to be 404 // Object.is equality
+   → expected 200 to be 404 // Object.is equality
+   → expected '1 of 2 section(s) have no quality gat…' to match /^1 of 2 sections was not assessed/
+   → expected { valid: true, …(3) } to deeply equal ObjectContaining{…}
+   → expected { valid: true, …(3) } to deeply equal ObjectContaining{…}
+   → expected { valid: true, …(3) } to deeply equal ObjectContaining{…}
+   → expected { valid: true, …(3) } to deeply equal ObjectContaining{…}
+   → expected 500 to be 200 // Object.is equality
+   → expected true to be null
+   → expected true to be null
+   → expected true to be null
+   → expected true to be null
+   → expected 500 to be 200 // Object.is equality
+   → expected undefined to be true // Object.is equality
+   → expected undefined to be true // Object.is equality
+   → expected true to be false // Object.is equality
+   → expected { sectionCode: 'benefit-risk', …(5) } to deeply equal ObjectContaining{…}
+   → expected { valid: false, …(3) } to deeply equal ObjectContaining{…}
+   → expected 1 to be 2 // Object.is equality
+   → expected { hard: +0, soft: +0, info: 1 } to deeply equal { hard: 1, soft: +0, info: +0 }
+ FAIL  a section no gating rule covers is not assessed, never passed > /api/tenant-quality-validation/validate-section: a plan this organization does not have is 404, not "not assessed"
+ FAIL  a section no gating rule covers is not assessed, never passed > /api/quality/validation/validate-section: a plan this organization does not have is 404, not "not assessed"
+ FAIL  a section no gating rule covers is not assessed, never passed > batch-validate, one section assessed and passing, one not: undecided, and it says one was not assessed
+ FAIL  a rule that names nothing checkable is not assessed, never passed > validate-section, a rule that names no factor
+ FAIL  a rule that names nothing checkable is not assessed, never passed > validate-section, a rule that names only a retired factor
+ FAIL  a rule that names nothing checkable is not assessed, never passed > validate-section, a rule that names a factor that does not exist
+ FAIL  a rule that names nothing checkable is not assessed, never passed > validate-section, a rule that names a factor with no validation criteria
+ FAIL  a rule that names nothing checkable is not assessed, never passed > validate-section, a rule that has a list that cannot be read
+ FAIL  a rule that names nothing checkable is not assessed, never passed > batch-validate, a rule that names no factor
+ FAIL  a rule that names nothing checkable is not assessed, never passed > batch-validate, a rule that names only a retired factor
+ FAIL  a rule that names nothing checkable is not assessed, never passed > batch-validate, a rule that names a factor with no validation criteria
+ FAIL  a rule that names nothing checkable is not assessed, never passed > batch-validate, a rule that names a factor that does not exist
+ FAIL  a rule that names nothing checkable is not assessed, never passed > batch-validate, a rule that has a list that cannot be read
+ FAIL  a rule that lists CTQ factors is assessed against them > /api/tenant-quality-validation/validate-section: a missing high-risk term fails the section — 200, not 500
+ FAIL  a rule that lists CTQ factors is assessed against them > /api/quality/validation/validate-section: a missing high-risk term fails the section — 200, not 500
+ FAIL  a rule that lists CTQ factors is assessed against them > batch-validate: a section that fails a soft gate fails the batch
+ FAIL  a rule that lists CTQ factors is assessed against them > batch-validate: a rule with no threshold recorded is the column default — a hard gate, not an informational one
+ FAIL  a rule that lists CTQ factors is assessed against them > factor ids stored as strings are read: both routes assess the factor, and the plan returns it
+ FAIL  the plan dashboard never computes a figure from nothing > control: two factors linked, one active — 50% complete, half high risk; a string id counts
+ FAIL  the plan dashboard never computes a figure from nothing > a rule with no threshold recorded counts as a hard gate
+ Test Files  1 failed (1)
+      Tests  20 failed | 8 passed (28)
+
+# client, against the first round's QmpWorkspace.tsx
+   → Unable to find an element with the text: /no risk factor is linked to this plan’s gating rules/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for you
+   → Unable to find an element with the text: 33% complete. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more fle
+   → expected <span class="rd-chip tone-idle"></span> to be null
+ FAIL  QmpWorkspace — real quality backend > a plan with no risk factor linked reads "Not assessed" — never 0% complete — and says so to AnA
+ FAIL  QmpWorkspace — real quality backend > shows whole percents, and tells AnA the same figure
+ FAIL  QmpWorkspace — figures belong to the plan they were read for > switching plans drops the last plan’s figure, and a slower answer for it never replaces the new one
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+
+# mutation: the final QmpWorkspace.tsx with only the out-of-order guard removed
+ × client/src/concept2cure/v2/__tests__/qmpWorkspace.test.tsx > QmpWorkspace — figures belong to the plan they were read for > switching plans drops the last plan’s 
+   → Unable to find an element with the text: Not assessed. This could be because the text is broken up by multiple elements. In this case, you can provide a function f
+      Tests  1 failed | 4 passed (5)

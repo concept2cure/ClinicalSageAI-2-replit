@@ -1,3 +1,9 @@
+-- 2026-09-25 AMENDED IN PLACE (W2 / D1, docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/):
+-- ivdr_packs_status_check is now replaced only when the live definition
+-- (pg_get_constraintdef) differs from the one below. Unconditional, every deploy dropped
+-- and re-added it — a full validation scan under lock (ACCESS EXCLUSIVE for a CHECK;
+-- writes blocked on child and parent for a FOREIGN KEY) while the application served.
+-- The definitions are unchanged. Pinned by npm run ci:replay-rebuilds-nothing.
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Migration: IVDR Pack Warnings + Artifact Integrity Columns
 -- Date: 2026-02-25
@@ -24,12 +30,20 @@ BEGIN
     RETURN;
   END IF;
 
-  ALTER TABLE ivdr_packs
-  DROP CONSTRAINT IF EXISTS ivdr_packs_status_check;
+  -- Replaced only when the live definition differs (2026-09-25, see the header):
+  -- unconditionally, every deploy re-validated it under lock while the app served.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = to_regclass('public.ivdr_packs') AND conname = 'ivdr_packs_status_check'
+       AND pg_get_constraintdef(oid) = $def$CHECK ((status = ANY (ARRAY['BUILDING'::text, 'SUCCEEDED'::text, 'FAILED'::text, 'REVOKED'::text])))$def$
+  ) THEN
+    ALTER TABLE ivdr_packs
+    DROP CONSTRAINT IF EXISTS ivdr_packs_status_check;
 
-  ALTER TABLE ivdr_packs
-  ADD CONSTRAINT ivdr_packs_status_check
-  CHECK (status IN ('BUILDING', 'SUCCEEDED', 'FAILED', 'REVOKED'));
+    ALTER TABLE ivdr_packs
+    ADD CONSTRAINT ivdr_packs_status_check
+    CHECK (status IN ('BUILDING', 'SUCCEEDED', 'FAILED', 'REVOKED'));
+  END IF;
 
   -- 2) Warning tracking columns
   --    has_warnings: quick filter for packs that have quality warnings

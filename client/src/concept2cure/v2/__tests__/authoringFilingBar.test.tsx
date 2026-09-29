@@ -283,3 +283,50 @@ describe('AuthoringFilingBar — real filing actions', () => {
     expect((screen.getByRole('button', { name: /Frozen/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
+
+/* 2026-09-28, coverage-gap sweep GE-P-3. Freeze and E-sign were offered to
+   every member who could open the document; one without an Owner or Approver
+   grant filled in the reason or the password and then met a 403. The host
+   now passes the server's refusal; the bar disables the control and states
+   the reason as text the control is described by. Unknown stays enabled. */
+describe('AuthoringFilingBar — the server’s refusal, before the dialog', () => {
+  const describedBy = (el: Element) =>
+    (el.getAttribute('aria-describedby') ?? '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .join(' ');
+  const FREEZE_NO = 'Freezing needs an Owner or Approver grant on this document. Your grants on it: Reviewer.';
+  const SIGN_NO = 'Applying an electronic signature needs a signing role in this organization (admin, approver, reviewer). Your role: member.';
+
+  function renderWith(props: { freezeRefusal?: string | null; esignRefusal?: string | null }) {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <AuthoringFilingBar docId="D1" docTitle="M2.3 QOS" docStatus="draft" onChanged={vi.fn()} fireToast={vi.fn()} {...props} />
+      </QueryClientProvider>,
+    );
+  }
+
+  it('disables Freeze and E-sign with the reason as visible, described text', () => {
+    renderWith({ freezeRefusal: FREEZE_NO, esignRefusal: SIGN_NO });
+    const freeze = screen.getByRole('button', { name: /Freeze/ }) as HTMLButtonElement;
+    const sign = screen.getByRole('button', { name: /E-sign/ }) as HTMLButtonElement;
+    expect(freeze.disabled, 'Freeze offered to a caller the server will refuse').toBe(true);
+    expect(sign.disabled, 'E-sign offered to a caller the server will refuse').toBe(true);
+    expect(describedBy(freeze)).toBe(FREEZE_NO);
+    expect(describedBy(sign)).toBe(SIGN_NO);
+    expect(screen.getByText(FREEZE_NO)).toBeTruthy();
+    expect(screen.getByText(SIGN_NO)).toBeTruthy();
+    fireEvent.click(freeze);
+    expect(screen.queryByTestId('form-title')).toBeNull();
+  });
+
+  it('leaves both enabled when the permission is unknown', () => {
+    renderWith({ freezeRefusal: null, esignRefusal: null });
+    expect((screen.getByRole('button', { name: /Freeze/ }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole('button', { name: /E-sign/ }) as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.queryByTestId('freeze-refusal')).toBeNull();
+    expect(screen.queryByTestId('esign-refusal')).toBeNull();
+  });
+});
