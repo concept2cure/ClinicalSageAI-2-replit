@@ -22,6 +22,7 @@ import { runWithTenantScope } from '../../server/db/tenantStore';
 import auditService from '../../server/services/auditService';
 import { createAuthBoundary } from '../../server/middleware/authBoundary';
 import projectSections from '../../server/routes/project-sections';
+import { getActivity, getProgramById } from '../../server/services/regulatory-programs.service';
 import {
   ORG_A,
   owner,
@@ -40,6 +41,7 @@ let project = 0;
 let leaver = 0; // acted in A's audit trail, then left
 let silentLeaver = 0; // never in A's audit trail, then left
 let leaverName = '';
+let program = ''; // led by the leaver
 
 async function leave(user: number) {
   await owner.query('DELETE FROM organization_users WHERE organization_id = $1 AND user_id = $2', [
@@ -84,6 +86,32 @@ beforeAll(async () => {
     `INSERT INTO section_status_log (organization_id, project_id, section_code, new_status, changed_by)
      VALUES ($1, $2, $3, 'drafting', $4)`,
     [ORG_A, project, CODE, leaver]
+  );
+  const p = await owner.query(
+    `INSERT INTO regulatory_programs
+       (organization_id, name, code, program_type, product_type, primary_agency, product_name, lead_user_id)
+     VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', $2, $4) RETURNING id::text AS id`,
+    [ORG_A, `${CODE}-program`, `${CODE}-program`, leaver]
+  );
+  program = p.rows[0].id;
+  const edit = await runWithTenantScope(
+    { tenantId: String(ORG_A), role: 'member', source: 'request', caller: 'actor-displays.dbtest' },
+    () =>
+      auditService.logAction({
+        tenantId: ORG_A,
+        userId: leaver,
+        action: 'data_modify',
+        resourceType: 'regulatory_programs',
+        resourceId: program,
+        details: { description: 'edited the program while a member' },
+      })
+  );
+  expect(edit.persisted).toBe(true);
+  // A row naming a user by user_id alone, not as an actor A's trail can name.
+  await owner.query(
+    `INSERT INTO audit_logs (tenant_id, user_id, action, table_name, record_id, created_at)
+     VALUES ($1, $2, 'data_modify', 'regulatory_programs', $3, now() - interval '1 minute')`,
+    [ORG_A, silentLeaver, program]
   );
   await leave(leaver);
   await leave(silentLeaver);
@@ -161,5 +189,23 @@ describe('project sections keep the records of people who left (D3)', () => {
     const rows = (res.body.sections ?? res.body) as Array<{ section_code: string; assigned_to_name: string | null }>;
     const mine = rows.find(r => r.section_code === CODE);
     expect(mine?.assigned_to_name).toBe(leaverName);
+  });
+});
+
+describe("a program keeps its lead's and editors' names (D3)", () => {
+  const inA = <T>(fn: () => Promise<T>) =>
+    runWithTenantScope(
+      { tenantId: String(ORG_A), role: 'member', source: 'request', caller: 'actor-displays.dbtest' },
+      fn
+    );
+
+  it('the lead who left is still named on the program', async () => {
+    const row = await inA(() => getProgramById(ORG_A, program));
+    expect(row?.leadUserName).toBe(leaverName);
+  });
+
+  it('activity names the editor, and never calls a person "System"', async () => {
+    const events = (await inA(() => getActivity(ORG_A, program, 20))) ?? [];
+    expect(events.map(e => e.who).sort()).toEqual([leaverName, `user ${silentLeaver}`].sort());
   });
 });
