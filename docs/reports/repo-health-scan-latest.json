@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T18:04:48.102Z",
+  "generatedAt": "2026-09-29T19:37:17.336Z",
   "git": {
-    "sha": "c0056614d3d467355b299aae03f33cc69ca66d73",
+    "sha": "aadbde6a64fd2261c1467852fe9218af8b8d4a1e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2009,7 +2009,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 194189
+        "bytes": 197616
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2032,12 +2032,12 @@
         "bytes": 160814
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "bytes": 155947
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 156464
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 155033
+        "file": "server/services/module3Composer.ts",
+        "bytes": 155947
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2191,7 +2191,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 4513
+        "lines": 4592
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2242,12 +2242,12 @@
         "lines": 3118
       },
       {
-        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "lines": 3116
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 3117
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3094
+        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
+        "lines": 3116
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
