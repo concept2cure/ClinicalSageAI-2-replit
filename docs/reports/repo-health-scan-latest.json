@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T20:12:31.059Z",
+  "generatedAt": "2026-09-29T20:31:37.875Z",
   "git": {
-    "sha": "2dd680d2aad788aec7b45dfe39af6068897c0db3",
+    "sha": "0ea8935b682d2f81f0837a15a3a04ecbef7f6ee5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1981,7 +1981,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 860125
+        "bytes": 860282
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2021,7 +2021,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 177229
+        "bytes": 173168
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2163,7 +2163,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20210
+        "lines": 20212
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2194,12 +2194,12 @@
         "lines": 4592
       },
       {
-        "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4508
-      },
-      {
         "file": "server/storage.ts",
         "lines": 4431
+      },
+      {
+        "file": "server/routes/c2c/artifacts.ts",
+        "lines": 4329
       },
       {
         "file": "server/routes/authoring-actions.ts",

@@ -293,6 +293,19 @@ describe('the real registry, unattributed paths enforced', () => {
     }
   });
 
+  /* 2026-09-29: /api/biotech-artifacts generates ICSRs, PSURs, CIOMS forms,
+     expedited safety reports, monitoring/deviation/enrollment reports and eCTD
+     cover letters from the request body and records none of them: no vault
+     document, no version, no audit row. Its only caller is its own route, no
+     screen calls it, and pharmacovigilance and clinical operations are outside
+     the release. artifacts-center no longer claims it, so production refuses
+     it; a regulated document is produced only through a path that records it. */
+  it('refuses the unrecorded regulatory-document generators', async () => {
+    for (const p of ['/api/biotech-artifacts/pv/icsr', '/api/biotech-artifacts/pv/psur', '/api/biotech-artifacts/clinical/monitoring-report', '/api/biotech-artifacts/ectd/cover-letter', '/api/biotech-artifacts/catalog']) {
+      expect(await passes(p), p).toBe(false);
+    }
+  });
+
   it('a public prefix does not widen: an exact public path is not its parent namespace', async () => {
     // /api/cortex/health is public; the rest of /api/cortex is not.
     expect(await passes('/api/cortex/health')).toBe(true);

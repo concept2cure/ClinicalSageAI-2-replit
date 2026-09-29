@@ -1,0 +1,100 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T19:25:33.282Z","pid":6731,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T19:25:33.284Z","pid":6731,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T19:25:33.284Z","pid":6731,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/correspondence-work-items.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-29T19:25:33.635Z', poolSize: 1 }
+
+stdout | tests/db/correspondence-work-items.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/correspondence-work-items.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > a letter raising several issues is recorded whole: 201, one work item for each
+[Correspondence Intake] DB operation failed: Failed query: insert into "c2c_project_work_items" ("id", "work_item_id", "org_id", "project_id", "source_type", "source_id", "source_ref", "artifact_id", "version_id", "ctd_section", "owner_id", "owner_name", "title", "status", "priority", "due_at", "blocker_type", "created_at", "updated_at", "resolved_at") values (default, $1, $2, $3, $4, $5, $6, default, default, $7, $8, $9, $10, $11, $12, $13, $14, default, default, default)
+params: wi_6e42a02f-bbc5-4108-988f-241c8d0aab15,91860,3,correspondence,0,50302e52-271b-4624-b55d-1bf6c2a0c896,,13,dbcwi-ra-6731_mun2gh17@example.invalid,[publish_gate_remediation] cmc_quality_issue,open,high,2026-10-01T19:25:34.261Z,regulatory_correspondence_issue
+
+stderr | tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > the organisation's next letter is recorded too
+[Correspondence Intake] DB operation failed: Failed query: insert into "c2c_project_work_items" ("id", "work_item_id", "org_id", "project_id", "source_type", "source_id", "source_ref", "artifact_id", "version_id", "ctd_section", "owner_id", "owner_name", "title", "status", "priority", "due_at", "blocker_type", "created_at", "updated_at", "resolved_at") values (default, $1, $2, $3, $4, $5, $6, default, default, $7, $8, $9, $10, $11, $12, $13, $14, default, default, default)
+params: wi_7e412ff1-5cc4-4c48-81d6-4dcbe8108d1f,91860,3,correspondence,0,45110087-2eaa-41b3-be1c-0c02356acfdb,,13,dbcwi-ra-6731_mun2gh17@example.invalid,[publish_gate_remediation] missing_information_clarification,open,high,2026-10-01T19:25:34.318Z,regulatory_correspondence_issue
+
+ × tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > a letter raising several issues is recorded whole: 201, one work item for each 195ms
+   → {"error":"Failed to ingest correspondence","detail":"Failed query: insert into \"c2c_project_work_items\" (\"id\", \"work_item_id\", \"org_id\", \"project_id\", \"source_type\", \"source_id\", \"source_ref\", \"artifact_id\", \"version_id\", \"ctd_section\", \"owner_id\", \"owner_name\", \"title\", \"status\", \"priority\", \"due_at\", \"blocker_type\", \"created_at\", \"updated_at\", \"resolved_at\") values (default, $1, $2, $3, $4, $5, $6, default, default, $7, $8, $9, $10, $11, $12, $13, $14, default, default, default)\nparams: wi_6e42a02f-bbc5-4108-988f-241c8d0aab15,91860,3,correspondence,0,50302e52-271b-4624-b55d-1bf6c2a0c896,,13,dbcwi-ra-6731_mun2gh17@example.invalid,[publish_gate_remediation] cmc_quality_issue,open,high,2026-10-01T19:25:34.261Z,regulatory_correspondence_issue"}: expected 500 to be 201 // Object.is equality
+stderr | tests/db/correspondence-work-items.dbtest.ts > a failed intake says so without shipping the database error > answers 500 with no PostgreSQL text in the body
+[Correspondence Intake] DB operation failed: permission denied for table c2c_correspondence_issues
+
+ × tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > the organisation's next letter is recorded too 35ms
+   → {"error":"Failed to ingest correspondence","detail":"Failed query: insert into \"c2c_project_work_items\" (\"id\", \"work_item_id\", \"org_id\", \"project_id\", \"source_type\", \"source_id\", \"source_ref\", \"artifact_id\", \"version_id\", \"ctd_section\", \"owner_id\", \"owner_name\", \"title\", \"status\", \"priority\", \"due_at\", \"blocker_type\", \"created_at\", \"updated_at\", \"resolved_at\") values (default, $1, $2, $3, $4, $5, $6, default, default, $7, $8, $9, $10, $11, $12, $13, $14, default, default, default)\nparams: wi_7e412ff1-5cc4-4c48-81d6-4dcbe8108d1f,91860,3,correspondence,0,45110087-2eaa-41b3-be1c-0c02356acfdb,,13,dbcwi-ra-6731_mun2gh17@example.invalid,[publish_gate_remediation] missing_information_clarification,open,high,2026-10-01T19:25:34.318Z,regulatory_correspondence_issue"}: expected 500 to be 201 // Object.is equality
+ ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > two work items for the same integer-keyed source in one organisation are refused 7ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > the same correspondence issue cannot be written twice 22ms
+ × tests/db/correspondence-work-items.dbtest.ts > a failed intake says so without shipping the database error > answers 500 with no PostgreSQL text in the body 35ms
+   → expected '{"error":"Failed to ingest correspond…' not to match /permission denied|c2c_correspondence…/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > a letter raising several issues is recorded whole: 201, one work item for each
+AssertionError: {"error":"Failed to ingest correspondence","detail":"Failed query: insert into \"c2c_project_work_items\" (\"id\", \"work_item_id\", \"org_id\", \"project_id\", \"source_type\", \"source_id\", \"source_ref\", \"artifact_id\", \"version_id\", \"ctd_section\", \"owner_id\", \"owner_name\", \"title\", \"status\", \"priority\", \"due_at\", \"blocker_type\", \"created_at\", \"updated_at\", \"resolved_at\") values (default, $1, $2, $3, $4, $5, $6, default, default, $7, $8, $9, $10, $11, $12, $13, $14, default, default, default)\nparams: wi_6e42a02f-bbc5-4108-988f-241c8d0aab15,91860,3,correspondence,0,50302e52-271b-4624-b55d-1bf6c2a0c896,,13,dbcwi-ra-6731_mun2gh17@example.invalid,[publish_gate_remediation] cmc_quality_issue,open,high,2026-10-01T19:25:34.261Z,regulatory_correspondence_issue"}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ tests/db/correspondence-work-items.dbtest.ts:204:50
+    202|   it('a letter raising several issues is recorded whole: 201, one work…
+    203|     const res = await intake('Refuse-to-file letter', MULTI_ISSUE_LETT…
+    204|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    205|     const issueIds = (res.body.issues as Array<{ id: string }>).map((i…
+    206|     expect(issueIds.length).toBeGreaterThanOrEqual(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > the organisation's next letter is recorded too
+AssertionError: {"error":"Failed to ingest correspondence","detail":"Failed query: insert into \"c2c_project_work_items\" (\"id\", \"work_item_id\", \"org_id\", \"project_id\", \"source_type\", \"source_id\", \"source_ref\", \"artifact_id\", \"version_id\", \"ctd_section\", \"owner_id\", \"owner_name\", \"title\", \"status\", \"priority\", \"due_at\", \"blocker_type\", \"created_at\", \"updated_at\", \"resolved_at\") values (default, $1, $2, $3, $4, $5, $6, default, default, $7, $8, $9, $10, $11, $12, $13, $14, default, default, default)\nparams: wi_7e412ff1-5cc4-4c48-81d6-4dcbe8108d1f,91860,3,correspondence,0,45110087-2eaa-41b3-be1c-0c02356acfdb,,13,dbcwi-ra-6731_mun2gh17@example.invalid,[publish_gate_remediation] missing_information_clarification,open,high,2026-10-01T19:25:34.318Z,regulatory_correspondence_issue"}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ tests/db/correspondence-work-items.dbtest.ts:215:50
+    213|     const before = (await workItems()).length;
+    214|     const res = await intake('Deficiency letter', SECOND_LETTER);
+    215|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    216|     const issueIds = (res.body.issues as Array<{ id: string }>).map((i…
+    217|     expect(issueIds.length).toBeGreaterThanOrEqual(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/correspondence-work-items.dbtest.ts > a failed intake says so without shipping the database error > answers 500 with no PostgreSQL text in the body
+AssertionError: expected '{"error":"Failed to ingest correspond…' not to match /permission denied|c2c_correspondence…/i
+
+- Expected:
+/permission denied|c2c_correspondence_issues|duplicate key|constraint/i
+
++ Received:
+"{\"error\":\"Failed to ingest correspondence\",\"detail\":\"permission denied for table c2c_correspondence_issues\"}"
+
+ ❯ tests/db/correspondence-work-items.dbtest.ts:258:44
+    256|       const res = await intake('Letter that cannot be stored', SECOND_…
+    257|       expect(res.status).toBe(500);
+    258|       expect(JSON.stringify(res.body)).not.toMatch(/permission denied|…
+       |                                            ^
+    259|     } finally {
+    260|       await owner.query(`GRANT INSERT ON c2c_correspondence_issues TO …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  19:25:29
+   Duration  6.46s (transform 2.17s, setup 100ms, import 291ms, tests 5.65s, environment 0ms)
+

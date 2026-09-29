@@ -1,0 +1,47 @@
+# this change: migrations/20260724_lumen_council_provisioning.sql and db/migrations/20260801_tenant_isolation_sweep.sql applied to an empty PostgreSQL 16 database, then applied again
+[rls-sweep] tenant_isolation_policy applied to 3 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+[rls-sweep] tenant_isolation_policy applied to 0 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+          table           | has_org_column 
+--------------------------+----------------
+ lumen.agent_executions   | t
+ lumen.council_sessions   | t
+ lumen.data_verifications | t
+
+          table           | rls | forced | tenant_policy 
+--------------------------+-----+--------+---------------
+ lumen.agent_executions   | t   | t      | t
+ lumen.council_sessions   | t   | t      | t
+ lumen.data_verifications | t   | t      | t
+
+FKs to organizations: 3
+
+## RLS as a non-superuser, non-BYPASSRLS role with app.rls_enforce=on
+-- as tenant 1: write its own session
+INSERT 0 1
+-- as tenant 1: write a session for tenant 2 (must be refused)
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/c78004c2-fddf-56c6-81aa-bf41f1b93d48/scratchpad/ev-council/rls-behaviour.sql:12: ERROR:  new row violates row-level security policy for table "council_sessions"
+-- as tenant 1: an execution row taking its tenant from the session, as the service writes it
+INSERT 0 1
+INSERT 0 1
+-- as tenant 2: what it can read
+                  id                  | organization_id 
+--------------------------------------+-----------------
+ 00000000-0000-4000-8000-000000000003 |               2
+(1 row)
+
+ executions_visible_to_tenant_2 
+--------------------------------
+                              0
+(1 row)
+
+-- as tenant 1: what it can read
+                  id                  | organization_id 
+--------------------------------------+-----------------
+ 00000000-0000-4000-8000-000000000001 |               1
+(1 row)
+
+ organization_id |  output_text   
+-----------------+----------------
+               1 | tenant 1 draft
+(1 row)
+
