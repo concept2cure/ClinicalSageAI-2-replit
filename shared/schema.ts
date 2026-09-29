@@ -5720,12 +5720,15 @@ export const projects = pgTable(
      * to. NULL means "not anchored to a regulatory program", a valid and common
      * state; nothing is required to be anchored.
      *
-     * Deliberately NOT `.references()`: `regulatory_programs` lives in
+     * Held to this project's own organization by the composite key
+     * projects_regulatory_program_same_org_fk, (regulatory_program_id,
+     * organization_id) → regulatory_programs (id, organization_id), NOT VALID,
+     * ON DELETE SET NULL (regulatory_program_id) — added by
+     * migrations/20260926b_program_same_org_keys.sql (PF-04). Not declared here
+     * with `.references()`: `regulatory_programs` lives in
      * shared/schema/programs.ts, which this module does not re-export, so
-     * drizzle-kit push does not create it — the FK would name a table push has
-     * never heard of. The raw migration
-     * (migrations/20260814_projects_regulatory_program_anchor.sql) declines the
-     * FK for the same reason plus a stronger one, and states both.
+     * drizzle-kit push does not create it (push runs before the migration that
+     * does), and Drizzle cannot express SET NULL (column) or NOT VALID.
      */
     regulatoryProgramId: uuid('regulatory_program_id'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -13037,8 +13040,10 @@ export const cdiscPrmStudies = pgTable(
     studyId: varchar('study_id', { length: 100 }).notNull().unique(),
     // Canonical project key (regulatory_programs.id) — shared with
     // clinical_studies and rbm_*. Nullable: populated on persist from a
-    // design's programId when it is a UUID. Bare uuid, no FK, matching the
-    // clinical-spine convention.
+    // design's programId when it is a UUID. Held to tenant_id's organization by
+    // cdisc_prm_studies_program_same_org_fk (migrations/20260926b, PF-04; NOT
+    // VALID, ON DELETE SET NULL (program_id)), declared there, not here, for
+    // the reasons on projects.regulatory_program_id.
     programId: uuid('program_id'),
     protocolId: varchar('protocol_id', { length: 100 }).notNull(),
     protocolTitle: text('protocol_title').notNull(),
