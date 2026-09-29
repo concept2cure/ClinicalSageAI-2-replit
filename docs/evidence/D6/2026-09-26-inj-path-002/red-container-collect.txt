@@ -1,0 +1,15 @@
+ ✓ server/services/compute/__tests__/containerExec.test.ts > buildDockerRunArgs — isolation contract > closes the network by default 2ms
+ ✓ server/services/compute/__tests__/containerExec.test.ts > buildDockerRunArgs — isolation contract > opens the network only when explicitly allowed 0ms
+ ✓ server/services/compute/__tests__/containerExec.test.ts > buildDockerRunArgs — isolation contract > drops all capabilities and forbids privilege escalation 1ms
+ ✓ server/services/compute/__tests__/containerExec.test.ts > buildDockerRunArgs — isolation contract > mounts a read-only root filesystem and runs as non-root 0ms
+ ✓ server/services/compute/__tests__/containerExec.test.ts > buildDockerRunArgs — isolation contract > applies memory, cpu, and pid limits 0ms
+ ✓ server/services/compute/__tests__/containerExec.test.ts > buildDockerRunArgs — isolation contract > mounts the host workdir read-write at /work and runs the entry script 0ms
+ ✓ server/services/compute/__tests__/containerExec.test.ts > buildDockerRunArgs — isolation contract > auto-removes the container 0ms
+ ✓ server/services/compute/__tests__/containerExec.test.ts > collectOutputFiles — the host reads only what the container wrote > returns a regular file the script produced 2ms
+ × server/services/compute/__tests__/containerExec.test.ts > collectOutputFiles — the host reads only what the container wrote > does not follow a symlink to a host file or to another directory 10ms
+   → expected [ 'host.txt', 'stolen.docx' ] to deeply equal []
+ ✓ server/services/compute/__tests__/containerExec.test.ts > collectOutputFiles — the host reads only what the container wrote > skips a FIFO instead of blocking on it 7ms
+ ✓ server/services/compute/__tests__/containerExec.test.ts > collectOutputFiles — the host reads only what the container wrote > leaves out the entry script and the inputs 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'host.txt', 'stolen.docx' ] to deeply equal []
+      Tests  1 failed | 10 passed (11)
