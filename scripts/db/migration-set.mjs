@@ -74,6 +74,15 @@ export const UUID_TENANT_ISOLATION_NONPUBLIC =
 export const C48_STAGE1_IDENTITY_ORG_BRIDGE =
   'db/migrations/20260919_c48_stage1_identity_org_bridge.sql';
 
+/**
+ * Parent-scoped RLS for child tables. Runs in the isolation tail, after the uuid
+ * step and before the integer sweep (2026-09-29, D3): its chained list
+ * delegates to parent policies the uuid step creates, and every table the set
+ * creates must exist before it runs. It creates no table, so the sweep stays
+ * last. Evidence docs/evidence/D3/2026-09-29-child-scope-first-deploy/.
+ */
+export const CHILD_TABLE_PARENT_SCOPE = 'db/migrations/20260813_child_table_parent_scoped_rls.sql';
+
 export const C2C_MIGRATION_FILES = [
   // ── Golden-journey prerequisites ────────────────────────────────────────────
   // Seven migrations that tests/golden-journeys provision and depend on, and
@@ -1164,23 +1173,11 @@ export const C2C_MIGRATION_FILES = [
   // tenant-facing data.
   'db/migrations/20260813_ai_gateway_audit_log.sql',
 
-  // ── Parent-scoped RLS for child tables (added 2026-08-13) ────────────────
-  // 21 tables held tenant data with NO tenant column, NO RLS and NO policy —
-  // readable by every tenant. Found mechanically against a provisioned
-  // database: of 937 public base tables, 195 have no tenant column, 170 of
-  // those have no RLS at all, 78 of those are referenced by server SQL, and 21
-  // of those carry an FK to a table that IS tenant-keyed. chat_messages is the
-  // sharpest: every tenant's conversation bodies.
-  //
-  // The FK is the evidence of ownership, so these get a PARENT-scoped policy
-  // rather than an organization_id column of their own — a copied tenant key is
-  // a second source of truth that can drift from the parent.
-  //
-  // Placed with the other pre-sweep entries: it only ALTERs, but "the isolation
-  // steps are the tail of the set" is an invariant (C-33), not a case-by-case
-  // judgement. The sweep will not touch these tables anyway — it keys on an
-  // org column they do not have, and it never replaces an existing policy.
-  'db/migrations/20260813_child_table_parent_scoped_rls.sql',
+  // (The parent-scoped child RLS, 20260813_child_table_parent_scoped_rls.sql,
+  // stood here until 2026-09-29. It now runs in the isolation tail — see
+  // CHILD_TABLE_PARENT_SCOPE — because here it ran before the uuid step and
+  // before every table added below it, so a blank database's first deploy left
+  // regulatory_harmonization.export_job_audit_log unscoped.)
   // Export receipts — what turns the purge's `finalExportDigest` precondition
   // from "a non-empty string was supplied" into "an export of THIS tenant was
   // actually produced". Creates one table, so it must precede the isolation
@@ -2667,6 +2664,15 @@ export const C2C_MIGRATION_FILES = [
   // policy is unchanged. Evidence docs/evidence/D3/2026-09-28-invitation-acceptance/.
   'migrations/20260928_invitations_for_member.sql',
 
+  // ── actor_name(): the audit trail names people who acted and left (D3) ───
+  // audit_logs keeps an actor id and no name; after the users policy a tenant
+  // scope resolves only current members, so the audit-trail ledger read
+  // `user <id>` for anyone who had left. actor_name returns name and email only,
+  // for members of the calling organization and actors in its own audit trail,
+  // nobody else. Plus audit_logs_tenant_actor_idx, created only when absent.
+  // Evidence docs/evidence/D3/2026-09-29-actor-names/.
+  'migrations/20260929_actor_names.sql',
+
   // ── submissions.program_id: a submission carries its project (LX-22) ─────
   // The project → submission link was guessed from product names; two projects
   // for one product shared a filing spine. Additive column, a composite
@@ -2732,6 +2738,23 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260327_data_lineage_tracking.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
+
+  // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
+  // 21 tables held tenant data with NO tenant column, NO RLS and NO policy —
+  // readable by every tenant (chat_messages the sharpest: every tenant's
+  // conversation bodies). The FK is the evidence of ownership, so these get a
+  // PARENT-scoped policy rather than a tenant column of their own; the list has
+  // grown since (see the file's dated notes).
+  //
+  // Here, not mid-set (D3, 2026-09-29): its chained list delegates to parents'
+  // own policies, and some of those come from the uuid step just above, so run
+  // earlier it logged "the parent is not scoped … skipping" and a blank
+  // database's first deploy left regulatory_harmonization.export_job_audit_log
+  // unscoped until the second. And a child or parent created by any entry
+  // above is now present when it runs. It creates no table, so the sweep below
+  // still sees everything the set creates. ci:migration-set-order pins the
+  // tail. Evidence docs/evidence/D3/2026-09-29-child-scope-first-deploy/.
+  CHILD_TABLE_PARENT_SCOPE,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
   // MUST BE LAST. 0021_enable_rls_everywhere runs once, on install-fresh, and

@@ -453,6 +453,12 @@ function withSignature(entry: AuditLedgerEntry, sig: LinkedSignature | undefined
  * rows only (the WHERE is applied before it), so nothing of another tenant is
  * read; the prev_hash of the chain's first row is NULL → 'genesis'.
  */
+// The actor's name comes from public.actor_name, not a join on users: since
+// users took row-level security (2026-09-28) a tenant scope reads only its own
+// current members, so someone who acted here and then left read `user <id>`.
+// actor_name answers name and email only, for members of this organization and
+// actors in its own audit trail (migrations/20260929_actor_names.sql;
+// docs/evidence/D3/2026-09-29-actor-names/).
 const AUDIT_LOGS_SQL = `
   WITH chained AS (
     SELECT a.id, a.action, a.actor_id, a.target, a.table_name, a.record_id, a.reason,
@@ -468,7 +474,7 @@ const AUDIT_LOGS_SQL = `
          u.name  AS user_name,
          u.email AS user_email
     FROM chained c
-    LEFT JOIN users u ON u.id = c.actor_id
+    LEFT JOIN LATERAL public.actor_name(c.actor_id) u ON TRUE
    ORDER BY ${AUDIT_CHAIN_HEAD_ORDER_SQL}
    LIMIT $2`;
 
@@ -594,7 +600,7 @@ const RECORD_HISTORY_SQL = `
        ORDER BY p.chain_seq DESC
        LIMIT 1
     ) prev ON TRUE
-    LEFT JOIN users u ON u.id = a.actor_id
+    LEFT JOIN LATERAL public.actor_name(a.actor_id) u ON TRUE
    WHERE a.tenant_id = $1
      AND a.table_name = $2
      AND a.record_id = $3
