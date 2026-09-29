@@ -1477,11 +1477,10 @@
    ellipsizes. (A page-name factor below 1 does not do this: alone, it absorbs
    only that fraction of the overflow and the rest is clipped, no ellipsis.) */
 .c2c-v2 .crumbs>span{min-width:0;overflow:hidden;text-overflow:ellipsis;flex-shrink:100000;}
-.c2c-v2 .crumbs .sep{flex-shrink:0;}
+.c2c-v2 .crumbs .sep{color:var(--text-400);flex-shrink:0;}
 /* The category crumb gives way before the page name, but never to nothing:
    shrunk to zero it left an orphan "›" before the page name. */
 .c2c-v2 .crumbs .crumb-tier{min-width:3.5em;max-width:10em;}
-.c2c-v2 .crumbs .sep{color:var(--text-400);}
 .c2c-v2 .crumbs .here{color:var(--text-100);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;}
 .c2c-v2 .tb-spacer{flex:1;}
 .c2c-v2 .tb-cmdk{display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-lg);color:var(--text-400);font-size:12px;background:var(--bg-050);min-width:64px;flex:0 100000 230px;max-width:230px;transition:border-color var(--dur);}

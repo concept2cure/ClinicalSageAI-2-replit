@@ -172,13 +172,93 @@ Shown failing and then passing in the browser, with the stand-in ending an
 answer at `max_tokens` (`answer-cut-off.txt` and the before/after
 screenshots).
 
+## What she says at each stop reaches the person (fifth pass)
+
+A demonstration is narrated between moves: AnA says a stop's talking point,
+then makes the move. Two things kept those words from the person.
+
+- **On every model, the stops ran together.** Each round's words were
+  appended to the answer with nothing between rounds. A model ends a note
+  without a line break, so the rail read "…Here it is on screen.Stop 5:
+  Authoring is…" as one block (`narration-before-default.png`). Each round's
+  words now start a new paragraph (`stream.ts`). The model is still handed
+  back its own words unchanged.
+- **On Opus 5.5, long talking points were never said.** The API documents
+  it: on Opus 5.5 (and Fable 5.1, Mythos 5.1, Fable 5), a note longer than a
+  sentence or two between tool calls comes back as a progress-update thinking
+  block. Under the default display that block is empty. With every round on
+  Opus 5.5, stops 1, 2 and 12 of the training demonstration were never
+  narrated. The screen moved to Projects and opened a program in silence
+  (`narration-before-opus.png`).
+  - Opus 5.5 serves AnA's rounds with tiering off, on a Thorough or
+    high-risk turn, and when a person picks it.
+  - The gateway now asks such a model for display "updates", the documented
+    fix, with its beta. It returns each note as her words, in its own
+    paragraph (`server/services/ai-gateway/progress-updates.ts`).
+  - A turn that asked for visible reasoning keeps its reasoning panel.
+
+The stand-in now plays that documented behaviour and refuses "updates"
+without its beta. The battery gained two checks. It passed 21/21 with every
+round on Opus 5.5 and 21/21 on the default tiering, with nothing refused
+(`narration.txt`).
+
+## An action on another screen gets that screen's answer (sixth pass)
+
+Asked to act on a screen the person is not on, AnA's move takes the person
+there. The action arrives while that screen is still reading its data, so the
+screen holds it and must say when the data has settled. Two screens never
+said, and sixteen said only when the read succeeded. Loading a Biostatistics
+study design from another screen never loaded it, though the design existed
+(`held-design-before.png`). Switching the Inconsistency overlay never
+answered. Each time AnA waited out 10 s and was told "not confirmed".
+
+- **The audit.** Every one of the 96 actions was checked from the source.
+  Each has a handler registered on the right screen, reading the params the
+  registry declares. The ready signal was the only break.
+- **The fix.** Those 18 screens now signal once their read settles, whether
+  it succeeded or failed. The handler then gives its own answer: the action,
+  or the honest refusal it already had for a failed read. The design now
+  loads (`held-design-after.png`), and AnA's turn finishes in 1 s instead
+  of 11.
+- **The guard.** `surfaceReadySignal.test.ts` reads every screen's source and
+  fails if one holds without signalling, or signals only on success. It
+  listed all 18 before the fix.
+
+`held-actions.txt` has the audit, the runs and the tests.
+
+## As production runs: launch scope enforced
+
+Production locks the screens outside the launch catalog
+(`LAUNCH_SCOPE_ENFORCE`, on by default there), and every run above had it off.
+With it on, the whole battery passed 23/23:
+- Every launch-catalog path works: navigation, a program, the Vault and its
+  search, both demonstrations.
+- AnA refuses every screen outside the release out loud ("not in this
+  release"), never moving the person onto a lock panel.
+- The battery now knows the mode (`LAUNCH_SCOPE=on`). Its refusal checks
+  were seen failing against an app without enforcement.
+
+No defect (`launch-scope-on.txt`).
+
 ## Evidence
 
+- `launch-scope-on.txt`: the whole battery with launch scope enforced, as
+  production runs it.
+
+- `held-actions.txt`, `held-design-before.png`, `held-design-after.png`: an
+  action sent to another screen, before and after.
+- `narration.txt` and four screenshots (`narration-before-default.png`,
+  `narration-before-opus.png`, `narration-after-opus.png`,
+  `narration-after-default.png`): the demonstration's narration, before and
+  after, on both configurations.
+- `batched-moves.txt`, `batched-moves.png`: two moves in one round, as a real
+  model batches them, reach the screen in order. Checked, no defect.
 - `answer-cut-off.txt`, `answer-cut-off-before.png`,
   `answer-cut-off-after.png`: a cut-off answer, before and after.
 - `harness/`: the stand-in model, its self-test and the browser battery that
   produced every run below, with how to repeat them. Run from this folder on
-  the current tree, it passed 19/19, with the stand-in refusing nothing.
+  the current tree, it passed 23/23, with the stand-in refusing nothing
+  (21/21 on both configurations before the held-action checks were added).
 - `silent-thinking.txt`, `silent-thinking-before.png`,
   `silent-thinking-after.png`: the silent-thinking cut-off, before and after.
 - `contract-audit.txt`: the rules, their sources, the stand-in failing each
@@ -227,6 +307,16 @@ document to open.
   documented contract, but a stand-in cannot show how a real model follows
   the instructions it is given. A run with a key (`docs/LOCAL_TESTING.md`,
   "AnA operates the app") is the remaining evidence for this row.
+- **On Opus 5.5, notes on a turn that asked for visible reasoning.** Such a
+  turn (Thorough effort, or high risk) keeps display "summarized", so its
+  reasoning panel stays. Its notes between moves appear in that panel, not as
+  her words. Asking for "updates" there too would empty the panel. That is a
+  choice for the founder.
+- **The Inconsistency board cannot read a program opened from Projects.**
+  The screen sends the program's UUID, and its route accepts only a numeric
+  legacy project id (400). A person sees the board's error state too; AnA
+  now says so rather than "not confirmed". It is outside the launch catalog,
+  so it is left to its owner (`held-actions.txt`).
 - **Staging.** It is owed with D1.
 - **Decision for the founder.** With `ENTITLEMENTS_ENFORCE=on`, Live Drive
   requires the `professional` tier (`ana_live_drive`). A standard-tier

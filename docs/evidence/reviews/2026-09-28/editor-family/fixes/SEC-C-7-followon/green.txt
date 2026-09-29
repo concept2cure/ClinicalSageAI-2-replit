@@ -1,0 +1,19 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > is the person’s to fill while nothing derives it 291ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > is read-only once derived, and its value alone satisfies the required check 33ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > submits the derived value, never what was typed there before it applied 66ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a review bound to an account, names the signer only, never a stored label 254ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a reviewer with no account, keeps the name the decision is recorded for 52ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the request-a-review drawer > says a chosen account is listed under its own name, before anything is typed 174ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > is the account’s name, read-only 115ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > is what is sent, never a name typed before the account was chosen 163ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > becomes a free field again when "no account" is chosen 139ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  18:09:12
+   Duration  2.17s (transform 587ms, setup 315ms, import 973ms, tests 1.30s, environment 1.14s)
+

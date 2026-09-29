@@ -1,0 +1,97 @@
+# WO-9 Clicks 1–6 in Chromium on a demo database built as a deploy builds one — 2026-09-29 (W5/D7)
+#
+# Database: empty Postgres 16 + pgvector 0.6.0 (Ubuntu archive), install-fresh (exit 0), deploy-migrate
+# (323/323 applied), ONE 'npm run db:seed'. Code: concept2cure-v2 at 40a7c79ac.
+# Driver: headless Chromium (Playwright), signed in as the demo admin; every click is a UI action on the
+# product's own surfaces. The FDA 1571 attached in Click 2 is a stand-in file for this sandbox run, not a
+# sponsor-completed form (report §20); JM's recording uses his real form.
+#
+# Packages downloaded through 'Download package (.zip)':
+#   wo9-0000.zip  2918358 bytes  sha256 956b0772205d1e8aa988724f5ed8053468fc61483cf5d6ca867e7e65fdb3f67f
+#   wo9-0001-rehearsal.zip  1711 bytes  sha256 f1af0c4dda566e4d29aac43b6078079b7a763c11d8019d641d0f9b71b796d7d4
+
+  
+  ## Click 1 — sign in, open BX-512 from Projects
+   identity: Sponsor=Concept2Cure Therapeutics | Product=Vorelinib · BX-512 | Indication=KIT-mutant gastrointestinal stromal tumor · 4L+ | IND number=000512
+  
+  ## Click 2 — IND checklist: build & check FDA 1571, attach the completed form
+   build: Form 1571 built — 2 required field(s) missing.
+   attach: Completed FDA 1571 filed at m1.1 in sequence 0000.
+  
+  ## Click 3 — place the approved 3.2.S.4 document at 3.2.S.4.2 in 0000
+   verdict: Placed as leaf 3.2.S.4.2 in sequence 0000 · original — server-confirmed (leaf #54, from Authored document #52).
+  
+  ## Click 4 — compile and export sequence 0000
+   leaf hierarchy: Leaf hierarchy | index.xml — ICH backbone | ectd | m1-administrative-information-and-prescribing-information | Module 1 regional backbone (us-regional.xml) NEW m1/us/us-regional.xml | m3-quality | m3-2-body-of-data | m3-2-s-drug-substance | Control of Drug Substance (CTD 3.2.S.4) NEW m3/3-2-s-4-2/3-2-s-4-2-coauthor-documents-52.pdf | m1/us/us-regional.xml — regional Module 1 | fda-regional | m1-regional | m1-1-forms | Form FDA 1571 (sponsor-completed) NEW 1-1/form-fda-1571-pdf-rendered-leaf-files-1.pdf
+   package facts: Sequence 0000 · region FDA · package SHA-256 8837ee6e89c26406… | Recorded — its leaf manifest is what the next sequence is diffed against. | 0 of 1 PDF leaves converted to PDF/A. | One FDA form shipped as FDA issued, with FDA's security settings intact, and not converted: form-fda-1571-pdf-rendered-leaf-files-1.pdf
+   download package control: 1
+   exported: 000512-0000-fda.zip 2918358 bytes
+  
+  ## Click 5 — dispatch readiness on sequence 0000
+   gates: [
+    'structural: No open error-severity finding, and no unacknowledged Shadow Review critical / Satisfied.',
+    'external: The agency-grade validator’s report for this package carries no errors / Not assessed. No agency-grade validator is configured on this installation, so no report exists for this package. It is not required here, so it does not block dispatch — but the package has not been checked against it.',
+    'shadowPresence: At least one Shadow Review has completed for this sequence / Blocks dispatch:',
+    'releaseSignature: A valid release signature binds this sequence’s package (21 CFR 11.70) / Blocks dispatch:'
+  ]
+   findings: 8
+  
+  ## Click 6a — Submission Center: start sequence 0001 (amendment)
+  
+  ## Click 6b — withdraw the 0000 leaf at 3.2.S.4.2 from 0001
+   verdict: Placed as leaf 3.2.S.4.2 in sequence 0001 · amendment — server-confirmed (leaf #55, from Authored document #52).
+  
+  ## Click 6c — rehearsal compile and export of 0001
+   leaf hierarchy: Leaf hierarchy | index.xml — ICH backbone | ectd | m1-administrative-information-and-prescribing-information | Module 1 regional backbone (us-regional.xml) NEW m1/us/us-regional.xml | m3-quality | m3-2-body-of-data | m3-2-s-drug-substance | Control of Drug Substance (CTD 3.2.S.4) DELETE · withdraws ../0000/index.xml#leaf-3-2-S-4-2-3-2-s-4-2-coauthor-documents-52 | m1/us/us-regional.xml — regional Module 1 | It carries no leaves — this sequence files nothing in it.
+   package facts: Sequence 0001 · region FDA · package SHA-256 7dc8e20f8ccb27cb… | Recorded — its leaf manifest is what the next sequence is diffed against.
+   lifecycle: Lifecycle |  | Rehearsal. Acts are bound to the latest recorded compile of each earlier sequence, through sequence 0000; 0000 was never filed. For an agency validator only: transmit binds only against filed sequences. |  | OPERATION	SECTION	FILE	MODIFIED-FILE | delete	3.2.S.4.2	3-2-s-4-2-coauthor-documents-52.pdf	../0000/index.xml#leaf-3-2-S-4-2-3-2-s-4-2-coauthor-documents-52
+   download package control: 1
+   exported: 000512-0001-fda-rehearsal.zip 1711 bytes
+  
+  console errors: [
+    '[Click 1] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID',
+    '[Click 1] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID',
+    '[Click 2] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID',
+    '[Click 2] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID',
+    '[Click 3] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID',
+    '[Click 4] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID',
+    '[Click 5] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID',
+    '[Click 6a] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID',
+    '[Click 6b] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID',
+    '[Click 6c] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID'
+  ]
+  failed/4xx+ requests: [
+    '[Click 1] net::ERR_CERT_AUTHORITY_INVALID GET https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wg',
+    '[Click 1] net::ERR_ABORTED GET http://localhost:5000/api/clients?organizationId=1',
+    '[Click 2] net::ERR_CERT_AUTHORITY_INVALID GET https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wg',
+    '[Click 3] net::ERR_CERT_AUTHORITY_INVALID GET https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wg',
+    '[Click 4] net::ERR_CERT_AUTHORITY_INVALID GET https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wg',
+    '[Click 5] net::ERR_CERT_AUTHORITY_INVALID GET https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wg',
+    '[Click 6a] net::ERR_CERT_AUTHORITY_INVALID GET https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wg',
+    '[Click 6b] net::ERR_CERT_AUTHORITY_INVALID GET https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wg',
+    '[Click 6c] net::ERR_CERT_AUTHORITY_INVALID GET https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wg'
+  ]
+
+# ── Package inspection (scratch script over the two downloaded ZIPs) ──
+  
+  == 0000: 6 files
+     index-md5.txt
+     index.xml
+     m1/us/1-1/form-fda-1571-pdf-rendered-leaf-files-1.pdf
+     m1/us/us-regional.xml
+     m3/3-2-s-4-2/3-2-s-4-2-coauthor-documents-52.pdf
+     util/index-md5.txt
+     util/index-md5.txt: 4 verified, 0 mismatched 
+  
+  == 0001: 4 files
+     index-md5.txt
+     index.xml
+     m1/us/us-regional.xml
+     util/index-md5.txt
+     util/index-md5.txt: 2 verified, 0 mismatched 
+  
+  == 0000 filed leaf at 3.2.S.4.2: <leaf operation="new" checksum="77d0921ab022cecfa295f853c49eb560" checksum-type="md5" xlink:href="m3/3-2-s-4-2/3-2-s-4-2-coauthor-documents-52.pdf" xlink:type="simple" ID="leaf-3-2-S-4-2-3-2-s-4-2-coauthor-documents-52">
+  == 0001 delete leaf: <leaf operation="delete" modified-file="../0000/index.xml#leaf-3-2-S-4-2-3-2-s-4-2-coauthor-documents-52" xlink:type="simple" ID="leaf-3-2-S-4-2-3-2-s-4-2-coauthor-documents-52">
+  
+  modified-file names the filed leaf: true (want ../0000/index.xml#leaf-3-2-S-4-2-3-2-s-4-2-coauthor-documents-52)
+  delete carries no href: true · no checksum: true

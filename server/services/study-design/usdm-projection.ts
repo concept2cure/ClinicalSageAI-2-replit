@@ -14,7 +14,9 @@
  * v4.0.0 API schema (see `USDM_V4_REFERENCE` in `usdm-types.ts`).
  *
  * ## What maps where
- *  - title → Study.name, StudyTitle.text; version → versionIdentifier;
+ *  - title → Study.name and the official StudyTitle; publicTitle and acronym →
+ *    their own StudyTitles, each typed by what the design records it as (a
+ *    C2C-INTERNAL code, not a CDISC controlled term); version → versionIdentifier;
  *    phase → StudyDesign.studyPhase; indication → Indication (uncoded).
  *  - framework.structuralDesign → InterventionalStudyDesign.model ONLY when it
  *    is an intervention model (parallel group, crossover, factorial, single
@@ -72,7 +74,7 @@ import {
 import type {
   SweepSpec, UsdmAdministration, UsdmAnalysisPopulation, UsdmContext, UsdmEligibilityCriterion, UsdmEligibilityCriterionItem, UsdmEstimand,
   UsdmExtensionAttribute, UsdmIntercurrentEvent, UsdmObjective, UsdmProjection, UsdmStudyArm, UsdmStudyDesign, UsdmStudyDesignPopulation,
-  UsdmStudyElement, UsdmStudyIntervention,
+  UsdmStudyElement, UsdmStudyIntervention, UsdmStudyTitle,
 } from './usdm-types';
 import { elementPlacementBlocker, mapSchedule, scheduleSweepSpecs, type ScheduleResult } from './usdm-schedule';
 
@@ -94,7 +96,6 @@ export const ALWAYS_UNFILLED: readonly string[] = [
   'StudyVersion.dateValues / GovernanceDate: the design records no protocol, approval or amendment date; none is invented',
   'StudyVersion.rationale: the design records no study rationale; none is invented',
   'StudyDefinitionDocument: the protocol document is not part of the design object; Study.documentedBy is not emitted',
-  'StudyTitle.type: the design does not record whether its title is the official, brief or acronym title',
   'StudyDesign.studyType: interventional vs observational is not recorded as a value and is not inferred; the graph uses ' +
     'InterventionalStudyDesign because this mapping exports intervention-model and blinding content, which only that class carries, ' +
     'so a consumer must confirm the study is interventional',
@@ -150,6 +151,7 @@ export function projectUsdm(design: StudyDesign): UsdmProjection {
   const version = mapVersion(design.version, ctx);
   const title = trimmed(design.title);
   if (!title) ctx.unfilled.push('Study.name / StudyVersion.titles / StudyTitle: the design records no title');
+  const titles = mapTitles(design, titleId, ctx);
   sweepUnmapped(design, {
     timed: schedule.timed, version: version.state, sampleSize: pop.sampleSize, modelMapped: studyDesign.model !== null, assignmentExported: el.assignmentExported,
   }, ctx.unmapped);
@@ -167,7 +169,7 @@ export function projectUsdm(design: StudyDesign): UsdmProjection {
         instanceType: 'StudyVersion',
         versionIdentifier: version.identifier,
         rationale: null,
-        titles: title ? [{ id: titleId, instanceType: 'StudyTitle', text: title, type: null }] : [],
+        titles,
         studyIdentifiers: [],
         dateValues: [],
         studyDesigns: [studyDesign],
@@ -546,7 +548,7 @@ function mapEstimands(design: StudyDesign, endpointIdByName: Map<string, string>
 // ─── Unmapped-field sweep ───────────────────────────────────────────────────
 
 const TOP_LEVEL_MAPPED = [
-  'title', 'phase', 'indication', 'objectives', 'estimands', 'endpoints', 'framework', 'population',
+  'title', 'publicTitle', 'acronym', 'phase', 'indication', 'objectives', 'estimands', 'endpoints', 'framework', 'population',
   'arms', 'randomization', 'scheduleOfActivities', 'statisticalPlan', 'safety', 'regulatoryStrategy',
 ];
 
@@ -592,6 +594,27 @@ function designSpecs(d: StudyDesign, f: SweepFlags): SweepSpec[] {
     { path: 'safety', each: false, items: one(d.safety), mapped: [], reason: 'USDM v4 carries no safety-monitoring design in this mapping' },
     { path: 'regulatoryStrategy', each: false, items: one(d.regulatoryStrategy), mapped: [], reason: 'regulatory-strategy attribute; no USDM home' },
   ];
+}
+
+/**
+ * The design's titles. Each is typed by what the design records it as — `title`
+ * is the protocol's official title, `publicTitle` the lay title a person
+ * recorded, `acronym` the study's acronym — with C2C-INTERNAL codes, not CDISC
+ * controlled terms. A title the design does not record is not emitted.
+ */
+function mapTitles(design: StudyDesign, officialId: string, ctx: UsdmContext): UsdmStudyTitle[] {
+  const out: UsdmStudyTitle[] = [];
+  const official = trimmed(design.title);
+  if (official) out.push({ id: officialId, instanceType: 'StudyTitle', text: official, type: usdmCode(ctx, 'official', 'Official title (the title of the protocol)') });
+  const others: Array<[unknown, string, string]> = [
+    [design.publicTitle, 'public', 'Public (lay-language) title'],
+    [design.acronym, 'acronym', 'Study acronym'],
+  ];
+  for (const [value, code, decode] of others) {
+    const text = trimmed(value);
+    if (text) out.push({ id: nextId(ctx, 'StudyTitle'), instanceType: 'StudyTitle', text, type: usdmCode(ctx, code, decode) });
+  }
+  return out;
 }
 
 /** List every populated design field this mapping does not carry, node by node. */

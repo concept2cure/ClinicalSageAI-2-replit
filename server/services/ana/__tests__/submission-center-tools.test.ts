@@ -102,20 +102,34 @@ describe('compute_lifecycle_operations (pure)', () => {
     expect(out.summary).toMatchObject({ new: 1, replace: 1 });
   });
 
-  it('forwards prior href + prior_sequence_prefix so a replace emits modified-file', async () => {
+  it('forwards the prior leaf ID + backbone and prior_sequence_prefix so a replace names the leaf it supersedes', async () => {
     const handler = getToolHandler('compute_lifecycle_operations')!;
     const out = JSON.parse(
       await handler({
         prior_sequence_prefix: '../0000/',
-        prior_leaves: [
-          { ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'a', href: 'm3/32-body-data/32s-drug-sub/general.pdf' },
-        ],
+        prior_leaves: [{
+          ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'a', href: 'm3/32-body-data/32s-drug-sub/general.pdf',
+          leaf_id: 'leaf-3-2-S-1-general', backbone: 'index.xml',
+        }],
         desired_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'b' }],
       })
     );
     expect(out.ok).toBe(true);
     const replaced = out.leaves.find((l: any) => l.operation === 'replace');
-    expect(replaced.modifiedFile).toBe('../0000/m3/32-body-data/32s-drug-sub/general.pdf');
+    expect(replaced.modifiedFile).toBe('../0000/index.xml#leaf-3-2-S-1-general');
+  });
+
+  it('never names a prior leaf by its file path: listed with only an href, a replace carries no pointer', async () => {
+    const handler = getToolHandler('compute_lifecycle_operations')!;
+    const out = JSON.parse(
+      await handler({
+        prior_sequence_prefix: '../0000/',
+        prior_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'a', href: 'm3/32-body-data/32s-drug-sub/general.pdf' }],
+        desired_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'b' }],
+      })
+    );
+    const replaced = out.leaves.find((l: any) => l.operation === 'replace');
+    expect(replaced.modifiedFile).toBeUndefined();
   });
 
   it('refuses to auto-load a prior sequence without tenant context (org from ToolContext only)', async () => {

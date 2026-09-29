@@ -18,6 +18,7 @@
  * - Command center aggregates
  */
 import { Router, Request, Response } from 'express';
+import { resolveActorNames } from '../services/tenant/actor-names';
 import { z } from 'zod';
 import * as fs from 'fs';
 import { loadUnifiedWork } from '../services/unified-work/unified-work-view';
@@ -39,7 +40,6 @@ import {
   concept2cureArtifacts,
   concept2cureReviewTasks,
   concept2cureReviewAssignments,
-  users,
 } from '../../shared/schema';
 import { eq, and, desc, sql, count, inArray, isNull, asc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
@@ -864,15 +864,11 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
           .filter((id: unknown): id is number => typeof id === 'number')
       )
     );
+    // Through actor_name, so a creator who has since left is still named
+    // (tenant/actor-names.ts; D3 2026-09-29).
     const creatorNames = new Map<number, string>();
-    if (creatorIds.length > 0) {
-      const creators = await db
-        .select({ id: users.id, name: users.name })
-        .from(users)
-        .where(inArray(users.id, creatorIds));
-      for (const u of creators) {
-        if (u.name) creatorNames.set(u.id, u.name);
-      }
+    for (const [id, a] of await resolveActorNames(creatorIds)) {
+      if (a.name) creatorNames.set(id, a.name);
     }
 
     // Attach sections for each milestone

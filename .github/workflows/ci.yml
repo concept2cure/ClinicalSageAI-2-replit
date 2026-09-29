@@ -133,6 +133,17 @@ jobs:
         # a written reason; the selftest shows each failure branch firing.
         run: npm run ci:runtime-ddl && npm run ci:runtime-ddl:selftest
 
+      - name: Guardrails — no jsonb operator on a json column
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Most JSON columns in this schema are `json`, not `jsonb`. json has no
+        # `||`, jsonb_set/jsonb_strip_nulls refuse it, and COALESCE(json_col,
+        # '{}'::jsonb) cannot convert — so each such statement fails on every
+        # execution. Twelve shipped, each behind unit tests that mocked the pool.
+        # Types from the Drizzle model (and migration retypes); no database.
+        # Baseline entries need a written reason; the selftest shows each
+        # failure branch firing and each safe form passing.
+        run: npm run ci:json-operator-types && npm run ci:json-operator-types:selftest
+
       - name: Guardrails — server SQL references a table nothing creates
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit
@@ -1516,6 +1527,24 @@ jobs:
 
       - name: Deploy migration succeeds on the provisioned database
         run: node scripts/db/deploy-migrate.mjs
+
+      - name: RLS coverage after the FIRST deploy (a new database is isolated before any re-run)
+        # The coverage step below runs after the idempotency re-run, so a gap the
+        # first deploy leaves and the second closes is invisible to it. That is
+        # how regulatory_harmonization.export_job_audit_log stayed unscoped on
+        # every blank database's first deploy until 2026-09-29, when the child
+        # scope moved into the isolation tail
+        # (docs/evidence/D3/2026-09-29-child-scope-first-deploy/). A first
+        # deploy is the one a new customer's database gets.
+        run: |
+          set -euo pipefail
+          UNPROTECTED=$(psql "$DATABASE_URL" -tA -f scripts/db/rls-coverage-check.sql)
+          if [[ -n "$UNPROTECTED" ]]; then
+            echo "::error::unprotected table(s) after the FIRST deploy-migrate (closed only by a re-run):"
+            echo "$UNPROTECTED"
+            exit 1
+          fi
+          echo "RLS coverage OK after the first deploy."
 
       - name: Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it)
         # Runs the same second deploy-migrate as before, between two snapshots

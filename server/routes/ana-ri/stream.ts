@@ -38,6 +38,7 @@ import {
   resolveModelTier,
   resolveTierModel,
 } from '../../services/ai-gateway/reasoning.js';
+import { asParagraph } from '../../services/ai-gateway/progress-updates.js';
 import { orchestrate } from '../../services/ana-ri/orchestrator.js';
 import type { IntentLens, UserRole } from '../../services/ana-ri/persona.js';
 import type { DetectedDocumentTemplatePayload } from '../../../shared/types/ana-document-detection.js';
@@ -2629,10 +2630,14 @@ export function mountStreamRoute(router: Router): void {
                 }
                 return;
               }
+              // A round's words start their own paragraph. A model ends a note
+              // without a line break, and the next round's first words ran
+              // straight on from it: "…on screen.Stop 2: …".
+              const shown = roundText ? chunk : asParagraph(fullContent, chunk);
               roundText += chunk;
-              fullContent += chunk;
-              turnRecorder?.appendStreamed(chunk);
-              res.write(`data: ${JSON.stringify({ type: 'text', content: chunk })}\n\n`);
+              fullContent += shown;
+              turnRecorder?.appendStreamed(shown);
+              res.write(`data: ${JSON.stringify({ type: 'text', content: shown })}\n\n`);
             },
             callerModule: 'ana-ri-stream-followup',
           });

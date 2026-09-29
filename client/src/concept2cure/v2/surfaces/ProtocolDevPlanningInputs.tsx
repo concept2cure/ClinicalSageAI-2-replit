@@ -4,24 +4,31 @@
  * The planning engines (dose escalation, enrollment, MMRM, external control,
  * master protocol, decentralised elements, biospecimens) read inputs only a
  * sponsor can supply, and nothing on screen could record them. This panel is
- * that: one governed `C2CForm` per block, posting to
+ * that: one governed `C2CForm` per block and per SoA activity, posting to
  * `POST /api/study-design/:studyId/planning`, which validates the block
  * strictly, writes it through the one design writer and records the reason.
  *
  * What it does not do: compute anything, default anything, or show a block as
  * recorded before the server has confirmed the write — the panel re-reads the
- * design after every write rather than trusting what it sent.
+ * design after every write rather than trusting what it sent. Every write
+ * carries the block as it was read (`expected`), so another author's write in
+ * between is refused by the server, not silently replaced. A refusal is shown
+ * in the server's own words (its field-level details); a request that did not
+ * complete is not reported as "nothing was written", because that is not
+ * known — the design is re-read instead. A design that cannot be read is an
+ * error, never an empty panel.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import * as PG from './ProtocolGov';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { C2CForm } from '../C2CForm';
-import { ACCRUAL_FORM, DOSE_FORM, MMRM_FORM, withGovernance, type PlanningFormSpec, type Values } from './planningInputForms';
-import { EXTERNAL_FORM, MASTER_FORM, activityFields, parseActivity } from './planningStructureForms';
+import { str } from './projectionFormat';
+import { ACCRUAL_FORM, DOSE_FORM, MMRM_FORM, TITLES_FORM, drawerFor, type Drawer, type PlanningFormSpec, type Values } from './planningInputForms';
+import { EXTERNAL_FORM, MASTER_FORM, activityFields, activityRecorded, parseActivity } from './planningStructureForms';
 
 type Obj = Record<string, unknown>;
 const MIN_REASON = 8;
-const str = (v: unknown): string => (v == null ? '' : String(v));
+const WRITER_ONLY = 'A writing role is required to record planning inputs.';
 
 /** Where each block lives on the design object. */
 const BLOCKS: Array<{ spec: PlanningFormSpec; read: (d: Obj) => unknown }> = [
@@ -30,13 +37,40 @@ const BLOCKS: Array<{ spec: PlanningFormSpec; read: (d: Obj) => unknown }> = [
   { spec: MMRM_FORM, read: (d) => (d.statisticalPlan as Obj | undefined)?.mmrmAssumptions },
   { spec: EXTERNAL_FORM, read: (d) => d.externalControlPlan },
   { spec: MASTER_FORM, read: (d) => d.masterProtocol },
+  // As the server reads it (planning-inputs.ts BLOCK_READERS): both titles, or nothing when neither is recorded.
+  { spec: TITLES_FORM, read: (d) => (d.publicTitle === undefined && d.acronym === undefined ? undefined : { publicTitle: d.publicTitle, acronym: d.acronym }) },
 ];
 
-function refusal(body: unknown, status: number): string {
-  const b = body as { error?: unknown; detail?: unknown; details?: unknown } | null;
-  const details = Array.isArray(b?.details) ? ` ${(b!.details as unknown[]).map(str).join('; ')}` : '';
-  const detail = typeof b?.detail === 'string' ? ` ${b.detail}` : '';
-  return `${typeof b?.error === 'string' ? b.error : `HTTP ${status}`}.${detail}${details}`;
+/** The server's refusal in sentences: its field-level details, else its detail. An error code is not a sentence and is not shown as one. */
+export function refusal(body: unknown, status: number): string {
+  const b = (body ?? {}) as { detail?: unknown; details?: unknown };
+  const details = Array.isArray(b.details) ? b.details.map(str).filter(Boolean) : [];
+  if (details.length) return `The server refused these values: ${details.join('; ')}.`;
+  if (typeof b.detail === 'string' && b.detail.trim()) return b.detail.trim();
+  return `The server refused it (HTTP ${status}).`;
+}
+
+/** The server answered and refused: nothing was written. */
+class Refused extends Error {
+  constructor(message: string, public readonly code: unknown) {
+    super(message);
+    this.name = 'Refused';
+  }
+}
+
+/** POST one block. `apiRequest` throws for every non-2xx but 401, which it returns; both become a {@link Refused} with the server's words. */
+async function postBlock(studyId: string, body: Obj): Promise<void> {
+  let res: Response;
+  try {
+    res = await apiRequest('POST', `/api/study-design/${encodeURIComponent(studyId)}/planning`, body);
+  } catch (e) {
+    if (e instanceof ApiRequestError) throw new Refused(refusal(e.payload, e.status), (e.payload as Obj | null)?.error);
+    throw e;
+  }
+  if (!res.ok) {
+    const j = (await res.json().catch(() => null)) as Obj | null;
+    throw new Refused(refusal(j, res.status), j?.error);
+  }
 }
 
 function useDesign(studyId: string) {
@@ -58,7 +92,22 @@ function useDesign(studyId: string) {
   return { design, error, reload: load };
 }
 
-type Open = { kind: 'block'; spec: PlanningFormSpec; current: Obj | null } | { kind: 'activity'; activityId: string };
+/** An open drawer: what it edits, what the design recorded when it was opened (the write's precondition), and its fields. */
+type Open =
+  | { kind: 'block'; spec: PlanningFormSpec; expected: Obj | null; drawer: Drawer }
+  | { kind: 'activity'; activity: Obj; expected: Obj; drawer: Drawer };
+
+const labelOf = (o: Open): string => (o.kind === 'block' ? o.spec.title : `${str(o.activity.name)} — location and specimen`);
+
+function openBlock(spec: PlanningFormSpec, current: Obj | null, design: Obj): Open {
+  return { kind: 'block', spec, expected: current, drawer: drawerFor(spec.fields(current, design), (v) => spec.parse(v, design), current) };
+}
+
+function openActivity(activity: Obj): Open {
+  const id = str(activity.id);
+  const expected = activityRecorded(activity);
+  return { kind: 'activity', activity, expected, drawer: drawerFor(activityFields(activity), (v) => parseActivity(v, id), { activityId: id, ...expected }, null) };
+}
 
 export interface PlanningInputsPanelProps {
   studyId: string;
@@ -67,46 +116,95 @@ export interface PlanningInputsPanelProps {
   onToast?: (m: string) => void;
 }
 
+function EditButton({ verb, target, canWrite, onClick }: { verb: string; target: string; canWrite: boolean; onClick: () => void }) {
+  return (
+    <PG.Btn icon="penLine" variant="outline" disabled={!canWrite} title={canWrite ? `${verb} ${target}` : WRITER_ONLY} onClick={onClick}>
+      {/* The space sits outside the hidden span, so every accessible-name algorithm keeps it. */}
+      {verb} <span className="sr-only">{target}</span>
+    </PG.Btn>
+  );
+}
+
+function ActivityRows({ design, canWrite, onOpen }: { design: Obj; canWrite: boolean; onOpen: (o: Open) => void }) {
+  const soa = design.scheduleOfActivities as Obj | undefined;
+  const activities = (Array.isArray(soa?.activities) ? soa!.activities : []) as Obj[];
+  if (activities.length === 0) {
+    return (
+      <div className="pd-pane-s" style={{ marginTop: 10 }}>
+        {soa ? 'The Schedule of Activities lists no activities' : 'This design records no Schedule of Activities'}, so no activity location or specimen can be recorded.
+      </div>
+    );
+  }
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div className="pd-pane-s">Schedule of Activities — where each activity happens and what it collects.</div>
+      {activities.map((a) => (
+        <div key={str(a.id)} className="pd-kv">
+          <span className="pd-kv-k">{str(a.name)}</span>
+          <span className="pd-kv-v">
+            {str(a.location) || 'location not stated'} · {str((a.specimen as Obj | undefined)?.type) || 'no specimen recorded'}
+          </span>
+          <EditButton verb="Edit" target={`${str(a.name)} location and specimen`} canWrite={canWrite} onClick={() => onOpen(openActivity(a))} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function PlanningInputsPanel({ studyId, canWrite, onError, onToast }: PlanningInputsPanelProps) {
   const { design, error, reload } = useDesign(studyId);
   const [open, setOpen] = useState<Open | null>(null);
 
-  const write = async (block: string, value: Obj | null, reason: string, label: string) => {
-    const res = await apiRequest('POST', `/api/study-design/${encodeURIComponent(studyId)}/planning`, { block, value, reason } as never);
-    const j = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(`${label} was not recorded — ${refusal(j, res.status)} Nothing was written.`);
+  /** A write that failed: say what is known — refused (nothing written) or not completed (not known) — and re-read when the drawer is stale. */
+  const failed = async (e: unknown, label: string) => {
+    if (!(e instanceof Refused)) {
+      onError?.(`The write of ${label} did not complete (${e instanceof Error ? e.message : String(e)}), so whether it was recorded is not known. The design is re-read to show what is recorded.`);
+      setOpen(null);
+      await reload();
+      return;
+    }
+    onError?.(`${label} was not recorded — ${e.message} Nothing was written.`);
+    // A stale block's drawer holds another author's superseded values: close it and re-read.
+    if (e.code === 'STALE_BLOCK') {
+      setOpen(null);
+      await reload();
+    }
   };
 
-  const submit = async (v: Values, block: string, label: string, parse: (v: Values) => { ok: true; value: Obj | null } | { ok: false; error: string }) => {
+  const submit = async (v: Values, o: Open, d: Obj) => {
+    const label = labelOf(o);
     if ((v.reason ?? '').trim().length < MIN_REASON) {
       onError?.(`The governed reason must be at least ${MIN_REASON} characters. Nothing was written.`);
       return;
     }
-    const parsed = parse(v);
+    const parsed = o.kind === 'block' ? o.spec.parse(v, d) : parseActivity(v, str(o.activity.id));
     if (!parsed.ok) {
       onError?.(`${parsed.error} Nothing was written.`);
       return;
     }
+    const block = o.kind === 'block' ? o.spec.block : 'activityAttributes';
     try {
-      await write(block, parsed.value, v.reason.trim(), label);
-      setOpen(null);
-      onToast?.(parsed.value === null ? `${label} cleared from the design.` : `${label} recorded on the design.`);
-      await reload();
+      await postBlock(studyId, { block, value: parsed.value, expected: o.expected, reason: v.reason.trim() });
     } catch (e) {
-      onError?.(e instanceof Error ? e.message : String(e));
+      await failed(e, label);
+      return;
     }
+    setOpen(null);
+    onToast?.(parsed.value === null ? `${label} cleared from the design.` : `${label} recorded on the design.`);
+    await reload();
   };
 
   if (error) return <div className="pde-refusal" role="alert">The design could not be read, so its planning inputs are not shown. {error}</div>;
   if (!design) return <div role="status" className="scaf-note">Reading the design’s planning inputs…</div>;
 
-  const activities = (((design.scheduleOfActivities as Obj | undefined)?.activities ?? []) as Obj[]);
+  const sub = open?.kind === 'block' ? open.spec.sub : '"Not stated" clears the location; "None recorded" clears the specimen and everything recorded about it.';
 
   return (
     <section style={{ marginTop: 16 }} aria-label="Planning inputs">
       <h3 className="pd-pane-t" style={{ fontSize: 13 }}>Planning inputs</h3>
       <div className="pd-pane-s">
         The sponsor inputs the planning projections read. Each is a governed write to the design object, with a reason; nothing here is computed or assumed.
+        {!canWrite && ` ${WRITER_ONLY}`}
       </div>
       <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
         {BLOCKS.map(({ spec, read }) => {
@@ -115,41 +213,21 @@ export function PlanningInputsPanel({ studyId, canWrite, onError, onToast }: Pla
             <div key={spec.block} className="pd-kv">
               <span className="pd-kv-k">{spec.title}</span>
               <span className="pd-kv-v"><PG.StatusBadge status={current ? 'recorded' : 'not recorded'} /></span>
-              <PG.Btn icon="penLine" variant="outline" disabled={!canWrite} onClick={() => setOpen({ kind: 'block', spec, current })}>
-                {current ? 'Edit' : 'Record'}
-              </PG.Btn>
+              <EditButton verb={current ? 'Edit' : 'Record'} target={spec.title} canWrite={canWrite} onClick={() => setOpen(openBlock(spec, current, design))} />
             </div>
           );
         })}
       </div>
-      {activities.length > 0 && (
-        <div style={{ marginTop: 10 }}>
-          <div className="pd-pane-s">Schedule of Activities — where each activity happens and what it collects.</div>
-          {activities.map((a) => (
-            <div key={str(a.id)} className="pd-kv">
-              <span className="pd-kv-k">{str(a.name)}</span>
-              <span className="pd-kv-v">
-                {str(a.location) || 'location not stated'} · {str((a.specimen as Obj | undefined)?.type) || 'no specimen recorded'}
-              </span>
-              <PG.Btn icon="penLine" variant="outline" disabled={!canWrite} onClick={() => setOpen({ kind: 'activity', activityId: str(a.id) })}>Edit</PG.Btn>
-            </div>
-          ))}
-        </div>
-      )}
-      {open?.kind === 'block' && canWrite && (
+      <ActivityRows design={design} canWrite={canWrite} onOpen={setOpen} />
+      {open && canWrite && (
         <C2CForm
-          key={open.spec.block}
-          config={{ eyebrow: 'Study design · planning inputs', title: open.spec.title, sub: open.spec.sub, governed: true, submitLabel: 'Record', fields: withGovernance(open.spec.fields(open.current)) }}
+          key={open.kind === 'block' ? open.spec.block : `activity:${str(open.activity.id)}`}
+          config={{
+            eyebrow: 'Study design · planning inputs', title: labelOf(open), sub: [sub, open.drawer.note].filter(Boolean).join(' '),
+            governed: true, submitLabel: 'Record', fields: open.drawer.fields,
+          }}
           onCancel={() => setOpen(null)}
-          onSubmit={(v) => void submit(v, open.spec.block, open.spec.title, open.spec.parse)}
-        />
-      )}
-      {open?.kind === 'activity' && canWrite && (
-        <C2CForm
-          key={`activity:${open.activityId}`}
-          config={{ eyebrow: 'Study design · planning inputs', title: 'Activity location and specimen', sub: '"Not stated" and "None recorded" clear the attribute.', governed: true, submitLabel: 'Record', fields: activityFields(activities, open.activityId) }}
-          onCancel={() => setOpen(null)}
-          onSubmit={(v) => void submit(v, 'activityAttributes', 'The activity’s location and specimen', parseActivity)}
+          onSubmit={(v) => void submit(v, open, design)}
         />
       )}
     </section>

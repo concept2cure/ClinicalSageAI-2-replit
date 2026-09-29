@@ -36,7 +36,7 @@
  * @module server/services/study-design/usdm-schedule
  */
 
-import type { ScheduleOfActivities, SoaEpoch, SoaVisit } from './study-design-types';
+import { studyDayIndex, type ScheduleOfActivities, type SoaEpoch, type SoaVisit } from './study-design-types';
 import {
   codeOr,
   gap,
@@ -241,11 +241,6 @@ function mapInstances(soa: ScheduleOfActivities, s: Sorted, ctx: UsdmContext): U
 
 // ─── Timings ────────────────────────────────────────────────────────────────
 
-/** Study day → zero-based day index under the no-day-0 convention (day 1 → 0, day −1 → −1). */
-function dayIndex(d: number): number {
-  return d > 0 ? d - 1 : d;
-}
-
 function pickAnchor(dated: Placed[], ctx: UsdmContext): Placed | null {
   const baseline = dated.filter(x => x.v.isBaseline === true);
   if (baseline.length === 1) return baseline[0];
@@ -264,7 +259,8 @@ const WINDOW_GAP = 'Timing.windowLower / Timing.windowUpper / Timing.windowLabel
 function buildTiming(x: Placed, anchor: Placed, instances: UsdmScheduledActivityInstance[], ctx: UsdmContext): UsdmTiming {
   const id = nextId(ctx, 'Timing');
   const day = x.v.studyDay as number;
-  const offset = dayIndex(day) - dayIndex(anchor.v.studyDay as number);
+  // Every visit timed here has an integer day other than 0: mapTimings returns before timing anything otherwise.
+  const offset = (studyDayIndex(day) as number) - (studyDayIndex(anchor.v.studyDay) as number);
   const kind: UsdmTimingType = x === anchor ? 'fixed_reference' : offset < 0 ? 'before' : 'after';
   const w = x.v.windowDays;
   const window = typeof w === 'number' && Number.isInteger(w) && w >= 0 ? w : null;

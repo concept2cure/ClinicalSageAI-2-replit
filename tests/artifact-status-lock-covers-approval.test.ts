@@ -132,6 +132,19 @@ vi.mock('../server/services/generation-guard.js', () => ({
   createTraceId: () => 't1', emitTraceEvent: vi.fn(),
 }));
 vi.mock('../server/db/drizzle-queryable', () => ({ queryableFromDrizzle: () => ({ query: vi.fn() }) }));
+/* 2026-09-28 (D5): approve and lock are electronic signatures. The ceremony
+   (re-authentication, the signer lookup, the ledger pair) is pinned end to end
+   on a real engine in
+   server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts;
+   here it is stubbed at its boundary so these cases test what they always did:
+   the lock rule, the quorum and the role table. */
+vi.mock('../server/routes/c2c/actions', () => ({
+  verifyReauth: vi.fn(async () => ({ ok: true })),
+  recordGovernedAction: vi.fn(async () => ({ actionId: 'act_1', auditId: 'aud_1', sha256Chain: 'chain' })),
+}));
+vi.mock('../server/services/part11/resolve-signer-identity', () => ({
+  resolveSignerIdentity: vi.fn(async () => ({ name: 'A Signer', email: 'a@b.c', title: null })),
+}));
 
 import artifactRouter from '../server/routes/c2c/artifacts';
 import { pool } from '../server/db';
@@ -173,11 +186,18 @@ const ARTIFACT = {
   updatedAt: new Date(),
 };
 
-const ATTEST = { meaning: 'Released', attestationText: 'I release this' };
+/** Each signed act states its own meaning (ARTIFACT_ACT_MEANING) and re-authenticates. */
+const ATTEST = (status: string) => ({
+  meaning: status === 'approved' ? 'approval' : 'release',
+  attestationText: status === 'approved' ? 'I approve' : 'I release this',
+});
 const putStatus = (status: string, extra: Record<string, unknown> = {}) =>
   request(makeApp())
     .put('/api/c2c/projects/3/artifacts/artifact_abc/status')
-    .send({ status, reason: 'status change', attestation: ATTEST, ...extra });
+    .send({ status, reason: 'status change', attestation: ATTEST(status), reauth: { password: 'pw' }, ...extra });
+/** The stored version the signature binds to, and the signature row the act writes. */
+const VERSION_ROW = { id: 31, artifactId: 4242, organizationId: 99, version: 2, content: 'content', contentHash: 'h0' };
+const SIG_ROW = { signatureId: 'sig_1', signatureType: 'publish', signatureMeaning: 'release', signerName: 'A Signer', signerRole: 'admin', signedAt: new Date(), signatureHash: 'x', authenticationMethod: 'password' };
 const statusWrite = (status: string) => st.sets.find((v) => v && v.status === status);
 
 beforeEach(() => {
@@ -190,7 +210,8 @@ beforeEach(() => {
 
 describe('PUT …/status: a lock must cover the approval', () => {
   it('approved v2 (approved at v2) → locked records published_version_id = 2, and the result is filable', async () => {
-    st.queue = [[ARTIFACT]];
+    // artifact, the version signed, the updated row, the signature, the lock's snapshot
+    st.queue = [[ARTIFACT], [VERSION_ROW], [{ ...ARTIFACT, status: 'locked' }], [SIG_ROW], [{ snapshotId: 'snap_1', versionId: 2 }]];
     await putStatus('locked');
     const write = statusWrite('locked');
     expect(write).toBeDefined();
@@ -216,8 +237,9 @@ describe('PUT …/status: a lock must cover the approval', () => {
   });
 
   it('review v3 → approved records approved_version_id = 3; an edit to v4 afterwards is not filable', async () => {
-    st.queue = [[{ ...ARTIFACT, status: 'review', version: 3, approvedVersionId: 2 }]];
-    await putStatus('approved', { attestation: { meaning: 'Approved', attestationText: 'I approve' } });
+    const reviewed = { ...ARTIFACT, status: 'review', version: 3, approvedVersionId: 2 };
+    st.queue = [[reviewed], [{ ...VERSION_ROW, version: 3 }], [{ ...reviewed, status: 'approved' }], [{ ...SIG_ROW, signatureType: 'approval' }]];
+    await putStatus('approved', { attestation: ATTEST('approved') });
     const write = statusWrite('approved');
     expect(write?.approvedVersionId).toBe(3);
     const approvedRow = { ...ARTIFACT, version: 3, ...write };
@@ -253,7 +275,7 @@ describe('PUT …/status review → approved applies the canonical P12 review qu
       { review_round: 1, status: 'pending' },
     ]);
     st.queue = [[{ ...ARTIFACT, status: 'review', version: 3, approvedVersionId: 2 }]];
-    const res = await putStatus('approved', { attestation: { meaning: 'Approved', attestationText: 'I approve' } });
+    const res = await putStatus('approved', { attestation: ATTEST('approved') });
     expect(res.status).toBe(400);
     expect(JSON.stringify(res.body)).toMatch(/1 of 2 reviewers have not yet submitted/);
     expect(statusWrite('approved')).toBeUndefined();
@@ -262,7 +284,7 @@ describe('PUT …/status review → approved applies the canonical P12 review qu
   it('a reviewer who did not approve refuses the approval (400)', async () => {
     quorumRows([{ review_round: 1, status: 'completed' }], [{ decision: 'reject' }]);
     st.queue = [[{ ...ARTIFACT, status: 'review', version: 3, approvedVersionId: 2 }]];
-    const res = await putStatus('approved', { attestation: { meaning: 'Approved', attestationText: 'I approve' } });
+    const res = await putStatus('approved', { attestation: ATTEST('approved') });
     expect(res.status).toBe(400);
     expect(JSON.stringify(res.body)).toMatch(/did not approve/);
     expect(statusWrite('approved')).toBeUndefined();
@@ -274,7 +296,7 @@ describe('PUT …/status review → approved applies the canonical P12 review qu
       return { rows: [] };
     });
     st.queue = [[{ ...ARTIFACT, status: 'review', version: 3, approvedVersionId: null }]];
-    const res = await putStatus('approved', { attestation: { meaning: 'Approved', attestationText: 'I approve' } });
+    const res = await putStatus('approved', { attestation: ATTEST('approved') });
     expect(res.status).toBeGreaterThanOrEqual(400);
     expect(statusWrite('approved')).toBeUndefined();
     expect(st.sets).toEqual([]);
@@ -287,7 +309,7 @@ describe('PUT …/status review → approved applies the canonical P12 review qu
       return { rows: [] };
     });
     st.queue = [[{ ...ARTIFACT, status: 'review', version: 3, approvedVersionId: null }]];
-    const res = await putStatus('approved', { attestation: { meaning: 'Approved', attestationText: 'I approve' } });
+    const res = await putStatus('approved', { attestation: ATTEST('approved') });
     expect(res.status).toBeGreaterThanOrEqual(400);
     expect(st.sets).toEqual([]);
   });
@@ -309,7 +331,7 @@ describe('PUT …/status: the role table decides who performs the approval act',
     app.use('/api/c2c', artifactRouter);
     const res = await request(app)
       .put('/api/c2c/projects/3/artifacts/artifact_abc/status')
-      .send({ status: 'approved', reason: 'status change', attestation: { meaning: 'Approved', attestationText: 'I approve' } });
+      .send({ status: 'approved', reason: 'status change', attestation: ATTEST('approved') });
     expect(res.status).toBe(403);
     expect(st.sets).toEqual([]);
   });

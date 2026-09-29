@@ -126,8 +126,8 @@ export interface UsdmStudyTitle {
   id: string;
   instanceType: 'StudyTitle';
   text: string;
-  /** Official / brief / acronym: the design does not record which, so null. */
-  type: null;
+  /** What the design records the title as: official, public or acronym (C2C-INTERNAL). */
+  type: UsdmCode;
 }
 
 export interface UsdmStudyVersion {

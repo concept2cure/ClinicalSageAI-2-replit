@@ -170,8 +170,12 @@ function judgeTitle(d: StudyDesign): Verdict {
   const drugs = investigationalNames(d);
   if (drugs.length === 0) notIdentified.push('an intervention (the design records no investigational intervention)');
   else if (!drugs.some(n => lc.includes(n.toLowerCase()))) notIdentified.push(`an investigational intervention (${drugs.join(', ')})`);
+  const acronym = present(d.acronym) ? d.acronym.trim() : '';
+  if (acronym && !title.includes(acronym)) notIdentified.push(`the recorded acronym "${acronym}"`);
   const shortfall = notIdentified.length ? `The title does not identify ${notIdentified.join(' or ')}. ` : '';
-  return partial([`design: title "${title}"`], `${shortfall}Whether the title identifies the study design (and the trial acronym, if any) is not carried by the design object; SPIRIT 1 asks the title to identify the design, population and interventions.`);
+  const acronymUnknown = acronym ? '' : ' (nor does the design record whether the trial has an acronym)';
+  const evidence = [`design: title "${title}"`, ...(acronym ? [`design: acronym "${acronym}"`] : [])];
+  return partial(evidence, `${shortfall}Whether the title identifies the study design is not judged from the design object${acronymUnknown}; SPIRIT 1 asks the title to identify the design, population, interventions and, if applicable, the trial acronym.`);
 }
 
 function judgeVersion(d: StudyDesign): Verdict {

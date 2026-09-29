@@ -29,8 +29,13 @@ to one line; edit only your own row to limit merge conflicts.
 | **D3 — `public.organizations` has no RLS, and its uuid is the tenant key.** Found by sweeping every table an RLS policy or policy function reads for "no RLS and writable by `app_service`": one hit. As `app_service` with RLS enforcing, tenant A moved its own org to a fresh uuid and gave B's org A's old one, then read B's vault (`core.get_program_org_id` maps programs to `organizations.uuid`). Files: `migrations/20260925_organizations_tenant_key_immutable.sql`, `tests/db/rls-policy-inputs.dbtest.ts` (the sweep, with two self-tests and guarded reviewed exceptions), two cases in `tests/db/vault-program-ownership.dbtest.ts`. Evidence: `docs/evidence/D3/2026-09-25-organizations-tenant-key/` | `…session_01J935DZwfFEardJCv85SJds` | **released** 2026-09-25 — row **D3**, done: `id` and `uuid` immutable once set (trigger, every role); red 4 of 13, green 13 of 13; whole `tests/db` tier 705 of 712 with the same 7 failing without the change. **Not done, handed on below:** narrowing writes to `organizations`' other columns (an own-org-or-platform policy was built, measured 12/12 and withdrawn: it would break five platform-staff override paths) |
 | **D3 — `organizations` writes: own org or platform only.** The item handed on 2026-09-25 ("→ D3, unclaimed — `organizations` writes"). First the five platform-staff override paths (`organizations-routes.ts` PATCH `/:id/profile`, `/:id/settings`; `tenant-config.ts` :203/:303/:404) open the system scope when, and only when, staff target another org — a route-level middleware over the existing `establishRequestSystemScope`; `:500`'s unchecked update fixed. Then the own-org-or-platform write policy on `public.organizations` (new migration). Files: those two routes, one new middleware file, the migration, a dbtest through the production routers. Evidence: `docs/evidence/D3/2026-09-26-organizations-writes/` | `…session_01J935DZwfFEardJCv85SJds` | **released** 2026-09-26 — row **D3**, done: the five staff paths open the system scope only when staff act on another org (`server/middleware/staffCrossOrgScope.ts`); zero-row writes are 404s, never success; own-org-or-platform UPDATE/DELETE policy on `organizations`. Before 1 fail, policy alone 3 fail (settings answered success and wrote nothing), each half's mutation fails its own cases, green 19/19; `tests/db` 711/718 (the same 7 fail without it). **Found, not fixed:** `organization_users` has no RLS at all — see the item below |
 | **D3 — `organization_users` (memberships) has no RLS.** The open item found 2026-09-26. As `app_service` in a member's tenant scope: its user written an `admin` membership in another tenant (the row `authMiddleware` accepts a token for that tenant on) and promoted to `super_admin` in its own. The table is on `RLS_ALLOWLIST` "temporarily retained from the staged rollout" (`server/db/rlsAllowlist.ts`, and the three synced copies). Plan: writes own-org-or-platform (reads stay open: the pre-auth membership check and the org switcher read across orgs), after mapping every writer's scope; staff roles never written from a tenant scope. Files: a new migration, the allowlist entry's reason, whichever writers run in the wrong scope, a dbtest through the real auth. Evidence: `docs/evidence/D3/2026-09-26-memberships/` | `…session_01J935DZwfFEardJCv85SJds` | **released** 2026-09-26 — row **D3**, done: writes own-org-or-platform, staff roles minted by the platform scope only (trigger); reads stay open (allowlist reason rewritten). Signup, persona and tenant-users' cross-org admin writes moved into the membership's own org — the last also repairs the member-create regression `85b67b50` caused. Before 3 fail (A's token admitted into B, 200), each piece's mutation fails its own cases, 10/10; four D3 contracts 29/29; `tests/db` 715/732, all 17 failures pre-existing. Handed on below: cross-org invitation acceptance, two fixture passwords |
-| **D3 — `public.users` is readable from any tenant scope.** The item handed on 2026-09-26 (`…013CtPf8`). Plan: RLS on `public.users` — a tenant scope sees members of its organization (via `organization_users`) and its own row; the platform/pre-auth scope keeps sign-in, reset, OTP, SCIM, user admin. Writes likewise. Files: a new migration above the final pair, `rls-coverage-check.sql`'s note, a dbtest. Evidence: `docs/evidence/D3/2026-09-28-users-rls/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **released** 2026-09-28 — row **D3**, done: RLS + FORCE on `public.users` by membership, pre-auth/system scopes keep the table (`20260928_users_membership_rls.sql`, in the set after the memberships file). Before: 3 of 7 fail (A read and rewrote B's password hash, MFA secret, reset token); after 11/11, each of three writer moves (existing-account check, setup-token scope, member-list scope) failing its own case when undone; affected suites 178/178; `tests/db` 753/766, the 13 failing identically with `users` RLS off. Handed on below the item: null actor names outside the org, `users`' children, pre-auth breadth; and the D3 row of `docs/LAUNCH_DEFINITION_OF_DONE.md` should cite `docs/evidence/D3/2026-09-28-users-rls/` (not edited: inside another lane's 24 h window, 14:45 UTC 09-28) |
+| **D3 — `public.users` is readable from any tenant scope.** The item handed on 2026-09-26 (`…013CtPf8`). Plan: RLS on `public.users` — a tenant scope sees members of its organization (via `organization_users`) and its own row; the platform/pre-auth scope keeps sign-in, reset, OTP, SCIM, user admin. Writes likewise. Files: a new migration above the final pair, `rls-coverage-check.sql`'s note, a dbtest. Evidence: `docs/evidence/D3/2026-09-28-users-rls/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **released** 2026-09-28 — row **D3**, done: RLS + FORCE on `public.users` by membership, pre-auth/system scopes keep the table (`20260928_users_membership_rls.sql`, in the set after the memberships file). Before: 3 of 7 fail (A read and rewrote B's password hash, MFA secret, reset token); after 11/11, each of three writer moves (existing-account check, setup-token scope, member-list scope) failing its own case when undone; affected suites 178/178; `tests/db` 753/766, the 13 failing identically with `users` RLS off. Handed on below the item: null actor names outside the org, `users`' children, pre-auth breadth; and the D3 row of `docs/LAUNCH_DEFINITION_OF_DONE.md` should cite `docs/evidence/D3/2026-09-28-users-rls/` (**done 2026-09-29**: the row cites all seven 2026-09-28/29 evidence directories) |
 | **D3 — `platform_role_grants` is writable from any tenant scope.** Handed on by the `public.users` item (2026-09-28). As `app_service` in a plain member's tenant scope, a `super_admin` grant was written (`INSERT 0 1`); `requirePlatformAdmin` reads that table. Plan: RLS + FORCE; SELECT stays open (the platform-admin check reads it in the caller's tenant scope), INSERT/UPDATE/DELETE from the platform scope only; writers moved if any runs elsewhere. Files: a new migration after `20260928_users_membership_rls.sql`, a dbtest, any mis-scoped writer. Evidence: `docs/evidence/D3/2026-09-28-platform-role-grants/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **released** 2026-09-28 — row **D3**, done: RLS + FORCE, SELECT open, INSERT/UPDATE/DELETE platform scope only (`20260928_platform_role_grants_platform_writes.sql`); no writer moved (the console already runs in the system scope). Before 2 of 6 fail (planted `super_admin`, console 200); after 6/6; mutation (console outside the system scope) fails case 6; affected suites 212/212; `entitlement-grants-resolution`'s posture assertion rewritten to the new truth |
+| **D3 — `drafting_tasks` (draft content) is readable from any tenant scope.** Found working the `public.users` children hand-on (2026-09-28). The table holds `draft_content`, `document_title`, `ectd_section` and a text `project_id` naming a `regulatory_programs` row, with no organisation column and no RLS; its two routes filter by program ownership in SQL, the table does not. Plan: one line on `20260813_child_table_parent_scoped_rls.sql`'s spec list (the canonical child scope; parent `regulatory_programs`, text comparison), amended in place with a dated note; a dbtest through the real drafting routes. Not the file's position in the set (the child-scope lane's). Evidence: `docs/evidence/D3/2026-09-28-drafting-tasks/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **released** 2026-09-28 — row **D3**, done: one spec line on `20260813_child_table_parent_scoped_rls.sql` (`drafting_tasks` → `regulatory_programs`, text key), amended in place with a dated note; no application change (the routes already work inside the program's org). Before 3 of 7 fail (A read, rewrote and deleted B's draft, and filed tasks under B's program and under none); after 7/7; the child-scope contract gains the table (scratch table, isolation case, list entry) and a shared `seedProgram` helper, 13/13; with the spec line and the live policy removed, 5 cases fail across both files; from blank 37/37; `tests/db` 768/781, the same 13 pre-existing |
+| **D3 — accepting an invitation to another organization fails under enforcement.** The open item (D2/D3) under the `organization_users` hand-ons: `organization_invitations` carries the FORCEd tenant policy, so an invitee signed into X can neither list nor accept nor decline an invitation to Y. Plan: a definer lookup of pending invitations for a member of the calling scope's organization (never an arbitrary user), then accept/decline inside the inviting organization's scope after the invitation is verified as the caller's. Files: a migration after `20260928_platform_role_grants_platform_writes.sql`, `server/routes/tenant-users.ts` (the three invitation routes), `atomicAcceptInvitation`, a dbtest through the real routes. Evidence: `docs/evidence/D3/2026-09-28-invitation-acceptance/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **released** 2026-09-28 — row **D3**, done: `invitations_for_member(user)` (definer, id-to-invitations for a member of the calling scope's organization only, `20260928_invitations_for_member.sql`); `/invitations/mine` lists through it; accept and decline find the caller's own invitation through it and write in the inviting organization's scope (`inVerifiedOrgScope`); another person's invitation is 404, a decline that reaches nothing is 409 (was a silent 200). Before 3 of 5 fail (empty list, accept 404, decline 404); after 6/6; each of the three parts fails its own case when undone; 33/33 with memberships, users-rls, organizations-writes; mocked 31/31; `tests/db` 774/787, the same 13 pre-existing |
+| **D3 — the child scope runs after every table and parent policy the set creates (taken over).** The row above, claimed 2026-09-24 by `…01GyGhjg`, taken over at the founder's direction (2026-09-29). Measured again 2026-09-28 on a blank database: `regulatory_harmonization.export_job_audit_log` unscoped after the first deploy, scoped after the second. Same files as that row; `migration-set.mjs` and `ci.yml` were inside other lanes' 24 h windows (until 18:38 / 18:26 UTC 09-29); the change landed inside them, after checking no hunk overlaps theirs (see the evidence). Evidence: `docs/evidence/D3/2026-09-29-child-scope-first-deploy/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **released** 2026-09-29 — row **D3**, done: the child scope runs in the isolation tail (uuid step → child scope → sweep, `CHILD_TABLE_PARENT_SCOPE`), pinned by `ci:migration-set-order` (refuses trunk's order); the two tail contracts updated; CI's blank-database job checks coverage after the FIRST deploy. Blank database at trunk: 1 unscoped child after one deploy; with the move: 0 after one and after two, 72/72 there; schema-contract 91/91. L201–L203 ledger rows corrected (atom-search 5/5). Found on the way and fixed in `89a8ade0`: my 2026-09-28 migrations halted the set on a minimal base |
+| **D3 — actor names outside the organization render as ids.** The hand-on under the `public.users` item. Decided (founder: "own it all"): a resolver, not a snapshot column on the hash-chained `audit_logs` — `public.actor_name(id)` returns name and email only, for members of the calling organization and actors in its own audit trail, nobody else; the audit-trail ledger resolves through it; the other display joins are triaged and converted where the person may have left. Files: a migration, `audit-trail-ledger.routes.ts` and its test (inside another lane's window until 17:05 UTC 09-29; landed inside it, no hunk overlapping `f0147f45`'s), the display joins triaged, a dbtest through the real audit writer and ledger reader. Evidence: `docs/evidence/D3/2026-09-29-actor-names/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **claimed** 2026-09-29 — ledger landed (red `user 951` → the name; 4/4; M1/M2); the remaining display joins in triage |
+| **D3 — the pre-auth scope reaches every account.** The hand-on under the `public.users` item: tenant '0' reads and writes all of `public.users`. First the map — which handlers run in the pre-auth scope on an already-authenticated identity, and whether any can be steered to another user's row — then the narrowing. `server/routes/authEnterprise.ts` is inside another lane's window until 17:04 UTC 09-29. Evidence: `docs/evidence/D3/2026-09-29-pre-auth-scope/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **released** 2026-09-29 — row **D3**, done: the map (every pre-auth handler and its `users` statements, in the evidence); the one steerable handler, `GET /api/users/:id`, now looks up in the verified token's organisation scope by membership (it loaded any user's full row pre-auth, guarded only by a `default_organization_id` check: a removed person stayed visible, a member with another default was hidden). Before 2 of 5 fail; after 5/5; back in the pre-auth scope B's member is returned to A; 87/87 with the sign-in, OTP, account-standing and memberships suites. Handed on below: the structural narrowing (a function per pre-auth statement) and `/api/user/preferences` being shadowed |
 | WO-15 finding 5 — `c2c_template_specs.doc_types` | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | WO-15 finding 8 — the two blind gates | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed `b9152a016` |
 | WO-15 finding 4 — `/api/design-risk` | `…session_01J935DZwfFEardJCv85SJds` | **released** — done `153481465` |
@@ -40,7 +45,7 @@ to one line; edit only your own row to limit merge conflicts.
 | **W1 / D2** — the relations server SQL names that no provisioned database has, measured against *launch reach* (a launch-app or shell action, an AnA tool, or a boot/cron/worker path). Distinct from `…01PwLFr8`'s first-render surface sweep and `…01KiDof7`'s all-SQL guards. Evidence: `docs/evidence/W1/2026-09-24-launch-reach/` | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** 2026-09-24 — every baselined relation classified by launch reach; the two production-reached ones fixed (enterprise onboarding intake `254f502da`, Firecrawl webhook); `ci:runtime-ddl` added (`cbe9844c1`); baseline 42 → 40. Earlier, pre-Rule-2: DEAD surfaces deleted (§7), triage corrected (§8), CMC playbook provisioned (§9) |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, `server/services/chat-uploads/*`, the retrieval-atom blocks of `server/routes/chat/upload.ts`, persona's CLIENT'S FILES section, and the lane's own tables `vault.document_catalog` / `vault.document_read_receipts` (`migrations/20260905_document_catalog.sql`) | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** — re-scoped 2026-09-24 under Rule 2: **row D3** (local half — RLS on the lane's two tables, which have none), evidence `docs/evidence/D3/2026-09-24-vault-catalog/`; green is **blocked** on D1 (D3's named evidence is a staging contract log). Defects in the lane's own code found in the same pass (model-governance classification, Part 11 attribution of AnA filing, unverified key_data figures) are fixed as defects with evidence under the row each touches. Also done 2026-09-24: the three items the vault re-baseline handed this lane, and the Vault's document count (URS-VAULT-004; `docs/evidence/D4/2026-09-24-vault-document-count/`). The Vault read model and surface are `…01KnUGoX`'s; the assessment's search-coverage and data-room-count findings stay with that lane, not taken here. **No toggle is turned on** — that is the founder's decision. |
 | WO-3 — tenant-isolation proof: the `app.current_org_id` distribution (`orgMembership` enrichment, token mint paths) | `…session_01J935DZwfFEardJCv85SJds` | **released** 2026-09-19 — question answered, degraded path pinned; the 230-route migration itself is NOT claimed |
-| IND eCTD demo path — JM's *"WO-09 Biotech IND eCTD Sequence Demo"*, **not** `WO-9-pilot-surface-lock.md` below (two work orders share the number). `server/services/ind-forms/*`, `server/routes/ind-forms.routes.ts`, `IndFormsPanel.tsx`, `AuthoringPlaceIntoFiling.tsx`, `ind-checklist-view-assembler.ts`, `scripts/seed/ga-demo.d/111-*`/`112-*`. Record: `docs/reports/wo9-phase1-ectd-unblock-2026-09-03.md` | `…session_01TtwRHmBMya3QTFCbFsBjoj` | **claimed** — row D7 (W5), evidence `docs/evidence/W5/2026-09-23-ind-ectd/`. Clicks 1–3 in human testing. Clicks 4–6 built 2026-09-23 (compile package + leaf hierarchy; named-rule dispatch readiness; next sequence, lifecycle view, eValidator report import). **Open, JM's decision:** how sequence 0000 becomes the filed prior that 0001's replace/delete bind against. **Blocked:** DTDs/ICH stylesheet (egress refused), ESG credentials, PDF/A toolchain. Record: report §19 |
+| IND eCTD demo path — JM's *"WO-09 Biotech IND eCTD Sequence Demo"*, **not** `WO-9-pilot-surface-lock.md` below (two work orders share the number). `server/services/ind-forms/*`, `server/routes/ind-forms.routes.ts`, `IndFormsPanel.tsx`, `AuthoringPlaceIntoFiling.tsx`, `ind-checklist-view-assembler.ts`, `scripts/seed/ga-demo.d/111-*`/`112-*`. Record: `docs/reports/wo9-phase1-ectd-unblock-2026-09-03.md` | `…session_01TtwRHmBMya3QTFCbFsBjoj` | **claimed** — row D7 (W5), evidence `docs/evidence/W5/2026-09-29-ind-ectd/`. Clicks 1–6 clicked in Chromium 2026-09-29 on a deploy-shaped build (install-fresh + deploy-migrate + one seed); 0000 and a rehearsal 0001 (withdrawal) exported, pointers verified from the ZIPs. Rehearsal binding delivered (JM, 2026-09-23). **Open, JM's decision:** how an approved document is revised so a `replace` can bind. **Blocked:** DTDs/ICH stylesheet (egress refused), ESG credentials, PDF/A toolchain, JM's eValidator run and recording. Record: report §20 |
 | W2 / D1 — Terraform to a booting task: B1 (`DATABASE_URL` is a JSON credential), B2 (illegal RDS name), B3 (task definition lacks the preflight's variables), B5 (health check calls `wget`). `terraform/environments/production/*`, `terraform/modules/{rds,secrets,ecs-fargate}/*`. Brief: `docs/evidence/W2/2026-09-23/README.md`. B4/B6/B7 go to the founder, not defaulted | `…session_013CtPf8pjozina2nVvDYkyB` | **blocked** on the founder, with everything provable offline done and pushed (`docs/evidence/W2/2026-09-23b/README.md`): B1–B3, B5 and eight more; the first-provision path; the GitHub deploy/build roles; the compliance-evidence module; the first-apply runbook (item 5). What D1 still needs is an AWS account, DNS/ACM, secret values and the apply, plus decisions B4, B6+B7, audit trail and storage. Also blocked: the lock file's other platforms (`registry.terraform.io` refused by this session's egress). Lane stays claimed for the apply follow-through |
 | **W2 / D1 — a deploy's migration does not stall the live application behind a lock, or hold one for a full scan.** `scripts/db/migration-set.mjs` (`applyMigrationFiles` and the lock-policy helpers only, not the file list), `scripts/db/deploy-migrate.mjs` step 3, the `cause` on `authoring-subsystem.mjs`'s rethrow, `tests/db/migration-lock-timeout.dbtest.ts`; next, the files that drop and re-add a validated foreign key on every replay (amended in place, Rule 1). Evidence `docs/evidence/W2/2026-09-25-migration-lock-timeout/` | `…session_013CtPf8pjozina2nVvDYkyB` | **claimed** 2026-09-26 — row **D1**. Done, each shown failing first: (1) lock waits: a request behind a replaying deploy waited 7721 ms against an 8 s reader, now 1985 ms (`docs/evidence/W2/2026-09-25-migration-lock-timeout/`); (2) a no-op deploy re-validated 14 constraints under lock (9 CHECKs incl. `c2c_documents`, 5 FKs to `organizations`), now 0, nine files amended in place; (3) the first deploy did not converge (`20260224_binder_evidence_source_types` ran before its table's creator); (4) every install from blank exited 1 since `ba797ca6d` (`public.users` flagged as a child of `organizations`), classified, not cleared — see the D3 item below. Gate `ci:replay-rebuilds-nothing` in the blank-DB job (`docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/`) |
 | W2 / D1 + D6 — B9: the ALB answers CloudFront alone (origin-facing prefix list + origin secret header), so `TRUST_PROXY_HOPS=2` records the user, and the CloudFront→ALB path works: origin certificate check, API 403/404 no longer rewritten to `200 index.html`, `/readyz` `/healthz` `/collab` `/scim/v2` the connector (`/mcp`, OAuth, `/.well-known`) routed to the ALB, deploy smoke test through the public URL and failing closed (audit SMOKE-01). `terraform/modules/{alb,cloudfront}/*`, the `smoke-test` job of `.github/workflows/deploy-aws.yml`. **Lines in the B1–B5 lane's files** (listed here for that lane, which this session had no way to message): `environments/production/main.tf` — the `alb` and `cdn` blocks and `trust_proxy_hops = 2` after `api_target_group_arn` in `ecs`; `variables.tf` — a validation inside `domain_aliases` and `cloudfront_origin_secret` appended at the end; `terraform.tfvars.example` — the secret note and `domain_aliases` | `…session_01GSjEDJLuZsEzPa9PnVg1yF` | **released** 2026-09-24 — done in code, not applied; evidence `docs/evidence/W2/2026-09-24-b9/`. Handed on: HEALTH-01's ALB half (target group `health_check.path`, `modules/alb`) to B5, whose change may edit that attribute; staging's `alb`/`cdn` composition to B8; domain, both certificates, the origin secret and `cloudfront:GetDistribution` on the deploy role to the founder |
@@ -62,7 +67,7 @@ to one line; edit only your own row to limit merge conflicts.
 | **D5 — every AnA turn is an immutable, chained, exportable record.** `migrations/20260926_ana_turn_records.sql`, `server/services/ana/turn-record{,-verify,-loop}.ts`, `server/routes/ana-ri/{stream,post-processing,turn-records}.ts`, the other loop doors (`chat/send-message.ts` loop call and response only — not the D4 lane's `searchHybrid` call; `ana-intelligence.ts` `/agent`; `ana-realtime.ts`), `chat-thread-helpers.ts` `deleteConversation` + both thread-delete routes, `lineage-dossier{,-xml}.ts`, client record line in `AnaActivity` / `useAnaChat`. Evidence: `docs/evidence/D5-ANA-RECORD/2026-09-26/` (live run, offline verifier, mutations) | `…session_01T2wooCZu46W7msw4TJuuzr` | **claimed** 2026-09-26 — slice 1 done (turn records on all four doors, read/verify/export, audited owner-only deletes); slice 2 (comments, quotes, suggestion accept/reject) next; hand-on to P0-8: add both tables to `APPEND_ONLY_TABLES` |
 | **D3 — atom search takes its tenant from the session, or does not run.** `enhancedEmbeddingService.searchHybrid`'s no-org branch ranks every tenant's `lumen_data_atoms` wherever RLS is not enforcing, and since the D4 fix (`881680d73`) it returns rows: Authoring's AI draft (`authoring.router.ts`) and deep research (`deep-research.ts`) call it with no key at all, `evidence-ask.ts` with an optional one. Also the nine client `x-org-uuid` fallbacks the D3 RAG row left to "their lanes", none of which is claimed: `ana-features.ts` ×5, `c2c/ai-editing.ts` ×2, `chat/send-message.ts` ×2. One scope-derived resolver in a new `server/db/currentTenant.ts`; cortex's local `sessionOrgUuid`, the derivation inside `advancedRAGPipeline.assertCallerTenantIsSession` (those lines only) and the unused `utils/tenantContext.getSecureOrgUuid` move onto it. Two-tenant dbtest, RLS on and off. Evidence: `docs/evidence/D3/2026-09-24-atom-search-tenant-key/` | `…session_01W5zW66wy5szuFwRQYUKmkE` | **released** 2026-09-24 — row **D3**, done; evidence as named (the old service served tenant B's atom to tenant A with RLS off; the fix holds with it off, 18/18). Recorded there, not edited — each an open finding for whoever takes it: six callers pass their similarity threshold as `semanticWeight`, so nothing filters by it; `ai-editing.ts` and deep research still show a failed retrieval as "no sources"; `middleware/tenantAuth.ts` admits by `x-tenant-id` header when there is no JWT user |
 | **D4 — the approved-model gate's free-text classifier sees only the field names it already knows.** The "For the model-governance lane" hand-on below: `FREE_TEXT_FIELD` is a fixed name list and the "every tool with a free-text input is classified" test draws its population from the same list, so a tool storing model-written prose under any other name (`summary`, `purpose`, `rationale`…) is never gated and never flagged. The population is re-derived from the schema, not the name list; every tool it surfaces is classified from its handler. `server/services/ana/governed-write-tools.ts`, `server/services/ana/__tests__/governed-write-gate.test.ts` only. Evidence: `docs/evidence/MODEL-GOVERNANCE/2026-09-24-free-text-classifier/` | `…session_01P7hJNw5CGQ3YC1p2QXuzzB` | **claimed** 2026-09-24 — row **D4** |
-| **D3 — the child scope runs after every table and parent policy the set creates.** Handed-on items 1 and 4 below ("Handed on by the install child-scope change"): `20260813_child_table_parent_scoped_rls.sql` runs mid-set, before the uuid half of the final pair policies `regulatory_harmonization.export_jobs`, and before every file a new migration is inserted as, so a child is unscoped until the second deploy. It moves into the isolation tail. Files: the entry's position and comment in `scripts/db/migration-set.mjs`, the tail check in `scripts/ci/check-migration-set-order.mjs`, the pair expectation in `tests/schema-contract/{uuid-tenant-isolation,c48-stage1-identity-org-bridge}.contract.test.ts`, a coverage check after the first deploy in `ci.yml`'s Blank DB job, and this lane's L201–L203 evidence and ledger text (the atom-search attribution). Evidence: `docs/evidence/D3/2026-09-24-child-scope-first-deploy/` | `…session_01GyGhjgjrNvxgwH4JhTMRZX` | **claimed** 2026-09-24 — row **D3** |
+| **D3 — the child scope runs after every table and parent policy the set creates.** Handed-on items 1 and 4 below ("Handed on by the install child-scope change"): `20260813_child_table_parent_scoped_rls.sql` runs mid-set, before the uuid half of the final pair policies `regulatory_harmonization.export_jobs`, and before every file a new migration is inserted as, so a child is unscoped until the second deploy. It moves into the isolation tail. Files: the entry's position and comment in `scripts/db/migration-set.mjs`, the tail check in `scripts/ci/check-migration-set-order.mjs`, the pair expectation in `tests/schema-contract/{uuid-tenant-isolation,c48-stage1-identity-org-bridge}.contract.test.ts`, a coverage check after the first deploy in `ci.yml`'s Blank DB job, and this lane's L201–L203 evidence and ledger text (the atom-search attribution). Evidence: `docs/evidence/D3/2026-09-24-child-scope-first-deploy/` | `…session_01GyGhjgjrNvxgwH4JhTMRZX` | **claimed** 2026-09-24 — row **D3**. **Taken over 2026-09-29 by `…01YZFCXR`** at the founder's direction: no commit to any of this row's files since the claim; see that session's row below |
 | **D8 — the connector admits accounts that are out of use, and its tokens open the whole API.** Review finding #6 and the D6 audit's P0-2 / IAM-02 parts (a) and (c): `verifyPlatformBearer` (the connector's one verifier, also the consent POST's) reads neither the revocation list nor `users.status`, and the code and refresh exchanges re-check membership only, so a suspended or deprovisioned account's refresh token mints access for 30 days; a connector-issued token is `type:'access'`, so `/api/*` and the sockets accept it as a full session whatever scope was consented. The canonical checks (`isTokenRevoked`, `isAccountActiveBeforeTenant`) are reused, not copied. `server/mcp/auth/{platform-token,provider,consent}.ts`, `server/middleware/tokenType.ts` (the token-class rule), `server/mcp/__tests__/*`, a new `server/mcp/__tests__/mcp-account-standing.dbtest.ts`. Not P0-2 (d), dynamic client registration (a founder decision, reported); (b) `requireScope` is reported, not edited. Evidence: `docs/evidence/D8/2026-09-24-account-standing/` | `…session_01JNRgCKWRqqJxZ1cJCyxoor` | **claimed** 2026-09-24 — row **D8**. **Widened 2026-09-25, same row:** driven over HTTP as the production runtime role, the connector cannot issue or read any grant — `mcp_oauth_authorization_codes`/`_refresh_tokens` are under the tenant sweep and `server/mcp/auth/store.ts` touches them in the pre-auth scope, so consent answers 500 ("new row violates row-level security policy") and no client can connect. The existing connector dbtest runs as a superuser and never drives consent. `store.ts` is added to this lane. Not `server/mcp/{config,index}.ts` (D6 P0-2d, `5c10785e`, last 24h) |
 | **D4 — the retrieval floor is applied, or not claimed.** Six callers of `enhancedEmbeddingService.searchHybrid` (`evidence-ask.ts`, `chat/send-message.ts`, `c2c/ai-editing.ts` ×2, `deep-research.ts`, `authoring.router.ts`'s AI draft) pass their similarity threshold (0.6–0.7) as the `semanticWeight` argument, so no floor is applied, weak atoms are cited as `[SRC-n]`, and `ai_retrieval_runs.threshold` records a floor that never ran. Founder's call 2026-09-26: precision first — enforce the configured floors on semantic similarity. `searchHybrid` takes named options so the slot cannot be misfilled. Evidence: `docs/evidence/D4/2026-09-26-retrieval-floor/` | `…session_01W5zW66wy5szuFwRQYUKmkE` | **released** 2026-09-26 — done; evidence as named. The floors (0.6–0.7) are enforced but not calibrated on a real corpus: tune `EVIDENCE_ASK_THRESHOLD` / `ANA_RETRIEVAL_THRESHOLD` and the 0.65 constants against one |
 | **D5 / D6 — P0-12 follow-ups: declining, the approve class, a red route test.** Claimed for the whole of part 2; the D6 lane's server half (`94036a27`) and client half (`c16fd78e`) landed while this lane built the same, so its duplicates were discarded — one implementation per capability — and only what the landed half lacked is kept: a decline that releases a held run (route and dialog), the approve class kept at the reason tier, the tenant-pinned route test the server half left red, and the approval frame built by the shared builder. Evidence: `docs/evidence/D6/2026-09-24-p0/P0-12/README.md` ("Follow-ups to part 2") | `…session_01471vSKg1KXj3ijXDiyvXGX` | **released** 2026-09-26 — done; open and handed on there: the five direct-mutator tools, prompts on the non-SSE chat paths |
@@ -84,10 +89,33 @@ to one line; edit only your own row to limit merge conflicts.
 - SEC-C-4 (`e8f448d1`); HS-C-3 (`146a6382`); A-C-2 (`88ef5f87`); A-C-5 (`8691cfe8`); A-C-8 (`a0bdfbf0`);
 - P11-C-4 (`8e72b9bf`, `d848acf3`); SEC-C-7 (`6b442012`); P11-C-2 (`fb69b716`).
 
-`…01KiDof7`'s same-day coverage-gap sweep fixed SEC-A-9 (`59b0d8f9`), part of HS-B-1 (`59b0d8f9`), and the protocol tab strip half of A-C-2 (`780a0639`). Its lane has no row here, and it works in this lane's files, so any further work in the editor family should be claimed first. Handed on: items 5–7 of this lane's list below. |
+`…01KiDof7`'s same-day coverage-gap sweep fixed SEC-A-9 (`59b0d8f9`), part of HS-B-1 (`59b0d8f9`), and the protocol tab strip half of A-C-2 (`780a0639`). Its lane has no row here, and it works in this lane's files, so any further work in the editor family should be claimed first. Handed on: items 5–7 of this lane's list below. **Second round, claimed 2026-09-28 18:00 (cold files only, none changed by another lane in 24 h):**
+  - SEC-C-4 (a) server half: `server/services/ana-ri/surface-context-block.ts`; the SEC-C-4 class in `client/src/concept2cure/v2/editor/askAnaToDraft.ts`;
+  - the SEC-C-7 follow-on: `C2CForm.tsx`, `ProtocolDevForms.tsx`;
+  - the P11-B-4 undo floor: `client/src/concept2cure/v2/editor/suggestions.ts`;
+  - the SEC-B-1/2 figure rule on the remaining writers: `server/export/authoring-images.ts`, `server/services/authoring/authoring-documents.ts`, `server/services/authoring/section-generation-service.ts`, `server/routes/batch-draft-routes.ts` (with the AI-authorship door there);
+  - NEW-P11-B-1a: `server/services/ingestion/ingestion-service.ts`;
+
+  **Corrected 2026-09-28 18:40:** as first pushed, this claim also listed
+  - SEC-A-10/B-5 (`hocuspocus-server.ts`), and
+  - P11-C-3-SNAP (`signature-persistence.ts`, `protocol-development-service.ts`).
+
+  Other lanes changed those three files minutes before the claim (`dd91ded4`
+  and `dc48d926` by `…01KiDof7`, `25cfc551` by `…01M8bGFS`), so they are not
+  claimed here. SEC-A-10/B-5 is handed on as item 12. P11-C-3-SNAP waits for
+  the holds to lapse.
+
+  Work in held files is handed on, or waits for the hold to lapse. |
 | **D7 / D5 — P11-28b: the Dispatch button is gated on a signature its own click creates.** From `docs/evidence/reviews/2026-09-28/ectd-lane-second-pass/part11-ux.md`. For IND / NDA / BLA / MAA the Submission Center's Dispatch button reads `gate`, which requires a release signature to already exist, and the signature it would accept is the one the click records — so no such sequence can be dispatched through the product's own screen, which D7's test sequence needs. Fix: the server states whether signing now clears the dispatch gate (the resolver's spine precedence lives there, and re-deriving it in the client is how P11-28a happened); the client reads that. `server/services/ectd/{assess-dispatch-readiness,release-signature-status}.ts` (the resolver's return and the assessment's verdicts only), `SubmissionSeqWorkspaces.tsx` (`DispatchWorkspace` only), their tests | `…session_01VB8JEGfy93uohAfBxSwmYx` | **released** 2026-09-28 — row **D7**. Done: server reports `dispatchGateOnSigning` (`composeStepVerdicts`, `signingNowResolvesRelease`), Dispatch reads it; 12 probes red-then-green (`docs/evidence/D7/2026-09-28-dispatch-reachable/`). Owed: a pglite sign→dispatch case for an IND |
 | **D5 — a quality-gating verdict is never chosen by an empty collection.** `server/services/qms/quality-gating-verdict.ts` (new: `assessSection`, `batchVerdict`, the one assessment both routes run), `server/routes/{tenant-quality-validation,quality-management-api}.ts` (validate-section, batch-validate, the plan dashboard, `GET /plans/:id` only), `client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx`, the two QMS entries in `scripts/ci/writerless-stores-baseline.json`, both quality API references. Closes the fail-open `7983d7299` handed to the QMS lane ("report 'not assessed'") and the three `= ANY(($1, …))` routes that always answered 500 | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done `da00b021a`: red 28/28 against HEAD and 20/28 against the first version (adversarially reviewed), green 28/28; client red 3/5, green 18/18. Evidence: `docs/evidence/D5-GOVERNED-PATH/2026-09-22/` (README "CI, 2026-09-23") |
 | **D5 — AnA's completion cascade commits its ledger rows with the completion.** `server/services/ana-ri/command-executor.ts` `updateTask`'s board block and `boardWriteWithLineage` only; `server/services/tasking/task-side-effects.ts` if a pool-client entry point is needed. The cascade AnA runs after `boardWriteWithLineage` COMMITs is on the pool with no ledger row for the dependents it unblocks; the HTTP routes already run it in the completion's transaction (`cascadeUnblockOnCompletionInTx`) | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: the cascade runs on the completion's transaction (`cascadeUnblockOnCompletionOnClient`), its rows after the completion's; red 2/2 on HEAD, green; the two older AnA task suites moved onto one pool fixture (`__tests__/pglite-pool.fixture.ts`). Evidence: `docs/evidence/D5/2026-09-28-ana-cascade-ledger/` |
+| **D5 — every task put on the board at project creation, or raised from a statistical assessment, has its task.create row.** `server/services/tasking/blueprint-milestones.ts` (new: the one blueprint-milestone seeder), the milestone block of `POST /projects` in `server/routes/concept2cure.ts`, `createTasksForDesign` in `server/services/biostatistics-bridge/bridge-service.ts`, its entry in `scripts/ci/discarded-audit-write-baseline.json`. Both wrote board tasks outside any transaction: the seeder with no ledger row at all, the bridge best-effort with the outcome discarded | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: one transaction each, every task with its row, all or none, nothing when the creator cannot be named; red 5/5 (seeder, HEAD's code), 1/1 (route), 4/4 (bridge), green 20/20. Evidence: `docs/evidence/D5/2026-09-28-task-create-ledger/` |
+| **D5 — approving or locking an artifact is an electronic signature.** The status route's review → approved and approved → locked (`server/routes/c2c/artifacts.ts`), `server/services/artifact-signed-act.ts` (new: the one transaction), `ARTIFACT_ACT_MEANING` in `server/services/artifact-approval-act.ts`, and the three suites that pinned the old contract. Taken over from `…01Wcyqbq` (handed on 2026-09-24, "Found by the vault re-baseline"; that lane's last commit was 2026-09-25 07:23) | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: the act's own meaning, re-authentication before any write, then status + version signed + ledger pair + signature (+ lock snapshot, provenance) on one transaction, only from the state the signer was shown; adversarially reviewed and its findings fixed; red 12/12 on HEAD, green 15/15. `concept2cure_signatures` append-only and `promote_artifact`: done 2026-09-29 (rows below). Evidence: `docs/evidence/D5/2026-09-28-artifact-approval-signature/`. The authoring-actions twins are handed on below (item 6) |
+| **D5 — an artifact's signatures and lock snapshots are append-only in the database.** `migrations/20260929_concept2cure_signatures_append_only.sql` (new, in the applier set), its four triggers in `EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS` (`server/services/audit/audit-immutability-triggers.ts`) and that registry's PGlite test, `docs/compliance/part11-immutability-record-class-policy.md`. Found by the review of the row above | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-29 — row **D5**. Done: UPDATE, DELETE, TRUNCATE and the cascade from artifact or version refused on both tables; no writer broken (census in the file); required at boot; red 10/11 with the migration emptied, green 11/11, applied twice on PostgreSQL 16. Evidence: `docs/evidence/D5/2026-09-29-artifact-signatures-append-only/` |
+| **D5 — promoting an artifact is not an approval, and is not recorded as a signature.** `server/services/ai-actions/handlers/promote-artifact.ts`, its entry in `scripts/ci/discarded-audit-write-baseline.json`, and the two suites that pinned the old status (`promote-artifact-approved-version.pglite.test.ts`, `artifact-approval-follows-status.pglite.test.ts`). Found by the review of the approval-signature row | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-29 — row **D5**. Done: promotion leaves the artifact's status unchanged and creates the document as a draft; its audit entry is `data_modify` / `artifact_promoted` (was `signature_apply`), outcome read. Red 8 on HEAD, green. Not fixed, recorded: no client sends `confirmApproval`, so "Promote to document" is refused from every surface (a dead control). Evidence: `docs/evidence/D5/2026-09-29-promotion-is-not-approval/` |
+
+| **D6 — sign-in limits are per account, and an office behind one address can sign in.** Hand-on "→ D6, unclaimed — the sign-in limiter counts per client IP, not per account" (validation package, 2026-09-27). Measured at HEAD before claiming: in production an office address gets **20** `/api/auth` requests per 15 min from the Redis `/api` limiter (every request counted; a sign-in is two), **10** from `auth.ts`'s login limiter and **10** from its MFA limiter (every request), and **5 failures** from the enterprise `/api/auth` limiter — so ~10 colleagues sign in per quarter hour and five mistyped passwords or expired-session 401s lock the address out. Plan: per-account throttling (the existing 5-failure lockout for passwords; a new per-account limit on wrong MFA codes, keyed by the verified challenge), per-IP counting failures only at a NAT-sized ceiling, no layer counting successful sign-ins; one `SIGN_IN_LIMITS` in `server/config/platform-limits.ts`. Files: `server/config/platform-limits.ts`, `server/routes/auth.ts` (limiter definitions only), `server/middleware/enterprise-security.ts` (the `auth` limiter's numbers), a new `server/middleware/sign-in-limits.ts`, tests. `redisRateLimiter.ts` is not edited (its `auth` numbers come from `platform-limits.ts`). Evidence: `docs/evidence/D6/2026-09-29-sign-in-limits/` | `…session_01PwLFr89hq8E7ZHUcAH96HK` | **released** 2026-09-29 — row **D6**, done (`c8fb0f36c`): per-account limits on failed passwords and wrong second-factor codes (`middleware/sign-in-limits.ts`), the address limited only on failures (enterprise `/api/auth` 5 → 50) and in volume (Redis `auth` 20 → 600 anonymous, 300 per credential, 3,000 credentialed per address); `SIGN_IN_LIMITS` in `platform-limits.ts`. Before 7/7 fail, after 7/7; mutation fails both per-account tests; live, one account ×15 from one address: before 200×10 then 429×5, after 200×15. Handed on: VSR-001 P-9's harness wait (validation lane) |
+| **D5 — a tracked-change decision names a section of its own document (item 13, SEC-A-7 second half).** Both decision routes in `server/routes/authoring.router.ts` (`POST /documents/:id/tracked-change-decisions` and `/bulk` only) and `server/routes/__tests__/authoringTrackedChangeDecisions.test.ts`. A `sectionId` that is not a section of `:id` in the tenant is refused 400 `SECTION_NOT_IN_DOCUMENT` before the row and the audit event; `changeType` is recorded only as `insertion` or `deletion`. Not the AI-authorship half (the verifier is `…01TTTQ1h`'s round 2). Also the server half of same-name members in pickers (`/api/task-management/assignees` carries the address; `taskBoard.routes.ts`). Evidence `docs/evidence/D5/2026-09-29-decision-section/` | `…session_01PwLFr89hq8E7ZHUcAH96HK` | **claimed** 2026-09-29 02:00 |
 
 If you are one of the sessions above, correct your own row. If a lane you want
 is claimed, take the next unclaimed finding in §3 rather than duplicating it.
@@ -100,7 +128,7 @@ adversarial skeptic; 2026-09-24). Every item below was upheld by its skeptic.
 Items in this lane's own code are fixed in this lane, not listed here.
 
 **→ `…01Wcyqbq` (launch-catalog follow-through, D2/D5/D6)**
-- `server/routes/c2c/artifacts.ts` status route writes Part 11 'approval'/'publish' signatures to `concept2cure_signatures` from the session alone (no re-verification); the printed signer name falls back to 'unknown'; the signature is not atomic with the status change and is skipped silently when no version row exists; the removal note and its pinning test say this router writes no signature substrate (false). The seal-verified route persists a client-supplied `signerRole`.
+- ~~`server/routes/c2c/artifacts.ts` status route writes Part 11 'approval'/'publish' signatures to `concept2cure_signatures` from the session alone (no re-verification); the printed signer name falls back to 'unknown'; the signature is not atomic with the status change and is skipped silently when no version row exists; the removal note and its pinning test say this router writes no signature substrate (false).~~ **Done 2026-09-28 by `…01P6GWSv`** (the claim was stale): re-authentication, the act's own meaning, one transaction, the note corrected; evidence `docs/evidence/D5/2026-09-28-artifact-approval-signature/`. Still open: the seal-verified route persists a client-supplied `signerRole`.
 - AnA `approve_qms_document` makes a QMS controlled document effective with no password/MFA, no signing-authority and no self-approval check; the QMS router accepts `status: 'effective'` directly on create and patch; three paths bypass the signed approval; two parallel QMS document-control backends, the guarded one unreached.
 - `AUTH_BOUNDARY_MODE=warn` is honoured in production: one env var turns default-deny off with an info log.
 - Submission Center shows a passing Validation gate when the readiness read fails.
@@ -157,13 +185,14 @@ Items in this lane's own code are fixed in this lane, not listed here.
 
 **→ D3 — `organizations` writes (from `…01J935DZ`, 2026-09-25)** — ~~handed on~~ **done 2026-09-26** by the same session; evidence `docs/evidence/D3/2026-09-26-organizations-writes/`.
 - ~~`public.organization_users` has no RLS at all.~~ **Done 2026-09-26** (`…01J935DZ`, evidence `docs/evidence/D3/2026-09-26-memberships/`).
-- **Open (D2/D3): accepting an invitation to another organization is broken under enforcement, before and after that change.** `organization_invitations` carries the FORCEd `tenant_isolation_policy`, so an invitee whose session is in X cannot read an invitation to Y (404). Needs a decision on how an invitee reads an invitation across tenants (a narrow definer lookup by token, or the platform scope for that one read).
+- ~~**Open (D2/D3): accepting an invitation to another organization is broken under enforcement, before and after that change.**~~ **Done 2026-09-28** (`…01YZFCXR`, evidence `docs/evidence/D3/2026-09-28-invitation-acceptance/`): a definer lookup narrowed to members of the calling scope's organization, then accept/decline in the inviting organization's scope. Originally: `organization_invitations` carries the FORCEd `tenant_isolation_policy`, so an invitee whose session is in X cannot read an invitation to Y (404). Needs a decision on how an invitee reads an invitation across tenants (a narrow definer lookup by token, or the platform scope for that one read).
 - **For the D6 password lane (`dd6632dd`): two fixture passwords are now refused** as built from the account's own words — `tests/db/signup-launch-catalog.dbtest.ts` (7 cases, a D2 contract, red since) and `tests/db/one-time-credentials.dbtest.ts` (1). Not edited here.
 - ~~**→ D3, unclaimed — `public.users` is readable from any tenant scope** (from `…013CtPf8`, 2026-09-26).~~ **Done 2026-09-28** (`…01YZFCXR`, evidence `docs/evidence/D3/2026-09-28-users-rls/`): RLS + FORCE on `public.users` (`migrations/20260928_users_membership_rls.sql`) — a tenant scope reaches only users with a membership in its organization; the pre-auth and system scopes keep the table; INSERT from any scope; `user_id_for_email()` (id only) for tenant-users' existing-account check. The `rls-coverage-check.sql` carve-out is removed, not reworded.
-  - **→ D3 / product, unclaimed — actor names outside the organization render null.** Display joins (`LEFT JOIN users` for an actor's name: audit-trail ledger, project owners, review assignees, `regulatory-programs.service.ts`, `ApprovalOrchestrator.ts`) now show no name for a former member or platform staff; `actor_id` is intact. Decide: snapshot the actor's name on the audit row, or an id→name resolver limited to actors of the tenant's own records. Not a cross-tenant `users` read.
+  - **→ D3 / product — actor names outside the organization render null.** Claimed 2026-09-29 (`…01YZFCXR`, row above; ledger done). Display joins (`LEFT JOIN users` for an actor's name: audit-trail ledger, project owners, review assignees, `regulatory-programs.service.ts`, `ApprovalOrchestrator.ts`) now show no name for a former member or platform staff; `actor_id` is intact. Decide: snapshot the actor's name on the audit row, or an id→name resolver limited to actors of the tenant's own records. Not a cross-tenant `users` read.
   - ~~**→ D3 — `platform_role_grants` writable from any tenant scope.**~~ **Done 2026-09-28** (`…01YZFCXR`, evidence `docs/evidence/D3/2026-09-28-platform-role-grants/`): a member's scope wrote itself `super_admin` and the Access Management console admitted it (200); now RLS + FORCE, reads open, writes platform scope only.
-  - **→ D3, unclaimed — `public.users`' other children carry no RLS:** `user_presence`, `notification_preferences`, `drafting_tasks` (exempt in `rls-coverage-check.sql` as user-keyed). Lower stakes than grants (no authority decision reads them); measure whether a tenant scope reads another tenant's user's rows before deciding.
-  - **→ D3, unclaimed — the pre-auth scope still reads every account.** Narrowing it means each pre-auth lookup (sign-in, reset, OTP, refresh) behind a function answering only what that step needs.
+  - ~~**→ D3 — `public.users`' other children carry no RLS.**~~ **Measured 2026-09-28** (`…01YZFCXR`): `drafting_tasks` was tenant content keyed by program, not user — **done**, scoped to its program (`docs/evidence/D3/2026-09-28-drafting-tasks/`). `user_presence` has no reader or writer anywhere in `server/`, `client/src/` or `scripts/` and 0 rows: nothing exposed today; **→ its first writer brings a policy.** `notification_preferences` is read and written only by `/api/users` (pre-auth mount, keyed by the verified token's user) and holds booleans, quiet hours and a time zone: recorded, not policied.
+  - ~~**→ D3 — the pre-auth scope still reads every account.**~~ **Mapped and the steerable handler fixed 2026-09-29** (`…01YZFCXR`, `docs/evidence/D3/2026-09-29-pre-auth-scope/`): no pre-auth handler can now be steered by request input to another user's row. **→ D3, unclaimed:** the structural narrowing (each pre-auth statement behind a function answering only what that step needs: by email, token hash or signed id), about 25 statements in `routes/auth.ts`, `routes/authEnterprise.ts` and three services; it would stop a future steerable handler at the database.
+  - **→ platform routes, unclaimed (not D3):** `GET /api/user/:id` (users.ts, registered first) captures `GET /api/user/preferences`; `notification_routes.ts:163` never runs.
 
 **→ Projects, unclaimed (D2)**
 - ProjectHome's "Dossier readiness" ring always shows 0%, contradicting the Projects list; the numeric readiness engine queries a column that does not exist. **Claimed 2026-09-24 by `…session_01KnUGoX3g4R4FWKWGc2sTbN` (row D2)**: the ring first (`server/routes/c2c/projects.ts` detail read, `ProjectHome.tsx`), then the engine's `project_id` query. Evidence `docs/evidence/D2-PROJECT-READINESS/2026-09-24/`. **Ring: done** (`61a7221d`). **Engine: deliberately NOT fixed; this needs a decision.** The missing column is what keeps an invented figure dark. With no twin assessment, `computeReadinessScore` scores consistency as the constant `70` and quality and compliance by heuristics (`estimateQuality`: 65 ± profile counts; `estimateCompliance`: 80 − risks). A program with no documents would read about 46. Today every call throws 42703 and all nine callers get null or an error (project-home, AnA context enrichment and orchestrator, next-best-action, RIM, intelligence routes ×2, AI editing ×2). Fix the query alone and they all publish that number. Before the query is fixed, the engine must either (a) report each dimension as null when not assessed, with no overall score unless every dimension has a real input, or (b) be retired in favour of the canonical readiness (`readinessByProject` / `readinessEvaluator`, which already says `assessed: false`). That is the re-baseline's "readiness built three times, all disagree", and it belongs to whoever owns project intelligence, or to the founder. Also in that function: `program_milestones.id` is a uuid mapped through `Number()`, so every overdue-milestone gap would carry NaN. The correct join, when it is time, is `projects.regulatory_program_id` (the anchor, `services/c2c/program-project-anchor.ts`). `recommendation-engine.ts:231-237` has the same query; its generator fails, is logged and skipped, and `program_milestones` has no writer, so it produces nothing either way.
@@ -309,8 +338,8 @@ tables as unbacked. Evidence: `docs/evidence/W1/2026-09-24-launch-reach/`.
 
 ### Handed on by the install child-scope change (`…01AiwZKG`), not edited
 
-1. **To the D3 lane: a blank database's first deploy leaves
-   `regulatory_harmonization.export_job_audit_log` unscoped (L203's table).** The
+1. ~~**To the D3 lane: a blank database's first deploy leaves
+   `regulatory_harmonization.export_job_audit_log` unscoped (L203's table).**~~ **Done 2026-09-29** (`…01YZFCXR`, `docs/evidence/D3/2026-09-29-child-scope-first-deploy/`): the child scope runs in the isolation tail, and CI checks coverage after the first deploy. Originally: The
    set creates its parent `export_jobs`, and the uuid half of the final sweep
    pair policies it. The child scope runs before that pair, logs "the parent is
    not scoped … skipping", and so the child is scoped only on the second deploy.
@@ -319,6 +348,12 @@ tables as unbacked. Evidence: `docs/evidence/W1/2026-09-24-launch-reach/`.
    A coverage check between CI's first and second `deploy-migrate` would catch
    this case and the whole class. Measured: after install, 0 rows; after one
    deploy, this 1; after two, 0.
+   Re-measured 2026-09-28 on a blank database with the `users` and
+   `platform_role_grants` policies in the set (`…01YZFCXR`,
+   `docs/evidence/D3/2026-09-28-drafting-tasks/green/from-blank.txt`): unchanged,
+   the same 1 row after one deploy and 0 after two. `tests/db` does not see it:
+   `child-table-parent-scoped-rls.dbtest.ts` re-applies the child-scope file to
+   the live schema, which heals the table before any later check reads it.
 2. **To the W2 schema-guards lane: the same shape in
    `20260828_drop_orphaned_org_guc_policies.sql`.** It drops an orphaned
    `*_org_policy` only where `tenant_isolation_policy` already exists, and on
@@ -341,7 +376,7 @@ tables as unbacked. Evidence: `docs/evidence/W1/2026-09-24-launch-reach/`.
    install. The schemas were identical to the passing runs (`pg_dump -s`). A
    forked chain is a Part 11 §11.10(e) finding, not a flake. Evidence:
    `docs/evidence/W2/2026-09-24-install-child-scope/README.md`.
-4. **To the D3 lane: `atom-search` is green.** L201 and L202 report 53/54 and
+4. ~~**To the D3 lane: `atom-search` is green.**~~ **Recorded 2026-09-29** (`…01YZFCXR`): confirmed 5/5; L201–L202 carry dated corrections. L201 and L202 report 53/54 and
    656/661, with `tests/db/atom-search.dbtest.ts` failing on "the pre-existing
    `search_atoms_hybrid` defect". That was fixed in `881680d73`, an ancestor of
    both commits. On a database built from blank at trunk it passes 5/5. The
@@ -587,7 +622,7 @@ the dead query — not a bulk listing. That is the next piece of this lane.
 
 Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
 
-1. **→ D6, unclaimed — the sign-in limiter counts per client IP, not per account.**
+1. ~~**→ D6, unclaimed — the sign-in limiter counts per client IP, not per account.**~~ **Done 2026-09-29** (`…01PwLFr8`, `c8fb0f36c`, `docs/evidence/D6/2026-09-29-sign-in-limits/`): per account, failures only; the address limited on failures and volume at office-sized ceilings.
    `loginLimiter` (`server/routes/auth.ts`, express-rate-limit, default key)
    allows ten password sign-ins per client IP in fifteen minutes, whoever
    signs in.
@@ -609,6 +644,22 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      belonging nowhere.
    - Not reviewed by this lane. `part11/resolve-signer-identity.ts` already
      reads the membership, and says why.
+   - **Measured 2026-09-29 (`…01PwLFr8`), not changed:** 26 references in 12
+     server files. The live sign-in paths fall back to the membership:
+     `auth.ts` login (`signInMembership`), the session read at `:762`, refresh at
+     `:1429`, `authEnterprise.ts` `:402`, and `resolve-signer-identity.ts`. The two
+     that treat such an account as belonging nowhere are not reached from the
+     client:
+     - `part11ComplianceService.checkAccessControl` filters on
+       `users.default_organization_id`, and has no caller anywhere in
+       `server/` or `client/`;
+     - `GET /api/users/:id` (`users.ts:747`) answers 404 across organizations
+       by the default organization, and nothing in `client/src` calls it.
+     `clients-routes.ts:116` counts a client workspace's "team members" by
+     default organization, which undercounts accounts added through user
+     administration, floored at 1. It is outside the launch catalog. Live, an
+     account added through user administration (the demo's second signer)
+     signs in, refreshes, signs SOPs and e-signs documents.
 3. **→ `…01KZK3jg` (AnA drive, `a75e3845`) and `…01VB8JEG` (`daae5ad4`), 2026-09-28
    — trunk's ESLint warning ratchet is over its baseline, so CI's Lint job is
    red and every job that needs it is skipped.**
@@ -688,6 +739,27 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      - In both routes (`coauthor.ts`, `ectd-documents.ts`), require
        `requireGovernedReason(req.body?.changeReason)`.
      - In `EctdCoauthor.tsx`, collect the author's reason before Save.
+   - **Status 2026-09-28 23:10 (re-checked at `3c87da01`: still open).**
+     - A second holder: `EctdCoauthor.tsx` is held by `…01PwLFr8` until
+       2026-09-29 11:44.
+     - **P11-B-3 folds in here.** The co-author canvas never reflects the
+       document's lock state: an approved row gets an enabled Save. It
+       needs the same two files. The server marks each row
+       `readOnly: isCoauthorVerdictStatus(status)`, and the client hides
+       Save and the reason field on a read-only row.
+     - **A hazard to handle in the same change:**
+       `coauthor_document_versions` references the document with ON DELETE
+       NO ACTION. Once an ordinary save writes a version row, deleting an
+       edited co-author document becomes a 500 unless the delete handles
+       it.
+     - **SEC-B-FO-b3:** `applyCoauthorDocumentPut` should also hold content
+       to the figure rule. It can use the sanitizer's `refusedFigures`,
+       with the module's own refusal shape. That covers both PUT routes
+       without editing `coauthor.ts`.
+     - If no lane has claimed this by the time the `coauthor.ts` hold lapses
+       (2026-09-29 02:15), `…01TTTQ1h` takes it back. It is the review's
+       only open blocker.
+     - Full triage: `docs/evidence/reviews/2026-09-28/editor-family/triage/coauthor-and-ribbon.md`.
 6. **→ `…01KZK3jg` (AnA drive; changed `DocumentWorkbench.tsx` at `a75e3845` and
    `df10de68`, 2026-09-28 01:16 and 01:58), until 2026-09-29 01:58 — the
    editor-family findings in `DocumentWorkbench.tsx`.** After that time, this
@@ -727,6 +799,34 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      - When an anchor is refused because the quoted words changed
        (`b43ec3af`), the host's "anchoring it…" toast gets no follow-up. Pass
        an `onAnchorRefused` in `commentsApi` and toast from it.
+   - **Added 2026-09-28 23:10 (round 2 triage; status of every item above:
+     `…/triage/handons-status.md`, where nothing is fully fixed yet):**
+     - **SEC-C-4 class, two workbench sites.** Each still sends stored text
+       as the person's own words:
+       - "Draft with AnA" splices the section title and code;
+       - "Ask what changed" splices the source title.
+
+       Use a fixed sentence ("Draft this section from the linked section
+       evidence.", as the editor itself sends) and carry the source as a
+       fenced fact. The empty state's "Ask AnA to draft" is fixed in the
+       helper (`f569d49d`). Its workbench test should also click it with a
+       planted program name.
+     - **P11-A-3 / P11-A-4.** The Sources rail's write controls stay live on
+       a frozen document. Add `|| docSealed` to their `disabled`, with the
+       Revert pattern's title. Its tooltip also claims a per-citation freeze
+       that nothing sets (router half: item 13).
+     - **P11-B-2, the client half.** Use the server's `access.edit` (item 13)
+       for `readOnly` and to gate Save, Draft with AnA, AI draft, rename,
+       reorder and Revert.
+     - **SEC-A-10, the client half:** `!docSealed` on the collab condition
+       (item 12).
+     - **NEW-AIACCEPT-POSTCOMMIT.** This is in the router, so it is in
+       item 13's file.
+       - `POST /sections/:id/ai/draft/accept` commits the content, then
+         writes its revision and its audit row on the pool after COMMIT. A
+         failed audit write answers 500 for content already saved, the
+         shape GE-P-1 removed from revert.
+       - Fix: move both writes inside the transaction.
 7. **→ The AnA lanes (`AnaToolExecutor.ts` changed by `…01KiDof7` at
    `41e7c539`), 2026-09-28 — SEC-C-5 (medium).** `update_protocol_section`
    records `fcoiReason(input, 'Protocol section edited via AnA')`: a reason
@@ -748,8 +848,22 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      loosening the assertion.
    - While this step is red, the Lint job fails. Every job that `needs: lint`
      then skips (Integration, Blank DB, Coverage), for every lane.
-9. **→ `…01PwLFr8` (the D2 launch sweep, `53237f62`), 2026-09-28 16:50 — trunk's
-   Lint job is red at `ci:tenant-entry-points`.**
+9. ~~**→ `…01PwLFr8` (the D2 launch sweep, `53237f62`), 2026-09-28 16:50 — trunk's
+   Lint job is red at `ci:tenant-entry-points`.**~~ **Done 2026-09-29** (`…01PwLFr8`,
+   `docs/evidence/W1/2026-09-29-trunk-ci-item9/`): the two `.crumbs .sep` rules are
+   one, and the gate was shown red before and green after. `.c2c-v2 .de-input[readonly]`
+   now has a muted stone fill, shown live on *Request a review* (5.25:1). The
+   entry-point half was already done in `8686a321`. **Status 2026-09-28 23:10:**
+   - The entry-point half is **done by this lane** (`8686a321`). The baseline
+     file is cold. The justification was re-read against `53237f62`, holds,
+     and carries a dated note.
+   - The CSS half below is **still red**. `app-v2.css` is held (`7b00c78d`),
+     so it stays with `…01PwLFr8`.
+   - Also for this lane, from this lane's SEC-C-7 follow-on (`e6822dac`):
+     `.c2c-v2 .de-input` (`journey-v2.css:490`, held by `53237f62`) has no
+     `[readonly]` rule. The reviewer name, now read-only, therefore looks
+     editable. Give `.c2c-v2 .de-input[readonly]` a muted background from
+     the stone tokens.
    - `server/routes/mdx-admin.ts` is a baselined entry point
      (`alternative-auth-router`). Its code changed in `53237f62` (the Part 11
      console's chain verdict) without the justification being re-read, so the
@@ -758,6 +872,241 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      code, and only if it still holds, refresh the digest with
      `npm run ci:tenant-entry-points:write-baseline`. That judgement is the
      lane's that changed the router.
+   - Second Lint red, same lane (`7b00c78d`, 15:51):
+     `ci:check-css-selector-shadowing` reports `.c2c-v2 .crumbs .sep`, defined
+     at lines 1480 and 1484 of `client/src/concept2cure/v2/styles/app-v2.css`.
+     The later rule silently wins. The fix is to merge the two declarations into
+     one rule.
+10. ~~**→ `…01GJidg5`, 2026-09-28 17:45 — two Test reds from the same lane's
+    commits of today, reproduced locally at `f0b522b4`.**~~ **Done 2026-09-28
+    23:10 by this lane (`20f237ca`).** Both test files are cold. The lane had
+    been quiet since 18:54, and the reds skipped the Test job for every lane.
+    Each fix was shown failing first, with a mutant; evidence is in
+    `docs/evidence/W3/2026-09-28-trunk-ci/` (second pass).
+    - `tests/governed-decision-db-integration.test.ts`, 2 tests, fails with
+      *"decisionRecordService.getByDecisionCode is not a function"*.
+      - `resolveGovernedDecisionRow` (`governed-decision-ledger.ts:94`) now
+        looks a decision up by its code first.
+      - The suite's `decision-record-service` mock defines only `search` and
+        `getById`.
+      - Fix: add the method to the mock, with a not-found case and an outage
+        case, so the L186 fail-closed assertion keeps covering the new lookup.
+    - `client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx`, 2 tests in
+      "CmQcTesting — recording and second-person review": the recorded rows
+      (`S-1`, `S-2`) are no longer rendered.
+      - Since `288411a4` (16:21), a CMC register lists the open program's rows
+        only.
+      - The fixture's rows need the program the test opens.
+11. ~~**→ `…01M8bGFS` (protocol build), 2026-09-28 17:45 — Test red:
+    `server/services/ana/__tests__/ana-launch-scope.test.ts` › "classifies every
+    enabled tool".**~~ **Done by `…01KiDof7`, `759049b5`.** Green at `1f5c009b`.
+    - 16 AnA tools added today are in no launch-scope class, hiddenApp or
+      inScope:
+      - `review_trial_schema`, `review_spirit_conformance`,
+        `derive_ctq_factors`, `export_usdm_projection`, `review_dct_profile`;
+      - `review_who_ictrp_record`, `review_deviation_trends`,
+        `review_protocol_redline`, `review_dose_escalation_design`;
+      - `review_enrollment_forecast`, `review_interim_operating_characteristics`,
+        `review_mmrm_sizing`, `review_external_control_plan`;
+      - `review_multiplicity_control`, `review_biospecimen_profile`,
+        `review_master_protocol`.
+    - Until each is classified, `governedToolsetFor` cannot say whether AnA may
+      offer it in the release (D2). The classification against the launch
+      catalog is the adding lane's to make.
+12. **→ `…01KiDof7` (holds `server/services/hocuspocus-server.ts` since
+    `dd91ded4`, 2026-09-28 17:32), 2026-09-28 — SEC-A-10 / SEC-B-5: the live
+    co-editing room authorises by tenant only.** Medium while co-editing is
+    off (both flags are off in every configuration found). It is a blocker the
+    moment `ENABLE_COLLAB_CRDT` is set; CloudFront already routes `/collab` to
+    the ALB.
+    - **What happens.** `authorizeResource` (`collab/collab-authorization.ts`)
+      checks that the document or section belongs to the tenant, and nothing
+      else. So:
+      - a tenant member with no grant gets a read-write room;
+      - a VIEWER grant gets a read-write room;
+      - a FROZEN or APPROVED document, or one with `locked_at`, is writable
+        through the room, and `onStoreDocument` persists it with no seal
+        check.
+
+      The HTTP twin refuses all three: `canEditSection` and
+      `authoringObjectAuthorization`.
+    - **Fix (triage, read-only, verified against the code):**
+      - **`authorizeResource(resource, tenantId, principal)`.** It returns
+        `read-write | read-only | denied | unavailable`:
+        - resolve the scope with `resolveAuthoring{Section,Document}Scope`;
+        - refuse when `scope.docId !== resource.documentId`;
+        - require `decideAuthoringPermission` 'view';
+        - it is read-write only when 'edit' is allowed AND
+          `check{Section,Document}Writable` passes.
+      - **In `hocuspocus-server.ts`:**
+        - build the principal the way HTTP does
+          (`expandRoleClaims(payload.role, payload.roles)`);
+        - `denied` and `unavailable` are refused;
+        - `read-only` sets `connectionConfig.readOnly`, and is refused when
+          the connection cannot be downgraded;
+        - `onStoreDocument` re-checks `checkDocumentWritable` before
+          `storeCollabState`.
+      - Your `dd91ded4` already closed the non-integer-subject skip at
+        admission and the periodic re-check (IAM-19).
+    - **Test first:** `collab-governance.pglite.integration.test.ts`. Also
+      apply `20260727_authoring_object_permissions.sql`, and seed an AUTHOR
+      grant for the two existing "admits…" cases. These cases are red at
+      HEAD:
+      - a member with no grant is refused;
+      - a VIEWER grant opens read-only;
+      - a FROZEN document is read-only even for its OWNER;
+      - a revoked grant is refused.
+    - **Client half, in held files; the same hold rule applies:**
+      - `DocumentWorkbench.tsx`: `collab={liveCoedit && activeDoc && !docSealed …}`.
+      - `RichSectionEditor.tsx` `onSynced`: when the room is non-empty,
+        compare it with the stored record through the same schema before
+        saying "All changes saved". If they differ, stay dirty and say the
+        live session holds text that is not in the saved section.
+13. **→ `…01KiDof7` and `…01PwLFr8` (hold `server/routes/authoring.router.ts`;
+    `d4176395`, `f0147f45`, until 2026-09-29 17:05), 2026-09-28 — the
+    editor-family findings whose fix is in the authoring router.** After
+    that time this lane takes back whatever is still open, as with item 6.
+    Evidence and the fix for each item:
+    `docs/evidence/reviews/2026-09-28/editor-family/`.
+    - **SEC-A-7 / SEC-B-7 (high): AI authorship is a client claim the ledger
+      records as fact.** The section PATCH takes contributor and origin from
+      the body.
+      - The verifier now exists: `server/services/authoring/machine-claim-verify.ts`.
+        It landed with the batch-draft door in this lane's round 2. It checks
+        a claimed machine text against the tenant's immutable
+        `ana_turn_records`.
+      - The fix is for the PATCH to call it: an unverified claim is saved as
+        the saver's own text, with the claim and reason disclosed.
+      - ~~Also, a tracked-change decision's `sectionId` must be a section of
+        `:id`, refused otherwise with 400 `SECTION_NOT_IN_DOCUMENT`.~~ **Done
+        2026-09-29** (`…01PwLFr8`, `docs/evidence/D5/2026-09-29-decision-section/`):
+        both decision routes check the section after the lock and before any
+        write, using a uuid guard and then a tenant-scoped lookup, and
+        `changeType` is recorded only as `insertion` or `deletion`. The before
+        and after runs were live, and five mutants each turn the suite red.
+      - **Status 2026-09-29 02:30 (`…01PwLFr8`):** `machine-claim-verify.ts` is
+        **not on trunk** at `081317f42`. No file is tracked, and nothing uses its
+        reason codes. It was not built here because this lane's round-2 claim
+        names it.
+    - **SEC-B-FO-b2: the figure rule (`ce56754d`) is not applied on three
+      router writers.**
+      - AI draft accept: the one real bypass of the PATCH's refusal.
+      - Revert: restoring a revision can put a refused image back.
+      - POST /templates.
+      - Use the sanitizer's `refusedFigures`, with one refusal shape.
+    - **SEC-B-3, server half: an anchor-only save is not checked to change
+      only the anchor.** The client half is fixed (`b43ec3af`). When
+      `changeReason` is "Comment anchor applied", the server should refuse a
+      body that changes anything but new `data-comment-id` marks. A
+      mark-signature prototype passes 8 of 8.
+    - **SEC-A-FO-c: freezing a document never sets
+      `authoring_citations.frozen_at`.** The fix sets it at the three seal
+      points, on the transaction client, with the count in each seal's audit
+      details. The helper goes in `source-usage.service.ts`.
+    - **P11-B-2: the editing ribbon is offered to people the server will
+      refuse.** Add `edit` to `callerDocumentAccess`, as GE-P-3 did for its
+      acts, and per section. The client half is in `DocumentWorkbench.tsx`
+      (item 6).
+14. **→ `…01KZK3jg` (AnA drive; holds `server/routes/ana-ri/stream.ts` since
+    `baa6a7e8`, 2026-09-28 19:17), 2026-09-28 — the screen state that
+    surfaces publish to AnA reaches no model.**
+    - `useAnaChat.ts` sends `module_context` on every turn. The server
+      renders it only in `buildSurfaceContextBlock` (the "OBSERVED SCREEN
+      STATE" fence), called only from `buildChatContext`
+      (`chat-context-builder.ts:327`). `buildChatContext` has no production
+      caller: its only reference is a test mock.
+    - `stream.ts` destructures no `module_context`, although it does render
+      the route and authoring blocks (`:821`, `:871`).
+    - So `ci:ana-surface-context`, which passes while every routable surface
+      publishes screen state, holds 114 surfaces to a contract whose output
+      reaches no model.
+    - Found by the adversarial reviewer of this lane's SEC-C-4 (a) server
+      half, and confirmed by grep at `37f21ed0`.
+    - **Fix:** read `module_context` in `stream.ts` and append
+      `buildSurfaceContextBlock(module_context)` to the volatile suffix beside
+      the route block. It is already fenced, capped and labelled untrusted.
+      Then retire `buildChatContext` or wire it, and correct its docblock
+      ("Both endpoints call buildChatContext()").
+    - The SEC-C-4 (a) client half (`useAnaChat.ts`, `useAnaChat.types.ts`,
+      `RichSectionEditor.tsx`, and `DocumentCanvas`, which the completeness
+      critic found as a fourth host) depends on this wiring. Until it lands,
+      a fenced `selection` field is rendered by no live path.
+15. **→ `…01M8bGFS` (protocol build; every file below changed by it on
+    2026-09-28), 2026-09-28 23:30 — a read-only review of the protocol
+    industry engines, re-checked at `1f5c009b` after the lane's evening
+    fixes.**
+    - Filed:
+      - `docs/evidence/reviews/2026-09-28/editor-family/triage/new-protocol-build.md`:
+        the review at `3c87da01`;
+      - `…/triage/new-protocol-build-recheck.md`: the status at `1f5c009b`,
+        each original probe re-run with `tsx`.
+    - Closed:
+      - PB-3, by `1ccf2f11`;
+      - PB-9, by `759049b5` (`…01KiDof7`);
+      - PB-2's substance: an allocation above alpha is now a gap, and the
+        recorded allocation is what is simulated.
+    - **Open, the lane's to fix:**
+      - **PB-1 (high): unbounded synchronous CPU on the event loop.** Any
+        authenticated user can reach it, a viewer included, through
+        `POST /api/study-design/<engine>`, `GET /:id/<engine>` and the AnA
+        review tools. Interim OC, BOIN and part of enrollment are now capped
+        (`85d7ce56`, `f4833a2d`). Still open:
+        - **Multiplicity.** There is no family limit, and `study-design.ts:107`
+          endpoints has no `.max`: 3,000 endpoints take 20.5 s. It is also a
+          **new regression from `1ccf2f11`**: the recorded-allocation path
+          copies the m×m matrix on every simulation, so 800 endpoints (76 KB)
+          take 30 s.
+        - **MMRM.** The cap is on `/planning` only. The engine has none, so a
+          design saved through `/persist` with 400 visits costs 22 s on every
+          GET and every AnA call.
+        - **Enrollment.** The work budget ignores the fixed cost of each
+          arrival: 100,000 patients at one site (a 176-byte body) take 17 s,
+          where the comment promises 1–2 s.
+        - `industryRead` holds a pooled connection in an open transaction for
+          the whole computation (`AnaToolExecutor.ts:20854`).
+      - **PB-7 (high): the governed `/planning` write keeps no before-image.**
+        The payload is `{studyId, block, cleared}`, and the prior value is
+        compared (`STALE_BLOCK`) but never stored. The same applies to the
+        prior `metadata.design` on `/persist`.
+      - **PB-8 (medium): a finalized protocol stays bound by reference to a
+        design that is still writable.** `readBoundDesign` reads no status
+        and no `updated_at`, and neither `/planning` nor `/persist` checks
+        for a finalized binding.
+      - **PB-4 (medium), case (a):** a pk, pd or biomarker activity with no
+        specimen still leaves the totals unmarked as lower bounds, so the
+        screen prints "within" for a total that is not known.
+      - **PB-5 (medium):** redline, deviation trends and protocol-scoped
+        SPIRIT still have no UI, and `README.md:34-36` still says all sixteen
+        engines are in the pane.
+      - **PB-6 (medium):** the projections pane still has no request token.
+        A slow response renders, and downloads, under a later projection's
+        label.
+      - **PB-2, wording only:** "controlled at alpha" is a weak-control
+        simulation under the global null, and the screen does not say so.
+      - **Lows:**
+        - PB-10: the ratingFrom provenance copy;
+        - PB-11: "no RNG" at `protocol-industry-tool-defs.ts:9-10`;
+        - PB-12: no §0 claim row naming the D-row and where the Rule 2
+          exception is recorded;
+        - PB-13: React key collisions, now reachable because duplicate ids
+          are listed.
+      - **Documentation drift in `tool-authorization.register.json`**
+        (`05286bf0`), from this lane's NEW-P11-B-1a fix, when it lands. In
+        `classify_submission_document`, `site` and `writes` should name the
+        verdict-row rule and the `coauthor_document.updated` event.
+16. **→ `…01KiDof7` (`80cbd718`, 18:00), 2026-09-28 23:40 — trunk's Lint job
+    is red at `ci:org-path-param-guards`.**
+    - `DELETE /gdpr/:orgId/data-subject/:dataSubjectId`
+      (`server/routes/global-compliance.ts`) was retired to a 410 that erases
+      nothing and names the signed path. It no longer calls `enforceOrgScope`,
+      so the gate reports an unguarded org path parameter.
+    - It reads no org data, so this is harmless in effect. But the gate is
+      red for every lane.
+    - Either run `enforceOrgScope(req, res, orgId)` before answering 410,
+      which is cheap and keeps the rule without exceptions, or record the
+      stub as a reviewed exception.
+    - Reproduced by this lane's local Lint job at `d73b215d`. Its other three
+      reds are items 8 and 9 and the D5 lane's item 4.
 
 ### Found by the D5 lane's CI check (`…01P6GWSv`, 2026-09-28) — handed on
 
@@ -783,6 +1132,120 @@ in all of them. Reproduced locally at `6bd237ca9`.
 3. **Coverage (ratchet)** fails only because the coverage run fails on (1).
    Blank DB's `ci:purge-coverage` is item 4 of the hand-ons above
    (`ana_turn_records`).
+4. **→ The lane that added `server/routes/study-design-planning.ts`
+   (`dd52716ed`, 2026-09-28 17:00, inside its window).**
+   `node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression` fails:
+   *"1 NEW route(s) on the shared pool above baseline of 229 … New
+   tenant-facing routes must use requestDb(req): server/routes/study-design-planning.ts"*.
+5. **→ Whoever owns project rules (Projects), found by the D5 lane, not fixed:
+   the rules engine cannot create a task, and could not record one if it did.**
+   - `POST /api/project-rules` (`server/routes/project-rules.ts:159`) binds
+     `JSON.stringify(data.tags)` to `project_rules.tags`, a `text[]`. Postgres
+     refuses both `'[]'` and `'["a"]'` (*malformed array literal*), so no rule
+     can be created and none exists on a deployed database. It is the table's
+     only writer. It also never sets `created_by_id`, and rule create, update
+     and delete write no audit row.
+   - The rules engine's `create_task` (`server/services/rules-engine/actions/index.ts:82`)
+     inserts `status 'todo'`, outside `TASK_STATUSES`. It inserts
+     `module_type = params.moduleType || null` against a `NOT NULL` column,
+     and both shipped templates (`project-rules.ts:527,571`) omit `moduleType`.
+     It writes no `task.create` row. No emitter passes a `userId`
+     (`projects-management.ts:315,480,487`, `sentinel/scheduler.ts:171`), so
+     there is no actor to record.
+   - Before this path is revived, a rule needs a recorded author to attribute
+     its actions to, and `create_task` needs the pattern
+     `tasking/blueprint-milestones.ts` uses: the insert and its row on one
+     transaction, and nothing written when no one can be named.
+6. **→ `…01GJidg5` (`server/routes/authoring-actions.ts`, touched 2026-09-28
+   18:28, inside its window).** `/api/authoring-actions/approve-artifact` and
+   `/lock-artifact` record an approved or locked version with no signature at
+   all. The status route now signs both acts, so these are the one API path
+   around the ceremony (no client calls them). Route each through `verifyReauth`
+   and `commitSignedArtifactAct` (`server/services/artifact-signed-act.ts`),
+   or refuse them. `server/routes/__tests__/lockArtifactCoversApproval.test.ts`
+   pins their current behaviour.
+7. **→ `…01GJidg5` (`cmcRegisters.tsx`, `288411a4e`, 16:21).** Trunk CI 12615:
+   `client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx` ›
+   CmQcTesting fails 2/2 locally at HEAD. *"a review PUTs the disposition and
+   the reviewer"* and *"refuses to let the analyst review their own result"*
+   both wait for `S-2` and find *"No QC testing records yet"*.
+8. **→ `…01KiDof7` (`server/routes/global-compliance.ts`, `80cbd718a`, 18:00).**
+   Trunk CI 12615 fails on this file in two places:
+   - `npm run ci:org-path-param-guards` fails on it.
+   - `tests/artifact-change-invalidates-bundles.contract.test.ts` fails with
+     *"BACKSTOP_ONLY lists files that no longer write those columns; remove
+     them"*, naming this file.
+9. ~~**→ `…01PwLFr8` (`f0147f452` / `7b00c78de`).** Trunk CI 12615 fails two
+   gates on this session's files:~~ **Done 2026-09-29.** `ci:tenant-entry-points`
+   was fixed in `8686a321`. The CSS shadowing is fixed; see the validation-package
+   section's item 9 and `docs/evidence/W1/2026-09-29-trunk-ci-item9/`.
+   - `ci:tenant-entry-points` fails because `server/routes/mdx-admin.ts`
+     changed since its justification.
+   - `ci:check-css-selector-shadowing` fails on
+     `client/src/concept2cure/v2/styles/app-v2.css`: `.c2c-v2 .crumbs .sep` is
+     defined at lines 1480 and 1484.
+10. **→ `…01KiDof7` (`server/services/ana-ri/command-executor.ts`, `dc48d9264`,
+    17:32, inside its window). Found by the review of the artifact approval
+    signature.** AnA `update_artifact_status` (`command-executor.ts:818`) sets
+    an artifact approved or locked with a reason only. It is not in
+    `PART11_ESIGN_COMMANDS` (`part11-governance.ts:88`). It records no
+    version, so the result is not filable. But after a signed approval it can
+    lock the artifact with no re-authentication, no release signature and no
+    snapshot, and the artifact then reads as locked. Make approve and lock
+    e-signature-tier, or refuse them and name the status route, which now
+    signs both (`server/services/artifact-signed-act.ts`).
+11. **→ `…01YZFCXR` (the D3 lane; `migrations/20260928_invitations_for_member.sql`,
+    `7347a3e2f`, 2026-09-28 18:22).**
+    `tests/schema-contract/tenant-isolation-sweep.contract.test.ts` › "C-33: the
+    batch applies in set order, twice, and ends fully isolated" fails at pass 1
+    on this file: *"relation public.organization_invitations does not exist"*.
+    A database the set builds does not have the table when the file runs.
+    Guard the statement on `to_regclass('public.organization_invitations')`
+    or move the file after the table's creator. The replay stops here, so no
+    file after it is exercised by that contract.
+
+### Found by the D6 owner-grant change (`…01PwLFr8`, 2026-09-29) — handed on
+
+1. **→ W2 / D1, the Terraform lane (`…013CtPf8`, `terraform/stack/*`): a
+   production deployment cannot name its first owner.**
+   - Since `d57bff619` (`docs/evidence/D6/2026-09-28-owner-grant/`) there is no
+     owner address in source. Platform administration and the owner grant come
+     from two places only:
+     - the `PLATFORM_ADMIN_EMAILS` and `MASTER_ADMIN_EMAILS` allowlists
+       (`requirePlatformAdmin.ts`, `master-admin.ts`);
+     - an in-app `super_admin` designation in Master Administration → Access
+       Management.
+   - The designation needs a Business Center administrator to grant it:
+     `BUSINESS_CENTER_EMAILS` or a business role (`requireBusinessAdmin.ts`).
+   - `terraform/stack/main.tf` `boot_environment` passes **none of the three**.
+     So a stack Terraform provisions boots with no platform administrator, no
+     owner and no Business Center administrator, and nobody can grant one in the
+     app.
+   - Setting them by hand on the task definition lasts until the next apply.
+   - Suggested fix: add a variable `platform_owner_emails` (a list of strings,
+     default `[]`, each validated lowercase), joined with commas into
+     `PLATFORM_ADMIN_EMAILS` and `MASTER_ADMIN_EMAILS`. Add
+     `business_center_emails` into `BUSINESS_CENTER_EMAILS` the same way.
+     Assert them in `tests/boot_contract.tftest.hcl`.
+   - Whether the deploy preflight should *require* a non-empty owner list is
+     the founder's decision (fail-closed to boot vs. fail-closed to
+     administer).
+   - Not done here: the provider registry is unreachable from this session, so
+     `terraform validate` and `terraform test` cannot run. The files are that
+     lane's.
+   - **Latent, for whoever owns `requireBusinessAdmin.ts` (not exploitable
+     today, measured 2026-09-29):**
+     - `isBusinessAdmin` admits a `req.userRole` of `owner`, `business_admin`
+       or `super_admin`. `req.userRole` is the **tenant membership** role
+       (`organization_users.role`, `auth.ts:262`), while the Business Center
+       is platform-wide.
+     - No writer produces those values today. SCIM and `tenant-users.ts`
+       enumerate `admin|manager|member|viewer`, and sign-up, setup, SSO and the
+       default-org seed write `admin` or `member`. But the column has no
+       CHECK.
+     - So the first writer that accepts `owner` for a tenant opens every
+       client's financials to that tenant. Read platform standing from
+       `platform_role_grants` and the allowlist only.
 
 ## 1. The rules come first
 

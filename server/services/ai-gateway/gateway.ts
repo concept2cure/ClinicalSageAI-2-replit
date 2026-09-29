@@ -110,6 +110,12 @@ import {
 import { Semaphore, resolveMaxConcurrency } from './concurrency.js';
 import { apiEffortForModel } from './effort.js';
 import { GatewayStreamStalledError, watchStreamForStall } from './stream-stall.js';
+import {
+  PROGRESS_UPDATES_BETA,
+  ProgressNotes,
+  addBetaHeader,
+  wantsProgressUpdates,
+} from './progress-updates.js';
 const log = createScopedLogger('ai-gateway');
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -185,6 +191,10 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     supportsSamplingParams: false,
     supportsInlineSystem: true,
     supportsStructuredOutputs: true,
+    // A note longer than a sentence or two between tool calls — a demo's
+    // talking point — comes back as a progress-update thinking block, not
+    // text (progress-updates.ts).
+    progressUpdatesInThinking: true,
     // 1M window. It read 200000 for every Claude entry, which is the Claude 3
     // figure. Under-declaring it is the harmful direction for the admission
     // gate (see context-budget.ts): the gate refuses a request the model would
@@ -2255,6 +2265,10 @@ export class AIGateway {
         // that only the legacy surface below consumes. Summarized display keeps
         // the reasoning stream visible to the client on the SSE path.
         params.thinking = { type: 'adaptive', display: 'summarized' };
+      } else if (wantsProgressUpdates(modelConfig, request)) {
+        // Its notes between tool calls come back as thinking blocks, empty
+        // under the default display (progress-updates.ts).
+        params.thinking = { type: 'adaptive', display: 'updates' };
       }
       return;
     }
@@ -2430,6 +2444,8 @@ export class AIGateway {
     // both from clobbering each other.
     const reqOptions: Record<string, unknown> = {};
     if (usesFilesApiDoc) reqOptions.headers = { 'anthropic-beta': 'files-api-2025-04-14' };
+    const notes = new ProgressNotes(wantsProgressUpdates(modelConfig, request));
+    if (notes.active) addBetaHeader(reqOptions, PROGRESS_UPDATES_BETA);
     if (request.signal) reqOptions.signal = request.signal;
 
     const response = await Promise.race([
@@ -2461,7 +2477,7 @@ export class AIGateway {
 
     for (const block of response.content || []) {
       if (block.type === 'text') {
-        content += block.text;
+        content += notes.text(block.text, content);
         for (const raw of ((block as any).citations || []) as any[]) {
           const citation = normalizeCitation(raw);
           if (citation) nonStreamCitations.push(citation);
@@ -2469,7 +2485,9 @@ export class AIGateway {
       } else if (collectServerToolBlock(block, nonStreamServerTools)) {
         // Recorded by the collector; nothing further to accumulate here.
       } else if (block.type === 'thinking') {
-        thinking += (block as any).thinking || '';
+        // Under display "updates" a thinking block is a note, not reasoning.
+        if (notes.active) content += notes.note((block as any).thinking || '', content);
+        else thinking += (block as any).thinking || '';
       } else if (block.type === 'tool_use') {
         toolUses.push({
           id: (block as any).id,
@@ -2639,6 +2657,10 @@ export class AIGateway {
     if (streamUsesFilesApiDoc) {
       streamOptions.headers = { 'anthropic-beta': 'files-api-2025-04-14' };
     }
+    // Notes between tool calls, on a model that returns them as thinking
+    // blocks, are read out as text (progress-updates.ts).
+    const notes = new ProgressNotes(wantsProgressUpdates(modelConfig, request));
+    if (notes.active) addBetaHeader(streamOptions, PROGRESS_UPDATES_BETA);
     // Aborting the SDK request is what actually stops GENERATION. Without it
     // a stop only stopped us reading, and the model ran to completion at full
     // cost — which is what stream.ts's own comment used to say.
@@ -2710,9 +2732,12 @@ export class AIGateway {
 
         if (event.type === 'content_block_delta') {
           if (event.delta?.type === 'text_delta') {
-            content += event.delta.text;
-            onStream(event.delta.text, { type: 'text' });
-          } else if (event.delta?.type === 'thinking_delta') {
+            const text = notes.text(event.delta.text, content);
+            content += text;
+            onStream(text, { type: 'text' });
+          } else if (event.delta?.type === 'thinking_delta' && !notes.took(event.index, event.delta.thinking)) {
+            // Reasoning. A note's fragment was taken by `notes`, to be shown
+            // as her words when its block closes.
             thinking += event.delta.thinking;
             onStream('', { type: 'thinking', thinkingContent: event.delta.thinking });
           } else if (event.delta?.type === 'citations_delta') {
@@ -2727,12 +2752,18 @@ export class AIGateway {
           }
         } else if (event.type === 'content_block_start') {
           openContentBlock(event, toolUses, toolInputBuffers, serverToolUses);
+          notes.opened(event.index, event.content_block?.type);
           if (event.content_block?.type === 'text') {
             openTextBlocks.add(event.index);
             stall.writing(true);
           }
         } else if (event.type === 'content_block_stop') {
           if (openTextBlocks.delete(event.index)) stall.writing(openTextBlocks.size > 0);
+          const note = notes.closed(event.index, content);
+          if (note) {
+            content += note;
+            onStream(note, { type: 'text' });
+          }
           // The block is closed, so its fragments are now a complete JSON
           // document — parse it onto the tool use it belongs to.
           const buffered = toolInputBuffers.get(event.index);

@@ -58,3 +58,27 @@ npx vitest run --config vitest.config.ts server/services/ai-gateway server/servi
  those tools are in the launch catalog is that workstream's call; left to it.
  After the push (c9dc4d582): typecheck exit 0; the gateway, stream-route and
  cut-off suites 64 files / 828 tests passed.
+
+Fifth pass, 2026-09-28 (narration.txt). Before the merge, the sweep
+  npx vitest run server/services/ai-gateway server/services/ana server/routes/ana-ri server/services/ana-ri client/src/concept2cure
+ Test Files  1 failed | 755 passed | 1 skipped (757)
+      Tests  2 failed | 9105 passed | 3 skipped (9110)
+On the merged tree (origin c1f101dc1 + this change):
+  npx vitest run server/services/ai-gateway server/routes/ana-ri server/services/ana server/services/ana-ri client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx
+ Test Files  1 failed | 322 passed | 1 skipped (324)
+      Tests  2 failed | 4392 passed | 3 skipped (4397)
+ Both failures are client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx
+ ("CmQcTesting — recording and second-person review": S-1 / S-2 never
+ render). They fail the same way with this change stashed. The cause is
+ 288411a4e, which scoped /api/cmc/qc-testing to the open program
+ (scopedRegisterPath appends ?projectId=). The tests' GET mock matches the
+ bare path only. Left to that change's owner.
+ The pre-push hook, run by hand on the merged head: every gate passed.
+
+Sixth pass, 2026-09-29 (held-actions.txt).
+  npx vitest run client/src/concept2cure
+ Before the merge: Test Files  1 failed | 437 passed (438); Tests  2 failed | 4740 passed (4742)
+   (the two cmcSuiteWrites.test.tsx failures noted above).
+ On the merged tree (origin aace8b61f + this change): Test Files  441 passed (441); Tests  4799 passed (4799)
+   The cmcSuiteWrites.test.tsx failures are fixed upstream.
+ The pre-push hook, run by hand on the merged head: every gate passed.

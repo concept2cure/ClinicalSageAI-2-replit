@@ -484,3 +484,27 @@ describe('erase_personal_data', () => {
     }
   });
 });
+
+/* 2026-09-28. tagArtifact's "this section already has an artifact" branch
+   merged metadata with `metadata || $7::jsonb`; concept2cure_artifacts.metadata
+   is json, which has no `||`, so every write down that branch failed at plan
+   time — the same defect the revert work fixed on the artifact-id branch. */
+describe('tagArtifact into a section that already has an artifact', () => {
+  it('updates that artifact, merging its metadata', async () => {
+    await seedArtifact();
+    const { tagArtifact } = await import('../../artifact-tagger');
+    await tagArtifact({
+      projectId: PROJECT,
+      organizationId: ORG,
+      userId: SIGNER,
+      sectionCode: '2.7.3',
+      title: 'Summary of Clinical Efficacy',
+      content: 'Section 2.7.3, revised by the section write.',
+      metadata: { revisedBy: 'section-write' },
+    });
+    const [row] = await q(`SELECT content, version, metadata FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT_EXT]);
+    expect(row.content).toBe('Section 2.7.3, revised by the section write.');
+    expect(Number(row.version)).toBe(4);
+    expect(asJson(row.metadata)).toMatchObject({ origin: 'seed', revisedBy: 'section-write' });
+  });
+});

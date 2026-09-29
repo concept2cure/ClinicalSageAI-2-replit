@@ -3,13 +3,15 @@
 // way the prompts ask, it refuses requests the real API refuses (see
 // ../contract-audit.txt for each rule's source), and it streams the way a
 // real adaptive model does: a thinking block first, pings, and — with
-// FAKE_THINK_MS — thinking in silence. See README.md for how to run it.
+// FAKE_THINK_MS — thinking in silence. On Opus 5.5 and Fable 5.x a long note
+// written between tool calls comes back as a progress-update thinking block,
+// as the API documents. See README.md for how to run it.
 import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { thinks, validate } from './api-contract.mjs';
+import { progressDisplay, thinks, validate } from './api-contract.mjs';
 
 const REQ_DIR = process.env.FAKE_REQ_DIR || path.join(os.tmpdir(), 'ana-drive-stand-in', 'requests');
 fs.mkdirSync(REQ_DIR, { recursive: true });
@@ -64,7 +66,7 @@ function findAsk(msgs) {
     const t = textOf(m.content);
     if (/\[Tool Result for /.test(t)) continue;
     if (/^\s*\[(Screen report|User interjection)/i.test(t)) continue;
-    if (/take me|open program|search the vault|demo|go to|show me/i.test(t)) return t;
+    if (/take me|open program|search the vault|demo|go to|show me|\bact [a-z]/i.test(t)) return t;
   }
   return '';
 }
@@ -88,6 +90,7 @@ function turnOf(body) {
     msgs,
     all: msgs.map(m => textOf(m.content)).join('\n'),
     ask: findAsk(msgs).toLowerCase(),
+    rawAsk: findAsk(msgs),
     results,
     last: results[results.length - 1],
     tool(name, input, say) {
@@ -148,7 +151,9 @@ function guessName(t) {
 function nextStop(t, steps, program) {
   if (demo.idx >= steps.length) return { text: `That is the whole demonstration: ${steps.length} stops. Ask me about any of them.` };
   const s = steps[demo.idx++];
-  const say = `Stop ${demo.idx}: ${String(s.say).split('.')[0]}.`;
+  // The whole talking point, and a word on the move: two sentences at most
+  // stops, three where the talking point has two.
+  const say = `Stop ${demo.idx}: ${String(s.say).trim()} Here it is on screen.`;
   if (s.navigate) return t.tool('navigate_to', { target: s.navigate.target, ...(program ? { program } : {}) }, say);
   const opensProgram = s.act.actionId === 'projects.open-program' && program;
   const params = { ...(s.act.params || {}), ...(opensProgram ? { program } : {}) };
@@ -170,9 +175,13 @@ function planDemo(t) {
 function planVaultSearch(t) {
   const asked = /search the vault for (\w+)/.exec(t.ask);
   if (!asked) return null;
-  const { last, results } = t;
   const search = say => t.tool('act_on_screen', { action: 'vault.search', params: { query: asked[1] } }, say);
-  if (!last) return search('Searching the Vault.');
+  if (!t.last) return process.env.FAKE_PARALLEL ? openAndSearch(t, search) : search('Searching the Vault.');
+  return vaultSearchFollowUp(t, search);
+}
+
+function vaultSearchFollowUp(t, search) {
+  const { last, results } = t;
   // Asked which program: open one on the Vault, as the refusal says, then search again.
   const programs = last.json?.programs ?? [];
   if (last.name === 'act_on_screen' && last.json?.status === 'needs_project' && programs.length && results.length < 3) {
@@ -180,6 +189,15 @@ function planVaultSearch(t) {
   }
   if (last.name === 'navigate_to' && last.json?.status === 'navigation_ready' && results.length < 4) return search('Now searching it.');
   return { text: `Vault search result: ${outcomeOf(last)}.` };
+}
+
+// FAKE_PARALLEL: both moves in one response, as a real model batches
+// independent calls — the program's Vault, and the search on it.
+function openAndSearch(t, search) {
+  const program = process.env.FAKE_DEMO_PROGRAM || '';
+  const open = t.tool('navigate_to', { target: 'vault', ...(program ? { program } : {}) }, 'Opening the Vault and searching it.');
+  const find = search('');
+  return open.tool && find.tool ? { ...open, more: [find.tool] } : open;
 }
 
 function planOpenProgram(t) {
@@ -206,9 +224,23 @@ function planNav(t) {
   return { text: `Navigation result: ${outcomeOf(last)}. You are on ${want} now.` };
 }
 
+// "act <action> [param=value]": one act_on_screen from wherever the person
+// is. The screen's bus heads there and acts once the screen can; the next
+// round says what came back, the screen's own report first.
+function planAct(t) {
+  const asked = /\bact ([a-z0-9-]+\.[a-z0-9-]+)(?: (\w+)=(.+))?\s*$/i.exec(t.rawAsk);
+  if (!asked) return null;
+  if (!t.last) return t.tool('act_on_screen', { action: asked[1], params: asked[2] ? { [asked[2]]: asked[3].trim() } : {} }, `Acting on ${asked[1]}.`);
+  const recent = t.msgs.slice(-2).map(m => textOf(m.content)).join('\n');
+  const unconfirmed = /has not yet confirmed (?:this move|these moves): ([^\n]*)/.exec(recent);
+  const reported = /\[Screen report\] The app reported[^\n]*\n\n([^\n]+)/.exec(recent);
+  const screen = unconfirmed ? `not confirmed: ${unconfirmed[1]}` : reported ? reported[1] : 'no report';
+  return { text: `Act result: ${outcomeOf(t.last)}. Screen: ${screen}` };
+}
+
 function plan(body) {
   const t = turnOf(body);
-  const planned = planReport(t) ?? planDemo(t) ?? planVaultSearch(t) ?? planOpenProgram(t) ?? planNav(t);
+  const planned = planAct(t) ?? planReport(t) ?? planDemo(t) ?? planVaultSearch(t) ?? planOpenProgram(t) ?? planNav(t);
   if (planned) return cutOff(t, planned);
   if (/title|summar/i.test(t.all.slice(0, 400)) && !body.stream) return { text: 'Live Drive test' };
   return { text: 'Understood.' };
@@ -248,11 +280,14 @@ function saveRequest(n, headers, verdict, body) {
   }
 }
 
+const toolCallsOf = p => (p.tool ? [p.tool, ...(p.more || [])] : []);
+const toolUseId = (n, k) => (k === 0 ? `toolu_fake_${n}` : `toolu_fake_${n}_${k}`);
+
 function logReceived(body, p, n) {
   const lastText = (body.messages || []).slice(-2).map(m => textOf(m.content)).join('\n');
   const report = /\[Screen report\][^\n]*\n?\n?([^\n]{0,200})/.exec(lastText);
   if (report) log(`#${n} received screen report: ${report[1]}`);
-  const what = p.tool ? `${p.tool.name} ${JSON.stringify(p.tool.input)}` : `text "${p.text.slice(0, 80)}"`;
+  const what = p.tool ? toolCallsOf(p).map(c => `${c.name} ${JSON.stringify(c.input)}`).join(' + ') : `text "${p.text.slice(0, 80)}"`;
   log(`#${n} stream=${!!body.stream} tools=${(body.tools || []).length} msgs=${(body.messages || []).length} ->`, what);
 }
 
@@ -302,10 +337,33 @@ async function streamText(res, text, index) {
   return index + 1;
 }
 
-function streamToolCall(res, tool, n, index) {
-  sse(res, 'content_block_start', { type: 'content_block_start', index, content_block: { type: 'tool_use', id: `toolu_fake_${n}`, name: tool.name, input: {} } });
+function streamToolCall(res, tool, id, index) {
+  sse(res, 'content_block_start', { type: 'content_block_start', index, content_block: { type: 'tool_use', id, name: tool.name, input: {} } });
   sse(res, 'content_block_delta', { type: 'content_block_delta', index, delta: { type: 'input_json_delta', partial_json: JSON.stringify(tool.input) } });
   sse(res, 'content_block_stop', { type: 'content_block_stop', index });
+}
+
+const sentences = text => (String(text).match(/[.!?](?=\s|$)/g) || []).length;
+const firstSentence = text => /^.*?[.!?](?=\s|$)/s.exec(String(text))?.[0] ?? String(text);
+
+// Opus 5.5 and Fable 5.x: a note longer than a sentence or two, written
+// before a tool call, is a progress-update thinking block — empty under the
+// default display, a short summary (here, its first sentence) under
+// "updates" and "summarized". Null when the note stays text.
+function progressNote(body, p, n) {
+  const display = progressDisplay(body);
+  if (!display || !p.tool || !p.text || sentences(p.text) < 3) return null;
+  const note = { display, text: display === 'omitted' ? '' : firstSentence(p.text) };
+  log(`#${n} note as a progress block (display ${display}): ${note.text ? JSON.stringify(note.text.slice(0, 60)) : 'empty'}`);
+  return note;
+}
+
+function streamProgressNote(res, note, n, index) {
+  sse(res, 'content_block_start', { type: 'content_block_start', index, content_block: { type: 'thinking', thinking: '', signature: '' } });
+  if (note.text) sse(res, 'content_block_delta', { type: 'content_block_delta', index, delta: { type: 'thinking_delta', thinking: note.text } });
+  sse(res, 'content_block_delta', { type: 'content_block_delta', index, delta: { type: 'signature_delta', signature: `sig_note_${n}` } });
+  sse(res, 'content_block_stop', { type: 'content_block_stop', index });
+  return index + 1;
 }
 
 async function streamReply(res, body, p, n) {
@@ -315,8 +373,10 @@ async function streamReply(res, body, p, n) {
   sse(res, 'ping', { type: 'ping' });
   let index = 0;
   if (thinks(body)) index = await streamThinking(res, body, n, index);
-  if (p.text) index = await streamText(res, p.text, index);
-  if (p.tool) streamToolCall(res, p.tool, n, index);
+  const note = progressNote(body, p, n);
+  if (note) index = streamProgressNote(res, note, n, index);
+  else if (p.text) index = await streamText(res, p.text, index);
+  toolCallsOf(p).forEach((call, k) => streamToolCall(res, call, toolUseId(n, k), index + k));
   sse(res, 'message_delta', { type: 'message_delta', delta: { stop_reason: stop, stop_sequence: null }, usage: { output_tokens: 20 } });
   sse(res, 'message_stop', { type: 'message_stop' });
   res.end();
@@ -325,8 +385,10 @@ async function streamReply(res, body, p, n) {
 function replyContent(body, p, n) {
   const content = [];
   if (thinks(body)) content.push({ type: 'thinking', thinking: '', signature: `sig_fake_${n}` });
-  if (p.text) content.push({ type: 'text', text: p.text });
-  if (p.tool) content.push({ type: 'tool_use', id: `toolu_fake_${n}`, name: p.tool.name, input: p.tool.input });
+  const note = progressNote(body, p, n);
+  if (note) content.push({ type: 'thinking', thinking: note.text, signature: `sig_note_${n}` });
+  else if (p.text) content.push({ type: 'text', text: p.text });
+  toolCallsOf(p).forEach((call, k) => content.push({ type: 'tool_use', id: toolUseId(n, k), name: call.name, input: call.input }));
   return content;
 }
 

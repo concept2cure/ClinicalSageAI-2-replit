@@ -13,6 +13,12 @@ fsSync.mkdirSync(SP, { recursive: true });
 const BASE = process.env.APP_URL || 'http://localhost:5000';
 const HOME = `${BASE}/concept2cure`;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// LAUNCH_SCOPE=on: the app runs with LAUNCH_SCOPE_ENFORCE=on (production's
+// default), so Biostatistics and Inconsistency are outside the release. The
+// checks on them then assert the honest refusal: AnA says so, and the screen
+// stays where it is.
+const LAUNCH_ON = process.env.LAUNCH_SCOPE === 'on';
+const NOT_IN_RELEASE = /not available in this workspace \(not in this release\)/;
 const psql = sql => execSync(`psql ${JSON.stringify(process.env.DATABASE_URL || '')} -Atc ${JSON.stringify(sql)}`).toString().trim();
 
 const results = [];
@@ -60,6 +66,17 @@ async function watchUrls(page, { until, timeout = 45000 }) {
 async function stripText(page) {
   return (await page.locator('.ana-drive-strip').allTextContents().catch(() => [])).join(' | ');
 }
+// What AnA said at each stop reaches the person, each stop in its own
+// paragraph. The stand-in narrates a stop as "Stop N: <talking point> …".
+function recordNarration(text) {
+  const total = Number(/That is the whole demonstration: (\d+) stops/.exec(text)?.[1] ?? 0);
+  const said = new Set([...text.matchAll(/Stop (\d+):/g)].map(m => Number(m[1])));
+  const unsaid = Array.from({ length: total }, (_, i) => i + 1).filter(k => !said.has(k));
+  const runOn = [...text.matchAll(/\S{0,24}\S(?=Stop \d+:|That is the whole demonstration)/g)].map(m => m[0]);
+  record('training demo: every stop is narrated in AnA\'s words', total > 0 && unsaid.length === 0, `${total} stops; not narrated: ${unsaid.join(', ') || 'none'}`);
+  record('training demo: each round\'s words start their own paragraph', runOn.length === 0, runOn.length ? `run together after: ${runOn.slice(0, 3).map(r => JSON.stringify(r)).join(', ')}` : '');
+}
+
 async function bodyText(page) {
   return page.evaluate(() => document.body.innerText);
 }
@@ -85,7 +102,9 @@ const SCENARIOS = {
     await waitIdle(page);
     const text = await bodyText(page);
     await page.screenshot({ path: `${SP}/e2e-biostat.png` });
-    record('take me to biostatistics → Biostatistics opens', seen.some(p => p.endsWith('/biostatistics')), seen.join(' → '));
+    const opened = seen.some(p => p.endsWith('/biostatistics'));
+    if (LAUNCH_ON) record('take me to biostatistics → refused, not in this release; the screen stays', !opened && NOT_IN_RELEASE.test(text), seen.join(' → '));
+    else record('take me to biostatistics → Biostatistics opens', opened, seen.join(' → '));
     record('biostat: no tool-missing / error text', !/FAKE:|not offered|Something went wrong/i.test(text));
   },
   async vault(page) {
@@ -109,6 +128,54 @@ const SCENARIOS = {
     await page.screenshot({ path: `${SP}/e2e-open-program.png` });
     record('open program BX-301 → its project home', seen.some(p => p.endsWith('/project-home')), seen.join(' → '));
     record('open program: BX-301 is the program shown', /BX-301/.test(text));
+  },
+  // Acting on a screen the person is not on: the bus heads there and the
+  // action arrives while the screen's read is in flight, so the screen holds
+  // it until its data settles. Each ask is answered with "Act result: …
+  // Screen: …" (the stand-in's planAct). The Inconsistency overlay is
+  // project-scoped, so a program is opened first; the design needs the local
+  // study design the README names.
+  async heldAction(page) {
+    await goHome(page);
+    await ask(page, 'open program BX-301');
+    await watchUrls(page, { until: s => s.some(p => p.endsWith('/project-home')) });
+    await waitIdle(page);
+    const actResults = async () => [...(await bodyText(page)).matchAll(/Act result:[^\n]*/g)].map(m => m[0]);
+    // The next "Act result:" line, read once its turn is over (it streams in).
+    const nextResult = async before => {
+      for (const t = Date.now(); Date.now() - t < 45000; await sleep(500)) {
+        if ((await actResults()).length > before) {
+          await waitIdle(page);
+          return (await actResults()).pop();
+        }
+      }
+      return '(no answer within 45 s)';
+    };
+    const selectedText = async sel => (await page.locator(sel).allTextContents().catch(() => [])).join(',');
+
+    let t = Date.now();
+    let before = (await actResults()).length;
+    await ask(page, 'act inconsistency.set-regulator regulator=EMA');
+    const overlaySaid = await nextResult(before);
+    const overlayMs = Date.now() - t;
+    const overlay = await selectedText('button.gi-reg-b.on');
+    await page.screenshot({ path: `${SP}/e2e-held-overlay.png` });
+    record(
+      "held action: an overlay switch sent from another screen gets the screen's own answer",
+      /Screen: /.test(overlaySaid) && !/not confirmed/.test(overlaySaid),
+      `${overlaySaid} (overlay ${overlay || 'unchanged'}; answered in ${overlayMs} ms)`,
+    );
+
+    t = Date.now();
+    before = (await actResults()).length;
+    await ask(page, 'act biostatistics.load-design design=Phase 2 dose finding');
+    const designSaid = await nextResult(before);
+    const designMs = Date.now() - t;
+    const loaded = await selectedText('button.sp-row[aria-pressed="true"] .sp-row-t');
+    await page.screenshot({ path: `${SP}/e2e-held-design.png` });
+    const designDetail = `${designSaid} (selected: ${loaded || 'none'}; answered in ${designMs} ms)`;
+    if (LAUNCH_ON) record('held action: a design on a screen outside the release is refused, not in this release', NOT_IN_RELEASE.test(designSaid) && !loaded, designDetail);
+    else record('held action: a study design named from another screen is loaded', loaded === 'Phase 2 dose finding' && /Screen: no report/.test(designSaid), designDetail);
   },
   async vaultSearch(page) {
     await goHome(page);
@@ -147,6 +214,7 @@ const SCENARIOS = {
     record('training demo visits every stop in order', missing.length === 0, `seen: ${seen.join(' → ')}${missing.length ? '  missing: ' + missing.join(',') : ''}`);
     record('training demo shows "AnA is demonstrating"', sawDemoStrip);
     record('training demo reaches its end', /That is the whole demonstration/.test(await bodyText(page)));
+    recordNarration(await bodyText(page));
   },
   async salesDemo(page) {
     const fs = await import('node:fs');
@@ -189,7 +257,9 @@ const SCENARIOS = {
     const railStill = await page.locator('aside textarea:visible').count();
     const text = await bodyText(page);
     await page.screenshot({ path: `${SP}/e2e-rail.png` });
-    record('rail: take me to biostatistics → Biostatistics opens', seen.some(p => p.endsWith('/biostatistics')), seen.join(' → '));
+    const railOpened = seen.some(p => p.endsWith('/biostatistics'));
+    if (LAUNCH_ON) record('rail: take me to biostatistics → refused, not in this release; the screen stays', !railOpened && NOT_IN_RELEASE.test(text), seen.join(' → '));
+    else record('rail: take me to biostatistics → Biostatistics opens', railOpened, seen.join(' → '));
     record('rail: the conversation is still there after the move', railStill > 0 && /Navigation result/.test(text));
   },
   async chipsWhenOff(page) {
@@ -209,7 +279,8 @@ const SCENARIOS = {
     const after = new URL(page.url()).pathname;
     await page.screenshot({ path: `${SP}/e2e-chips.png` });
     record('drive off: the ask does not move the screen', !stayed.endsWith('/biostatistics'), stayed);
-    record('drive off: a Biostatistics chip is offered and works', hasChip && after.endsWith('/biostatistics'), `chip=${hasChip} after=${after}`);
+    if (LAUNCH_ON) record('drive off: no chip is offered for a screen outside the release', !hasChip && !after.endsWith('/biostatistics'), `chip=${hasChip} after=${after}`);
+    else record('drive off: a Biostatistics chip is offered and works', hasChip && after.endsWith('/biostatistics'), `chip=${hasChip} after=${after}`);
     // Restore the default.
     await goHome(page);
     const sw2 = page.locator('[role="switch"]').first();
@@ -282,7 +353,7 @@ const SCENARIOS = {
 };
 
 const want = process.argv.slice(2);
-const names = want.length ? want : ['biostat', 'vault', 'openProgram', 'vaultSearch', 'railAsk', 'demo', 'salesDemo', 'chipsWhenOff'];
+const names = want.length ? want : ['biostat', 'vault', 'openProgram', 'heldAction', 'vaultSearch', 'railAsk', 'demo', 'salesDemo', 'chipsWhenOff'];
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await ctx.newPage();

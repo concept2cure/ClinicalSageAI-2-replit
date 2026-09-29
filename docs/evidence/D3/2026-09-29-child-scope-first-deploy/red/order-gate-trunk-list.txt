@@ -1,0 +1,22 @@
+# ci:migration-set-order with the new tail invariant, against trunk's list (child scope still mid-set). Expected: refused.
+[ci:migration-set-order] ❌ 1 ordering invariant(s) broken:
+
+  • the isolation tail is not uuid step, child scope, sweep
+      Expected the last three entries to be, in order:
+        db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql
+        db/migrations/20260813_child_table_parent_scoped_rls.sql
+        db/migrations/20260801_tenant_isolation_sweep.sql
+      found:
+        migrations/20260327_data_lineage_tracking.sql
+        db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql
+        db/migrations/20260801_tenant_isolation_sweep.sql
+
+  The sweep attaches tenant_isolation_policy to every integer tenant-keyed
+  table that exists WHEN IT RUNS. Anything ordered after it is never swept,
+  so a tenant table ships with no policy — silently, because the policy
+  count goes UP when unprotected tables are added.
+
+  Same invariants are pinned by tests/schema-contract (which also APPLIES
+  the set); this is the fast pre-flight.
+
+exit=1

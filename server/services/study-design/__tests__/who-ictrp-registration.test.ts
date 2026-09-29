@@ -450,6 +450,15 @@ describe('projectWhoIctrp — never fabricates', () => {
     expect(i.gap).toMatch(/scientific title is not reused as the public one/);
   });
 
+  it('item 9 renders a recorded public title; item 10 carries a recorded acronym, and stays rendered without one', () => {
+    const d = { ...completeDesign(), publicTitle: '  A study of Drug X for adults with type 2 diabetes ', acronym: 'DX-T2D' };
+    const rec = projectWhoIctrp(d);
+    expect(item(rec, 9)).toMatchObject({ status: 'rendered', value: 'A study of Drug X for adults with type 2 diabetes', source: 'StudyDesign.publicTitle' });
+    expect(item(rec, 10)).toMatchObject({ status: 'rendered', value: `${d.title} (DX-T2D)` });
+    expect(item(projectWhoIctrp(completeDesign()), 10)).toMatchObject({ status: 'rendered', value: completeDesign().title });
+    expect(item(projectWhoIctrp({ ...completeDesign(), publicTitle: '   ' }), 9).status).toBe('missing');
+  });
+
   it('design-carried items are missing with a reason when the design is silent', () => {
     const d = { ...completeDesign(), title: '', indication: '', arms: [], endpoints: [], targetRegions: [] };
     const rec = projectWhoIctrp(d);

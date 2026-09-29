@@ -179,7 +179,14 @@ editor role, reason, `FOR UPDATE`, the one writer, a governed-action row) and
 the **Planning inputs** panel on the Design tab
 (`ProtocolDevPlanningInputs.tsx`). The server validates each block strictly
 (`study-design/planning-inputs.ts`); the forms refuse what does not parse and
-default nothing.
+default nothing. A write carries the block as it was read (`expected`); a block
+another author changed in between is refused (409 `STALE_BLOCK`) rather than
+overwritten. `|`, `;` and line breaks are reserved in list entries and refused,
+because the forms show lists one entry per line with `|` between fields — the
+recorded text is always exactly what the author typed. The same panel records
+the **registration titles** (a lay public title and an acronym), which the
+ClinicalTrials.gov, EU CTIS, WHO, USDM and SPIRIT projections read and never
+derive from the official title.
 
 `sample-size.ts` solves continuous endpoints exactly and binary /
 time-to-event on the normal approximation, with margins for non-inferiority

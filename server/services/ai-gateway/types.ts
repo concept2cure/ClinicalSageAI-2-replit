@@ -736,6 +736,15 @@ export interface ModelConfig {
   supportsInlineSystem?: boolean;
 
   /**
+   * Whether this model returns the notes it writes between tool calls as
+   * progress-update `thinking` blocks rather than `text` (Opus 5.5, Fable 5.1,
+   * Mythos 5.1, Fable 5). Under the default display those blocks are empty, so
+   * the gateway asks for display "updates" and returns the notes as text (see
+   * progress-updates.ts). Omitted means false: the model writes them as text.
+   */
+  progressUpdatesInThinking?: boolean;
+
+  /**
    * The highest `output_config.effort` this entry accepts, or `null` for none.
    *
    *   null    Haiku 4.5, Sonnet 4.5 and older — effort is a 400

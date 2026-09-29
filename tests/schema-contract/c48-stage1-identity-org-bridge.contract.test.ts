@@ -29,6 +29,7 @@ import { fileURLToPath } from 'node:url';
 import {
   C2C_MIGRATION_FILES,
   C48_STAGE1_IDENTITY_ORG_BRIDGE,
+  CHILD_TABLE_PARENT_SCOPE,
   UUID_TENANT_ISOLATION_NONPUBLIC,
   TENANT_ISOLATION_SWEEP,
 } from '../../scripts/db/migration-set.mjs';
@@ -80,8 +81,13 @@ describe('C-48 Stage 1: wired before the final isolation pair', () => {
     expect(idxBridge).toBeGreaterThan(-1);
     expect(idxBridge).toBeLessThan(idxUuid); // a backfill, before the sweeps
     expect(idxBridge).toBeLessThan(idxSweep);
-    // and the final pair is left intact (sweep last, uuid step just before it)
-    expect(C2C_MIGRATION_FILES.slice(-2)).toEqual([UUID_TENANT_ISOLATION_NONPUBLIC, TENANT_ISOLATION_SWEEP]);
+    // and the isolation tail is left intact (uuid step, child scope, sweep last;
+    // the child scope joined the tail 2026-09-29, D3)
+    expect(C2C_MIGRATION_FILES.slice(-3)).toEqual([
+      UUID_TENANT_ISOLATION_NONPUBLIC,
+      CHILD_TABLE_PARENT_SCOPE,
+      TENANT_ISOLATION_SWEEP,
+    ]);
   });
 });
 
