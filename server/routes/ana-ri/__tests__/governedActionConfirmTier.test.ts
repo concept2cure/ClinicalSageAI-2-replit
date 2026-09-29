@@ -147,6 +147,36 @@ describe('a live prompt', () => {
     expect(decisions).toEqual([{ runId: 'run-1', orgId: ORG, decided: 'approved' }]);
   });
 
+  it('a yes on a held command runs it with the model call that proposed it, from the ROW (D6)', async () => {
+    // Every agent write command is propose-only and runs only here, so this is
+    // where its Part 11 row gets the gateway request id (agentAuditDetails).
+    // Until 2026-09-26 the context carried no serving model, and the row named
+    // no model call.
+    const proposedBy = { provider: 'anthropic', model: 'claude-opus-5-5', requestId: 'req-held-1' };
+    pending = { toolUseId: 'tu-1', command: 'update_artifact', params: { artifactId: 7, title: 'SAP v2' }, proposedBy };
+    const res = await post({
+      runId: 'run-1',
+      toolUseId: 'tu-1',
+      confirm: true,
+      servingModel: { provider: 'openai', model: 'forged', requestId: 'req-forged' },
+    });
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(executed[0].ctx.servingModel).toEqual(proposedBy);
+  });
+
+  it('a command posted without its run names no model call: null, never the body\'s claim (D6)', async () => {
+    const res = await post({
+      command: 'create_task',
+      params: { title: 'Chase the CoA' },
+      confirm: true,
+      servingModel: { provider: 'anthropic', model: 'claude-opus-5-5', requestId: 'req-forged' },
+    });
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(executed[0].ctx.servingModel).toBeNull();
+  });
+
   it('a decline records the decision, runs nothing, and releases the run at once', async () => {
     pending = { toolUseId: 'tu-1', command: 'update_artifact', params: { artifactId: 7 } };
     const res = await post({ runId: 'run-1', toolUseId: 'tu-1', decision: 'decline' });
