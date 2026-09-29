@@ -12,7 +12,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
-const { createCmcChange, listCmcChanges, CmcChangeValidationError, logAction, writeThroughChangeControl, inc } = vi.hoisted(() => {
+const { createCmcChange, listCmcChanges, CmcChangeValidationError, logAction, writeThroughChangeControl, inc, projectOwned } = vi.hoisted(() => {
   class CmcChangeValidationError extends Error {}
   return {
     createCmcChange: vi.fn(),
@@ -21,12 +21,19 @@ const { createCmcChange, listCmcChanges, CmcChangeValidationError, logAction, wr
     logAction: vi.fn(),
     writeThroughChangeControl: vi.fn(),
     inc: vi.fn(),
+    projectOwned: vi.fn(),
   };
 });
 vi.mock('../../services/cmc/cmc-change-control-service', () => ({ createCmcChange, listCmcChanges, CmcChangeValidationError }));
 vi.mock('../../services/auditService', () => ({ default: { logAction } }));
 vi.mock('../../services/cmc-write-through', () => ({ writeThroughChangeControl }));
 vi.mock('../../metrics.js', () => ({ metrics: { concept2cureErrors: { inc } } }));
+/* Whether a stated CMC project is the organization's own (PF-15). Its SQL is
+   proven in services/cmc/__tests__/project-membership.pglite.test.ts; here the
+   fixture project OWN is organization 9's and FOREIGN is another organization's. */
+vi.mock('../../services/cmc/project-membership', () => ({ projectBelongsToTenant: projectOwned }));
+const OWN = 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab';
+const FOREIGN = 'f0000000-0000-4000-8000-00000000000f';
 
 import cmcRouter from '../cmc-changes.routes';
 
@@ -51,7 +58,11 @@ function dbRow(over: Record<string, unknown> = {}) {
   };
 }
 
-beforeEach(() => { createCmcChange.mockReset(); listCmcChanges.mockReset(); logAction.mockReset(); writeThroughChangeControl.mockReset(); inc.mockReset(); });
+beforeEach(() => {
+  createCmcChange.mockReset(); listCmcChanges.mockReset(); logAction.mockReset(); writeThroughChangeControl.mockReset(); inc.mockReset();
+  projectOwned.mockReset();
+  projectOwned.mockImplementation(async (p: { organizationId: number; projectId: string }) => p.organizationId === 9 && p.projectId === OWN);
+});
 
 describe('GET /api/cmc-changes', () => {
   it('403 without org context', async () => {
@@ -117,12 +128,12 @@ describe('POST /api/cmc-changes', () => {
     writeThroughChangeControl.mockResolvedValueOnce({ ok: true, sourceObjectId: '1', sourceHash: 'h', staleSections: ['3.2.P.3'], isNew: true });
     const res = await request(appWith(9)).post('/api/cmc-changes').send({
       title: 'New scale-up', dosageFormFamily: 'biologic', changeCategory: 'scale_up',
-      cmcProjectId: 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab',
+      cmcProjectId: OWN,
     });
     expect(res.status).toBe(201);
     expect(writeThroughChangeControl).toHaveBeenCalledWith(
       9,
-      'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab',
+      OWN,
       'c-9',
       expect.objectContaining({ title: 'Bioreactor scale-up', change_type: 'scale_up' }),
       '55',
@@ -148,11 +159,41 @@ describe('POST /api/cmc-changes', () => {
     writeThroughChangeControl.mockResolvedValueOnce({ ok: false, code: 'write_failed', reason: 'connection terminated unexpectedly' });
     const res = await request(appWith(9)).post('/api/cmc-changes').send({
       title: 'New scale-up', dosageFormFamily: 'biologic', changeCategory: 'scale_up',
-      cmcProjectId: 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab',
+      cmcProjectId: OWN,
     });
     expect(res.status).toBe(201);
     expect(res.body.id).toBe('c-9');
     expect(res.body.meta.module3WriteThrough).toBe('failed');
     expect(inc).toHaveBeenCalledWith({ operation: 'cmc_write_through_change_control', error_type: 'propagation_failed' });
+  });
+
+  /* ── PF-15: the stated project is the organization's own ──
+     The write-through files the change's §3.2 source under cmcProjectId, taken
+     from the body. Another organization's project, or an id naming none, is
+     refused before anything is written: no change, no audit row, no source. */
+
+  it.each([
+    ['another organization\'s project', FOREIGN],
+    ['an id that names no project', 'not-a-project'],
+  ])('404 for %s — nothing is written', async (_label, cmcProjectId) => {
+    const res = await request(appWith(9)).post('/api/cmc-changes').send({
+      title: 'New scale-up', dosageFormFamily: 'biologic', changeCategory: 'scale_up', cmcProjectId,
+    });
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('PROJECT_NOT_FOUND');
+    expect(projectOwned).toHaveBeenCalledWith({ organizationId: 9, projectId: cmcProjectId });
+    expect(createCmcChange).not.toHaveBeenCalled();
+    expect(logAction).not.toHaveBeenCalled();
+    expect(writeThroughChangeControl).not.toHaveBeenCalled();
+  });
+
+  it('a project lookup that cannot complete writes nothing and is not answered as a success', async () => {
+    projectOwned.mockRejectedValueOnce(new Error('connection reset'));
+    const res = await request(appWith(9)).post('/api/cmc-changes').send({
+      title: 'New scale-up', dosageFormFamily: 'biologic', changeCategory: 'scale_up', cmcProjectId: OWN,
+    });
+    expect(res.status).toBeGreaterThanOrEqual(500);
+    expect(createCmcChange).not.toHaveBeenCalled();
+    expect(writeThroughChangeControl).not.toHaveBeenCalled();
   });
 });
