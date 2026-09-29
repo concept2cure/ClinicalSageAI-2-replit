@@ -751,6 +751,18 @@ jobs:
           npm run ci:sign-ceremony:selftest
           npm run ci:sign-ceremony
 
+      - name: Guardrails — only named writers change a recorded Vault version (Part 11)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # The record guard (migrations/20260926_vault_documents_record_immutability.sql)
+        # refuses identity, hash and lineage changes; title, type, classification
+        # and filing are left to named writers that each write a chained audit
+        # row. A new file issuing UPDATE vault.documents fails here until it is
+        # named. The selftest runs first and fails on an unnamed writer and on a
+        # stale entry.
+        run: |
+          npm run ci:vault-document-writers:selftest
+          npm run ci:vault-document-writers
+
       - name: Guardrails — route mount authority audit (no regressions)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:audit-route-mounts:no-regression

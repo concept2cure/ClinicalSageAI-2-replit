@@ -179,7 +179,7 @@ async function revertIngest(args: RevertIngestArgs): Promise<void> {
     // ownership by this tenant was proven by ingestVaultDocument moments ago,
     // and the predicate pins the row to that program.
     await client.query(
-      `UPDATE vault.documents SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND program_id = $2`,
+      `UPDATE vault.documents SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL`,
       [vaultDocumentId, programId],
     );
     await writeChainedAuditRow(client, {

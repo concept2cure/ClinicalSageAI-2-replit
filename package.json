@@ -388,6 +388,8 @@
     "ci:sign-ceremony": "node scripts/ci/check-sign-ceremony.mjs",
     "ci:sign-ceremony:selftest": "node scripts/ci/check-sign-ceremony.selftest.mjs",
     "ci:sign-ceremony:list": "node scripts/ci/check-sign-ceremony.mjs --list",
+    "ci:vault-document-writers": "node scripts/ci/check-vault-document-writers.mjs",
+    "ci:vault-document-writers:selftest": "node scripts/ci/check-vault-document-writers.selftest.mjs",
     "ci:upload-guards": "node scripts/ci/check-upload-guards.mjs",
     "ci:upload-guards:selftest": "node scripts/ci/check-upload-guards.mjs --selftest",
     "ci:upload-guards:list": "node scripts/ci/check-upload-guards.mjs --list",
