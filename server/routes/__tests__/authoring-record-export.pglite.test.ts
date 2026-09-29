@@ -423,6 +423,18 @@ describe('(iv) tenancy', () => {
   }, T);
 });
 
+describe('(iv) an id that is not a document id', () => {
+  it('is 404 on the read and the export — not the uuid cast\'s 500 — and nothing is written', async () => {
+    const mark = trace.stmts.length;
+    for (const path of ['audit', 'audit/export']) {
+      const res = await author(request(app).get(`/api/authoring/docs/not-a-document/${path}`));
+      expect(res.status, `${path}: ${res.text}`).toBe(404);
+      expect(res.body).toEqual({ success: false, error: 'Document not found' });
+    }
+    expect(writesSince(mark)).toEqual([]);
+  }, T);
+});
+
 describe('(v) a chain walk that could not run', () => {
   it('(v) when the tenant chain walk throws, tenantChain.ok is null in the package and in the recorded row — never true', async () => {
     const calls = h.chainWalkCalls;

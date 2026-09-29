@@ -447,10 +447,10 @@ describe('(6) the engine holds the record, whoever asks', () => {
     const before = await count('authoring_audit_trail');
     await expect(
       jdb.pglite.query(`UPDATE authoring_audit_trail SET after_content = 'rewritten' WHERE id = $1`, [made.resolved]),
-    ).rejects.toThrow(/IMMUTABILITY_VIOLATION: authoring_audit_trail row cannot be update/);
+    ).rejects.toThrow(/IMMUTABILITY_VIOLATION: authoring_audit_trail row cannot be changed/);
     await expect(
       jdb.pglite.query('DELETE FROM authoring_audit_trail WHERE id = $1', [made.resolved]),
-    ).rejects.toThrow(/IMMUTABILITY_VIOLATION: authoring_audit_trail row cannot be delete/);
+    ).rejects.toThrow(/IMMUTABILITY_VIOLATION: authoring_audit_trail row cannot be deleted/);
     await expect(jdb.pglite.query('TRUNCATE authoring_audit_trail')).rejects.toThrow(
       /IMMUTABILITY_VIOLATION: authoring_audit_trail cannot be truncated/,
     );

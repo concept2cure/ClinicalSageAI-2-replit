@@ -77,7 +77,8 @@ BEGIN
   IF TG_LEVEL = 'ROW' THEN
     RAISE EXCEPTION
       'IMMUTABILITY_VIOLATION: authoring_audit_trail row cannot be % — it is a retained authoring record (21 CFR Part 11 §11.10(e)).',
-      lower(TG_OP)
+      -- 2026-09-29: "changed"/"deleted", not lower(TG_OP) ("cannot be update").
+      CASE TG_OP WHEN 'DELETE' THEN 'deleted' ELSE 'changed' END
       USING ERRCODE = 'raise_exception',
             HINT = 'An authoring record is corrected by appending a new entry, never by editing or removing one.';
   END IF;

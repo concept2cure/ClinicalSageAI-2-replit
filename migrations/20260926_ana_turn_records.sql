@@ -140,7 +140,8 @@ BEGIN
   IF TG_LEVEL = 'ROW' THEN
     RAISE EXCEPTION
       'IMMUTABILITY_VIOLATION: % row cannot be % — it is part of a retained AnA turn record (21 CFR Part 11 §11.10(e)).',
-      TG_TABLE_NAME, lower(TG_OP)
+      -- 2026-09-29: "changed"/"deleted", not lower(TG_OP) ("cannot be update").
+      TG_TABLE_NAME, CASE TG_OP WHEN 'DELETE' THEN 'deleted' ELSE 'changed' END
       USING ERRCODE = 'raise_exception',
             HINT = 'A turn record is corrected by appending a new record, never by editing or removing one.';
   END IF;

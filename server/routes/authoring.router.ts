@@ -6177,6 +6177,8 @@ router.get('/docs/:docId/audit', async (req: Request, res: Response) => {
        match what the chain carries (D5, 2026-09-26). The before/after content
        is read to check it and is not returned — the response keeps the shape
        callers were coded against. */
+    // A malformed id names no document: 404, not the uuid cast's 500.
+    if (!isUuid(String(docId))) return res.status(404).json({ success: false, error: 'Document not found' });
     const record = await loadAuthoringRecord(pool, tenantId, String(docId), { limit: Number(limit) || 100 });
     const events = record.events.map((e) => ({
       id: e.id,
@@ -6216,6 +6218,7 @@ export const AUTHORING_RECORD_EXPORT_FORMAT = 'authoring-record-export/1';
 router.get('/docs/:docId/audit/export', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
+    if (!isUuid(String(docId))) return res.status(404).json({ success: false, error: 'Document not found' });
     const tenantId = getTenantId(req);
     const doc = await pool.query(
       'SELECT id, title, status, module FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
