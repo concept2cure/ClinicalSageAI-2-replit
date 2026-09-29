@@ -74,3 +74,11 @@ On the merged tree (origin c1f101dc1 + this change):
  (scopedRegisterPath appends ?projectId=). The tests' GET mock matches the
  bare path only. Left to that change's owner.
  The pre-push hook, run by hand on the merged head: every gate passed.
+
+Sixth pass, 2026-09-29 (held-actions.txt).
+  npx vitest run client/src/concept2cure
+ Before the merge: Test Files  1 failed | 437 passed (438); Tests  2 failed | 4740 passed (4742)
+   (the two cmcSuiteWrites.test.tsx failures noted above).
+ On the merged tree (origin aace8b61f + this change): Test Files  441 passed (441); Tests  4799 passed (4799)
+   The cmcSuiteWrites.test.tsx failures are fixed upstream.
+ The pre-push hook, run by hand on the merged head: every gate passed.

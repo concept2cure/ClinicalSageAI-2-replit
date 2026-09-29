@@ -66,7 +66,7 @@ function findAsk(msgs) {
     const t = textOf(m.content);
     if (/\[Tool Result for /.test(t)) continue;
     if (/^\s*\[(Screen report|User interjection)/i.test(t)) continue;
-    if (/take me|open program|search the vault|demo|go to|show me/i.test(t)) return t;
+    if (/take me|open program|search the vault|demo|go to|show me|\bact [a-z]/i.test(t)) return t;
   }
   return '';
 }
@@ -90,6 +90,7 @@ function turnOf(body) {
     msgs,
     all: msgs.map(m => textOf(m.content)).join('\n'),
     ask: findAsk(msgs).toLowerCase(),
+    rawAsk: findAsk(msgs),
     results,
     last: results[results.length - 1],
     tool(name, input, say) {
@@ -223,9 +224,23 @@ function planNav(t) {
   return { text: `Navigation result: ${outcomeOf(last)}. You are on ${want} now.` };
 }
 
+// "act <action> [param=value]": one act_on_screen from wherever the person
+// is. The screen's bus heads there and acts once the screen can; the next
+// round says what came back, the screen's own report first.
+function planAct(t) {
+  const asked = /\bact ([a-z0-9-]+\.[a-z0-9-]+)(?: (\w+)=(.+))?\s*$/i.exec(t.rawAsk);
+  if (!asked) return null;
+  if (!t.last) return t.tool('act_on_screen', { action: asked[1], params: asked[2] ? { [asked[2]]: asked[3].trim() } : {} }, `Acting on ${asked[1]}.`);
+  const recent = t.msgs.slice(-2).map(m => textOf(m.content)).join('\n');
+  const unconfirmed = /has not yet confirmed (?:this move|these moves): ([^\n]*)/.exec(recent);
+  const reported = /\[Screen report\] The app reported[^\n]*\n\n([^\n]+)/.exec(recent);
+  const screen = unconfirmed ? `not confirmed: ${unconfirmed[1]}` : reported ? reported[1] : 'no report';
+  return { text: `Act result: ${outcomeOf(t.last)}. Screen: ${screen}` };
+}
+
 function plan(body) {
   const t = turnOf(body);
-  const planned = planReport(t) ?? planDemo(t) ?? planVaultSearch(t) ?? planOpenProgram(t) ?? planNav(t);
+  const planned = planAct(t) ?? planReport(t) ?? planDemo(t) ?? planVaultSearch(t) ?? planOpenProgram(t) ?? planNav(t);
   if (planned) return cutOff(t, planned);
   if (/title|summar/i.test(t.all.slice(0, 400)) && !body.stream) return { text: 'Live Drive test' };
   return { text: 'Understood.' };

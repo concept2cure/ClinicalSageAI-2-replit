@@ -43,8 +43,12 @@ const hoisted = vi.hoisted(() => {
     registerExportGovernanceQuick: vi.fn(),
     auditLogAction: vi.fn(),
     resolveSignedPackageForExport: vi.fn(),
+    resolveProgramProjectAnchor: vi.fn(),
     reset() {
       this.resolveSignedPackageForExport.mockReset();
+      this.resolveProgramProjectAnchor.mockReset();
+      // The submission's program is anchored to project 77 (projects.regulatory_program_id).
+      this.resolveProgramProjectAnchor.mockResolvedValue(77);
       this.assembleSubmissionEctd.mockReset();
       this.validateEctdPackage.mockReset();
       this.registerExportGovernanceQuick.mockReset();
@@ -64,6 +68,8 @@ const hoisted = vi.hoisted(() => {
         // (84e935e9b); an export for filing binds against filed sequences.
         priorState: 'filed',
         unfiledPriorSequences: [],
+        // The submission's program (submissions.program_id).
+        programId: '5eb50a2e-235a-4605-bd1b-af2d75e8518c',
         stats: {
           totalModules: 5,
           totalFiles: 12,
@@ -153,6 +159,13 @@ vi.mock('../../server/services/auditService', () => ({
 // ectd4-validator and regional-rules modules may pull it through transitives.
 // Provide a no-op facade so any incidental import resolves.
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// The program → project anchor (Document Identity Contract C1) and the
+// request-scoped DB it reads through.
+vi.mock('../../server/services/c2c/program-project-anchor', () => ({
+  resolveProgramProjectAnchor: (...args: unknown[]) => hoisted.resolveProgramProjectAnchor(...args),
+}));
+vi.mock('../../server/db/requestDb', () => ({ requestDb: () => ({}) }));
 
 vi.mock('../../server/db', () => {
   const db = { execute: vi.fn(), select: vi.fn(), update: vi.fn(), insert: vi.fn() };
@@ -586,5 +599,92 @@ describe('POST /api/ectd/export/:submissionId — the assembly\'s audit rows', (
     const res = await withAudit(LOST);
     expect(res.status).toBe(422);
     expect(res.body.auditTrail).toEqual(LOST);
+  });
+});
+
+/**
+ * Who a governed eCTD export is recorded against. 2026-09-29 (W5/D7, WO-9
+ * Click 6): the route registered the export with projectId = the SUBMISSION id.
+ * concept2cure_artifacts.project_id is a foreign key to projects.id, a
+ * different id space: on a database where no project shares the submission's
+ * id the export 500'd (found on a clean demo build: submission 6, no project 6),
+ * and where one did, the governed record was filed under an unrelated project.
+ * The project is the one that anchors the submission's program
+ * (projects.regulatory_program_id); with no anchor the export is delivered
+ * audited-unplaced, as the CER and eSTAR exports are.
+ */
+describe('POST /api/ectd/export/:submissionId — the project a governed export is recorded against', () => {
+  const REVIEWED = {
+    governance: {
+      aiGenerated: true, humanReviewApproved: true, reviewerName: 'Dana Reviewer',
+      reviewerRole: 'Regulatory Affairs', reviewTimestamp: '2026-09-24T10:00:00.000Z',
+    },
+  };
+  const post = () => request(makeApp())
+    .post('/api/ectd/export/42')
+    .send({ applicationNumber: '123456', ...REVIEWED })
+    .buffer(true)
+    .parse((r, cb) => {
+      const chunks: Buffer[] = [];
+      r.on('data', (c: Buffer) => chunks.push(c));
+      r.on('end', () => cb(null, Buffer.concat(chunks)));
+    });
+  const exportRows = () => hoisted.auditLogAction.mock.calls.map((c) => c[0]).filter((e: any) => e?.action === 'EXPORT_GENERATED');
+
+  it('records it against the project that anchors the submission\'s program — not a project that shares the submission\'s id', async () => {
+    const res = await post();
+    expect(res.status, (res.body as Buffer).toString('utf8').slice(0, 300)).toBe(200);
+    expect(hoisted.resolveProgramProjectAnchor).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ programId: '5eb50a2e-235a-4605-bd1b-af2d75e8518c', orgId: 100 }),
+    );
+    expect(hoisted.registerExportGovernanceQuick).toHaveBeenCalledWith(expect.objectContaining({ projectId: 77 }));
+    expect(hoisted.registerExportGovernanceQuick).not.toHaveBeenCalledWith(expect.objectContaining({ projectId: 42 }));
+    expect(res.headers['x-export-registry']).toBe('placed');
+  });
+
+  it('a program with no project anchor is delivered audited-unplaced, and says so', async () => {
+    hoisted.resolveProgramProjectAnchor.mockResolvedValueOnce(null);
+    const res = await post();
+    expect(res.status, (res.body as Buffer).toString('utf8').slice(0, 300)).toBe(200);
+    expect((res.body as Buffer).toString('utf8')).toBe('FAKE-ZIP-BYTES');
+    expect(hoisted.registerExportGovernanceQuick).not.toHaveBeenCalled();
+    expect(res.headers['x-export-registry']).toBe('unplaced');
+    expect(exportRows()).toEqual([
+      expect.objectContaining({
+        organizationId: 100,
+        details: expect.objectContaining({
+          artifactRegistry: 'unplaced_pending_document_identity_contract',
+          sha256: require('crypto').createHash('sha256').update(Buffer.from('FAKE-ZIP-BYTES')).digest('hex'),
+        }),
+      }),
+    ]);
+  });
+
+  it('a submission with no program is delivered audited-unplaced — nothing is attributed by an id that happens to match', async () => {
+    hoisted.assembleSubmissionEctd.mockResolvedValueOnce({
+      buffer: Buffer.from('FAKE-ZIP-BYTES'), filename: 'SEQ-1-0000-fda.zip', sequenceId: 1, sequenceNumber: '0000',
+      region: 'fda', sha256: 'a'.repeat(64), materialized: 9, unresolvedLeaves: [], skipped: [],
+      priorState: 'filed', unfiledPriorSequences: [], programId: null,
+      stats: { totalModules: 5, totalFiles: 12, totalGranules: 9, generatedAt: '2026-06-29T00:00:00.000Z',
+        completeness: { totalLeaves: 9, completeLeaves: 9, placeholderLeaves: 0, unfinalizedLeaves: 0, completenessPct: 100, complete: true, incompleteSections: [] } },
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(hoisted.resolveProgramProjectAnchor).not.toHaveBeenCalled();
+    expect(hoisted.registerExportGovernanceQuick).not.toHaveBeenCalled();
+    expect(res.headers['x-export-registry']).toBe('unplaced');
+  });
+
+  it('an unplaced export whose audit row did not persist is refused, and no package is returned', async () => {
+    hoisted.resolveProgramProjectAnchor.mockResolvedValueOnce(null);
+    hoisted.auditLogAction.mockImplementation(async (e: any) =>
+      e?.action === 'EXPORT_GENERATED'
+        ? { persisted: false, error: 'audit store unavailable' }
+        : { persisted: true, chained: true, tamperProof: true });
+    const res = await post();
+    expect(res.status).toBeGreaterThanOrEqual(500);
+    expect((res.body as Buffer).toString('utf8')).not.toBe('FAKE-ZIP-BYTES');
+    expect(res.headers['content-type']).not.toMatch(/application\/zip/);
   });
 });

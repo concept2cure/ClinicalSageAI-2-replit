@@ -149,8 +149,8 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!st.loading && !st.error) notifySurfaceActionReady('source-tracer');
-  }, [st.loading, st.error]);
+    if (!st.loading) notifySurfaceActionReady('source-tracer');
+  }, [st.loading]);
 
   const stTone = (s: string) => (s === 'approved' ? 'ok' : s === 'in_review' || s === 'review' ? 'warn' : 'idle');
 
