@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T19:41:20.665Z",
+  "generatedAt": "2026-09-29T19:51:49.149Z",
   "git": {
-    "sha": "36614ba99431f6361556c00872b62cd2962a9fe1",
+    "sha": "57dad1157d997e8f63887195962234f2ad8f7996",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1981,7 +1981,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 859708
+        "bytes": 860125
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -1993,7 +1993,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 311094
+        "bytes": 311304
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2021,7 +2021,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 176932
+        "bytes": 177229
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2163,11 +2163,11 @@
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20205
+        "lines": 20210
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7102
+        "lines": 7106
       },
       {
         "file": "server/statistics-service.ts",
@@ -2195,7 +2195,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4504
+        "lines": 4508
       },
       {
         "file": "server/storage.ts",
