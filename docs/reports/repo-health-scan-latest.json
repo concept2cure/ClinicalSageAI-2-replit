@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T20:58:30.132Z",
+  "generatedAt": "2026-09-29T21:23:39.216Z",
   "git": {
-    "sha": "923fd19f6ecc75ff5a515685be67bf11f0d7441c",
+    "sha": "0aeeb1c460f6ed03f32005d00a173c8ad64c923b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2009,7 +2009,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 199490
+        "bytes": 200335
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2191,7 +2191,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 4636
+        "lines": 4650
       },
       {
         "file": "server/storage.ts",
@@ -2462,6 +2462,10 @@
         "lines": 1828
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1824
+      },
+      {
         "file": "server/services/compliance/globalComplianceEngine.ts",
         "lines": 1824
       },
@@ -2495,10 +2499,6 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1776
-      },
-      {
-        "file": "server/routes/c2c/project-vault.ts",
         "lines": 1776
       },
       {

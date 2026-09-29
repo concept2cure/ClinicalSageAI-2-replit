@@ -1,0 +1,16 @@
+# the same file, this change
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > hosted tools never reach a lane that is not first-party Anthropic > Bedrock is sent the custom tools and none of the hosted ones
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > hosted tools never reach a lane that is not first-party Anthropic > a tool choice that named a withheld tool is dropped with it
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > a tenant with no placement policy has not opted in
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > an opted-in tenant gets web search and web fetch on first-party Anthropic
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > a zero-retention tenant is not offered hosted tools, even with the opt-in
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > a tenant that turned public-source egress off is not offered them
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > a policy that could not be read withholds them, even where the request itself may run
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > code execution never runs a tenant payload on Anthropic’s sandbox
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > a document referenced by Anthropic file id is read only by first-party Anthropic > is refused on Bedrock before any call, not sent with the Files-API header
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > a document referenced by Anthropic file id is read only by first-party Anthropic > is sent to first-party Anthropic
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > web tools reach each model in the version it accepts > Haiku 4.5 is sent the basic variants, with the same domains and cap
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > web tools reach each model in the version it accepts > Opus 5.5 keeps the dynamic-filtering variants
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > web tools reach each model in the version it accepts > every Anthropic model in the registry says which version it accepts, and only 4.6+ claim dynamic filtering
+      Tests  13 passed (13)
+exit=0

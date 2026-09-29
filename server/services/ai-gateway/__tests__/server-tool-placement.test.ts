@@ -244,3 +244,58 @@ describe('a document referenced by Anthropic file id is read only by first-party
     expect(dispatch).toHaveBeenCalledTimes(1);
   });
 });
+
+/*
+ * Each model is sent the web tools in the version it accepts (2026-09-29).
+ * `web_search_20260209` / `web_fetch_20260209` (dynamic filtering) are accepted
+ * by Opus 4.6+ and Sonnet 4.6+ only; Haiku 4.5 takes the basic
+ * `web_search_20250305` / `web_fetch_20250910`. AnA sends the dynamic variants,
+ * and every Fast turn routes to Haiku 4.5, so an opted-in tenant's Fast turn
+ * carried a tool its model does not accept.
+ */
+describe('web tools reach each model in the version it accepts', () => {
+  it('Haiku 4.5 is sent the basic variants, with the same domains and cap', async () => {
+    useTenantPolicy(OPTED_IN);
+    const gateway = buildGateway(['anthropic']);
+    const dispatch = stubDispatch(gateway);
+    const tools = [
+      LOOKUP,
+      { ...WEB_SEARCH, allowed_domains: ['fda.gov'] },
+      { ...WEB_FETCH, allowed_domains: ['fda.gov'] },
+    ] as GatewayRequest['tools'];
+
+    await gateway.route(chat({ provider: 'anthropic', model: 'claude-haiku-4-5', tools }));
+
+    expect(sent(dispatch).tools).toEqual([
+      LOOKUP,
+      { type: 'web_search_20250305', name: 'web_search', max_uses: 5, allowed_domains: ['fda.gov'] },
+      { type: 'web_fetch_20250910', name: 'web_fetch', max_uses: 5, allowed_domains: ['fda.gov'] },
+    ]);
+  });
+
+  it('Opus 5.5 keeps the dynamic-filtering variants', async () => {
+    useTenantPolicy(OPTED_IN);
+    const gateway = buildGateway(['anthropic']);
+    const dispatch = stubDispatch(gateway);
+
+    await gateway.route(chat({ provider: 'anthropic', model: 'claude-opus-5-5' }));
+
+    expect((sent(dispatch).tools ?? []).map(t => (t as { type?: string }).type)).toEqual([
+      undefined,
+      'web_search_20260209',
+      'web_fetch_20260209',
+    ]);
+  });
+
+  it('every Anthropic model in the registry says which version it accepts, and only 4.6+ claim dynamic filtering', async () => {
+    const { DEFAULT_MODELS } = await import('../gateway');
+    const anthropic = DEFAULT_MODELS.filter(m => m.provider === 'anthropic');
+    expect(anthropic.length).toBeGreaterThan(0);
+    for (const m of anthropic) {
+      expect(m.webToolVariant, m.id).toMatch(/^(dynamic_filtering|basic)$/);
+      const dynamicCapable = /^claude-(opus|sonnet)-(4-[6-9]|[5-9])/.test(m.model);
+      if (m.webToolVariant === 'dynamic_filtering') expect(dynamicCapable, `${m.id} (${m.model})`).toBe(true);
+    }
+    expect(anthropic.find(m => m.model === 'claude-haiku-4-5')?.webToolVariant).toBe('basic');
+  });
+});
