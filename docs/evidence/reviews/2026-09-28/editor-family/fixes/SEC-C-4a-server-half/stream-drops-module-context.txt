@@ -1,0 +1,36 @@
+# Who reads module_context on the server, and who calls buildChatContext (HEAD 37f21ed0)
+
+$ grep -rn "module_context" server --include=*.ts (excluding tests)
+server/services/ana-ri/mdx-context-resolver.ts:5: * Called by `chat-context-builder.ts` when `module_context.workstream === 'mdx'`.
+server/services/ana-ri/mdx-context-resolver.ts:45:  /** The active nav key from module_context (e.g. 'k510', 'pre-sub'). */
+server/services/ana-ri/surface-context-block.ts:7: * as `module_context` on every turn. Server-side, `chat-context-builder` used
+server/services/ana-ri/chat-context-builder.ts:338:    module_context,
+server/services/ana-ri/chat-context-builder.ts:496:    module_context &&
+server/services/ana-ri/chat-context-builder.ts:497:    typeof module_context === 'object' &&
+server/services/ana-ri/chat-context-builder.ts:498:    (module_context as any).workstream === 'mdx' &&
+server/services/ana-ri/chat-context-builder.ts:506:          typeof (module_context as any).activeNav === 'string'
+server/services/ana-ri/chat-context-builder.ts:507:            ? (module_context as any).activeNav
+server/services/ana-ri/chat-context-builder.ts:510:          typeof (module_context as any).activeProgramCode === 'string'
+server/services/ana-ri/chat-context-builder.ts:511:            ? (module_context as any).activeProgramCode
+server/services/ana-ri/chat-context-builder.ts:523:     sends it as `module_context` on every turn. Until now the only server-side
+server/services/ana-ri/chat-context-builder.ts:533:  const surfaceContextBlock = buildSurfaceContextBlock(module_context);
+
+$ grep -rn "buildChatContext(" server tests (all callers)
+server/services/ana-ri/chat-context-builder.ts:5: * Both endpoints call buildChatContext() to get the fully assembled
+server/services/ana-ri/chat-context-builder.ts:327:export async function buildChatContext(req: Request): Promise<ChatContext> {
+tests/routes/ana-ri-health.test.ts:207:    // buildRouteContextBlock and buildChatContext were added to the
+tests/routes/ana-ri-health.test.ts:215:    buildChatContext: vi.fn(async () => ({ block: '', sources: [] })),
+
+$ grep -n "module_context\|buildSurfaceContextBlock" server/routes/ana-ri/stream.ts  (the route useAnaChat posts to)
+(no matches)
+
+$ grep -n "/api/ana-ri/stream'" client/src/concept2cure/components/ana/useAnaChat.ts
+963:        const res = await fetch('/api/ana-ri/stream', {
+904:        module_context: options.moduleContext ?? undefined,
+
+$ sed -n 948,952p server/routes/ana-ri/stream.ts  (the per-turn suffix; no surface block)
+      }
+      const streamStablePrefix = intelligencePrefix + orchestration.systemPrompt;
+      const streamVolatileSuffix =
+        memoryBlock +
+        enrichment.block +

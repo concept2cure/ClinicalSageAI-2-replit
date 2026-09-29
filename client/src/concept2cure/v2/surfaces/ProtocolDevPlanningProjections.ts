@@ -31,7 +31,11 @@ export function doseEscalationView(payload: Obj): ProjectionView {
     ? [
       `Target toxicity ${num(p.targetToxicity)}; cohorts of ${num(p.cohortSize)}; at most ${num(p.maxSampleSize)} patients` +
         (typeof p.stopWhenAtDoseN === 'number' ? `; stop at ${p.stopWhenAtDoseN} at one dose` : '') + '.',
-      [sourced('φ1', p.phi1), sourced('φ2', p.phi2), sourced('elimination threshold', p.eliminationThreshold)].join('; ') + '.',
+      [
+        sourced('φ1', p.phi1), sourced('φ2', p.phi2), sourced('elimination threshold', p.eliminationThreshold),
+        ...(p.minEliminationN ? [sourced('minimum n before elimination', p.minEliminationN)] : []),
+        ...(p.prior ? [`prior ${str((p.prior as Obj).value)} (${str((p.prior as Obj).source) || 'source not stated'})`] : []),
+      ].join('; ') + '.',
       p.startingDose ? `Starting dose: ${str((p.startingDose as Obj).label)}.` : '',
     ].filter(Boolean).join(' ')
     : '';
@@ -45,6 +49,7 @@ export function doseEscalationView(payload: Obj): ProjectionView {
       params,
       b ? `Escalate when the observed DLT rate ≤ λe = ${num(b.lambdaE)}; de-escalate when ≥ λd = ${num(b.lambdaD)}.` : '',
       str(d.mtdSelection),
+      str(d.safetyStopping),
     ].filter(Boolean).join(' '),
     entries: rows(d.decisionTable).map((r) => ({
       key: 'boin:' + str(r.n),
@@ -52,7 +57,8 @@ export function doseEscalationView(payload: Obj): ProjectionView {
       status: '',
       text:
         `Escalate if DLTs ≤ ${num(r.escalateIfAtMost)} · de-escalate if ≥ ${num(r.deescalateIfAtLeast)} · ` +
-        (typeof r.eliminateIfAtLeast === 'number' ? `eliminate if ≥ ${r.eliminateIfAtLeast}` : 'no DLT count eliminates at this n'),
+        // The engine says why no count eliminates (too few patients, or a cap); fall back only when it does not.
+        (typeof r.eliminateIfAtLeast === 'number' ? `eliminate if ≥ ${r.eliminateIfAtLeast}` : str(r.eliminationNote) || 'no DLT count eliminates at this n'),
       gaps: [],
     })),
   };
@@ -62,6 +68,16 @@ export function doseEscalationView(payload: Obj): ProjectionView {
 
 const timeOrNotReached = (v: unknown, unit: string): string =>
   typeof v === 'number' && Number.isFinite(v) ? `${v} ${unit}s` : 'not reached';
+
+/**
+ * A simulated completion time. The engine reports the median and interval only
+ * when every simulation reached the target: a null time with some simulations
+ * reaching it is "not reported", never "not reached" and never a number.
+ */
+function simulatedTime(v: unknown, unit: string, probReached: unknown): string {
+  if (typeof v === 'number' && Number.isFinite(v)) return `${v} ${unit}s`;
+  return probReached === 0 ? 'not reached' : 'not reported (some simulations never reached the target)';
+}
 
 export function enrollmentView(payload: Obj): ProjectionView {
   const e = (payload.enrollment ?? {}) as Obj;
@@ -75,8 +91,10 @@ export function enrollmentView(payload: Obj): ProjectionView {
     gaps: strings(e.gaps),
     note: f
       ? [
-        `Target ${num(f.targetN)} patients. Median ${timeOrNotReached(f.median, unit)}; 80% interval ${timeOrNotReached(f.p10, unit)} to ${timeOrNotReached(f.p90, unit)}.`,
-        `Probability of reaching the target: ${num(f.probReached)} (${num(f.nSim)} simulations, seed ${num(f.seed)}).`,
+        `Target ${num(f.targetN)} patients. Median ${simulatedTime(f.median, unit, f.probReached)}; ` +
+          `80% interval ${simulatedTime(f.p10, unit, f.probReached)} to ${simulatedTime(f.p90, unit, f.probReached)}.`,
+        `Probability of reaching the target: ${num(f.probReached)} (${num(f.nSim)} simulations, seed ${num(f.seed)}` +
+          (f.seedSource === 'derived_from_inputs' ? ', derived from the inputs because no seed is recorded).' : ').'),
         `Closed-form expectation at the mean rates: ${timeOrNotReached(f.closedFormExpectedTime, unit)}.`,
         str(e.note),
       ].join(' ')
@@ -93,6 +111,13 @@ export function enrollmentView(payload: Obj): ProjectionView {
 
 /* ── Interim-analysis operating characteristics (Tier 2) ─────────────────── */
 
+/** The type I error is one-sided and non-binding; the binding figure, when futility is recorded, is its own number. */
+function characteristicsLine(c: Obj): string {
+  const binding = typeof c.typeIErrorIfFutilityBinding === 'number' ? `; ${num(c.typeIErrorIfFutilityBinding)} if futility were binding` : '';
+  const power = c.power === null ? 'not computed (see the gaps)' : num(c.power);
+  return `Characteristics of the ${str(c.boundariesEvaluated)} boundaries: one-sided type I error ${num(c.typeIError)} (futility non-binding)${binding}; power ${power}.`;
+}
+
 export function interimOcView(payload: Obj): ProjectionView {
   const i = (payload.interimOc ?? {}) as Obj;
   const c = (i.characteristics ?? null) as Obj | null;
@@ -106,7 +131,7 @@ export function interimOcView(payload: Obj): ProjectionView {
     gaps: strings(i.gaps),
     note: [
       Array.isArray(i.schedule) ? `Analyses at information fractions ${strings(i.schedule).join(', ')}.` : '',
-      c ? `Characteristics of the ${str(c.boundariesEvaluated)} boundaries: type I error ${num(c.typeIError)}; power ${c.power === null ? 'not computed (alpha or power not recorded)' : num(c.power)}.` : '',
+      c ? characteristicsLine(c) : '',
       c ? `Expected information fraction ${num(eif.underNull)} under H0, ${eif.underAlternative === null ? 'not computed' : num(eif.underAlternative)} under the alternative.` : '',
       ess ? `Expected sample size ${num(ess.underNull)} under H0, ${ess.underAlternative === null ? 'not computed' : num(ess.underAlternative)} under the alternative.` : '',
       ...strings(i.notes),
@@ -135,6 +160,13 @@ export function interimOcView(payload: Obj): ProjectionView {
 
 /* ── MMRM sizing (Tier 2) ────────────────────────────────────────────────── */
 
+/** "179 per arm" only at 1:1; otherwise each arm's n and where the allocation comes from. */
+function armsText(z: Obj): string {
+  if (z.allocationRatio === 1 || typeof z.nSecondArm !== 'number') return `${num(z.nPerArm)} per arm`;
+  const from = z.allocationSource === 'randomization' ? 'the randomization ratio' : z.allocationSource === 'mmrm_assumptions' ? 'the MMRM assumptions' : 'source not stated';
+  return `${num(z.nPerArm)} in the first arm and ${num(z.nSecondArm)} in the second (allocation ${num(z.allocationRatio)}, from ${from})`;
+}
+
 export function mmrmView(payload: Obj): ProjectionView {
   const m = (payload.mmrm ?? {}) as Obj;
   const z = (m.sizing ?? null) as Obj | null;
@@ -146,7 +178,7 @@ export function mmrmView(payload: Obj): ProjectionView {
     gaps: strings(m.gaps),
     note: [
       m.endpointName ? `Endpoint: ${str(m.endpointName)}.` : '',
-      z ? `Required: ${num(z.nPerArm)} per arm, ${num(z.nTotal)} in total (two-sided alpha ${num(z.alphaTwoSided)}); achieved power ${num(z.achievedPower)}.` : '',
+      z ? `Required: ${armsText(z)}, ${num(z.nTotal)} in total (two-sided alpha ${num(z.alphaTwoSided)}); achieved power ${num(z.achievedPower)}.` : '',
       z ? `Variance factor ${num(z.varianceFactor)}; efficiency over a completers-only analysis ${num(z.efficiencyVsCompleters)}.` : '',
       pvr ? (pvr.covered ? `The planned ${num(pvr.planned)} covers the requirement.` : `The planned ${num(pvr.planned)} is ${num(pvr.shortfall)} below the requirement.`) : '',
       typeof m.soaVisitCount === 'number' ? `The Schedule of Activities schedules the endpoint at ${m.soaVisitCount} post-baseline visit(s).` : '',
@@ -175,7 +207,7 @@ export function externalControlView(payload: Obj): ProjectionView {
     entries: rows(e.elements).map((x) => ({
       key: 'ec:' + str(x.element),
       label: str(x.element),
-      status: x.stated ? 'stated' : 'not stated',
+      status: x.stated ? 'stated' : x.field === null ? 'not recordable yet' : 'not stated',
       text: str(x.detail),
       gaps: [],
     })),
@@ -190,6 +222,12 @@ function fwerText(label: string, r: Obj | null): string {
     (typeof r.controlled === 'boolean' ? (r.controlled ? ' — controlled at alpha.' : ' — NOT controlled at alpha.') : '.');
 }
 
+/** What was simulated, when the engine says: the recorded allocation, or the textbook split in its absence. */
+function procedureLabel(p: Obj | null): string {
+  const what = p?.simulated === 'recorded_allocation' ? 'the recorded allocation' : p?.simulated === 'textbook_split' ? 'its textbook split (no allocation recorded)' : null;
+  return what ? `Named procedure, ${what}, spending ${num(p?.level)}` : 'Named procedure';
+}
+
 export function multiplicityView(payload: Obj): ProjectionView {
   const m = (payload.multiplicity ?? {}) as Obj;
   return {
@@ -199,7 +237,7 @@ export function multiplicityView(payload: Obj): ProjectionView {
     gaps: strings(m.gaps),
     note: [
       m.method ? `Procedure: ${str(m.method)} at alpha ${num(m.alpha)}.` : '',
-      fwerText('Named procedure', (m.procedure ?? null) as Obj | null),
+      fwerText(procedureLabel((m.procedure ?? null) as Obj | null), (m.procedure ?? null) as Obj | null),
       fwerText('Each hypothesis at full alpha', (m.unadjusted ?? null) as Obj | null),
       ...strings(m.notes),
     ].filter(Boolean).join(' '),
@@ -222,14 +260,19 @@ export function biospecimenView(payload: Obj): ProjectionView {
     gaps: strings(p.gaps),
     note: b
       ? [
-        `Blood per participant: ${num(b.totalScheduledMl)} mL scheduled, up to ${num(b.totalUpperBoundMl)} mL with conditional draws` +
-          (b.totalsAreLowerBounds ? ' — LOWER BOUNDS: a draw records no volume.' : '.'),
-        `Worst 8-week window: ${known(b.maxEightWeekScheduledMl, ' mL')}; most draw visits in one week: ${known(b.maxDrawVisitsInAnyWeek, '')}.`,
+        `Blood per participant: ${num(b.totalScheduledMl)} mL scheduled${b.scheduledIsLowerBound ? ' (a lower bound)' : ''}, ` +
+          `up to ${num(b.totalUpperBoundMl)} mL with conditional and unscheduled draws${b.totalsAreLowerBounds ? ' (a lower bound)' : ''}` +
+          (typeof b.unscheduledMl === 'number' && b.unscheduledMl > 0 ? `, of which ${b.unscheduledMl} mL at unscheduled visits (counted once each).` : '.'),
+        // Under lower-bound totals, the window is a lower bound too, and is printed as one.
+        `Worst 8-week window: ${b.totalsAreLowerBounds && typeof b.maxEightWeekScheduledMl === 'number' ? `at least ${b.maxEightWeekScheduledMl} mL (lower bound)` : known(b.maxEightWeekScheduledMl, ' mL')}; ` +
+          `most scheduled draw visits in one week: ${known(b.maxDrawVisitsInAnyWeek, '')}` +
+          (typeof b.maxDrawVisitsInAnyWeekUpperBound === 'number' ? `, up to ${b.maxDrawVisitsInAnyWeekUpperBound} with conditional draws.` : '.'),
         ...refs.map((r) => `Reference ${num(r.eightWeekLimitMl)} mL / 8 weeks (${str(r.appliesTo)}): ` +
-          (r.exceededScheduled === null ? 'not known.' : r.exceededScheduled ? 'above.' : 'within.')),
+          (r.exceededScheduled === null ? `not known${r.withinUnknownBecause ? ` — ${str(r.withinUnknownBecause)}` : ''}.` : r.exceededScheduled ? 'above.' : 'within.')),
         str(b.meaning),
+        b.countingRule ? `Counting rule: ${str(b.countingRule)}.` : '',
         ...strings(p.notes),
-      ].join(' ')
+      ].filter(Boolean).join(' ')
       : strings(p.notes).join(' '),
     entries: rows(p.specimens).map((s) => {
       const sp = (s.specimen ?? null) as Obj | null;
@@ -253,7 +296,10 @@ export function masterProtocolView(payload: Obj): ProjectionView {
     percent: null,
     status: str(m.status),
     gaps: strings(m.gaps),
-    note: `Structural design: ${str(m.structuralDesign) || 'not recorded'}. A structural check — no statistic is computed and no stated rule is judged adequate.`,
+    note: [
+      `Structural design: ${str(m.structuralDesign) || 'not recorded'}. A structural check — no statistic is computed and no stated rule is judged adequate.`,
+      ...strings(m.notes),
+    ].join(' '),
     entries: rows(m.elements).map((e, i) => ({
       key: `mp:${i}`,
       label: `${str(e.scope)} — ${str(e.element)}`,

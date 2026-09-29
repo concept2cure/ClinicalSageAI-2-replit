@@ -42,6 +42,7 @@ import os from 'os';
 import path from 'path';
 import { createHash } from 'crypto';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { baseLeafId } from '../../submission-gateways/ectd-packager/leaf-id';
 
 const holder = vi.hoisted(() => ({ db: null as any, pglite: null as any }));
 vi.mock('../../../db', () => ({
@@ -89,7 +90,7 @@ beforeAll(async () => {
   holder.pglite = harness.pglite;
   await harness.pglite.exec(`
     CREATE TABLE IF NOT EXISTS ectd_compilations (
-      id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER,
+      id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT,
       sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW()
     );
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
@@ -139,8 +140,11 @@ beforeAll(async () => {
       (17, 'm3.2.s.8', 'Unnamed', 'delete', NULL, NULL, ${ORG}, ${USER}),
       (17, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, ${ORG}, ${USER});
   `);
+  // As the packager records a filed leaf: with the backbone ID a later
+  // modified-file names (2026-09-29, W5/D7).
   const filed = (section: string, fileName: string, md5: string) => ({
     ctdSection: section, fileName, href: `m3/${section.slice(1).replace(/\./g, '-')}/${fileName}`, md5, operation: 'new',
+    leafId: baseLeafId({ ctdSection: section, fileName }), backbone: 'index.xml',
   });
   await harness.pglite.query(
     `INSERT INTO ectd_compilations (organization_id, submission_id, sequence_number, leaf_manifest) VALUES
@@ -166,7 +170,7 @@ beforeAll(async () => {
       ]),
       JSON.stringify([{
         ...filed('m3.2.s.5', '3-2-coauthor-documents-410.pdf', '2'.repeat(32)),
-        href: '../0000/m3/3-2-s-5/3-2-coauthor-documents-410.pdf', operation: 'delete',
+        href: '../0000/index.xml#leaf-m3-2-s-5-3-2-coauthor-documents-410', operation: 'delete',
       }]),
       // 411 was filed under module '3.2', beside another document's leaf.
       JSON.stringify([
@@ -232,7 +236,7 @@ describe('assembleSequence — declared withdrawals', () => {
     const r = await assemble(2);
     try {
       const { files, del } = await zipOf(r.bundle.path);
-      expect(del).toContain('modified-file="../0000/m3/3-2-p-8-1/m3-2-p-8-1-coauthor-documents-300.pdf"');
+      expect(del).toContain('modified-file="../0000/index.xml#leaf-m3-2-p-8-1-m3-2-p-8-1-coauthor-documents-300"');
       expect(files.some((f) => f.includes('coauthor-documents-300'))).toBe(false);
       expect(r.unfinalized).toBe(0);
       expect(assembledTransmitBlockers(r)).toEqual([]);
@@ -245,7 +249,7 @@ describe('assembleSequence — declared withdrawals', () => {
     const r = await assemble(4);
     try {
       const { files, del } = await zipOf(r.bundle.path);
-      expect(del).toContain('modified-file="../0000/m3/3-2-s-2/3-2-coauthor-documents-106.pdf"');
+      expect(del).toContain('modified-file="../0000/index.xml#leaf-m3-2-s-2-3-2-coauthor-documents-106"');
       expect(files.some((f) => f.includes('coauthor-documents-106'))).toBe(false);
       expect(r.skipped).toEqual([]);
     } finally {
@@ -308,7 +312,7 @@ describe('assembleSequence — declared withdrawals', () => {
     const r = await assemble(13);
     try {
       const { del } = await zipOf(r.bundle.path);
-      expect(del).toContain('modified-file="../0000/m3/3-2-s-6/3-2-coauthor-documents-411.pdf"');
+      expect(del).toContain('modified-file="../0000/index.xml#leaf-m3-2-s-6-3-2-coauthor-documents-411"');
       expect(r.skipped).toEqual([]);
     } finally {
       await r.cleanup();
@@ -319,7 +323,7 @@ describe('assembleSequence — declared withdrawals', () => {
     const r = await assemble(17);
     try {
       const { del } = await zipOf(r.bundle.path);
-      expect(del).toContain('modified-file="../0000/m3/3-2-s-8/x-coauthor-documents-414.pdf"');
+      expect(del).toContain('modified-file="../0000/index.xml#leaf-m3-2-s-8-x-coauthor-documents-414"');
       expect(r.skipped).toEqual([]);
     } finally {
       await r.cleanup();
@@ -395,8 +399,11 @@ async function seedUnreadableWithdrawals() {
        (49, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2)`,
     [ORG, USER, sha('<p>the filed text</p>'), VAULT_UUID],
   );
+  // As the packager records a filed leaf: with the backbone ID a later
+  // modified-file names (2026-09-29, W5/D7).
   const filed = (section: string, fileName: string, md5: string) => ({
     ctdSection: section, fileName, href: `m3/${section.slice(1).replace(/\./g, '-')}/${fileName}`, md5, operation: 'new',
+    leafId: baseLeafId({ ctdSection: section, fileName }), backbone: 'index.xml',
   });
   await harness.pglite.query(
     `INSERT INTO ectd_compilations (organization_id, submission_id, sequence_number, leaf_manifest) VALUES
@@ -482,19 +489,19 @@ describe('a withdrawal of a filed document whose source can no longer be read', 
   };
 
   it('row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees', async () => {
-    await expectWithdrawnAndAgreed(41, '../0000/m3/3-2-s-2/3-2-coauthor-documents-600.pdf', 'coauthor-documents-600');
+    await expectWithdrawnAndAgreed(41, '../0000/index.xml#leaf-m3-2-s-2-3-2-coauthor-documents-600', 'coauthor-documents-600');
   }, 60_000);
 
   it('content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees', async () => {
-    await expectWithdrawnAndAgreed(43, '../0000/m3/3-2-s-2/3-2-coauthor-documents-601.pdf', 'coauthor-documents-601');
+    await expectWithdrawnAndAgreed(43, '../0000/index.xml#leaf-m3-2-s-2-3-2-coauthor-documents-601', 'coauthor-documents-601');
   }, 60_000);
 
   it('upload bytes rotated: zero transmit blockers, and readiness agrees', async () => {
-    await expectWithdrawnAndAgreed(45, '../0000/m3/3-2-s-3/stab-pdf-ctd-onboarding-documents-700.pdf', 'ctd-onboarding-documents-700');
+    await expectWithdrawnAndAgreed(45, '../0000/index.xml#leaf-m3-2-s-3-stab-pdf-ctd-onboarding-documents-700', 'ctd-onboarding-documents-700');
   }, 60_000);
 
   it('vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees', async () => {
-    await expectWithdrawnAndAgreed(47, `../0000/m3/3-2-s-4/${vaultFiled}`, VAULT_UUID);
+    await expectWithdrawnAndAgreed(47, `../0000/index.xml#${baseLeafId({ ctdSection: 'm3.2.s.4', fileName: vaultFiled })}`, VAULT_UUID);
   }, 60_000);
 
   it('a document filed twice in the section is reported, never guessed and never dropped', async () => {

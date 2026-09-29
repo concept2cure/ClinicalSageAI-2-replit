@@ -46,8 +46,23 @@
  * 3,000/min of credentialed traffic, fifty such users. The resource-priced
  * buckets (ai, documents, validation, upload) keep their ceilings: they exist
  * for cost, not for source attribution, and per-identity keying alone already
- * stops one user's quota from being consumed by a colleague. `auth` declares
- * no authenticated ceiling: a login carries no credential and stays IP-keyed.
+ * stops one user's quota from being consumed by a colleague.
+ *
+ * ── Sign-in (D6, 2026-09-29) ─────────────────────────────────────────────────
+ * Sign-in was limited per client address at every layer, successes counted:
+ * the `auth` bucket below held 20 requests per address per 15 minutes in
+ * production (a sign-in is two — password, then second factor), routes/auth.ts
+ * held 10 of each step, and the enterprise /api/auth limit refused an address
+ * after 5 failures. So about ten colleagues behind one office address — or one
+ * CloudFront edge, while the load balancer trusts one hop — signed in per
+ * quarter hour, and five typos or expired-session 401s locked the address out.
+ *
+ * Now an ACCOUNT is what is protected, per account ({@link SIGN_IN_LIMITS}:
+ * the failed-sign-in and wrong-second-factor limits beside the five-failure
+ * lockout in auth-security-service), and an ADDRESS is limited only in what it
+ * gets wrong ({@link SIGN_IN_LIMITS}.failuresPerIp) and in raw volume (the
+ * `auth` bucket, sized for a shared address). No layer counts a successful
+ * sign-in against the address it came from.
  *
  * @module server/config/platform-limits
  */
@@ -87,10 +102,17 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production';
  * the original DEFAULT_RULES.
  */
 export const RATE_LIMITS = {
-  /** Authentication endpoints — env-dependent (prod strict, dev relaxed). */
+  /** Authentication endpoints — a VOLUME guard, every request counted; what
+   *  guessing is allowed is SIGN_IN_LIMITS' business. Production: 600 anonymous
+   *  requests per address per 15 minutes (about 300 sign-ins at one office
+   *  address or edge — it was 20, about ten), 300 per session credential, and
+   *  3,000 credentialed per address so rotating unverified credentials stays
+   *  bounded. Development is unchanged. */
   auth: {
     windowMs: IS_PRODUCTION ? FIFTEEN_MINUTES_MS : ONE_MINUTE_MS,
-    maxRequests: IS_PRODUCTION ? 20 : 300,
+    maxRequests: IS_PRODUCTION ? 600 : 300,
+    maxRequestsAuthenticated: 300,
+    maxRequestsPerIpAuthenticated: 3000,
     message: IS_PRODUCTION
       ? 'Too many authentication attempts. Please try again later.'
       : 'Too many authentication attempts. Please wait briefly and try again.',
@@ -144,6 +166,31 @@ export const RATE_LIMITS = {
     maxRequests: 10,
     message: 'Too many file uploads. Please wait.',
   },
+} as const;
+
+/**
+ * Sign-in guessing limits (D6, 2026-09-29; see the header's "Sign-in" note).
+ *
+ *   failuresPerIp            — FAILED /api/auth requests from one address, any
+ *                              account (enterprise-security.ts rateLimiters.auth).
+ *                              Spraying across accounts from one address stops
+ *                              here; an office's typos and expired sessions do
+ *                              not reach it. Was 5 in production.
+ *   loginFailuresPerAccount  — failed sign-ins for one address SIGNED IN WITH
+ *                              (middleware/sign-in-limits.ts). Beside the
+ *                              five-failure lockout, which counts only
+ *                              addresses that have an account; this counts all.
+ *   mfaFailuresPerAccount    — wrong second-factor codes for one account, keyed
+ *                              by the verified challenge's account. Wrong
+ *                              authenticator and recovery codes counted nothing
+ *                              per account before: only the address's 10.
+ *
+ * Successful requests are never counted by any of the three.
+ */
+export const SIGN_IN_LIMITS = {
+  failuresPerIp: { windowMs: FIFTEEN_MINUTES_MS, max: IS_PRODUCTION ? 50 : 100 },
+  loginFailuresPerAccount: { windowMs: FIFTEEN_MINUTES_MS, max: 10 },
+  mfaFailuresPerAccount: { windowMs: FIFTEEN_MINUTES_MS, max: 10 },
 } as const;
 
 /**
@@ -246,6 +293,10 @@ Object.freeze(RATE_LIMITS.concept2cure);
 Object.freeze(RATE_LIMITS.validation);
 Object.freeze(RATE_LIMITS.upload);
 Object.freeze(RATE_LIMIT_FAIL_CLOSED_CATEGORIES);
+Object.freeze(SIGN_IN_LIMITS);
+Object.freeze(SIGN_IN_LIMITS.failuresPerIp);
+Object.freeze(SIGN_IN_LIMITS.loginFailuresPerAccount);
+Object.freeze(SIGN_IN_LIMITS.mfaFailuresPerAccount);
 Object.freeze(LEGACY_RATE_LIMITS);
 Object.freeze(LEGACY_RATE_LIMITS.auth);
 Object.freeze(LEGACY_RATE_LIMITS.api);

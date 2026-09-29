@@ -112,3 +112,26 @@ through the production tenant-users and organizations routers behind
 - The response still names the inviting organization by id only.
   Showing its name would be a further, deliberate cross-organization read,
   and is left to the D2 surface that renders the list.
+
+## Amended 2026-09-29: the migration halted the set on a database without the table
+
+`migrations/20260928_invitations_for_member.sql` created its function
+unconditionally. PostgreSQL validates a `LANGUAGE sql` body when the function
+is created, so on a database without `organization_invitations` the whole set
+stopped at this file.
+
+- **Where it showed:** `tests/schema-contract/tenant-isolation-sweep.contract.test.ts`
+  applies the set to a minimal base, and it has been red since `7347a3e2`
+  (`amend-2026-09-29/red-unguarded.txt`).
+- **The fix:** the function is now created only when both tables it reads
+  exist; otherwise it is skipped with a NOTICE, like its siblings. The file is
+  amended in place with a dated note (Rule 1). The contract passes 19/19
+  (`amend-2026-09-29/green-guarded.txt`).
+- **The same latent defect in `20260928_users_membership_rls.sql`** (`user_id_for_email`)
+  is guarded the same way.
+- **Checks on the result:**
+  - Both files skip cleanly on an empty database.
+  - On the provisioned database, `invitation-acceptance`, `users-rls` and
+    `memberships` pass 27/27.
+  - The full `tests/schema-contract` suite passes 91/91. One mid-run failure
+    came from the red reproduction swapping the file under it; re-run, 19/19.

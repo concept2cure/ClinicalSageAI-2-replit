@@ -245,7 +245,7 @@ describe('interim-analysis characteristics', () => {
         },
       },
     });
-    expect(v.note).toContain('Characteristics of the recorded boundaries: type I error 0.031; power not computed (alpha or power not recorded).');
+    expect(v.note).toContain('Characteristics of the recorded boundaries: one-sided type I error 0.031 (futility non-binding); power not computed (see the gaps).');
     expect(v.entries[0]).toMatchObject({ status: 'discrepancy', text: 'Recorded 2.5 · solved 2.963 · difference -0.463' });
     expect(v.entries[1].text).toContain('P(stop for efficacy) 0.006 under H0');
   });
@@ -294,11 +294,11 @@ describe('specimens and blood volume', () => {
       status: 'partial', gaps: ['g'], notes: [],
       specimens: [{ activityId: 'bm', name: 'Biomarker', specimen: null, unspecified: ['specimen type, volume, processing and storage'] }],
       bloodVolume: {
-        totalScheduledMl: 28, totalUpperBoundMl: 32, totalsAreLowerBounds: true, maxEightWeekScheduledMl: null, maxDrawVisitsInAnyWeek: null,
+        totalScheduledMl: 28, totalUpperBoundMl: 32, totalsAreLowerBounds: true, scheduledIsLowerBound: true, maxEightWeekScheduledMl: null, maxDrawVisitsInAnyWeek: null,
         referencePoints: [{ appliesTo: 'healthy adults', eightWeekLimitMl: 550, exceededScheduled: null }], meaning: 'not safety limits',
       },
     } });
-    expect(v.note).toContain('28 mL scheduled, up to 32 mL with conditional draws — LOWER BOUNDS');
+    expect(v.note).toContain('28 mL scheduled (a lower bound), up to 32 mL with conditional and unscheduled draws (a lower bound).');
     expect(v.note).toContain('Worst 8-week window: not computable');
     expect(v.note).toContain('Reference 550 mL / 8 weeks (healthy adults): not known.');
     expect(v.entries[0]).toMatchObject({ status: 'unspecified', gaps: ['specimen type, volume, processing and storage not specified'] });
@@ -313,6 +313,77 @@ describe('master protocol structure', () => {
     } });
     expect(v.entries[0]).toMatchObject({ label: 'across sub-studies — Dropping an arm', status: 'not stated' });
     expect(v.note).toContain('no stated rule is judged adequate');
+  });
+});
+
+describe('what the fixed engines report, said as they report it', () => {
+  it('enrollment: some simulations short of the target is "not reported", none is "not reached"; a derived seed says so', () => {
+    const f = { timeUnit: 'month', targetN: 60, median: null, p10: null, p90: null, probReached: 0.97, closedFormExpectedTime: 20, nSim: 4000, seed: 7, seedSource: 'derived_from_inputs' };
+    const v = enrollmentView({ enrollment: { status: 'partial', gaps: ['g'], note: '', sites: null, forecast: f } });
+    expect(v.note).toContain('Median not reported (some simulations never reached the target)');
+    expect(v.note).not.toContain('Median not reached');
+    expect(v.note).toContain('seed 7, derived from the inputs because no seed is recorded).');
+    const recorded = enrollmentView({ enrollment: { status: 'rendered', gaps: [], note: '', sites: null, forecast: { ...f, median: 18, p10: 15, p90: 22, probReached: 1, seedSource: 'recorded' } } });
+    expect(recorded.note).toContain('Median 18 months; 80% interval 15 months to 22 months.');
+    expect(recorded.note).toContain('seed 7).');
+  });
+
+  it('interim: the binding figure is printed beside the non-binding type I error, never in its place', () => {
+    const v = interimOcView({ interimOc: { status: 'rendered', gaps: [], notes: [], schedule: [0.5, 1], discrepancies: [], characteristics: {
+      boundariesEvaluated: 'solved', typeIError: 0.025, typeIErrorIfFutilityBinding: 0.0231, power: 0.9,
+      expectedInformationFraction: { underNull: 0.99, underAlternative: 0.8 }, expectedSampleSize: null, perLook: [],
+    } } });
+    expect(v.note).toContain('one-sided type I error 0.025 (futility non-binding); 0.0231 if futility were binding; power 0.9.');
+  });
+
+  it('MMRM: "per arm" only at 1:1; an unequal allocation prints each arm and where the ratio comes from', () => {
+    const z = { nPerArm: 135, nSecondArm: 270, nTotal: 405, allocationRatio: 2, allocationSource: 'randomization', alphaTwoSided: 0.05, achievedPower: 0.9, varianceFactor: 1, efficiencyVsCompleters: 1 };
+    const v = mmrmView({ mmrm: { status: 'rendered', gaps: [], sizing: z, plannedVsRequired: null, soaVisitCount: null } });
+    expect(v.note).toContain('Required: 135 in the first arm and 270 in the second (allocation 2, from the randomization ratio), 405 in total');
+    expect(v.note).not.toContain('per arm');
+  });
+
+  it('dose escalation: a row with no eliminating count prints the engine\'s reason; the elimination defaults are labelled', () => {
+    const v = doseEscalationView({ doseEscalation: {
+      status: 'rendered', gaps: [], basis: 'BOIN', applicability: { reasons: [] }, boundaries: null, mtdSelection: '', safetyStopping: 'If the lowest dose is eliminated, the trial stops for safety.',
+      parameters: { targetToxicity: 0.3, cohortSize: 1, maxSampleSize: 30, phi1: { value: 0.18, source: 'engine default' }, phi2: { value: 0.42, source: 'engine default' },
+        eliminationThreshold: { value: 0.95, source: 'engine default' }, minEliminationN: { value: 3, source: 'engine default' }, prior: { value: 'Beta(1,1)', source: 'engine default' } },
+      decisionTable: [{ n: 2, escalateIfAtMost: 0, deescalateIfAtLeast: 1, eliminateIfAtLeast: null, eliminationNote: 'fewer than 3 patients: the elimination rule does not apply yet' }],
+    } });
+    expect(v.entries[0].text).toContain('fewer than 3 patients: the elimination rule does not apply yet');
+    expect(v.note).toContain('minimum n before elimination 3 (engine default); prior Beta(1,1) (engine default).');
+    expect(v.note).toContain('the trial stops for safety');
+  });
+
+  it('external control: an element the design has no field for is "not recordable yet", not "not stated"', () => {
+    const v = externalControlView({ externalControl: { status: 'partial', gaps: [], elements: [
+      { element: 'Fitness of the data source', stated: false, detail: 'no field', field: null },
+      { element: 'Tipping-point sensitivity analysis', stated: false, detail: 'not recorded', field: 'tippingPointAnalysisPlanned' },
+    ] } });
+    expect(v.entries.map((e) => e.status)).toEqual(['not recordable yet', 'not stated']);
+  });
+
+  it('multiplicity: says whether the recorded allocation or a textbook split was simulated, and what it spends', () => {
+    const v = multiplicityView({ multiplicity: { status: 'rendered', gaps: [], notes: [], family: [], method: 'holm', alpha: 0.05,
+      procedure: { fwer: 0.03, monteCarloSe: 0.001, controlled: true, simulated: 'recorded_allocation', level: 0.03 } } });
+    expect(v.note).toContain('Named procedure, the recorded allocation, spending 0.03: family-wise error 0.03');
+  });
+
+  it('biospecimens: a within-unknown reference says why; unscheduled blood and the upper-bound frequency are shown', () => {
+    const v = biospecimenView({ biospecimens: { status: 'partial', gaps: [], notes: [], specimens: [], bloodVolume: {
+      totalScheduledMl: 40, totalUpperBoundMl: 60, unscheduledMl: 10, totalsAreLowerBounds: false, scheduledIsLowerBound: false,
+      maxEightWeekScheduledMl: 40, maxDrawVisitsInAnyWeek: 1, maxDrawVisitsInAnyWeekUpperBound: 3, countingRule: 'one collection per cell', meaning: 'm',
+      referencePoints: [{ appliesTo: 'other adults and children', eightWeekLimitMl: 50, exceededScheduled: null, withinUnknownBecause: 'no minimum weight is recorded' }],
+    } } });
+    expect(v.note).toContain('40 mL scheduled, up to 60 mL with conditional and unscheduled draws, of which 10 mL at unscheduled visits (counted once each).');
+    expect(v.note).toContain('most scheduled draw visits in one week: 1, up to 3 with conditional draws.');
+    expect(v.note).toContain('not known — no minimum weight is recorded.');
+    expect(v.note).toContain('Counting rule: one collection per cell.');
+  });
+
+  it('master protocol: a not-applicable result gives its reason', () => {
+    const v = masterProtocolView({ masterProtocol: { status: 'not_applicable', structuralDesign: 'parallel_group', gaps: [], elements: [], notes: ['structural design "parallel_group" is not a master protocol'] } });
+    expect(v.note).toContain('is not a master protocol');
   });
 });
 

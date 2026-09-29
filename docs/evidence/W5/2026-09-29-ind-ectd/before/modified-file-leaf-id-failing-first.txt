@@ -1,0 +1,27 @@
+# Failing-first: modified-file names a leaf by backbone#ID (ICH eCTD v3.2.2) — 2026-09-29, W5/D7, WO-9 Click 6
+# Code under test: concept2cure-v2 at bb32c15bb (unchanged).
+# Command: npx vitest run server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts
+#
+# Found in the browser: the rehearsal compile of 0001 (withdrawal of 3.2.S.4.2) emitted
+#   <leaf operation="delete" modified-file="../0000/m3/3-2-s-4-2/3-2-s-4-2-coauthor-documents-52.pdf"
+#         checksum="77d0921ab022cecfa295f853c49eb560" checksum-type="md5" xlink:href="../0000/m3/…" …>
+# i.e. a file path where the spec wants the prior backbone + '#' + leaf ID, and a checksum and href on a
+# delete, which ships no file.
+
+ × server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a Module 3 replace points at the ID 0000 filed that document under, in 0000/index.xml 153ms
+   → expected '../0000/m3/3-2-s-1/general.pdf' to be '../0000/index.xml#leaf-3-2-S-1-general' // Object.is equality
+ × server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a Module 1 replace, carried by the regional backbone two folders down, climbs out to 0000/m1/us/us-regional.xml 84ms
+   → expected '../../../0000/m1/us/1-2/cover.pdf' to be '../../../0000/m1/us/us-regional.xml#l…' // Object.is equality
+ × server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a delete names the withdrawn leaf the same way, and carries no checksum and no href: it ships no file 65ms
+   → expected '../0000/m3/3-2-s-2/manufacture.pdf' to be '../0000/index.xml#leaf-3-2-S-2-manufa…' // Object.is equality
+ × server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > the recorded manifest names, for every leaf, the backbone that carries it and the ID it carries there 64ms
+   → general.pdf names a backbone this package has: undefined: expected null not to be null
+ × server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a withdrawal is recorded with the pointer it filed, so a later sequence still folds it out 81ms
+   → expected { ctdSection: '3.2.S.2', …(6) } to match object { ctdSection: '3.2.S.2', …(2) }
+ × server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a prior leaf recorded without its backbone ID gets no modified-file at all — never a file path 2ms
+   → expected '../0000/m3/3-2-s-1/general.pdf' to be undefined
+ × server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > the packager refuses a follow-up replace that names no superseded leaf, as it refuses such a delete 24ms
+   → promise resolved "{ bundle: { …(9) }, …(2) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  7 failed (7)

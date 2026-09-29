@@ -72,3 +72,23 @@ under "Found by the validation package at head (`…01TTTQ1h`)":
 | `governed-decision-db-integration`: the mock lacks `getByDecisionCode` | Test | `…01GJidg5` | 10 |
 | `cmcSuiteWrites`: register rows now filtered to the open program (`288411a4`) | Test | `…01GJidg5` | 10 |
 | `ana-launch-scope`: 16 new protocol tools unclassified | Test | `…01M8bGFS` | 11 |
+
+## Second pass, 2026-09-28 23:00 (merged head `1f5c009b`)
+
+Re-run of every red handed on in the first pass:
+
+- **Item 11 (16 unclassified protocol tools): fixed by its lane, `759049b5`.**
+- **Items 9 and 10: still red, and their lanes have been quiet since
+  17:05–18:54.**
+  - Lint is red, so Integration, Blank DB and Coverage are skipped for every
+    lane.
+  - Test is red for every lane.
+  - Three of the four reds sit in cold files, so this lane fixed them. The
+    fourth stays with its lane.
+
+| Red | Where | Fix | Proof |
+|---|---|---|---|
+| `governed-decision-db-integration.test.ts`: 2 tests, *"getByDecisionCode is not a function"* | The test's `decision-record-service` mock (the file is cold; last changed 09-24). `resolveGovernedDecisionRow` (`91e45bcb`) now looks a decision up by its code first. | The mock gains `getByDecisionCode`, held to the same outage rule as the other doors. A new positive case pins the order: code first, then primary key. | `ledger-mock/`: red 2 of 14 at trunk, green 15 of 15. Two mutants in `governed-decision-ledger.ts`, each caught: primary key tried first; a failed lookup swallowed as "not found". Both restored. |
+| `cmcSuiteWrites.test.tsx`: 2 QC tests time out | The test's GET mock (the file is cold; last changed 09-05). `288411a4` narrows the QC register's read to the open program (`?projectId=`). The mock answered only the bare path. | The mock answers the scoped read, and one case asserts the bare path is never read. | `cmc-register/`: red 2 of 19, green 19 of 19. Mutant: `scopedRegisterPath` returns the bare path again (the register lists every program). 2 fail, restored. |
+| `ci:tenant-entry-points`: the `mdx-admin.ts` digest changed | `docs/reports/tenant-entry-points-baseline.json` (cold) | Re-read against `53237f62`, as the gate asks. It is still one `GET /admin` under `/api/mdx`, inside the authenticated chain and scoped to the session's organization. "scim" still matches only the `scim_tenants` facet and prose. The justification holds, so the digest is refreshed and a dated re-read note added to the reason. | `entry-points/`: red, exit 1; green, exit 0. |
+| `ci:check-css-selector-shadowing`: `.c2c-v2 .crumbs .sep` is defined twice | `client/src/concept2cure/v2/styles/app-v2.css`, held by `…01PwLFr8` (`7b00c78d`, 15:51) | Not edited here: board item 9 | — |

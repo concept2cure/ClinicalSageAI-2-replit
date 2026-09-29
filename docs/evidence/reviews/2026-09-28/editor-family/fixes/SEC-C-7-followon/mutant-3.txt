@@ -1,0 +1,55 @@
+MUTANT 3 (client/src/concept2cure/v2/C2CForm.tsx): the required check ignores the effective values: it reads what was typed
+--- mutation (diff fixed -> mutant):
+122c122
+<     const e = effectiveValues(fields, v);
+---
+>     const e = v;
+---
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > is the person’s to fill while nothing derives it 299ms
+ × client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > is read-only once derived, and its value alone satisfies the required check 87ms
+   → expected <div class="de-err" …(2)></div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a review bound to an account, names the signer only, never a stored label 229ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a reviewer with no account, keeps the name the decision is recorded for 33ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the request-a-review drawer > says a chosen account is listed under its own name, before anything is typed 179ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > submits the derived value, never what was typed there before it applied 47ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > is the account’s name, read-only 124ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > is what is sent, never a name typed before the account was chosen 135ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > becomes a free field again when "no account" is chosen 134ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > is read-only once derived, and its value alone satisfies the required check
+AssertionError: expected <div class="de-err" …(2)></div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="de-err"
+  id="_r_1_-error"
+  role="alert"
+>
+  Complete the required field: Owner name
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx:74:41
+     72|     expect(name.getAttribute('aria-readonly')).toBe('true');
+     73|     fireEvent.click(screen.getByRole('button', { name: 'Assign' }));
+     74|     expect(screen.queryByRole('alert')).toBeNull();
+       |                                         ^
+     75|     expect(onSubmit).toHaveBeenCalledWith({ ownerId: '7', ownerName: '…
+     76|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 8 passed (9)
+   Start at  18:07:55
+   Duration  2.28s (transform 609ms, setup 299ms, import 1.04s, tests 1.28s, environment 1.22s)
+

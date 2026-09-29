@@ -123,6 +123,10 @@ function classifyError(error: unknown): {
       message: raw,
     };
   }
+  // A rehearsal asked of an original sequence: nothing precedes 0000.
+  if (/rehearsal binds a follow-up sequence/i.test(raw)) {
+    return { status: 400, code: 'REHEARSAL_NOT_APPLICABLE', message: raw };
+  }
   if (/not found|no such|does not exist/i.test(raw)) {
     return {
       status: 404,
@@ -457,6 +461,9 @@ const exportBodySchema = z
     // assembling a package with unmaterialized leaves or no content — so a
     // substantively-empty dossier can never be filed.
     requireComplete: z.boolean().default(false),
+    // A follow-up sequence bound against earlier sequences that were never
+    // filed — for an agency validator only (package-from-core PriorState).
+    rehearsal: z.boolean().default(false),
   })
   .passthrough(); // governance + future fields ride through untouched
 
@@ -483,7 +490,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       details: parsedBody.error.flatten(),
     });
   }
-  const { region, sequenceNumber, applicationNumber, validateAfter, requireComplete } =
+  const { region, sequenceNumber, applicationNumber, validateAfter, requireComplete, rehearsal } =
     parsedBody.data;
 
   if (!validateExportGovernance(req, res)) return;
@@ -502,6 +509,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       sequenceNumber,
       applicationNumber,
       requireComplete,
+      priorState: rehearsal ? 'rehearsal' : 'filed',
     });
 
     // Optionally validate the generated package
@@ -550,6 +558,12 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     // Recorded identity of what was actually packaged (the core is authoritative).
     res.setHeader('X-ECTD-Sequence', result.sequenceNumber);
     res.setHeader('X-ECTD-Region', result.region);
+    // What the lifecycle acts were bound against. A rehearsal names the earlier
+    // sequences it bound to that were never filed.
+    res.setHeader('X-ECTD-Prior-State', result.priorState);
+    if (result.priorState === 'rehearsal') {
+      res.setHeader('X-ECTD-Unfiled-Prior', result.unfiledPriorSequences.join(','));
+    }
     // Surface submission-completeness on every export (draft builds included) so
     // callers can see how much of the dossier is still placeholder content.
     const comp = result.stats.completeness;
@@ -591,7 +605,10 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       projectId: submissionId,
       userId: Number(user.id),
       userName: user?.name || user?.email || 'unknown',
-      title: `eCTD Package: ${result.filename}`,
+      title:
+        result.priorState === 'rehearsal'
+          ? `eCTD Package (rehearsal — prior not filed: ${result.unfiledPriorSequences.join(', ') || 'none'}): ${result.filename}`
+          : `eCTD Package: ${result.filename}`,
       exportFormat: 'zip',
       exportFilename: result.filename,
       exportFileSize: result.buffer.length,
@@ -617,6 +634,8 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       packageSha256,
       region: result.region,
       sequenceNumber: result.sequenceNumber,
+      priorState: result.priorState,
+      unfiledPriorSequences: result.unfiledPriorSequences,
     });
 
     return res.send(result.buffer);

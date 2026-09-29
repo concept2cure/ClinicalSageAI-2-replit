@@ -2731,6 +2731,20 @@ export const C2C_MIGRATION_FILES = [
   // polices them — which it could not while they were invisible to it.
   'migrations/20260327_data_lineage_tracking.sql',
 
+  // ── An artifact's signatures and lock snapshots are append-only (2026-09-29)
+  // concept2cure_signatures (the approval and release signatures the
+  // readiness engine, the Artifacts Center and the DOCX signature block read)
+  // and concept2cure_submission_snapshots (each lock's record) were protected
+  // only by triggers in db/migrations/_legacy/ and by a migration on no
+  // applier, so an UPDATE could rewrite a signer's name and a DELETE, or the
+  // ON DELETE CASCADE from the artifact, could remove a signature. UPDATE,
+  // DELETE and TRUNCATE are now refused for every role; no server code does
+  // either (census in the file). Creates no table. Idempotent (CREATE OR
+  // REPLACE FUNCTION, CREATE TRIGGER only when absent, to_regclass guarded);
+  // required at boot by server/services/audit/audit-immutability-triggers.ts.
+  // Evidence docs/evidence/D5/2026-09-29-artifact-signatures-append-only/.
+  'migrations/20260929_concept2cure_signatures_append_only.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

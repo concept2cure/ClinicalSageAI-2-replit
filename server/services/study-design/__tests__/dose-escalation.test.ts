@@ -16,7 +16,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { boinBoundaries, boinDecision, boinDecisionTable, selectMtd } from '../../stats/dose-finding-boin';
+import { BOIN_DEFAULTS as ENGINE_BOIN_DEFAULTS, boinBoundaries, boinDecision, boinDecisionTable, selectMtd } from '../../stats/dose-finding-boin';
 import type { DoseEscalationDesign, StudyDesign } from '../study-design-types';
 import { BOIN_DEFAULTS, DOSE_ESCALATION_BASIS, MAX_TABLE_N, projectDoseEscalation } from '../dose-escalation';
 
@@ -141,6 +141,9 @@ describe('projectDoseEscalation — the engine\'s numbers', () => {
     // 0.4 / 0.4: both above → the lower dose.
     expect(selectMtd([{ nPatients: 10, nDlt: 4 }, { nPatients: 10, nDlt: 4 }], 0.3).mtdIndex).toBe(0);
     expect(rule).toContain('between two above it the lower');
+    // A dose above an eliminated one is out, even with a smoothed rate nearer the target.
+    expect(selectMtd([{ nPatients: 3, nDlt: 0 }, { nPatients: 9, nDlt: 6, eliminated: true }, { nPatients: 3, nDlt: 0 }], 0.3).mtdIndex).toBe(0);
+    expect(rule).toContain('among the doses below the lowest eliminated one (eliminating a dose eliminates every higher dose)');
   });
 
   it('states BOIN\'s safety stop: the lowest dose eliminated stops the trial', () => {
@@ -160,6 +163,10 @@ describe('projectDoseEscalation — defaults are labelled, never passed off as d
     expect(p.eliminationThreshold).toEqual({ value: BOIN_DEFAULTS.eliminationThreshold, source: 'engine default' });
     expect(p.minEliminationN).toEqual({ value: BOIN_DEFAULTS.minEliminationN, source: 'engine default' });
     expect(p.prior).toEqual({ value: 'Beta(1,1)', source: 'engine default' });
+  });
+
+  it('BOIN_DEFAULTS is the engine\'s own exported constant, not a copy', () => {
+    expect(BOIN_DEFAULTS).toBe(ENGINE_BOIN_DEFAULTS);
   });
 
   it('the restated elimination defaults are the engine\'s: its unparameterised decision is exactly the rule they state', () => {

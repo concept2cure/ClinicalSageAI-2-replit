@@ -27,7 +27,7 @@ import path from 'path';
 import { eq, and, isNull, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
-import { packageSequenceFromCore, type PackageFromCoreResult } from './package-from-core';
+import { packageSequenceFromCore, type PackageFromCoreResult, type PriorState } from './package-from-core';
 import { materializeLeafSources, leafSourceKey, type UnresolvedLeaf } from './leaf-source-resolver';
 import { validateLeafPaths } from './leaf-path-safety';
 import { toPackagerRegion, type LeafFileResolver } from './core-to-packager';
@@ -55,6 +55,9 @@ export interface AssembleSequenceParams {
   sponsorId: string;
   sponsorName: string;
   emitUnzipped?: boolean;
+  /** What lifecycle acts bind against; 'filed' unless a caller asks for a
+   *  rehearsal (package-from-core PriorState). Transmit never does. */
+  priorState?: PriorState;
 }
 
 export interface AssembleSequenceResult extends PackageFromCoreResult {
@@ -299,6 +302,7 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     sponsorName: params.sponsorName,
     resolveFile,
     emitUnzipped: params.emitUnzipped,
+    priorState: params.priorState,
   });
 
   if (unresolvedLeaves.length > 0) {
@@ -461,6 +465,9 @@ export interface AssembleSubmissionParams {
    * actual filing.
    */
   requireComplete?: boolean;
+  /** What a follow-up sequence's acts bind against; 'filed' unless asked for
+   *  a rehearsal, whose package is named so (see package-from-core). */
+  priorState?: PriorState;
 }
 
 export interface AssembleSubmissionResult {
@@ -475,6 +482,10 @@ export interface AssembleSubmissionResult {
   materialized: number;
   unresolvedLeaves: UnresolvedLeaf[];
   skipped: Array<{ sectionCode: string; reason: string }>;
+  /** The prior state the acts were bound against, and — for a rehearsal — the
+   *  earlier sequences bound against that were never filed. */
+  priorState: PriorState;
+  unfiledPriorSequences: string[];
   /** The assembly's §11.10(e) outcome (both rows), from assembleSequence. */
   auditTrail: AuditRowOutcome;
   /** DTD self-containment status from the packager. */
@@ -577,6 +588,7 @@ export async function assembleSubmissionEctd(
     applicationId: params.applicationNumber ?? `UNASSIGNED-SEQ-${sequence.id}`,
     sponsorId: params.applicantId ?? `UNASSIGNED-ORG-${organizationId}`,
     sponsorName: params.applicantName ?? `UNASSIGNED (organization ${organizationId})`,
+    priorState: params.priorState,
   });
 
   try {
@@ -618,9 +630,12 @@ export async function assembleSubmissionEctd(
       entries.map((f) => f.split('/')[0]).filter((top) => /^m[1-5]$/.test(top)),
     );
 
+    // A rehearsal's download says so in its name: it is for an agency
+    // validator, bound against sequences that were never filed.
+    const baseName = path.basename(assembled.bundle.path);
     return {
       buffer,
-      filename: path.basename(assembled.bundle.path),
+      filename: assembled.priorState === 'rehearsal' ? baseName.replace(/(\.zip)?$/i, '-rehearsal$1') : baseName,
       sequenceId: sequence.id,
       sequenceNumber: sequence.sequenceNumber,
       region: sequence.region,
@@ -628,6 +643,8 @@ export async function assembleSubmissionEctd(
       materialized: assembled.materialized,
       unresolvedLeaves: assembled.unresolvedLeaves,
       skipped: assembled.skipped,
+      priorState: assembled.priorState,
+      unfiledPriorSequences: assembled.unfiledPriorSequences,
       // The assembly's §11.10(e) outcome; the export route answers it as headers.
       auditTrail: assembled.auditTrail,
       dtdStatus: assembled.bundle.dtdStatus,

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T19:11:20.964Z",
+  "generatedAt": "2026-09-29T01:20:08.603Z",
   "git": {
-    "sha": "1f6197defa4cab8471e2161580303ad2955d7985",
+    "sha": "2a2a25ba5ad36ef8b3efc9c15636db098d7706d8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1092404
+        "bytes": 1092604
       },
       {
         "file": "shared/schema.ts",
@@ -2009,7 +2009,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 192487
+        "bytes": 194189
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2021,7 +2021,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 175247
+        "bytes": 176932
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2037,7 +2037,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 154653
+        "bytes": 155033
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2081,7 +2081,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 131374
+        "bytes": 131728
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2159,7 +2159,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21035
+        "lines": 21039
       },
       {
         "file": "shared/schema.ts",
@@ -2190,12 +2190,12 @@
         "lines": 5384
       },
       {
-        "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4491
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 4513
       },
       {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 4482
+        "file": "server/routes/c2c/artifacts.ts",
+        "lines": 4504
       },
       {
         "file": "server/storage.ts",
@@ -2247,7 +2247,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3089
+        "lines": 3094
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2259,7 +2259,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2867
+        "lines": 2868
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2271,7 +2271,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 2729
+        "lines": 2711
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2398,6 +2398,10 @@
         "lines": 1968
       },
       {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 1949
+      },
+      {
         "file": "server/routes/c2c/projects.ts",
         "lines": 1934
       },
@@ -2408,10 +2412,6 @@
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
         "lines": 1924
-      },
-      {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 1907
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
@@ -2554,6 +2554,10 @@
         "lines": 1623
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+        "lines": 1616
+      },
+      {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
         "lines": 1606
       },
@@ -2580,10 +2584,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
         "lines": 1551
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
-        "lines": 1550
       },
       {
         "file": "server/services/grdhe/grdheService.ts",

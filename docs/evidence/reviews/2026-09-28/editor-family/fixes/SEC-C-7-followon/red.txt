@@ -1,0 +1,121 @@
+RED: tests at the fix's final form, run against the HEAD (unfixed) C2CForm.tsx and ProtocolDevForms.tsx
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > is the person’s to fill while nothing derives it 229ms
+ × client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > is read-only once derived, and its value alone satisfies the required check 17ms
+   → expected '' to be 'Dr Iyer' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > submits the derived value, never what was typed there before it applied 14ms
+   → expected 'Dr Someone Else' to be 'Dr Iyer' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a review bound to an account, names the signer only, never a stored label 216ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a reviewer with no account, keeps the name the decision is recorded for 30ms
+ × client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the request-a-review drawer > says a chosen account is listed under its own name, before anything is typed 136ms
+   → expected 'Only for a reviewer with no account h…' to match /Required when the reviewer has no acc…/
+ × client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > is the account’s name, read-only 120ms
+   → expected 'Dr Someone Else' to be 'Dr Amara Okafor' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > is what is sent, never a name typed before the account was chosen 137ms
+   → expected { …(4) } to match object { reviewerUserId: 21, …(1) }
+(2 matching properties omitted from actual)
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > becomes a free field again when "no account" is chosen 128ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the request-a-review drawer > says a chosen account is listed under its own name, before anything is typed
+AssertionError: expected 'Only for a reviewer with no account h…' to match /Required when the reviewer has no acc…/
+
+- Expected:
+/Required when the reviewer has no account/
+
++ Received:
+"Only for a reviewer with no account here; leave blank for an account"
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx:90:30
+     88|     // Blank is no longer "an account": a chosen account fills this fi…
+     89|     // locks it (SEC-C-7 follow-on (b), protocolReviewerNameReadOnly.t…
+     90|     expect(name.placeholder).toMatch(/Required when the reviewer has n…
+       |                              ^
+     91|   });
+     92| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > is read-only once derived, and its value alone satisfies the required check
+AssertionError: expected '' to be 'Dr Iyer' // Object.is equality
+
+- Expected
++ Received
+
+- Dr Iyer
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx:70:24
+     68|     fireEvent.change(screen.getByLabelText(/Owner account/), { target:…
+     69|     const name = screen.getByLabelText(/Owner name/) as HTMLInputEleme…
+     70|     expect(name.value).toBe('Dr Iyer');
+       |                        ^
+     71|     expect(name.readOnly).toBe(true);
+     72|     expect(name.getAttribute('aria-readonly')).toBe('true');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > submits the derived value, never what was typed there before it applied
+AssertionError: expected 'Dr Someone Else' to be 'Dr Iyer' // Object.is equality
+
+Expected: "Dr Iyer"
+Received: "Dr Someone Else"
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx:83:77
+     81|     fireEvent.change(screen.getByLabelText(/Owner name/), { target: { …
+     82|     fireEvent.change(screen.getByLabelText(/Owner account/), { target:…
+     83|     expect((screen.getByLabelText(/Owner name/) as HTMLInputElement).v…
+       |                                                                             ^
+     84|     fireEvent.click(screen.getByRole('button', { name: 'Assign' }));
+     85|     expect(onSubmit).toHaveBeenCalledWith({ ownerId: '7', ownerName: '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > is the account’s name, read-only
+AssertionError: expected 'Dr Someone Else' to be 'Dr Amara Okafor' // Object.is equality
+
+Expected: "Dr Amara Okafor"
+Received: "Dr Someone Else"
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx:118:37
+    116|     fireEvent.change(nameField(dialog), { target: { value: 'Dr Someone…
+    117|     chooseAccount(dialog, '21');
+    118|     expect(nameField(dialog).value).toBe('Dr Amara Okafor');
+       |                                     ^
+    119|     expect(nameField(dialog).readOnly).toBe(true);
+    120|     expect(nameField(dialog).getAttribute('aria-readonly')).toBe('true…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > is what is sent, never a name typed before the account was chosen
+AssertionError: expected { …(4) } to match object { reviewerUserId: 21, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "reviewerName": "Dr Amara Okafor",
++   "reviewerName": "Dr Someone Else",
+    "reviewerUserId": 21,
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx:131:28
+    129|     await waitFor(() => expect(onDone).toHaveBeenCalledWith('review-re…
+    130|     expect(onError).not.toHaveBeenCalled();
+    131|     expect(lastWrite()[2]).toMatchObject({ reviewerUserId: 21, reviewe…
+       |                            ^
+    132|   });
+    133|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 4 passed (9)
+   Start at  18:03:20
+   Duration  1.86s (transform 548ms, setup 310ms, import 846ms, tests 1.04s, environment 1.01s)
+

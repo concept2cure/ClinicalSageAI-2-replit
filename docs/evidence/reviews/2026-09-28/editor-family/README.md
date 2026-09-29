@@ -83,8 +83,8 @@ is one defect:
 | SEC-B-1 | An image reference with `..` segments got an authenticated GET to any API route from every viewer | confirmed | **fixed** `ce56754d` (`fixes/SEC-B-1-2/`) |
 | SEC-B-2 / SEC-A-11 | External images fetched from third parties by every viewer; a figure could change after approval | confirmed | **fixed** `ce56754d` (`fixes/SEC-B-1-2/`); export, section create, co-author PUT and batch accept should use the same rule |
 | SEC-C-3 | The budget-parameter upsert let one tenant claim, block or overwrite another's | confirmed | **fixed** `29d80fe9` |
-| SEC-C-4 | Stored text spliced into the chat turn as the user's own words | confirmed; raised from medium | **fixed** for the three ProtocolDev buttons, `e8f448d1` (`fixes/SEC-C-4/`). The editor's `askForSource` needs a fenced channel for the selection: open |
-| SEC-C-7 | A signed disposition is shown under a free-text label, not the signer | confirmed; raised from medium | **fixed** `6b442012` (`fixes/SEC-C-7/`) |
+| SEC-C-4 | Stored text spliced into the chat turn as the user's own words | confirmed; raised from medium | **fixed** for the three ProtocolDev buttons, `e8f448d1` (`fixes/SEC-C-4/`), and for Authoring's "Ask AnA to draft", `f569d49d` (`fixes/SEC-C-4-class-draft-prompt/`). **Open:** the editor's `askForSource` (SEC-C-4 (a)). Its fenced server channel landed in `dfe08dea` (`fixes/SEC-C-4a-server-half/`), but it is inert: the stream route never reads `module_context` (board item 14). Two workbench sites are handed on (board item 6) |
+| SEC-C-7 | A signed disposition is shown under a free-text label, not the signer | confirmed; raised from medium | **fixed** `6b442012` (`fixes/SEC-C-7/`). Follow-on (b), the reviewer's name derived from the chosen account and read-only: **fixed** `e6822dac` (`fixes/SEC-C-7-followon/`) |
 | HS-B-1 | A failed Data Room read is shown as "no sources" | partly confirmed | partly fixed by `59b0d8f9` (GE-H-1: the Sources rail's "Record a source" picker). The rest is handed on, board item 6: the Cite picker, the Vault rail, and citations painted "unresolved" |
 | V-2 | Source mode: text typed during a save was reported saved, and neither saved nor cached | confirmed (found by HS-B-2's verifier) | **fixed** `b43ec3af` (`fixes/SEC-B-3_V-2_P11-B-4_SEC-A-6/`) |
 
@@ -106,7 +106,7 @@ is one defect:
 | SEC-A-4 | Stored text could write itself into AnA's system prompt | confirmed | **fixed** `44a48357` (`fixes/SEC-A-4/`) |
 | SEC-A-5 / SEC-B-6 / SEC-C-6 | The device draft cache outlives sign-out and is keyed by section, not user | confirmed | **fixed** `de430222` (`fixes/SEC-A-5/`): keyed by account, purged at sign-out, no offer on a read-only canvas |
 | SEC-A-9 | Revert commits before its audit row | confirmed | **fixed** by another lane's sweep of the same day, `59b0d8f9` (GE-P-1) |
-| SEC-A-10 / SEC-B-5 | The co-editing room authorises by tenant only | confirmed; dark in every configuration found | open. It must be fixed before co-editing is switched on |
+| SEC-A-10 / SEC-B-5 | The co-editing room authorises by tenant only | confirmed; dark in every configuration found | open. It must be fixed before co-editing is switched on. The session re-check and the non-integer subject were closed by another lane, `dd91ded4`. The grant and lock check is handed on (board item 12) |
 | SEC-C-5 | The AnA protocol-section write records a reason nobody gave | confirmed | handed on, board item 7 |
 | SEC-C-8 | Six protocol create paths never proved the document was the caller's | reported with SEC-C-3 | **fixed** `29d80fe9` |
 | A-A-1, A-A-2, A-A-4, A-A-5 | Reason field state; Escape closes AnA; 12 px targets; invisible draft dot | confirmed | handed on, board item 6 |
@@ -127,6 +127,52 @@ Lows were not independently verified; each is in its lens report:
 - P11-A-3, P11-A-4;
 - SEC-A-12, SEC-B-8 through SEC-B-10.
 
+## Round 2 (2026-09-28, evening)
+
+A read-only triage re-checked every open finding and follow-on at the head
+and attributed each file's holder. It is filed as returned in `triage/`, one
+file per group plus the completeness critic. That re-check found:
+
+- **NEW, high:** the eCTD batch-draft accept records a client claim of AI
+  authorship as fact. It is the second door of SEC-B-7.
+- **NEW-P11-B-1a, medium:** ingestion adopts a model-proposed section code
+  onto an approved co-author document.
+- **NEW-AIACCEPT-POSTCOMMIT, medium:** the AI-draft accept writes its
+  revision and audit row after COMMIT. Handed on, board item 13.
+- **Board item 14:** the screen state 114 surfaces publish to AnA reaches no
+  model. `buildChatContext` has no production caller, and the stream route
+  never reads `module_context`.
+- **Protocol-build review (`triage/new-protocol-build.md`):** 13 findings in
+  another lane's new engines. The re-check at `1f5c009b`
+  (`triage/new-protocol-build-recheck.md`) found:
+  - 2 fixed, 4 partly fixed and 7 open;
+  - 3 new defects in PB-1's unbounded-CPU class, one of them a regression
+    from the lane's own fix.
+
+  Handed on as board item 15.
+
+Round 2's fixes were each made failing first and reviewed by an agent told to
+refute them.
+
+**Landed:**
+- `f569d49d`: the SEC-C-4 class, draft prompt.
+- `e6822dac`: the SEC-C-7 follow-on.
+- `dfe08dea`: SEC-C-4 (a), server half, inert.
+
+**Still in progress**, each after its reviewers found a blocking defect in
+the first attempt:
+- **P11-B-4, remaining gap.** Undo past a recorded decision. The reviewers
+  found that redo reversed a decision too, and that a long session disabled
+  undo.
+- **SEC-B-1/2 follow-ons a, b1, b6.** The reviewers found:
+  - the export placeholder printed a whole base64 payload;
+  - generated drafts were double-escaped.
+- **The batch-draft door.** The reviewers found that a `< … >` span in the
+  text passed both the verifier and the lineage.
+- **NEW-P11-B-1a.** The reviewers found:
+  - the leaf path still re-filed an approved row;
+  - the actor was named "System".
+
 ## Files
 
 - `lenses/`: the 14 lens reports, as returned. Paths to scratch harnesses
@@ -134,3 +180,4 @@ Lows were not independently verified; each is in its lens report:
 - `verification.md`: every verifier's hand-back.
 - `fixes/<ID>/`: one folder per fix, each with a README, the red and green
   runs and the mutants.
+- `triage/`: round 2's re-check of every open item, as returned.

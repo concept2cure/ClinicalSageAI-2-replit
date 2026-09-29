@@ -60,6 +60,10 @@ const hoisted = vi.hoisted(() => {
         materialized: 9,
         unresolvedLeaves: [],
         skipped: [],
+        // The assembler always states what lifecycle acts were bound against
+        // (84e935e9b); an export for filing binds against filed sequences.
+        priorState: 'filed',
+        unfiledPriorSequences: [],
         stats: {
           totalModules: 5,
           totalFiles: 12,

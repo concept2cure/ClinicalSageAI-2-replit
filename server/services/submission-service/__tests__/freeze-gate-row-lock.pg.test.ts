@@ -126,7 +126,7 @@ describeIfDb('the sequence row lock serializes leaf writes with a governed freez
     await q(`
       CREATE TABLE c2c_ana_actions (id TEXT PRIMARY KEY, org_id INTEGER, command TEXT, target TEXT, state TEXT, proposed_by INTEGER, payload JSONB);
       CREATE TABLE electronic_signatures (id SERIAL PRIMARY KEY, organization_id INTEGER, signed_target TEXT, signature_manifest TEXT, bound_payload_digest TEXT, binding_basis TEXT, superseded_by INTEGER, is_valid BOOLEAN, verification_status TEXT);
-      CREATE TABLE IF NOT EXISTS ectd_compilations (id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
+      CREATE TABLE IF NOT EXISTS ectd_compilations (id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT, sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
       INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
         (1, 'lock A', 'ind', 'biotech', 'fda', ${ORG}, ${USER}), (2, 'lock B', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
       INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
