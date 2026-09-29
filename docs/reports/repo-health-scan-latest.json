@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T20:45:31.000Z",
+  "generatedAt": "2026-09-29T20:52:26.681Z",
   "git": {
-    "sha": "7e10d93d18fd134126dc7fc995688962cc008d90",
+    "sha": "57fe219f39dd500437ce41c95e1d0db6c0db3ada",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2494,12 +2494,12 @@
         "lines": 1787
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "lines": 1776
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1775
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1776
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
