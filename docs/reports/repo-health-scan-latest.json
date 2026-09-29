@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T20:12:31.059Z",
+  "generatedAt": "2026-09-29T20:21:27.134Z",
   "git": {
-    "sha": "2dd680d2aad788aec7b45dfe39af6068897c0db3",
+    "sha": "dd7224852f857e2193efeeb5d86bf2ad1a679c51",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2021,7 +2021,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 177229
+        "bytes": 173168
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2194,12 +2194,12 @@
         "lines": 4592
       },
       {
-        "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4508
-      },
-      {
         "file": "server/storage.ts",
         "lines": 4431
+      },
+      {
+        "file": "server/routes/c2c/artifacts.ts",
+        "lines": 4329
       },
       {
         "file": "server/routes/authoring-actions.ts",
