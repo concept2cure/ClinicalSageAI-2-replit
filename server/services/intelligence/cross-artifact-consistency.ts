@@ -32,6 +32,27 @@
  * (`draftCopiesSetAside`): comparing the draft with itself agrees by
  * construction, and used to read as 'clean'.
  *
+ * 2026-09-28 (row 74, track NC; ADR-0014 §7): the within-document check
+ * (checkInternalNumericalIntegrity, behind check_numerical_integrity) said
+ * 'clean' — "No numerical inconsistencies detected." — for a draft with no
+ * labelled figure, and for one whose every quantity is stated once, where no
+ * figure was compared with another. Both now report 'not_assessed' with
+ * `notAssessedReason` (no_figures, no_repeated_figures). 'clean' needs at least
+ * one quantity stated more than once (`quantitiesCompared`). The verdict is
+ * integrityVerdictFor in consistency-verdict.ts; the list is
+ * NUMERICAL_INTEGRITY_VERDICTS in shared/ana/dossier-consistency.ts.
+ *
+ * 2026-09-28 (row 74, track NC review [2], [3], [5], [7]): one agreement rule,
+ * figuresAgree, for both checks here (it replaces valuesMatch and the integrity
+ * check's inline spread). A range (confidence interval, age range) is compared
+ * on both bounds: the pattern's second group, stored as `unit`, is the upper
+ * bound, and both checks used to compare the lower bound only. Counts and other
+ * whole-number labels (EXACT_MATCH_LABELS) agree only when equal: the product
+ * decision is that N = 1000 against N = 1004 is four subjects, not a rounding
+ * artefact. The rounding spread (FIGURE_AGREEMENT_SPREAD) and the extractor's
+ * minimum length (FIGURE_EXTRACTION_MIN_LENGTH) are shared constants the copy
+ * reads too. Content under that length is 'content_too_short', not 'no_figures'.
+ *
  * @module server/services/intelligence/cross-artifact-consistency
  */
 
@@ -41,11 +62,15 @@ import { concept2cureArtifacts } from '../../../shared/schema.js';
 import { createScopedLogger } from '../../utils/logger';
 import {
   DOSSIER_CHECK_MIN_DRAFT_LENGTH,
+  FIGURE_AGREEMENT_SPREAD,
+  FIGURE_EXTRACTION_MIN_LENGTH,
   type DivergenceSeverity,
   type DossierConsistencyVerdict,
   type DossierNotAssessedReason,
+  type NumericalIntegrityNotAssessedReason,
+  type NumericalIntegrityVerdict,
 } from '../../../shared/ana/dossier-consistency.js';
-import { verdictFor } from './consistency-verdict.js';
+import { integrityVerdictFor, verdictFor } from './consistency-verdict.js';
 
 const logger = createScopedLogger('cross-artifact-consistency');
 
@@ -156,7 +181,7 @@ const LABELLED_NUMERIC_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
 ];
 
 export function extractNumericalFacts(text: string): NumericalFact[] {
-  if (!text || text.length < 20) return [];
+  if (!text || text.length < FIGURE_EXTRACTION_MIN_LENGTH) return [];
   const facts: NumericalFact[] = [];
   const seen = new Set<string>();
 
@@ -248,20 +273,58 @@ function severityFor(label: string): DivergenceSeverity {
   return SEVERITY_BY_LABEL[label] ?? 'medium';
 }
 
-function valuesMatch(a: string, b: string): boolean {
-  // Tolerant comparison: strip commas, trim, parse as numbers when possible.
-  const na = a.replace(/,/g, '').trim();
-  const nb = b.replace(/,/g, '').trim();
-  if (na === nb) return true;
-  const fa = parseFloat(na);
-  const fb = parseFloat(nb);
-  if (Number.isFinite(fa) && Number.isFinite(fb)) {
-    // Within 0.5% tolerance for float rounding artefacts
-    const tolerance = Math.max(Math.abs(fa), Math.abs(fb)) * 0.005;
-    return Math.abs(fa - fb) <= tolerance;
-  }
-  return false;
+// ─────────────────────────────────────────────────────────────────────────────
+// WHEN TWO STATEMENTS OF ONE FIGURE AGREE — one rule for both checks
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Labels whose pattern captures a range. The second group, which the extractor
+ * stores as `unit`, is the upper bound, not a unit: a statement of one of these
+ * is its two bounds.
+ */
+const RANGE_LABELS: ReadonlySet<string> = new Set(['confidence_interval', 'age_range']);
+
+/**
+ * Labels stated as counts or other whole numbers: subjects, batches, months of
+ * shelf life, weeks, years of age, a risk priority number. They agree only when
+ * equal. The rounding spread is for measured values; N = 1000 against N = 1004
+ * is four subjects (track NC review [5], a product decision).
+ */
+const EXACT_MATCH_LABELS: ReadonlySet<string> = new Set([
+  'sample_size',
+  'batches',
+  'shelf_life',
+  'duration_weeks',
+  'age_range',
+  'rpn',
+]);
+
+const canonical = (v: string): string => v.replace(/,/g, '').trim();
+
+/** What is compared of a statement: each bound of a range, or its one value, commas stripped. */
+function readingOf(fact: NumericalFact): readonly string[] {
+  return RANGE_LABELS.has(fact.label) && fact.unit ? [canonical(fact.value), canonical(fact.unit)] : [canonical(fact.value)];
 }
+
+/** A statement as the reviewer reads it: "0.5 to 0.9" for a range, the value otherwise. */
+const renderReading = (reading: readonly string[]): string => reading.join(' to ');
+
+function numbersAgree(a: string, b: string, spread: number): boolean {
+  if (a === b) return true;
+  const fa = parseFloat(a);
+  const fb = parseFloat(b);
+  if (!Number.isFinite(fa) || !Number.isFinite(fb)) return false;
+  return Math.abs(fa - fb) <= Math.max(Math.abs(fa), Math.abs(fb)) * spread;
+}
+
+/** Do two readings of one label agree? Every bound must, exactly for a count, within the spread otherwise. */
+function readingsAgree(label: string, a: readonly string[], b: readonly string[]): boolean {
+  const spread = EXACT_MATCH_LABELS.has(label) ? 0 : FIGURE_AGREEMENT_SPREAD;
+  return a.length === b.length && a.every((bound, i) => numbersAgree(bound, b[i], spread));
+}
+
+/** Do two statements of the same label agree? */
+const figuresAgree = (a: NumericalFact, b: NumericalFact): boolean => readingsAgree(a.label, readingOf(a), readingOf(b));
 
 interface DossierCheckParams {
   projectId: number;
@@ -329,7 +392,9 @@ function firstByLabel(facts: readonly NumericalFact[]): Map<string, NumericalFac
   return byLabel;
 }
 
-const withUnit = (f: NumericalFact): string => `${f.value}${f.unit ? ' ' + f.unit : ''}`;
+/** A statement for the reviewer: a range as "lo to hi", a value with its unit when it has one. */
+const withUnit = (f: NumericalFact): string =>
+  RANGE_LABELS.has(f.label) ? renderReading(readingOf(f)) : `${f.value}${f.unit ? ' ' + f.unit : ''}`;
 
 /**
  * 1. Numeric divergences — same labelled quantity, different values.
@@ -353,14 +418,14 @@ function compareFigures(
       const existingFact = existingByLabel.get(label);
       if (!existingFact) continue;
       compared += 1;
-      if (valuesMatch(draftFact.value, existingFact.value)) continue;
+      if (figuresAgree(draftFact, existingFact)) continue;
 
       divergences.push({
         kind: 'numeric_divergence',
         severity: severityFor(label),
         description: `${humanLabel(label)} differs: draft says ${withUnit(draftFact)}, existing artifact "${existing.title}" says ${withUnit(existingFact)}.`,
-        draftValue: draftFact.value,
-        existingValue: existingFact.value,
+        draftValue: renderReading(readingOf(draftFact)),
+        existingValue: renderReading(readingOf(existingFact)),
         existingArtifactId: existing.artifactId,
         existingArtifactTitle: existing.title,
         existingCtdSection: existing.ctdSection,
@@ -549,100 +614,81 @@ export interface InternalNumericalCandidate {
 export interface NumericalIntegrityReport {
   readonly contentLength: number;
   readonly factsExtracted: number;
+  /**
+   * Labelled quantities stated more than once in the content, whose values
+   * were compared with each other. 0 means no figure was compared.
+   */
+  readonly quantitiesCompared: number;
   readonly candidateCount: number;
   readonly candidates: readonly InternalNumericalCandidate[];
-  readonly verdict: 'clean' | 'review_candidates' | 'likely_inconsistency';
+  /** 'not_assessed' when no figure was compared with another: see `notAssessedReason`. */
+  readonly verdict: NumericalIntegrityVerdict;
+  /** Why nothing was compared. */
+  readonly notAssessedReason?: NumericalIntegrityNotAssessedReason;
   readonly generatedAt: string;
 }
 
-/**
- * Scan a single drafted artifact for the same labelled quantity stated with
- * multiple distinct values. Returns candidates, not divergences — a multi-arm
- * study legitimately reports different N per arm, so the checker refuses to
- * pretend it knows which case a given document is in.
- *
- * Deterministic, sync, no external calls — safe to run on every draft.
- */
-export function checkInternalNumericalIntegrity(content: string): NumericalIntegrityReport {
-  const now = new Date().toISOString();
-  const facts = extractNumericalFacts(content);
-
-  if (facts.length === 0) {
-    return {
-      contentLength: content?.length ?? 0,
-      factsExtracted: 0,
-      candidateCount: 0,
-      candidates: [],
-      verdict: 'clean',
-      generatedAt: now,
-    };
-  }
-
-  // Group by label; canonicalize value (strip commas, normalize negative sign)
-  // so "1,000" and "1000" don't register as different.
+function groupByLabel(facts: readonly NumericalFact[]): Map<string, NumericalFact[]> {
   const byLabel = new Map<string, NumericalFact[]>();
   for (const fact of facts) {
     const list = byLabel.get(fact.label) ?? [];
     list.push(fact);
     byLabel.set(fact.label, list);
   }
+  return byLabel;
+}
 
-  const candidates: InternalNumericalCandidate[] = [];
-  for (const [label, group] of byLabel) {
-    if (group.length < 2) continue;
-    const distinctValuesSet = new Set<string>();
-    for (const f of group) {
-      const normalized = f.value.replace(/,/g, '').trim();
-      distinctValuesSet.add(normalized);
-    }
-    if (distinctValuesSet.size < 2) continue;
-
-    // Suppress if the values cluster within the tolerance bucket — avoids
-    // noise for things like "approximately 648" vs "648" that are effectively
-    // the same reading.
-    const numericDistincts = Array.from(distinctValuesSet)
-      .map(v => parseFloat(v))
-      .filter(n => Number.isFinite(n));
-    if (numericDistincts.length === distinctValuesSet.size && numericDistincts.length >= 2) {
-      const max = Math.max(...numericDistincts);
-      const min = Math.min(...numericDistincts);
-      const spread = max === 0 ? 0 : (max - min) / Math.max(Math.abs(max), Math.abs(min));
-      if (spread < 0.005) continue;
-    }
-
-    candidates.push({
-      label,
-      humanLabel: humanLabel(label),
-      severity: severityFor(label),
-      distinctValues: Array.from(distinctValuesSet),
-      occurrences: group.map(f => ({
-        value: f.value,
-        unit: f.unit,
-        context: f.context,
-      })),
-    });
+/**
+ * The candidate for one quantity stated more than once, or null when every
+ * statement agrees with every other under figuresAgree's rule: commas stripped
+ * ("1,000" is "1000"), both bounds of a range, counts exactly, and measured
+ * values within FIGURE_AGREEMENT_SPREAD.
+ */
+function candidateFor(label: string, group: readonly NumericalFact[]): InternalNumericalCandidate | null {
+  const distinct = new Map<string, readonly string[]>();
+  for (const fact of group) {
+    const reading = readingOf(fact);
+    distinct.set(renderReading(reading), reading);
   }
+  const readings = Array.from(distinct.values());
+  if (readings.every((a, i) => readings.slice(i + 1).every(b => readingsAgree(label, a, b)))) return null;
+  return {
+    label,
+    humanLabel: humanLabel(label),
+    severity: severityFor(label),
+    distinctValues: Array.from(distinct.keys()),
+    occurrences: group.map(f => ({ value: f.value, unit: f.unit, context: f.context })),
+  };
+}
 
-  const verdict = computeIntegrityVerdict(candidates);
+/**
+ * Scan a single drafted artifact for the same labelled quantity stated with
+ * multiple distinct values. Returns candidates, not divergences — a multi-arm
+ * study legitimately reports different N per arm, so the checker refuses to
+ * pretend it knows which case a given document is in. A quantity stated once
+ * is not compared; with none stated twice, the verdict is 'not_assessed'.
+ *
+ * Deterministic, sync, no external calls — safe to run on every draft.
+ */
+export function checkInternalNumericalIntegrity(content: string): NumericalIntegrityReport {
+  const facts = extractNumericalFacts(content);
+  const repeated = Array.from(groupByLabel(facts)).filter(([, group]) => group.length > 1);
+  const candidates = repeated
+    .map(([label, group]) => candidateFor(label, group))
+    .filter((c): c is InternalNumericalCandidate => c !== null);
 
   return {
     contentLength: content?.length ?? 0,
     factsExtracted: facts.length,
+    quantitiesCompared: repeated.length,
     candidateCount: candidates.length,
     candidates,
-    verdict,
-    generatedAt: now,
+    ...integrityVerdictFor({
+      candidates,
+      contentLength: content?.length ?? 0,
+      facts: facts.length,
+      quantitiesCompared: repeated.length,
+    }),
+    generatedAt: new Date().toISOString(),
   };
-}
-
-function computeIntegrityVerdict(
-  candidates: InternalNumericalCandidate[],
-): NumericalIntegrityReport['verdict'] {
-  if (candidates.length === 0) return 'clean';
-  // Critical-severity labels with multiple distinct values are very likely
-  // real inconsistencies — dose, NOAEL, MRSD, sample size rarely have a
-  // legitimate "different value in different places" interpretation within
-  // a single drafted section.
-  if (candidates.some(c => c.severity === 'critical')) return 'likely_inconsistency';
-  return 'review_candidates';
 }
