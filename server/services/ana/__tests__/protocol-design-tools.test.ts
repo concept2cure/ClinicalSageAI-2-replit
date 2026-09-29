@@ -235,7 +235,7 @@ describe('bind_protocol_to_study_design', () => {
     bindStudyDesignTx.mockRejectedValueOnce(
       Object.assign(new Error('Study design not found for this organization.'), { code: 'NOT_FOUND' }),
     );
-    const out = await call('bind_protocol_to_study_design', { document_id: 5, study_design_id: 'SD-X' });
+    const out = await call('bind_protocol_to_study_design', { document_id: 5, study_design_id: 'SD-X', reason: 'Design agreed at the kickoff.' });
     expect(out.ok).toBeUndefined();
     expect(out.error).toMatch(/Study design not found/);
     expect(out.code).toBe('NOT_FOUND');
@@ -332,7 +332,7 @@ describe('apply_protocol_design_derivation', () => {
 
   it('rolls back and returns an error when the apply throws', async () => {
     applyDerivationTx.mockRejectedValueOnce(derivationError('BAD_INPUT', 'Name at least one path to accept.'));
-    const out = await call('apply_protocol_design_derivation', { document_id: 5, accepted_paths: ['title'] });
+    const out = await call('apply_protocol_design_derivation', { document_id: 5, accepted_paths: ['title'], reason: 'Reviewed with the study team.' });
     expect(out.ok).toBeUndefined();
     expect(out.error).toMatch(/Name at least one path/);
     expect(out.code).toBe('BAD_INPUT');

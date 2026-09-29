@@ -115,7 +115,11 @@ const suggestionAttrs = {
 
 export const InsertionMark = Mark.create({
   name: 'insertion',
-  excludes: 'deletion',
+  /* Excludes itself as well (2026-09-29, D5). Without it, a person typing at
+     the end of a pending AnA draft inherited the draft's mark and the tracking
+     plugin added theirs BESIDE it, so their words merged into AnA's suggestion
+     and a decision on it was filed as text that turn wrote. */
+  excludes: 'insertion deletion',
   // Above StarterKit marks so nothing else claims <ins> first.
   priority: 1000,
   addAttributes() {
@@ -763,7 +767,12 @@ function fnv1a(input: string, seed: number): string {
 }
 
 export function changeIdOf(range: SuggestionRange): string {
-  const key = [range.kind, range.authorId ?? '', range.at ?? '', range.text].join('\u0000');
+  /* The turn record joins the key when there is one, so identical text from
+     two AnA turns in one minute is two changes, each decided and recorded
+     against its own turn. A range with no turn record keeps its old id. */
+  const parts = [range.kind, range.authorId ?? '', range.at ?? '', range.text];
+  if (range.sourceRecord) parts.push(range.sourceRecord);
+  const key = parts.join('\u0000');
   // Two differently-seeded 32-bit passes → 64 bits of digest.
   return `${range.kind}:${fnv1a(key, 0x811c9dc5)}${fnv1a(key, 0x01000193)}`;
 }

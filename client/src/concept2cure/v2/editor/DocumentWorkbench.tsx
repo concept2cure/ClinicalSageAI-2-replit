@@ -65,6 +65,7 @@ import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from '../surfaces/AuthoringCollab';
 import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
 import { newDocumentAction } from '../newDocumentAction';
+import { downloadBlob, safeFileName } from '../download';
 import { ProjectFilesPanel } from './ProjectFilesPanel';
 import { ReviewTasksPanel } from './ReviewTasksPanel';
 import { FileToVaultDialog } from './FileToVaultDialog';
@@ -200,6 +201,48 @@ interface AuthAuditEvent {
    *  richest part of several governed records — which model produced a draft,
    *  which redline a reviewer refused — was written and unreadable. */
   metadata: Record<string, unknown> | null;
+  /** The server's verdict on this row against its entry on the tenant audit
+   *  chain, computed at read time (authoring-record.ts). `chained: false` is a
+   *  row no chain entry names — written before the chain carried trail ids —
+   *  and is unknown, neither a failure nor a pass. Absent from older servers. */
+  integrity?: AuditRowIntegrity | null;
+}
+
+interface AuditRowIntegrity {
+  chained: boolean;
+  intact: boolean | null;
+  mismatches: string[];
+  chainPayloadIntact?: boolean | null;
+}
+
+/** What each field the server compares reads as on the rail. */
+const AUDIT_MISMATCH_LABELS: Record<string, string> = {
+  before_content: 'text before',
+  after_content: 'text after',
+  metadata: 'details',
+  change_reason: 'reason',
+  operation_type: 'operation',
+  chain_payload: 'chain entry',
+};
+
+/**
+ * The warning an audit row carries when it no longer matches its chained
+ * record, or null.
+ *
+ * Only `intact === false` speaks. A row the chain does not name (`chained:
+ * false`) and a row with no verdict are unknown, and unknown is not rendered as
+ * a failure; an intact row gets no badge either, because silence is the rail's
+ * default and a "verified" mark on every row would stop being read.
+ */
+export function auditIntegrityNote(integrity: AuditRowIntegrity | null | undefined): string | null {
+  if (!integrity || integrity.chained !== true || integrity.intact !== false) return null;
+  const fields = (Array.isArray(integrity.mismatches) ? integrity.mismatches : [])
+    .filter((m): m is string => typeof m === 'string' && m.length > 0)
+    .map(m => AUDIT_MISMATCH_LABELS[m] ?? m.replace(/_/g, ' '));
+  return (
+    'This entry no longer matches its record on the audit chain' +
+    (fields.length > 0 ? ` (${fields.join(', ')}).` : '.')
+  );
 }
 
 /** How each recorded operation reads to a reviewer. Unknown operations are
@@ -212,6 +255,8 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   REVERT: 'reverted to a prior revision',
   tracked_change_decision: 'tracked change decided',
   tracked_change_bulk_decision: 'tracked changes decided in bulk',
+  comment_added: 'comment added',
+  reply_added: 'reply added',
   REORDER_SECTIONS: 'sections reordered',
   RENAME: 'renamed',
   TRACK_CHANGES: 'track changes toggled',
@@ -235,6 +280,7 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
  *   ai-draft-accept — which model and provider produced the text, and whether
  *     the author edited it before accepting (so "accepted AI draft" cannot
  *     vouch for words the model never wrote).
+ *   comment_added / reply_added — the passage the comment was anchored to.
  *
  * Unrecognised metadata is left alone rather than dumped as JSON: a rail is a
  * reading surface, and raw payloads are not read.
@@ -273,6 +319,13 @@ export function describeAuditMetadata(
     const count = typeof metadata.count === 'number' ? metadata.count : null;
     if (!decision || count === null) return null;
     const verb = decision === 'accept' ? 'accepted' : 'rejected';
+    /* Every change decided is on the row now, whole (2026-09-26), so the rail
+       shows a sample of the first three and the export carries the rest.
+       Rows written before that were capped at twenty changes and said how
+       many they left out in `changesOmittedFromSummary`. The trail is
+       immutable, so those rows still exist and still read that way: a
+       truncated record that reads as complete is worse than one that admits
+       its limit. */
     const omitted =
       typeof metadata.changesOmittedFromSummary === 'number'
         ? metadata.changesOmittedFromSummary
@@ -283,13 +336,20 @@ export function describeAuditMetadata(
       .map(c => (c && typeof (c as any).text === 'string' ? (c as any).text : null))
       .filter((t): t is string => !!t)
       .map(t => `“${t.length > 80 ? t.slice(0, 80) + '…' : t}”`);
-    /* When the stored summary was capped, the row says so. A truncated record
-       that reads as complete is worse than one that admits its limit. */
     return (
       `${verb} ${count} tracked change${count === 1 ? '' : 's'} in one action` +
       (sample.length > 0 ? ` — including ${sample.join(', ')}` : '') +
       (omitted > 0 ? ` (${omitted} more not summarised on this row)` : '')
     );
+  }
+
+  if (eventType === 'comment_added' || eventType === 'reply_added') {
+    /* The passage the comment was anchored to, as the server stored it. The
+       comment's own words are the row's content (and in the export); the
+       quote is what places it in the document. */
+    const quote = str('quote');
+    if (!quote) return null;
+    return `commented on “${quote.length > 80 ? quote.slice(0, 80) + '…' : quote}”`;
   }
 
   if (metadata.source === 'section-metadata') {
@@ -863,6 +923,15 @@ export function DocumentWorkbench({
      governed acts have occurred". */
   const [auditEvents, setAuditEvents] = useState<AuthAuditEvent[]>([]);
   const [auditState, setAuditState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  /* The record export — busy while the server records the export on the chain
+     and builds the package; `error` is the reason it did not arrive, kept on
+     the rail until the next attempt. Scoped to the document it was asked for,
+     so a refusal is never shown under a different document's trail. */
+  const [recordExport, setRecordExport] = useState<{
+    docId: string | null;
+    busy: boolean;
+    error: string | null;
+  }>({ docId: null, busy: false, error: null });
   /* The revision ledger's recomputed verdict — null until asked, 'error' on a
      failed read (which is a failure to CHECK, never a claim about the chain). */
   const [ledger, setLedger] = useState<LedgerVerdict | 'error' | 'checking' | null>(null);
@@ -1755,6 +1824,48 @@ export function DocumentWorkbench({
     }
     setAuditEvents(Array.isArray(body.events) ? body.events : []);
     setAuditState('ready');
+  }, []);
+
+  /* ── Download the document's authoring record ──
+     GET /docs/:docId/audit/export — every trail row whole, its chain entry and
+     verdict, the tenant chain walked now, and how to check it all offline.
+     Through apiRequest, so the bearer token and tenant header travel with it
+     (the API takes no cookie). The server records the export on the chain
+     BEFORE it sends anything and answers 503 when it cannot; that refusal, like
+     any other, stays on the rail in the server's own words. */
+  const downloadAuditRecord = useCallback(async (docId: string) => {
+    setRecordExport({ docId, busy: true, error: null });
+    const settle = (error: string | null) =>
+      setRecordExport(prev => (prev.docId === docId ? { docId, busy: false, error } : prev));
+    try {
+      const res = await apiRequest(
+        'GET',
+        `/api/authoring/docs/${encodeURIComponent(docId)}/audit/export`
+      );
+      // apiRequest RETURNS a 401 rather than throwing it.
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        settle(
+          'The record was not downloaded. ' +
+            (serverMessage(json) ?? 'Your session isn’t authenticated.')
+        );
+        return;
+      }
+      const blob = await res.blob();
+      const saved = downloadBlob(`authoring-record-${safeFileName(docId, 'document')}.json`, blob);
+      settle(
+        saved
+          ? null
+          : 'The record was prepared, but this browser did not save the file. Try again.'
+      );
+    } catch (err) {
+      settle(
+        'The record was not downloaded. ' +
+          (err instanceof ApiRequestError
+            ? serverMessage(err.payload) ?? err.message
+            : 'The service could not be reached.')
+      );
+    }
   }, []);
 
   /* ── The sources this section is drafted from ──
@@ -2838,6 +2949,7 @@ export function DocumentWorkbench({
         authorId: d.authorId ?? undefined,
         authorName: d.authorName ?? undefined,
         at: d.at ?? undefined,
+        sourceRecord: d.sourceRecord ?? undefined,
       });
       const decision = batch[0].decision;
       try {
@@ -4300,6 +4412,9 @@ export function DocumentWorkbench({
                             const ok = editorRef.current?.insertSuggestion(m.text, {
                               id: 'ana',
                               name: 'AnA (AI draft)',
+                              /* The turn that wrote this text, so accepting or
+                                 rejecting it later names that turn's record. */
+                              ...(m.turnRecord?.status === 'recorded' ? { sourceRecord: m.turnRecord.id } : {}),
                             });
                             if (ok) {
                               fireToast(
@@ -4560,8 +4675,26 @@ export function DocumentWorkbench({
       {rail === 'audit' && (
         <aside className="ed-comments">
           <div className="ed-comments-h ed-comments-h-row">
-            <span>Audit trail{activeDoc ? ` · ${activeDoc.title}` : ''}</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              Audit trail{activeDoc ? ` · ${activeDoc.title}` : ''}
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              {/* The whole record, for someone who is not in this product: every
+                  row with its full content, its chain entry and verdict, and
+                  how to check them offline. The server records the export
+                  before it sends it. */}
+              <button
+                type="button"
+                className="nda-open"
+                onClick={() => activeDocId && void downloadAuditRecord(activeDocId)}
+                disabled={
+                  !activeDocId || (recordExport.busy && recordExport.docId === activeDocId)
+                }
+              >
+                {recordExport.busy && recordExport.docId === activeDocId
+                  ? 'Preparing the record…'
+                  : 'Download the record'}
+              </button>
               <button
                 type="button"
                 className="nda-open"
@@ -4573,6 +4706,16 @@ export function DocumentWorkbench({
               <RailClose label="Close audit trail" onClose={closeRail} />
             </span>
           </div>
+          {activeDocId && recordExport.docId === activeDocId && recordExport.error && (
+            <div
+              className="scaf-note"
+              role="alert"
+              data-testid="audit-export-error"
+              style={{ marginTop: 0, padding: '8px 12px', fontSize: 12, borderLeftColor: 'var(--error)' }}
+            >
+              {recordExport.error}
+            </div>
+          )}
           {!activeDocId ? (
             <EmptyState
               icon={I.activity}
@@ -4601,8 +4744,9 @@ export function DocumentWorkbench({
               const section = ev.section_id
                 ? sections.find(s => s.id === ev.section_id) ?? null
                 : null;
+              const integrityNote = auditIntegrityNote(ev.integrity);
               return (
-                <div key={ev.id} className="cmt">
+                <div key={ev.id} className="cmt" data-testid="audit-event">
                   <div className="cmt-meta">
                     <span className="cmt-av">
                       {(ev.actor ?? '·')
@@ -4671,6 +4815,20 @@ export function DocumentWorkbench({
                         {(ev.content_hash_before ?? '—').slice(0, 8)} →{' '}
                         {(ev.content_hash_after ?? '—').slice(0, 8)}
                       </span>
+                    )}
+                    {/* The server's check of this row against its chained
+                        record, said only when it fails. A row the chain does
+                        not name is unknown and gets nothing; an intact row gets
+                        nothing either. */}
+                    {integrityNote && (
+                      <div className="ana-msg-warnings" role="note" data-testid="audit-integrity-note">
+                        <div className="ana-msg-warning">
+                          <span className="ana-msg-warning-ic" aria-hidden="true">
+                            {I.alertTriangle}
+                          </span>
+                          <span>{integrityNote}</span>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

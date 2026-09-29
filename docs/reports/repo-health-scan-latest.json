@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T20:45:31.000Z",
+  "generatedAt": "2026-09-29T20:58:30.132Z",
   "git": {
-    "sha": "7e10d93d18fd134126dc7fc995688962cc008d90",
+    "sha": "923fd19f6ecc75ff5a515685be67bf11f0d7441c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1098526
+        "bytes": 1102768
       },
       {
         "file": "shared/schema.ts",
@@ -1993,11 +1993,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 310676
+        "bytes": 310967
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 252512
+        "bytes": 260007
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2159,7 +2159,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21146
+        "lines": 21361
       },
       {
         "file": "shared/schema.ts",
@@ -2167,7 +2167,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7062
+        "lines": 7065
       },
       {
         "file": "server/statistics-service.ts",
@@ -2182,12 +2182,12 @@
         "lines": 5558
       },
       {
-        "file": "server/routes/ana-features.ts",
-        "lines": 5473
+        "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+        "lines": 5542
       },
       {
-        "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5384
+        "file": "server/routes/ana-features.ts",
+        "lines": 5473
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2494,12 +2494,12 @@
         "lines": 1787
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "lines": 1776
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1775
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1776
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2531,7 +2531,7 @@
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
-        "lines": 1699
+        "lines": 1700
       },
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",

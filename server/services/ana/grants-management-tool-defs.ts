@@ -14,6 +14,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { STATED_REASON_INPUT } from './stated-reason-input';
 
 export const CREATE_GRANT_PROPOSAL: AnaTool = {
   name: 'create_grant_proposal',
@@ -27,7 +28,7 @@ export const CREATE_GRANT_PROPOSAL: AnaTool = {
       project_id: { type: 'number' },
       principal_investigator: { type: 'string' },
       requested_amount: { type: 'number' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['title'],
   },
@@ -47,7 +48,7 @@ export const RECORD_GRANT_AWARD: AnaTool = {
       total_amount: { type: 'number' },
       period_start: { type: 'string', description: 'YYYY-MM-DD.' },
       period_end: { type: 'string', description: 'YYYY-MM-DD.' },
-      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['award_number', 'funding_agency'],
   },
