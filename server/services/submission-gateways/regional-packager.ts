@@ -85,6 +85,7 @@ import type {
 import { leafIdSlug, createLeafIdAssigner } from './ectd-packager/leaf-id';
 import { buildMd5Index } from './ectd-packager/md5-index';
 import { escapeXml, studyFolderSlug, commonDir } from './ectd-packager/paths';
+import { isPathWithin } from '../../utils/document-file-roots';
 import { buildIchModuleTree, findDroppedLeaves, type RenderedLeaf } from './ectd-packager/ich-headings';
 import { normalizeCtdCode } from '../ectd/section-to-ctd';
 import { ctdFolderSlug } from '../../../shared/regulatory/section-code';
@@ -160,10 +161,31 @@ export function isModule1Section(ctdSection: string): boolean {
   return normalizeCtdCode(ctdSection)?.charAt(0) === '1';
 }
 
+/**
+ * A single file-name segment: no separator, no NUL, not `.` or `..`.
+ *
+ * Leaf file names and the application id reach this packager from AnA's tool
+ * arguments (package_ectd_for_region), i.e. from the model. A `fileName` of
+ * `../../x.pdf` became a zip entry outside its CTD folder — shipped to an agency
+ * as such, and written outside the extraction directory when a caller asked for
+ * the unzipped tree — and an `applicationId` of `../../x` put the zip itself
+ * anywhere the process could write (INJ-PATH-002).
+ */
+function isPlainName(value: string): boolean {
+  return value.length > 0 && value !== '.' && value !== '..' && !/[\\/\0]/.test(value);
+}
+
 export function leafPackagePath(
   leaf: Pick<EctdLeaf, 'ctdSection' | 'fileName'> & { studyId?: string },
   region: Region,
 ): { relPath: string; href: string; backboneDir: string } {
+  if (!isPlainName(leaf.fileName)) {
+    throw new ValidationError(
+      `A leaf's file name must be a single name with no path in it; '${leaf.fileName}' is not. ` +
+        `The CTD section decides the folder.`,
+      [{ ruleId: 'LEAF-FILE-NAME-NOT-PLAIN', severity: 'error', filePath: leaf.fileName }],
+    );
+  }
   const section = normalizeCtdCode(leaf.ctdSection);
   if (!section) {
     throw new ValidationError(
@@ -1031,6 +1053,13 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   zip.file('util/index-md5.txt', buildMd5Index(checksums));
 
   /* Generate the zip + write to disk. */
+  if (!isPlainName(input.applicationId) || !isPlainName(input.sequence)) {
+    throw new ValidationError(
+      'The application id and the sequence number name the package file, so each must be a single name ' +
+        'with no path in it.',
+      [{ ruleId: 'PACKAGE-NAME-NOT-PLAIN', severity: 'error', filePath: `${input.applicationId}-${input.sequence}` }],
+    );
+  }
   await fs.mkdir(input.outputDir, { recursive: true });
   const buffer = await zip.generateAsync({
     type: 'nodebuffer',
@@ -1050,6 +1079,14 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     for (const [relPath, file] of Object.entries(zip.files)) {
       if (file.dir) continue;
       const dest = path.join(extractDir, relPath);
+      // Every entry name is built here from plain names and fixed folders, so
+      // this cannot fire today; it is what keeps a future entry from writing
+      // outside the tree it is extracted into.
+      if (!isPathWithin(extractDir, dest)) {
+        throw new ValidationError(`Package entry '${relPath}' would extract outside its directory.`, [
+          { ruleId: 'PACKAGE-ENTRY-ESCAPES', severity: 'error', filePath: relPath },
+        ]);
+      }
       await fs.mkdir(path.dirname(dest), { recursive: true });
       const content = await (file as JSZip.JSZipObject).async('nodebuffer');
       await fs.writeFile(dest, content);

@@ -1,31 +1,32 @@
 import { describe, it, expect } from 'vitest';
 import { Buffer } from 'node:buffer';
-import {
-  runPythonScriptIsolated,
-  runDocxInsertIsolated,
-} from '../../services/compute/scriptWorker';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { runDocxInsertIsolated } from '../../services/compute/scriptWorker';
 import { validateEnvelope } from '../../../workers/artifact-compute/runner';
 
 // python-docx ships in the services/ Docker image but is not guaranteed on the
 // Node test runner. Probe once; skip the docx-dependent suite when it's absent
 // (the docx-insert runtime is exercised directly in environments that have it).
-const pythonDocxAvailable = await (async () => {
-  try {
-    const probe = await runPythonScriptIsolated({ code: 'import docx' });
-    return probe.ok;
-  } catch {
-    return false;
-  }
-})();
+const pythonDocxAvailable = spawnSync('python3', ['-c', 'import docx'], { stdio: 'ignore' }).status === 0;
 
 describe('AnA compute worker policy', () => {
-  it('allows the new runtime profiles', () => {
-    expect(() =>
-      validateEnvelope({ runtimeProfile: 'python-script', networkEnabled: false, timeoutSeconds: 30 })
-    ).not.toThrow();
+  it('allows the fixed document runtimes', () => {
     expect(() =>
       validateEnvelope({ runtimeProfile: 'docx-insert', networkEnabled: false, timeoutSeconds: 30 })
     ).not.toThrow();
+  });
+
+  it('has no host profile for model-written code (INJ-PATH-002)', () => {
+    // run_python_script exec()'d AnA's code on the application host with the
+    // whole filesystem in reach. It runs in the hardened container now; the
+    // host profile is gone, so nothing can quietly route code back here.
+    expect(() =>
+      // @ts-expect-error — the profile no longer exists
+      validateEnvelope({ runtimeProfile: 'python-script', networkEnabled: false, timeoutSeconds: 30 })
+    ).toThrow(/Runtime profile not allowed/);
   });
 
   it('rejects unknown profiles', () => {
@@ -37,77 +38,36 @@ describe('AnA compute worker policy', () => {
 
   it('blocks network egress for compute profiles', () => {
     expect(() =>
-      validateEnvelope({ runtimeProfile: 'python-script', networkEnabled: true, timeoutSeconds: 30 })
+      validateEnvelope({ runtimeProfile: 'docx-insert', networkEnabled: true, timeoutSeconds: 30 })
     ).toThrow(/Network egress is disabled/);
   });
 });
 
-describe('run_python_script sandbox', () => {
-  it('runs AnA-authored Python, captures stdout, and returns produced files', async () => {
-    const result = await runPythonScriptIsolated({
-      code: [
-        "with open('out.txt', 'w') as f:",
-        "    f.write('hello from ana')",
-        "print('done', 2 + 2)",
-      ].join('\n'),
-    });
-
-    expect(result.ok).toBe(true);
-    expect(result.stdout).toContain('done 4');
-    expect(result.outputFiles['out.txt']).toBeTruthy();
-    expect(Buffer.from(result.outputFiles['out.txt'] as string, 'base64').toString('utf8')).toBe(
-      'hello from ana'
-    );
-  });
-
-  it('reads provided input files from the sandbox cwd', async () => {
-    const result = await runPythonScriptIsolated({
-      code: "print(open('data.txt').read().upper())",
-      inputFiles: { 'data.txt': Buffer.from('abc').toString('base64') },
-    });
-    expect(result.ok).toBe(true);
-    expect(result.stdout).toContain('ABC');
-  });
-
-  it('reports script errors without crashing the worker', async () => {
-    const result = await runPythonScriptIsolated({ code: 'raise ValueError("boom")' });
-    expect(result.ok).toBe(false);
-    expect(result.error).toContain('ValueError');
-  });
-
-  it('blocks outbound network from inside the sandbox', async () => {
-    const result = await runPythonScriptIsolated({
-      code: [
-        'import socket',
-        'try:',
-        '    socket.socket()',
-        "    print('OPEN')",
-        'except OSError:',
-        "    print('BLOCKED')",
-      ].join('\n'),
-    });
-    expect(result.ok).toBe(true);
-    expect(result.stdout).toContain('BLOCKED');
-  });
-});
-
 describe.skipIf(!pythonDocxAvailable)('insert_document_content (targeted docx insertion)', () => {
-  // Build the source .docx in the same isolated sandbox (python-docx is a host
-  // requirement) so the test needs no JS docx dependency.
+  // Build the source .docx with python-docx directly (a host requirement of
+  // this suite) so the test needs no JS docx dependency.
   async function buildSourceDocx(): Promise<Buffer> {
-    const built = await runPythonScriptIsolated({
-      code: [
-        'from docx import Document',
-        'd = Document()',
-        "d.add_heading('10.3 Statistical Methods', level=2)",
-        "d.add_paragraph('Prepared for {{SPONSOR}}.')",
-        "d.save('source.docx')",
-      ].join('\n'),
-    });
-    expect(built.ok).toBe(true);
-    const b64 = built.outputFiles['source.docx'];
-    expect(b64).toBeTruthy();
-    return Buffer.from(b64 as string, 'base64');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'docx-insert-src-'));
+    try {
+      const built = spawnSync(
+        'python3',
+        [
+          '-c',
+          [
+            'from docx import Document',
+            'd = Document()',
+            "d.add_heading('10.3 Statistical Methods', level=2)",
+            "d.add_paragraph('Prepared for {{SPONSOR}}.')",
+            "d.save('source.docx')",
+          ].join('\n'),
+        ],
+        { cwd: dir },
+      );
+      expect(built.status).toBe(0);
+      return fs.readFileSync(path.join(dir, 'source.docx'));
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   }
 
   it('inserts after a heading, replaces a placeholder, and appends at end', async () => {

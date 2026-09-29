@@ -14,14 +14,32 @@ import { SOP_TEMPLATES } from '../../services/qms/sopTemplates';
 import { resolveUserId } from '../../types/auth-request';
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
+import { usableOrgId } from '../../utils/authedOrgId';
 
 const router = Router();
 const log = createScopedLogger('templates-routes');
 
 // Configure multer for file uploads
+/**
+ * The directory an organization's template files live in, relative to the
+ * server's working directory — inside the tenant's own uploads prefix
+ * (`uploads/org-<id>/`), which is the only place AnA's document tools will
+ * read a template from (INJ-PATH-002). Templates used to land in one flat
+ * `uploads/templates/` shared by every tenant.
+ */
+function tenantTemplateDir(organizationId: number): string {
+  return path.join('uploads', `org-${organizationId}`, 'templates');
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/templates/'); // Make sure this directory exists
+    const organizationId = usableOrgId((req as any).tenantId || (req as any).tenantContext?.organizationId);
+    if (organizationId === null) {
+      cb(new Error('Organization context required'), '');
+      return;
+    }
+    const dir = tenantTemplateDir(organizationId);
+    fs.mkdir(dir, { recursive: true }, err => cb(err ?? null, dir));
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + crypto.randomBytes(8).toString('hex');
@@ -467,7 +485,10 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       module,
       description,
       type: 'uploaded',
-      fileUrl: `/uploads/templates/${req.file.filename}`,
+      // Relative to the working directory, the form the document workspace
+      // guard resolves. (It was `/uploads/templates/…` — a filesystem-root path
+      // nothing could open.)
+      fileUrl: path.join(tenantTemplateDir(organizationId), req.file.filename),
       fileSize: req.file.size,
       fileType: path.extname(req.file.originalname).substring(1),
       version: '1.0.0',

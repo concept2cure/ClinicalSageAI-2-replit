@@ -27,6 +27,9 @@ const logger = createScopedLogger('tesseract-ocr');
 /** Languages we ship support for, mirroring the legacy OCR_CONFIG language list. */
 const SUPPORTED_LANGUAGES = ['eng', 'fra', 'deu', 'spa', 'ita'] as const;
 
+/** The shape of a Tesseract language code (eng, fra, chi_sim, deu_frak). */
+const TESSERACT_LANG_CODE = /^[a-z]{3}(?:_[a-z]{3,4})?$/;
+
 function defaultLanguages(): string[] {
   const fromEnv = (process.env.TESSERACT_LANG || '').trim();
   if (fromEnv) {
@@ -117,6 +120,14 @@ class TesseractOcrService {
   /** Recognise text in an image (PNG, JPEG, TIFF, BMP, PBM, WEBP). */
   async recognizeImage(input: ImageInput, options: OcrImageOptions = {}): Promise<OcrImageResult> {
     const languages = options.languages?.length ? options.languages : defaultLanguages();
+    // Each code becomes a file name (`<lang>.traineddata`) under the language
+    // directory and the cache. The codes reach here from a tool argument, and
+    // `../../x` walked out of both (INJ-PATH-002). A Tesseract code is three
+    // letters with an optional script suffix; anything else is refused.
+    const badCode = languages.find(l => !TESSERACT_LANG_CODE.test(l));
+    if (badCode !== undefined) {
+      throw new Error('OCR languages must be Tesseract language codes such as eng, fra or chi_sim.');
+    }
     return this.serialize(async () => {
       const worker = await this.ensureWorker(languages);
       const startedAt = Date.now();
