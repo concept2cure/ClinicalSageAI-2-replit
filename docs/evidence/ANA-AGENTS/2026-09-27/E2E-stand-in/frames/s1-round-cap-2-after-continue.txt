@@ -1,0 +1,64 @@
+Concept2Cure.RI
+›
+Conversation
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+Project
+Survey every source you can for BX-512 stability evidence.
+Conversation
+AnA
+New conversation
+Progress
+· AnA's progress
+Survey every source you can for BX-512 stability evidence.
+✻
+AnA reached this turn's round limit (20 rounds) before she said she was done.
+20 steps completed · in 3s
+
+AnA reached this turn's round limit (20 rounds) before she said she was done.
+
+Checking source 1.Checking source 2.Checking source 3.Checking source 4.Checking source 5.Checking source 6.Checking source 7.Checking source 8.Checking source 9.Checking source 10.Checking source 11.Checking source 12.Checking source 13.Checking source 14.Checking source 15.Checking source 16.Checking source 17.Checking source 18.Checking source 19.Checking source 20.Stand-in answer: I looked at 20 sources and had more to check when the turn was closed.
+
+Continue from where you stopped.
+✻
+
+Stand-in answer: picking up from where the previous turn stopped.
+
+AnA drives: on
+Demos
+Between steps
+Manual
+AnA takes one step, then waits for you to run the next, change it or stop. If nobody answers within 10 minutes, or the page is closed, she stops there. A demonstration you start runs through without stopping.
+Auto
+AnA keeps going, step after step, until she judges the task done — for up to 20 rounds whichever engine you chose, 15 minutes of work or 40 minutes in all. Anything that changes a record waits for you; if nobody answers within 10 minutes, it does not happen and she stops.
+She keeps going: up to 20 rounds, 15 minutes of work.
+Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.
+Progress
+Finished in 0s
+Planning response…
+— done
+31 ms
+Loading project memory…
+— done
+0 ms
+Generating response…
+— done
+122 ms
+Composing the answer…
+— done
+56 ms
+Checking evidence and recording the turn…
+— done
+34 ms
+Used in this session
+Memory
+Could not be read
+Tools
+Global search
+Context
+balanced effort

@@ -1,0 +1,56 @@
+# s2-deep — rows in postgresql://127.0.0.1:5432/ana_e2e_2
+# runs: run_aa252b23-392f-4d78-baa9-f8f653e20f94
+# threads: ana-ri_1790620488335_ybwrf40ia
+
+## ana_runs
+                    id                    |  status  | stopped_reason | current_round |    surface    | controls | pending_command | decided | decided_by |   created    |   finished   
+------------------------------------------+----------+----------------+---------------+---------------+----------+-----------------+---------+------------+--------------+--------------
+ run_aa252b23-392f-4d78-baa9-f8f653e20f94 | finished | no_more_tools  |             0 | ana-ri-stream |        0 |                 |         |            | 18:34:48.303 | 18:34:48.518
+(1 row)
+
+
+## ana_runs.control_events
+                    id                    | jsonb_pretty 
+------------------------------------------+--------------
+ run_aa252b23-392f-4d78-baa9-f8f653e20f94 | [           +
+                                          | ]
+(1 row)
+
+
+## chat_messages (the saved turn; metadata fields S1/S4 write)
+ id |   role    |                        content                         | stopped_reason | rounds | run_policy | pending_steps 
+----+-----------+--------------------------------------------------------+----------------+--------+------------+---------------
+ 13 | user      | Summarise the Vorelinib IND strategy in depth, please. |                |        |            | 
+ 14 | assistant | Stand-in answer for the engine check. No tools.        |                |        | auto       | 
+(2 rows)
+
+
+## chat_messages.metadata policyHolds / humanControls / warnings (assistant rows)
+ id | jsonb_pretty 
+----+--------------
+ 14 | {           +
+    | }
+(1 row)
+
+
+## ana_turn_records 0a7f57bd-426d-4f65-bf3e-eea10977fb03 (row columns, then the record's own fields)
+                  run_id                  | outcome  |  schema_version   | hash_ok 
+------------------------------------------+----------+-------------------+---------
+ run_aa252b23-392f-4d78-baa9-f8f653e20f94 | answered | ana-turn-record/1 | t
+(1 row)
+
+{
+ "model": {
+  "effort": "thorough",
+  "model": "claude-opus-5-5",
+  "calls": 1
+ },
+ "turn": {
+  "runId": "run_aa252b23-392f-4d78-baa9-f8f653e20f94",
+  "outcome": "answered",
+  "surface": "conversation-thread"
+ },
+ "warnings": [],
+ "controls": [],
+ "steps": []
+}

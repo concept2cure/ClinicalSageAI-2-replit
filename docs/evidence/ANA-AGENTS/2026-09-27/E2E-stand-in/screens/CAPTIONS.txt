@@ -1,0 +1,21 @@
+# Captions for every screenshot in this folder. Tab-separated: file, caption.
+# EVERY SCREENSHOT HERE IS OF THE REAL APP DRIVEN BY A SCRIPTED STAND-IN MODEL, NOT A LIVE MODEL.
+# Row 74 S1/S2/S4 end-to-end capture, 2026-09-28, snapshot 640937815, database ana_e2e_2.
+# Burned-in copies carrying the banner and caption: captioned/<same name>.png (harness/caption-screens.mjs).
+s1-round-cap-1-stopped.png	S1. A Standard turn under Auto ran 20 tool rounds and was capped. The panel reads "Stopped at the round limit · 3s". The note ("AnA reached this turn's round limit (20 rounds) before she said she was done.") and Continue sit under the step summary, above the answer text.
+s1-round-cap-2-after-continue.png	S1, after Continue. The note stays on the capped turn; Continue is gone (0 buttons); the Continue turn's answer follows.
+s2-deep-0-engine-menu.png	S2. The Home engine menu open, under Auto. It opens upward and is clipped by the composer (Finding F3): the first option is covered and "Maximum" loses its label.
+s2-deep-1-pill-deep-research.png	S2. The pill after choosing Deep research: "AnA Maximum Deep research".
+s2-deep-2-answered.png	S2. The Deep research turn answered (one call, #45: claude-opus-5-5, effort high, max_tokens 8192). No tools; the round budget was not exercised.
+s4-approval-1-approval-prompt.png	S4 Auto never approves. The model proposed create_task; the dialog "Confirm the proposed action" waits for a person.
+s4-approval-2-still-waiting-20s.png	S4 Auto never approves. ~20 s later, still unanswered: no model call, no task row. Other surfaces still say "Working" / "AnA is driving" (Finding F2).
+s4-approval-3-after-decline.png	S4 Auto never approves. After Cancel (the decline): "1 step completed · 1 failed" (Finding F1); no task row was written.
+s4-approval-control-1-after-confirm.png	S4 positive control. The same proposal, confirmed: the task was written (1 project_tasks row).
+s4-auto-0-home-auto.png	S4 Auto. Home with "Between steps: Auto" chosen and the pill on Standard.
+s4-auto-1-finished.png	S4 Auto. A Standard turn ran 12 tool rounds, past the old 8-round ceiling, and ended by itself.
+s4-manual-0-home-manual.png	S4 Manual. Home with "Between steps: Manual" chosen and the pill on "AnA Balanced Standard". (This Standard turn was still served by claude-opus-5-5: the tier is routed by the ask.)
+s4-manual-1-hold-before-round-2.png	S4 Manual. Held before round 2: "Waiting for you before the next step", "Next: Global search", Run this step / Do this instead / Stop. The Live Drive strip still says "AnA is driving" (Finding F2). This hold lasted about 1.33 s.
+s4-manual-2-hold-before-round-3.png	S4 Manual. After Run this step, round 2 ran; held again before round 3 (about 1.33 s).
+s4-manual-3-typed-do-this-instead.png	S4 Manual. A steer typed into "Do this instead", before it was sent.
+s4-manual-4-after-redirect.png	S4 Manual. After Do this instead: the held step was not run ("Not run — your steer replaced it: Global search.").
+s4-manual-unavailable-1-manual-unavailable.png	S4 Manual fails closed, produced by an INDUCED ENVIRONMENT FAULT (ana_runs refused new rows for this turn). "Stopped: Manual was unavailable", with the note and Continue under the step summary, above the answer text.
