@@ -83,3 +83,28 @@ describe('resolveCmcArtifactProject', () => {
     expect(resolveProgramProjectAnchor).not.toHaveBeenCalled();
   });
 });
+
+describe('resolveCmcArtifactProject — strict, for an authorization decision (PF-17)', () => {
+  beforeEach(() => {
+    resolveProgramProjectAnchor.mockReset();
+  });
+  const failingDb = () => {
+    const chain: any = { select: () => chain, from: () => chain, where: () => chain, limit: () => Promise.reject(new Error('connection reset')) };
+    return chain;
+  };
+
+  it('a numeric lookup that could not complete throws in strict mode — "could not tell" is not "not yours"', async () => {
+    await expect(resolveCmcArtifactProject(ORG, '42', { db: failingDb(), strict: true })).rejects.toThrow('connection reset');
+  });
+
+  it('without strict, the same failure is still reported as unaddressable (degraded readers are unchanged)', async () => {
+    const r = await resolveCmcArtifactProject(ORG, '42', { db: failingDb() });
+    expect(r.state).toBe('unaddressable');
+  });
+
+  it('strict reaches the anchor reader for a program uuid', async () => {
+    resolveProgramProjectAnchor.mockResolvedValue(1234);
+    await resolveCmcArtifactProject(ORG, PROGRAM_UUID, { strict: true });
+    expect(resolveProgramProjectAnchor).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ strict: true }));
+  });
+});
