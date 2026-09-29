@@ -181,8 +181,8 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!live.loading && !live.error) notifySurfaceActionReady('cro-portfolio');
-  }, [live.loading, live.error]);
+    if (!live.loading) notifySurfaceActionReady('cro-portfolio');
+  }, [live.loading]);
 
   /* A sponsor with no `subs` / `studies` at all used to flatMap to a list of
      undefined rows, and the very next filter read `.state` off one of them. */

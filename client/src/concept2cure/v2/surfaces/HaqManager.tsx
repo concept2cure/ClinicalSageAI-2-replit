@@ -157,8 +157,8 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!roundsState.loading && !roundsState.error) notifySurfaceActionReady('haq-manager');
-  }, [roundsState.loading, roundsState.error]);
+    if (!roundsState.loading) notifySurfaceActionReady('haq-manager');
+  }, [roundsState.loading]);
 
   const HAQ_FORM: C2CFormConfig = {
     eyebrow: 'HAQ — log question',
