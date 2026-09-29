@@ -27,6 +27,8 @@ import path from 'path';
 import { eq, and, isNull, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
+import { regulatoryPrograms } from '../../../shared/schema/programs';
+import { recordedApplicationId, usableIdentifier } from './regulatory-identifiers';
 import { packageSequenceFromCore, type PackageFromCoreResult, type PriorState } from './package-from-core';
 import { materializeLeafSources, leafSourceKey, type UnresolvedLeaf } from './leaf-source-resolver';
 import { validateLeafPaths } from './leaf-path-safety';
@@ -486,6 +488,10 @@ export interface AssembleSubmissionResult {
    *  earlier sequences bound against that were never filed. */
   priorState: PriorState;
   unfiledPriorSequences: string[];
+  /** The submission's program (submissions.program_id), or null for a
+   *  submission not anchored to one. The export route records a governed
+   *  export against the project that anchors this program (W5/D7). */
+  programId: string | null;
   /** The assembly's §11.10(e) outcome (both rows), from assembleSequence. */
   auditTrail: AuditRowOutcome;
   /** DTD self-containment status from the packager. */
@@ -506,6 +512,59 @@ export interface AssembleSubmissionResult {
     generatedAt: string;
     completeness: CompletenessReport;
   };
+}
+
+/**
+ * The application number a submission's package carries, from its program's
+ * record (recordedApplicationId): the recorded agency number, else the
+ * program's code, else a handle that says it is unassigned. The record is
+ * authoritative, as it is for the region: a caller-supplied number must be a
+ * usable identifier and must not contradict a recorded agency number.
+ *
+ * 2026-09-29 (W5/D7, WO-9 Click 6): the number came only from the caller, which
+ * the compile surface never sends — BX-512 compiled as IND 000512 and exported
+ * as UNASSIGNED-SEQ-6 — and a supplied one went unvalidated into a filename
+ * and the backbone.
+ */
+async function exportApplicationId(
+  submission: { programId: string | null },
+  sequenceId: number,
+  organizationId: number,
+  supplied: string | undefined,
+): Promise<string> {
+  const [program] = submission.programId
+    ? await db
+        .select({ applicationNumber: regulatoryPrograms.applicationNumber, code: regulatoryPrograms.code })
+        .from(regulatoryPrograms)
+        .where(
+          and(
+            eq(regulatoryPrograms.id, submission.programId),
+            eq(regulatoryPrograms.organizationId, organizationId),
+            isNull(regulatoryPrograms.deletedAt),
+          ),
+        )
+        .limit(1)
+    : [];
+  const recorded = recordedApplicationId(
+    { applicationNumber: program?.applicationNumber ?? null, programCode: program?.code ?? null },
+    `UNASSIGNED-SEQ-${sequenceId}`,
+  );
+  if (supplied === undefined) return recorded;
+  const usable = usableIdentifier('applicationNumber', supplied);
+  if (usable === null) {
+    throw new Error(
+      `"${supplied}" is not a usable application number: it must start with a letter or digit and hold only ` +
+        'letters, digits, ".", "_" or "-" (up to 64).',
+    );
+  }
+  const recordedNumber = usableIdentifier('applicationNumber', program?.applicationNumber);
+  if (recordedNumber !== null && usable !== recordedNumber) {
+    throw new Error(
+      `Application number "${usable}" does not match the program's recorded application number "${recordedNumber}". ` +
+        'The record is authoritative; omit the number to package as recorded.',
+    );
+  }
+  return usable;
 }
 
 /**
@@ -578,14 +637,17 @@ export async function assembleSubmissionEctd(
     }
   }
 
+  const applicationId = await exportApplicationId(submission, sequence.id, organizationId, params.applicationNumber);
+
   const assembled = await assembleSequence({
     sequenceId: sequence.id,
     organizationId,
     userId,
-    // Never fabricate an agency identifier. An unassigned value says so, in the
-    // same wording the transmit path already uses (submission-ops), so a
-    // reviewer reading the backbone sees a gap instead of a plausible applicant.
-    applicationId: params.applicationNumber ?? `UNASSIGNED-SEQ-${sequence.id}`,
+    // Never fabricate an agency identifier. The program's record decides it
+    // (exportApplicationId); an unassigned value says so, in the same wording
+    // the transmit path already uses (submission-ops), so a reviewer reading
+    // the backbone sees a gap instead of a plausible applicant.
+    applicationId,
     sponsorId: params.applicantId ?? `UNASSIGNED-ORG-${organizationId}`,
     sponsorName: params.applicantName ?? `UNASSIGNED (organization ${organizationId})`,
     priorState: params.priorState,
@@ -645,6 +707,7 @@ export async function assembleSubmissionEctd(
       skipped: assembled.skipped,
       priorState: assembled.priorState,
       unfiledPriorSequences: assembled.unfiledPriorSequences,
+      programId: submission.programId ?? null,
       // The assembly's §11.10(e) outcome; the export route answers it as headers.
       auditTrail: assembled.auditTrail,
       dtdStatus: assembled.bundle.dtdStatus,

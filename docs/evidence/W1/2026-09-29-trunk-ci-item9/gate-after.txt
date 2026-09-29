@@ -1,0 +1,3 @@
+$ npm run ci:check-css-selector-shadowing   # with the fix
+[css-shadowing] OK — 42 stylesheets, 21 known shadowed selector(s), 0 new.
+exit 0

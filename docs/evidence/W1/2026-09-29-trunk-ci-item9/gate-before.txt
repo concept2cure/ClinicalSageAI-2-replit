@@ -1,0 +1,10 @@
+$ npm run ci:check-css-selector-shadowing   # at HEAD a44df9da6+merge, previous app-v2.css
+[css-shadowing] 1 NEW shadowed selector(s):
+
+  ✗ client/src/concept2cure/v2/styles/app-v2.css
+      .c2c-v2 .crumbs .sep
+      defined at lines 1480 and 1484 — the later one wins, silently.
+      Rename one, or scope the override under @media if it is meant to be conditional.
+
+  This is invisible to jsdom tests: the DOM is right and the pixels are not.
+exit 1
