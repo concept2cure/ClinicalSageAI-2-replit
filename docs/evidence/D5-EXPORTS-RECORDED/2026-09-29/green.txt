@@ -1,0 +1,6 @@
+# GREEN — same tests, exports and template render deliver through sendAuditedDownload
+ ✓ server/routes/c2c/__tests__/exports-recorded.test.ts > POST /api/concept2cure/artifacts/export-docx > records EXPORT_GENERATED with the SHA-256 of the delivered bytes, then delivers them 54ms
+ ✓ server/routes/c2c/__tests__/exports-recorded.test.ts > POST /api/concept2cure/artifacts/export-docx > delivers nothing when the record does not persist 10ms
+ ✓ server/routes/c2c/__tests__/exports-recorded.test.ts > POST /api/c2c/templates/:id/render > records EXPORT_GENERATED with the SHA-256 of the delivered bytes, then delivers them 13ms
+ ✓ server/routes/c2c/__tests__/exports-recorded.test.ts > POST /api/c2c/templates/:id/render > delivers nothing when the record does not persist 7ms
+      Tests  4 passed (4)
