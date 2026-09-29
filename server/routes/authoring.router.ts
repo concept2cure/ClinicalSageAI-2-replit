@@ -8,6 +8,7 @@ import crypto from 'crypto';
 // Lazy load docx to prevent startup failures
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
+import { isUuid } from '../middleware/uuidParam';
 import { enforceOrgMembership, GOVERNED_WRITE_ROLES } from '../middleware/orgMembership';
 import { getTenantScope } from '../db/tenantStore';
 import { vaultWriteRefusal } from '../services/vault/vault-write-authority';
@@ -6284,6 +6285,46 @@ function describeProposer(authorName: unknown, authorId: unknown): {
   return { proposedBy: claimed.slice(0, 200), proposedByVerified: false };
 }
 
+/** The kinds of tracked change the editor has (suggestions.ts SuggestionRange
+ *  `kind`). Anything else in a decision's `changeType` is not recorded: the
+ *  field is read back as what the reviewer decided about. */
+function decisionChangeType(value: unknown): 'insertion' | 'deletion' | null {
+  return value === 'insertion' || value === 'deletion' ? value : null;
+}
+
+/**
+ * Whether a decision's `sectionId` names a section of THIS document, in this
+ * tenant (SEC-A-7, second half; editor-family review 2026-09-28,
+ * docs/evidence/D5/2026-09-29-decision-section/). Both decision routes used to
+ * check only the document's lock and then record the body's sectionId as
+ * given, so a decision could be written to this document's hash-chained trail
+ * against another document's section, or another tenant's, and be read back
+ * as a decision on it.
+ *
+ * True when the body names no section (a decision without one is recorded as
+ * before). A value that is not a uuid is refused without a query: both columns
+ * are uuid, and Postgres would answer 22P02, which this router reports as 500.
+ * The workbench always sends the open document's active section, so only a
+ * forged or stale caller is refused.
+ */
+async function decisionSectionIsOfDocument(docId: string, sectionId: unknown, tenantId: number): Promise<boolean> {
+  if (sectionId === undefined || sectionId === null) return true;
+  if (typeof sectionId !== 'string' || !isUuid(sectionId) || !isUuid(docId)) return false;
+  const found = await pool.query(
+    'SELECT 1 FROM authoring_sections WHERE id = $1 AND doc_id = $2 AND tenant_id = $3 LIMIT 1',
+    [sectionId, docId, tenantId],
+  );
+  return (found.rowCount ?? found.rows.length) > 0;
+}
+
+const SECTION_NOT_IN_DOCUMENT = {
+  success: false,
+  error: {
+    code: 'SECTION_NOT_IN_DOCUMENT',
+    message: 'The section named is not a section of this document. Nothing was recorded.',
+  },
+} as const;
+
 // authoring_tracked_change_decisions is now provisioned by
 // db/migrations/20260730_authoring_runtime_ddl.sql. Retained as a no-op so
 // existing call sites need no change; the router no longer issues runtime DDL.
@@ -6335,6 +6376,9 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
     if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
       return res.status(403).json({ error: 'DOCUMENT_FROZEN', message: lock.reason });
     }
+    if (!(await decisionSectionIsOfDocument(String(artifactId), req.body?.sectionId, tenantId))) {
+      return res.status(400).json(SECTION_NOT_IN_DOCUMENT);
+    }
 
     const result = await pool.query(
       `INSERT INTO authoring_tracked_change_decisions
@@ -6361,7 +6405,7 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
       {
         changeId,
         decision,
-        ...(typeof req.body?.changeType === 'string' ? { changeType: req.body.changeType } : {}),
+        ...(decisionChangeType(req.body?.changeType) ? { changeType: decisionChangeType(req.body?.changeType) } : {}),
         ...(typeof req.body?.text === 'string' && req.body.text.length > 0
           ? { text: req.body.text.slice(0, 500) }
           : {}),
@@ -6427,6 +6471,9 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
     if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
       return res.status(403).json({ error: 'DOCUMENT_FROZEN', message: lock.reason });
     }
+    if (!(await decisionSectionIsOfDocument(String(artifactId), req.body?.sectionId, tenantId))) {
+      return res.status(400).json(SECTION_NOT_IN_DOCUMENT);
+    }
 
     // Upsert each decision
     const results = [];
@@ -6458,7 +6505,7 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
       const proposer = describeProposer(c?.authorName, c?.authorId);
       return {
       changeId: typeof c?.changeId === 'string' ? c.changeId : null,
-      changeType: typeof c?.changeType === 'string' ? c.changeType : null,
+      changeType: decisionChangeType(c?.changeType),
       proposedBy: proposer.proposedBy ?? null,
       proposedByVerified: proposer.proposedByVerified ?? null,
       text: typeof c?.text === 'string' ? c.text.slice(0, 200) : null,
