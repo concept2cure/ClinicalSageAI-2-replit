@@ -8,16 +8,26 @@
  * and classified, and any PASS the changed verdict gives where HEAD did not is
  * a failure (the change may only close routes to PASS, never open one).
  *
- * HEAD's module is `git show HEAD:server/eval/pq/pq-verdict.ts`, saved beside
- * this file; it has no imports, so it loads from here unchanged.
+ * "HEAD" is pq-verdict.ts as it was before this change, commit 575cd8323. It
+ * has no imports, so the harness writes it from git into a temporary folder at
+ * run time and loads it from there. Nothing but this script is committed.
+ * Run from the repository root: npx tsx <this file>.
  */
-import { readFileSync } from 'node:fs';
-import * as HEAD from './head/server/eval/pq/pq-verdict';
-import * as NOW from '/home/user/ClinicalSageAI-2-replit/server/eval/pq/pq-verdict';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import * as NOW from '../../../../../../server/eval/pq/pq-verdict';
+
+const BEFORE_CHANGE = '575cd8323';
+const headFile = path.join(mkdtempSync(path.join(tmpdir(), 'pq-verdict-head-')), 'pq-verdict.ts');
+writeFileSync(headFile, execFileSync('git', ['show', `${BEFORE_CHANGE}:server/eval/pq/pq-verdict.ts`]));
+const HEAD: typeof NOW = await import(pathToFileURL(headFile).href);
 
 type Any = any; // the matrix deliberately builds malformed records
 
-const REAL = JSON.parse(readFileSync('/home/user/ClinicalSageAI-2-replit/server/eval/pq/pq-protocol.json', 'utf8'));
+const REAL = JSON.parse(readFileSync('server/eval/pq/pq-protocol.json', 'utf8'));
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 
 const gen = (n: number, over: Any = {}) =>
