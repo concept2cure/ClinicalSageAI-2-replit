@@ -57,6 +57,8 @@
 // so the reverse edge must never become a runtime import (circular init).
 import type { CommandContext, CommandResult } from './command-executor';
 import rbacService from '../roleBasedAccess';
+import { HIDDEN_APP_COMMANDS, anaCapabilityInLaunchScope } from '../ana/ana-launch-scope';
+import { launchScopeEnforced } from '../entitlements/launch-scope';
 
 /**
  * Minimum organization role, expressed in the canonical hierarchy used by
@@ -458,6 +460,12 @@ function deny(command: string, error: string, message: string): AuthorizationDec
   return { ok: false, result: { success: false, action: command, message, error } };
 }
 
+/** Step 1b of authorizeCommand: the refusal for a hidden-app command, or null. */
+function launchScopeRefusal(command: string): AuthorizationDecision | null {
+  if (!launchScopeEnforced() || anaCapabilityInLaunchScope(command, HIDDEN_APP_COMMANDS)) return null;
+  return deny(command, 'LAUNCH_SCOPE', 'This part of the product is not in this release.');
+}
+
 /**
  * Central, fail-closed authorization decision for one dispatched command.
  *
@@ -482,6 +490,17 @@ export async function authorizeCommand(
       `Command '${command}' has no authorization policy and cannot be executed.`,
     );
   }
+
+  // 1b. Launch scope (D2/D6, 2026-09-29). A command that serves only apps
+  //     outside the release (hiddenApp in services/ana/ana-launch-scope.
+  //     inventory.json) is refused while launch scope is enforced, production
+  //     by default. The API refuses those apps' routes and AnA is not offered
+  //     their tools; this is where the four command paths (the bridge,
+  //     /execute, /governed-action, chat command blocks) meet. Before the
+  //     read-only early return, so a hidden app's reads are refused too, and
+  //     before tenant policy, which cannot re-open what the release excludes.
+  const outsideRelease = launchScopeRefusal(command);
+  if (outsideRelease) return outsideRelease;
 
   // 2. Per-tenant tool allow/deny policy (organizations.settings.anaToolPolicy),
   //    applied to EVERY dispatched command.
