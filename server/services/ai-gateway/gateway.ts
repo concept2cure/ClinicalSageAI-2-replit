@@ -1513,7 +1513,7 @@ export class AIGateway {
         if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(selectedModel.id);
-        await this.endOnTerminalDecline(error, selectedModel, request, requestId, startTime, strategy, triedModels, contentPolicy);
+        await this.endOnTerminalDecline(error, selectedModel, { request, requestId, startTime, strategy, triedModels, contentPolicy });
         this.noteRungFailure(selectedModel, error, declines);
         log.warn(
           `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`
@@ -1543,7 +1543,7 @@ export class AIGateway {
         if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(fallback.id);
-        await this.endOnTerminalDecline(error, fallback, request, requestId, startTime, strategy, triedModels, contentPolicy);
+        await this.endOnTerminalDecline(error, fallback, { request, requestId, startTime, strategy, triedModels, contentPolicy });
         this.noteRungFailure(fallback, error, declines);
         log.warn(
           `[AI Gateway] Fallback ${fallback.provider}/${fallback.model} failed: ${error.message}`
@@ -3613,16 +3613,24 @@ export class AIGateway {
   private async endOnTerminalDecline(
     error: unknown,
     model: ModelConfig,
-    request: GatewayRequest,
-    requestId: string,
-    startTime: number,
-    strategy: RoutingStrategy,
-    triedModels: string[],
-    contentPolicy?: { action: ContentPolicyAction; findings: PolicyFinding[] },
+    call: {
+      request: GatewayRequest;
+      requestId: string;
+      startTime: number;
+      strategy: RoutingStrategy;
+      triedModels: string[];
+      contentPolicy?: { action: ContentPolicyAction; findings: PolicyFinding[] };
+    },
   ): Promise<void> {
     if (!(error instanceof GatewayModelDeclinedError) || error.retryable) return;
     await this.logAudit(
-      request, failedCallResponse(model, requestId, startTime), strategy, false, error.message, triedModels, contentPolicy,
+      call.request,
+      failedCallResponse(model, call.requestId, call.startTime),
+      call.strategy,
+      false,
+      error.message,
+      call.triedModels,
+      call.contentPolicy,
     );
     throw error;
   }
@@ -3781,11 +3789,8 @@ export class AIGateway {
         triedModels: triedModels && triedModels.length > 0 ? triedModels : undefined,
         // Placement / residency evidence.
         substrate: placement.substrate,
-        // Only a lane that served the call has a region to record; a failed or
-        // size-refused row names no region, and no served-model governance.
-        region: success ? servingRegion(placement, request) : undefined,
         retentionPolicy: placement.zeroDataRetention ? 'zero_retention' : 'standard',
-        ...ledgerProvenance(request, success ? response : undefined),
+        ...ledgerServedFields(placement, request, response, success),
         // Content-policy findings carry only detector names, classes and
         // classifier-redacted excerpts — never raw content (the prompt itself
         // is represented by promptHash alone).
@@ -4311,9 +4316,7 @@ function ledgerProvenance(
     tenantPolicyResolution: tenant?.resolution,
     tenantBoundFrom: tenant?.boundFrom,
     riskTier: request.riskTier,
-    // The request's own run, else the run a tool call inside it belongs to.
-    runId: request.runId ?? currentRunScope()?.runId,
-    parentRunId: request.parentRunId ?? (request.runId ? undefined : currentRunScope()?.parentRunId),
+    ...ledgerRun(request),
     ...(served
       ? {
           placementReasonCode: served.placementReasonCode,
@@ -4325,6 +4328,28 @@ function ledgerProvenance(
         }
       : {}),
   };
+}
+
+/**
+ * A row's region and provenance. Only a lane that served the call has a region
+ * to record: a failed or size-refused row names no region and carries no
+ * served-model governance (2026-09-26 review).
+ */
+function ledgerServedFields(
+  placement: ProviderPlacement,
+  request: GatewayRequest,
+  response: GatewayResponse,
+  success: boolean,
+): Partial<AuditLogEntry> {
+  if (!success) return { region: undefined, ...ledgerProvenance(request) };
+  return { region: servingRegion(placement, request), ...ledgerProvenance(request, response) };
+}
+
+/** The request's own run, else the run a tool call inside it belongs to (run-scope.ts). */
+function ledgerRun(request: GatewayRequest): Pick<AuditLogEntry, 'runId' | 'parentRunId'> {
+  if (request.runId) return { runId: request.runId, parentRunId: request.parentRunId };
+  const scope = currentRunScope();
+  return { runId: scope?.runId, parentRunId: request.parentRunId ?? scope?.parentRunId };
 }
 
 /**

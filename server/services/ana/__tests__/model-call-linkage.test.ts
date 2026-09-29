@@ -80,8 +80,8 @@ describe('an agent mutation’s audit row names the model call', () => {
     expect(read('server/routes/ana-ri/post-processing.ts')).toMatch(/servingModel: servingModel \?\? null/);
     const stream = read('server/routes/ana-ri/stream.ts');
     expect(stream).toMatch(/runStreamPostProcessing\(\{[\s\S]{0,4000}?servingModel: commandBlockProposer\(commandRounds, lastServedModel\),/);
-    expect(stream).toMatch(/COMMAND_FENCE\.test\(fullContent\) \? \[lastServedModel\] : \[\]/);
-    expect(stream).toMatch(/if \(COMMAND_FENCE\.test\(roundText\)\) commandRounds\.push\(lastServedModel\);/);
+    expect(stream).toMatch(/const commandRounds = commandRoundOf\(fullContent, lastServedModel\);/);
+    expect(stream).toMatch(/commandRounds\.push\(\.\.\.commandRoundOf\(roundText, lastServedModel\)\);/);
   });
 
   it('a command block is attributed to the round that wrote it, and to no one when rounds disagree', () => {
@@ -121,7 +121,7 @@ describe('a run is closed with the reason its loop stopped', () => {
   it('a turn that ends before the loop is closed failed when it failed, not finished for want of tools', () => {
     const src = read('server/routes/ana-ri/stream.ts');
     // The fast-path answer that came back as an error.
-    expect(src).toMatch(/if \(fastOutcome === 'failed'\) streamFailed = true;\s*await closeFastPath\(fastOutcome\);/);
+    expect(src).toMatch(/streamFailed = fastOutcome === 'failed';\s*await closeFastPath\(fastOutcome\);/);
     // The refused thread.
     expect(src).toMatch(/belongs to another user\.'\);\s*streamFailed = true;\s*const turnRecord = await fileTurnRecord\('failed'\);/);
   });

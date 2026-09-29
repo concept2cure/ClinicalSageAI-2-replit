@@ -201,6 +201,11 @@ const dbPool = {
 /** A command block's opening fence, as parseCommandBlocks reads it. */
 const COMMAND_FENCE = /```command\s*\n/;
 
+/** The round's model call, if the round's own text holds a command block (commandBlockProposer). */
+function commandRoundOf<T>(roundText: string, served: T): T[] {
+  return COMMAND_FENCE.test(roundText) ? [served] : [];
+}
+
 /**
  * Frame a screen report as the operator-channel turn AnA reads next round.
  *
@@ -802,7 +807,7 @@ export function mountStreamRoute(router: Router): void {
           turnRecorder?.warn(`The answer could not be processed: ${String(err?.message ?? err).slice(0, 500)}`);
           say(`Error processing intelligence answer: ${err?.message}`);
         }
-        if (fastOutcome === 'failed') streamFailed = true;
+        streamFailed = fastOutcome === 'failed';
         await closeFastPath(fastOutcome);
         return;
       }
@@ -1711,7 +1716,7 @@ export function mountStreamRoute(router: Router): void {
       // Each round whose own text holds a command block, with the model call
       // that wrote it: post-processing runs the blocks from the whole answer,
       // which joins every round's text (commandBlockProposer).
-      const commandRounds: Array<ReturnType<typeof servedModelOf>> = COMMAND_FENCE.test(fullContent) ? [lastServedModel] : [];
+      const commandRounds = commandRoundOf(fullContent, lastServedModel);
       turnRecorder?.addServed(1, lastServedModel);
       recordCacheUsage(gwResponse);
       // The first model call is round 1's call; its server tools ran inside it.
@@ -2622,7 +2627,7 @@ export function mountStreamRoute(router: Router): void {
           emitServerToolSteps(roundResponse, round);
           recordServerToolEvidence(roundResponse);
           lastServedModel = servedModelOf(roundResponse);
-          if (COMMAND_FENCE.test(roundText)) commandRounds.push(lastServedModel);
+          commandRounds.push(...commandRoundOf(roundText, lastServedModel));
           recordServed(round, lastServedModel);
           const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
           return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };
