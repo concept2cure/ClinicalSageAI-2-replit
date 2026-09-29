@@ -59,3 +59,34 @@
   - `projectHomeRecords.test.tsx` 2/2: mounted and reading the open project; absent
     with none.
   - Every ProjectHome suite still passes: 9 files, 47 tests.
+
+## Follow-up: two review findings on the pushed route (`fe7db61a`)
+
+The multi-lens review of this change, with two refuters per finding, confirmed two
+defects. Both are fixed in the next commit.
+
+- **The AnA outcome log recorded `parseInt` of the URL.** A program UUID's leading
+  digits (for example `5e1d…` → 5) name some other project, possibly another
+  tenant's, so a rejection's lesson was filed under the wrong project and
+  surfaced in its AnA bootstrap. The log now records the resolved, authorized
+  project.
+- **A failed project lookup answered 404.** The resolver catches its own database
+  errors and reports "unaddressable" or "unanchored", which is honest for a
+  degraded reader but reads as "not yours" in an access decision. That reversed
+  the WO-15 contract `verifyProjectAccess` keeps: never answer "no access" to "I
+  could not tell". `resolveCmcArtifactProject` and `resolveProgramProjectAnchor`
+  gained `strict`, which rethrows; an absent anchor column is still null. The
+  route asks strictly, so a failed lookup is its 500. Every other caller keeps
+  the default.
+
+Red: see `01-red.txt` (follow-up sections). Green:
+- `artifact-status-project-scope`: 7/7, adding the outcome-log case and the 500
+  case;
+- `resolve-cmc-artifact-project`: 3 new strict cases;
+- `program-project-anchor-strict` (new): 3/3.
+
+**Also found by the review, not fixed here (next work order):** about 20 other
+routes in `artifacts.ts` still check the URL's project and then load the artifact
+by id and organization alone. Two of them, rollback and reviews/submit, are
+governed writes. This change leaves them no worse; the same scoping applies to
+all of them.

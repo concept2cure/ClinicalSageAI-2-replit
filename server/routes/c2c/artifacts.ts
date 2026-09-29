@@ -2530,7 +2530,9 @@ router.put(
          the artifact was then loaded by id and organization alone, so access
          to one project's URL changed another project's artifact. */
       const urlProject = paramStr(req.params.projectId).replace(/^proj_/, '');
-      const spine = await resolveCmcArtifactProject(organizationId, urlProject);
+      // strict: a lookup that could not complete throws to this route's catch
+      // (500), as verifyProjectAccess does — it is never answered as "not found".
+      const spine = await resolveCmcArtifactProject(organizationId, urlProject, { strict: true });
       const projectId = spine.state === 'linked' ? spine.artifactProjectId : null;
       if (projectId === null || !(await verifyProjectAccess(req, String(projectId)))) {
         return sendError(res, 404, 'Project not found');
@@ -2998,7 +3000,9 @@ router.put(
       if (feedbackType) {
         interceptFeedback({
           organizationId,
-          projectId: parseInt(paramStr(req.params.projectId), 10),
+          // The resolved, authorized project — never the URL text: parseInt of
+          // a program UUID is a different project, possibly another tenant's.
+          projectId,
           userId,
           artifactId: paramStr(req.params.artifactId),
           artifactVersionId: artifact.id?.toString(),

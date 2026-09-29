@@ -812,4 +812,13 @@ The founder chose the plan's recommended option in each case:
 
 - **LX-22 part 1** landed as `041976f2`: `submissions.program_id`, the same-organization key (`ON DELETE SET NULL (program_id)`, so a tenant purge is not blocked) and the one-to-one backfill.
 - **The LX-20 red test (§5 item 5)** is fixed in `c0a95ede`, with a second suite the same sweep found.
-- **PF-05 and PF-06 (LX-22 part 2)** are next, in this session.
+- **PF-05 and PF-06 (LX-22 part 2)** landed as `1706c05b` and `99862840`: every writer anchors a submission to its project, and readers take the anchored one; a name match is only for unanchored legacy rows.
+- **PF-11**, placement half, and LX-11: `39dfd9b7`. A cross-project placement is refused 409 `CROSS_PROJECT`, and the ledger names the document, its pin and both projects. Citations, pins, comments and the protocol→design binding are still open.
+- **PF-02**: the upload route landed as `25ee228e`, and `/docs/from-draft` in `824f699c`. The AnA tool's legacy branch (precondition P2 of PF-04) goes with PF-04.
+- **PF-14**: `2564895a`. A study design is anchored to a live project of its organization, and never moved or overwritten across organizations.
+- **PF-17**: the server half landed as `65412ea5` (`GET /:id/records`, and the activity feed shows the project's governed actions). The ProjectHome panel and the artifact status route follow PF-04.
+- **PF-13**: `6f752472`. A project holding sealed, filed or transmitted records is archived, never deleted.
+- **PF-07** (founder decision: project required):
+  - the Data Room half landed as `824f699c`: no source without a project, one audited adopt, identity per project;
+  - the Authoring half (no document without a project, on the server and both client create paths) is the next commit.
+- **PF-04**: the same-organization keys on five stores, with a pre-flight for legacy rows. Its test is written and green, and it lands after PF-07's Authoring half. `vault.documents` and `submission_transmittals` are deliberately left out (see the migration header), and handed to D6 and PF-12.
