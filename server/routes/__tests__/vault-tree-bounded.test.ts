@@ -147,7 +147,7 @@ describe('the filing cabinet page is bounded and says so', () => {
     wireStore({ total: 500, unfiled: 137, filedHashes: [] });
     await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
     const page = query.mock.calls.find(
-      ([sql]) => /FROM vault\.documents d/.test(String(sql)) && /LEFT JOIN users/.test(String(sql)),
+      ([sql]) => /FROM vault\.documents d/.test(String(sql)) && /LEFT JOIN LATERAL public\.actor_name/.test(String(sql)),
     );
     expect(page, 'the filing-cabinet page query was never issued').toBeDefined();
     expect(String(page![0])).toMatch(/LIMIT \$3/);

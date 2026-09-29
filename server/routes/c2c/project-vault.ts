@@ -996,6 +996,8 @@ export default function createProjectVaultRoutes(): Router {
       const view: VaultViewId = projSegs[0] ?? (await resolveOrgVaultView(orgId));
 
       // 3) The project's active document builds + their rule-pack section specs.
+      //    Owners are named through public.actor_name, not users, so an owner who
+      //    has left is still named (D3, 2026-09-29; docs/evidence/D3/2026-09-29-actor-names/).
       const docsRes = await pool.query(
         `SELECT d.id, d.doc_type, d.agency, d.rule_pack_version, d.title,
                 d.status, d.readiness, d.updated_at,
@@ -1005,7 +1007,7 @@ export default function createProjectVaultRoutes(): Router {
            LEFT JOIN c2c_rule_packs rp
              ON rp.doc_type = d.doc_type AND rp.agency = d.agency
                 AND rp.version = d.rule_pack_version
-           LEFT JOIN users du ON du.id = d.owner_id
+           LEFT JOIN LATERAL public.actor_name(d.owner_id) du ON TRUE
           WHERE d.project_id = $1 AND d.org_id = $2
           ORDER BY d.updated_at DESC`,
         [id, orgId],
@@ -1031,7 +1033,7 @@ export default function createProjectVaultRoutes(): Router {
                   ${sectionHasContentSql('ds.content')} AS has_content,
                   COALESCE(u.name, u.email) AS owner_name
              FROM c2c_document_sections ds
-             LEFT JOIN users u ON u.id = ds.owner_id
+             LEFT JOIN LATERAL public.actor_name(ds.owner_id) u ON TRUE
             WHERE ds.document_id = ANY($1::text[])
               AND EXISTS (SELECT 1 FROM c2c_documents d
                            WHERE d.id = ds.document_id AND d.org_id = $2)`,
@@ -1130,7 +1132,7 @@ export default function createProjectVaultRoutes(): Router {
                   d.updated_at,
                   COALESCE(u.name, u.email) AS owner_name
              FROM vault.documents d
-             LEFT JOIN users u ON u.id = d.created_by
+             LEFT JOIN LATERAL public.actor_name(d.created_by) u ON TRUE
             WHERE ${uploadsWhere}
             ORDER BY d.updated_at DESC
             LIMIT $3`,

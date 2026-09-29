@@ -22,6 +22,9 @@ import { runWithTenantScope } from '../../server/db/tenantStore';
 import auditService from '../../server/services/auditService';
 import { createAuthBoundary } from '../../server/middleware/authBoundary';
 import projectSections from '../../server/routes/project-sections';
+import projectKnowledgeRoutes from '../../server/routes/c2c/project-knowledge';
+import mdxAuditRoutes from '../../server/routes/mdx-audit';
+import { authenticateToken } from '../../server/middleware/auth';
 import { getActivity, getProgramById } from '../../server/services/regulatory-programs.service';
 import {
   ORG_A,
@@ -120,6 +123,8 @@ beforeAll(async () => {
   app.use(express.json());
   app.use('/api', createAuthBoundary());
   app.use('/api/project-sections', projectSections);
+  app.use('/api/concept2cure', authenticateToken, projectKnowledgeRoutes);
+  app.use('/api/mdx', mdxAuditRoutes);
 }, 60_000);
 
 afterAll(async () => {
@@ -207,5 +212,26 @@ describe("a program keeps its lead's and editors' names (D3)", () => {
   it('activity names the editor, and never calls a person "System"', async () => {
     const events = (await inA(() => getActivity(ORG_A, program, 20))) ?? [];
     expect(events.map(e => e.who).sort()).toEqual([leaverName, `user ${silentLeaver}`].sort());
+  });
+});
+
+describe('activity feeds and the MDx audit list name people who left (D3)', () => {
+  // project_activities.project_id references cer_projects, so this project
+  // has no activity rows; what is measured is that the feed answers at all —
+  // it selected u.full_name, a column users does not have.
+  it('the project activity feed answers', async () => {
+    const res = await request(app)
+      .get(`/api/concept2cure/projects/${project}/activity`)
+      .set(asA());
+    expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
+  });
+
+  it("the MDx audit list names the leaver's audit entries", async () => {
+    const res = await request(app).get('/api/mdx/audit?resource=project_section').set(asA());
+    expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
+    const rows = (res.body.data?.events ?? res.body.events) as Array<{ actor: string; actorName: string }>;
+    const mine = rows.filter(r => r.actor === `u-${leaver}`);
+    expect(mine.length).toBeGreaterThan(0);
+    expect(new Set(mine.map(r => r.actorName))).toEqual(new Set([leaverName]));
   });
 });
