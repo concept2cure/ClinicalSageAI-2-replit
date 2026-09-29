@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T21:23:39.216Z",
+  "generatedAt": "2026-09-29T21:30:50.825Z",
   "git": {
-    "sha": "0aeeb1c460f6ed03f32005d00a173c8ad64c923b",
+    "sha": "dccbf51660ab159ae16f6cc013e351566c0e34a8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2482,6 +2482,10 @@
         "lines": 1813
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 1804
+      },
+      {
         "file": "ui_kits/home/Projects.jsx",
         "lines": 1795
       },
@@ -2496,10 +2500,6 @@
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1787
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1776
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
