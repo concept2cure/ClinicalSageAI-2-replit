@@ -126,7 +126,9 @@ export const UI_V2_SURFACES: UiSurface[] = [
     icon: 'workflow',
     uiKit: 'biopharma',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): BiopharmaJourney reads the journey.
-    apiPrefixes: ['/api/biopharma/programs', '/api/rim', '/api/regulatory-correspondence', '/api/ectd', '/api/program-journey'],
+    // 2026-09-29: '/api/rim' removed: ProgramJourney does not call it; it is
+    // the hidden Registrations app's API.
+    apiPrefixes: ['/api/biopharma/programs', '/api/regulatory-correspondence', '/api/ectd', '/api/program-journey'],
     anaToolFamilies: ['plan_submission', 'assess_filing_readiness'],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,

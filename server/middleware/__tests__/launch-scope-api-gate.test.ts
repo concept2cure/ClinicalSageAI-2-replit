@@ -162,6 +162,21 @@ describe('the real registry, launch scope on', () => {
     }
   });
 
+  /* 2026-09-29: three more broad claims, each pre-dating launch scope, that let
+     a hidden app's routes answer as launch. dossier-map claimed all of
+     /api/global-ri and /api/rim; project-home and program-journey claimed
+     /api/rim; submission-center claimed all of /api/510k/estar. No launch
+     screen calls any of them except the two eSTAR sub-paths Submission Center
+     uses. */
+  it('refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call', async () => {
+    for (const p of ['/api/global-ri/catalog', '/api/global-ri/impurities/x', '/api/rim/products', '/api/510k/estar/official', '/api/510k/estar/build']) {
+      expect(await refused(p), p).toBe(true);
+    }
+    for (const p of ['/api/dossier-map', '/api/510k/estar/submissions', '/api/510k/estar/assemble']) {
+      expect(await refused(p), p).toBe(false);
+    }
+  });
+
   it('refuses a surface outside the catalog, and leaves the public API and webhooks alone', async () => {
     expect(await refused('/api/pharmacovigilance/cases')).toBe(true);
     expect(await refused('/api/v1/documents')).toBe(false);
