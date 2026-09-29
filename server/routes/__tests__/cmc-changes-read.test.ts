@@ -29,10 +29,9 @@ vi.mock('../../services/auditService', () => ({ default: { logAction } }));
 vi.mock('../../services/cmc-write-through', () => ({ writeThroughChangeControl }));
 vi.mock('../../metrics.js', () => ({ metrics: { concept2cureErrors: { inc } } }));
 /* Whether a stated CMC project is the organization's own (PF-15). Its SQL is
-   proven in services/cmc/__tests__/cmc-project-access; here the fixture
-   project OWN is organization 9's and FOREIGN is another organization's. */
-vi.mock('../../db', () => ({ getPool: () => ({ query: vi.fn() }) }));
-vi.mock('../../services/cmc/cmc-project-access', () => ({ cmcProjectInOrganization: projectOwned }));
+   proven in services/cmc/__tests__/project-membership.pglite.test.ts; here the
+   fixture project OWN is organization 9's and FOREIGN is another organization's. */
+vi.mock('../../services/cmc/project-membership', () => ({ projectBelongsToTenant: projectOwned }));
 const OWN = 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab';
 const FOREIGN = 'f0000000-0000-4000-8000-00000000000f';
 
@@ -62,7 +61,7 @@ function dbRow(over: Record<string, unknown> = {}) {
 beforeEach(() => {
   createCmcChange.mockReset(); listCmcChanges.mockReset(); logAction.mockReset(); writeThroughChangeControl.mockReset(); inc.mockReset();
   projectOwned.mockReset();
-  projectOwned.mockImplementation(async (_db: unknown, org: number, id: string) => org === 9 && id === OWN);
+  projectOwned.mockImplementation(async (p: { organizationId: number; projectId: string }) => p.organizationId === 9 && p.projectId === OWN);
 });
 
 describe('GET /api/cmc-changes', () => {
@@ -182,7 +181,7 @@ describe('POST /api/cmc-changes', () => {
     });
     expect(res.status).toBe(404);
     expect(res.body.error.code).toBe('PROJECT_NOT_FOUND');
-    expect(projectOwned).toHaveBeenCalledWith(expect.anything(), 9, cmcProjectId);
+    expect(projectOwned).toHaveBeenCalledWith({ organizationId: 9, projectId: cmcProjectId });
     expect(createCmcChange).not.toHaveBeenCalled();
     expect(logAction).not.toHaveBeenCalled();
     expect(writeThroughChangeControl).not.toHaveBeenCalled();

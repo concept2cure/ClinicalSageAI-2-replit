@@ -30,7 +30,7 @@ import {
 } from '../../services/part11/signature-persistence';
 import { SIGNATURE_MEANINGS, signatureMeaningSchema, resolveActorUserId } from './governance';
 import { serverError } from '../../lib/api-response';
-import { cmcProjectInOrganization } from '../../services/cmc/cmc-project-access';
+import { projectBelongsToTenant } from '../../services/cmc/project-membership';
 import { createScopedLogger } from '../../utils/logger';
 import { clientIpOf } from '../../utils/client-ip';
 
@@ -57,7 +57,7 @@ router.param('projectId', async (req, res, next, projectId: string) => {
     return next();
   }
   try {
-    if (!(await cmcProjectInOrganization(getPool(), orgId, projectId))) {
+    if (!(await projectBelongsToTenant({ organizationId: orgId, projectId }))) {
       return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
     }
     return next();

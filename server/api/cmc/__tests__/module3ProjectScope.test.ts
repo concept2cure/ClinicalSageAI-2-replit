@@ -3,8 +3,8 @@
  *
  * Every /api/cmc/module3-os route that names a project took :projectId from the
  * URL and wrote and read under it unchecked. One router.param guard now asks
- * cmcProjectInOrganization first. Its SQL is proven in
- * services/cmc/__tests__/cmc-project-access.pglite.test.ts; here it is mocked
+ * projectBelongsToTenant first. Its SQL is proven in
+ * services/cmc/__tests__/project-membership.pglite.test.ts; here it is mocked
  * so that 'foreign-proj' is another organization's project, and the routes are
  * shown to refuse it before any query runs.
  */
@@ -21,8 +21,8 @@ vi.mock('../../../db', () => ({
     connect: async () => ({ query: mockQuery, release: vi.fn() }),
   }),
 }));
-vi.mock('../../../services/cmc/cmc-project-access', () => ({
-  cmcProjectInOrganization: (db: unknown, org: number, id: unknown) => mockProjectOwned(db, org, id),
+vi.mock('../../../services/cmc/project-membership', () => ({
+  projectBelongsToTenant: (params: unknown) => mockProjectOwned(params),
 }));
 vi.mock('../../../routes/c2c/actions', () => ({
   verifyReauth: vi.fn(async () => ({ ok: true })),
@@ -46,7 +46,7 @@ beforeEach(() => {
   mockQuery.mockReset();
   mockQuery.mockResolvedValue({ rows: [] });
   mockProjectOwned.mockReset();
-  mockProjectOwned.mockImplementation(async (_db: unknown, _org: number, id: unknown) => id !== 'foreign-proj');
+  mockProjectOwned.mockImplementation(async (p: { projectId: string }) => p.projectId !== 'foreign-proj');
 });
 
 describe("module3-os — another organization's project", () => {
@@ -67,13 +67,13 @@ describe("module3-os — another organization's project", () => {
     const res = await (body ? r.send(body) : r);
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('PROJECT_NOT_FOUND');
-    expect(mockProjectOwned).toHaveBeenCalledWith(expect.anything(), 1, 'foreign-proj');
+    expect(mockProjectOwned).toHaveBeenCalledWith({ organizationId: 1, projectId: 'foreign-proj' });
     expect(mockQuery).not.toHaveBeenCalled();
   });
 
   it('the organization asked about is the caller\'s own', async () => {
     await request(appFor(7)).get('/api/cmc/module3-os/readiness/proj-1');
-    expect(mockProjectOwned).toHaveBeenCalledWith(expect.anything(), 7, 'proj-1');
+    expect(mockProjectOwned).toHaveBeenCalledWith({ organizationId: 7, projectId: 'proj-1' });
   });
 
   it('a project lookup that cannot complete is a 500, never a "not found"', async () => {

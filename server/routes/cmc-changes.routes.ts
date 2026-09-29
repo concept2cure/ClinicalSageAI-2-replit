@@ -27,8 +27,7 @@ import {
 import auditService from '../services/auditService';
 import { writeThroughChangeControl } from '../services/cmc-write-through';
 import { observeWriteThroughFailure } from '../services/cmc/link-to-module3';
-import { cmcProjectInOrganization } from '../services/cmc/cmc-project-access';
-import { getPool } from '../db';
+import { projectBelongsToTenant } from '../services/cmc/project-membership';
 
 const router = Router();
 
@@ -84,7 +83,7 @@ router.post('/', async (req: Request, res: Response) => {
        was taken from the body unchecked. Refused before anything is written —
        the change, its audit row and the source alike. */
     const cmcProjectId = b.cmcProjectId != null ? String(b.cmcProjectId).trim() : '';
-    if (cmcProjectId && !(await cmcProjectInOrganization(getPool(), orgId, cmcProjectId))) {
+    if (cmcProjectId && !(await projectBelongsToTenant({ organizationId: orgId, projectId: cmcProjectId }))) {
       return res.status(404).json({ error: { code: 'PROJECT_NOT_FOUND', message: 'Project not found.' } });
     }
     const change = await createCmcChange(orgId, {

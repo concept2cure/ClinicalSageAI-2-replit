@@ -23,13 +23,23 @@ never asked whose it was.
 
 ## The fix
 
-- **One answer for both id-spaces:** `server/services/cmc/cmc-project-access.ts`
-  `cmcProjectInOrganization(db, organizationId, projectId)`.
-  - A UUID is checked by `programInOrganization`, the canonical check: a live
-    program of this organization.
-  - A numeric id must be a `projects` row of this organization.
+- **One answer for both id-spaces:** `server/services/cmc/project-membership.ts`
+  `projectBelongsToTenant({ organizationId, projectId })`.
+  - A program id must name a live `regulatory_programs` row of this
+    organization.
+  - A numeric id must name a `projects` row of this organization.
   - Anything else is refused.
+  - Both are compared as text, so a numeric id never raises a uuid cast.
   - A lookup that cannot complete throws. "Could not tell" is not "not yours".
+  - This check already existed for the interview commit, the Module 3 link and
+    the AnA capability tool. The first cut of this slice (`652e0947`) added a
+    second one, `cmc-project-access.ts`. That is folded back in and deleted
+    (zero duplication).
+  - **What folding it in found.** The existing check admitted a program its
+    organization had **deleted**: the programs arm had no `deleted_at IS NULL`.
+    So a record could be filed under a deleted project through all four
+    callers. It now holds the same rule as `programInOrganization`, the
+    canonical program check.
 - **Module 3 routes:** one `router.param('projectId', …)` guards every route
   that names a project.
   - Another organization's project, a deleted one and a malformed id get 404
@@ -43,13 +53,14 @@ never asked whose it was.
 
 ## Tests
 
-- `server/services/cmc/__tests__/cmc-project-access.pglite.test.ts`: the
-  helper on real SQL (PGlite), 14 cases.
+- `server/services/cmc/__tests__/project-membership.pglite.test.ts`: the check
+  on real SQL (PGlite), 14 cases.
   - Two organizations.
   - A live, a deleted and a foreign program.
   - An owned and a foreign numeric project.
-  - Zero, malformed, empty, non-string and past-the-safe-range ids.
+  - Zero, malformed, empty, padded and past-the-safe-range ids.
   - The same ids seen from the other organization.
+  - No organization: no query, and the answer is no.
   - A lookup that throws.
 - `server/api/cmc/__tests__/module3ProjectScope.test.ts`: eleven routes, writes
   and reads, answer 404 for a foreign project and issue **no query at all**.
@@ -73,8 +84,14 @@ never asked whose it was.
   The no-organization case passes on trunk as well, as it should: it pins that
   the guard changes nothing there.
 - `02-green.txt`: every suite under `server/api/cmc/__tests__`,
-  `server/services/cmc/__tests__` and the cmc-changes suite. **46 files, 472
-  tests pass.**
+  `server/services/cmc/__tests__` and the cmc-changes suite, at `652e0947`.
+  **46 files, 472 tests pass.**
+- `03-red-deleted-program.txt`: the check's test run against trunk's
+  `project-membership.ts`. **Exactly the deleted-program case fails**; the
+  other 13 pass on both.
+- `04-green-one-check.txt`: the same suites plus the AnA capability-tool suite
+  (`deepening-tools.test.ts`, the fourth caller), on the one check. **47 files,
+  515 tests pass.**
 
 ## Still open in PF-15
 
