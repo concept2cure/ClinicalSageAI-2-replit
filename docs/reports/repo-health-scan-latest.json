@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T20:42:45.062Z",
+  "generatedAt": "2026-09-29T20:52:26.681Z",
   "git": {
-    "sha": "12c57bd7667034fcc678a25aa20d4b469203994c",
+    "sha": "57fe219f39dd500437ce41c95e1d0db6c0db3ada",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2394,12 +2394,12 @@
         "lines": 1990
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1968
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1987
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1938
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1968
       },
       {
         "file": "server/routes/ectd-compile.ts",
@@ -2494,12 +2494,12 @@
         "lines": 1787
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "lines": 1776
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1775
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1776
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2570,12 +2570,12 @@
         "lines": 1602
       },
       {
-        "file": "server/routes/mdx-qms.ts",
-        "lines": 1576
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1577
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1572
+        "file": "server/routes/mdx-qms.ts",
+        "lines": 1576
       },
       {
         "file": "server/services/module3-extensions.ts",

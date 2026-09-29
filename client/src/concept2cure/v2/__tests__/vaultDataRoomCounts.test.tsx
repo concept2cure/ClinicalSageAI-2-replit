@@ -67,4 +67,18 @@ describe('Vault data room lane', () => {
     expect(lane.textContent).toContain('Captured 1');
     expect(lane.textContent).not.toContain('Captured 1+');
   });
+
+  it("a classified source's suggestion names its kind in words, not the stored token (VR-04)", async () => {
+    mockVaultApi(apiRequest, () => ok(vaultPayload({
+      dataRoom: {
+        captured: 1, classified: 1, filed: 0, needsReview: 0,
+        sources: [row(3, 'classified', { suggestedFolder: 'module-5', suggestedFolderLabel: 'Module 5 · Clinical', evidenceKind: 'csr' })],
+        window: { shown: 1, truncated: false },
+      },
+    })));
+    render(<Vault {...props()} />);
+    fireEvent.click(await screen.findByText('Show 1 source'));
+    const suggest = screen.getByTestId('vault-data-room').querySelector('.vd-dr-suggest');
+    expect(suggest?.getAttribute('title')).toBe('Looks like: Clinical study report');
+  });
 });

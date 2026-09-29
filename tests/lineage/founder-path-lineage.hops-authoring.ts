@@ -364,6 +364,20 @@ export async function hopAdopt(w: World): Promise<void> {
     expect(upload.body.dataRoom.recorded).toBe(false);
     expect(sources).toHaveLength(0);
   });
+  await hop.check('project-offers-the-conversation-file', 'the project lists the caller\'s conversation file for adoption, and only the caller\'s', async (observe) => {
+    // A colleague's chat attachment in the same organization: theirs to bring in.
+    await q(
+      `INSERT INTO file_uploads (id, user_id, original_name, mime_type, file_size, storage_path, organization_id, checksum_sha256)
+       VALUES ('colleague-file', 99, 'colleague.txt', 'text/plain', 3, 'uploads/colleague.txt', $1, $2)`,
+      [ORG_A, sha256(Buffer.from('colleague'))],
+    );
+    const mine = await asPrincipal(ORG_A, 3)(request(w.app).get(`/api/c2c/projects/${k.programId}/conversation-files`));
+    const ids = (mine.body?.files ?? []).map((f: { id: string }) => f.id);
+    observe({ status: mine.status, listed: ids.includes(fileId), colleagueListed: ids.includes('colleague-file') });
+    expect(mine.status).toBe(200);
+    expect(ids).toContain(fileId);
+    expect(ids).not.toContain('colleague-file');
+  });
   await hop.check('adopt-makes-it-the-projects-source', 'one audited adopt makes the file a source of the project, keyed to it', async (observe) => {
     const res = await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
     const [src] = await q<{ client_program_id: string; organization_id: number; checksum: string }>(
@@ -382,6 +396,13 @@ export async function hopAdopt(w: World): Promise<void> {
     expect(again.status).toBe(200);
     expect(sources).toHaveLength(1);
     expect(audit).toHaveLength(1);
+  });
+  await hop.check('adopted-file-is-no-longer-offered', 'once in a project\'s Data Room, the file is not offered as a conversation file', async (observe) => {
+    const after = await asPrincipal(ORG_A, 3)(request(w.app).get(`/api/c2c/projects/${k.programId}/conversation-files`));
+    const ids = (after.body?.files ?? []).map((f: { id: string }) => f.id);
+    observe({ status: after.status, listed: ids.includes(fileId) });
+    expect(after.status).toBe(200);
+    expect(ids).not.toContain(fileId);
   });
   hop.verdict();
 }
