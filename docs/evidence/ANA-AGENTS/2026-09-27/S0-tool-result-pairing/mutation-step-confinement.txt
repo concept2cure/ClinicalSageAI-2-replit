@@ -1,0 +1,22 @@
+# S0 mutation: HEAD 85cb5654b with the no-id fallback's step confinement removed from useAnaChat.ts (the '(resultRound === undefined || t.round === undefined || t.round === resultRound)' clause). Recorded 2026-09-28T05:12:04Z
+diff --git a/client/src/concept2cure/components/ana/useAnaChat.ts b/client/src/concept2cure/components/ana/useAnaChat.ts
+index ed0892f01..de5817452 100644
+--- a/client/src/concept2cure/components/ana/useAnaChat.ts
++++ b/client/src/concept2cure/components/ana/useAnaChat.ts
+@@ -1437,8 +1437,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
+                                  call a result belongs to, guessing by name could
+                                  pin it on a sibling — so the name fallback only
+                                  ever considers rows announced WITHOUT an id. */
+-                              !t.toolUseId &&
+-                              (resultRound === undefined || t.round === undefined || t.round === resultRound)
++                              !t.toolUseId 
+                           );
+                     if (realIdx !== -1) {
+                       const calls = m.toolCalls.slice();
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids, a call an earlier step left running does not take a later step's result 64ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'running' to be 'success' // Object.is equality
+Expected: "success"
+Received: "running"
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)

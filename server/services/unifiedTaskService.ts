@@ -7,7 +7,7 @@
  */
 
 import { db } from '../db';
-import { eq, and, or, ne, sql, inArray, isNull } from 'drizzle-orm';
+import { eq, and, or, ne, sql, isNull } from 'drizzle-orm';
 import * as schema from '../../shared/schema';
 import { generateUUID } from '../utils/id-generator';
 
@@ -296,22 +296,25 @@ class UnifiedTaskService {
       isNull(schema.unifiedTasks.deletedAt)
     );
 
-    // Both endpoints in ONE read, locked in task-id order: two links over the
-    // same pair queue on the first row instead of each holding one the other
-    // waits for, and neither task can be archived under the link. A completion
-    // locks its own row before its dependents', so a link racing a completion
-    // over the same two tasks can still deadlock; Postgres aborts one side,
-    // which rolls back whole (a 500, nothing written). Every row lock still
-    // precedes the ledger row's audit-chain lock.
-    const endpoints = await runner
-      .select()
-      .from(schema.unifiedTasks)
-      .where(and(live, inArray(schema.unifiedTasks.taskId, [input.sourceTaskId, input.targetTaskId])))
-      .orderBy(schema.unifiedTasks.taskId)
-      .for('no key update');
-    const sourceTask = endpoints.find(t => t.taskId === input.sourceTaskId);
-    const targetTask = endpoints.find(t => t.taskId === input.targetTaskId);
-    if (!sourceTask || !targetTask) return null;
+    // Both endpoints locked, SOURCE first, then target: predecessor before
+    // successor, the order a completion takes (its own row, then its
+    // dependents'). In a graph without cycles that is one order for every link
+    // and every completion, so a link racing a completion over the same two
+    // tasks queues behind it instead of deadlocking (until 2026-09-28 the link
+    // locked in task-id order, the opposite whenever the dependent's id sorted
+    // first; tests/db/task-link-completion-lock-order.dbtest.ts). Neither task
+    // can be archived under the link, and every row lock still precedes the
+    // ledger row's audit-chain lock.
+    const lockLive = (taskId: string) =>
+      runner
+        .select()
+        .from(schema.unifiedTasks)
+        .where(and(live, eq(schema.unifiedTasks.taskId, taskId)))
+        .for('no key update');
+    const [sourceTask] = await lockLive(input.sourceTaskId);
+    if (!sourceTask) return null;
+    const [targetTask] = await lockLive(input.targetTaskId);
+    if (!targetTask) return null;
 
     // Create the link (tenant-stamped from the validated source task, D20)
     const link = await runner

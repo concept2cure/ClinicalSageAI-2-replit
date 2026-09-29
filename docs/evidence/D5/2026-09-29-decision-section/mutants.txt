@@ -1,0 +1,7 @@
+# Each mutant applied alone to the fixed router; the suite must go red.
+$ npx vitest run server/routes/__tests__/authoringTrackedChangeDecisions.test.ts
+M1 drop doc_id predicate → Tests  1 failed | 25 passed (26)
+M2 drop tenant predicate → Tests  1 failed | 25 passed (26)
+M3 drop uuid guard → Tests  1 failed | 25 passed (26)
+M4 bulk route skips the check → Tests  1 failed | 25 passed (26)
+M5 changeType passes anything → Tests  1 failed | 25 passed (26)

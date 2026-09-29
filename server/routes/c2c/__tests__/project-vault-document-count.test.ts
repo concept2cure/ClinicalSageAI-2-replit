@@ -64,7 +64,7 @@ function seed(opts: { uploads: string[]; total: number }) {
     .mockResolvedValueOnce({ rows: [] });
   queryMock.mockImplementation(async (sql: string) => {
     if (/COUNT\(\*\)::int AS total/.test(sql)) return { rows: [{ total: opts.total, unfiled: opts.total }] };
-    if (/FROM vault\.documents d\s+LEFT JOIN users/.test(sql)) return { rows: opts.uploads.map(upload) };
+    if (/FROM vault\.documents d\s+LEFT JOIN LATERAL public\.actor_name/.test(sql)) return { rows: opts.uploads.map(upload) };
     return { rows: [] };
   });
 }

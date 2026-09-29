@@ -85,6 +85,26 @@ export interface ModelConfig {
 export interface AIRequest {
   taskType: TaskType;
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+  /**
+   * Pin the model that must serve this request, by gateway model id.
+   *
+   * WHY IT EXISTS. Without it a caller cannot say WHICH model answered, only
+   * which task type was asked — and a run that cannot be attributed to a model
+   * cannot be a performance qualification of that model. That is the blocker
+   * `ga-readiness-report` records against the PQ row for the RAG component:
+   * "ragQuery takes no model parameter — the answer is generated inside the RAG
+   * pipeline by whatever it selects".
+   *
+   * IT IS NOT AN APPROVAL BYPASS, and must never become one. The gateway's
+   * selectModel treats an explicitly named model as a REQUEST, not an
+   * instruction: for a high-risk task it filters the matches through
+   * `approvedForTask` and throws ModelNotApprovedError when none qualify,
+   * rather than silently substituting an approved one or honouring an
+   * unapproved one. Naming an unapproved model here therefore produces a
+   * refusal, which is the point — a PQ must fail loudly against a model nobody
+   * approved.
+   */
+  model?: string;
   maxTokens?: number;
   temperature?: number;
   jsonMode?: boolean;
@@ -480,8 +500,18 @@ export class AIProviderRouter {
       maxTokens: request.maxTokens ?? 4096,
       temperature: request.temperature,
       jsonMode: request.jsonMode,
-      // Honor the router's provider choice; the gateway picks a live model for it.
-      provider: modelConfig.provider as GatewayProviderName,
+      /* An explicitly pinned model OUTRANKS the router's provider guess, and the
+         provider is then dropped rather than sent alongside it. The gateway
+         filters on BOTH when both are present
+         (`(!request.provider || m.provider === …) && (!request.model || …)`), so
+         sending this router's independently-chosen provider next to a caller's
+         model yields an empty match set whenever the two disagree — and an
+         empty match set on a high-risk task is indistinguishable from "no such
+         model". The model determines its own provider; that is what naming one
+         means. */
+      ...(request.model
+        ? { model: request.model }
+        : { provider: modelConfig.provider as GatewayProviderName }),
       organizationId: request.organizationId,
       userId: request.userId,
       projectId: request.projectId,

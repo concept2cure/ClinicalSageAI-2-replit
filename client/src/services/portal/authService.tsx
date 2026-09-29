@@ -13,6 +13,7 @@
  */
 
 import { authLogger } from './logger';
+import { purgeDeviceDrafts } from '@/lib/deviceDraftCache';
 import {
   SESSION_ENDED_EVENT,
   rememberSignOutReason,
@@ -216,6 +217,9 @@ class SecureStorage {
     LEGACY_BEARER_KEYS.forEach(key => {
       this.removeItem(key);
     });
+    // Unsaved section text the editor cached on this device is the signed-out
+    // person's, not the next one's (SEC-A-5; see lib/deviceDraftCache).
+    purgeDeviceDrafts();
   }
 }
 

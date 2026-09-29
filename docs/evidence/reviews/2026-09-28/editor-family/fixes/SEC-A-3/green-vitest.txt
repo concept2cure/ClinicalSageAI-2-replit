@@ -1,0 +1,547 @@
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx server/routes/__tests__/vault-ingest-type-binding.test.ts server/middleware/__tests__/uploadSafety.test.ts server/utils/__tests__/fileSignature.t
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the audit trail matches what happened > actually stores the attachment it audits 1799ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the audit trail matches what happened > actually removes the attachment it audits 1ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the audit trail matches what happened > does not record a removal when nothing was removed 3ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the audit trail matches what happened > will not remove an attachment through a document it does not belong to 1ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — tenant scoping > refuses to attach to another organization's document, and writes nothing 1ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — tenant scoping > refuses to remove from another organization's document, and writes nothing 1ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — tenant scoping > fails closed when the caller has no organization 2ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > rejects a missing fileName without writing anything 9ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > rejects a fileName that is really a path without writing anything 8ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > rejects a fileName with a separator without writing anything 1ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > rejects a missing fileType without writing anything 1ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > rejects a filesystem path as filePath without writing anything 0ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > rejects a traversal path as filePath without writing anything 0ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > rejects a non-UUID token as filePath without writing anything 0ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > rejects a negative fileSize without writing anything 0ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > rejects a non-integer fileSize without writing anything 2ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > rejects a fileSize past the column width without writing anything 0ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > rejects an executable without writing anything 0ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > rejects a missing payload entirely 0ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the record is validated at the boundary > accepts an allowed non-PDF and defaults the optional columns 1ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the reader > lists an owned document's attachments, newest first 1ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the reader > surfaces attachments on the existing document read 1ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the reader > does not list another organization's attachments 0ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the reader > fails closed when the caller has no organization 1ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the reader > agrees with the writers: an added attachment appears, a removed one disappears 1ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the single-row reader a download needs > returns an owned attachment by document and id 0ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the single-row reader a download needs > cannot reach an attachment through a document it does not belong to 1ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the single-row reader a download needs > reports another organization's attachment as not found, never forbidden 0ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts > Attachments — the single-row reader a download needs > fails closed when the caller has no organization 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > reading the document’s captioned objects > reads a stored section’s tables and figures, in order 141ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > reading the document’s captioned objects > does not count an uncaptioned table, or a figure inside a cell 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > reading the document’s captioned objects > numbers tables and figures as two separate sequences 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > reading the document’s captioned objects > offers as reference targets only the objects that carry an identity 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > a stored caption survives the editor > round-trips as a <caption>, and is NOT turned into a table row 500ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > a stored caption survives the editor > keeps the section RICH-EDITABLE — the fidelity gate is not tripped by it 187ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > numbering in the canvas > draws the number beside the caption, and stores no ordinal 175ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > numbering in the canvas > continues the count from the sections above this one 131ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > numbering in the canvas > A TABLE ADDED EARLIER RENUMBERS THIS SECTION, with its stored content untouched 267ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > stores the words and mints an identity, and never a number 769ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > offers no way to type a number 161ms
+ × client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > captions a SELECTED FIGURE, keeping its identity across a rewording 36ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > changes nothing when the caret is on neither a table nor a figure 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > referencing a table from the canvas > prints the table’s CURRENT number, not the cached one 108ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > referencing a table from the canvas > follows the table when one is added above it, with no stored change 156ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > referencing a table from the canvas > SAYS SO when the table it points at is gone 71ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > referencing a table from the canvas > offers this document’s tables and figures in the reference picker 173ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > the order key > changes when a caption changes, so references repaint then and not per keystroke 36ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the class namespace is its own > shares no class name with the Design Controls surface, whose stylesheet also owns a “.dc” family 180ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > names what the expand control does and what it controls, and moves focus into the region it opens 484ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > Escape collapses from anywhere in the expanded region — including with focus left on the body — and returns focus to the header control 459ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > offers exactly one way back while expanded 736ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > does not trap: every control in the collapsed card is reachable, and the card does not hold focus 22ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > File to vault: labelled, modal, focus trapped while open, focus restored on close 58ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > Assign review: labelled, modal, focus trapped while open, focus restored on close 155ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas stylesheet — motion > every transition and animation is at most 200ms and eases out — no spring, no bounce, no overshoot 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas stylesheet — motion > every animation and transition it declares is removed under prefers-reduced-motion 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas — microcopy > never exclaims and never cheers 2ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas — microcopy > never hedges in a user-facing string 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > enumerates AcroForm fields into a skeleton map from inline template bytes 104ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > fails closed (422) when no template is available to scaffold against 59ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > honest fail-closed (no template / empty map) > returns 422 with blockers and officialEstarPdf:false; never persists 10ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > end-to-end official PDF when template + verified map present > produces a real PDF and asserts officialEstarPdf:true truthfully 30ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > not ready (no template / empty map) > reports ready:false with blockers and persists nothing 8ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > ready (template + verified map present) > reports ready:true with no blockers 20ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'device', descriptorId: 'pma-dev
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'ivd', descriptorId: 'pma-ivd' }
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'q_sub', variant: 'device', descriptorId: 'q_sub
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'ide', variant: 'ivd', descriptorId: 'ide-presta
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: '513g', variant: 'device', descriptorId: '513g-p
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > governed wins, request fills the gap, blanks + ignored keys are reported, provenance is persisted 20ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > without useProgramData the loader is never consulted and the response carries no fieldReport 14ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > with nothing governed and nothing requested no official eSTAR is produced at all 7ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: one row per mapped field with value + source; unsourced keys are null/null but name their declared home; no request data 6ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: the Phase 3 homes are sourced when the program and registration rows hold them 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 404 when the ident resolves to nothing in this organization — and reads no governed data 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 422 ESTAR_FIELD_MAP_NOT_POPULATED when the descriptor has no verified map 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 400 on a bad query (missing ident / unknown variant) 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or wri
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 6ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 0ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > retains the delivered bytes and reports where they went 11ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it 34ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > says plainly when a legacy project has no vault, and still delivers 6ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > names the erased keys in the 200 body AND in the registered metadata 569ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > reports an EMPTY erased list rather than omitting it (assessed ≠ unassessed) 221ms
+ ✓ server/routes/__tests__/vault-download.test.ts > scope > 403 without org context 23ms
+ ✓ server/routes/__tests__/vault-download.test.ts > scope > 404 when the programme is not this org’s — the document is never looked up 9ms
+ ✓ server/routes/__tests__/vault-download.test.ts > scope > 404 when the document does not belong to the programme 4ms
+ ✓ server/routes/__tests__/vault-download.test.ts > scope > 404 on a non-uuid id rather than a 500 from the uuid cast 11ms
+ ✓ server/routes/__tests__/vault-download.test.ts > integrity > serves the bytes when they match the recorded hash 9ms
+ ✓ server/routes/__tests__/vault-download.test.ts > integrity > REFUSES bytes that do not match the recorded hash 6ms
+ ✓ server/routes/__tests__/vault-download.test.ts > integrity > says the record has no stored file rather than 404ing the record itself 4ms
+ ✓ server/routes/__tests__/vault-download.test.ts > integrity > says the stored file is missing when the bytes are gone from disk 7ms
+ ✓ server/routes/__tests__/vault-download.test.ts > path safety > refuses a storage key that escapes the uploads root 17ms
+ ✓ server/routes/__tests__/vault-download.test.ts > path safety > refuses an absolute key outside the uploads root 10ms
+ ✓ server/routes/__tests__/vault-download.test.ts > audit > records the download before any byte is sent 8ms
+ ✓ server/routes/__tests__/vault-download.test.ts > audit > records the served content hash, so the trail names which edition left 2ms
+ ✓ server/routes/__tests__/vault-download.test.ts > audit > REFUSES the download when the audit write fails, and sends nothing 4ms
+ ✓ server/routes/__tests__/vault-download.test.ts > audit > does not audit a refused read 2ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > serves a provider-backed row from the provider, never from disk 5ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > passes the caller organization to the provider — the only tenant gate on bytes 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > prefers the version id when the row carries both addresses 2ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > still serves a legacy row from disk, untouched by the move 2ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > refuses when the provider has no such version for this organization 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > does not fall back to disk when the provider read fails 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > hash-verifies provider bytes against the record, same as disk bytes 6ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > refuses a row carrying neither address 6ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 when every written value is one the form erases (P3) 556ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 on the reviewer's non-string declaring entity (P1, over HTTP) 21ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (governed path) > says the same thing beside the fieldReport, and in the metadata 17ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project 46ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row 12ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > a viewer: 403, nothing stored, nothing written 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > no role at all: refused the same way 8ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses with no organization context at all 0ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed 12ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed 5ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed 10ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates 9ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes 9ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > the INSERT computes retention_until from the named, active policy, bound to the same parameter as retention_policy, and a re-upload does not r
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > files the document and says where it went 1284ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > the governed record names what was filed, not only the form 1157ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > reads the tenant and the program from the REQUEST, never from the body 838ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > hands the resolver a client it can actually query with 725ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > renders the record: title, type, project name and phase, provenance, first section, count, actions 225ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > "Show all" reveals every section, with an honest "Not drafted yet" for an empty one 662ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > a failed read is an error with a retry, never an empty document 123ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > says "Not filed under a program" when the draft carried no program 38ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > "Edit in Authoring" carries the document identity and the return route on the editor channel 44ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses the export, with the reason, when a section is not fileable 1128ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses a slot the template does not declare 737ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > rejects a malformed attachment request at the schema, before any work 3ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — converts into the full editor in place > Open full editor mounts DocumentWorkbench for the same docId without navigating; Back collapses and keeps state; Escape collapses 18
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > does not inflate the administrative field report by one 1959ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > never builds a resolver when no attachment was asked for 248ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — converts into the full editor in place > Escape inside the editor document or a text control belongs to it, not to the canvas 389ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > 401s without authentication 53ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > 400s without an organization context 42ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > 400s when no document is attached 13ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > 415s an unreadable file type instead of pretending to read it 39ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > returns verified proposals with their provenance 19ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > passes through an honest empty result rather than inventing content 16ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — converts into the full editor in place > an ask from inside the workbench lands in the host composer, not a second AnA pane 2509ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — accessibility smoke > is a labelled region whose controls have names, and the dialogs it opens are modal and labelled 132ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > degrades honestly when extraction throws 26ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > 403s a non-admin member (fail-closed authorization) 23ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > 400s without a reason — it is never synthesized 9ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > 410s an expired or unknown review session rather than trusting the body 9ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > applies an approved field and audits it as AnA-on-behalf-of with server provenance 8ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > cannot be tricked into writing a value the server never proposed 8ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > is registered as a Part 11 governed command at the reason-only tier 0ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > enforces the governed minimum reason length, not a token one 7ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > records the governed command name in the audit entry 7ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > rejects a human edit that the canonical governed PATCH would reject 7ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > reports a field with no governed write path instead of writing it elsewhere 6ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > an applied change whose audit row was lost still answers 200, and says the row is missing 10ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > an applied change whose audit row was written says so 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > INCIDENT 1: a heading flattened by the pre-fix schema 57ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > INCIDENT 2: a caption reparented into a data cell by the pre-fix schema 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #1: an <h6> — above the schema ceiling — silently becomes a paragraph 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #2: a definition list — no schema node — is flagged 27ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #3: a header row written with <td> in <thead> is demoted to data 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > INCIDENT 1 fixed: an <h4> round-trips under the shipped schema 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > INCIDENT 2 fixed: a captioned table stays in rich mode 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > div→p and b→strong do not trip the gate 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > the execCommand provenance strip (1 div, 3 spans → paragraphs) is not refused 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > a colspan cell counts as ONE declared cell on both sides — merged tables are not refused 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a ragged table (a short row) is refused — the editor would pad it 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a rowspan that overflows the table is refused — the editor would clamp it 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a well-formed rectangular table is NOT refused — fixTables leaves it alone 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a merged (colspan) table is NOT refused — declared cells agree, no fabrication 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — a dropped image is caught > a srcless <img> (its alt caption lost) is flagged: any <img> is counted 9ms
+ × client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — a dropped image is caught > a normal img[src] still round-trips — not a false positive 260ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > inserts the first upload 22ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > is idempotent for identical bytes — a retry still succeeds 22ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > returns NO row for different bytes, which the route turns into a 409 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > leaves the original hash and storage key untouched 6ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > accepts the new bytes under a new version 5ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > raises 23505 for the same bytes under a different code 5ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > is handled by the route rather than falling through to INGEST_FAILED 0ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > keeps the stored copy it names, its file name, retention policy and lineage 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > a record with no storage handle takes the retry's as one unit 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the defect the predicate prevents is still demonstrable > WITHOUT the predicate, the same upload overwrites the recorded hash 6ms
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts > POST /documents/:id/attachments — order of operations > proves ownership, then safety, then stores bytes, then records — in that order 873ms
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts > POST /documents/:id/attachments — order of operations > never stores bytes for a document the caller does not own 6ms
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts > POST /documents/:id/attachments — order of operations > never stores bytes that fail the safety gate 6ms
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts > POST /documents/:id/attachments — order of operations > removes the stored bytes again when the record cannot be written 6ms
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts > POST /documents/:id/attachments — order of operations > rejects a disallowed file type before buffering, touching nothing 4ms
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts > POST /documents/:id/attachments — order of operations > rejects a request with no file 4ms
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts > POST /documents/:id/attachments — order of operations > rejects a non-integer document id 3ms
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts > GET /documents/:id/attachments/:attachmentId — two boundaries, honest headers > serves the bytes with the recorded type, a safe disposition, and no-sniff 3ms
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts > GET /documents/:id/attachments/:attachmentId — two boundaries, honest headers > does not consult the provider when the record is not the caller's 9ms
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts > GET /documents/:id/attachments/:attachmentId — two boundaries, honest headers > reports a record whose bytes the provider will not return as not found 3ms
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts > GET /documents/:id/attachments/:attachmentId — two boundaries, honest headers > refuses to serve bytes that no longer match the recorded digest 2ms
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts > GET /documents/:id/attachments/:attachmentId — two boundaries, honest headers > rejects non-integer ids 5ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id 314ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace 5ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it 4ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending 5ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload 18ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id 42ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > with no project open, the file stays a conversation file: no Data Room source (PF-07) 2ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > resolves identity within the project, never across the organization (PF-07 / VR-10) 5ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > a project-scoped source that cannot be written answers 503 — never 200 "ready" (PF-07) 4ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it 6ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none 5ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too 4ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends 332ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero 42ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > refuses a request carrying no file rather than recording a phantom document 70ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > writes nothing at all when it refuses 38ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > does not accept a filename and size in place of a file 43ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums 88ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename 83ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible 17ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > the parser enforces its limits > rejects a file type outside the allowlist with 415, not 500 5ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > is told it is the wrong store, and never that the file is missing 3ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > a genuinely unknown vault id still says plainly that the vault does not hold it 8ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > catalog_project_document — a chat upload id > is refused with the same honest reason, without a pointless lookup 3ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > files the upload through the SAME governed ingest the Vault surface uses 21ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > refuses a vault UUID — a document already in the vault needs no filing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > asks which program rather than guessing one 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > relays a governed refusal with its reason, claiming nothing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > the read refusal now names a tool that exists 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > returns the comprehension record for a cataloged document 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > omits it entirely for a document nobody has studied 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > does not frame HTML saved under a .pdf name and served as text/html; it downloads it and says why 478ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > does not frame HTML the server typed application/pdf 121ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > frames %PDF bytes as application/pdf even when the server typed them text/html 103ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > still opens a real PDF in the viewer, with the served hash 100ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > opens a real PDF the server typed as octet-stream under a name without .pdf — the bytes decide 85ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > downloads a file that is not a PDF and does not claim to be, as before 65ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom 93ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text 9ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document 11ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact) 7ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory 919ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > accepts a buffer starting with %PDF 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects a buffer that declares pdf but starts with PNG bytes 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects an executable masquerading as pdf 4ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts a real PNG 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > rejects a JPEG-marked buffer that is actually PDF bytes 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts real JPEG (ff d8 ff) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts both GIF87a and GIF89a 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts a docx-declared buffer that starts with PK 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > rejects a docx-declared buffer that does not start with PK 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts .xlsx and .pptx (same container) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts plain application/zip 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts plain ASCII text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts CSV 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts JSON 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects binary content declared as text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects a buffer with embedded null bytes (classic binary tell) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > accepts OLE compound for application/msword 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > rejects a .doc-declared buffer that is actually a ZIP (real-world bug case) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects an empty buffer 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects unknown / unhandled MIME types 3ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects a buffer too short to contain the magic 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > the SEC-A-3 upload passes the declared-type check on its own — the gap this closes 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf declared text/html, naming the type a .pdf must be declared as 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf whose bytes are not a PDF, whatever was declared 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts a real PDF, whatever the case of its extension 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > binds rather than blacklists: text/html is refused for .txt and .md, and left alone for .html 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts the types a text file is actually sent as, parameters and case aside 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses one Office format declared as another 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > leaves a name it does not bind to the caller’s own allowlist 0ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > lists the vault read model the Vault surface renders, under the program name 1479ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — signature check > rejects bytes that do not match the declared MIME (400) 5ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — signature check > rejects an empty buffer (400) 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — AV scan > rejects on a virus FOUND without leaking the signature name (400) 22ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — AV scan > resolves on a clean scan 8ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > rejects (503) when scanner is not configured and NODE_ENV=production 7ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > resolves (permissive) when scanner is not configured and NODE_ENV=test 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > resolves (permissive) in development 0ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — path input > reads bytes from a filesystem path 15ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > does not reject in production when no scanner is configured 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > still rejects bytes that do not match the declared type (400) 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > leaves an upload with no stated origin fail-closed in production 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > refuses HTML declared text/html under a .pdf name (400 FILE_TYPE_MISMATCH) 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > binds platform-generated bytes too — what a name promises does not depend on origin 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > admits a real PDF under a .pdf name, as before 0ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > searches through the vault search route and shows the total 702ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > Cite in this section inserts a citation node through the editor and records the source link 582ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > stores the source’s identity and the pinpoint, not the number on screen 748ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > records the section→source link the platform already keeps 306ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > offers the document’s sources to pick from, and no field to type a number in 104ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > says so plainly when the document has no sources yet 120ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > hides the capability entirely when the host supplies no library 98ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > a file that is not a data-room source cannot be cited; a reference inserts as text and says it is not a citation 445ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > numbers by position, in reading order 132ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > A CITATION APPEARING EARLIER RENUMBERS THIS ONE, with the stored content untouched 70ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > never shows the cached source name in place of the number 78ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > a failed vault read is an error with a retry, never an empty vault 360ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > with no program open the rail says the document is not filed under a program 317ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > says an unknown source is unknown, in place, and gives it no number 99ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the “Cite” label that cited nothing > the assistant control no longer claims to cite 152ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > inserting a cross-reference > stores the target’s identity, not the number on screen 837ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the “Cite” label that cited nothing > asks for a source instead of claiming to have cited one 97ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the fidelity gate > still allows rich editing of a section that holds a citation 74ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the fidelity gate > round-trips through parse, serialization and the governed save path 228ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > inserting a cross-reference > offers the document’s sections to pick from, by their current codes 171ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > inserting a cross-reference > hides the capability entirely when the host supplies no directory 156ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > resolution in the canvas > shows what the target is called NOW, never the cached number 58ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > admits the delivered bytes through the canonical vault ingest 4ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > versions by content, so the same bytes are idempotent and new bytes are a new version 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > says plainly when a program has no vault to retain into 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when storage refused the bytes — an unretained submission artifact is not delivered 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the program is not ours — an unretained submission artifact is not delivered 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when different bytes already hold this version — an unretained submission artifact is not delivered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the ingest itself fails, rather than reporting a retention 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the stored hash is not the delivered hash 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > reads this org only, only retained eSTARs, and only live rows 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > maps the row to what a signer needs to tell two eSTARs apart 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > resolution in the canvas > RENUMBERING THE TARGET REPAINTS THE REFERENCE, with the stored content untouched 67ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > resolution in the canvas > says a dangling reference is dangling, in place 82ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > the fidelity gate > still allows rich editing of a section that holds a reference 60ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > the fidelity gate > round-trips through parse, serialization and the governed save path 245ms
+ ✓ server/api/templates/__tests__/routes.upload-safety.test.ts > POST /api/templates/upload — magic-byte validation > accepts a real PDF uploaded as .pdf 78ms
+ ✓ server/api/templates/__tests__/routes.upload-safety.test.ts > POST /api/templates/upload — magic-byte validation > accepts a ZIP-container payload uploaded as .docx 46ms
+ ✓ server/api/templates/__tests__/routes.upload-safety.test.ts > POST /api/templates/upload — magic-byte validation > accepts an OLE compound document uploaded as legacy .doc 20ms
+ ✓ server/api/templates/__tests__/routes.upload-safety.test.ts > POST /api/templates/upload — magic-byte validation > accepts plain text uploaded as .txt 5ms
+ ✓ server/api/templates/__tests__/routes.upload-safety.test.ts > POST /api/templates/upload — magic-byte validation > rejects executable bytes disguised as .pdf and deletes the stored file 21ms
+ ✓ server/api/templates/__tests__/routes.upload-safety.test.ts > POST /api/templates/upload — magic-byte validation > rejects PDF bytes disguised as .docx (claimed type must match content) 14ms
+ ✓ server/api/templates/__tests__/routes.upload-safety.test.ts > POST /api/templates/upload — magic-byte validation > rejects ZIP bytes disguised as legacy .doc 22ms
+ ✓ server/api/templates/__tests__/routes.upload-safety.test.ts > POST /api/templates/upload — magic-byte validation > rejects binary content disguised as .txt 17ms
+ ✓ server/api/templates/__tests__/routes.upload-safety.test.ts > POST /api/templates/upload — magic-byte validation > rejects empty files 27ms
+ ✓ server/api/templates/__tests__/routes.upload-safety.test.ts > POST /api/templates/upload — magic-byte validation > still requires tenant context before touching the upload 8ms
+ ✓ server/api/templates/__tests__/routes.upload-safety.test.ts > POST /api/templates/upload — magic-byte validation > fails closed with 401 when no authenticated user is present (Part 11 attribution) 7ms
+ ✓ server/api/templates/__tests__/routes.upload-safety.test.ts > GET /api/templates/catalog — org context > no longer trusts ?organizationId and requires tenant context 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the ribbon is operable without a mouse > activates on click, which is what Enter and Space dispatch 1174ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > renders sanitized prose and keeps a governed figure, resolved to displayable bytes 179ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > states a failed reference instead of leaving a broken glyph 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > refuses a reference OUTSIDE the governed images route — no authenticated fetch fires 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/../../tenant-export/full 99ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/%2e%2e/%2e%2e/users/me 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/..\..\tenant-export\full 93ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a?download=1 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: https://collector.example/p.png?d=secret 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: //collector.example/p.png 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: data:image/svg+xml;base64,PHN2Zz4= 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: data:image/webp;base64,UklGRg== 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > displays an inline PNG as it is, with no request and no statement 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the ribbon is operable without a mouse > reports its pressed state as false rather than omitting it 242ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the ribbon is operable without a mouse > names its shortcut so it is discoverable 342ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the toolbar is not rebuilt on every render > defines its button at module scope, not inside the render body 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the footer counts what is actually there > counts the source text when the fidelity gate drops to raw source 46ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > an AI draft is never reported as inserted when it is discarded > refuses in source mode, where the editor is not the document 46ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > an AI draft is never reported as inserted when it is discarded > refuses on a frozen section, whose save the server would refuse anyway 70ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > an AI draft is never reported as inserted when it is discarded > still inserts, and reports so, on an editable rich section 138ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition list 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition term 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition detail 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > table caption 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > figure 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > figure caption 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > still refuses to treat a tag-shaped prose token as markup 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > does not report a glossary as faithfully editable in rich mode 18ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > reads a glossary as the words a reviewer sees, not as its tags 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > still passes content the editor genuinely represents 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > still catches real text loss 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the two allowlists agree > the server parser recognises exactly what the client does 4ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses with 403 and never reaches the governed write 61ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses whatever case the role arrives in 11ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses a caller with no role at all 27ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits member 21ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits manager 13ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits admin 7ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits owner 3ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits super_admin 5ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > organization context is still required > refuses a writing role with no organization 19ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > POST /api/vault/ingest — who may put bytes in the vault > gates the role BEFORE the upload is parsed 92ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > POST /api/vault/ingest — who may put bytes in the vault > lets a writing role past the gate 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor stores > keeps the source id and the pinpoint, and no number at all 22ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor stores > round-trips through serialization without losing the identity 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor stores > caches the source’s NAME as the element’s text, never the number 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor stores > does not capture an ordinary link 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor shows > numbers by position in the document, not by position in the section 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor shows > gives a source cited twice in one section ONE number 57ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor shows > gives an unknown source NO number, so the list it points into has no gap 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor shows > numbers nothing when the library is unavailable, rather than guessing 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor shows > changes its order key only when a citation moves, is added or is removed 44ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > reading the sections above this one > lists the source ids a stored section cites, in reading order 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > reading the sections above this one > returns nothing for content with no citations, and for empty content 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > reading the sections above this one > is not fooled by prose that merely looks like markup 11ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > calls the route with the chosen format and renders the server’s folder, hash and id 1101ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > renders the server’s refusal as a refusal, with nothing claimed 653ms
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .pdf name: 400 FILE_TYPE_MISMATCH, and nothing is stored 109ms
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .txt name — a binding, not a .pdf special case 21ms
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > admits a real PDF declared application/pdf, through to storage and a 201 12ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > a 2xx without a vault record is not a success 789ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > with no program the dialog says so and offers no submit 670ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses a body over the size limit with 413 instead of buffering it 1053ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses an executable named file whatever type it declares (415) 19ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses a declared type the byte check cannot verify (415) 16ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses bytes that are not what the declared type says (the shared byte check) 23ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > checks every file of a multi-file body, not only the first 48ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > leaves a request with no file to the handler (its own 422, unchanged) 8ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > control: a real text file passes the guard and reaches the ingestion proxy 19ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /ocr: an image is read, but only when the bytes are that image 122ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /extract-pdf: a binary declared as PDF is refused before any extractor sees it 7ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /ind-autodraft/upload: an executable is refused whatever type it declares 3ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses a body over the size limit with 413 instead of buffering it 719ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses an executable named file whatever type it declares (415) 7ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses a declared type these routes do not read (415, not a 500) 4ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > refuses bytes that are not what the declared type says (the shared byte check) 17ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > leaves a request with no file to the handler (its own 400, unchanged) 5ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > control: a real text document passes the guard and reaches ingestDocument 7ms
+ ✓ server/routes/__tests__/client-intelligence-upload-guards.test.ts > POST /api/client-intelligence/documents/upload: the upload guard > control: the project route runs the same guard 4ms
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses a body over the size limit with 413 and leaves nothing on disk 1004ms
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses an executable named file whatever type it declares (415) 12ms
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses a declared type the service does not accept (415) 8ms
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses bytes that are not what the declared type says and removes the stored file 26ms
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > leaves a request with no file to the route 8ms
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > control: a real PNG passes the guard, is stored, and reaches the route 13ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses a .exe with 400 FILE_TYPE_NOT_ALLOWED and stores nothing (F-4) 39ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses an upload under the wrong field name with 400, not 500 (multer LIMIT_UNEXPECTED_FILE) 7ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > still admits an allowed type to the governed ingest (the happy path is untouched) 8ms
+ ✓ server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses a body over the size limit with 413 and leaves nothing on disk 368ms
+ ✓ server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses an executable named file whatever type it declares (415) 36ms
+ ✓ server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses a declared type this uploader does not accept (415) 14ms
+ ✓ server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses bytes that are not what the declared type says and removes the stored file 69ms
+ ✓ server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > leaves a request with no file to the handler 7ms
+ ✓ server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > control: a real PDF passes the guard, is stored, and reaches the handler 88ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses a body over the size limit with 413 instead of buffering it 919ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses an executable named file whatever type it declares (415) 23ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses a declared type this route does not read (415, not a silent "no file") 4ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses bytes that are not a PDF under a PDF declaration (the shared byte check) 7ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > leaves a request with no file to the handler (its own NO_FILE code, unchanged) 10ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > control: a real PDF passes the guard and reaches ingestStudy 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > reports the words the parse could not keep 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > stays quiet when the parse kept everything 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > does not cry wolf over a one-word tokenisation difference 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > reports a real loss on a long paste, where one word would be noise 50ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > ignores a plain-text paste, which has no structure to lose 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > is insensitive to reflowed whitespace 89ms
+ ✓ tests/routes/chat-governed-upload.test.ts > chat upload governance > returns GOVERNED_CONTRACT_INVALID when governed context fails 681ms
+ ✓ server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > refuses parentDocumentId with 400, before anything is stored 109ms
+ ✓ server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > refuses supersedesId with 400, before anything is stored 15ms
+ ✓ server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > admits an upload that names no lineage, as before 38ms
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a body over the limit is 413 FILE_TOO_LARGE, naming the limit 56ms
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a type the filter refuses is 415 UNSUPPORTED_FILE_TYPE 13ms
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a second file where one is allowed is 400 UPLOAD_INVALID 8ms
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > an admitted file reaches the handler 8ms
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > extensionOf > extracts a lowercase extension 2ms
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > allows regulatory document types 1ms
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > rejects executables/scripts even if MIME is spoofed to a document type 0ms
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > rejects unknown types and extensionless files 0ms
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > honours a custom allowlist 0ms
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > makeUploadFileFilter > accepts an allowed file and rejects a blocked one 2ms
+ ✓ tests/routes/concept2cure-governed-upload.test.ts > Concept2Cure knowledge upload governance > fails closed with GOVERNED_CONTRACT_INVALID when upload artifact contract is invalid 7ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses a body over the size limit with 413 instead of buffering it 216ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses an executable named file whatever type it declares (415) 65ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses a declared type this router does not read (415) 4ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses bytes that are not what the declared type says (the shared byte check) 6ms
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > control: a real CSV passes the guard and reaches the handler 10ms
+ Test Files  2 failed | 41 passed (43)
+      Tests  2 failed | 469 passed (471)
+$ npx vitest related --run --config vitest.config.ts server/middleware/uploadSafety.ts server/utils/fileSignature.ts client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx server/routes/vault-ingest.ts
+ Test Files  1 failed | 265 passed | 1 skipped (267)
+      Tests  1 failed | 4440 passed | 2 skipped (4443)
+ × client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > switches a live drive to a demonstration, keeping the turn and its queued moves 5293m
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx server/routes/__tests__/vault-ingest-type-binding.test.ts server/middleware/__tests__/uploadSafety.test.ts server/utils/__tests__/fileSignature.t
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > accepts a buffer starting with %PDF 2ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects a buffer that declares pdf but starts with PNG bytes 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects an executable masquerading as pdf 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts a real PNG 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > rejects a JPEG-marked buffer that is actually PDF bytes 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts real JPEG (ff d8 ff) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts both GIF87a and GIF89a 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts a docx-declared buffer that starts with PK 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > rejects a docx-declared buffer that does not start with PK 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts .xlsx and .pptx (same container) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts plain application/zip 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts plain ASCII text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts CSV 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts JSON 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects binary content declared as text/plain 9ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects a buffer with embedded null bytes (classic binary tell) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > accepts OLE compound for application/msword 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > rejects a .doc-declared buffer that is actually a ZIP (real-world bug case) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects an empty buffer 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects unknown / unhandled MIME types 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects a buffer too short to contain the magic 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > the SEC-A-3 upload passes the declared-type check on its own — the gap this closes 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf declared text/html, naming the type a .pdf must be declared as 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf whose bytes are not a PDF, whatever was declared 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts a real PDF, whatever the case of its extension 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > binds rather than blacklists: text/html is refused for .txt and .md, and left alone for .html 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts the types a text file is actually sent as, parameters and case aside 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses one Office format declared as another 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > leaves a name it does not bind to the caller’s own allowlist 0ms
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .pdf name: 400 FILE_TYPE_MISMATCH, and nothing is stored 48ms
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .txt name — a binding, not a .pdf special case 22ms
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > admits a real PDF declared application/pdf, through to storage and a 201 26ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — signature check > rejects bytes that do not match the declared MIME (400) 5ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — signature check > rejects an empty buffer (400) 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — AV scan > rejects on a virus FOUND without leaking the signature name (400) 18ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — AV scan > resolves on a clean scan 4ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > rejects (503) when scanner is not configured and NODE_ENV=production 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > resolves (permissive) when scanner is not configured and NODE_ENV=test 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > resolves (permissive) in development 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — path input > reads bytes from a filesystem path 5ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > does not reject in production when no scanner is configured 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > still rejects bytes that do not match the declared type (400) 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > leaves an upload with no stated origin fail-closed in production 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > refuses HTML declared text/html under a .pdf name (400 FILE_TYPE_MISMATCH) 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > binds platform-generated bytes too — what a name promises does not depend on origin 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > admits a real PDF under a .pdf name, as before 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > does not frame HTML saved under a .pdf name and served as text/html; it downloads it and says why 357ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > does not frame HTML the server typed application/pdf 84ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > frames %PDF bytes as application/pdf even when the server typed them text/html 75ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > still opens a real PDF in the viewer, with the served hash 70ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > opens a real PDF the server typed as octet-stream under a name without .pdf — the bytes decide 75ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > downloads a file that is not a PDF and does not claim to be, as before 39ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the class namespace is its own > shares no class name with the Design Controls surface, whose stylesheet also owns a “.dc” family 79ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > names what the expand control does and what it controls, and moves focus into the region it opens 245ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > Escape collapses from anywhere in the expanded region — including with focus left on the body — and returns focus to the header control 155ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > offers exactly one way back while expanded 452ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > does not trap: every control in the collapsed card is reachable, and the card does not hold focus 30ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > File to vault: labelled, modal, focus trapped while open, focus restored on close 63ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > Assign review: labelled, modal, focus trapped while open, focus restored on close 49ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas stylesheet — motion > every transition and animation is at most 200ms and eases out — no spring, no bounce, no overshoot 2ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas stylesheet — motion > every animation and transition it declares is removed under prefers-reduced-motion 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas — microcopy > never exclaims and never cheers 2ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas — microcopy > never hedges in a user-facing string 2ms
+ Test Files  5 passed (5)
+      Tests  63 passed (63)

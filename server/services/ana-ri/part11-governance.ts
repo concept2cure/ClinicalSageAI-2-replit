@@ -21,6 +21,7 @@
  */
 
 import { COMMAND_AUTHORIZATION } from './command-rbac';
+import type { GovernedSignMeaning } from '../part11/signature-meanings';
 
 /** AnA command names whose effect alters the regulatory record and therefore
  * require, at minimum, a Part 11 reason-for-change. Scoped deliberately to
@@ -67,8 +68,8 @@ export const PART11_GOVERNED_COMMANDS: ReadonlySet<string> = new Set<string>([
   // and enforces the status state machine, whatever tier the caller holds.
   // Escalate this only as a deliberate RBAC decision, with the tier changed in
   // the same commit.
-  // The GDPR erasure. It destroys personal data and overwrites regulated
-  // artifact content, and until 2026-09-25 a model response containing it ran
+  // The GDPR erasure. It destroys personal data (regulated artifact content is
+  // retained under GDPR Art. 17(3)(b) since 2026-09-28), and until 2026-09-25 a model response containing it ran
   // it with no person in the loop (security audit 2026-09-24 DP-08/DP-09, plan
   // P0-12). Governed and in the e-sign set below: a person gives the reason for
   // change and re-authenticates, the sign-off is recorded, then the handler's
@@ -125,6 +126,17 @@ export interface Part11Signoff {
    * so those handlers fail closed when it is absent.
    */
   verifiedAt?: Date;
+  /**
+   * The factors the route's re-verification actually checked for THIS
+   * dispatch ('password', or 'password+mfa' when a TOTP was also verified),
+   * and whether that second factor was verified. Stamped by the route from
+   * reverifySigner's result, never by a handler or the client. Added
+   * 2026-09-28: the FDA ESG transmit handler hard-coded
+   * `secondFactorVerified: false`, so a transmission whose signer passed MFA
+   * was recorded as having passed a password only.
+   */
+  authenticationMethod?: 'password' | 'password+mfa';
+  secondFactorVerified?: boolean;
 }
 
 /** Does this command require a Part 11 sign-off (at least a reason-for-change)? */
@@ -165,6 +177,55 @@ export function governedTierOf(command: string): GovernedTier {
  * (re-authentication), not just a reason-for-change? */
 export function requiresEsignature(command: string): boolean {
   return PART11_ESIGN_COMMANDS.has(command);
+}
+
+/**
+ * The §11.50(a)(3) meanings a signer may declare on an e-signature-tier AnA
+ * action, as GovernedActionSignoff offers them (AUTHOR / REVIEWER / APPROVER),
+ * mapped onto the platform's canonical spelling (GOVERNED_SIGN_MEANINGS) — the
+ * value the shared signature writer accepts and readers compare against.
+ *
+ * Closed: nothing outside these three keys is a declaration this route takes.
+ * The dialog's tokens are mapped rather than stored raw because the one
+ * handler that writes a signature from this path (the FDA ESG transmit,
+ * persistGovernedActionSignature) refuses 'AUTHOR' as an unknown meaning — and
+ * it does so after the bytes have left.
+ *
+ * 2026-09-28 (coverage-gap sweep GP-P-2): until this, the route stamped
+ * `signaturePurpose: 'approval'` whatever the signer declared.
+ */
+export const GOVERNED_ACTION_DECLARED_MEANINGS: Readonly<Record<'AUTHOR' | 'REVIEWER' | 'APPROVER', GovernedSignMeaning>> =
+  Object.freeze({
+    AUTHOR: 'authorship',
+    REVIEWER: 'review',
+    APPROVER: 'approval',
+  });
+
+export type DeclaredMeaningResolution =
+  | { ok: true; meaning: GovernedSignMeaning }
+  | { ok: false; code: 'SIGNATURE_MEANING_REQUIRED' | 'SIGNATURE_MEANING_UNKNOWN'; error: string };
+
+/**
+ * Pure: resolve what the signer declared into the canonical meaning, or refuse.
+ * Case-sensitive and exact; the declared value is not echoed back.
+ */
+export function resolveDeclaredSignatureMeaning(declared: unknown): DeclaredMeaningResolution {
+  const accepted = Object.keys(GOVERNED_ACTION_DECLARED_MEANINGS).join(', ');
+  if (declared === undefined || declared === null || declared === '') {
+    return {
+      ok: false,
+      code: 'SIGNATURE_MEANING_REQUIRED',
+      error: `An electronic signature must declare its meaning (§11.50), one of: ${accepted}. Nothing was run.`,
+    };
+  }
+  if (typeof declared === 'string' && Object.prototype.hasOwnProperty.call(GOVERNED_ACTION_DECLARED_MEANINGS, declared)) {
+    return { ok: true, meaning: GOVERNED_ACTION_DECLARED_MEANINGS[declared as keyof typeof GOVERNED_ACTION_DECLARED_MEANINGS] };
+  }
+  return {
+    ok: false,
+    code: 'SIGNATURE_MEANING_UNKNOWN',
+    error: `The declared signature meaning is not one this action accepts; use one of: ${accepted}. Nothing was run.`,
+  };
 }
 
 export interface SignoffValidation {

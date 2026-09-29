@@ -1,0 +1,10 @@
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: task board — a failed read is a failure, never a clean empty board > publishes "could not be read", not "0 tasks", when the board read fails 97ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: doc-journey never publishes the actor name/email > publishes the active stage label but not its who (a name-or-email field) 59ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: projects never publishes the lead email > publishes the program code but not its lead (a COALESCE(name,email) field) 66ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: audit-trail never publishes an actor name or a reason free-text > publishes the event meaning and hasReason boolean, not the actor or the reason text 59ms
+ × client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: the ledger row names the account that acted (F-42) > shows each entry's account reference beside a display name two accounts share 5013ms
+   → Unable to find an element with the text: user:11. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit2: review queue — a dead my-queue read is a failure, not "0 threads" > publishes "could not be read", not "0 open threads", when the queue read fails 58ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit2: clinical-ops never publishes a subject-scoped deviation narrative > publishes the deviation category/study but not its free-text description or CAPA 71ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed | 7 skipped (14)

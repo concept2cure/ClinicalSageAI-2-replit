@@ -1,0 +1,48 @@
+## M1: header Ask AnA splices the stored protocol number back in
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the AnA buttons send no stored text as the person's words (SEC-C-4) > "Ask AnA" names the protocol on screen, not its stored number 539ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 6 passed (7)
+
+## M2: Draft with AnA splices the stored section title back in
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevSection.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the AnA buttons send no stored text as the person's words (SEC-C-4) > "Draft with AnA" names the section on screen, not its stored title or the protocol number 359ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 6 passed (7)
+
+## M3: empty state splices the stored programme name back in
+   file: client/src/concept2cure/v2/surfaces/ProtocolDev.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the AnA buttons send no stored text as the person's words (SEC-C-4) > the empty state's ask names the programme open in the workspace, not its stored name 31ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 6 passed (7)
+
+## M4: context's openSection reverts to the server's default doc.openSection
+   file: client/src/concept2cure/v2/surfaces/ProtocolDev.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the fenced screen context names what those sentences point at (SEC-C-4) > carries the section open on screen, and follows the outline when it changes 5206ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 6 passed (7)
+
+## M5: workspace no longer reports the section open on screen
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the fenced screen context names what those sentences point at (SEC-C-4) > carries the section open on screen, and follows the outline when it changes 5251ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 6 passed (7)
+
+## M6: empty-state context drops the programme
+   file: client/src/concept2cure/v2/surfaces/ProtocolDev.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the fenced screen context names what those sentences point at (SEC-C-4) > carries the programme the empty state is for 5031ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 6 passed (7)
+

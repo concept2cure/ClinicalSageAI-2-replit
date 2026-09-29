@@ -17,6 +17,7 @@ import {
   emitToOrg,
 } from './socket/tenantBroadcast.js';
 import { isDocumentInOrg, isProjectInOrg } from './socket/socketAuthz.js';
+import { startSessionRecheck } from './socket/sessionRecheck';
 const log = createScopedLogger('socket-server');
 
 // Define types for socket events
@@ -153,71 +154,17 @@ interface AuthenticatedSocket extends Socket {
   authEmail?: string;
   /** The handshake token, kept so the session can be re-verified while connected. */
   sessionToken?: string;
-  /** The re-verification timer, cleared on disconnect. */
-  sessionRecheck?: NodeJS.Timeout;
 }
 
 // ── Session re-verification while connected (IAM-12 / P1-9) ─────────────────
-//
-// A socket is admitted on a verified token, a live membership and an active
-// tenant, and then stays open for as long as the transport lives. Until
-// 2026-09-25 nothing looked again, so a member removed from the organisation,
-// an account taken out of use, a revoked or password-change-ended session and
-// a suspended tenant all kept receiving the org room's live events for the
-// token's remaining lifetime. Every open socket now re-runs the same three
-// checks on a timer and, when one fails, is told why and disconnected. The
-// interval is generous (the HTTP paths re-check on every request; membership is
-// cached 60 s there too) and never keeps the process alive.
-
-const SOCKET_SESSION_RECHECK_MS = Math.max(5_000, Number(process.env.SOCKET_SESSION_RECHECK_MS) || 60_000);
+// The timer, its checks and its interval live in server/socket/sessionRecheck.ts,
+// shared with the `/ana` namespace (IAM-19). Moved there 2026-09-28 rather than
+// copied, so the two namespaces cannot drift.
 
 /** A token claim as a positive integer id, or null when it is anything else. */
 function positiveIntClaim(value: unknown): number | null {
   const n = Number(value);
   return Number.isSafeInteger(n) && n > 0 ? n : null;
-}
-
-type SessionEndReason = 'session_ended' | 'membership_revoked' | 'tenant_inactive';
-
-async function sessionEndReason(socket: AuthenticatedSocket): Promise<SessionEndReason | null> {
-  const userId = Number(socket.authUserId);
-  const organizationId = Number(socket.orgId);
-  try {
-    // Signature, revocation, account standing, the password-change rule and
-    // the session's inactivity, exactly as the handshake verified them. The
-    // re-check is not the user acting, so it is not the session's activity
-    // (P1-1): an open tab does not keep an unattended session alive.
-    await verifyLiveToken(socket.sessionToken ?? '', undefined, { activity: false });
-  } catch {
-    return 'session_ended';
-  }
-  if ((await checkOrgMembership(userId, organizationId)) !== 'member') return 'membership_revoked';
-  if (!(await shouldProcessTenantInBackground(organizationId))) return 'tenant_inactive';
-  return null;
-}
-
-function startSessionRecheck(socket: AuthenticatedSocket): void {
-  let inFlight = false;
-  const timer = setInterval(() => {
-    if (inFlight) return;
-    inFlight = true;
-    void sessionEndReason(socket)
-      .catch(() => 'session_ended' as const)
-      .then(reason => {
-        inFlight = false;
-        if (!reason) return;
-        log.warn(`[Socket.io] Ending socket ${socket.id} (org ${socket.orgId}, user ${socket.authUserId}): ${reason}`);
-        clearInterval(timer);
-        socket.emit('session:ended', { reason });
-        socket.disconnect(true);
-      });
-  }, SOCKET_SESSION_RECHECK_MS);
-  timer.unref?.();
-  socket.sessionRecheck = timer;
-  socket.on('disconnect', () => {
-    clearInterval(timer);
-    socket.sessionRecheck = undefined;
-  });
 }
 
 /**
@@ -376,7 +323,7 @@ export function initializeSocketServer(server: Server) {
 
     // The handshake's three checks again, on a timer, for as long as the
     // socket lives (IAM-12 / P1-9).
-    startSessionRecheck(socket);
+    startSessionRecheck(socket, 'Socket.io');
 
     // Every authenticated socket belongs to exactly one tenant room, joined
     // from the VERIFIED principal. Every tenant-bearing publish below addresses

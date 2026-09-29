@@ -1,0 +1,788 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-28T16:57:41.555Z","pid":7845,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:57:41.557Z","pid":7845,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:57:41.557Z","pid":7845,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/two-tenant-application-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/two-tenant-application-rls.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > catalog and live session prove RLS is active for the runtime role 12ms
+stdout | tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A
+[database] Database connection successful { timestamp: '2026-09-28T16:57:42.169Z', poolSize: 1 }
+
+stdout | tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A
+[database] Database connection successful { timestamp: '2026-09-28T16:57:42.170Z', poolSize: 2 }
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A 106ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows 90ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: list/filter, direct read and existence probe hide tenant B from A 31ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: update and delete of tenant B are indistinguishable not-found 21ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: list/filter, direct read and existence probe hide tenant B from A 24ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: update and delete of tenant B are indistinguishable not-found 16ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: list/filter, direct read and existence probe hide tenant B from A 25ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: update and delete of tenant B are indistinguishable not-found 16ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: list/filter, direct read and existence probe hide tenant B from A 20ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: update and delete of tenant B are indistinguishable not-found 16ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: list/filter, direct read and existence probe hide tenant B from A 22ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: update and delete of tenant B are indistinguishable not-found 15ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: list/filter, direct read and existence probe hide tenant B from A 23ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: update and delete of tenant B are indistinguishable not-found 14ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: WITH CHECK rejects planting a row into tenant B without leaking details 9ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: list/filter, direct read and existence probe hide tenant B from A 23ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: update and delete of tenant B are indistinguishable not-found 17ms
+{"level":30,"time":"2026-09-28T16:57:42.644Z","pid":7845,"hostname":"vm","context":{"code":"governed-fabric:0da07e2e-5ac2-4ae7-b6c5-3c9df84eb8b8","project":903010},"msg":"[decision-record] Creating decision record"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: WITH CHECK rejects planting a row into tenant B without leaking details 5ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > pooled session context is reset and the wrong-context negative control is observable 11ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the recording evaluator persists the caller's own decision through the app role 1506ms
+{"level":30,"time":"2026-09-28T16:57:44.134Z","pid":7845,"hostname":"vm","context":{"code":"governed-fabric:47994539-db48-4da4-82e6-2d387dc03a95","project":903010},"msg":"[decision-record] Creating decision record"}
+{"level":40,"time":"2026-09-28T16:57:44.136Z","pid":7845,"hostname":"vm","context":{"operation":"recordGovernedDecision","error":"new row violates row-level security policy for table \"decision_records\""},"msg":"[governance-observability] Governance persistence failure"}
+{"level":40,"time":"2026-09-28T16:57:44.136Z","pid":7845,"hostname":"vm","context":{"decisionId":"47994539-db48-4da4-82e6-2d387dc03a95","error":"new row violates row-level security policy for table \"decision_records\""},"msg":"[governed-decision-ledger] Governed decision durable write failed"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > WITH CHECK refuses a decision the recorder files for another tenant 1504ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the simulate route records nothing, for any tenant 1512ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the reads show tenant A its decision and tenant B nothing of it 40ms
+{"level":30,"time":"2026-09-28T16:57:48.680Z","pid":7867,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:57:48.681Z","pid":7867,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:57:48.682Z","pid":7867,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/one-time-credentials.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-28T16:57:48.825Z', poolSize: 1 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/one-time-credentials.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/one-time-credentials.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 196
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 197
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 198
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 199
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 202
+
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":196,"tenantId":91850,"resourceId":"196"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/one-time-credentials.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the posture is the one production runs in > enrolment used the step it presented 3ms
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":196,"tenantId":"91850","resourceId":"196"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":196,"tenantId":91850,"resourceId":"196"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":196,"tenantId":"91850","resourceId":"196"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":196,"tenantId":91850,"resourceId":"196"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":196,"tenantId":"91850","resourceId":"196"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+{"level":30,"time":"2026-09-28T16:58:05.000Z","pid":7867,"hostname":"vm","context":{"userId":196,"tenantId":91850,"resourceId":"196"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T16:58:05.000Z","pid":7867,"hostname":"vm","context":{"userId":196,"tenantId":"91850","resourceId":"196"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses the same code the second time 133ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses a code from a step earlier than the last accepted, though that code was never used 30ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > accepts the next code: a refusal is per step, not a lockout 41ms
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":197,"tenantId":91850,"resourceId":"197"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":197,"tenantId":91850,"resourceId":"197"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > two sign-ins racing one code: exactly one session
+[database] Database connection successful { timestamp: '2026-09-28T16:57:35.000Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":197,"tenantId":"91850","resourceId":"197"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":197,"tenantId":"91850","resourceId":"197"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-09-28T16:58:05.000Z', poolSize: 3 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-09-28T16:58:05.000Z', poolSize: 4 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-09-28T16:58:05.000Z', poolSize: 5 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-09-28T16:58:05.000Z', poolSize: 6 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-09-28T16:58:05.000Z', poolSize: 7 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-09-28T16:58:05.000Z', poolSize: 8 }
+
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":198,"tenantId":91850,"resourceId":"198"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":198,"tenantId":"91850","resourceId":"198"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":198,"tenantId":91850,"resourceId":"198"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":198,"tenantId":"91850","resourceId":"198"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+ ✓ tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > two sign-ins racing one code: exactly one session 68ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it 26ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > one record of used codes, whichever path verifies > the enterprise sign-in refuses a code it already accepted 74ms
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":198,"tenantId":91850,"resourceId":"198"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":198,"tenantId":"91850","resourceId":"198"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+ ✓ tests/db/one-time-credentials.dbtest.ts > one record of used codes, whichever path verifies > the password sign-in refuses a code the enterprise sign-in used 39ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the modal can check a code, even twice, and it is still unused 33ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the signature then accepts that same code, and uses it 12ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > a used code neither checks nor signs again 30ms
+{"level":40,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{},"msg":"[auth-security] Account locked for user 199 after 5 failed attempts"}
+{"level":40,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{},"msg":"[auth-security] Account locked for user 199 after 5 failed attempts"}
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the code pre-check is metered per signer, and a wrong code counts against the account 79ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the password pre-check is metered per signer too, on its own budget, and a wrong password counts 106ms
+stdout | tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused
+[database] Database connection successful { timestamp: '2026-09-28T16:57:35.000Z', poolSize: 9 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused
+[database] Database connection successful { timestamp: '2026-09-28T16:57:35.000Z', poolSize: 10 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused
+[database] Database connection successful { timestamp: '2026-09-28T16:57:35.000Z', poolSize: 11 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused
+[database] Database connection successful { timestamp: '2026-09-28T16:57:35.000Z', poolSize: 12 }
+
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > five verifiers racing one emailed code: exactly one accepts it 20ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > after 4 wrong guesses the right code is accepted: true (the limit is exactly five) 12ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > after 5 wrong guesses the right code is accepted: false (the limit is exactly five) 13ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused 36ms
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":201,"tenantId":91850,"resourceId":"201"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+{"level":30,"time":"2026-09-28T16:57:35.000Z","pid":7867,"hostname":"vm","context":{"userId":201,"tenantId":91850,"resourceId":"201"},"msg":"[audit-service] [AUDIT] user_password_reset_failed user"}
+stdout | tests/db/one-time-credentials.dbtest.ts > a password-reset token is used once > two resets racing one token: exactly one succeeds, and its password is the one set
+{
+  "timestamp": "2026-09-28T16:57:35.000Z",
+  "level": "info",
+  "message": "[auth] Password reset completed",
+  "context": {
+    "userId": 201
+  }
+}
+
+ ✓ tests/db/one-time-credentials.dbtest.ts > a password-reset token is used once > two resets racing one token: exactly one succeeds, and its password is the one set 1066ms
+stdout | tests/db/one-time-credentials.dbtest.ts > replay state belongs to one secret > a new authenticator's first code is not refused for the old one's last step
+[mfa] MFA disabled for user 202
+
+stdout | tests/db/one-time-credentials.dbtest.ts > replay state belongs to one secret > a new authenticator's first code is not refused for the old one's last step
+[mfa] MFA enabled for user 202
+
+ ✓ tests/db/one-time-credentials.dbtest.ts > replay state belongs to one secret > a new authenticator's first code is not refused for the old one's last step 22ms
+{"level":30,"time":"2026-09-28T16:57:53.373Z","pid":7895,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:57:53.376Z","pid":7895,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:57:53.377Z","pid":7895,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/signup-launch-catalog.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-28T16:57:53.419Z', poolSize: 1 }
+
+stdout | tests/db/signup-launch-catalog.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/signup-launch-catalog.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/signup-launch-catalog.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/signup-launch-catalog.dbtest.ts
+✅ Platform health/auth routes mounted
+
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > posture — the connection and the policies are production's > server/db talks to Postgres as the non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > posture — the connection and the policies are production's > client_workspaces, module_subscriptions and organization_industry_profiles are RLS-enabled and FORCED 2ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > posture — the connection and the policies are production's > the signup handler's external calls are known-off: no Stripe key, no SMTP host 0ms
+stdout | tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end
+{
+  "timestamp": "2026-09-28T16:57:54.232Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 38,
+    "granted": 19
+  }
+}
+
+{"level":30,"time":"2026-09-28T16:57:54.238Z","pid":7895,"hostname":"vm","context":{"userId":203,"tenantId":38,"resourceId":"203"},"msg":"[audit-service] [AUDIT] user_signup user"}
+stdout | tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant
+[database] Database connection successful { timestamp: '2026-09-28T16:57:54.269Z', poolSize: 2 }
+
+stdout | tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant
+[database] Database connection successful { timestamp: '2026-09-28T16:57:54.269Z', poolSize: 3 }
+
+stdout | tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant
+[database] Database connection successful { timestamp: '2026-09-28T16:57:54.270Z', poolSize: 4 }
+
+stdout | tests/db/signup-launch-catalog.dbtest.ts > D2 via /api/setup — the first-run path, under the scope its mount applies > the system scope setup runs in grants every launch module, with no failure logged
+{
+  "timestamp": "2026-09-28T16:57:54.315Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 91701,
+    "granted": 19
+  }
+}
+
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > answers 201 and creates a free-tier organisation whose signing-up user is its admin 3ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > grants every launch module to the new organisation — enabled, perpetual, and nothing else 2ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > writes the grants as the platform, not a person (enabled_by NULL; the reason lives in the audit trail) 1ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > seeds the organization_industry_profiles row from the signup signals 1ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > gives the new organisation exactly one client workspace — its own, created by the signing-up user 1ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > logs no launch-provisioning error for the new organisation 1ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant 17ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via /api/setup — the first-run path, under the scope its mount applies > the system scope setup runs in grants every launch module, with no failure logged 38ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > first-run setup: the system scope its mount applies 9ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > the pre-auth scope (tenant 0, no role): the writer stands on the organisation's own tenant, and it does not outlive the transaction 4ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > the boot seed: its PoolClient under enforcement, run twice, writes one workspace per seeded organisation 24ms
+stderr | tests/db/signup-launch-catalog.dbtest.ts > a refused workspace write takes the whole organisation with it > answers 500 AUTH_010 and leaves no organisation, user, membership or workspace behind
+{
+  "timestamp": "2026-09-28T16:57:54.737Z",
+  "level": "error",
+  "message": "[auth] Signup error",
+  "context": {
+    "err": "Failed query: insert into \"client_workspaces\" (\"id\", \"organization_id\", \"name\", \"slug\", \"description\", \"logo\", \"status\", \"quota_projects\", \"quota_storage\", \"contact_name\", \"contact_email\", \"contact_phone\", \"industry\", \"settings\", \"metadata\", \"created_by_id\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, default, default, default, default, default, default, default, $6, $7, default, default) on conflict (\"organization_id\",\"slug\") do nothing returning \"id\"\nparams: 43,dbtsu refused 7895_mulhqsak,dbtsu-refused-7895-mulhqsak,Default workspace for dbtsu refused 7895_mulhqsak,active,{\"defaultForOrganization\":true},204"
+  }
+}
+
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > a refused workspace write takes the whole organisation with it > answers 500 AUTH_010 and leaves no organisation, user, membership or workspace behind 387ms
+{"level":50,"time":"2026-09-28T16:57:54.745Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"projects",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.748Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"program-journey",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.749Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"filings-catalog",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.751Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"tasks",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.752Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"vault",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.753Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"artifacts-center",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.755Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"document-authoring",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.756Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"template-library",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.758Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"review",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.760Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"protocol-dev",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.761Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"submission-center",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.762Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"dossier-map",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.763Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"ectd-compile",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.765Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"ectd-coauthor",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.766Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"ectd-publishing",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.767Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"gateway-transmittals",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.768Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"dispatch-readiness",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.769Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"quality",true,null,null]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T16:57:54.770Z","pid":7895,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"module_subscriptions\"","query":"INSERT INTO module_subscriptions\n       (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,\n        expires_at, expiry_set_by, expiry_set_at, updated_at)\n     VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,\n             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,\n             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,\n             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,\n             now())\n     ON CONFLICT (organization_id, module_id) DO UPDATE\n       SET enabled = EXCLUDED.enabled,\n           enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,\n           disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,\n           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,\n           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,\n           -- Written unconditionally, including to NULL. The caller has stated\n           -- which it means; carrying the old date forward is the silent no-op\n           -- this signature exists to prevent.\n           expires_at = EXCLUDED.expires_at,\n           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,\n           expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,\n           updated_at = now()\n     RETURNING organization_id, module_id, enabled, expires_at, updated_at","params":[91702,"qmp",true,null,null]},"msg":"[database] Database query error"}
+stderr | tests/db/signup-launch-catalog.dbtest.ts > a failed provisioning is never silent > a scope RLS refuses yields every failure, and exactly one error-level summary with the remediation
+{
+  "timestamp": "2026-09-28T16:57:54.771Z",
+  "level": "error",
+  "message": "[launch-scope] launch catalog NOT provisioned for organisation 91702: 19 of 19 launch modules were not granted",
+  "context": {
+    "organizationId": 91702,
+    "attempted": 19,
+    "granted": 0,
+    "failed": 19,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp"
+    ],
+    "errors": [
+      "new row violates row-level security policy for table \"module_subscriptions\""
+    ],
+    "scope": {
+      "tenantId": "0",
+      "role": null,
+      "source": "request",
+      "caller": "dbtsu:POST /signup"
+    },
+    "remediation": "npm run ops:provision-launch-modules -- --org 91702"
+  }
+}
+
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > a failed provisioning is never silent > a scope RLS refuses yields every failure, and exactly one error-level summary with the remediation 30ms
+{"level":30,"time":"2026-09-28T16:57:56.522Z","pid":7914,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:57:56.523Z","pid":7914,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:57:56.523Z","pid":7914,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/signing-lockout.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-28T16:57:56.620Z', poolSize: 1 }
+
+stdout | tests/db/signing-lockout.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/signing-lockout.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/signing-lockout.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/signing-lockout.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/signing-lockout.dbtest.ts
+[mfa] MFA enabled for user 206
+
+stdout | tests/db/signing-lockout.dbtest.ts
+[mfa] MFA enabled for user 209
+
+{"level":40,"time":"2026-09-28T16:58:05.000Z","pid":7914,"hostname":"vm","context":{},"msg":"[auth-security] Account locked for user 205 after 5 failed attempts"}
+{"level":30,"time":"2026-09-28T16:58:05.000Z","pid":7914,"hostname":"vm","context":{"userId":205,"tenantId":92000,"resourceId":"205"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/signing-lockout.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > count against the account, and the fifth locks it 43ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > lock the sign-in too: the account has one password and one allowance 43ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > while locked, refuse a signature even with the right password, without comparing it 4ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > unlock when the lockout has run out 10ms
+{"level":40,"time":"2026-09-28T16:58:05.000Z","pid":7914,"hostname":"vm","context":{},"msg":"[auth-security] Account locked for user 206 after 5 failed attempts"}
+{"level":30,"time":"2026-09-28T16:58:05.000Z","pid":7914,"hostname":"vm","context":{"userId":207,"tenantId":92000,"resourceId":"207"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+stderr | tests/db/signing-lockout.dbtest.ts > below the allowance > a successful sign-in clears the count, as it always has
+{
+  "timestamp": "2026-09-28T16:58:05.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "d***@example.invalid"
+  }
+}
+
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong codes at signing > count against the account once the password is right, and the fifth locks it 57ms
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a signer who mistypes and then gets it right signs 39ms
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a successful sign-in clears the count, as it always has 26ms
+{"level":40,"time":"2026-09-28T16:58:05.000Z","pid":7914,"hostname":"vm","context":{},"msg":"[auth-security] Account locked for user 208 after 5 failed attempts"}
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > count a wrong password, and the fifth locks the account 109ms
+{"level":40,"time":"2026-09-28T16:58:05.000Z","pid":7914,"hostname":"vm","context":{},"msg":"[auth-security] Account locked for user 209 after 5 failed attempts"}
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > say the account is locked, and do not compare the password 11ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > count a wrong code, and the fifth locks the account 74ms
+{"level":30,"time":"2026-09-28T16:57:59.068Z","pid":7929,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:57:59.069Z","pid":7929,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:57:59.069Z","pid":7929,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-28T16:57:59.153Z', poolSize: 1 }
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/sign-in-audit-trail.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/sign-in-audit-trail.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[mfa] MFA enabled for user 210
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[mfa] MFA enabled for user 211
+
+{"level":30,"time":"2026-09-28T16:57:59.512Z","pid":7929,"hostname":"vm","context":{"userId":210,"tenantId":91800,"resourceId":"210"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T16:57:59.548Z","pid":7929,"hostname":"vm","context":{"userId":210,"tenantId":"91800","resourceId":"210"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the MFA challenge a password sign-in issues, against the organisation 62ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong authenticator code 24ms
+{"level":30,"time":"2026-09-28T16:57:59.595Z","pid":7929,"hostname":"vm","context":{"userId":210,"tenantId":"91800","resourceId":"210"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T16:57:59.612Z","pid":7929,"hostname":"vm","context":{"userId":210,"tenantId":91800,"resourceId":"210"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T16:57:59.624Z","pid":7929,"hostname":"vm","context":{"resourceId":"unknown"},"msg":"[audit-service] [AUDIT] user_logout user"}
+stdout | tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens the API with the session /mfa/verify issued
+[database] Database connection successful { timestamp: '2026-09-28T16:57:59.637Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-28T16:57:59.655Z","pid":7929,"hostname":"vm","context":{"userId":"210","tenantId":"91800","resourceId":"210"},"msg":"[audit-service] [AUDIT] user_logout user"}
+stderr | tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens nothing once it is signed out (AUTH-03)
+[Enterprise Auth] select-organization error: SessionEndedError: This session has ended. Sign in again.
+    at verifyLiveToken (/home/user/ClinicalSageAI-2-replit/server/services/token-revocation.ts:288:42)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authEnterprise.ts:885:22 {
+  reason: 'signed-out'
+}
+
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the session /mfa/verify issues 44ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong password on a real account, against its organisation 17ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > does not let a token the server never signed write into the organisation chain 11ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens the API with the session /mfa/verify issued 20ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the end of a session the server issued, against its organisation 15ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens nothing once it is signed out (AUTH-03) 22ms
+{"level":30,"time":"2026-09-28T16:57:59.714Z","pid":7929,"hostname":"vm","context":{"userId":211,"tenantId":91800,"resourceId":"211"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T16:57:59.732Z","pid":7929,"hostname":"vm","context":{"userId":211,"tenantId":91800,"resourceId":"211"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T16:57:59.745Z","pid":7929,"hostname":"vm","context":{"userId":211,"tenantId":"91800","resourceId":"211"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+{"level":30,"time":"2026-09-28T16:57:59.761Z","pid":7929,"hostname":"vm","context":{"userId":211,"tenantId":"91800","resourceId":"211"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T16:57:59.786Z","pid":7929,"hostname":"vm","context":{"userId":"211","resourceType":"organization","resourceId":"91800","success":true},"msg":"[audit] [AUDIT] authorization:organization_switch"}
+{"level":30,"time":"2026-09-28T16:57:59.786Z","pid":7929,"hostname":"vm","context":{"userId":"211","tenantId":"91800","resourceId":"91800"},"msg":"[audit-service] [AUDIT] authorization.organization_switch organization"}
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > refuses a session another server signed out, which only the database can know 10ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong password 23ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the challenge a correct password receives 17ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong code 14ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the session it issues 16ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records entering an organisation, against that organisation 112ms
+{"level":30,"time":"2026-09-28T16:57:59.886Z","pid":7929,"hostname":"vm","context":{"userId":"211","tenantId":"91800","resourceId":"211"},"msg":"[audit-service] [AUDIT] user_logout user"}
+{"level":30,"time":"2026-09-28T16:57:59.910Z","pid":7929,"hostname":"vm","context":{"userId":210,"tenantId":91800,"resourceId":"210"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T16:57:59.927Z","pid":7929,"hostname":"vm","context":{"userId":210,"tenantId":91800,"resourceId":"210"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > ends the session it reports ending, and records it 17ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/users/login asks for the code instead of issuing a session 19ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/user/login asks for the code instead of issuing a session 17ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > creates no account outside signup 6ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the organisation audit chain > verifies end to end over every row the organisation holds 4ms
+{"level":30,"time":"2026-09-28T16:58:01.615Z","pid":7945,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:58:01.616Z","pid":7945,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:58:01.616Z","pid":7945,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-28T16:58:01.733Z', poolSize: 1 }
+
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/account-standing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/account-standing.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/account-standing.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 212
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 213
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 214
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 215
+
+{"level":30,"time":"2026-09-28T16:59:35.000Z","pid":7945,"hostname":"vm","context":{"userId":212,"tenantId":92100,"resourceId":"212"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T16:59:35.000Z","pid":7945,"hostname":"vm","context":{"userId":212,"tenantId":"92100","resourceId":"212"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 18ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 3ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 3ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 2ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > an active account signs in 118ms
+{"level":30,"time":"2026-09-28T16:59:35.000Z","pid":7945,"hostname":"vm","context":{"userId":213,"tenantId":92100,"resourceId":"213"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T16:59:35.000Z","pid":7945,"hostname":"vm","context":{"userId":214,"tenantId":92100,"resourceId":"214"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T17:00:05.000Z","pid":7945,"hostname":"vm","context":{"userId":215,"tenantId":92100,"resourceId":"215"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T17:00:05.000Z","pid":7945,"hostname":"vm","context":{"userId":215,"tenantId":"92100","resourceId":"215"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T17:00:35.000Z","pid":7945,"hostname":"vm","context":{"userId":215,"tenantId":92100,"resourceId":"215"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T17:00:35.000Z","pid":7945,"hostname":"vm","context":{"userId":215,"tenantId":"92100","resourceId":"215"},"msg":"[audit-service] [AUDIT] user_login user"}
+stdout | tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why
+[database] Database connection successful { timestamp: '2026-09-28T17:00:35.000Z', poolSize: 2 }
+
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 19ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 20ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it 36ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 82ms
+{"level":30,"time":"2026-09-28T17:01:05.000Z","pid":7945,"hostname":"vm","context":{"userId":215,"tenantId":92100,"resourceId":"215"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T17:01:05.000Z","pid":7945,"hostname":"vm","context":{"userId":215,"tenantId":"92100","resourceId":"215"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T17:01:35.000Z","pid":7945,"hostname":"vm","context":{"userId":215,"tenantId":92100,"resourceId":"215"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T17:01:35.000Z","pid":7945,"hostname":"vm","context":{"userId":215,"tenantId":"92100","resourceId":"215"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account 51ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated 38ms
+{"level":30,"time":"2026-09-28T16:58:04.154Z","pid":7961,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:58:04.155Z","pid":7961,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:58:04.155Z","pid":7961,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/sign-in-posture.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-28T16:58:04.253Z', poolSize: 1 }
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/sign-in-posture.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/sign-in-posture.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 216
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 218
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA disabled for user 218
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 219
+
+{"level":30,"time":"2026-09-28T16:58:05.000Z","pid":7961,"hostname":"vm","context":{"userId":216,"tenantId":92100,"resourceId":"216"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > the three accounts are what their names say 2ms
+{"level":30,"time":"2026-09-28T16:58:05.000Z","pid":7961,"hostname":"vm","context":{"userId":216,"tenantId":"92100","resourceId":"216"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7961,"hostname":"vm","context":{"userId":217,"tenantId":92100,"resourceId":"217"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree
+{
+  "timestamp": "2026-09-28T16:58:35.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "d***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7961,"hostname":"vm","context":{"userId":217,"tenantId":"92100","resourceId":"217"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so 148ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree 76ms
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7961,"hostname":"vm","context":{"userId":218,"tenantId":92100,"resourceId":"218"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree
+{
+  "timestamp": "2026-09-28T16:58:35.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "d***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7961,"hostname":"vm","context":{"userId":218,"tenantId":"92100","resourceId":"218"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7961,"hostname":"vm","context":{"userId":217,"tenantId":92100,"resourceId":"217"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false
+{
+  "timestamp": "2026-09-28T16:58:35.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "d***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7961,"hostname":"vm","context":{"userId":217,"tenantId":"92100","resourceId":"217"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree 61ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false 51ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address 9ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the enterprise router refuses setup over an enrolled authenticator, and says so (F-26) > 409 MFA_ALREADY_ENABLED, no secret handed out, the enrolled secret untouched 10ms
+{"level":30,"time":"2026-09-28T16:58:06.775Z","pid":7977,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:58:06.776Z","pid":7977,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:58:06.776Z","pid":7977,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/second-factor-binding.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-28T16:58:06.880Z', poolSize: 1 }
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/second-factor-binding.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/second-factor-binding.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+[mfa] MFA enabled for user 220
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+[mfa] MFA enabled for user 221
+
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7977,"hostname":"vm","context":{"userId":220,"tenantId":"92050","resourceId":"220"},"msg":"[audit-service] [AUDIT] user_mfa_setup user"}
+ ✓ tests/db/second-factor-binding.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > is refused, hands out no secret, and leaves the stored one as it was 80ms
+{"level":30,"time":"2026-09-28T16:59:05.000Z","pid":7977,"hostname":"vm","context":{"userId":220,"tenantId":92050,"resourceId":"220"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-28T16:59:05.000Z","pid":7977,"hostname":"vm","context":{"userId":220,"tenantId":"92050","resourceId":"220"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7977,"hostname":"vm","context":{"userId":222,"tenantId":"92050","resourceId":"222"},"msg":"[audit-service] [AUDIT] user_mfa_setup user"}
+stdout | tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > a member without two-step verification can enrol, and the enrolment is recorded
+[mfa] MFA enabled for user 222
+
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7977,"hostname":"vm","context":{"userId":222,"tenantId":"92050","resourceId":"222"},"msg":"[audit-service] [AUDIT] user_mfa_enable user"}
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing them in 55ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing for them 15ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > records the refused attempt against the account 3ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > a member without two-step verification can enrol, and the enrolment is recorded 49ms
+{"level":30,"time":"2026-09-28T16:59:05.000Z","pid":7977,"hostname":"vm","context":{"userId":222,"tenantId":"92050","resourceId":"222"},"msg":"[audit-service] [AUDIT] user_mfa_setup user"}
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7977,"hostname":"vm","context":{"userId":223,"tenantId":"92050","resourceId":"223"},"msg":"[audit-service] [AUDIT] user_mfa_setup user"}
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7977,"hostname":"vm","context":{"userId":223,"tenantId":"92050","resourceId":"223"},"msg":"[audit-service] [AUDIT] user_mfa_setup user"}
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7977,"hostname":"vm","context":{"userId":221,"tenantId":"92050","resourceId":"221"},"msg":"[audit-service] [AUDIT] user_mfa_disable user"}
+stdout | tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > the owner rotates by turning it off with a current code, then enrolling again
+[mfa] MFA disabled for user 221
+
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7977,"hostname":"vm","context":{"userId":221,"tenantId":"92050","resourceId":"221"},"msg":"[audit-service] [AUDIT] user_mfa_disable user"}
+{"level":30,"time":"2026-09-28T16:58:35.000Z","pid":7977,"hostname":"vm","context":{"userId":221,"tenantId":"92050","resourceId":"221"},"msg":"[audit-service] [AUDIT] user_mfa_setup user"}
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > once enrolled, that member is refused a new secret too 16ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > an enrolment not yet confirmed can be restarted: nothing is switched on until a code confirms it 54ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > the owner rotates by turning it off with a current code, then enrolling again 56ms
+{"level":30,"time":"2026-09-28T16:58:09.018Z","pid":7992,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:58:09.019Z","pid":7992,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:58:09.019Z","pid":7992,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/memberships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/memberships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/memberships.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/memberships.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization
+[database] Database connection successful { timestamp: '2026-09-28T16:58:09.516Z', poolSize: 1 }
+
+{"level":40,"time":"2026-09-28T16:58:09.560Z","pid":7992,"hostname":"vm","context":{"userId":224,"organizationId":90302},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":40,"time":"2026-09-28T16:58:09.560Z","pid":7992,"hostname":"vm","context":{"method":"GET","path":"/api/organizations/90302","statusCode":403},"msg":"[auth-boundary] Unauthenticated request passed through auth boundary (mode=warn). This route would be rejected in enforce mode."}
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 70ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 20ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 9ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 8ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 9ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 4ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin
+{
+  "timestamp": "2026-09-28T16:58:10.048Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 44,
+    "granted": 19
+  }
+}
+
+{"level":30,"time":"2026-09-28T16:58:10.052Z","pid":7992,"hostname":"vm","context":{"userId":230,"tenantId":44,"resourceId":"230"},"msg":"[audit-service] [AUDIT] user_signup user"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 690ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+[database] Database connection successful { timestamp: '2026-09-28T16:58:10.326Z', poolSize: 2 }
+
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-09-28T16:58:10.368Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — invitation email not sent",
+  "context": {
+    "to": "w***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-09-28T16:58:10.368Z","pid":7992,"hostname":"vm","context":{"userId":229,"tenantId":90302,"resourceId":"231"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-09-28T16:58:10.378Z","pid":7992,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:117:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:462:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 13ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 194ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 15ms
+{"level":30,"time":"2026-09-28T16:58:11.601Z","pid":8010,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:58:11.602Z","pid":8010,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:58:11.603Z","pid":8010,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/users-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > reads none of B's user rows, by id, by email, or by scanning 8ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > cannot rewrite B's password hash, MFA secret or reset token, nor delete B's user 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > reads its own organization's members, the caller included 2ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > updates its own member's profile 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > INSERT … RETURNING of a non-member is refused, so tenant-users takes the id first 5ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > user_id_for_email answers an existing account’s id, and nothing else 3ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > pre-auth: the sign-in lookup by email finds any tenant’s user, and writes it 4ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > system: SCIM and platform administration read and write every tenant’s users 3ms
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-28T16:58:11.884Z', poolSize: 1 }
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-28T16:58:11.885Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-28T16:58:11.931Z","pid":8010,"hostname":"vm","context":{"userId":237,"tenantId":90301,"resourceId":"239"},"msg":"[audit-service] [AUDIT] user_invited user"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account 222ms
+{"level":30,"time":"2026-09-28T16:58:12.106Z","pid":8010,"hostname":"vm","context":{"userId":237,"tenantId":90302,"resourceId":"240"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-09-28T16:58:12.115Z","pid":8010,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:117:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:462:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of failing or duplicating it 17ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into 157ms
+{"level":30,"time":"2026-09-28T16:58:13.268Z","pid":8029,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:58:13.270Z","pid":8029,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:58:13.270Z","pid":8029,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/organizations-writes.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > a tenant scope cannot write another organization at the database 5ms
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings
+[database] Database connection successful
+
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings
+[database] Database connection successful { timestamp: '2026-09-28T16:58:13.512Z', poolSize: 1 }
+
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings
+[database] Database connection successful { timestamp: '2026-09-28T16:58:13.513Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-28T16:58:13.544Z","pid":8029,"hostname":"vm","context":{"userId":246,"tenantId":90301,"resourceId":"90301"},"msg":"[audit-service] [AUDIT] data_modify organization_settings"}
+{"level":20,"time":"2026-09-28T16:58:13.586Z","pid":8029,"hostname":"vm","context":{"caller":"system:PATCH /api/organizations/90302/settings"},"msg":"[establish-tenant-scope] Nesting system scope over an existing request scope"}
+{"level":30,"time":"2026-09-28T16:58:13.590Z","pid":8029,"hostname":"vm","context":{"userId":245,"tenantId":90302,"resourceId":"90302"},"msg":"[audit-service] [AUDIT] data_modify organization_settings"}
+{"level":20,"time":"2026-09-28T16:58:13.612Z","pid":8029,"hostname":"vm","context":{"caller":"system:PATCH /api/organizations/90302/profile"},"msg":"[establish-tenant-scope] Nesting system scope over an existing request scope"}
+{"level":30,"time":"2026-09-28T16:58:13.616Z","pid":8029,"hostname":"vm","context":{"userId":245,"tenantId":90302,"resourceId":"90302"},"msg":"[audit-service] [AUDIT] data_modify organization"}
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings 97ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still cannot touch another organization's settings 12ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's settings, and the change is really there 25ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's profile 23ms
+{"level":20,"time":"2026-09-28T16:58:13.638Z","pid":8029,"hostname":"vm","context":{"caller":"system:PATCH /api/tenant-config/90302/settings"},"msg":"[establish-tenant-scope] Nesting system scope over an existing request scope"}
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff update another tenant's configuration through tenant-config 35ms
+{"level":30,"time":"2026-09-28T16:58:14.898Z","pid":8046,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:58:14.899Z","pid":8046,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:58:14.899Z","pid":8046,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log
+[database] Database connection successful
+
+stdout | tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log
+[database] Database connection successful { timestamp: '2026-09-28T16:58:15.092Z', poolSize: 1 }
+
+stdout | tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log
+[database] Database connection successful { timestamp: '2026-09-28T16:58:15.093Z', poolSize: 2 }
+
+{"level":40,"time":"2026-09-28T16:58:15.110Z","pid":8046,"hostname":"vm","context":{"userId":251,"role":"admin","path":"/api/control-plane/kernel/recent?limit=500"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-28T16:58:15.124Z","pid":8046,"hostname":"vm","context":{"userId":252,"role":"research_admin","path":"/api/control-plane/kernel/recent?limit=500"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-28T16:58:15.131Z","pid":8046,"hostname":"vm","context":{"userId":251,"role":"admin","path":"/api/control-plane/kernel/recent/clear"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-28T16:58:15.139Z","pid":8046,"hostname":"vm","context":{"userId":247,"role":"member","path":"/api/control-plane/kernel/recent?limit=500"},"msg":"[platform-admin-guard] Master Administration access denied"}
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log 67ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a role that merely contains "admin" is not a platform role 10ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot clear the platform's kernel log 7ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > outside production, a member is not let in by default 8ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a member cannot read the organization's governed decisions 15ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the organization's administrator can 20ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a platform operator reads the kernel log 10ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > monitoring that presents the ops token reads the kernel log 5ms
+{"level":40,"time":"2026-09-28T16:58:15.198Z","pid":8046,"hostname":"vm","context":{"userId":247,"role":"member","path":"/api/control-plane/kernel/recent?limit=500"},"msg":"[platform-admin-guard] Master Administration access denied"}
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a wrong ops token is refused 9ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the non-production bypass still opens the control plane when it is asked for 4ms
+{"level":40,"time":"2026-09-28T16:58:15.926Z","pid":8064,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_8064_mulhr9ua-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > leaves the tenant exactly as it was when a table fails part-way 42ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > removes every listed table’s rows and marks the tenant purged when nothing fails 36ms
+{"level":20,"time":"2026-09-28T16:58:15.944Z","pid":8064,"hostname":"vm","context":{"table":"purge_probe_no_such_table"},"msg":"[tenant-offboarding] Purge skipped a table not present in this schema"}
+{"level":40,"time":"2026-09-28T16:58:15.946Z","pid":8064,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_8064_mulhr9ua-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+{"level":40,"time":"2026-09-28T16:58:15.969Z","pid":8064,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_8064_mulhr9ua-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+{"level":40,"time":"2026-09-28T16:58:15.978Z","pid":8064,"hostname":"vm","context":{"organizationId":90601,"digest":"purge_8064_mulhr9ua-truncated","tablesFailed":[],"truncatedTables":["vault.documents"]},"msg":"[tenant-full-export] Tenant export incomplete — no receipt recorded; this digest cannot authorize a purge"}
+{"level":40,"time":"2026-09-28T16:58:15.987Z","pid":8064,"hostname":"vm","context":{"organizationId":90601,"digest":"purge_8064_mulhr9ua-partial","tablesFailed":["projects"],"truncatedTables":[]},"msg":"[tenant-full-export] Tenant export incomplete — no receipt recorded; this digest cannot authorize a purge"}
+{"level":40,"time":"2026-09-28T16:58:16.027Z","pid":8064,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_8064_mulhr9ua-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > still skips a table this deployment’s schema does not have 12ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > refuses while any hold on the tenant is active, and destroys nothing 9ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason 13ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for a truncated export, so its digest opens nothing 10ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export in which a table failed to read 8ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records one for a complete export 12ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits 29ms
+{"level":40,"time":"2026-09-28T16:58:16.079Z","pid":8064,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_8064_mulhr9ua-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way 35ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove 16ms
+ ✓ tests/db/gdpr-service-runtime-role.dbtest.ts > GDPR service under the production runtime role > the runtime role cannot CREATE in public — the premise of the defect 6ms
+ ✓ tests/db/gdpr-service-runtime-role.dbtest.ts > GDPR service under the production runtime role > CREATE TABLE IF NOT EXISTS is refused even when the table exists 3ms
+ ✓ tests/db/gdpr-service-runtime-role.dbtest.ts > GDPR service under the production runtime role > the service reads its tables through to_regclass as the runtime role 7ms
+ ✓ tests/db/gdpr-service-runtime-role.dbtest.ts > GDPR service under the production runtime role > the service module contains no CREATE TABLE — it verifies, it does not provision 2ms
+
+ Test Files  14 passed (14)
+      Tests  178 passed (178)
+   Start at  16:57:39
+   Duration  37.23s (transform 2.34s, setup 477ms, import 7.59s, tests 26.91s, environment 1ms)
+

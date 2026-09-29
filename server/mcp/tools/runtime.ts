@@ -201,6 +201,21 @@ export function registerTool(server: McpServer, spec: AnyToolSpec, config: McpCo
             await writeAudit({ principal, tool: spec.name, governed: spec.governed, outcome: 'denied', durationMs: 0, detail: reason });
             return render(refused(reason), spec.name);
           }
+          /* 2026-09-28 (GS-S-1, coverage-gap sweep): a governed tool writes a
+             governed record, so it needs an editor role in the organization —
+             read live from organization_users, never from the token. The scope
+             check alone let a viewer's own login token (which resolves to every
+             scope) run c2c_file_draft_for_review, which the REST route and AnA
+             both refuse them. Same decision as AnA's registry wrapper. */
+          if (spec.governed) {
+            const { editorRoleDecision, editorRoleRefusalText } = await import('../../services/part11/editor-role');
+            const decision = await editorRoleDecision(principal.userId, principal.organizationId);
+            if (!decision.allowed) {
+              const reason = editorRoleRefusalText(spec.name, `${spec.name}`, decision);
+              await writeAudit({ principal, tool: spec.name, governed: spec.governed, outcome: 'denied', durationMs: 0, detail: reason });
+              return render(refused(reason), spec.name);
+            }
+          }
           const ctx: ToolRunContext = {
             principal,
             config,

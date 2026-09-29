@@ -1,0 +1,38 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-28T16:59:56.614Z","pid":9046,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T16:59:56.615Z","pid":9046,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T16:59:56.615Z","pid":9046,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/users-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > reads none of B's user rows, by id, by email, or by scanning 7ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > cannot rewrite B's password hash, MFA secret or reset token, nor delete B's user 3ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > reads its own organization's members, the caller included 2ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > updates its own member's profile 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > INSERT … RETURNING of a non-member is refused, so tenant-users takes the id first 5ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > user_id_for_email answers an existing account’s id, and nothing else 3ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > pre-auth: the sign-in lookup by email finds any tenant’s user, and writes it 5ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > system: SCIM and platform administration read and write every tenant’s users 4ms
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-28T16:59:57.136Z', poolSize: 1 }
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-28T16:59:57.215Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-28T16:59:57.245Z","pid":9046,"hostname":"vm","context":{"userId":286,"tenantId":90301,"resourceId":"288"},"msg":"[audit-service] [AUDIT] user_invited user"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account 267ms
+{"level":30,"time":"2026-09-28T16:59:57.416Z","pid":9046,"hostname":"vm","context":{"userId":286,"tenantId":90302,"resourceId":"289"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-09-28T16:59:57.424Z","pid":9046,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:117:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:462:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of failing or duplicating it 17ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into 150ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  16:59:54
+   Duration  2.86s (transform 1.07s, setup 73ms, import 1.84s, tests 674ms, environment 0ms)
+

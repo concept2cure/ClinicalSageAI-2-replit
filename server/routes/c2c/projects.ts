@@ -79,6 +79,10 @@ import {
 import { serverError } from '../../lib/api-response.js';
 import { createSource, findSourceByChecksum } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 
+// People are named through public.actor_name, not a join on users: since users
+// took row-level security (D3, 2026-09-28) a tenant scope reads only current
+// members, so the join dropped the name of anyone who had left
+// (docs/evidence/D3/2026-09-29-actor-names/).
 const router = Router();
 
 /**
@@ -503,7 +507,7 @@ async function readProgramDetail(id: string, orgId: number): Promise<Record<stri
   const measured = await readinessByProject([id], orgId);
   return {
     ...serializeProgramDetail(rows[0] as Record<string, unknown>),
-    readiness: measured ? (measured.get(id) ?? 0) : null,
+    readiness: measured?.get(id) ?? null,
   };
 }
 
@@ -552,7 +556,7 @@ router.get('/', async (req: Request, res: Response) => {
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.organization_id = $1 AND p.deleted_at IS NULL
           AND ($4::boolean OR p.status <> 'archived')
         ORDER BY p.updated_at DESC
@@ -570,9 +574,15 @@ router.get('/', async (req: Request, res: Response) => {
       (page as Array<{ id: string }>).map((p) => p.id),
       orgId,
     );
-    for (const p of page as Array<{ id: string; readiness: number }>) {
-      const r = real?.get(p.id);
-      if (r != null) p.readiness = r;
+    /* A measurement that failed, or a program with no governed sections to
+       measure, is no figure: null, which the card renders as "not measured".
+       Both used to fall back to the stored progress_percent 0 — a failed read
+       rendered as a measured "0% ready", which the note above admits was "not
+       a good answer". A share over no sections is undefined, as a mean over
+       no programs is. (A program with its dossier spine and nothing approved
+       is a real, measured 0 and still reads 0%.) */
+    for (const p of page as Array<{ id: string; readiness: number | null }>) {
+      p.readiness = real?.get(p.id) ?? null;
     }
 
     return res.json({
@@ -938,7 +948,7 @@ router.post('/', async (req: Request, res: Response) => {
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.id = $1 AND p.organization_id = $2`,
       [newId, orgId],
     );
@@ -1116,7 +1126,7 @@ router.get('/:id/team', async (req: Request, res: Response) => {
     const { rows } = await pool.query(
       `SELECT p.lead_user_id, p.team_members, u.name, u.email
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.id = $1 AND p.organization_id = $2
         LIMIT 1`,
       [req.params.id, orgId],
@@ -1308,7 +1318,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
          COALESCE(u.name, u.email) AS actor_name,
          al.occurred_at, al.ip_address
        FROM audit_logs al
-       LEFT JOIN users u ON u.id = COALESCE(al.actor_id, al.user_id)
+       LEFT JOIN LATERAL public.actor_name(COALESCE(al.actor_id, al.user_id)) u ON TRUE
        WHERE al.tenant_id = $2
          AND (al.record_id = $1
               OR al.target = 'regulatory_program:' || $1

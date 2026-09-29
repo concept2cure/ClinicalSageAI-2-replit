@@ -1,0 +1,115 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-28T17:55:20.702Z","pid":2851,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T17:55:20.704Z","pid":2851,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T17:55:20.704Z","pid":2851,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/drafting-tasks-tenant-scope.dbtest.ts > the drafting routes, positive control (D3) > A starts a task for its own program and reads it back
+[database] Database connection successful
+
+stdout | tests/db/drafting-tasks-tenant-scope.dbtest.ts > the drafting routes, positive control (D3) > A starts a task for its own program and reads it back
+[database] Database connection successful { timestamp: '2026-09-28T17:55:21.145Z', poolSize: 1 }
+
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > the drafting routes, positive control (D3) > A starts a task for its own program and reads it back 118ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > the drafting routes, positive control (D3) > the route refuses B's task and B's program to A's token 19ms
+ × tests/db/drafting-tasks-tenant-scope.dbtest.ts > tenant A's scope cannot reach tenant B's drafts (D3) > reads none of B's drafting tasks, by id, by program, or by scanning the content 11ms
+   → A's scope read B's draft: expected { byId: [ { …(2) } ], …(2) } to deeply equal { byId: [], byProgram: [], scan: [] }
+ × tests/db/drafting-tasks-tenant-scope.dbtest.ts > tenant A's scope cannot reach tenant B's drafts (D3) > cannot rewrite or delete B's draft 6ms
+   → expected { updated: 1, deleted: 1 } to deeply equal { updated: +0, deleted: +0 }
+ × tests/db/drafting-tasks-tenant-scope.dbtest.ts > tenant A's scope cannot reach tenant B's drafts (D3) > cannot file a task under B's program, or under no program at all 5ms
+   → expected { intoB: 1, orphan: 1 } to deeply equal { intoB: +0, orphan: +0 }
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > what still reaches the drafts (D3) > A's scope reads and writes its own program's tasks 2ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > what still reaches the drafts (D3) > the platform scope reads every organization's tasks 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/drafting-tasks-tenant-scope.dbtest.ts > tenant A's scope cannot reach tenant B's drafts (D3) > reads none of B's drafting tasks, by id, by program, or by scanning the content
+AssertionError: A's scope read B's draft: expected { byId: [ { …(2) } ], …(2) } to deeply equal { byId: [], byProgram: [], scan: [] }
+
+- Expected
++ Received
+
+  {
+-   "byId": [],
+-   "byProgram": [],
+-   "scan": [],
++   "byId": [
++     {
++       "draft_content": "wo03_2851_muljsopq-B-CONFIDENTIAL-DRAFT",
++       "task_id": "wo03_2851_muljsopq-task-b",
++     },
++   ],
++   "byProgram": [
++     {
++       "task_id": "wo03_2851_muljsopq-task-b",
++     },
++   ],
++   "scan": [
++     {
++       "task_id": "wo03_2851_muljsopq-task-b",
++     },
++   ],
+  }
+
+ ❯ tests/db/drafting-tasks-tenant-scope.dbtest.ts:153:7
+    151|       { byId: byId.rows, byProgram: byProgram.rows, scan: scan.rows },
+    152|       "A's scope read B's draft"
+    153|     ).toEqual({ byId: [], byProgram: [], scan: [] });
+       |       ^
+    154|   });
+    155|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/drafting-tasks-tenant-scope.dbtest.ts > tenant A's scope cannot reach tenant B's drafts (D3) > cannot rewrite or delete B's draft
+AssertionError: expected { updated: 1, deleted: 1 } to deeply equal { updated: +0, deleted: +0 }
+
+- Expected
++ Received
+
+  {
+-   "deleted": 0,
+-   "updated": 0,
++   "deleted": 1,
++   "updated": 1,
+  }
+
+ ❯ tests/db/drafting-tasks-tenant-scope.dbtest.ts:164:36
+    162|     );
+    163|     try {
+    164|       expect({ updated, deleted }).toEqual({ updated: 0, deleted: 0 });
+       |                                    ^
+    165|       expect(await draftOfB()).toBe(SECRET);
+    166|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/drafting-tasks-tenant-scope.dbtest.ts > tenant A's scope cannot reach tenant B's drafts (D3) > cannot file a task under B's program, or under no program at all
+AssertionError: expected { intoB: 1, orphan: 1 } to deeply equal { intoB: +0, orphan: +0 }
+
+- Expected
++ Received
+
+  {
+-   "intoB": 0,
+-   "orphan": 0,
++   "intoB": 1,
++   "orphan": 1,
+  }
+
+ ❯ tests/db/drafting-tasks-tenant-scope.dbtest.ts:187:33
+    185|     );
+    186|     try {
+    187|       expect({ intoB, orphan }).toEqual({ intoB: 0, orphan: 0 });
+       |                                 ^
+    188|     } finally {
+    189|       await owner.query('DELETE FROM drafting_tasks WHERE task_id = AN…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed (7)
+   Start at  17:55:18
+   Duration  2.94s (transform 1.15s, setup 75ms, import 2.04s, tests 555ms, environment 0ms)
+

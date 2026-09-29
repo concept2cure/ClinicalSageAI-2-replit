@@ -157,7 +157,7 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
     fields: [
       // Options and help text come from the member list (reviewerFieldFor).
       { key: 'reviewerUserId', label: 'Reviewer account', type: 'select', options: [] },
-      { key: 'reviewerName', label: 'Reviewer name', type: 'text', placeholder: 'Defaults to the account’s name; required when there is no account' },
+      { key: 'reviewerName', label: 'Reviewer name', type: 'text', placeholder: 'Required when the reviewer has no account; a chosen account shows its own name here' },
       { key: 'role', label: 'Review role', type: 'select', options: REVIEW_ROLE, default: 'scientific', half: true },
       { key: 'dueDate', label: 'Due date', type: 'date', half: true },
       REASON,
@@ -211,7 +211,8 @@ const candidateLabel = (m: ReviewerCandidate) => `${m.name || m.email} · ${m.ro
 /** The reviewer-account select for the member list's current state. It never
  *  shows a failed read as an organization with no one to assign. */
 function reviewerFieldFor(field: C2CFormField, choice: ReviewerChoice): C2CFormField {
-  const signsOwn = 'The assigned account signs its own review, as review or approval.';
+  // The server stores an account's own name and refuses a different one (SEC-C-7).
+  const signsOwn = 'The assigned account signs its own review, as review or approval, and the review is listed under the account’s own name.';
   switch (choice.state) {
     case 'ready':
       return {
@@ -230,6 +231,25 @@ function reviewerFieldFor(field: C2CFormField, choice: ReviewerChoice): C2CFormF
   }
 }
 
+/** The chosen account's name, which the review is listed under (the server
+ *  stores it and refuses another, SEC-C-7); null when no account is chosen. */
+function accountNameOf(choice: ReviewerChoice, userId: string | undefined): string | null {
+  if (!userId || choice.state !== 'ready') return null;
+  const m = choice.members.find((x) => String(x.id) === userId);
+  return m ? m.name || m.email : null;
+}
+
+/** The request-a-review fields for the member list's current state. The name
+ *  field used to stay free beside a chosen account and was filled in only at
+ *  submit, and only when blank, so the drawer could show one name and assign
+ *  another person's account. It now shows that account's name, read-only
+ *  (SEC-C-7 follow-on (b), periodic review 2026-09-28, editor family). */
+function reviewRequestField(f: C2CFormField, choice: ReviewerChoice): C2CFormField {
+  if (f.key === 'reviewerUserId') return reviewerFieldFor(f, choice);
+  if (f.key === 'reviewerName') return { ...f, derive: (vals) => accountNameOf(choice, vals.reviewerUserId) };
+  return f;
+}
+
 /** The drawer for `kind`, opened on the row it acts on. */
 export function configFor(kind: PdevFormKind, target?: PdevFormTarget, reviewers?: ReviewerChoice): C2CFormConfig {
   const base = FORMS[kind];
@@ -238,7 +258,7 @@ export function configFor(kind: PdevFormKind, target?: PdevFormTarget, reviewers
     ? base.fields.map((f) => (defaults[f.key] == null ? f : { ...f, default: defaults[f.key] }))
     : base.fields;
   const fields = kind === 'review-request'
-    ? withDefaults.map((f) => (f.key === 'reviewerUserId' ? reviewerFieldFor(f, reviewers ?? { state: 'unavailable' }) : f))
+    ? withDefaults.map((f) => reviewRequestField(f, reviewers ?? { state: 'unavailable' }))
     : withDefaults;
   const sub = target?.label ? `${target.label} — ${base.sub ?? ''}`.trim() : base.sub;
   return { ...base, sub, fields };
@@ -375,14 +395,9 @@ export function ProtocolDevForm({ kind, documentId, target, onCancel, onDone, on
       else onError('A disposition is an electronic signature and cannot be recorded from here. Nothing was recorded.');
       return;
     }
-    let values = v;
-    if (kind === 'review-request' && v.reviewerUserId && !(v.reviewerName ?? '').trim() && reviewers.state === 'ready') {
-      // A chosen account supplies the name the review is listed under.
-      const m = reviewers.members.find((x) => String(x.id) === v.reviewerUserId);
-      if (m) values = { ...v, reviewerName: m.name || m.email };
-    }
     try {
-      await submitPdevForm(kind, documentId, target, values);
+      // A chosen account's name arrives in v.reviewerName: its field derives it.
+      await submitPdevForm(kind, documentId, target, v);
       onDone(kind);
     } catch (e) {
       onError(e instanceof Error ? e.message : String(e));

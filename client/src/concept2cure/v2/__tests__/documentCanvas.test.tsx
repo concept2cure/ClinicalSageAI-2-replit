@@ -283,3 +283,19 @@ describe('DocumentCanvas — accessibility smoke', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 });
+
+describe('DocumentCanvas — a failed program read says so (GE-H-2, 2026-09-28)', () => {
+  it.each([
+    ['a 500', () => ok({ error: 'boom' }, 500)],
+    ['a network failure', () => { throw new Error('network down'); }],
+  ])('after %s it does not claim the program is still being read', async (_label, answer) => {
+    mockApi();
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      method === 'GET' && url === `/api/c2c/projects/${PID}` ? answer() : base(method, url),
+    );
+    render(<Host />);
+    await waitFor(() => expect(screen.getByText(/Program details could not be read/)).toBeTruthy());
+    expect(screen.queryByText(/Reading the program…/)).toBeNull();
+  });
+});

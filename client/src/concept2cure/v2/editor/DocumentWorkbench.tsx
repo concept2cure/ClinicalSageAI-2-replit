@@ -43,7 +43,7 @@
  * in, and the pane is not drawn. One conversation on screen, never two.
  */
 import { AnaActionChips } from '../AnaActionChips';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
@@ -98,6 +98,7 @@ import {
 import { consumeNavParams } from '../navParams';
 import {
   advertisedScreenActions,
+  listedChoices,
   notifySurfaceActionReady,
   useSurfaceActionHandlers,
 } from '../surfaceActions';
@@ -493,6 +494,78 @@ async function readJson<T = any>(
   }
 }
 
+/* ── What the caller may do to this document (GE-P-3, 2026-09-28) ──
+   GET /api/authoring/docs/:docId returns `access`: per governed act, the
+   decision the write route will make for this caller (callerDocumentAccess in
+   server/routes/authoring.router.ts), or null where the server could not
+   determine it. A refused act is shown DISABLED with the server's reason as
+   visible text the control is described by — never hidden. Anything unknown
+   (the read failed, no `access`, a malformed entry) is left enabled and the
+   write route decides: this never invents a denial or an allowance. */
+export interface DocumentActGate {
+  allowed: boolean;
+  reason: string | null;
+}
+export interface DocumentAccess {
+  freeze: DocumentActGate | null;
+  esign: DocumentActGate | null;
+  fileToVault: DocumentActGate | null;
+  assignReview: DocumentActGate | null;
+}
+export const UNKNOWN_DOCUMENT_ACCESS: DocumentAccess = {
+  freeze: null,
+  esign: null,
+  fileToVault: null,
+  assignReview: null,
+};
+
+function readActGate(raw: unknown): DocumentActGate | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const g = raw as { allowed?: unknown; reason?: unknown };
+  if (typeof g.allowed !== 'boolean') return null;
+  return { allowed: g.allowed, reason: typeof g.reason === 'string' && g.reason.trim() ? g.reason : null };
+}
+
+/** Parse the server's `access`; anything missing or malformed is unknown. */
+export function readDocumentAccess(raw: unknown): DocumentAccess {
+  if (!raw || typeof raw !== 'object') return UNKNOWN_DOCUMENT_ACCESS;
+  const a = raw as Record<string, unknown>;
+  return {
+    freeze: readActGate(a.freeze),
+    esign: readActGate(a.esign),
+    fileToVault: readActGate(a.fileToVault),
+    assignReview: readActGate(a.assignReview),
+  };
+}
+
+/** The sentence to show for a refused act; null when allowed OR unknown. */
+export function actRefusal(gate: DocumentActGate | null | undefined): string | null {
+  if (!gate || gate.allowed) return null;
+  return gate.reason ?? 'The server does not permit this for your account on this document.';
+}
+
+/** True when the keydown should NOT close a rail or collapse the canvas:
+ *  inside a dialog, the editor's own document, or a text control — each of
+ *  those owns Escape. Lives here (moved 2026-09-28 from DocumentCanvas.tsx,
+ *  which re-exports it) because the workbench's rails ask the same question
+ *  (GA-4) and DocumentCanvas already imports this module. */
+export function escapeBelongsToInner(target: KeyboardEvent['target']): boolean {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest('[role="dialog"], [role="alertdialog"], .ProseMirror, input, textarea, select, [contenteditable="true"]'),
+  );
+}
+
+/** A right rail's own close control, matching AnA's (`ed-comments-close`).
+ *  2026-09-28, coverage-gap sweep GA-4: six rails had none. */
+function RailClose({ label, onClose }: { label: string; onClose: () => void }) {
+  return (
+    <button type="button" className="ed-comments-close" aria-label={label} title={label} onClick={onClose}>
+      {I.close}
+    </button>
+  );
+}
+
 function num(v: number | string | null | undefined): number {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -675,6 +748,8 @@ export function DocumentWorkbench({
    * directly would capture whatever the reason was when the callback was
    * built. */
   const [changeReason, setChangeReason] = useState('');
+  /** The persistent note stating the reason rule (GA-1, 2026-09-28). */
+  const reasonNoteId = useId();
   const changeReasonRef = useRef('');
   useEffect(() => {
     changeReasonRef.current = changeReason;
@@ -739,6 +814,10 @@ export function DocumentWorkbench({
      the gateway reported, the conversation). Null until read; a failed read
      is a failed read, and the header then makes no origin claim. */
   const [docProvenance, setDocProvenance] = useState<DocumentProvenance | null>(null);
+  /** What this caller may do to the open document (GE-P-3); unknown until read. */
+  const [docAccess, setDocAccess] = useState<DocumentAccess>(UNKNOWN_DOCUMENT_ACCESS);
+  const assignRefusalId = useId();
+  const vaultRefusalId = useId();
   /* Bumped after a save or an export so the Exports rail re-reads. A save
      changes the live content hash, which is exactly what its verdict compares
      against — a rail left stale would keep saying "matches the last export"
@@ -793,6 +872,10 @@ export function DocumentWorkbench({
   const [sources, setSources] = useState<SectionSource[]>([]);
   const [sourcesState, setSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [projectSources, setProjectSources] = useState<ProjectSource[]>([]);
+  /* 2026-09-28 (GE-H-1, coverage-gap sweep): the data room's read state. A
+     failed read set the same [] as an empty data room, and the picker then told
+     the author to add documents to a data room that may already hold them. */
+  const [projectSourcesState, setProjectSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   /** Citations the last document-wide re-read could NOT refresh, with the
    *  server's reason. Held rather than toasted away: "3 could not be re-read"
    *  is the finding, and a message that fades in four seconds is not where a
@@ -1093,13 +1176,58 @@ export function DocumentWorkbench({
   useEffect(() => {
     if (rail !== 'ana') return;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
+      /* An Escape something inside already handled — the section rename, the
+         governed sign-off dialog in this rail — is not also a request to close
+         AnA (2026-09-28; it closed both). The composer does not handle Escape,
+         so Escape there still closes the rail. */
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
       event.preventDefault();
       closeAna();
     };
     document.addEventListener('keydown', closeOnEscape);
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [closeAna, rail]);
+
+  /* 2026-09-28, coverage-gap sweep GA-4. Escape closed only the AnA rail
+     (above), and six rails had no close control, so the way out of History,
+     Comments, Sources, Signatures, Audit or Exports was to find the toolbar
+     toggle again. Every other rail now closes on Escape and from its own
+     close button, and focus goes back to the toggle that opened it — the
+     toggle is the one stable control, since the close button unmounts with
+     the rail. Escape that belongs to something inside (a dialog, the editor,
+     a text field) is left alone, as the canvas does, and one the page already
+     handled (defaultPrevented, e.g. the rename group) is not taken twice. */
+  const railToggleRefs = useRef<Partial<Record<string, HTMLButtonElement | null>>>({});
+  const railReturnFocusRef = useRef<string | null>(null);
+  const closeRail = useCallback(() => {
+    setRail(current => {
+      railReturnFocusRef.current = current;
+      return null;
+    });
+  }, []);
+  useEffect(() => {
+    if (rail !== null) return;
+    const from = railReturnFocusRef.current;
+    railReturnFocusRef.current = null;
+    if (from && from !== 'ana') railToggleRefs.current[from]?.focus({ preventScroll: true });
+  }, [rail]);
+  useEffect(() => {
+    if (rail === null || rail === 'ana') return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      if (escapeBelongsToInner(event.target)) return;
+      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
+      /* Only an Escape from inside the workbench, or from the body (where
+         focus sits after a click on non-focusable chrome). One from a host's
+         own control — the canvas's Back bar — is the host's. */
+      const t = event.target;
+      if (t instanceof Node && t !== document.body && !rootRef.current?.contains(t)) return;
+      event.preventDefault();
+      closeRail();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [closeRail, rail]);
 
   useEffect(() => {
     if (anaFirstPaintRef.current) {
@@ -1132,16 +1260,20 @@ export function DocumentWorkbench({
   useEffect(() => {
     provenanceDocRef.current = activeDocId;
     setDocProvenance(null);
+    setDocAccess(UNKNOWN_DOCUMENT_ACCESS);
     if (!activeDocId) return;
     const wanted = activeDocId;
-    void readJson<{ document?: { provenance?: unknown } }>(
+    void readJson<{ document?: { provenance?: unknown }; access?: unknown }>(
       `/api/authoring/docs/${encodeURIComponent(wanted)}`,
     ).then(({ ok, body }) => {
       if (provenanceDocRef.current !== wanted) return;
       if (!ok || !body?.document) return;
       setDocProvenance(describeProvenance(body.document.provenance));
+      /* GE-P-3: the same read carries the caller's access. */
+      setDocAccess(readDocumentAccess(body.access));
     });
-  }, [activeDocId]);
+    /* Re-read on a status change too: a freeze changes what may be filed. */
+  }, [activeDocId, activeDoc?.status]);
 
   /* ── Load sections when the active document changes ──
      Doc-scoped like the comments/audit loaders below: the ref stamps the
@@ -1442,12 +1574,13 @@ export function DocumentWorkbench({
       const guarded = authoringGuard() ?? dirtyGuard();
       if (guarded) return guarded;
       const raw = (params.title ?? '').trim();
-      if (!raw) return { ok: false, reason: 'No document named.' };
       // Not-ready, not failed: the bus holds the directive and re-attempts on
       // this surface's ready signal below — the navigate→act gap.
       if (docsState === 'loading')
         return { ok: false, reason: 'The document list is still loading.', retry: true };
       if (docsState === 'error') return { ok: false, reason: 'The document list could not be read.' };
+      const listed = () => listedChoices(docs.map(d => d.title), 'Documents listed');
+      if (!raw) return { ok: false, reason: `No document named.${listed()}` };
       /* The same resolution idiom as the deep-link hand-off above — normalized
          exact, then containment — except that MULTIPLE containment hits are an
          honest refusal here. The legacy inline path silently took the first;
@@ -1460,11 +1593,17 @@ export function DocumentWorkbench({
       if (pool.length === 0) {
         return {
           ok: false,
-          reason: `No document matching "${raw}" in scope (status filter: ${status.replace('_', ' ')}).`,
+          reason: `No document matching "${raw}" in scope (status filter: ${status.replace('_', ' ')}).${listed()}`,
         };
       }
       if (pool.length > 1) {
-        return { ok: false, reason: `"${raw}" matches ${pool.length} documents — name one exactly.` };
+        return {
+          ok: false,
+          reason: `"${raw}" matches ${pool.length} documents — name one exactly.${listedChoices(
+            pool.map(d => d.title),
+            'Matches',
+          )}`,
+        };
       }
       const match = pool[0];
       if (match.id === activeDocId) return { ok: true, detail: 'Already open' };
@@ -1654,12 +1793,16 @@ export function DocumentWorkbench({
     const pid = programId;
     if (!pid) {
       setProjectSources([]);
+      setProjectSourcesState('idle');
       return;
     }
+    setProjectSourcesState('loading');
     const { ok, body } = await readJson<{ sources?: ProjectSource[] }>(
       `/api/c2c/projects/${encodeURIComponent(pid)}/sources`
     );
-    setProjectSources(ok && Array.isArray(body?.sources) ? body!.sources! : []);
+    const read = ok && Array.isArray(body?.sources);
+    setProjectSources(read ? body!.sources! : []);
+    setProjectSourcesState(read ? 'ready' : 'error');
   }, [programId]);
 
   /* ── Recompute the revision ledger server-side ──
@@ -2450,6 +2593,23 @@ export function DocumentWorkbench({
   useEffect(() => {
     setRenaming(false);
   }, [activeSectionId]);
+  /* 2026-09-28, coverage-gap sweep GA-6: every exit from the rename group
+     (Escape, Cancel, a no-change or successful save) unmounted the control
+     that held focus and left it on <body>. Those exits now go through
+     closeRename, and focus returns to the Rename button once the header has
+     re-rendered. The section-change reset above does not: the user moved
+     somewhere else on purpose. */
+  const renameBtnRef = useRef<HTMLButtonElement>(null);
+  const renameReturnFocusRef = useRef(false);
+  const closeRename = useCallback(() => {
+    renameReturnFocusRef.current = true;
+    setRenaming(false);
+  }, []);
+  useEffect(() => {
+    if (renaming || !renameReturnFocusRef.current) return;
+    renameReturnFocusRef.current = false;
+    renameBtnRef.current?.focus({ preventScroll: true });
+  }, [renaming]);
 
   const openRename = useCallback(() => {
     if (!activeSection) return;
@@ -2467,7 +2627,7 @@ export function DocumentWorkbench({
       return;
     }
     if (code === activeSection.code && title === activeSection.title) {
-      setRenaming(false);
+      closeRename();
       return;
     }
     setRenameBusy(true);
@@ -2496,7 +2656,7 @@ export function DocumentWorkbench({
       setSections(ss =>
         ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? { code, title }) } : s))
       );
-      setRenaming(false);
+      closeRename();
       fireToast(`Section renamed — ${code} · ${title}. Its content and history are unchanged.`);
     } catch (e) {
       const err = e as Partial<ApiRequestError> & { message?: string };
@@ -2523,7 +2683,7 @@ export function DocumentWorkbench({
     } finally {
       setRenameBusy(false);
     }
-  }, [activeSection, renameCode, renameTitle, fireToast]);
+  }, [activeSection, renameCode, renameTitle, fireToast, closeRename]);
 
   /* ── Move the open section within its document ──
      `order_index` is what the tree AND the export assembler order by, and
@@ -2762,7 +2922,7 @@ export function DocumentWorkbench({
     : null;
 
   return (
-    <div className="ed" ref={rootRef} data-comments={rail != null || undefined}>
+    <div className="ed" ref={rootRef} data-comments={rail != null || undefined} data-rail={rail ?? undefined}>
       {/* ── Left: document + section tree ── */}
       <aside className="ed-tree">
         <div className="ed-tree-h">
@@ -3168,6 +3328,7 @@ export function DocumentWorkbench({
             <button
               className="btn ghost"
               style={{ height: 30 }}
+              ref={el => { railToggleRefs.current.comments = el; }}
               onClick={() => setRail(rail === 'comments' ? null : 'comments')}
               data-active={rail === 'comments' || undefined}
             >
@@ -3179,6 +3340,7 @@ export function DocumentWorkbench({
             <button
               className="btn ghost"
               style={{ height: 30 }}
+              ref={el => { railToggleRefs.current.history = el; }}
               onClick={() => setRail(rail === 'history' ? null : 'history')}
               data-active={rail === 'history' || undefined}
             >
@@ -3190,6 +3352,7 @@ export function DocumentWorkbench({
             <button
               className="btn ghost"
               style={{ height: 30 }}
+              ref={el => { railToggleRefs.current.sources = el; }}
               onClick={() => setRail(rail === 'sources' ? null : 'sources')}
               data-active={rail === 'sources' || undefined}
               data-testid="sources-rail-open"
@@ -3205,6 +3368,7 @@ export function DocumentWorkbench({
             <button
               className="btn ghost"
               style={{ height: 30 }}
+              ref={el => { railToggleRefs.current.signatures = el; }}
               onClick={() => setRail(rail === 'signatures' ? null : 'signatures')}
               data-active={rail === 'signatures' || undefined}
             >
@@ -3216,6 +3380,7 @@ export function DocumentWorkbench({
             <button
               className="btn ghost"
               style={{ height: 30 }}
+              ref={el => { railToggleRefs.current.audit = el; }}
               onClick={() => setRail(rail === 'audit' ? null : 'audit')}
               data-active={rail === 'audit' || undefined}
             >
@@ -3229,6 +3394,7 @@ export function DocumentWorkbench({
             <button
               className="btn ghost"
               style={{ height: 30 }}
+              ref={el => { railToggleRefs.current.exports = el; }}
               onClick={() => setRail(rail === 'exports' ? null : 'exports')}
               data-active={rail === 'exports' || undefined}
               data-testid="exports-rail-open"
@@ -3242,6 +3408,7 @@ export function DocumentWorkbench({
             <button
               className="btn ghost"
               style={{ height: 30 }}
+              ref={el => { railToggleRefs.current.vault = el; }}
               onClick={() => setRail(rail === 'vault' ? null : 'vault')}
               data-active={rail === 'vault' || undefined}
               data-testid="vault-rail-open"
@@ -3251,28 +3418,39 @@ export function DocumentWorkbench({
             <button
               className="btn ghost"
               style={{ height: 30 }}
+              ref={el => { railToggleRefs.current.tasks = el; }}
               onClick={() => setRail(rail === 'tasks' ? null : 'tasks')}
               data-active={rail === 'tasks' || undefined}
               data-testid="tasks-rail-open"
             >
               {I.checkSquare} Tasks
             </button>
+            {/* GE-P-3 (2026-09-28): disabled, not hidden, when the server
+                will refuse this caller — the reason is the text beside it. */}
             {activeDoc && (
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
                 onClick={() => setAssignReviewOpen(true)}
+                disabled={!!actRefusal(docAccess.assignReview)}
+                aria-describedby={actRefusal(docAccess.assignReview) ? assignRefusalId : undefined}
                 data-testid="assign-review-open"
               >
                 {I.user} Assign review
               </button>
+            )}
+            {activeDoc && actRefusal(docAccess.assignReview) && (
+              <span id={assignRefusalId} style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 240 }}>
+                {actRefusal(docAccess.assignReview)}
+              </span>
             )}
             {activeDoc && (
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
                 onClick={() => setFileToVaultOpen(true)}
-                disabled={dirty}
+                disabled={dirty || !!actRefusal(docAccess.fileToVault)}
+                aria-describedby={actRefusal(docAccess.fileToVault) ? vaultRefusalId : undefined}
                 title={
                   dirty
                     ? 'Save the open section first — the vault files the saved document.'
@@ -3285,37 +3463,68 @@ export function DocumentWorkbench({
                 {I.vault} File to vault
               </button>
             )}
+            {activeDoc && actRefusal(docAccess.fileToVault) && (
+              <span id={vaultRefusalId} style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 240 }}>
+                {actRefusal(docAccess.fileToVault)}
+              </span>
+            )}
             {/* Reason for change, stated once per section and carried on every
                 save of it. Inline beside Save rather than a dialog: there is no
                 autosave here, but Save and ⌘S each fire many times while
                 working through a section, and a modal on each would be the
                 friction the regulation does not ask for. */}
+            {/* 2026-09-28, coverage-gap sweep GA-1: the rule lived in the
+                placeholder, gone after one keystroke, and why Save stayed
+                inert was a `title` on a disabled button, which a keyboard
+                never reaches. The field is now aria-required, and the rule is
+                a persistent note both the field and Save are described by —
+                the ProtocolDevSection `pde-sec-state` pattern. */}
             {dirty && !docSealed && (
-              <input
-                className="de-input"
-                style={{ height: 30, width: 260 }}
-                value={changeReason}
-                onChange={e => setChangeReason(e.target.value)}
-                placeholder="Why this changed (at least 8 characters)"
-                aria-label="Reason for change"
-                data-testid="change-reason"
-              />
+              <>
+                <input
+                  className="de-input"
+                  style={{ height: 30, width: 260 }}
+                  value={changeReason}
+                  onChange={e => setChangeReason(e.target.value)}
+                  placeholder="Why this changed (at least 8 characters)"
+                  aria-label="Reason for change"
+                  aria-required="true"
+                  aria-describedby={reasonNoteId}
+                  data-testid="change-reason"
+                />
+                <span
+                  id={reasonNoteId}
+                  aria-live="polite"
+                  style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 220 }}
+                  data-testid="change-reason-note"
+                >
+                  {changeReason.trim().length < 8
+                    ? 'Required to save: at least 8 characters, recorded with the revision.'
+                    : 'Recorded with the revision.'}
+                </span>
+              </>
             )}
             <button
               className="btn primary"
               style={{ height: 30 }}
               onClick={() => void editorRef.current?.save()}
+              aria-describedby={dirty && !docSealed ? reasonNoteId : undefined}
               disabled={!dirty || saving || docSealed || changeReason.trim().length < 8}
               title={
                 docSealed
                   ? 'This document is frozen — its content cannot be edited.'
-                  : dirty && changeReason.trim().length < 8
-                    ? 'Say why this section changed, in at least 8 characters — it is recorded with the revision.'
-                    : undefined
+                  : !activeSection
+                    ? 'Open a section to edit and save it.'
+                    : dirty && changeReason.trim().length < 8
+                      ? 'Say why this section changed, in at least 8 characters — it is recorded with the revision.'
+                      : undefined
               }
               data-testid="save-section"
             >
-              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : 'Saved'}
+              {/* "Saved" is a claim about a section's save state. It fell through
+                  to that word whenever nothing was dirty — including with no
+                  document or section open ("eCTD › No document" … "Saved"). */}
+              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
             </button>
             <button
               className="btn ghost"
@@ -3379,6 +3588,8 @@ export function DocumentWorkbench({
                 }}
                 fireToast={fireToast}
                 signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+                freezeRefusal={actRefusal(docAccess.freeze)}
+                esignRefusal={actRefusal(docAccess.esign)}
               />
             )}
             {/* The authoring → filing seam: place the OPEN document into an
@@ -3546,7 +3757,7 @@ export function DocumentWorkbench({
                       onKeyDown={e => {
                         if (e.key === 'Escape') {
                           e.preventDefault();
-                          setRenaming(false);
+                          closeRename();
                         } else if (e.key === 'Enter') {
                           e.preventDefault();
                           void saveRename();
@@ -3580,7 +3791,7 @@ export function DocumentWorkbench({
                         className="btn ghost"
                         style={{ height: 30 }}
                         disabled={renameBusy}
-                        onClick={() => setRenaming(false)}
+                        onClick={closeRename}
                       >
                         Cancel
                       </button>
@@ -3596,6 +3807,7 @@ export function DocumentWorkbench({
                           className="nda-open"
                           style={{ marginLeft: 8, verticalAlign: 'middle' }}
                           title="Rename this section's code and title — its content and history are unchanged"
+                          ref={renameBtnRef}
                           onClick={openRename}
                         >
                           {I.penLine} Rename
@@ -3742,7 +3954,10 @@ export function DocumentWorkbench({
                     {String(activeDoc?.status).toUpperCase() === 'APPROVED'
                       ? 'This document has been approved and frozen. Its content is part of the signed record and cannot be edited.'
                       : 'This document is frozen. Its content is sealed under a content hash and cannot be edited.'}{' '}
-                    Create a new version to make further changes.
+                    {/* 2026-09-28 (GE-P-2, coverage-gap sweep): this said "Create a new
+                        version to make further changes" — a capability nothing provides.
+                        The remedy that exists is a new document; this one stays the record. */}
+                    To make further changes, start a new document in Authoring; this one remains the record.
                   </div>
                 )}
                 {/* Above the canvas, at reading width: the accept decision is
@@ -4172,7 +4387,10 @@ export function DocumentWorkbench({
       {/* ── Right: history / comments rail ── */}
       {rail === 'history' && (
         <aside className="ed-comments">
-          <div className="ed-comments-h">Revision history</div>
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Revision history</span>
+            <RailClose label="Close revision history" onClose={closeRail} />
+          </div>
           {/* ── The ledger: history as a checkable fact ──
               Every revision is a link in a hash chain the database refuses to
               edit; this control recomputes the whole chain from stored content
@@ -4195,29 +4413,37 @@ export function DocumentWorkbench({
               >
                 {I.shieldCheck} {ledger === 'checking' ? 'Recomputing ledger…' : 'Verify ledger'}
               </button>
-              {ledger === 'error' && (
-                <span style={{ color: 'var(--error)' }}>
-                  Couldn’t recompute the ledger — this is a failed check, not a verdict about the
-                  record.
-                </span>
-              )}
-              {ledger != null &&
-                ledger !== 'error' &&
-                ledger !== 'checking' &&
-                (ledger.intact ? (
+              {/* 2026-09-28, coverage-gap sweep GA-5: the verdict was plain
+                  spans, so a screen reader announced nothing — not even
+                  "Ledger BROKEN". Two live regions, always mounted (a region
+                  mounted together with its text is not announced): status
+                  for an intact chain, alert for a broken one or a failed
+                  check, the split this file uses elsewhere. */}
+              <span role="status" data-testid="ledger-verdict-status">
+                {ledger != null && ledger !== 'error' && ledger !== 'checking' && ledger.intact && (
                   <span className="sp-tone-ok">
                     Ledger intact — {ledger.chainedCount} chained revision
                     {ledger.chainedCount === 1 ? '' : 's'} recomputed and verified
                     {ledger.preLedgerCount > 0 ? `; ${ledger.preLedgerCount} pre-ledger` : ''}.
                   </span>
-                ) : (
+                )}
+              </span>
+              <span role="alert" data-testid="ledger-verdict-alert">
+                {ledger === 'error' && (
+                  <span style={{ color: 'var(--error)' }}>
+                    Couldn’t recompute the ledger — this is a failed check, not a verdict about the
+                    record.
+                  </span>
+                )}
+                {ledger != null && ledger !== 'error' && ledger !== 'checking' && !ledger.intact && (
                   <span style={{ color: 'var(--error)', fontWeight: 600 }}>
                     Ledger BROKEN at {ledger.breaks.length} point
                     {ledger.breaks.length === 1 ? '' : 's'} —{' '}
                     {ledger.breaks.map(b => b.reason).join(', ')}. The history has been altered or
                     forked; treat this section’s record as disputed.
                   </span>
-                ))}
+                )}
+              </span>
             </div>
           )}
           {!activeSection ? (
@@ -4304,7 +4530,10 @@ export function DocumentWorkbench({
           is inferred from the draft text. */}
       {rail === 'signatures' && (
         <aside className="ed-comments">
-          <div className="ed-comments-h">Electronic signatures</div>
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Electronic signatures</span>
+            <RailClose label="Close electronic signatures" onClose={closeRail} />
+          </div>
           <AuthoringSignatures docId={activeDocId} />
         </aside>
       )}
@@ -4316,7 +4545,10 @@ export function DocumentWorkbench({
           badge would have merged them. */}
       {rail === 'exports' && (
         <aside className="ed-comments">
-          <div className="ed-comments-h">Exports{activeDoc ? ` · ${activeDoc.title}` : ''}</div>
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Exports{activeDoc ? ` · ${activeDoc.title}` : ''}</span>
+            <RailClose label="Close exports" onClose={closeRail} />
+          </div>
           <AuthoringExports docId={activeDocId} refreshKey={exportsEpoch} />
         </aside>
       )}
@@ -4329,14 +4561,17 @@ export function DocumentWorkbench({
         <aside className="ed-comments">
           <div className="ed-comments-h ed-comments-h-row">
             <span>Audit trail{activeDoc ? ` · ${activeDoc.title}` : ''}</span>
-            <button
-              type="button"
-              className="nda-open"
-              onClick={() => activeDocId && void loadAudit(activeDocId)}
-              disabled={!activeDocId || auditState === 'loading'}
-            >
-              {auditState === 'loading' ? 'Loading…' : 'Refresh'}
-            </button>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <button
+                type="button"
+                className="nda-open"
+                onClick={() => activeDocId && void loadAudit(activeDocId)}
+                disabled={!activeDocId || auditState === 'loading'}
+              >
+                {auditState === 'loading' ? 'Loading…' : 'Refresh'}
+              </button>
+              <RailClose label="Close audit trail" onClose={closeRail} />
+            </span>
           </div>
           {!activeDocId ? (
             <EmptyState
@@ -4452,15 +4687,18 @@ export function DocumentWorkbench({
             {/* Document-wide, not section-wide, because the question before an
                 export or a sign-off is "has anything I cite moved?" across the
                 whole document — not one claim at a time. */}
-            <button
-              className="nda-open"
-              onClick={() => void refreshAllSources()}
-              disabled={!activeDocId || refreshingAll}
-              data-testid="refresh-all-sources"
-              title="Re-read every unfrozen citation in this document against its stored source. Frozen citations are left alone."
-            >
-              {refreshingAll ? 'Re-reading…' : 'Re-read all'}
-            </button>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <button
+                className="nda-open"
+                onClick={() => void refreshAllSources()}
+                disabled={!activeDocId || refreshingAll}
+                data-testid="refresh-all-sources"
+                title="Re-read every unfrozen citation in this document against its stored source. Frozen citations are left alone."
+              >
+                {refreshingAll ? 'Re-reading…' : 'Re-read all'}
+              </button>
+              <RailClose label="Close sources" onClose={closeRail} />
+            </span>
           </div>
           {/* The findings from the last document-wide re-read. Kept on the rail
               rather than in a toast: a citation whose source is gone is the
@@ -4524,6 +4762,21 @@ export function DocumentWorkbench({
                   >
                     {I.plus} Record a source
                   </button>
+                ) : projectSourcesState === 'error' ? (
+                  <div role="alert" style={{ fontSize: 12 }}>
+                    The project’s data room could not be read, so no sources are listed. This is
+                    not the same as the data room being empty.
+                    <button className="nda-open" style={{ marginLeft: 8 }} onClick={() => void loadProjectSources()}>
+                      Retry
+                    </button>
+                    <button className="nda-open" style={{ marginLeft: 8 }} onClick={() => setPicking(false)}>
+                      Close
+                    </button>
+                  </div>
+                ) : projectSourcesState === 'loading' ? (
+                  <div role="status" style={{ fontSize: 12, opacity: 0.8 }}>
+                    Reading the project’s data room…
+                  </div>
                 ) : projectSources.length === 0 ? (
                   <div style={{ fontSize: 12, opacity: 0.8 }}>
                     No project sources available. Add documents to the project’s data room first, or
@@ -4658,7 +4911,7 @@ export function DocumentWorkbench({
             projectSources={projectSources}
             onCite={(sourceId) => editorRef.current?.insertCitation(sourceId) ?? false}
             onInsertReference={(text) => editorRef.current?.insertReference(text) ?? false}
-            onClose={() => setRail(null)}
+            onClose={closeRail}
             fireToast={fireToast}
           />
         </aside>
@@ -4675,8 +4928,9 @@ export function DocumentWorkbench({
             docTitle={activeDoc?.title ?? null}
             refreshKey={tasksEpoch}
             onAssign={() => setAssignReviewOpen(true)}
+            assignRefusal={actRefusal(docAccess.assignReview)}
             onNav={onNav}
-            onClose={() => setRail(null)}
+            onClose={closeRail}
             fireToast={fireToast}
           />
         </aside>
@@ -4684,7 +4938,10 @@ export function DocumentWorkbench({
 
       {rail === 'comments' && (
         <aside className="ed-comments">
-          <div className="ed-comments-h">Comments</div>
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Comments</span>
+            <RailClose label="Close comments" onClose={closeRail} />
+          </div>
           {activeSection && (
             <div
               style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)' }}

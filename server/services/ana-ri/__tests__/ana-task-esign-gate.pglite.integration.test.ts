@@ -23,6 +23,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vites
 import { PGlite } from '@electric-sql/pglite';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from './governed-action-ledger.fixture';
+import { pglitePool, TASK_GRAPH_PGLITE_DDL } from './pglite-pool.fixture';
 
 let pg: PGlite;
 
@@ -43,22 +44,13 @@ vi.mock('../../roleBasedAccess', () => ({
   },
 }));
 
-const pool = {
-  query: async (sql: string, params?: unknown[]) => {
-    const r = await pg.query(sql, params as unknown[]);
-    return {
-      rows: r.rows as Array<Record<string, unknown>>,
-      rowCount: (r as { affectedRows?: number }).affectedRows ?? (r.rows as unknown[]).length,
-    };
-  },
-};
-// connect(): the board write and its task lineage row share one transaction
-// (command-executor boardWriteWithLineage). PGlite is one connection, so the
-// client is that connection.
-const client = { query: (sql: string, p?: unknown[]) => pool.query(sql, p), release: () => undefined };
+// connect(): the board write, its task lineage row and — for a completion — the
+// dependents' moves share one transaction (command-executor
+// boardWriteWithLineage). The pool answers pg's and Drizzle's call shapes.
+const pool = pglitePool(() => pg);
 vi.mock('../../../db', () => ({
-  pool: { query: (sql: string, p?: unknown[]) => pool.query(sql, p), connect: async () => client },
-  getPool: () => ({ query: (sql: string, p?: unknown[]) => pool.query(sql, p), connect: async () => client }),
+  pool: { query: (...a: Parameters<typeof pool.query>) => pool.query(...a), connect: () => pool.connect() },
+  getPool: () => ({ query: (...a: Parameters<typeof pool.query>) => pool.query(...a), connect: () => pool.connect() }),
   db: {},
 }));
 
@@ -172,6 +164,7 @@ beforeAll(async () => {
   // A completion or transition lands only with its task.transition ledger row.
   await pg.exec(AUDIT_LOGS_PGLITE_DDL);
   await pg.exec(GOVERNED_ACTION_LEDGER_PGLITE_DDL);
+  await pg.exec(TASK_GRAPH_PGLITE_DDL);
   await pg.exec(`INSERT INTO organizations (id, name, settings) VALUES (${ORG}, 'Concept2Cure', '{}'::jsonb)`);
   await pg.exec(`INSERT INTO projects (id, organization_id, name) VALUES (${PROJECT}, ${ORG}, 'BX-099')`);
   // Load the executor here, not inside the first test. Its module graph

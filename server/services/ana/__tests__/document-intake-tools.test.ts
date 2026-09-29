@@ -11,7 +11,14 @@
  * path short-circuits on a missing file_id before any pool import.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// 2026-09-28: edit_spreadsheet is confirm-class, and a confirmed call now runs only
+// for an identified member with an editor role (writeRoleRefusal). These smoke
+// tests model a member's confirmed call; the role is stubbed so no DB is needed.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({ resolveSignerOrgRole: vi.fn(async () => 'member') }));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 import { getToolHandler } from '../AnaToolExecutor.js';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
@@ -44,7 +51,7 @@ describe('document intake tools — input validation (no DB needed)', () => {
   for (const name of INTAKE_TOOLS) {
     it(`${name} returns a structured error when file_id is missing`, async () => {
       const handler = getToolHandler(name)!;
-      const result = JSON.parse(await handler({}, { organizationId: 1, humanConfirmed: true }));
+      const result = JSON.parse(await handler({}, { organizationId: 1, userId: 2, humanConfirmed: true }));
       expect(result.error).toMatch(/file_id/);
     });
   }

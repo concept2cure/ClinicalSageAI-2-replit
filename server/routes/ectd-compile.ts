@@ -49,6 +49,7 @@ import { sectionMatches } from '../services/ectd/section-code-match';
 import { formRequirementForDocumentType } from '../services/ectd/section-to-ctd';
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
+import { recordedApplicationId } from '../services/ectd/regulatory-identifiers';
 import {
   resolveRequiredSections,
   type RequiredSectionSet,
@@ -244,29 +245,10 @@ async function resolveCompileAnchor(ident: string, orgId: number): Promise<Compi
   return null;
 }
 
-/**
- * The identifier that goes in the agency's application-number field.
- *
- * `applicationId` becomes `<application-number>` in the FDA us-regional
- * backbone (and the equivalent field in the EU/JP backbones), so it must be the
- * number the AGENCY assigned whenever the program records one. It used to be
- * `anchor.programCode` unconditionally — the sponsor's internal code, e.g.
- * `BX-204` — because at the time nothing in the data model held an agency
- * number. `regulatory_programs.application_number` does now.
- *
- * The chain below keeps the rule the previous comment stated, and only improves
- * what "recorded identity" can mean: the recorded agency number, else the
- * program's own code, else a handle that says plainly it is unassigned. A blank
- * or whitespace column is NOT a recorded number. Nothing is ever invented — an
- * invented agency number is a filing that references another sponsor's
- * application.
- */
+/** The agency application-number field from the program record — the one rule
+ *  (services/ectd/regulatory-identifiers.ts), shared with the export. */
 function applicationIdFor(anchor: CompileAnchor, fallbackKey: string): string {
-  const recorded = (anchor.applicationNumber ?? '').trim();
-  if (recorded !== '') return recorded;
-  const code = (anchor.programCode ?? '').trim();
-  if (code !== '') return code;
-  return fallbackKey;
+  return recordedApplicationId({ applicationNumber: anchor.applicationNumber, programCode: anchor.programCode }, fallbackKey);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -427,6 +409,11 @@ interface CompiledLifecycle {
   }>;
   /** Placed leaves the package does not hold, and why (the transmit blockers). */
   leftOut: Array<{ sectionCode: string; reason: string }>;
+  /** 'filed': bound against what the agency received. 'rehearsal': against the
+   *  latest recorded compile of each earlier sequence, filed or not. */
+  priorState: 'filed' | 'rehearsal';
+  /** Under a rehearsal, the earlier sequences bound against that were never filed. */
+  unfiledPriorSequences: string[];
 }
 
 interface CompiledPackage {
@@ -533,6 +520,14 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
           });
         }
       }
+      if (req.body?.rehearsal === true && spine.sequence.sequenceNumber === '0000') {
+        return res.status(400).json({
+          error: {
+            code: 'REHEARSAL_NOT_APPLICABLE',
+            message: 'A rehearsal binds a follow-up sequence against earlier ones; sequence 0000 has none.',
+          },
+        });
+      }
       return await compileFromSpine(req, res, {
         orgId,
         anchor,
@@ -541,6 +536,15 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
         submissionType: String(submissionType),
         moduleFilter,
         required,
+        priorState: req.body?.rehearsal === true ? 'rehearsal' : 'filed',
+      });
+    }
+    if (req.body?.rehearsal === true) {
+      return res.status(400).json({
+        error: {
+          code: 'REHEARSAL_NOT_APPLICABLE',
+          message: 'A rehearsal binds a follow-up sequence of this program\'s submission; it has no sequence with placed documents.',
+        },
       });
     }
 
@@ -934,9 +938,12 @@ async function compileFromSpine(
     submissionType: string;
     moduleFilter: Set<string> | null;
     required: RequiredSectionSet;
+    /** 'rehearsal' binds a follow-up sequence against recorded, unfiled
+     *  sequences — for an agency validator only (package-from-core). */
+    priorState: 'filed' | 'rehearsal';
   },
 ): Promise<void> {
-  const { orgId, anchor, ident, spine, submissionType, moduleFilter, required } = args;
+  const { orgId, anchor, ident, spine, submissionType, moduleFilter, required, priorState } = args;
   const seq = spine.sequence!;
   const startedAt = new Date().toISOString();
 
@@ -986,6 +993,7 @@ async function compileFromSpine(
       applicationId: applicationIdFor(anchor, `UNASSIGNED-SEQ-${seq.id}`),
       sponsorId: `UNASSIGNED-ORG-${orgId}`,
       sponsorName: `UNASSIGNED (organization ${orgId})`,
+      priorState,
     });
     auditTrail = assembled.auditTrail;
     try {
@@ -1036,6 +1044,8 @@ async function compileFromSpine(
           modifiedFile: m.modifiedFile ?? null,
         })),
         leftOut: assembled.skipped.map((k) => ({ sectionCode: k.sectionCode, reason: k.reason })),
+        priorState: assembled.priorState ?? 'filed',
+        unfiledPriorSequences: assembled.unfiledPriorSequences ?? [],
       };
     } finally {
       await assembled.cleanup();
@@ -1091,6 +1101,17 @@ async function compileFromSpine(
       );
     }
     blockers.push(...leftOut);
+    if (lifecycle?.priorState === 'rehearsal') {
+      const unfiled = lifecycle.unfiledPriorSequences;
+      blockers.push(
+        unfiled.length === 0
+          ? 'Rehearsal: bound against the latest recorded compile of each earlier sequence, not against what the agency received. ' +
+            'This package is for an agency validator; transmit binds only against filed sequences.'
+          : `Rehearsal: bound against sequence${unfiled.length === 1 ? '' : 's'} ${unfiled.join(', ')}, which ` +
+            `${unfiled.length === 1 ? 'was' : 'were'} never filed. This package is for an agency validator; ` +
+            'transmit binds only against filed sequences and would not send these acts.',
+      );
+    }
     const missingRequired = validationResults.filter(
       (v) => v.rule === 'REQUIRED_SECTION_UNPLACED' && v.severity === 'error',
     ).length;
@@ -1122,7 +1143,10 @@ async function compileFromSpine(
   // path feeds the sequence-continuity gate). Non-blocking, same as the draft
   // path — a compilation the caller can download is worth more than a failed
   // request.
-  const compilationName = `IND Compilation — ${anchor.label}`;
+  // A rehearsal is recorded as one: its type keeps it out of the filed prior
+  // state (prior-sequence-loader), and its name says so in every history.
+  const rehearsal = priorState === 'rehearsal';
+  const compilationName = `IND Compilation — ${anchor.label}${rehearsal ? ' (rehearsal — prior not filed)' : ''}`;
   let recorded = false;
   try {
     await pool.query(
@@ -1134,7 +1158,7 @@ async function compileFromSpine(
       [
         orgId,
         compilationName,
-        submissionType,
+        rehearsal ? 'rehearsal' : submissionType,
         compileStatus,
         xmlBackbone,
         JSON.stringify(validationResults),

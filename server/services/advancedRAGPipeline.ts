@@ -76,6 +76,17 @@ import {
 
 export interface RetrievalOptions {
   strategy: 'basic' | 'hyde' | 'multi_query' | 'step_back' | 'decompose' | 'advanced';
+  /**
+   * Pin the model that generates the answer in `queryWithGeneration`, by
+   * gateway model id. Retrieval itself is unaffected — this names the
+   * GENERATOR, which is the only part of a RAG run a model can be qualified
+   * on. Absent (the normal case) the gateway selects for the task type as
+   * before, so this changes nothing for existing callers.
+   *
+   * The gateway still refuses an unapproved model on a high-risk task — see
+   * AIRequest.model. This is attribution, not an approval override.
+   */
+  model?: string;
   limit?: number;
   threshold?: number;
   useReranking?: boolean;
@@ -1580,9 +1591,12 @@ export class AdvancedRAGPipeline {
     // Build context for generation
     const sourceText = this.buildSourceText(context.documents);
 
-    // Generate answer
+    // Generate answer. `options.model`, when set, pins WHICH model answers so
+    // the run can be attributed to it (a PQ requirement); unset keeps the
+    // gateway's task-type selection, which is every existing caller.
     const response = await this.aiRouter.route({
       taskType: 'regulatory_review',
+      ...(options.model ? { model: options.model } : {}),
       messages: [
         {
           role: 'system',

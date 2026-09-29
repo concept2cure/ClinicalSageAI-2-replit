@@ -762,6 +762,11 @@ for (const f of ENFORCEMENT_FLAGS) {
    * rather than listed here. Same reason as goldBankState: this line named "a
    * live extraction path" after extraction became executable, and a dashboard
    * that keeps naming finished work sends the next session to redo it.
+   *
+   * Each blocked component is reported WITH its recorded reason for the same
+   * reason. A bare component name under an "Engineering:" heading reads as code
+   * still to be written; rag's remaining blocker is a corpus that was never
+   * ingested, and a session that cannot see that goes looking for the code.
    */
   function unexecutableComponentsState() {
     try {
@@ -770,9 +775,12 @@ for (const f of ENFORCEMENT_FLAGS) {
       if (!components || typeof components !== 'object') return 'the components that cannot execute yet';
       const blocked = Object.entries(components)
         .filter(([, c]) => c?.required && !c?.executable)
-        .map(([name]) => name);
+        .map(([name, c]) => {
+          const reason = typeof c?.notExecutableReason === 'string' ? c.notExecutableReason.trim() : '';
+          return reason ? `${name} — ${reason}` : `${name} (no reason recorded in the protocol)`;
+        });
       return blocked.length
-        ? `the required component(s) that still cannot execute: ${blocked.join(', ')}`
+        ? `the required component(s) that still cannot execute: ${blocked.join('; ')}`
         : 'every required component can execute';
     } catch {
       return 'the components that cannot execute yet';

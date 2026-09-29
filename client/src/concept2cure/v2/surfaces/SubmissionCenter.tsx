@@ -44,7 +44,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor } from '../assessmentState';
 import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
@@ -223,6 +223,9 @@ const ESTAR_FILING_STATUS: Record<string, ToneMap> = {
 interface AssemblyVerdictPayload {
   artifactKind: string; // official-estar | content-package-draft | none
   blockers?: string[];
+  /** The section readiness the blockers were written from
+   *  (assemble-device-submission.ts: `estar.summary`). */
+  estar?: { summary?: { missingRequired?: unknown; undetermined?: unknown } };
 }
 
 // Honest labels for the assembly verdict's artifactKind enum.
@@ -235,7 +238,33 @@ const ARTIFACT_KIND_LABEL: Record<string, string> = {
 type AssemblyVerdictState =
   | { state: 'loading' }
   | { state: 'error' }
-  | { state: 'ready'; artifactKind: string; blockerCount: number };
+  | { state: 'ready'; artifactKind: string; missingRequired: number; undetermined: number; otherBlockers: number };
+
+/* ── What the blocker list counts ───────────────────────────────────────────
+   `blockers` is a list of SENTENCES, not of blockers: the engine writes every
+   missing required eSTAR section into ONE sentence ("11 required eSTAR
+   section(s) missing: …") and every section of undetermined applicability into
+   another. The caption printed `blockers.length`, so an org with 11 required
+   sections missing and 7 undetermined read "· 2 blockers". The section counts
+   are read from the summary those sentences are written from; each remaining
+   entry (a template or market blocker) is one blocker. */
+function readAssemblyVerdict(p: AssemblyVerdictPayload): AssemblyVerdictState {
+  const blockers = Array.isArray(p.blockers) ? p.blockers : [];
+  const missingList = p.estar?.summary?.missingRequired;
+  const undeterminedList = p.estar?.summary?.undetermined;
+  const missingRequired = Array.isArray(missingList) ? missingList.length : 0;
+  const undetermined = Array.isArray(undeterminedList) ? undeterminedList.length : 0;
+  const sectionSentences = (missingRequired > 0 ? 1 : 0) + (undetermined > 0 ? 1 : 0);
+  return {
+    state: 'ready',
+    artifactKind: p.artifactKind,
+    missingRequired,
+    undetermined,
+    otherBlockers: Math.max(0, blockers.length - sectionSentences),
+  };
+}
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** The device-section header line: the org-wide assembly verdict (one call). */
 function assemblyReadinessLine(v: AssemblyVerdictState): string {
@@ -246,7 +275,15 @@ function assemblyReadinessLine(v: AssemblyVerdictState): string {
   if (v.state === 'loading') return 'Checking 510(k) device assembly readiness…';
   if (v.state === 'error') return '510(k) device assembly readiness unavailable right now';
   const kind = ARTIFACT_KIND_LABEL[v.artifactKind] ?? v.artifactKind;
-  return `510(k) device assembly readiness: ${kind} · ${v.blockerCount} blocker${v.blockerCount === 1 ? '' : 's'} (other pathways not assessed here)`;
+  const parts: string[] = [];
+  if (v.missingRequired > 0) parts.push(`${plural(v.missingRequired, 'required section', 'required sections')} missing`);
+  if (v.undetermined > 0) parts.push(`applicability of ${plural(v.undetermined, 'section', 'sections')} not established`);
+  if (v.otherBlockers > 0 || parts.length === 0) {
+    parts.push(parts.length === 0
+      ? plural(v.otherBlockers, 'blocker', 'blockers')
+      : plural(v.otherBlockers, 'other blocker', 'other blockers'));
+  }
+  return `510(k) device assembly readiness: ${kind} · ${parts.join(' · ')} (other pathways not assessed here)`;
 }
 
 /** Review-clock cell: only states the tracker actually knows. */
@@ -368,8 +405,7 @@ export function SubmissionCenter({
     }).then((r) => {
       if (cancelled) return;
       if (r.data && typeof r.data.artifactKind === 'string') {
-        const blockers = Array.isArray(r.data.blockers) ? r.data.blockers : [];
-        setAssembly({ state: 'ready', artifactKind: r.data.artifactKind, blockerCount: blockers.length });
+        setAssembly(readAssemblyVerdict(r.data));
       } else {
         // Failed or misshapen — say it is unavailable, never fabricate a verdict.
         setAssembly({ state: 'error' });
@@ -660,10 +696,11 @@ export function SubmissionCenter({
       const guarded = busyGuard();
       if (guarded) return guarded;
       const wanted = (params.submission ?? '').trim().toLowerCase();
-      if (!wanted) return { ok: false, reason: 'No submission named.' };
       if (subs.loading)
         return { ok: false, reason: 'The submission portfolio is still loading.', retry: true };
       if (subs.error) return { ok: false, reason: 'The submission portfolio could not be read.' };
+      const listed = () => listedChoices(list.map((s) => s.title), 'Submissions listed');
+      if (!wanted) return { ok: false, reason: `No submission named.${listed()}` };
       // Resolved over the same `list` the portfolio picker renders: exact
       // title/product match first (case-insensitive), then unique containment.
       const exact = list.find(
@@ -682,8 +719,11 @@ export function SubmissionCenter({
           ok: false,
           reason:
             contains.length > 1
-              ? `"${params.submission}" matches ${contains.length} submissions — name one exactly.`
-              : `No submission named "${params.submission}" in this portfolio.`,
+              ? `"${params.submission}" matches ${contains.length} submissions — name one exactly.${listedChoices(
+                  contains.map((s) => s.title),
+                  'Matches',
+                )}`
+              : `No submission named "${params.submission}" in this portfolio.${listed()}`,
         };
       }
       const already = match.id === sub?.id;
@@ -801,7 +841,8 @@ export function SubmissionCenter({
         deviceFilingsUnavailable: deviceRes.error ? 'the eSTAR tracker read failed' : null,
         deviceAssemblyVerdict:
           assembly.state === 'ready'
-            ? { artifactKind: assembly.artifactKind, blockerCount: assembly.blockerCount }
+            ? { artifactKind: assembly.artifactKind, missingRequiredSections: assembly.missingRequired,
+                undeterminedSections: assembly.undetermined, otherBlockers: assembly.otherBlockers }
             : assembly.state === 'error'
               ? 'unavailable'
               : 'loading',

@@ -1236,31 +1236,23 @@ router.post('/projects', async (req: Request, res: Response) => {
             // completely empty task board (assessment D22). Deterministic
             // task_id (project + milestone id) keeps this idempotent;
             // best-effort so a milestone failure never fails project creation.
+            // 2026-09-28: one transaction, each milestone with its task.create
+            // row, all or none (tasking/blueprint-milestones). It was one
+            // pool.query per milestone and no row: board tasks nobody was
+            // recorded as creating.
             try {
-              let milestonesInserted = 0;
-              for (const milestone of bootstrapResult.milestones ?? []) {
-                const r = await pool.query(
-                  `INSERT INTO unified_tasks
-                     (task_id, organization_id, project_id, module_type, title,
-                      description, task_type, category, priority, status,
-                      source_entity_type, source_entity_id, created_by_id,
-                      created_at, updated_at)
-                   VALUES ($1, $2, $3, 'Regulatory', $4, $5, 'milestone',
-                           'regulatory', 'high', 'pending', 'registry_blueprint',
-                           $6, $7, NOW(), NOW())
-                   ON CONFLICT (task_id) DO NOTHING`,
-                  [
-                    `TASK-BP-${newProject.id}-${milestone.id}`,
-                    organizationId,
-                    newProject.id,
-                    milestone.title,
-                    milestone.description || '',
-                    `${bootstrapResult.entry.id}:${milestone.id}`,
-                    userId ?? null,
-                  ]
-                );
-                milestonesInserted += r.rowCount ?? 0;
-              }
+              const { seedBlueprintMilestones } = await import(
+                '../services/tasking/blueprint-milestones.js'
+              );
+              const milestonesInserted = (
+                await seedBlueprintMilestones({
+                  organizationId,
+                  projectId: newProject.id,
+                  userId,
+                  registryId: bootstrapResult.entry.id,
+                  milestones: bootstrapResult.milestones ?? [],
+                })
+              ).length;
               if (milestonesInserted > 0) {
                 logger.info('Seeded blueprint milestones onto the task board', {
                   projectId,

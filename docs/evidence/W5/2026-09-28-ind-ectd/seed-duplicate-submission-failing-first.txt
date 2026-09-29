@@ -1,0 +1,80 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > anchors the submission it created before submissions.program_id, instead of creating a second one
+   ⚠ ind program BX-256: not seeded by the GA demo — skipping
+
+stdout | tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > anchors the submission it created before submissions.program_id, instead of creating a second one
+   ✓ ind program BX-512: already carries 000512
+
+stdout | tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > anchors the submission it created before submissions.program_id, instead of creating a second one
+   ✓ ind program BX-512: submission 4 (created), sequence 0000 created (2)
+
+ × tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > anchors the submission it created before submissions.program_id, instead of creating a second one 3208ms
+   → expected [ { id: 3, program_id: null }, …(1) ] to deeply equal [ { id: 3, …(1) } ]
+stdout | tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > is idempotent: a second run changes nothing
+   ⚠ ind program BX-256: not seeded by the GA demo — skipping
+
+stdout | tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > is idempotent: a second run changes nothing
+   ✓ ind program BX-512: already carries 000512
+
+stdout | tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > is idempotent: a second run changes nothing
+   ✓ ind program BX-512: submission 1 (created), sequence 0000 created (1)
+
+stdout | tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > is idempotent: a second run changes nothing
+   ⚠ ind program BX-256: not seeded by the GA demo — skipping
+
+stdout | tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > is idempotent: a second run changes nothing
+   ✓ ind program BX-512: already carries 000512
+
+stdout | tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > is idempotent: a second run changes nothing
+   ✓ ind program BX-512: submission 1, sequence 0000 already present
+
+ ✓ tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > is idempotent: a second run changes nothing 2487ms
+stdout | tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > never anchors a submission it cannot tell apart — two unanchored look-alikes are left alone
+   ⚠ ind program BX-256: not seeded by the GA demo — skipping
+
+stdout | tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > never anchors a submission it cannot tell apart — two unanchored look-alikes are left alone
+   ✓ ind program BX-512: already carries 000512
+
+stdout | tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > never anchors a submission it cannot tell apart — two unanchored look-alikes are left alone
+   ✓ ind program BX-512: submission 3 (created), sequence 0000 created (1)
+
+ ✓ tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > never anchors a submission it cannot tell apart — two unanchored look-alikes are left alone 3533ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > anchors the submission it created before submissions.program_id, instead of creating a second one
+AssertionError: expected [ { id: 3, program_id: null }, …(1) ] to deeply equal [ { id: 3, …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "id": 3,
++     "program_id": null,
++   },
++   {
++     "id": 4,
+      "program_id": "709edd20-9af6-41e7-a206-c00ecb4671b9",
+    },
+  ]
+
+ ❯ tests/seed/ind-program-spine-anchor.test.ts:68:25
+     66|     await seedIndProgramNumbers(client(), { org: { id: ORG }, admin: {…
+     67|
+     68|     expect(await ind()).toEqual([{ id: 3, program_id: PROGRAM_ID }]);
+       |                         ^
+     69|     const seqs = await pg.query(`SELECT submission_id, sequence_number…
+     70|     expect(seqs.rows).toEqual([{ submission_id: 3, sequence_number: '0…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  23:27:32
+   Duration  9.90s (transform 125ms, setup 125ms, import 64ms, tests 9.23s, environment 0ms)
+

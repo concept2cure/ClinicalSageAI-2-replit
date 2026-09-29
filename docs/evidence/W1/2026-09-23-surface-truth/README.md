@@ -1,9 +1,10 @@
 # D2 — the launch boundary on a fresh organisation, surface by surface
 
 **Date:** 2026-09-23 · **Row:** D2 (Launch catalog) · **Workstream:** W1
-**Status of this folder:** interim. The boundary sweep and the gate rule below
-are complete. Fixes for the in-scope findings are in progress; this README is
-updated with their dispositions when they land.
+**Status of this folder:** the boundary sweep and the gate rule are complete.
+Of the 55 in-scope findings, 40 are fixed here, 3 were fixed by other
+sessions, 2 are deferred as product or security decisions, and 10 are open —
+all shell layout and wording, none of them a false statement about data.
 
 ## What was run
 
@@ -49,13 +50,53 @@ in a copy of `surfaceViews.ts` and requires exit 1 naming it and only it.
 An earlier sweep of the same kind (enforcement off, older commit) produced 141
 findings. They split by what production can reach:
 
-- **55 on launch or shell surfaces** — reachable by a customer. Being verified
-  and fixed; dispositions to follow here.
+- **55 on launch or shell surfaces** — reachable by a customer. Dispositions
+  below.
 - **86 on out-of-scope surfaces** (5 critical, 27 high, 36 medium, 18 low) —
   not reachable in production with enforcement on. They are **not** fixed
   here: Rule 2 gives those surfaces no sessions. They are listed below so that
   any surface later admitted to the catalog arrives with its known defects.
   **All five critical findings are in this group.**
+
+### In-scope findings — disposition (2026-09-28, on `b50d45577` + the commits named)
+
+Every fix below was re-verified against the code current on 2026-09-28 (1,054
+commits after the sweep), pinned by a test, and **shown failing first**: each
+cluster's tests were run against the upstream sources (fail) and the fixed
+sources (pass). The full client, route and middleware suites were run over the
+combined change: 7,796 pass; the one unrelated failure
+(`submissionCenterGovernedWorkspaces` › "offers the governed freeze…") fails
+identically on the upstream source and is not this change's.
+
+| Finding | Surface | Disposition |
+|---|---|---|
+| 111 (high), 116, 125 | Part 11 console | Fixed, `53237f620` — 15/15 fail → pass |
+| 118 | QMP | Fixed, `7ca532c54` — 6/6 fail → pass |
+| 45, 46, 51, 52 | Admin console | Fixed, `270724d99` — 24/32 fail → 32/32 pass; also fixes API-key revoke sending an id the route refused |
+| 78 (high), 82, 120 | Project home, Projects, Vault | Fixed, `00a4ec8e0` — 6/13 fail → 13/13 pass |
+| 100, 103, 107, 115, 124 | eCTD co-author, editor, Submission Center, Publishing, Gateways | Fixed, `af7067b96` — 10/12 fail → 12/12 pass |
+| 48, 49, 55, 69 | Access requests, AnA memory, conversation | Fixed, `aafe9de7f` — 10/14 fail → 14/14 pass |
+| 22, 127 (high), 133, 138, 140 | Shell (account menu, AnA rail, tray) | Fixed, `b9cabbf5a` — 25/31 fail → 31/31 pass |
+| 112 (high), 113 (high) | QMS SOP register | Fixed upstream by `12e12240c` (HS-1) before this landed; this session's parallel fix was discarded rather than duplicated. The clause HS-1 left ("All current" / "None in review" over an empty register) fixed in `fc8435287` — 2/2 fail → pass |
+| 119 | Vault header count | Fixed upstream (count renders only over a read vault) |
+| 18 (high), 110 (high), 114, 20 | Identity console | Fixed, `c541ff5b0` — a refused SCIM read is a refusal, never "the allowlist is not enforced"; 4/4 fail → pass |
+| 42 (high), 6, 7, 9 | AnA command | Fixed, `cac23587b` — zero programs is `200 { data: null }` and the empty state; failures say what the server answered; 4 fail → 9/9 pass |
+| 85 | Onboarding | Fixed, `4d217e473` — names the organisation it changes and starts from its recorded name and industry; 4/4 fail → pass |
+| 122, 123 | Setup client type | Fixed, `f04feac2c` — a pending change saved under the page's reason; the route now requires a reason and records it; 7 fail → pass |
+| 47, 53, 54, 129 | Audit trail headers and copy, Apps eyebrow, breadcrumb | Fixed, `04e784bc2` — one meaning for `.ct-head`; §11.10(e); 5/5 fail → pass. **53 is partly open:** its raw targets (`user:1`) remain; see `../2026-09-28-populated/`. |
+| 43 (high) | Master licensing owner identity | **Fixed 2026-09-28 by `d57bff619`** ([`docs/evidence/D6/2026-09-28-owner-grant/`](../../D6/2026-09-28-owner-grant/README.md)). The hard-coded default address is deleted. The owner grant is decided inside `resolvePlatformAdmin` (`resolveAdminStanding`), so the nav and the console can no longer disagree, and a federated e-mail never matches. Shown live: before, `masterAdmin: true` with 87 surfaces unlocked and the console at 403; after, `false` and 403, or `true` and 200 once the owner is configured. Sign-up e-mail verification had already landed upstream (IAM-17). |
+| 19 (high) | Identity console for an org admin | **Deferred — a product decision.** Every SCIM route is platform-admin only and takes an organisation id from the body; Setup sends org admins to the console to manage "their" SCIM. The console now says honestly that a platform administrator is required. Letting an org admin manage their own SCIM needs org-scoped routes: new capability, not a fix. |
+
+**Closed 2026-09-28** (layout and wording; the ten items this record left
+open): see [`../2026-09-28-shell-chrome/`](../2026-09-28-shell-chrome/README.md).
+Each was re-checked against current code first, and all ten were still
+present. The fixes are shown failing first and measured live.
+
+| Finding | Surface | Now |
+|---|---|---|
+| 44 | Apps catalog: lock copy that disagrees with the rail | The card reads its own verdict. A module the plan includes, with no row written, opens, as the server and the rail already said. Live: 87 of 87 open. |
+| 128, 131, 132 | Shell header: the domain crumb falls back to "Biotech & Pharma"; the organisation switcher and Help icon do nothing | One grouping function for the breadcrumb and the rail. The org is a label. Help goes where "Get help" goes. |
+| 130, 134, 135, 136, 137, 139 | Shell layout: rail highlight, header squeeze at 1440px, squashed logo, floating button over the dock, task-modal copy and keys | The current page is highlighted and the category shows as pressed. The header gives way in priority order. The logo keeps the top of the collapsed rail. The duplicate floating launcher is removed (the header's Task and Collaborate buttons remain). The task modal speaks in names, not keys. |
 
 ### Out-of-scope findings (must be resolved before that surface joins the catalog)
 

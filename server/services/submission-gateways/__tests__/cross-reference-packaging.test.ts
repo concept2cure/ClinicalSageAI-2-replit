@@ -34,7 +34,7 @@ async function pkg(work: string, opts: {
     // and names the filed copy through modified-file.
     opts.deleteTarget
       ? { ctdSection: '5.3.5.1', operation: 'delete', sourcePath: '', fileName: 'study.pdf', title: 'Study Report',
-          modifiedFile: '../0000/m5/53-clin-stud-rep/535-rep-effic-safety-stud/study.pdf' }
+          modifiedFile: '../0000/index.xml#leaf-5-3-5-1-study' }
       : { ctdSection: '5.3.5.1', operation: 'new', sourcePath: path.join(src, 'study.pdf'), fileName: 'study.pdf', title: 'Study Report' },
   ];
   const prevEnv: Record<string, string | undefined> = {};

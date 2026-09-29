@@ -1,0 +1,72 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T01:30:04.083Z","pid":15848,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:30:04.084Z","pid":15848,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:30:04.084Z","pid":15848,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/pre-auth-user-lookup.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/pre-auth-user-lookup.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/pre-auth-user-lookup.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/pre-auth-user-lookup.dbtest.ts
+✅ Platform health/auth routes mounted
+
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > positive control: a member of A finds another member of A 62ms
+ × tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a person removed from A is not found, whatever their default organization says 13ms
+   → {"id":"1002","email":"wo03_15848_mum01gks-lookup-leaver@example.invalid","firstName":"WO03","lastName":"lookup-leaver","displayName":"WO03 lookup-leaver","roles":["user"],"organizationId":"90301"}: expected 200 to be 404 // Object.is equality
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a current member of A is found, even with another default organization 8ms
+ × tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > B's member is not found from A 8ms
+   → expected 200 to be 404 // Object.is equality
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > the response carries no credential field 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a person removed from A is not found, whatever their default organization says
+AssertionError: {"id":"1002","email":"wo03_15848_mum01gks-lookup-leaver@example.invalid","firstName":"WO03","lastName":"lookup-leaver","displayName":"WO03 lookup-leaver","roles":["user"],"organizationId":"90301"}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ tests/db/pre-auth-user-lookup.dbtest.ts:86:50
+     84|   it("a person removed from A is not found, whatever their default org…
+     85|     const res = await lookup(leaver);
+     86|     expect(res.status, JSON.stringify(res.body)).toBe(404);
+       |                                                  ^
+     87|   });
+     88|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > B's member is not found from A
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ tests/db/pre-auth-user-lookup.dbtest.ts:97:24
+     95|   it("B's member is not found from A", async () => {
+     96|     const res = await lookup(userB);
+     97|     expect(res.status).toBe(404);
+       |                        ^
+     98|   });
+     99|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  01:30:02
+   Duration  3.21s (transform 1.48s, setup 71ms, import 1.53s, tests 1.34s, environment 0ms)
+

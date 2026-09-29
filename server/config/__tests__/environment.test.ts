@@ -594,3 +594,81 @@ describe('production audit-seal posture (fires on config import)', () => {
     expect(config.isDevelopment).toBe(true);
   });
 });
+
+/**
+ * Deterministic mode at boot (docs/evidence/D2-DETERMINISTIC-PROD/2026-09-28/).
+ * AI_GATEWAY_DETERMINISTIC makes AnA answer with fixed responses. In production
+ * the process refuses to boot on it unless AI_GATEWAY_ACCEPT_DETERMINISTIC=true
+ * records that exact risk; AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses it
+ * regardless. Each case below differs from the control only in those variables.
+ */
+describe('assertDeterministicModePostureForProduction (wired into config load)', () => {
+  let originalEnv: NodeJS.ProcessEnv;
+
+  beforeEach(() => {
+    originalEnv = { ...process.env };
+    vi.resetModules();
+    process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET_PROD = VALID_SECRET;
+    process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
+    process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    process.env.STORAGE_PROVIDER = 's3';
+    process.env.AWS_S3_BUCKET = 'c2c-vault-test';
+    process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
+      anthropic: { region: 'us', zeroRetentionApproved: true, approvedDataClasses: ['pii'], approvedIntendedUses: ['drafting'] },
+    });
+    process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.AUDIT_HMAC_SECRET = 's'.repeat(32);
+    process.env.RLS_ENFORCE = 'on';
+    process.env.AUDIT_HMAC_KEY = 'h'.repeat(32);
+    process.env.DATABASE_URL = 'postgres://test';
+    process.env.DATABASE_URL_PROD = 'postgres://test';
+    for (const k of [
+      'AI_GATEWAY_DETERMINISTIC',
+      'DETERMINISTIC_MODE',
+      'AI_GATEWAY_ACCEPT_DETERMINISTIC',
+      'AI_GOVERNANCE_ACCEPT_PERMISSIVE',
+      'AI_GOVERNANCE_REQUIRE_ENFORCE',
+    ]) {
+      delete process.env[k];
+    }
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    vi.resetModules();
+  });
+
+  it('control: the production posture loads with deterministic mode off', async () => {
+    await expect(import('../environment')).resolves.toBeDefined();
+  });
+
+  it('refuses to boot with AI_GATEWAY_DETERMINISTIC=true and no acceptance', async () => {
+    process.env.AI_GATEWAY_DETERMINISTIC = 'true';
+    await expect(import('../environment')).rejects.toThrow(/AI_GATEWAY_ACCEPT_DETERMINISTIC/);
+  });
+
+  it('refuses the legacy alias DETERMINISTIC_MODE=true the same way', async () => {
+    process.env.DETERMINISTIC_MODE = 'true';
+    await expect(import('../environment')).rejects.toThrow(/AI_GATEWAY_ACCEPT_DETERMINISTIC/);
+  });
+
+  it('is not accepted by AI_GOVERNANCE_ACCEPT_PERMISSIVE, which accepts a different risk', async () => {
+    process.env.AI_GATEWAY_DETERMINISTIC = 'true';
+    process.env.AI_GOVERNANCE_ACCEPT_PERMISSIVE = 'true';
+    await expect(import('../environment')).rejects.toThrow(/AI_GATEWAY_ACCEPT_DETERMINISTIC/);
+  });
+
+  it('boots with the written acceptance (the CI boot job posture)', async () => {
+    process.env.AI_GATEWAY_DETERMINISTIC = 'true';
+    process.env.AI_GATEWAY_ACCEPT_DETERMINISTIC = 'true';
+    await expect(import('../environment')).resolves.toBeDefined();
+  });
+
+  it('AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses it even when accepted', async () => {
+    process.env.AI_GATEWAY_DETERMINISTIC = 'true';
+    process.env.AI_GATEWAY_ACCEPT_DETERMINISTIC = 'true';
+    process.env.AI_GOVERNANCE_REQUIRE_ENFORCE = 'true';
+    await expect(import('../environment')).rejects.toThrow(/AI_GOVERNANCE_REQUIRE_ENFORCE/);
+  });
+});

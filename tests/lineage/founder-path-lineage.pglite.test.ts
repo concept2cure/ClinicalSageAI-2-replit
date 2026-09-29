@@ -183,6 +183,8 @@ const MIGRATIONS = [
   'migrations/20260527_mutation_primitives.sql',
   'migrations/20260609_audit_hmac_seal.sql',
   'migrations/20260921_audit_logs_chain_seq.sql',
+  // public.actor_name (D3, 2026-09-29): project reads name people through it.
+  'migrations/20260929_actor_names.sql',
   // The project: the program, its filing scaffold, its PM-spine anchor.
   'migrations/20260524_program_workbench_schema.sql',
   'migrations/20260907_regulatory_programs_application_number.sql',

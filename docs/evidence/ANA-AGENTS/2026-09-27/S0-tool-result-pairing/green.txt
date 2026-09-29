@@ -1,0 +1,42 @@
+# S0 green: HEAD 85cb5654b, unmodified. Recorded 2026-09-28T05:11:49Z
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > two calls, paired by id
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > three calls, paired by id — the first and last were the ones that swapped
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > two calls, paired by id 80ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > keeps the id on the row, so a later correlation can use it
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids (an older server), still pairs correctly — the fallback is first-in, not last-in
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > three calls, paired by id — the first and last were the ones that swapped 57ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > keeps the id on the row, so a later correlation can use it 56ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids, a call an earlier step left running does not take a later step's result
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids (an older server), still pairs correctly — the fallback is first-in, not last-in 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids, a call an earlier step left running does not take a later step's result 86ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > a result whose id matches no call does not steal a sibling that has its own id
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > every call settles — none is left running
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > a result whose id matches no call does not steal a sibling that has its own id 84ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > every call settles — none is left running 57ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the round's tool_use announcement carries toolUseId 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the server-run steps (web search / fetch) carry their own id on both events 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the round's tool_result carries toolUseId 1ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  05:11:50
+   Duration  2.10s (transform 411ms, setup 233ms, import 451ms, tests 483ms, environment 715ms)
+

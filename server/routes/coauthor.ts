@@ -3,7 +3,7 @@
  * eCTD collaborative authoring service
  */
 import { Router, Request, Response } from 'express';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, count } from 'drizzle-orm';
 import { db, transaction } from '../db';
 import { coauthorDocuments, coauthorSections } from '../../shared/schema';
 import { authMiddleware } from '../auth';
@@ -103,9 +103,20 @@ router.get('/documents', authMiddleware, async (req: any, res: Response) => {
       .orderBy(desc(coauthorDocuments.updatedAt))
       .limit(limit);
 
+    // 2026-09-28 (HS-0928-1): `total` was documents.length — the capped page —
+    // so EctdCoauthor.tsx's partialRead (serverTotal > total) could never fire
+    // and a truncated backbone read as complete, "All documents approved"
+    // included. `total` is now the organisation's count(*) under the page's
+    // own predicate; `returned` is the page length.
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(coauthorDocuments)
+      .where(eq(coauthorDocuments.organizationId, organizationId));
+
     return res.json({
       documents,
-      total: documents.length,
+      total: Number(total),
+      returned: documents.length,
       message:
         documents.length > 0
           ? `Found ${documents.length} document(s)`

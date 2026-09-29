@@ -18,7 +18,7 @@
  *     the session 'complete', and dry_run shows the plan without writing.
  */
 import { runWithTenantScope } from '../../../db/tenantStore';
-import { describe, it, expect, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 
 import { mockPool } from '../../../../tests/setup';
 
@@ -40,6 +40,15 @@ const registerCreates = {
   registerBodyRefusal: vi.fn((_register: string, _body: unknown): string | null => null),
 };
 vi.mock('../../cmc/register-writes', () => registerCreates);
+
+/* 2026-09-28: commit_intelligence_flow is confirm-class, so it now passes the
+   registry's editor-role gate (writeRoleRefusal) first; CTX models the confirmed
+   member who ran the interview, so the principal's role is an editor one. */
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 
 
 /* The runtime instruments the pool on import (server/db/poolInstrumentation

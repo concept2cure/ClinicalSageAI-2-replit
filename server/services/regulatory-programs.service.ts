@@ -18,8 +18,9 @@
 
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db, pool } from '../db';
+import { actorLabel, resolveActorNames } from './tenant/actor-names';
 import { regulatoryPrograms } from '../../shared/schema/programs';
-import { users, auditLogs, cerv2510kSections, deviceTestStandards } from '../../shared/schema';
+import { auditLogs, cerv2510kSections, deviceTestStandards } from '../../shared/schema';
 import { qSubmissions, qSubMeetings, qSubQuestions, qSubCommitments } from '../../shared/schema/q-sub';
 import {
   SIGNAL_SOURCE_MAP,
@@ -227,15 +228,11 @@ export async function listPrograms(
     .where(and(...conditions))
     .orderBy(desc(regulatoryPrograms.updatedAt));
 
-  const leadIds = Array.from(
-    new Set(rows.map((r) => r.leadUserId).filter((v): v is number => typeof v === 'number')),
-  );
-  const leadRows = leadIds.length
-    ? await db.select({ id: users.id, name: users.name }).from(users).where(inArray(users.id, leadIds))
-    : [];
-  const leadById = new Map(leadRows.map((r) => [r.id, r.name]));
+  // Names through actor_name: a lead who has left the organization is still
+  // named (tenant/actor-names.ts; D3 2026-09-29).
+  const leads = await resolveActorNames(rows.map((r) => r.leadUserId));
 
-  return rows.map((r) => toProgramRow(r, leadById.get(r.leadUserId ?? -1) ?? null));
+  return rows.map((r) => toProgramRow(r, leads.get(r.leadUserId ?? -1)?.name ?? null));
 }
 
 /** Get a single program by id, scoped to the caller's org. Returns null
@@ -247,12 +244,8 @@ export async function getProgramById(
   const row = await requireProgramInOrg(orgId, id);
   if (!row) return null;
 
-  let leadUserName: string | null = null;
-  if (row.leadUserId != null) {
-    const [u] = await db.select({ name: users.name }).from(users).where(eq(users.id, row.leadUserId));
-    if (u) leadUserName = u.name;
-  }
-  return toProgramRow(row, leadUserName);
+  const leads = await resolveActorNames([row.leadUserId]);
+  return toProgramRow(row, leads.get(row.leadUserId ?? -1)?.name ?? null);
 }
 
 function toProgramRow(
@@ -324,11 +317,9 @@ export async function getActivity(
     .orderBy(desc(auditLogs.createdAt))
     .limit(limit);
 
-  const userIds = Array.from(new Set(events.map((e) => e.userId).filter((v): v is number => typeof v === 'number')));
-  const userRows = userIds.length
-    ? await db.select({ id: users.id, name: users.name }).from(users).where(inArray(users.id, userIds))
-    : [];
-  const userById = new Map(userRows.map((u) => [u.id, u.name]));
+  // An actor this tenant cannot name reads as `user <id>`, never 'System'
+  // (tenant/actor-names.ts; D3 2026-09-29).
+  const actors = await resolveActorNames(events.map((e) => e.userId));
 
   return events.map((e) => {
     const oldVals = (e.oldValues as Record<string, unknown> | null) ?? null;
@@ -347,7 +338,7 @@ export async function getActivity(
     return {
       id:        e.id,
       when:      e.createdAt.toISOString(),
-      who:       e.userId != null ? (userById.get(e.userId) ?? 'System') : 'System',
+      who:       actorLabel(actors, e.userId) ?? 'System',
       what,
       action:    e.action,
       changedFields,
@@ -590,11 +581,7 @@ export async function getChangeImpact(
     .orderBy(desc(auditLogs.createdAt))
     .limit(20);
 
-  const userIds = Array.from(new Set(recentEdits.map((e) => e.userId).filter((v): v is number => typeof v === 'number')));
-  const userRows = userIds.length
-    ? await db.select({ id: users.id, name: users.name }).from(users).where(inArray(users.id, userIds))
-    : [];
-  const userById = new Map(userRows.map((u) => [u.id, u.name]));
+  const actors = await resolveActorNames(recentEdits.map((e) => e.userId));
 
   const allSections = await db
     .select({
@@ -624,7 +611,7 @@ export async function getChangeImpact(
     }
     return {
       id:    edit.id,
-      who:   edit.userId != null ? (userById.get(edit.userId) ?? 'System') : 'System',
+      who:   actorLabel(actors, edit.userId) ?? 'System',
       when:  edit.createdAt.toISOString(),
       what:  `edited ${editedTitle}`,
       affects,

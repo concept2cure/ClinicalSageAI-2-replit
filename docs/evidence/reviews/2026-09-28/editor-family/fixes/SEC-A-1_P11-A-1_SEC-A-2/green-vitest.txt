@@ -1,0 +1,113 @@
+# GREEN — after the fix (final state: SEC-A-9 dropped from this lane; revert handler is HEAD's)
+
+$ npx vitest run --config vitest.config.ts server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the source-usage migration > creates the back-reference index the Data Room reads by 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the source-usage migration > is idempotent — applying it twice is a no-op 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > captures the source's checksum at the moment it is cited 26ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > citing the same source twice returns the existing citation rather than duplicating 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > citing it again does not re-baseline the checksum recorded at cite time (SEC-A-8) 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > refuses to cite onto another tenant's section 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > refuses to cite another tenant's source 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > keeps the cited checksum and reports the citation as changed once the source moves 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > rejects a non-numeric source id instead of letting Postgres cast it 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > reports the affected section and document, scoped to the project 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > a citation whose checksum still matches is not reported as changed 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > does not leak another tenant's changed citations 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > counts the sections and documents a source is used in 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > counts only the sections whose citation is against superseded content 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > leaves an uncited source out of the map, so "not cited yet" is visible 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > does not count another tenant's citations of the same source id 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > drops non-numeric ids rather than casting them 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > reads the checksum from the source instead of manufacturing one 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > reports unchanged content as unchanged 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > refuses a citation that references no canonical source 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > refuses to touch a frozen citation 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > cannot re-resolve a citation through a section it does not belong to (SEC-A-1) 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > cannot re-resolve another tenant's citation 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > citations that no longer resolve > lists a deleted source as unresolved instead of dropping the row 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > citations that no longer resolve > reports a citation with no recorded checksum as unverified, never current 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > citations that no longer resolve > survives free-text reference_ids left by the data-token flow 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > removing a citation > removes an unfrozen citation and leaves frozen ones alone 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > removing a citation > cannot remove another tenant's citation 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > groups recorded citations per section with document context 24ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > surfaces a changed source as changed, per section 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > omits sections with no recorded citations — that is the surface contract 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > does not serve another tenant's citations 22ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > lists an unresolvable source rather than dropping the citation 6ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses, as not found, a citation on another document that is FROZEN and not granted to the caller; nothing is written 74ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses a citation on another section of the same document 22ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction 33ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > a re-read that finds the content unchanged writes nothing 13ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction 21ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing 34ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone 37ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image 35ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction 16ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section 20ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all refuses a FROZEN document and re-reads nothing 9ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source 23ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite 15ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token 17ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure 18ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a body doc_id naming another document, and writes nothing 14ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction 16ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing 26ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section 32ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved 14ms
+ Test Files  2 passed (2)
+      Tests  53 passed (53)
+
+# Neighbouring suites (every suite that drives or scans the changed handlers/service), one run:
+$ npx vitest run --config vitest.config.ts <the 25 files below>
+# count  result  file
+     17 ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts
+      6 ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts
+     27 ✓ server/routes/__tests__/authoring-schema-contract.test.ts
+      9 ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+     20 ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+      6 ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts
+      8 ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+     33 ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
+     13 ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts
+     36 ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts
+      1 ✓ tests/golden-journeys/ind-authoring.journey.test.ts
+     14 ✓ tests/lineage/founder-path-lineage.pglite.test.ts
+     14 ✓ tests/regulatory-honesty.contract.test.ts
+      7 ✓ tests/routes/source-tracer-recorded.test.ts
+      7 ✓ tests/schema-contract/authoring-auth-parity.contract.test.ts
+      5 ✓ tests/schema-contract/authoring-comments-router-columns.contract.test.ts
+      6 ✓ tests/schema-contract/authoring-durable-applier.contract.test.ts
+      4 ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts
+     13 ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+      6 ✓ tests/schema-contract/authoring-role-gate.contract.test.ts
+      4 ✓ tests/schema-contract/authoring-router-columns.contract.test.ts
+     30 ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+     28 ✓ tests/schema-contract/authoring-section-gate.contract.test.ts
+      1 ✓ tests/schema-contract/authoring-section-permissions.contract.test.ts
+      5 ✓ tests/schema-contract/authoring-section-revision-gate.contract.test.ts
+ Test Files  25 passed (25)
+      Tests  320 passed (320)
+   Duration  50.06s (transform 17.71s, setup 869ms, import 22.85s, tests 119.05s, environment 3ms)
+
+# CI scripts that scan authoring.router.ts (exit codes)
+check-canvas-path exit=0
+check-discarded-audit-write exit=0
+check-lineage-save-gate exit=0
+check-no-mock-in-prod-routes exit=0
+check-docx-runtime-canonicality exit=0
+check-pdf-runtime-canonicality exit=0
+
+# ESLint (json formatter; the unix formatter is not installed in this repo)
+# before:
+  server/routes/authoring.router.ts errors=0 warnings=28
+  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts errors=0 warnings=0
+  server/services/clinical-regulatory-evidence/source-usage.service.ts errors=0 warnings=0
+  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts (new file)
+# after:
+  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts errors=0 warnings=0 {}
+  server/routes/authoring.router.ts errors=0 warnings=28 {"complexity":14,"max-params":3,"no-console":1,"max-lines":1,"max-lines-per-function":8,"max-depth":1}
+  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts errors=0 warnings=0 {}
+  server/services/clinical-regulatory-evidence/source-usage.service.ts errors=0 warnings=0 {}
+
+# Typecheck: npx tsc -p SCRATCH/tsconfig.fa.json (extends tsconfig.json; my files + both test files + every Express augmentation)
+exit=0, 0 errors

@@ -148,9 +148,17 @@ export function setUpPgliteApp(ddl: string, fixture: string) {
           // The WHERE's task id is the LAST one: an array_append SET binds the
           // other task's id first.
           const id = params.filter(p => typeof p === 'string' && /^TASK-/.test(p)).at(-1);
-          // A locking read of task rows, and whether it takes them in task-id order.
+          // A locking read of task rows: a single-row lock names its task, a
+          // multi-row one says whether it takes them in task-id order.
+          const taskIds = params.filter(p => typeof p === 'string' && /^TASK-/.test(p));
           if (q.startsWith('select') && q.includes('from "unified_tasks"') && q.endsWith('for no key update'))
-            h.log.push(q.includes('order by "unified_tasks"."task_id"') ? 'lock:by-task-id' : 'lock:unordered');
+            h.log.push(
+              q.includes('order by "unified_tasks"."task_id"')
+                ? 'lock:by-task-id'
+                : taskIds.length === 1
+                  ? `lock:${taskIds[0]}`
+                  : 'lock:unordered'
+            );
           else if (q.includes('from document_approvals')) h.log.push('read:document_approvals');
           else if (q.startsWith('update "unified_tasks"')) h.log.push(`update:${id}`);
           else if (q.startsWith('insert into "unified_tasks"')) h.log.push('insert:task');

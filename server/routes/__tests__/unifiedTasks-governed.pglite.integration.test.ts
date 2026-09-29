@@ -77,13 +77,9 @@ const DDL = [
     'db/migrations/20260807_task_graph_org_columns.sql',
     'db/migrations/20260807_unified_tasks_soft_delete.sql',
   ].map(f => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8')),
-  // KNOWN SCHEMA GAP, not papered over: the Drizzle model declares
-  // cross_module_task_links.updated_at and every insert names it, but the
-  // baseline creates the table without it and no migration in the set adds it —
-  // so on a database built from the migration set POST /:id/link fails at the
-  // INSERT (now an honest 500 with nothing written). Added here so this file
-  // tests the gate and the transaction; the column itself is schema work.
-  'ALTER TABLE cross_module_task_links ADD COLUMN IF NOT EXISTS updated_at timestamp DEFAULT now();',
+  // No column is added here: cross_module_task_links is exactly what the
+  // migration set builds (the baseline's columns plus organization_id), so the
+  // link test fails if the Drizzle model names a column the database lacks.
   `CREATE TABLE ledger_rows (
      seq serial PRIMARY KEY,
      target text NOT NULL,
@@ -219,11 +215,16 @@ describe('T1 — each write commits with its ledger row, or neither commits', ()
         }),
       }),
     ]);
-    // Both endpoints locked in one read, in task-id order, before the link or
-    // either array is written; every row lock before the ledger row.
+    // Both endpoints locked, the SOURCE first, then the target — predecessor
+    // before successor, the order a completion takes (a link over TASK-X →
+    // TASK-A locks X first although A sorts first: task-id order deadlocked
+    // against a completion, tests/db/task-link-completion-lock-order.dbtest.ts)
+    // — before the link or either array is written; every row lock before the
+    // ledger row.
     expect(h.log).toEqual([
       'BEGIN',
-      'lock:by-task-id',
+      'lock:TASK-X',
+      'lock:TASK-A',
       'insert:link',
       'update:TASK-A',
       'update:TASK-X',

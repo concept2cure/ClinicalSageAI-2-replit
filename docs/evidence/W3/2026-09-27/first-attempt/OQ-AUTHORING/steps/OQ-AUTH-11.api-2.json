@@ -1,0 +1,71 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/docs/ad3c56cf-9f12-424c-a285-62208e030217/frozen",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 24,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "version": "1.0",
+      "contentHash": "a0526c07f5a1b74500bcafefe55410632248a43b3e8f28de7e8e140de32f3686",
+      "frozenAt": "2026-09-27T23:53:26.948Z",
+      "frozenBy": "oq-runner@validation.local",
+      "content": {
+        "document": {
+          "id": "ad3c56cf-9f12-424c-a285-62208e030217",
+          "title": "OQ-003 Clinical Overview 20260927235318",
+          "module": "M2",
+          "product_code": null,
+          "locale": "en-US",
+          "status": "IN_REVIEW",
+          "created_at": "2026-09-27T23:53:19.240Z",
+          "updated_at": "2026-09-27T23:53:19.240Z",
+          "created_by": "1",
+          "template_id": null,
+          "submitted_at": "2026-09-27T23:53:24.129Z",
+          "current_workflow_id": "64b3f36e-fd6b-48c0-9fe4-4b9d0f3b66f5",
+          "approved_at": null,
+          "frozen_at": null,
+          "locked_at": null,
+          "locked_by": null,
+          "tenant_id": 1,
+          "version": null
+        },
+        "sections": [
+          {
+            "id": "e1c25ac0-ada8-48f2-b4d3-34e9d279197b",
+            "doc_id": "ad3c56cf-9f12-424c-a285-62208e030217",
+            "code": "2.5",
+            "title": "Clinical Overview",
+            "content": "<p>Initial 2.5 text.</p>",
+            "order_index": 0,
+            "track_changes": false,
+            "created_at": "2026-09-27T23:53:19.805Z",
+            "updated_at": "2026-09-27T23:53:21.974Z",
+            "tenant_id": 1
+          },
+          {
+            "id": "6741632d-5be7-4e14-bfbf-8157de8ccc3f",
+            "doc_id": "ad3c56cf-9f12-424c-a285-62208e030217",
+            "code": "2.7",
+            "title": "Clinical Summary",
+            "content": "<p>Initial 2.7 text.</p>",
+            "order_index": 1,
+            "track_changes": false,
+            "created_at": "2026-09-27T23:53:19.514Z",
+            "updated_at": "2026-09-27T23:53:19.514Z",
+            "tenant_id": 1
+          }
+        ],
+        "frozenAt": "2026-09-27T23:53:26.948Z"
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+-- The CMC final-export gate could not evaluate on any deployed database, and
+-- the log it depends on could not accept a Module 3 project. Measured.
+
+-- ── 1. The table was on no applier ──────────────────────────────────────────
+
+$ grep -n "0011_governed_decision_transitions" scripts/db/migration-set.mjs
+  (no output -- ABSENT from C2C_MIGRATION_FILES)
+
+-- deploy-migrate runs exactly two DDL steps, applyAuthoringSubsystem and
+-- applyMigrationFiles(C2C_MIGRATION_FILES), and no drizzle-kit push. So
+-- governed_decision_transitions existed on NO deployed database. It exists on
+-- developer boxes only because the file was applied by hand.
+
+-- ── 2. That absence was not inert. Reproduced by renaming it away ───────────
+
+-- getProjectReviewQueue reads this table and THROWS on failure by design
+-- (its own comment: "Empty queues here meant a database outage answered
+-- 'nothing unresolved', so both gates opened"). The throw propagates through
+-- hasUnresolvedGovernedDecisions -> buildCanonicalGovernedState -> the gate.
+
+ALTER TABLE governed_decision_transitions RENAME TO governed_decision_transitions__absent_probe;
+
+GET /api/cmc/module3-os/readiness/f50f5093-...
+  before : governedStateEvaluated = true
+  after  : governedStateEvaluated = false
+
+POST /api/cmc/module3-os/guard/final-export/f50f5093-...
+  "canonicalGovernedState": {"error":"Canonical governed-state evaluation failed",
+                             "degraded":true,"blocked":true},
+  "governedStateEvaluated": false,
+  "fabricBlocks": true
+
+-- fabricBlocks: true, permanently, for every project on every deployment.
+-- Fail-closed and correct in isolation; a testers' dead end in practice.
+
+-- ── 3. Even where the table existed, the write was impossible ───────────────
+
+-- governed_decision_transitions.project_id was INTEGER NOT NULL with
+--   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+-- while a Module 3 project is a uuid-keyed regulatory program
+-- (cmc_module3_sections.project_id is TEXT; projects.id is INTEGER and there is
+-- no uuid column). The writer coerced: Number(uuid) is NaN, || 0 -> 0.
+
+INSERT INTO governed_decision_transitions (… project_id …) VALUES (…, 0, …);
+ERROR:  insert or update on table "governed_decision_transitions" violates
+        foreign key constraint "governed_decision_transitions_project_id_fkey"
+DETAIL:  Key (project_id)=(0) is not present in table "projects".
+
+-- Swallowed by recordTransitionEvent's catch, which only log.warns.
+-- Live proof of the asymmetry: decision_records held 377 rows while
+-- governed_decision_transitions held 0. decision_records has no FK; this one
+-- did.
+
+-- And the read collapsed the same way: every uuid project resolved to bucket
+-- 0, so all ~27 Module 3 projects shared one review queue.

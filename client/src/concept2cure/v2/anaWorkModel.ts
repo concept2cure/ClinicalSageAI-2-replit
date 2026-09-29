@@ -11,7 +11,7 @@
  */
 
 import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../components/ana/useAnaChat';
-import type { AnaProgressPhase } from '../components/ana/useAnaChat.types';
+import type { AnaProgressPhase, AnaStoppedReason } from '../components/ana/useAnaChat.types';
 import {
   formatElapsed,
   formatStepDuration,
@@ -49,10 +49,69 @@ export function stateLineFor(
   // A timeout or a lost connection never sets `stopped` (that flag is the
   // person's own stop). Both are turns that did not finish, and neither may
   // read "Finished" — including one that failed before its first phase
-  // arrived, which leaves no phase to mark stopped.
+  // arrived, which leaves no phase to mark stopped. Ahead of the loop's own
+  // stop reasons: a turn whose `done` said why the loop stopped and whose
+  // stream then dropped before `post_done` did not finish either.
   if (turn.interrupted || progressCutShort(turn)) return `Did not finish · ${elapsed}`;
+  // A reopened turn has no clock (the thread keeps no send or end time), so a
+  // stop line restored from its metadata is said without one.
+  const clocked = (label: string) => (elapsed ? `${label} · ${elapsed}` : label);
+  // `cancelled` from the server is the same Stop: when its done and post_done
+  // land before this client's own abort, `stopped` is never set.
+  if (turn.stoppedReason === 'cancelled') return elapsed ? `Stopped after ${elapsed}` : 'Stopped';
+  // The loop ended the turn, not AnA: the round limit forced the answer, or
+  // she was repeating a step. The stream closed cleanly and every phase
+  // completed, so nothing above can see it — and a capped turn must never
+  // read "Finished". Each says the stop and then its cause, so neither can be
+  // read as good news ("stopped repeating" would say she quit repeating and
+  // carried on).
+  if (turn.stoppedReason === 'max_rounds') return clocked('Stopped at the round limit');
+  if (turn.stoppedReason === 'duplicate_thrash') return clocked('Stopped: repeating a step');
+  if (turn.stoppedReason === 'answer_cut_off') return clocked('Stopped: answer cut off');
   if (typeof turn.completedAt === 'number') return `Finished in ${elapsed}`;
   return '';
+}
+
+/**
+ * Whether a turn that stopped for this reason can be picked up where it left
+ * off. The round limit and the time limit stopped work that was going
+ * somewhere; a hold or an unanswered approval stopped it before a step she had
+ * chosen. A repeated step would only be repeated again — the person has to say
+ * what to change — and a Stop was the person's decision.
+ */
+export function isContinuable(reason: AnaStoppedReason | undefined): boolean {
+  switch (reason) {
+    case 'max_rounds':
+    case 'answer_cut_off':
+    case 'budget_exhausted':
+    case 'approval_timeout':
+    case 'hold_expired':
+    case 'hold_unavailable':
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * What Continue sends: a new turn on the same conversation. The stopped run is
+ * over — there is nothing to resume — and the next turn is told its
+ * predecessor did not finish (server: formatStoppedTurnNote).
+ */
+export const CONTINUE_PROMPT = 'Continue from where you stopped.';
+
+/**
+ * The one turn a host may offer Continue on: the last message, when it is an
+ * assistant turn that has settled and nothing is in flight. -1 otherwise — an
+ * earlier turn has been followed by later ones, and a turn still streaming, or
+ * a question already waiting, is not something to continue. Takes the rail's
+ * `ana` role as well as `assistant`.
+ */
+export function continueTurnIndex(turns: ReadonlyArray<{ role: string; streaming?: boolean }>, busy: boolean): number {
+  if (busy || turns.length === 0) return -1;
+  const i = turns.length - 1;
+  const last = turns[i];
+  return last.role !== 'user' && !last.streaming ? i : -1;
 }
 
 /** True when the turn's progress record ended in a phase marked stopped. */

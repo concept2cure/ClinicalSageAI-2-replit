@@ -1,0 +1,13 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts > askAnaToDraftPrompt names no stored value (SEC-C-4 class) > leaves a planted program name out of the prompt 2ms
+ ✓ client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts > askAnaToDraftPrompt names no stored value (SEC-C-4 class) > sends the same fixed sentence with a program name or without one 0ms
+ ✓ client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts > askAnaToDraftPrompt names no stored value (SEC-C-4 class) > seeds the new conversation with the fixed sentence only 2ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  17:55:07
+   Duration  321ms (transform 101ms, setup 107ms, import 22ms, tests 8ms, environment 0ms)
+

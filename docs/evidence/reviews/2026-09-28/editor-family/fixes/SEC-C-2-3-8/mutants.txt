@@ -1,0 +1,49 @@
+# Mutants: each part of the fix altered alone, then the SEC-C pglite test run; the files were restored after each (cmp against the saved fix)
+## mutant: addAssessmentTx checks ownership but not the status
+ × a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a finalized protocol takes no new assessment, and no cell is set or cleared 22ms
+ × a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a superseded protocol takes no new assessment, and no cell is set or cleared 7ms
+      Tests  2 failed | 20 passed (22)
+## mutant: setCellTx: the check removed
+ × a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a finalized protocol takes no new assessment, and no cell is set or cleared 49ms
+ × a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a superseded protocol takes no new assessment, and no cell is set or cleared 17ms
+      Tests  2 failed | 20 passed (22)
+## mutant: clearCellTx: the check removed
+ × a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a finalized protocol takes no new assessment, and no cell is set or cleared 44ms
+ × a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a superseded protocol takes no new assessment, and no cell is set or cleared 16ms
+      Tests  2 failed | 20 passed (22)
+## mutant: addAssessmentTx: the check removed
+ × a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a finalized protocol takes no new assessment, and no cell is set or cleared 31ms
+ × a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a superseded protocol takes no new assessment, and no cell is set or cleared 12ms
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against another tenant’s protocol is refused, and nothing is written 8ms
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against a protocol that does not exist is refused 2ms
+      Tests  4 failed | 18 passed (22)
+## mutant: setBudgetParamsTx: the check removed
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > another tenant cannot claim, block or overwrite a protocol’s budget parameters 13ms
+      Tests  1 failed | 21 passed (22)
+## mutant: addBudgetItemTx: the check removed
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against another tenant’s protocol is refused, and nothing is written 16ms
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against a protocol that does not exist is refused 2ms
+      Tests  2 failed | 20 passed (22)
+## mutant: addRiskTx: the check removed
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against another tenant’s protocol is refused, and nothing is written 13ms
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against a protocol that does not exist is refused 2ms
+      Tests  2 failed | 20 passed (22)
+## mutant: addMilestoneTx: the check removed
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against another tenant’s protocol is refused, and nothing is written 16ms
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against a protocol that does not exist is refused 2ms
+      Tests  2 failed | 20 passed (22)
+## mutant: assignReviewerTx: the check removed (first occurrence)
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against another tenant’s protocol is refused, and nothing is written 11ms
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against a protocol that does not exist is refused 2ms
+      Tests  2 failed | 20 passed (22)
+## mutant: addCommentTx: the check removed (second occurrence)
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against another tenant’s protocol is refused, and nothing is written 25ms
+ × a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against a protocol that does not exist is refused 2ms
+      Tests  2 failed | 20 passed (22)
+## mutant: requireProtocolForWriteTx: the status is never asserted
+ × a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a finalized protocol takes no new assessment, and no cell is set or cleared 36ms
+ × a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a superseded protocol takes no new assessment, and no cell is set or cleared 35ms
+      Tests  2 failed | 20 passed (22)
+
+## mutant: the SoA route without INVALID_STATE -> 409 (protocol-soa-finalized.routes.test.ts)
+   three of three fail: expected 500 to be 409

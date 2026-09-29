@@ -11,6 +11,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { drizzle } from 'drizzle-orm/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,7 +23,16 @@ const pool = {
     return { rows: r.rows as unknown[], rowCount: (r as { affectedRows?: number }).affectedRows ?? (r.rows as unknown[]).length };
   },
 };
-vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
+// 2026-09-28: `db` is the Drizzle view of the same PGlite (set in beforeAll), so the
+// registry's confirmed-write role check (resolveSignerOrgRole, which reads
+// organization_users through Drizzle) reads a real membership row seeded below.
+const drizzleHolder = vi.hoisted(() => ({ db: {} as unknown }));
+vi.mock('../../../db', () => ({
+  pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) },
+  get db() {
+    return drizzleHolder.db;
+  },
+}));
 // benchmarkDesign reuses the CSR effect extractor (Drizzle); stub it here.
 // projectOrgCsrReports is stubbed so the project_csr_evidence handler test can
 // assert output shaping without standing up the full csr_reports corpus.
@@ -41,6 +51,15 @@ beforeAll(async () => {
   pglite = new PGlite();
   const here = path.dirname(fileURLToPath(import.meta.url));
   await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../db/migrations/20260724_clinical_regulatory_evidence_spine.sql'), 'utf8'));
+  // The confirming principal (CTX) is an editor ('member') of the acting org —
+  // project_csr_evidence is confirm-class and the registry reads this row.
+  await pglite.exec(`CREATE TABLE organization_users (
+    id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member', persona TEXT)`);
+  await pglite.query('INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, $3)', [
+    CTX.organizationId, CTX.userId, 'member',
+  ]);
+  drizzleHolder.db = drizzle(pglite);
 });
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => {

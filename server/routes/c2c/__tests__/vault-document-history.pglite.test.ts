@@ -72,6 +72,12 @@ beforeAll(async () => {
   await h.pg.exec('ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS reason TEXT;');
   await h.pg.exec(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);
                    INSERT INTO users (id, name) VALUES (7, 'Dana Reviewer') ON CONFLICT DO NOTHING;`);
+  // The ledger resolves actor names through public.actor_name (D3 2026-09-29,
+  // migrations/20260929_actor_names.sql), applied from the real file; it reads
+  // organization_users, so a minimal one stands in. No enforcement is set here,
+  // so it names every account, as the users join it replaced did.
+  await h.pg.exec('CREATE TABLE IF NOT EXISTS organization_users (user_id integer, organization_id integer);');
+  await h.pg.exec(fs.readFileSync(path.join(process.cwd(), 'migrations/20260929_actor_names.sql'), 'utf8'));
 });
 afterAll(async () => { await h.pg.close(); });
 beforeEach(async () => {

@@ -14,6 +14,12 @@
  * say plainly that it cannot — never guess between two, never find another
  * tenant's, and never present a failed read as "you have no programs".
  *
+ * The reads are answered by support/program-table, which answers each one by
+ * its SQL. Resolution used to list the 100 most recent programs and match in
+ * memory; against a fake that returned every row for any read that looked
+ * right, and it passed. In a real workspace with more programs, an older one
+ * could not be opened even by its exact code.
+ *
  * ── The prompt ───────────────────────────────────────────────────────────────
  * With Live Drive on she answered "click Settings in the sidebar" instead of
  * going there. The block has to tell her to DO the move, to run demos, and
@@ -31,6 +37,7 @@ import {
   type ProgramQuery,
 } from '../drive-context';
 import { buildLiveDrivePromptBlock, buildOfferedMovesPromptBlock } from '../live-drive';
+import { programTable, type ProgramRow } from './support/program-table';
 import { MAX_NAVIGATION_ACTIONS } from '../navigation-actions';
 import { DRIVE_BUDGETS } from '../../../../shared/navigation/drive-policy';
 
@@ -107,10 +114,17 @@ const ROWS = [
   { id: 'prog-400', name: 'Oncology Platform', code: '  ' },
   { id: 'prog-030', name: 'Legacy Formulation', code: 'BX-30' },
 ];
+/** ROWS as the table holds them: ORG's, most recently touched first in listed order. */
+const TABLE: ProgramRow[] = ROWS.map((r, i) => ({ ...r, organization_id: ORG, updated_at: ROWS.length - i }));
 
-/** A query that answers only for ORG — every other organisation has nothing. */
-function orgQuery() {
-  return vi.fn<ProgramQuery>(async (_text, params) => ({ rows: params[0] === ORG ? ROWS : [] }));
+/** The table's reads, recorded. Every other organisation has nothing. */
+function orgQuery(rows: readonly ProgramRow[] = TABLE) {
+  return vi.fn<ProgramQuery>(programTable(rows));
+}
+
+/** Which read a recorded query call was. */
+function readKind(text: string): 'exact' | 'partial' | 'list' {
+  return text.includes('id::text') ? 'exact' : text.includes('ILIKE') ? 'partial' : 'list';
 }
 
 describe('resolveProgramRef', () => {
@@ -148,6 +162,7 @@ describe('resolveProgramRef', () => {
     const r = await resolveProgramRef(ORG, 'bexarotene', orgQuery());
     expect(r.status).toBe('ambiguous');
     expect(r.status === 'ambiguous' && r.matches.map(p => p.id).sort()).toEqual(['prog-301', 'prog-302']);
+    expect(r.status === 'ambiguous' && r.truncated).toBe(false);
   });
 
   it('reports not_found with the candidates that do exist', async () => {
@@ -169,6 +184,20 @@ describe('resolveProgramRef', () => {
     expect(await listProgramCandidates(ORG, 25, failing)).toEqual({ ok: false, programs: [] });
   });
 
+  it('is unavailable whichever of its reads fails — a failed read has not shown the program is absent', async () => {
+    // ZZ-999 matches nothing, so resolution makes all three reads: exact,
+    // partial, then the candidate list. Fail each in turn.
+    for (const failOn of ['exact', 'partial', 'list'] as const) {
+      const table = programTable(TABLE);
+      const q = vi.fn<ProgramQuery>(async (text, params) => {
+        if (readKind(text) === failOn) throw new Error('connection terminated');
+        return table(text, params);
+      });
+      expect(await resolveProgramRef(ORG, 'ZZ-999', q), `the ${failOn} read failed`).toEqual({ status: 'unavailable' });
+      expect(q.mock.calls.map(([text]) => readKind(text))).toContain(failOn);
+    }
+  });
+
   it('is unavailable without an organisation or a reference, and does not query', async () => {
     const q = orgQuery();
     expect(await resolveProgramRef(null, 'BX-301', q)).toEqual({ status: 'unavailable' });
@@ -179,14 +208,103 @@ describe('resolveProgramRef', () => {
   it('only ever reads the person\'s own organisation', async () => {
     const q = orgQuery();
     await resolveProgramRef(ORG, 'BX-301', q);
-    expect(q).toHaveBeenCalledTimes(1);
-    const [text, params] = q.mock.calls[0];
-    expect(text).toMatch(/WHERE\s+organization_id\s*=\s*\$1/);
-    expect(params[0]).toBe(ORG);
+    await resolveProgramRef(ORG, 'ZZ-999', q);
+    expect(q.mock.calls.length).toBeGreaterThan(1);
+    for (const [text, params] of q.mock.calls) {
+      expect(text).toMatch(/WHERE\s+organization_id\s*=\s*\$1/);
+      expect(params[0]).toBe(ORG);
+    }
 
     // Another organisation's BX-301 is not this one's.
     const other = await resolveProgramRef(6, 'BX-301', orgQuery());
     expect(other.status).toBe('not_found');
+  });
+
+  it('reads the candidate list only when nothing matched — never to decide a match', async () => {
+    const found = orgQuery();
+    await resolveProgramRef(ORG, 'BX-301', found);
+    expect(found.mock.calls.map(([text]) => readKind(text))).toEqual(['exact']);
+
+    const ambiguous = orgQuery();
+    await resolveProgramRef(ORG, 'bexarotene', ambiguous);
+    expect(ambiguous.mock.calls.map(([text]) => readKind(text))).toEqual(['exact', 'partial']);
+
+    const missing = orgQuery();
+    await resolveProgramRef(ORG, 'ZZ-999', missing);
+    expect(missing.mock.calls.map(([text]) => readKind(text))).toEqual(['exact', 'partial', 'list']);
+  });
+});
+
+describe('resolveProgramRef — a workspace with more than 100 programs', () => {
+  // 150 programs. Resolution used to read the 100 most recently touched and
+  // match those, so everything older did not exist as far as AnA could tell.
+  const MANY: ProgramRow[] = Array.from({ length: 150 }, (_, i) => ({
+    id: `prog-${1000 + i}`,
+    organization_id: ORG,
+    name: `Program ${1000 + i}`,
+    code: `P-${1000 + i}`,
+    updated_at: 150 - i, // prog-1000 is the most recent, prog-1149 the oldest
+  }));
+  MANY[3] = { ...MANY[3], name: 'Zeta Stability Study' }; //   4th most recent
+  MANY[140] = { ...MANY[140], name: 'Zeta Device Study' }; // 141st — outside any hundred
+
+  it('opens the oldest program by its exact code', async () => {
+    const r = await resolveProgramRef(ORG, 'p-1149', orgQuery(MANY));
+    expect(r.status).toBe('found');
+    expect(r.status === 'found' && r.program.id).toBe('prog-1149');
+  });
+
+  it('opens an old program by its exact name', async () => {
+    const r = await resolveProgramRef(ORG, 'program 1120', orgQuery(MANY));
+    expect(r.status === 'found' && r.program.id).toBe('prog-1120');
+  });
+
+  it('judges ambiguity over every program, not over a recent window', async () => {
+    // Within the most recent hundred, "zeta" is unique — and opening it would
+    // have been a guess between two programs the person has.
+    const r = await resolveProgramRef(ORG, 'zeta', orgQuery(MANY));
+    expect(r.status).toBe('ambiguous');
+    expect(r.status === 'ambiguous' && r.matches.map(p => p.id)).toEqual(['prog-1003', 'prog-1140']);
+  });
+
+  it('lists at most ten of many matches, most recent first, and says there were more', async () => {
+    const r = await resolveProgramRef(ORG, 'program', orgQuery(MANY));
+    expect(r.status).toBe('ambiguous');
+    if (r.status !== 'ambiguous') return;
+    const named = MANY.filter(p => p.name.startsWith('Program ')); // already most recent first
+    expect(r.matches.map(p => p.id)).toEqual(named.slice(0, 10).map(p => p.id));
+    expect(r.truncated).toBe(true);
+  });
+});
+
+describe('resolveProgramRef — what the person typed is matched literally', () => {
+  const LITERAL: ProgramRow[] = [
+    { id: 'prog-a', organization_id: ORG, name: 'Dose Escalation 50% Cohort', code: 'DE-50', updated_at: 5 },
+    { id: 'prog-b', organization_id: ORG, name: 'Oncology Basket', code: 'ONC_B', updated_at: 4 },
+    { id: 'prog-c', organization_id: ORG, name: 'Cardiac Monitor', code: 'CM-1', updated_at: 3 },
+    { id: 'prog-d', organization_id: ORG, name: 'Renal Outcomes', code: 'RN-2', updated_at: 2 },
+  ];
+
+  it('"%" matches the program with a % in it, not every program', async () => {
+    const q = orgQuery(LITERAL);
+    const r = await resolveProgramRef(ORG, '%', q);
+    expect(r.status === 'found' && r.program.id).toBe('prog-a');
+    // The pattern it sent: the person's % escaped inside the wildcards.
+    const partial = q.mock.calls.find(([text]) => readKind(text) === 'partial');
+    expect(partial?.[1][1]).toBe('%\\%%');
+  });
+
+  it('"_" matches an underscore, not any one character', async () => {
+    const r = await resolveProgramRef(ORG, 'c_b', orgQuery(LITERAL));
+    expect(r.status === 'found' && r.program.id).toBe('prog-b');
+    expect((await resolveProgramRef(ORG, 'r_n', orgQuery(LITERAL))).status).toBe('not_found');
+  });
+
+  it('a backslash is a backslash, not an escape of the character after it', async () => {
+    // Unescaped, "onc\ology" is the pattern for "oncology" — and opens a
+    // program the person did not name.
+    const r = await resolveProgramRef(ORG, 'onc\\ology', orgQuery(LITERAL));
+    expect(r.status).toBe('not_found');
   });
 });
 

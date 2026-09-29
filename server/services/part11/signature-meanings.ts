@@ -39,3 +39,18 @@ export type GovernedSignMeaning = (typeof GOVERNED_SIGN_MEANINGS)[number];
 export function isGovernedSignMeaning(value: unknown): value is GovernedSignMeaning {
   return typeof value === 'string' && (GOVERNED_SIGN_MEANINGS as readonly string[]).includes(value);
 }
+
+/**
+ * Why a declared meaning is refused, or null when it is one of
+ * GOVERNED_SIGN_MEANINGS. Every route that takes a signer's meaning checks it
+ * BEFORE re-authentication, so no one is asked for a password for a request the
+ * shared writer (persistGovernedActionSignature) would refuse anyway.
+ */
+export function signMeaningRefusal(
+  meaning: unknown,
+): { error: 'SIGNATURE_MEANING_REQUIRED' | 'SIGNATURE_MEANING_UNKNOWN'; detail: string } | null {
+  const detail = `One of: ${GOVERNED_SIGN_MEANINGS.join(', ')}.`;
+  if (typeof meaning !== 'string' || meaning.length === 0) return { error: 'SIGNATURE_MEANING_REQUIRED', detail };
+  if (!isGovernedSignMeaning(meaning)) return { error: 'SIGNATURE_MEANING_UNKNOWN', detail };
+  return null;
+}

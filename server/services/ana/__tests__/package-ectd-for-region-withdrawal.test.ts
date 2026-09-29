@@ -11,11 +11,20 @@
  * and is carried through, and a delete that still names a source_path reaches
  * the packager's refusal instead of being shipped.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import JSZip from 'jszip';
+
+// 2026-09-28: confirmed writes now need an editor role (registry wrapper,
+// writeRoleRefusal); CTX models a confirmed person who may edit, so the
+// membership lookup answers 'member'. The pg stub has no organization_users row.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 
 import { PACKAGE_ECTD_FOR_REGION } from '../AnaToolDefinitions';
 import { getToolHandler } from '../AnaToolExecutor';
@@ -53,14 +62,14 @@ describe('package_ectd_for_region — withdrawal', () => {
       await fs.writeFile(cover, pdf('cover'));
       const out = await run(base(path.join(work, 'out'), [
         { ctd_section: '3.2.S.2', operation: 'delete', file_name: 'old-manufacture.pdf', title: 'Old Manufacture',
-          modified_file: '../0000/m3/3-2-s-2/old-manufacture.pdf' },
+          modified_file: '../0000/index.xml#leaf-3-2-S-2-old-manufacture' },
         { ctd_section: '1.2', operation: 'new', source_path: cover, file_name: 'cover.pdf', title: 'Cover' },
       ]));
       expect(out.error).toBeUndefined();
       const zip = await JSZip.loadAsync(await fs.readFile(out.bundlePath!));
       expect(Object.keys(zip.files).some((f) => f.endsWith('old-manufacture.pdf'))).toBe(false);
       const xml = (await zip.file('index.xml')?.async('string')) ?? '';
-      expect(xml).toMatch(/<leaf operation="delete" modified-file="\.\.\/0000\/m3\/3-2-s-2\/old-manufacture\.pdf"/);
+      expect(xml).toMatch(/<leaf operation="delete" modified-file="\.\.\/0000\/index\.xml#leaf-3-2-S-2-old-manufacture" xlink:type="simple"/);
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }
@@ -73,7 +82,7 @@ describe('package_ectd_for_region — withdrawal', () => {
       await fs.writeFile(withdrawn, pdf('WITHDRAWN DOCUMENT BYTES'));
       const out = await run(base(path.join(work, 'out'), [
         { ctd_section: '3.2.S.2', operation: 'delete', source_path: withdrawn, file_name: 'old-manufacture.pdf',
-          title: 'Old Manufacture', modified_file: '../0000/m3/3-2-s-2/old-manufacture.pdf' },
+          title: 'Old Manufacture', modified_file: '../0000/index.xml#leaf-3-2-S-2-old-manufacture' },
       ]));
       expect(out.ok).toBeUndefined();
       expect(out.error).toMatch(/old-manufacture\.pdf/);

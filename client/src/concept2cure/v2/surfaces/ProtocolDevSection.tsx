@@ -44,7 +44,7 @@ const STATUSES: SectionStatus[] = ['not_started', 'draft', 'complete'];
 const MIN_REASON = 8;
 
 export interface ProtocolSectionPaneProps {
-  doc: { id?: string; shortTitle?: string; content?: Record<string, { p?: string }[]> };
+  doc: { id?: string; content?: Record<string, { p?: string }[]> };
   sec: { id: string; num?: string; title?: string; status?: string; updatedAt?: string };
   /** False when the protocol row carries no governed document id. */
   canWrite?: boolean;
@@ -149,7 +149,7 @@ export function ProtocolSectionPane({ doc, sec, canWrite, onAsk, onSaved }: Prot
   const label = `Section ${sec.num ?? ''} — ${sec.title ?? ''}`.trim();
   return (
     <div className="pde-sec">
-      <SectionHead sec={sec} shortTitle={doc.shortTitle} onAsk={onAsk} />
+      <SectionHead sec={sec} onAsk={onAsk} />
 
       <SectionReason writable={writable} reason={reason} onReason={setReason} />
 
@@ -217,10 +217,17 @@ function SectionReason(
   );
 }
 
-/** The section's identity and its one AnA affordance. */
+/** The section's identity and its one AnA affordance.
+ *
+ *  The request names no stored value. It used to splice in the section title
+ *  (from an organisation template any member can write) and the protocol
+ *  number, and send them as the person's own words, outside the fence the
+ *  server puts around screen context. The workspace publishes the open
+ *  section in that fenced context instead (periodic review 2026-09-28, editor
+ *  family, SEC-C-4). */
 function SectionHead(
-  { sec, shortTitle, onAsk }:
-  { sec: ProtocolSectionPaneProps['sec']; shortTitle?: string; onAsk: (p: string) => void },
+  { sec, onAsk }:
+  { sec: ProtocolSectionPaneProps['sec']; onAsk: (p: string) => void },
 ) {
   return (
     <div className="pde-sec-head">
@@ -233,7 +240,7 @@ function SectionHead(
         <PG.Btn
           icon="sparkles"
           variant="outline"
-          onClick={() => onAsk('Draft ' + (sec.title ?? 'this section') + ' for ' + (shortTitle ?? 'this protocol') + ' from the linked evidence.')}
+          onClick={() => onAsk('Draft the protocol section open on screen from the linked evidence.')}
         >
           Draft with AnA
         </PG.Btn>
