@@ -214,3 +214,136 @@ describe('PATCH /sections/:id refuses an image that is not an uploaded figure', 
     }
   });
 });
+
+/* ── The create doors (SEC-B-1/2 follow-on b1) ───────────────────────────────
+   POST /sections inserted `content` as sent, and POST /docs with an
+   organization template seeded each section with the template's stored
+   content, unchecked. Either stored exactly what the save above refuses. Both
+   now refuse it the same way, before anything is read or written. */
+
+const TEMPLATE_ID = '55555555-5555-4555-8555-555555555555';
+
+async function createSection(content: unknown) {
+  return request(makeApp())
+    .post('/api/authoring/sections')
+    .set('Authorization', await bearer())
+    .send({ doc_id: 'D1', code: '2.3.S', title: 'Drug substance', content });
+}
+
+/** The organization's template holds these section contents; the global store has none. */
+function orgTemplate(contents: string[]) {
+  h.poolQuery.mockImplementation(async (sql: string) => {
+    if (/FROM intelligence\.template_sections/i.test(sql)) return { rowCount: 0, rows: [] };
+    if (/FROM authoring_templates/i.test(sql)) {
+      return {
+        rowCount: 1,
+        rows: [
+          {
+            template_content: {
+              sections: contents.map((content, i) => ({
+                code: `2.3.${i + 1}`,
+                title: `Section ${i + 1}`,
+                content,
+                order_index: i,
+              })),
+            },
+          },
+        ],
+      };
+    }
+    return { rowCount: 1, rows: [{}] };
+  });
+}
+
+async function createFromTemplate() {
+  return request(makeApp())
+    .post('/api/authoring/docs')
+    .set('Authorization', await bearer())
+    .send({ title: 'Quality overall summary', module: 'M2', template_id: TEMPLATE_ID });
+}
+
+const sectionInserts = () =>
+  h.clientQuery.mock.calls.filter((c) => /INSERT INTO authoring_sections/i.test(String(c[0])));
+
+/** Every statement that read or wrote the parent document. */
+const parentReads = () =>
+  [...h.clientQuery.mock.calls, ...h.poolQuery.mock.calls]
+    .map((c) => String(c[0]))
+    .filter((s) => /authoring_documents/i.test(s));
+
+describe('POST /sections refuses an image that is not an uploaded figure', () => {
+  it.each([
+    ['an external address', 'https://collector.example/p.png'],
+    ['dot segments', '/api/authoring/images/../../tenant-export/full'],
+    ['an inline SVG', 'data:image/svg+xml;base64,PHN2Zz4='],
+  ])('%s: 400 with the sentence, nothing read or written', async (_label, src) => {
+    const res = await createSection(`<p>Drug substance.</p><img src="${src}" alt="Figure 1">`);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    // The route's string `error`, which both creating clients show as it is.
+    expect(String(res.body.error)).toMatch(/^Image 1 \(.+\) is not an uploaded figure\./);
+    expect(String(res.body.error)).not.toContain('/api/');
+    expect(parentReads()).toEqual([]);
+    expect(writes()).toEqual([]);
+    expect(h.connect).not.toHaveBeenCalled();
+  });
+
+  it('refuses content that is not text, which the driver would store as JSON unchecked', async () => {
+    const res = await createSection({ html: '<img src=https://collector.example/p.png>' });
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(parentReads()).toEqual([]);
+    expect(writes()).toEqual([]);
+  });
+
+  it('creates a section holding a governed reference and an inline PNG, exactly as sent (guard)', async () => {
+    const content = `<p>Figure 1.</p><img src="${REF}" alt="Chromatogram"><img src="${PNG}" alt="Inline">`;
+    const res = await createSection(content);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(sectionInserts()).toHaveLength(1);
+    expect((sectionInserts()[0][1] as unknown[])[4]).toBe(content);
+  });
+});
+
+describe('POST /docs refuses an organization template whose section holds a non-figure image', () => {
+  it('400 naming the template section, and no document is created', async () => {
+    orgTemplate(['<p>Clean.</p>', '<p>Stability.</p><img src="https://collector.example/p.png">']);
+    const res = await createFromTemplate();
+
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(String(res.body.error)).toMatch(
+      /^Template section 2\.3\.2 holds an image that is not an uploaded figure \(from another site\)\./,
+    );
+    expect(writes()).toEqual([]);
+    expect(h.connect).not.toHaveBeenCalled();
+  });
+
+  /* The section save's sentence ends "Upload the image or remove it, then save
+     again". A template has no edit route, so the person creating a document
+     can act only on the choice of template (fix-up). */
+  it('tells the person what they can do: choose another template, never "save again"', async () => {
+    orgTemplate([
+      '<p>Stability.</p><img src="https://collector.example/p.png"><img src="data:image/webp;base64,UklGRg==">',
+    ]);
+    const res = await createFromTemplate();
+
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    const error = String(res.body.error);
+    expect(error).toMatch(
+      /^Template section 2\.3\.1 holds 2 images that are not uploaded figures \(from another site, inline image\/webp data\)\./,
+    );
+    expect(error).toContain('Choose another template, or create the document without one.');
+    expect(error).not.toMatch(/save again/i);
+    expect(error).not.toContain('collector.example');
+    expect(error).not.toContain('UklGRg');
+  });
+
+  it('seeds a template whose sections hold only figures, as stored (guard)', async () => {
+    const figures = `<p>Figure 1.</p><img src="${REF}"><img src="${PNG}">`;
+    orgTemplate(['<p>Clean.</p>', figures]);
+    const res = await createFromTemplate();
+
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(sectionInserts().map((c) => (c[1] as unknown[])[3])).toEqual(['<p>Clean.</p>', figures]);
+  });
+});

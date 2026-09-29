@@ -1,0 +1,24 @@
+== ci:check-test-imports
+[ci:test-imports] 3044 test files · 5770 local imports checked · 6863 bare package specifiers skipped (out of scope).
+[ci:test-imports] OK — every local import in every test file resolves.
+exit=0
+== ci:unreferenced-modules
+Unreferenced modules: 86 (baseline 86)
+
+OK: no new unreachable modules.
+exit=0
+== ci:canonicalizers
+Local canonicalizers: 7 (baseline 7)
+
+OK: no new canonicalizers.
+exit=0
+== ci:commonjs-require
+check-commonjs-require: no new occurrences. 12 baselined across 12 file(s).
+exit=0
+== ci:check-client-reachability
+[ci:client-reachability] 462 reachable / 0 unreachable (baseline 0) from client/src/main.tsx.
+[ci:client-reachability] OK — no new unreachable client modules.
+exit=0
+== ci:check-pdf-runtime
+[ci:pdf-runtime-canonicality] OK — no new PDF entry points outside the approved list
+exit=0

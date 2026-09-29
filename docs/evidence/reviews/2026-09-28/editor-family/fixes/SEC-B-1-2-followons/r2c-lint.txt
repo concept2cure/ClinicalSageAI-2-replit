@@ -1,0 +1,15 @@
+
+./client/src/concept2cure/v2/editor/roundTrip.ts
+   85:38  warning  'Document' is not defined                                               no-undef
+  174:49  warning  'Document' is not defined                                               no-undef
+  251:8   warning  Function 'parsedDocText' has a complexity of 16. Maximum allowed is 15  complexity
+
+./server/export/authoring-images.ts
+  75:1  warning  Function 'jpegSize' has a complexity of 16. Maximum allowed is 15  complexity
+
+./server/services/ectd/leaf-pdf-renderer.ts
+  336:1  warning  Function 'walkNode' has a complexity of 29. Maximum allowed is 15             complexity
+  520:8  warning  Async function 'renderLeafPdf' has a complexity of 16. Maximum allowed is 15  complexity
+
+✖ 6 problems (0 errors, 6 warnings)
+

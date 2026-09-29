@@ -258,12 +258,6 @@ describe('htmlToPlainText — structural fidelity', () => {
     expect(out).toContain('After.');
   });
 
-  it('falls back to the file name when a figure has no alt text', () => {
-    expect(htmlToPlainText('<p>x</p><img src="/uploads/2026/consort.png">')).toContain(
-      '[Figure: consort.png]',
-    );
-  });
-
   it('keeps ordered-list numbering, including an explicit start', () => {
     // "as described in step 3" needs a step 3 to point at.
     expect(
@@ -358,6 +352,50 @@ describe('htmlToPlainText — structural fidelity', () => {
     const html =
       '<ol><li>A<ul><li>B</li></ul></li></ol><table><tr><td>x</td><td>y</td></tr></table>';
     expect(htmlToPlainText(html)).toBe(htmlToPlainText(html));
+  });
+});
+
+/**
+ * A figure with no alt text is named the way the authoring export names a
+ * figure it did not file (unfiledFigureLabel, server/export/
+ * authoring-images.ts): by the kind of src, or, for an upload to the image
+ * store, by that short reference; no other src is printed. The leaf used
+ * to print the text after the src's last "/". For a data: URI that is the
+ * tail of its base64 payload, and the whole payload when the payload holds no
+ * "/", printed as a line of the filed leaf. For an external address it is
+ * whatever path and query the address carries (periodic review 2026-09-28,
+ * editor family, the export placeholder's class).
+ */
+describe('htmlToPlainText — a figure with no alt text is named by its kind, never by any other src', () => {
+  const PAYLOAD_WITH_SLASH = `iVBORw0KGgo${'A'.repeat(150_000)}/VGFpbE9mVGhlUGF5bG9hZA==`;
+  const PAYLOAD_WITHOUT_SLASH = 'A'.repeat(150_000);
+
+  it.each([
+    ['inline PNG data whose payload holds a "/"', `data:image/png;base64,${PAYLOAD_WITH_SLASH}`, 'inline image/png data'],
+    ['inline PNG data whose payload holds no "/"', `data:image/png;base64,${PAYLOAD_WITHOUT_SLASH}`, 'inline image/png data'],
+    ['inline WebP data', `data:image/webp;base64,${'UklGR'.repeat(30_000)}`, 'inline image/webp data'],
+    ['an external address', `https://collector.example/p.png?d=${'x'.repeat(5_000)}`, 'from another site'],
+    ['a path outside the image store', '/uploads/2026/consort.png', 'not from the image store'],
+  ])('%s', (_label, src, kind) => {
+    expect(htmlToPlainText(`<p>See figure.</p><img src="${src}"><p>After.</p>`)).toBe(
+      `See figure.\n\n[Figure: ${kind}]\n\nAfter.`,
+    );
+  });
+
+  it('names a governed upload by its reference, as the export names one it could not file', () => {
+    expect(htmlToPlainText('<img src="/api/authoring/images/file_1759000000000_abc123">')).toBe(
+      '[Figure: /api/authoring/images/file_1759000000000_abc123]',
+    );
+  });
+
+  it('names the figure by its alt text when it has one; alt text of spaces is none', () => {
+    const src = `data:image/png;base64,${PAYLOAD_WITH_SLASH}`;
+    expect(htmlToPlainText(`<img src="${src}" alt=" Kaplan-Meier  curve ">`)).toBe('[Figure: Kaplan-Meier curve]');
+    expect(htmlToPlainText(`<img src="${src}" alt="   ">`)).toBe('[Figure: inline image/png data]');
+  });
+
+  it('says a figure with no src and no alt text is an unresolved reference', () => {
+    expect(htmlToPlainText('<p>x</p><img>')).toBe('x\n\n[Figure: unresolved image reference]');
   });
 });
 

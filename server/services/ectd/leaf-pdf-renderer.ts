@@ -24,6 +24,7 @@ import { parse as parseHtml } from 'node-html-parser';
 import { addBookmarks, type OutlineNode } from './pdf-bookmark-generator';
 import { inlineMarksToText } from '../../export/inline-marks-to-text.js';
 import { decodeHtmlEntities } from '../../export/decode-html-entities.js';
+import { unfiledFigureLabel } from '../../export/authoring-images.js';
 
 const PAGE_WIDTH = 612; // US Letter, points
 const PAGE_HEIGHT = 792;
@@ -346,10 +347,15 @@ function walkNode(node: any, ctx: WalkContext): string {
 
     case 'img': {
       // Never silent. Alt text is the figure's only description in a text
-      // rendering; the file name still tells a reviewer something was there.
+      // rendering. Without it, the figure is named the way the authoring
+      // export names a figure it did not file (unfiledFigureLabel): by the kind
+      // of src, or, for an upload to the image store, by that short reference;
+      // no other src is printed. The text
+      // after the src's last "/" used to be printed here, and for a data: URI
+      // that is the tail of its base64 payload, or the whole payload when the
+      // payload holds no "/" (periodic review 2026-09-28, editor family).
       const alt = collapseInline(node.getAttribute('alt') ?? '').trim();
-      const src = (node.getAttribute('src') ?? '').split(/[/\\]/).pop() ?? '';
-      return '\n[Figure: ' + (alt || src || 'image') + ']\n';
+      return '\n[Figure: ' + unfiledFigureLabel({ src: node.getAttribute('src') ?? '', alt }) + ']\n';
     }
 
     case 'pre':

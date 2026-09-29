@@ -1,0 +1,162 @@
+MUTANT 3: export decodes any data:image/ src (the old data: branch)
+file: server/export/authoring-images.ts
+--- mutation diff vs the fix ---
+192c192
+<     } else if (isInlineFigureImage(src)) {
+---
+>     } else if (src.startsWith('data:image/')) {
+--- test run ---
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a dot segment after a real id: the loader is not called and nothing resolves 8ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a query after a real id: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > an id the store never minted: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > percent-encoded dot segments: the loader is not called and nothing resolves 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a reference padded with spaces: the loader is not called and nothing resolves 0ms
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline an upper-case type: not decoded, not filed 6ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline WebP, which Word cannot hold: not decoded, not filed 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline SVG, a script container: not decoded, not filed 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline TIFF: not decoded, not filed 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline a PNG whose payload holds a newline: not decoded, not filed 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > the PDF of a section holding an inline WebP states it instead of embedding it 5ms
+   → expected '<p>Stability results.</p><figure><img…' to contain '[Figure not exported: Figure 1]'
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > reads srcs the way the export parser does: character references, unquoted and upper-case 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > still files a governed reference and an inline PNG (guard) 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline an upper-case type: not decoded, not filed
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "data:image/PNG;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
++ ]
+
+ ❯ server/export/__tests__/authoring-images-figure-rule.test.ts:68:32
+     66|   ])('inline %s: not decoded, not filed', async (_label, src) => {
+     67|     const images = await resolveAuthoringImages([img(src)], ORG);
+     68|     expect([...images.keys()]).toEqual([]);
+       |                                ^
+     69|   });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline WebP, which Word cannot hold: not decoded, not filed
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "data:image/webp;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
++ ]
+
+ ❯ server/export/__tests__/authoring-images-figure-rule.test.ts:68:32
+     66|   ])('inline %s: not decoded, not filed', async (_label, src) => {
+     67|     const images = await resolveAuthoringImages([img(src)], ORG);
+     68|     expect([...images.keys()]).toEqual([]);
+       |                                ^
+     69|   });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline SVG, a script container: not decoded, not filed
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "data:image/svg+xml;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
++ ]
+
+ ❯ server/export/__tests__/authoring-images-figure-rule.test.ts:68:32
+     66|   ])('inline %s: not decoded, not filed', async (_label, src) => {
+     67|     const images = await resolveAuthoringImages([img(src)], ORG);
+     68|     expect([...images.keys()]).toEqual([]);
+       |                                ^
+     69|   });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline TIFF: not decoded, not filed
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "data:image/tiff;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
++ ]
+
+ ❯ server/export/__tests__/authoring-images-figure-rule.test.ts:68:32
+     66|   ])('inline %s: not decoded, not filed', async (_label, src) => {
+     67|     const images = await resolveAuthoringImages([img(src)], ORG);
+     68|     expect([...images.keys()]).toEqual([]);
+       |                                ^
+     69|   });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline a PNG whose payload holds a newline: not decoded, not filed
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "data:image/png;base64,iVBORw0KGgoAAAANSUhE
++ UgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
++ ]
+
+ ❯ server/export/__tests__/authoring-images-figure-rule.test.ts:68:32
+     66|   ])('inline %s: not decoded, not filed', async (_label, src) => {
+     67|     const images = await resolveAuthoringImages([img(src)], ORG);
+     68|     expect([...images.keys()]).toEqual([]);
+       |                                ^
+     69|   });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > the PDF of a section holding an inline WebP states it instead of embedding it
+AssertionError: expected '<p>Stability results.</p><figure><img…' to contain '[Figure not exported: Figure 1]'
+
+Expected: "[Figure not exported: Figure 1]"
+Received: "<p>Stability results.</p><figure><img src="data:image/webp;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" alt="Figure 1"><figcaption>Figure 1</figcaption></figure>"
+
+ ❯ server/export/__tests__/authoring-images-figure-rule.test.ts:74:21
+     72|     const html = img(`data:image/webp;base64,${PNG_B64}`);
+     73|     const printed = blocksToHtml(sectionContentToBlocks(html), await r…
+     74|     expect(printed).toContain('[Figure not exported: Figure 1]');
+       |                     ^
+     75|     expect(printed).not.toContain('data:image/webp');
+     76|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 7 passed (13)
+   Start at  18:26:19
+   Duration  511ms (transform 212ms, setup 105ms, import 178ms, tests 33ms, environment 0ms)
+

@@ -369,15 +369,12 @@ export function assessFidelity(stored: string, parsedDoc: JSONContent): Fidelity
  * Convert textarea-era plain text to the editor's HTML: blank-line-separated
  * runs become paragraphs, single newlines become hard breaks. Escapes
  * everything — plain text has no markup by definition.
+ *
+ * Implemented in @shared/authoring/plain-text-html, because section generation
+ * on the server stores a model's text with the same function, and re-exported
+ * here for the editor and its tests.
  */
-export function plainTextToHtml(text: string): string {
-  const esc = (s: string) =>
-    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const paras = text.replace(/\r\n/g, '\n').split(/\n{2,}/);
-  return paras
-    .map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`)
-    .join('');
-}
+export { plainTextToHtml } from '@shared/authoring/plain-text-html';
 
 /**
  * How many of the clipboard's words the parse kept.

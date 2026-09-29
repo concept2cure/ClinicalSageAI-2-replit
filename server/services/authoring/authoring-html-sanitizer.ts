@@ -141,8 +141,13 @@ export async function refusedFigures(html: string): Promise<RefusedFigure[]> {
 
 /** What kind of src it is, in words an author can act on. Never the src
  *  itself: an application path in a message makes the client hide the whole
- *  message (redactInternals), and the src is returned alongside it anyway. */
-function refusedKind(src: string): string {
+ *  message (redactInternals), and the src is returned alongside it anyway.
+ *  Exported for the other places that name such an image: a template's
+ *  refusal and, through unfiledFigureLabel (server/export/authoring-images.ts),
+ *  every figure with no alt text that a rendering prints as words: the
+ *  export's "[Figure not exported: …]" placeholder and the eCTD leaf and
+ *  fallback PDFs' "[Figure: …]", valid inline figures included. */
+export function refusedKind(src: string): string {
   if (!src.trim()) return 'an empty reference';
   const dataType = /^data:([a-z0-9.+/-]{1,40})/i.exec(src);
   if (dataType) return `inline ${dataType[1].toLowerCase()} data`;
