@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T21:13:36.548Z",
+  "generatedAt": "2026-09-29T21:23:39.216Z",
   "git": {
-    "sha": "d8b5193603429faf1d0fd74d156a48d62f5f1c96",
+    "sha": "0aeeb1c460f6ed03f32005d00a173c8ad64c923b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2462,6 +2462,10 @@
         "lines": 1828
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1824
+      },
+      {
         "file": "server/services/compliance/globalComplianceEngine.ts",
         "lines": 1824
       },
@@ -2495,10 +2499,6 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1776
-      },
-      {
-        "file": "server/routes/c2c/project-vault.ts",
         "lines": 1776
       },
       {
