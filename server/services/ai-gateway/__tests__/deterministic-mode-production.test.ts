@@ -30,6 +30,12 @@ function deterministicGateway(): AIGateway {
   return new AIGateway({ deterministicMode: true, auditEnabled: false, providers: [] });
 }
 
+/* Bound to a tenant, so each case tests the deterministic acceptance and not
+   ADR-0014 §5's refusal of an unbound call in production, which would
+   otherwise answer first (added 2026-09-29, row 74, when the two production
+   refusals met in one tree). The last case pins that ordering. */
+const TENANT = { organizationId: 7 };
+
 describe('deterministic mode — the gateway at request time (defence in depth)', () => {
   const saved = { ...process.env };
   beforeEach(() => {
@@ -41,7 +47,7 @@ describe('deterministic mode — the gateway at request time (defence in depth)'
 
   it('refuses to serve a fixed response in production without the acceptance', async () => {
     process.env.NODE_ENV = 'production';
-    await expect(deterministicGateway().complete('Draft section 2.7.3')).rejects.toThrow(
+    await expect(deterministicGateway().complete('Draft section 2.7.3', TENANT)).rejects.toThrow(
       /AI_GATEWAY_ACCEPT_DETERMINISTIC/,
     );
   });
@@ -49,20 +55,28 @@ describe('deterministic mode — the gateway at request time (defence in depth)'
   it('serves it in production only when AI_GATEWAY_ACCEPT_DETERMINISTIC=true', async () => {
     process.env.NODE_ENV = 'production';
     process.env.AI_GATEWAY_ACCEPT_DETERMINISTIC = 'true';
-    await expect(deterministicGateway().complete('Draft section 2.7.3')).resolves.toEqual(expect.any(String));
+    await expect(deterministicGateway().complete('Draft section 2.7.3', TENANT)).resolves.toEqual(expect.any(String));
   });
 
   it('does not treat the permissive-governance acceptance as accepting fixed responses', async () => {
     process.env.NODE_ENV = 'production';
     process.env.AI_GOVERNANCE_ACCEPT_PERMISSIVE = 'true';
-    await expect(deterministicGateway().complete('Draft section 2.7.3')).rejects.toThrow(
+    await expect(deterministicGateway().complete('Draft section 2.7.3', TENANT)).rejects.toThrow(
       /AI_GATEWAY_ACCEPT_DETERMINISTIC/,
     );
   });
 
+  it('an unbound call in production is refused for its missing tenant before any fixed response is considered', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.AI_GATEWAY_ACCEPT_DETERMINISTIC = 'true';
+    await expect(deterministicGateway().complete('Draft section 2.7.3')).rejects.toMatchObject({
+      reasonCode: 'DENY_NO_TENANT_BINDING',
+    });
+  });
+
   it('is unchanged outside production (tests and development rely on it)', async () => {
     process.env.NODE_ENV = 'test';
-    await expect(deterministicGateway().complete('Draft section 2.7.3')).resolves.toEqual(expect.any(String));
+    await expect(deterministicGateway().complete('Draft section 2.7.3', TENANT)).resolves.toEqual(expect.any(String));
   });
 });
 

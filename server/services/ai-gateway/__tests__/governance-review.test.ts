@@ -47,6 +47,7 @@ beforeEach(() => {
   delete process.env.AI_PII_ENFORCEMENT;
   delete process.env.AI_GATEWAY_DETERMINISTIC;
   delete process.env.DETERMINISTIC_MODE;
+  delete process.env.AI_GATEWAY_ACCEPT_DETERMINISTIC;
   setOrgPlacementResolver({ resolve: async () => null });
   metered.length = 0;
 });
@@ -105,6 +106,9 @@ describe('[2]/[11] deterministic mode does not switch the §3 refusal off in pro
   it('control: production deterministic chat is still the fixture (the boot smoke runs on it)', async () => {
     production();
     process.env.AI_GATEWAY_DETERMINISTIC = 'true';
+    // The boot smoke sets the written acceptance (ci.yml); without it trunk's
+    // 7ca7bc271 refuses a fixed response in production, which is right.
+    process.env.AI_GATEWAY_ACCEPT_DETERMINISTIC = 'true';
     const gw = governedGateway({ providers: [], deterministic: 'env' });
     const out = await gw.route(chat({ organizationId: ORG }));
     expect(out.deterministic).toBe(true);
