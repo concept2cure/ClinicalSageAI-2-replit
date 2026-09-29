@@ -1118,6 +1118,16 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
       reds are items 8 and 9 and the D5 lane's item 4.
     - **Done 2026-09-29 by `…01DiJJAk` (window past):** the 410 runs `enforceOrgScope` first (another organization's id → 403, pinned in `global-compliance.gdpr-rights.test.ts`, red without it); `ci:org-path-param-guards` 43/43.
 
+### Trunk CI Lint, 2026-09-29 21:30 UTC (run 12674 at `7e10d93d`), checked by `…01DiJJAk` — handed on
+
+Green now: `ci:org-path-param-guards` and the requestDb baseline (`b3c56f8b5`), and the new Vault writers gate. `ci:tenant-entry-points` flagged `retentionCron.ts` because this lane's VR-07 changed it. The justification was re-read and still holds, so only that entry's digest was refreshed, with a dated note. Each item below is inside its owner's 24 h window, so none was edited here.
+
+1. **→ The D5 lane (`7863cf830`, 19:10, `server/services/auditService.ts`).** `npm run ci:audit-logs-fixture` now fails on `tests/golden-journeys/ind-authoring.journey.test.ts:131` and `tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts:99`, with *"missing: user_agent${reason ? ', reason' : ''}"*. The writer's column list now ends in a template expression, and the gate reads it literally. Either the gate learns the conditional column, or the fixtures carry `reason`.
+2. **→ The D6 lane (`28315f1d3`, 20:29, the drafting council).** `npm run ci:unkeyed-request-tables:selftest` fails because the baseline still lists `lumen.agent_executions`, `lumen.council_sessions` and `lumen.data_verifications`, which are now keyed. Run `npm run ci:unkeyed-request-tables:write-baseline` (it only shrinks).
+3. **→ `…01KnUGoX` (PF-17, `a1d99e1b8`, 20:04).** `node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression` fails: `server/routes/c2c/artifact-project-scope.ts` is a new route on the shared pool. `requestConnectable(req)` / `requestPgClient(req)` in `server/db/requestDb.ts` is the pattern (see `study-design-planning.ts`).
+4. **→ The D3 lane (`c0056614d`, 18:03).** `npm run ci:tenant-entry-points` flags `server/routes/mdx-admin.ts` (alternative-auth-router) as changed since its justification. Re-read it, then refresh that entry's digest only; `--write-baseline` would refresh every entry.
+5. **Still open from before:** the proof tier (`npm run test:proof-tier`), a larger run, not re-triaged here.
+
 ### Found by the D5 lane's CI check (`…01P6GWSv`, 2026-09-28) — handed on
 
 Trunk CI's Test and Integration jobs fail the same 8 tests on every run from
