@@ -1,0 +1,34 @@
+# the review-round tests against 213fbebc: every source file this round touches at 213fbebc, run-scope.ts absent
+ × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a refusal writes one content-free row naming the tenant-placement detector, reason and stage
+   → expected [ 'boundFrom', 'detail', …(6) ] to deeply equal ArrayNotContaining{…}
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > the prompt hash and the serving region > two requests that differ only in their request-level imageContent hash differently
+   → expected 'c3f7cb30eab9722d64228f1dbef576d1af9db…' not to be 'c3f7cb30eab9722d64228f1dbef576d1af9db…' // Object.is equality
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a row claims only what happened (2026-09-26 review) > a call nothing served records no served-model governance and no region
+   → approvedModelId: expected 'claude-opus-4' to be undefined
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a row claims only what happened (2026-09-26 review) > a payload whose document or image no screen read is recorded unscreened_media, not none
+   → expected 'none' to be 'unscreened_media' // Object.is equality
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a row claims only what happened (2026-09-26 review) > a malformed content block still leaves a row, hashed
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a row claims only what happened (2026-09-26 review) > a decline no other model may run leaves a failure row
+   → expected [] to deeply equal [ ObjectContaining{…} ]
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > a declared residency is known codes only: an unknown token claims nothing, and is reported
+   → expected [ 'eastus2', 'eu', 'eu' ] to deeply equal [ 'eu' ]
+ × server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts > GatewayAuditLogger — which failures latch > stops re-probing once the table is known to lack a column the writer inserts
+   → expected 9 to be 3 // Object.is equality
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held command runs it with the model call that proposed it, from the ROW (D6)
+   → expected undefined to deeply equal { provider: 'anthropic', …(2) }
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a command posted without its run names no model call: null, never the body's claim (D6)
+   → expected undefined to be null
+ × server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > the streamed answer’s command blocks carry the model call that wrote them
+   → expected '/**\n * POST /api/ana-ri/stream — SSE…' to match /runStreamPostProcessing\(\{[\s\S]{0,1…/
+ × server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > a command block is attributed to the round that wrote it, and to no one when rounds disagree
+   → commandBlockProposer is not a function
+ × server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > a held action records the model call that proposed it, which governed-action runs it with
+   → expected '/**\n * POST /api/ana-ri/stream — SSE…' to match /requestApproval\(getPool\(\), runId, …/
+ × server/services/ana/__tests__/model-call-linkage.test.ts > a run is closed with the reason its loop stopped > a turn that ends before the loop is closed failed when it failed, not finished for want of tools
+   → expected '/**\n * POST /api/ana-ri/stream — SSE…' to match /if \(fastOutcome === 'failed'\) strea…/
+ FAIL  server/services/ai-gateway/__tests__/run-scope.test.ts [ server/services/ai-gateway/__tests__/run-scope.test.ts ]
+Error: Cannot find module '/server/services/ai-gateway/run-scope' imported from /home/user/ClinicalSageAI-2-replit/server/services/ai-gateway/__tests__/run-scope.test.ts
+ Test Files  7 failed (7)
+      Tests  14 failed | 85 passed (99)
+exit=1

@@ -1,0 +1,9 @@
+## mutation: entry.runId and entry.parentRunId swapped in the INSERT params
+ × server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts > GatewayAuditLogger — every value binds to its own column (D6) > binds each provenance field to the column of the same name 12ms
+   → expected { region: 'eu', …(13) } to deeply equal { region: 'eu', …(13) }
+-   "parent_run_id": "run-1",
++   "parent_run_id": "run-7",
+-   "run_id": "run-7",
++   "run_id": "run-1",
+      Tests  1 failed | 8 skipped (9)
+exit=1
