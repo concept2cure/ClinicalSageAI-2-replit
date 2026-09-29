@@ -39,7 +39,9 @@ vi.mock('../../services/storage/index.js', () => ({
 /* After admission: audit, filing, catalog, chunking and text extraction are
    not under test, and each would otherwise need a database or a real parse. */
 vi.mock('../../services/auditService.js', () => ({ writeChainedAuditRow: vi.fn() }));
-vi.mock('../../services/vault/vault-filing.service.js', () => ({
+vi.mock('../../services/vault/vault-filing.service.js', async (importOriginal) => ({
+  // The real vocabulary check (VR-04); the classifier and view are this suite's to fix.
+  filingVocabularyRefusal: (await importOriginal<typeof import('../../services/vault/vault-filing.service.js')>()).filingVocabularyRefusal,
   classifyForFiling: () => ({
     folderId: null, evidenceKind: null, ctdSection: null,
     status: 'unfiled', confidence: null, rationale: null, placedBy: null,

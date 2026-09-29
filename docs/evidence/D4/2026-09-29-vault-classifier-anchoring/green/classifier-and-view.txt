@@ -1,0 +1,93 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > degrades to the service view when the table is missing (42P01), as before
+{
+  "timestamp": "2026-09-29T20:39:34.385Z",
+  "level": "warn",
+  "message": "[vault-filing] resolveVaultView degraded to service view",
+  "context": {
+    "err": "relation \"regulatory_programs\" does not exist"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > degrades to the service view when the table is missing (42P01), as before
+{
+  "timestamp": "2026-09-29T20:39:34.386Z",
+  "level": "warn",
+  "message": "[vault-filing] resolveOrgVaultView degraded to service view",
+  "context": {
+    "err": "relation \"regulatory_programs\" does not exist"
+  }
+}
+
+ ✓ server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > reads the program's product type 3ms
+ ✓ server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > degrades to the service view when the table is missing (42P01), as before 3ms
+ ✓ server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > lets any other failure through instead of filing against the wrong taxonomy 2ms
+stdout | server/services/vault/__tests__/vault-filing.service.test.ts
+{
+  "timestamp": "2026-09-29T20:39:35.579Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T20:39:35.580Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-filing.service.test.ts
+{
+  "timestamp": "2026-09-29T20:39:35.581Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/vault/__tests__/vault-filing.service.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/vault/__tests__/vault-filing.service.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/vault/__tests__/vault-filing.service.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > FILING_RULES totality > every rule target folder exists in the view preset it names 3ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > FILING_RULES totality > classifier output folder is always renderable for the input view 10ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > fail-closed on unclassifiable input > a meaningless filename lands in the Unfiled queue, not a guessed folder 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > fail-closed on unclassifiable input > an empty name with no text is unfiled everywhere 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > fail-closed on unclassifiable input > the TMF default zone is NOT treated as a finding — service-view no-match stays unfiled 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > labeling: pharma → Module 1, device → udi 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > CTD content: stability → Module 3, toxicology → Module 4, CSR → Module 5 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > device engineering: risk file → eng with a rationale 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > an SOP in a pharma dossier vault is honestly not placeable 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > service view files by TMF zone on a keyword match 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > correspondence and templates file in every view 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > document-body fallback > uses bounded text only when the name says nothing 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > document-body fallback > a name match wins over body text 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > folderLabel > labels a real folder and never invents one 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > a word inside another word is not a section: "Permission" is not ISS, "Otherwise" is not ISE 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > an Integrated Summary of Safety is proposed at 5.3.5.3, not the generic 5.3.5 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > a safety data sheet is not a clinical safety study 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > "Item2" is not Module 2, and a bare module is never proposed as a section 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > clinical pharmacology is Module 5, not the nonclinical pharmacology of Module 4 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > positive controls stay put 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > a declared PROTOCOL on a neutral filename is a protocol 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > a declared type that contradicts the filename is flagged for review naming both, not overridden 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > a declared type that agrees with the filename keeps the placement and the more specific kind 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > OTHER, or no declared type, changes nothing 0ms
+
+ Test Files  2 passed (2)
+      Tests  27 passed (27)
+   Start at  20:39:33
+   Duration  1.90s (transform 978ms, setup 189ms, import 1.64s, tests 35ms, environment 0ms)
+
