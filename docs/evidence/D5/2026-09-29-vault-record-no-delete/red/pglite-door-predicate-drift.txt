@@ -1,0 +1,44 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > erases every vault document the tenant owns, including one on a soft-deleted programme 12ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > erases the chunks of those documents too 5ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > never reaches another tenant's documents 4ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > the old organization_id-only predicate leaves the bytes behind (why this changed) 5ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > scopes chunks through the same document predicate, not a weaker one 2ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > keeps the predicate map frozen and free of request-derived input 3ms
+ × server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the database's purge door deletes exactly the predicate's rows (VR-07) > for every tenant: removes the rows the predicate selects, returns one row per version, and spares the rest 17ms
+   → org 11: expected [ { storage_version_id: null, …(1) } ] to have a length of 2 but got 1
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the database's purge door deletes exactly the predicate's rows (VR-07) > refuses an organization that is not pending deletion, and deletes nothing 8ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > exports the document on a soft-deleted programme that the purge will erase 19ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > for every tenant: the purge set is a subset of the export set — exactly equal here 19ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > never exports another tenant's document 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the database's purge door deletes exactly the predicate's rows (VR-07) > for every tenant: removes the rows the predicate selects, returns one row per version, and spares the rest
+AssertionError: org 11: expected [ { storage_version_id: null, …(1) } ] to have a length of 2 but got 1
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts:193:43
+    191|       await pglite.query(`UPDATE organizations SET status = 'pending_d…
+    192|       const returned = await pglite.query('SELECT * FROM public.purge_…
+    193|       expect(returned.rows, `org ${org}`).toHaveLength(named.length);
+       |                                           ^
+    194|       expect(await remaining('vault.documents'), `org ${org}`).toEqual…
+    195|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  19:59:48
+   Duration  2.91s (transform 215ms, setup 83ms, import 284ms, tests 2.25s, environment 0ms)
+

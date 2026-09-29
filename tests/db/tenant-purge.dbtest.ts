@@ -241,6 +241,23 @@ describe("the purge erases the vault's stored bytes, and only once it has commit
     expect(await new LocalStorageProvider().get(versionId, ORG), 'the bytes must go with their record').toBeNull();
   });
 
+  /* The route (tenants-simple.ts) runs the purge on the runtime pool, as
+     app_service, in the platform scope (/api/tenants is a system-scope
+     prefix). The cases above run it as the table owner, which RLS does not
+     filter; the Vault's policies key on the caller's organization and have no
+     platform arm, so this is the only case that shows what the route does. */
+  it("erases the vault through the route's own connection: the runtime role in the platform scope (VR-07)", async () => {
+    const { pool: runtime } = await import('../../server/db');
+    const { runWithSystemTenantScope } = await import('../../server/db/tenantStore');
+    const result = await runWithSystemTenantScope('tests/db/tenant-purge.dbtest.ts', () =>
+      purge(runtime, ['vault.document_chunks', 'vault.documents']),
+    );
+    const left = await owner.query('SELECT count(*)::int AS n FROM vault.documents WHERE organization_id = $1', [ORG]);
+    expect(left.rows[0].n, "the tenant's vault versions must go").toBe(0);
+    expect(result.storageErasure).toEqual({ objects: 1, deleted: 1, notDeleted: [] });
+    expect(await new LocalStorageProvider().get(versionId, ORG), 'the bytes must go with their record').toBeNull();
+  });
+
   it('keeps the bytes, and their record, when the purge fails part-way', async () => {
     await expect(purge(everyStatementOnItsOwnConnection(owner), [...VAULT, ROWS, REFUSES])).rejects.toThrow(
       /purge probe refuses/,

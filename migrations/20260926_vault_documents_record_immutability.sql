@@ -31,11 +31,37 @@
 --     ingest's same-bytes retry (vault-ingest.service.ts).
 --   - Only the table owner can disable these triggers; production refuses to
 --     boot with the runtime role owning an RLS table (server/db/rlsEnforcement.ts),
---     and refuses to boot with either trigger missing or disabled
+--     and refuses to boot with any of them missing or disabled
 --     (server/services/audit/audit-immutability-triggers.ts).
+--
+-- AMENDED 2026-09-29 (VR-07, rows D5/D6,
+-- docs/evidence/D5/2026-09-29-vault-record-no-delete/), in place per CLAUDE.md
+-- Rule 1: a recorded version cannot be deleted either. Any runtime-role DELETE
+-- succeeded, and the retention job hard-deleted when a policy said so.
+--   - vault_documents_delete_guard refuses DELETE from anyone but the table's
+--     owner. It reads no session setting, so no SET makes a DELETE pass.
+--   - public.purge_tenant_vault_records(integer) is the runtime role's one way
+--     to remove versions. It is SECURITY DEFINER, owned by the table's owner,
+--     and runs with a pinned search_path. It refuses unless the caller is in
+--     the platform scope the purge route runs in, the organization is
+--     pending_deletion (tenant-offboarding.ts) and no legal hold on it is
+--     active. It then deletes that organization's chunks and versions with
+--     VAULT_DOCUMENT_TENANCY's predicate (server/services/tenant/vault-tenancy.ts;
+--     tenant-purge-vault-scope.pglite.integration.test.ts pins the two
+--     together), and returns each deleted version's storage address, so the
+--     purge erases those bytes after it commits. EXECUTE is revoked from PUBLIC.
+--   - It also closes an erasure gap. The purge route runs as the runtime role in
+--     the platform scope, and the Vault's policies have no platform arm. So the
+--     purge's own DELETE and its read of the bytes' addresses matched nothing:
+--     a purged tenant kept every Vault version and its bytes, and the purge
+--     reported success. The function deletes as the table's owner, and the
+--     table does not FORCE row security, so it reaches the whole predicate.
+--   - Nothing is dropped. Replays: CREATE OR REPLACE, triggers only when absent.
 -- =============================================================================
 
 DO $vr06$
+DECLARE
+  v_owner name;
 BEGIN
   IF to_regclass('vault.documents') IS NULL THEN
     RAISE NOTICE 'vault.documents not present - record guard not installed';
@@ -116,6 +142,86 @@ BEGIN
     CREATE TRIGGER vault_documents_truncate_guard
       BEFORE TRUNCATE ON vault.documents
       FOR EACH STATEMENT EXECUTE FUNCTION vault.documents_truncate_guard();
+  END IF;
+
+  -- VR-07: only the table's owner deletes a recorded version. Inside
+  -- purge_tenant_vault_records, current_user is that owner.
+  CREATE OR REPLACE FUNCTION vault.documents_delete_guard()
+  RETURNS trigger
+  LANGUAGE plpgsql
+  AS $fn$
+  BEGIN
+    IF current_user = (SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid = TG_RELID) THEN
+      RETURN OLD;
+    END IF;
+    RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: vault.documents version % is recorded and cannot be deleted (21 CFR 11.10(c)). Only the tenant purge removes recorded versions.', OLD.id
+      USING ERRCODE = 'raise_exception';
+  END;
+  $fn$;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+     WHERE tgrelid = 'vault.documents'::regclass AND tgname = 'vault_documents_delete_guard'
+  ) THEN
+    CREATE TRIGGER vault_documents_delete_guard
+      BEFORE DELETE ON vault.documents
+      FOR EACH ROW EXECUTE FUNCTION vault.documents_delete_guard();
+  END IF;
+
+  -- The tenant purge's door (tenant-offboarding.ts purgeTenant). It restates at
+  -- the database the preconditions the purge checks in code. The DELETE is
+  -- VAULT_DOCUMENT_TENANCY with $1 as p_org.
+  CREATE OR REPLACE FUNCTION public.purge_tenant_vault_records(p_org integer)
+  RETURNS TABLE (storage_version_id text, storage_provider text)
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  SET search_path = pg_catalog, vault, public
+  AS $fn$
+  #variable_conflict use_column
+  DECLARE
+    v_status text;
+    v_holds integer := 0;
+  BEGIN
+    IF NULLIF(current_setting('app.rls_enforce', true), '') = 'on'
+       AND current_setting('app.current_user_role', true) IS DISTINCT FROM 'app_super_admin' THEN
+      RAISE EXCEPTION 'VAULT_PURGE_REFUSED: the tenant purge runs in the platform scope, not a tenant scope (organization %).', p_org
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+    SELECT status INTO v_status FROM public.organizations WHERE id = p_org;
+    IF v_status IS DISTINCT FROM 'pending_deletion' THEN
+      RAISE EXCEPTION 'VAULT_PURGE_REFUSED: organization % is not pending deletion (status %).', p_org, COALESCE(v_status, 'not found')
+        USING ERRCODE = 'raise_exception';
+    END IF;
+    IF to_regclass('vault.legal_holds') IS NOT NULL THEN
+      SELECT count(*) INTO v_holds FROM vault.legal_holds WHERE organization_id = p_org AND lifted_at IS NULL;
+    END IF;
+    IF v_holds > 0 THEN
+      RAISE EXCEPTION 'VAULT_PURGE_REFUSED: organization % has % active legal hold(s); records under hold cannot be destroyed.', p_org, v_holds
+        USING ERRCODE = 'raise_exception';
+    END IF;
+    DELETE FROM vault.document_chunks
+     WHERE document_id IN (
+       SELECT id FROM vault.documents
+        WHERE (organization_id = p_org OR program_id IN (SELECT id FROM public.regulatory_programs WHERE organization_id = p_org)));
+    -- One row per version deleted, with where its bytes are stored, so the
+    -- purge erases exactly those after it commits.
+    RETURN QUERY
+      DELETE FROM vault.documents d
+       WHERE (d.organization_id = p_org OR d.program_id IN (SELECT id FROM public.regulatory_programs WHERE organization_id = p_org))
+      RETURNING d.storage_version_id::text, d.storage_provider::text;
+  END;
+  $fn$;
+
+  -- The function deletes as its owner, which the delete guard admits only when
+  -- that is the table's owner.
+  SELECT pg_get_userbyid(relowner) INTO v_owner FROM pg_class WHERE oid = 'vault.documents'::regclass;
+  IF (SELECT pg_get_userbyid(proowner) FROM pg_proc
+       WHERE oid = 'public.purge_tenant_vault_records(integer)'::regprocedure) <> v_owner THEN
+    EXECUTE format('ALTER FUNCTION public.purge_tenant_vault_records(integer) OWNER TO %I', v_owner);
+  END IF;
+  REVOKE ALL ON FUNCTION public.purge_tenant_vault_records(integer) FROM PUBLIC;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_service') THEN
+    GRANT EXECUTE ON FUNCTION public.purge_tenant_vault_records(integer) TO app_service;
   END IF;
 END
 $vr06$;
