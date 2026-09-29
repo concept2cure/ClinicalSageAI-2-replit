@@ -6579,14 +6579,10 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>, 
 
   // Template mode: copy + unpack + string replace + XML inject
   if (templatePath && input.replacements) {
-    let safeTemplatePath: string;
-    try {
-      safeTemplatePath = assertWithinDocumentWorkspace(templatePath, 'template_path', ctx.organizationId);
-    } catch (err) {
-      return JSON.stringify({ error: err instanceof Error ? err.message : String(err) });
-    }
+    const template = workspacePathOrRefusal(templatePath, 'template_path', ctx.organizationId);
+    if (!template.ok) return template.refusal;
     const result = await builder.buildFromTemplate({
-      templatePath: safeTemplatePath,
+      templatePath: template.path,
       replacements: input.replacements as Record<string, string>,
       outputFormat: outputFormat as 'docx' | 'pdf',
       documentTitle: title,
@@ -7086,7 +7082,6 @@ registerToolHandler('author_docx_native', async (input, ctx) => {
     const { runIsolatedCompute } = await import('../compute/workerClient.js');
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    const { randomUUID } = await import('crypto');
 
     /* runIsolatedCompute spawns the python-docx subprocess in an ephemeral
        tempdir, parses output JSON, returns the .docx as a Buffer. The
@@ -7272,6 +7267,33 @@ function truncateForModel(s: string, cap = SCRIPT_OUTPUT_CAP): string {
   return `${s.slice(0, cap)}\n…[truncated ${s.length - cap} chars]`;
 }
 
+/**
+ * Save the files a code-execution tool produced into this tenant's own scratch
+ * area, under safe names, and describe them for the model. One place for
+ * run_python_script and run_in_container, which wrote the same way to a
+ * shared tmp/ directory every tenant could name (INJ-PATH-002).
+ */
+async function persistToolOutputs(
+  outputFiles: Record<string, string> | undefined,
+  organizationId: number,
+  kind: 'ana-scripts' | 'ana-container',
+): Promise<Array<{ name: string; path: string; bytes: number }>> {
+  const entries = Object.entries(outputFiles ?? {});
+  if (entries.length === 0) return [];
+  const { promises: fs } = await import('fs');
+  const path = await import('path');
+  const outDir = anaScratchDir(organizationId, kind);
+  await fs.mkdir(outDir, { recursive: true });
+  const saved: Array<{ name: string; path: string; bytes: number }> = [];
+  for (const [name, b64] of entries) {
+    const dest = path.join(outDir, workspaceFileName(name, 'output'));
+    const buf = Buffer.from(b64, 'base64');
+    await fs.writeFile(dest, buf);
+    saved.push({ name, path: dest, bytes: buf.length });
+  }
+  return saved;
+}
+
 registerToolHandler('run_python_script', async (input, ctx) => {
   const code = typeof input.code === 'string' ? input.code : '';
   if (!code.trim()) {
@@ -7309,27 +7331,12 @@ registerToolHandler('run_python_script', async (input, ctx) => {
   const timeoutMs = typeof input.timeout_ms === 'number' ? input.timeout_ms : undefined;
 
   try {
-    const { promises: fs } = await import('fs');
-    const path = await import('path');
     const result = await runInContainer({
       script: 'exec python3 /work/__script.py',
       inputFiles: { ...inputFiles, '__script.py': Buffer.from(code, 'utf8').toString('base64') },
       timeoutMs,
     });
-
-    // Persist produced files where only this tenant's later calls can reach them.
-    const outputFilePaths: Array<{ name: string; path: string; bytes: number }> = [];
-    const entries = Object.entries(result.outputFiles ?? {});
-    if (entries.length > 0) {
-      const outDir = anaScratchDir(ctx.organizationId, 'ana-scripts');
-      await fs.mkdir(outDir, { recursive: true });
-      for (const [name, b64] of entries) {
-        const dest = path.join(outDir, workspaceFileName(name, 'output'));
-        const buf = Buffer.from(b64, 'base64');
-        await fs.writeFile(dest, buf);
-        outputFilePaths.push({ name, path: dest, bytes: buf.length });
-      }
-    }
+    const outputFilePaths = await persistToolOutputs(result.outputFiles, ctx.organizationId, 'ana-scripts');
 
     return JSON.stringify({
       ok: result.ok,
@@ -7372,7 +7379,7 @@ registerToolHandler('insert_document_content', async (input, ctx) => {
   // INJ-PATH-002: the path is the model's. Open only the real path of a file
   // in this tenant's own workspace, never the string it wrote.
   const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
-  if (docx.refusal) return docx.refusal;
+  if (!docx.ok) return docx.refusal;
 
   const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
 
@@ -7394,7 +7401,6 @@ registerToolHandler('insert_document_content', async (input, ctx) => {
     const { runDocxInsertIsolated } = await import('../compute/scriptWorker.js');
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    const { randomUUID } = await import('crypto');
 
     const sourceBuf = await fs.readFile(docx.path);
     const baseName = path.basename(docx.path, path.extname(docx.path));
@@ -7465,7 +7471,7 @@ registerToolHandler('surgical_docx_xml_edit', async (input, ctx) => {
   // INJ-PATH-002: the path is the model's. Open only the real path of a file
   // in this tenant's own workspace, never the string it wrote.
   const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
-  if (docx.refusal) return docx.refusal;
+  if (!docx.ok) return docx.refusal;
 
   const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
   const operations = (input.operations as Array<Record<string, unknown>>).map(o => ({
@@ -7483,7 +7489,6 @@ registerToolHandler('surgical_docx_xml_edit', async (input, ctx) => {
     const { runDocxXmlSurgeryIsolated } = await import('../compute/scriptWorker.js');
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    const { randomUUID } = await import('crypto');
 
     const sourceBuf = await fs.readFile(docx.path);
     const baseName = path.basename(docx.path, path.extname(docx.path));
@@ -7564,7 +7569,7 @@ registerToolHandler('insert_clause_template', async (input, ctx) => {
   // INJ-PATH-002: the path is the model's. Open only the real path of a file
   // in this tenant's own workspace, never the string it wrote.
   const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
-  if (docx.refusal) return docx.refusal;
+  if (!docx.ok) return docx.refusal;
 
   const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
   const fields = (input.fields && typeof input.fields === 'object'
@@ -7610,7 +7615,6 @@ registerToolHandler('insert_clause_template', async (input, ctx) => {
     const { runDocxInsertIsolated } = await import('../compute/scriptWorker.js');
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    const { randomUUID } = await import('crypto');
 
     const sourceBuf = await fs.readFile(docx.path);
     const baseName = path.basename(docx.path, path.extname(docx.path));
@@ -7677,7 +7681,7 @@ registerToolHandler('validate_docx', async (input, ctx) => {
   // INJ-PATH-002: the path is the model's. Open only the real path of a file
   // in this tenant's own workspace, never the string it wrote.
   const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
-  if (docx.refusal) return docx.refusal;
+  if (!docx.ok) return docx.refusal;
 
   try {
     const { runDocxValidateIsolated } = await import('../compute/scriptWorker.js');
@@ -7720,7 +7724,7 @@ registerToolHandler('verify_docx_against_source', async (input, ctx) => {
   // INJ-PATH-002: the path is the model's. Open only the real path of a file
   // in this tenant's own workspace, never the string it wrote.
   const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
-  if (docx.refusal) return docx.refusal;
+  if (!docx.ok) return docx.refusal;
 
   const expectedText = typeof input.expected_text === 'string' ? input.expected_text : '';
   const requiredStrings = Array.isArray(input.required_strings)
@@ -7842,20 +7846,7 @@ registerToolHandler('run_in_container', async (input, ctx) => {
 
     const result = await runInContainer({ script, inputFiles, timeoutMs });
 
-    const { promises: fs } = await import('fs');
-    const path = await import('path');
-    const outputFilePaths: Array<{ name: string; path: string; bytes: number }> = [];
-    const entries = Object.entries(result.outputFiles ?? {});
-    if (entries.length > 0) {
-      const outDir = anaScratchDir(ctx.organizationId, 'ana-container');
-      await fs.mkdir(outDir, { recursive: true });
-      for (const [name, b64] of entries) {
-        const dest = path.join(outDir, workspaceFileName(name, 'output'));
-        const buf = Buffer.from(b64, 'base64');
-        await fs.writeFile(dest, buf);
-        outputFilePaths.push({ name, path: dest, bytes: buf.length });
-      }
-    }
+    const outputFilePaths = await persistToolOutputs(result.outputFiles, ctx.organizationId, 'ana-container');
 
     return JSON.stringify({
       ok: result.ok,
@@ -8779,6 +8770,38 @@ registerToolHandler('register_ldt', async (input, ctx) => {
 // EUDAMED / PMDA Gateway. Wraps server/services/submission-gateways/.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * package_ectd_for_region's paths, confined (INJ-PATH-002). Every source_path
+ * is the model's, and the packager reads each one and ships its bytes, so an
+ * unconfined path put another tenant's document — or a host file — into this
+ * tenant's eCTD zip; and output_dir was written to wherever it named. Both are
+ * confined to this tenant's own workspace, and the packager gets the real
+ * paths, never the strings. A delete carries no bytes, so its source_path goes
+ * through as given for the packager to refuse by name.
+ */
+function confinePackagerPaths(
+  leaves: Array<Record<string, unknown>>,
+  outputDirInput: unknown,
+  organizationId: number,
+): { ok: true; sourcePaths: string[]; outputDir: string } | { ok: false; refusal: string } {
+  const sourcePaths: string[] = [];
+  for (const leaf of leaves) {
+    if (String(leaf.operation) === 'delete') {
+      sourcePaths.push(typeof leaf.source_path === 'string' ? leaf.source_path : '');
+      continue;
+    }
+    const src = workspacePathOrRefusal(leaf.source_path, `leaves[].source_path (${String(leaf.file_name)})`, organizationId);
+    if (!src.ok) return src;
+    sourcePaths.push(src.path);
+  }
+  if (typeof outputDirInput === 'string' && outputDirInput.trim()) {
+    const out = workspacePathOrRefusal(outputDirInput, 'output_dir', organizationId);
+    if (!out.ok) return out;
+    return { ok: true, sourcePaths, outputDir: out.path };
+  }
+  return { ok: true, sourcePaths, outputDir: anaScratchDir(organizationId, 'submissions') };
+}
+
 registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
@@ -8804,29 +8827,9 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
         `the file it ships (${missingSource.map((l) => String(l.file_name)).join(', ')}). Only a delete omits it.`,
     });
   }
-  // INJ-PATH-002: every source_path is the model's. The packager reads each
-  // one and ships its bytes, so an unconfined path was another tenant's
-  // document — or a host file — inside this tenant's eCTD zip. And output_dir
-  // was written to wherever it named. Both are confined to this tenant's own
-  // workspace, and the packager is handed the real paths, never the strings.
-  const sourcePaths: string[] = [];
-  for (const leaf of leaves) {
-    if (String(leaf.operation) === 'delete') {
-      sourcePaths.push(typeof leaf.source_path === 'string' ? leaf.source_path : '');
-      continue;
-    }
-    const src = workspacePathOrRefusal(leaf.source_path, `leaves[].source_path (${String(leaf.file_name)})`, ctx.organizationId);
-    if (src.refusal) return src.refusal;
-    sourcePaths.push(src.path);
-  }
-  let outputDir: string;
-  if (typeof input.output_dir === 'string' && input.output_dir.trim()) {
-    const out = workspacePathOrRefusal(input.output_dir, 'output_dir', ctx.organizationId);
-    if (out.refusal) return out.refusal;
-    outputDir = out.path;
-  } else {
-    outputDir = anaScratchDir(ctx.organizationId, 'submissions');
-  }
+  const paths = confinePackagerPaths(leaves, input.output_dir, ctx.organizationId);
+  if (!paths.ok) return paths.refusal;
+  const { sourcePaths, outputDir } = paths;
   try {
     const { packageEctdSubmission } = await import('../submission-gateways/index.js');
     const bundle = await packageEctdSubmission({
@@ -14501,7 +14504,7 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
   // names, sizes, hashes, sponsor, application id — into the caller's rows.
   // The job row keeps the real path, so nothing later re-reads the string.
   const source = workspacePathOrRefusal(input.source_path, 'source_path', ctx.organizationId);
-  if (source.refusal) return source.refusal;
+  if (!source.ok) return source.refusal;
   const sourcePath = source.path;
   try {
     const { getPool } = await import('../../db.js');

@@ -5,7 +5,6 @@ import { templateService } from '../../services/templateService';
 import multer from 'multer';
 import path from 'path';
 import fs from 'node:fs';
-import crypto from 'node:crypto';
 import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety';
 import { db } from '../../db';
 import { ectdTemplates } from '../../../shared/schema';
@@ -14,39 +13,12 @@ import { SOP_TEMPLATES } from '../../services/qms/sopTemplates';
 import { resolveUserId } from '../../types/auth-request';
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
-import { usableOrgId } from '../../utils/authedOrgId';
+import { requireUploadOrganization, storage, tenantTemplateDir } from './template-storage';
 
 const router = Router();
 const log = createScopedLogger('templates-routes');
 
-// Configure multer for file uploads
-/**
- * The directory an organization's template files live in, relative to the
- * server's working directory — inside the tenant's own uploads prefix
- * (`uploads/org-<id>/`), which is the only place AnA's document tools will
- * read a template from (INJ-PATH-002). Templates used to land in one flat
- * `uploads/templates/` shared by every tenant.
- */
-function tenantTemplateDir(organizationId: number): string {
-  return path.join('uploads', `org-${organizationId}`, 'templates');
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const organizationId = usableOrgId((req as any).tenantId || (req as any).tenantContext?.organizationId);
-    if (organizationId === null) {
-      cb(new Error('Organization context required'), '');
-      return;
-    }
-    const dir = tenantTemplateDir(organizationId);
-    fs.mkdir(dir, { recursive: true }, err => cb(err ?? null, dir));
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + crypto.randomBytes(8).toString('hex');
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
+// Configure multer for file uploads (storage is per tenant: ./template-storage)
 const upload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
@@ -435,7 +407,7 @@ async function unlinkUploadedFile(filePath: string): Promise<void> {
  * POST /api/templates/upload
  * Upload template file
  */
-router.post('/upload', upload.single('file'), async (req: Request, res: Response) => {
+router.post('/upload', requireUploadOrganization, upload.single('file'), async (req: Request, res: Response) => {
   try {
     const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
     if (!organizationId) {

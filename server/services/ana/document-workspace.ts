@@ -190,10 +190,10 @@ export function workspacePathOrRefusal(
   candidate: unknown,
   label: string,
   organizationId: unknown,
-): { path: string; refusal?: undefined } | { path?: undefined; refusal: string } {
+): { ok: true; path: string } | { ok: false; refusal: string } {
   try {
-    return { path: assertWithinDocumentWorkspace(candidate, label, organizationId) };
+    return { ok: true, path: assertWithinDocumentWorkspace(candidate, label, organizationId) };
   } catch (err) {
-    return { refusal: JSON.stringify({ error: err instanceof Error ? err.message : String(err) }) };
+    return { ok: false, refusal: JSON.stringify({ error: err instanceof Error ? err.message : String(err) }) };
   }
 }

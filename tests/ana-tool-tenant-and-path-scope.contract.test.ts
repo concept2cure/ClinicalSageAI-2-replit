@@ -250,3 +250,57 @@ describe('RIM query tools take no tenant id from the model', () => {
     expect(QUERY_RIM_PATTERNS_BY_DOMAIN.input_schema.required).toEqual(['domain']);
   });
 });
+
+/*
+ * INJ-PATH-002 found the guard wired into ONE tool while its siblings read the
+ * same kind of argument unguarded. So this is the ratchet the finding asked
+ * for: every AnA tool handler that reads a path-shaped argument (…_path,
+ * …_dir, or a leaf's source_path) resolves it through the workspace guard. A handler that takes such
+ * an argument and never touches the filesystem is listed below with the
+ * reason, and stays listed only while that is true.
+ */
+describe('every AnA tool that takes a path runs it through the workspace guard', () => {
+  const NO_FILESYSTEM: Record<string, string> = {
+    record_validation_finding: 'file_path is stored as the finding\'s text; nothing is opened',
+    transmit_submission: 'bundle_path is echoed into the refusal; the tool transmits nothing',
+    compute_lifecycle_operations: 'source_path is carried through a pure lifecycle computation',
+    rasterize_page: 'a stub: builds a message, opens nothing',
+    pdf_overlay: 'a stub: builds a message, opens nothing',
+    convene_drafting_council: 'section_path is a section label, not a file',
+    convert_to_rps_v4: 'a leaf\'s source_path is only a lookup key for a caller-supplied hash; the in-memory RPS message opens nothing',
+    check_ectd_cross_references: 'the cross-reference resolver reads the leaf list, not the files',
+  };
+  const PATH_INPUT = /input\.\w*_(?:path|dir)\b|\.source_path\b/;
+  // The guard itself, or a helper that does nothing but apply it to one tool's
+  // paths (confinePackagerPaths, for package_ectd_for_region's leaves).
+  const GUARD =
+    /workspacePathOrRefusal\(|assertWithinDocumentWorkspace\(|resolveWithinDocumentWorkspace\(|confinePackagerPaths\(/;
+
+  const handlers: Array<{ tool: string; body: string }> = [];
+  for (const rel of ['server/services/ana/AnaToolExecutor.ts', 'server/services/ana/agentic-workflow-tools.ts']) {
+    const src = fs.readFileSync(path.resolve(process.cwd(), rel), 'utf8');
+    const starts = [...src.matchAll(/(?:registerToolHandler|register)\('([a-z0-9_]+)'/g)];
+    starts.forEach((m, i) => {
+      handlers.push({ tool: m[1], body: src.slice(m.index!, starts[i + 1]?.index ?? src.length) });
+    });
+  }
+
+  it('finds the handlers it checks', () => {
+    expect(handlers.length).toBeGreaterThan(500);
+  });
+
+  it('has no unguarded path argument', () => {
+    const unguarded = handlers
+      .filter(h => PATH_INPUT.test(h.body) && !GUARD.test(h.body) && !(h.tool in NO_FILESYSTEM))
+      .map(h => h.tool);
+    expect(unguarded, 'tool handlers that read a path argument without the workspace guard').toEqual([]);
+  });
+
+  it('lists only handlers that still take a path argument', () => {
+    const stale = Object.keys(NO_FILESYSTEM).filter(tool => {
+      const h = handlers.find(x => x.tool === tool);
+      return !h || !PATH_INPUT.test(h.body);
+    });
+    expect(stale).toEqual([]);
+  });
+});

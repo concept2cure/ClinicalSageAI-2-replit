@@ -30,6 +30,12 @@ vi.mock('../../compute/containerExec.js', () => ({
   runInContainer: container.runInContainer,
 }));
 
+// A confirmed write runs only for an editor role (writeRoleRefusal); stubbed
+// so no database is needed, as in direct-mutator-confirm-gate.test.ts.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({ resolveSignerOrgRole: vi.fn(async () => 'member') }));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { getToolHandler } from '../AnaToolExecutor.js';
 
 const ORG = 990011;
@@ -56,7 +62,7 @@ describe('run_python_script', () => {
     const out = await run({ code, input_files: { 'data.csv': Buffer.from('a').toString('base64') } });
 
     expect(container.runInContainer).toHaveBeenCalledTimes(1);
-    const call = container.runInContainer.mock.calls[0][0] as { script: string; inputFiles: Record<string, string> };
+    const call = (container.runInContainer.mock.calls as unknown as Array<[{ script: string; inputFiles: Record<string, string> }]>)[0][0];
     expect(call.script).toBe('exec python3 /work/__script.py');
     expect(Buffer.from(call.inputFiles['__script.py'], 'base64').toString()).toBe(code);
     expect(call.inputFiles['data.csv']).toBeDefined();
