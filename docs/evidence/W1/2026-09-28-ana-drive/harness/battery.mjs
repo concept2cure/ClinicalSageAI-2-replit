@@ -121,6 +121,56 @@ const SCENARIOS = {
     record('open program BX-301 → its project home', seen.some(p => p.endsWith('/project-home')), seen.join(' → '));
     record('open program: BX-301 is the program shown', /BX-301/.test(text));
   },
+  // Acting on a screen the person is not on: the bus heads there and the
+  // action arrives while the screen's read is in flight, so the screen holds
+  // it until its data settles. Each ask is answered with "Act result: …
+  // Screen: …" (the stand-in's planAct). The Inconsistency overlay is
+  // project-scoped, so a program is opened first; the design needs the local
+  // study design the README names.
+  async heldAction(page) {
+    await goHome(page);
+    await ask(page, 'open program BX-301');
+    await watchUrls(page, { until: s => s.some(p => p.endsWith('/project-home')) });
+    await waitIdle(page);
+    const actResults = async () => [...(await bodyText(page)).matchAll(/Act result:[^\n]*/g)].map(m => m[0]);
+    // The next "Act result:" line, read once its turn is over (it streams in).
+    const nextResult = async before => {
+      for (const t = Date.now(); Date.now() - t < 45000; await sleep(500)) {
+        if ((await actResults()).length > before) {
+          await waitIdle(page);
+          return (await actResults()).pop();
+        }
+      }
+      return '(no answer within 45 s)';
+    };
+    const selectedText = async sel => (await page.locator(sel).allTextContents().catch(() => [])).join(',');
+
+    let t = Date.now();
+    let before = (await actResults()).length;
+    await ask(page, 'act inconsistency.set-regulator regulator=EMA');
+    const overlaySaid = await nextResult(before);
+    const overlayMs = Date.now() - t;
+    const overlay = await selectedText('button.gi-reg-b.on');
+    await page.screenshot({ path: `${SP}/e2e-held-overlay.png` });
+    record(
+      "held action: an overlay switch sent from another screen gets the screen's own answer",
+      /Screen: /.test(overlaySaid) && !/not confirmed/.test(overlaySaid),
+      `${overlaySaid} (overlay ${overlay || 'unchanged'}; answered in ${overlayMs} ms)`,
+    );
+
+    t = Date.now();
+    before = (await actResults()).length;
+    await ask(page, 'act biostatistics.load-design design=Phase 2 dose finding');
+    const designSaid = await nextResult(before);
+    const designMs = Date.now() - t;
+    const loaded = await selectedText('button.sp-row[aria-pressed="true"] .sp-row-t');
+    await page.screenshot({ path: `${SP}/e2e-held-design.png` });
+    record(
+      'held action: a study design named from another screen is loaded',
+      loaded === 'Phase 2 dose finding' && /Screen: no report/.test(designSaid),
+      `${designSaid} (selected: ${loaded || 'none'}; answered in ${designMs} ms)`,
+    );
+  },
   async vaultSearch(page) {
     await goHome(page);
     await ask(page, 'search the vault for stability');
@@ -294,7 +344,7 @@ const SCENARIOS = {
 };
 
 const want = process.argv.slice(2);
-const names = want.length ? want : ['biostat', 'vault', 'openProgram', 'vaultSearch', 'railAsk', 'demo', 'salesDemo', 'chipsWhenOff'];
+const names = want.length ? want : ['biostat', 'vault', 'openProgram', 'heldAction', 'vaultSearch', 'railAsk', 'demo', 'salesDemo', 'chipsWhenOff'];
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await ctx.newPage();

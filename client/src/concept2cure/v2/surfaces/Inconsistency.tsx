@@ -7,7 +7,7 @@ import { assessmentState } from '../assessmentState';
 import type { AnswerLeadProps } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { useSurfaceActionHandlers } from '../surfaceActions';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
@@ -737,6 +737,13 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
       };
     },
   });
+  /* The ready signal for the hold above: the handler holds only while the
+     board is loading with nothing to show, so it signals as soon as that is
+     no longer so, whether the read succeeded or failed. Without it an overlay
+     switch sent from another screen was never answered. */
+  useEffect(() => {
+    if (!boardState.loading || boardData) notifySurfaceActionReady('inconsistency');
+  }, [boardState.loading, boardData]);
 
   usePublishSurfaceContext('inconsistency', anaContext);
 

@@ -211,8 +211,8 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!live.loading && !live.error) notifySurfaceActionReady('change-assessment');
-  }, [live.loading, live.error]);
+    if (!live.loading) notifySurfaceActionReady('change-assessment');
+  }, [live.loading]);
 
   usePublishSurfaceContext('change-assessment', anaContext);
 
