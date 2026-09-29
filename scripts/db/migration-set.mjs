@@ -1288,8 +1288,9 @@ export const C2C_MIGRATION_FILES = [
   // new to policy — `projects` is a base table policied long ago — and the
   // ordering costs it nothing. No dependency on any entry above: it ALTERs
   // `projects` (a drizzle-push base table deploy-migrate asserts as a sentinel)
-  // and its backfill self-guards on regulatory_programs, whose creator
-  // (20260524_program_workbench_schema.sql) is deliberately not on this path.
+  // and its backfill self-guards on regulatory_programs. (Corrected 2026-09-26:
+  // this said that table's creator, 20260524_program_workbench_schema.sql, is
+  // not on this path. It is entry 1 of this set.)
   'migrations/20260814_projects_regulatory_program_anchor.sql',
 
   // ── Literature screening trail, GA ledger L4 (added 2026-08-14) ──────────
@@ -2750,6 +2751,21 @@ export const C2C_MIGRATION_FILES = [
   // required at boot by server/services/audit/audit-immutability-triggers.ts.
   // Evidence docs/evidence/D5/2026-09-29-artifact-signatures-append-only/.
   'migrations/20260929_concept2cure_signatures_append_only.sql',
+
+  // ── A record names a project of its own organization only (PF-04, D3) ────
+  // One composite key per store, (project key, org) → regulatory_programs (id,
+  // organization_id): projects, authoring_documents, cre_evidence_sources,
+  // c2c_documents, cdisc_prm_studies. NOT VALID (legacy rows are listed by
+  // scripts/db/program-same-org-preflight.mjs, not scanned by the deploy), ON
+  // DELETE SET NULL (key) so a tenant purge un-anchors instead of failing —
+  // except c2c_documents, NO ACTION like the key it already has.
+  // After every creator it keys: 20260524, 20260528/29, the cre spine and its
+  // scope, the authoring scope, 20260814, and 20260925b's unique index (which it
+  // also creates when that file skipped). authoring_documents comes from the
+  // authoring subsystem deploy-migrate applies before this set. Creates no
+  // table, so the sweep has nothing new to policy; it adds one column
+  // (cdisc_prm_studies.program_id) to an existing table. No DROP.
+  'migrations/20260926b_program_same_org_keys.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
