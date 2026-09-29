@@ -847,8 +847,12 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      loosening the assertion.
    - While this step is red, the Lint job fails. Every job that `needs: lint`
      then skips (Integration, Blank DB, Coverage), for every lane.
-9. **→ `…01PwLFr8` (the D2 launch sweep, `53237f62`), 2026-09-28 16:50 — trunk's
-   Lint job is red at `ci:tenant-entry-points`.** **Status 2026-09-28 23:10:**
+9. ~~**→ `…01PwLFr8` (the D2 launch sweep, `53237f62`), 2026-09-28 16:50 — trunk's
+   Lint job is red at `ci:tenant-entry-points`.**~~ **Done 2026-09-29** (`…01PwLFr8`,
+   `docs/evidence/W1/2026-09-29-trunk-ci-item9/`): the two `.crumbs .sep` rules are
+   one, and the gate was shown red before and green after. `.c2c-v2 .de-input[readonly]`
+   now has a muted stone fill, shown live on *Request a review* (5.25:1). The
+   entry-point half was already done in `8686a321`. **Status 2026-09-28 23:10:**
    - The entry-point half is **done by this lane** (`8686a321`). The baseline
      file is cold. The justification was re-read against `53237f62`, holds,
      and carries a dated note.
@@ -1161,8 +1165,10 @@ in all of them. Reproduced locally at `6bd237ca9`.
    - `tests/artifact-change-invalidates-bundles.contract.test.ts` fails with
      *"BACKSTOP_ONLY lists files that no longer write those columns; remove
      them"*, naming this file.
-9. **→ `…01PwLFr8` (`f0147f452` / `7b00c78de`).** Trunk CI 12615 fails two
-   gates on this session's files:
+9. ~~**→ `…01PwLFr8` (`f0147f452` / `7b00c78de`).** Trunk CI 12615 fails two
+   gates on this session's files:~~ **Done 2026-09-29.** `ci:tenant-entry-points`
+   was fixed in `8686a321`. The CSS shadowing is fixed; see the validation-package
+   section's item 9 and `docs/evidence/W1/2026-09-29-trunk-ci-item9/`.
    - `ci:tenant-entry-points` fails because `server/routes/mdx-admin.ts`
      changed since its justification.
    - `ci:check-css-selector-shadowing` fails on
@@ -1187,6 +1193,49 @@ in all of them. Reproduced locally at `6bd237ca9`.
     Guard the statement on `to_regclass('public.organization_invitations')`
     or move the file after the table's creator. The replay stops here, so no
     file after it is exercised by that contract.
+
+### Found by the D6 owner-grant change (`…01PwLFr8`, 2026-09-29) — handed on
+
+1. **→ W2 / D1, the Terraform lane (`…013CtPf8`, `terraform/stack/*`): a
+   production deployment cannot name its first owner.**
+   - Since `d57bff619` (`docs/evidence/D6/2026-09-28-owner-grant/`) there is no
+     owner address in source. Platform administration and the owner grant come
+     from two places only:
+     - the `PLATFORM_ADMIN_EMAILS` and `MASTER_ADMIN_EMAILS` allowlists
+       (`requirePlatformAdmin.ts`, `master-admin.ts`);
+     - an in-app `super_admin` designation in Master Administration → Access
+       Management.
+   - The designation needs a Business Center administrator to grant it:
+     `BUSINESS_CENTER_EMAILS` or a business role (`requireBusinessAdmin.ts`).
+   - `terraform/stack/main.tf` `boot_environment` passes **none of the three**.
+     So a stack Terraform provisions boots with no platform administrator, no
+     owner and no Business Center administrator, and nobody can grant one in the
+     app.
+   - Setting them by hand on the task definition lasts until the next apply.
+   - Suggested fix: add a variable `platform_owner_emails` (a list of strings,
+     default `[]`, each validated lowercase), joined with commas into
+     `PLATFORM_ADMIN_EMAILS` and `MASTER_ADMIN_EMAILS`. Add
+     `business_center_emails` into `BUSINESS_CENTER_EMAILS` the same way.
+     Assert them in `tests/boot_contract.tftest.hcl`.
+   - Whether the deploy preflight should *require* a non-empty owner list is
+     the founder's decision (fail-closed to boot vs. fail-closed to
+     administer).
+   - Not done here: the provider registry is unreachable from this session, so
+     `terraform validate` and `terraform test` cannot run. The files are that
+     lane's.
+   - **Latent, for whoever owns `requireBusinessAdmin.ts` (not exploitable
+     today, measured 2026-09-29):**
+     - `isBusinessAdmin` admits a `req.userRole` of `owner`, `business_admin`
+       or `super_admin`. `req.userRole` is the **tenant membership** role
+       (`organization_users.role`, `auth.ts:262`), while the Business Center
+       is platform-wide.
+     - No writer produces those values today. SCIM and `tenant-users.ts`
+       enumerate `admin|manager|member|viewer`, and sign-up, setup, SSO and the
+       default-org seed write `admin` or `member`. But the column has no
+       CHECK.
+     - So the first writer that accepts `owner` for a tenant opens every
+       client's financials to that tenant. Read platform standing from
+       `platform_role_grants` and the allowlist only.
 
 ## 1. The rules come first
 
