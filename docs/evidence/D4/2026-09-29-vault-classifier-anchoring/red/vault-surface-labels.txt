@@ -1,0 +1,66 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a full window reads as a floor, says so, and AnA is told 102ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a refused source is shown as needing review, not as classified 52ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — document types are named in words > names a search hit's document type in words, not the stored wire token 129ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — document types are named in words > the upload type picker offers the shared labels, not the wire tokens with underscores swapped for spaces 33ms
+stderr | client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a classified source's suggestion names its kind in words, not the stored token (VR-04)
+An update to DocumentHistory inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a classified source's suggestion names its kind in words, not the stored token (VR-04) 76ms
+   → expected 'Looks like: csr' to be 'Looks like: Clinical study report' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — an evidence kind is named in words (VR-04) > the detail pane's 'Looks like' says 'Clinical study report', not 'csr' 69ms
+   → expected 'csr' to be 'Clinical study report' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — what AnA is told about a selected file > a search hit is not "0% complete": no authoring completion was assessed 78ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a classified source's suggestion names its kind in words, not the stored token (VR-04)
+AssertionError: expected 'Looks like: csr' to be 'Looks like: Clinical study report' // Object.is equality
+
+Expected: "Looks like: Clinical study report"
+Received: "Looks like: csr"
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx:82:44
+     80|     fireEvent.click(await screen.findByText('Show 1 source'));
+     81|     const suggest = screen.getByTestId('vault-data-room').querySelecto…
+     82|     expect(suggest?.getAttribute('title')).toBe('Looks like: Clinical …
+       |                                            ^
+     83|   });
+     84| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — an evidence kind is named in words (VR-04) > the detail pane's 'Looks like' says 'Clinical study report', not 'csr'
+AssertionError: expected 'csr' to be 'Clinical study report' // Object.is equality
+
+Expected: "Clinical study report"
+Received: "csr"
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx:131:51
+    129|       fireEvent.click((await screen.findAllByText('stability-summary-2…
+    130|       const key = await screen.findByText('Looks like');
+    131|       expect(key.nextElementSibling?.textContent).toBe('Clinical study…
+       |                                                   ^
+    132|     } finally {
+    133|       UPLOAD.filing.evidenceKind = stored;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 5 passed (7)
+   Start at  20:31:02
+   Duration  2.08s (transform 1.51s, setup 299ms, import 1.88s, tests 551ms, environment 1.05s)
+

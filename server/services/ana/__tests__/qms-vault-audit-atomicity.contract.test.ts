@@ -219,7 +219,7 @@ describe('create_qms_document — controlled document creation is audited atomic
   it('FAILS CLOSED — a broken audit write rolls the document back', async () => {
     await breakAuditWrites();
     const res = await call('create_qms_document', {
-      doc_number: 'SOP-101', title: 'Should not persist', doc_type: 'sop',
+      doc_number: 'SOP-101', title: 'Should not persist', doc_type: 'sop', reason: 'New SOP for supplier audits.',
     });
     expect(res.ok).toBeUndefined();
     expect(res.error).toMatch(/create_qms_document failed/i);
