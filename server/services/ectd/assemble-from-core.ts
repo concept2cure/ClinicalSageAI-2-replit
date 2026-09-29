@@ -486,6 +486,10 @@ export interface AssembleSubmissionResult {
    *  earlier sequences bound against that were never filed. */
   priorState: PriorState;
   unfiledPriorSequences: string[];
+  /** The submission's program (submissions.program_id), or null for a
+   *  submission not anchored to one. The export route records a governed
+   *  export against the project that anchors this program (W5/D7). */
+  programId: string | null;
   /** The assembly's §11.10(e) outcome (both rows), from assembleSequence. */
   auditTrail: AuditRowOutcome;
   /** DTD self-containment status from the packager. */
@@ -645,6 +649,7 @@ export async function assembleSubmissionEctd(
       skipped: assembled.skipped,
       priorState: assembled.priorState,
       unfiledPriorSequences: assembled.unfiledPriorSequences,
+      programId: submission.programId ?? null,
       // The assembly's §11.10(e) outcome; the export route answers it as headers.
       auditTrail: assembled.auditTrail,
       dtdStatus: assembled.bundle.dtdStatus,
