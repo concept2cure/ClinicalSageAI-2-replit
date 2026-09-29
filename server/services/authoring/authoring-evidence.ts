@@ -176,7 +176,10 @@ async function writeAuditIndexOrChain(
        change, so it is logged at error severity with what was actually lost. */
     const indexRow = await recordAuditRow({
       tenantId: ctx.tenantId,
-      userId: ctx.actorEmail,
+      // The id, as the enlisted branch below records it: an email here became
+      // Number(email) = NaN in the chained writer, and the row had no actor.
+      userId: ctx.actorId,
+      reason: entry.changeReason,
       action,
       resourceType,
       resourceId,
