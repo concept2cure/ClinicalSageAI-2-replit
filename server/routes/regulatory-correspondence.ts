@@ -41,8 +41,11 @@ import {
   type CorrespondenceIssueRow,
 } from '../services/regulatory-correspondence/issue-row-mapper';
 import { recordGovernedAction } from './c2c/actions';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const intakeLog = createScopedLogger('regulatory-correspondence');
 router.use(authMiddleware);
 
 const REG_CORRESPONDENCE_ENABLED = process.env.ENABLE_REG_CORRESPONDENCE_OS !== 'false';
@@ -714,9 +717,15 @@ router.post('/correspondence/intake', async (req, res) => {
 
   return res.status(201).json({ data: record, issues: extracted, downstreamActions, auditTrail });
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Unknown error';
-    console.error('[Correspondence Intake] DB operation failed:', message);
-    return res.status(500).json({ error: 'Failed to ingest correspondence', detail: message });
+    /* Through the canonical helper: the detail — Drizzle's "Failed query: …
+       params: …", the requester's e-mail among the params — goes to the log
+       against the request id, never to the client (2026-09-29, row D2). The
+       PostgreSQL error rides on `.cause`. */
+    return serverError(res, intakeLog, 'ingesting agency correspondence', (e as { cause?: unknown })?.cause ?? e, {
+      correspondenceId: id,
+      projectId: record.projectId,
+      submissionId: record.submissionId,
+    });
   }
 });
 
