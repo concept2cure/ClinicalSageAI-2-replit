@@ -11,6 +11,7 @@ import type {
   MethodRegulatoryOutcome,
 } from 'shared/schema';
 import { ai } from '../lib/unified-ai-client';
+import { hochbergReject, holmReject } from './stats/multiplicity';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -78,13 +79,42 @@ interface DesignMultiplicityParams {
   approach: 'graphical' | 'fixed_sequence' | 'fallback' | 'gatekeeping' | 'holm' | 'hochberg';
 }
 
+/**
+ * One threshold of the Holm (step-down) or Hochberg (step-up) procedure. Order
+ * the observed p-values p(1) ≤ … ≤ p(m); p(rank) is compared with `threshold`,
+ * alpha / (m − rank + 1), the comparison `holmReject` / `hochbergReject` in
+ * stats/multiplicity.ts make. It belongs to a RANK of the ordered p-values,
+ * never to a particular hypothesis, and it is not an initial level: it must
+ * never be written into an id- or endpoint-keyed allocation such as
+ * StudyDesign.statisticalPlan.multiplicity.alphaAllocation.
+ */
+interface RankThreshold {
+  /** 1 = the smallest observed p-value, m = the largest. */
+  rank: number;
+  /** Unrounded. */
+  threshold: number;
+}
+
 interface MultiplicityResult {
   id: number;
   approach: string;
   hypotheses: Hypothesis[];
+  /**
+   * Each hypothesis's INITIAL significance level (the weights × alpha of Bretz
+   * et al. 2009), keyed by hypothesis id: the meaning
+   * StudyDesign.statisticalPlan.multiplicity.alphaAllocation has, read by
+   * study-design/multiplicity-check.ts. For holm and hochberg that is alpha/m
+   * for every hypothesis, unrounded; their later thresholds belong to ranks and
+   * are in `rankThresholds`. Until 2026-09-28 holm and hochberg put step
+   * thresholds here against the hypotheses in the order they were listed (and
+   * hochberg's were the Simes k·alpha/m, not alpha/(m − k + 1)).
+   */
   alphaAllocation: Record<string, number>;
   transitionWeights: Record<string, Record<string, number>> | null;
+  /** A pre-specified order; null where the order is the observed p-values' (holm, hochberg) or the graph's. */
   testingOrder: string[] | null;
+  /** holm and hochberg only, else null: the thresholds for the ordered p-values, by rank. Added 2026-09-28. */
+  rankThresholds: RankThreshold[] | null;
   overallAlpha: number;
   graphDefinition: object | null;
   gatekeepingStrategy: string | null;
@@ -179,6 +209,171 @@ function readRecommendation(raw: unknown): Omit<MethodRecommendation, 'source' |
     supplementaryAnalyses: r.supplementaryAnalyses as MethodRecommendation['supplementaryAnalyses'],
     regulatoryConsiderations: typeof r.regulatoryConsiderations === 'string' ? r.regulatoryConsiderations : '',
   };
+}
+
+// ---------------------------------------------------------------------------
+// Multiplicity: input refusal, and Holm / Hochberg as rank procedures
+// ---------------------------------------------------------------------------
+
+const MULTIPLICITY_APPROACHES: ReadonlyArray<DesignMultiplicityParams['approach']> = [
+  'graphical', 'fixed_sequence', 'fallback', 'gatekeeping', 'holm', 'hochberg',
+];
+
+type RankProcedure = 'holm' | 'hochberg';
+
+/**
+ * The largest family a Holm or Hochberg design is produced for. Every rank
+ * threshold is confirmed against the canonical engine (below), one probe of
+ * length m per rank, so the cost is quadratic in m; a larger family is refused
+ * rather than let one request hold the event loop.
+ */
+const MAX_RANK_FAMILY = 100;
+
+const DESIGNER = 'designMultiplicityStrategy';
+
+function describeValue(v: unknown): string {
+  if (typeof v === 'string') return JSON.stringify(v);
+  if (v === null || typeof v === 'number' || typeof v === 'boolean' || v === undefined) return String(v);
+  return Array.isArray(v) ? 'an array' : typeof v;
+}
+
+/**
+ * Refuses, with a TypeError or RangeError naming it, an input the designer
+ * cannot honour. Until 2026-09-28 an alpha of 1.5 or "0.05" produced an
+ * allocation, a repeated id silently merged two hypotheses' entries, and the
+ * refusals there were (no hypotheses, an unknown approach) were rewrapped as a
+ * plain Error, which the route answered as a 500.
+ */
+function refuseMultiplicityInput(params: DesignMultiplicityParams, overallAlpha: unknown): void {
+  if (!MULTIPLICITY_APPROACHES.includes(params.approach)) {
+    throw new RangeError(
+      `${DESIGNER}: approach ${describeValue(params.approach)} is not supported; supported: ${MULTIPLICITY_APPROACHES.join(', ')}`,
+    );
+  }
+  const hypotheses: unknown = params.hypotheses;
+  if (!Array.isArray(hypotheses)) {
+    throw new TypeError(`${DESIGNER}: hypotheses must be an array; got ${describeValue(hypotheses)}`);
+  }
+  if (hypotheses.length === 0) {
+    throw new RangeError(`${DESIGNER}: hypotheses is empty; at least one hypothesis must be provided`);
+  }
+  const seen = new Set<string>();
+  hypotheses.forEach((h: unknown, i) => {
+    const id: unknown = (h as { id?: unknown } | null)?.id;
+    if (typeof id !== 'string' || id.trim() === '') {
+      throw new TypeError(`${DESIGNER}: hypotheses[${i}].id must be a non-empty string; got ${describeValue(id)}`);
+    }
+    if (seen.has(id)) {
+      throw new RangeError(`${DESIGNER}: hypotheses[${i}].id "${id}" repeats an earlier hypothesis; the allocation is keyed by id`);
+    }
+    seen.add(id);
+  });
+  if (typeof overallAlpha !== 'number') {
+    throw new TypeError(`${DESIGNER}: overallAlpha must be a number; got ${describeValue(overallAlpha)}`);
+  }
+  if (!(overallAlpha > 0 && overallAlpha < 1)) {
+    throw new RangeError(`${DESIGNER}: overallAlpha must lie strictly between 0 and 1; got ${overallAlpha}`);
+  }
+  if (params.approach === 'holm' || params.approach === 'hochberg') {
+    if (hypotheses.length > MAX_RANK_FAMILY) {
+      throw new RangeError(
+        `${DESIGNER}: ${params.approach} over ${hypotheses.length} hypotheses exceeds the ${MAX_RANK_FAMILY} ` +
+        `this designer confirms rank by rank against the canonical engine`,
+      );
+    }
+    refuseUnequalWeights(params.approach, params.hypotheses);
+  }
+}
+
+/**
+ * Holm and Hochberg here are the canonical engine's UNWEIGHTED procedures, so a
+ * weight they would ignore is refused. Equal positive weights on every
+ * hypothesis change nothing and pass.
+ */
+function refuseUnequalWeights(procedure: RankProcedure, hypotheses: Hypothesis[]): void {
+  const weights: unknown[] = hypotheses.map((h) => h.weight);
+  if (weights.every((w) => w === undefined)) return;
+  const i = weights.findIndex(
+    (w) => typeof w !== 'number' || !Number.isFinite(w) || w <= 0 || w !== weights[0],
+  );
+  if (i >= 0) {
+    throw new RangeError(
+      `${DESIGNER}: ${procedure} is the unweighted procedure (initial level alpha/m for every hypothesis), ` +
+      `so weights must be omitted or equal and positive on every hypothesis; hypotheses[${i}].weight is ` +
+      `${describeValue(weights[i])} where hypotheses[0].weight is ${describeValue(weights[0])}. ` +
+      `Use 'fallback' for a weighted allocation`,
+    );
+  }
+}
+
+/**
+ * p-values in rank order with p(rank) = `at`, every smaller rank at 0 and every
+ * larger rank at 1. Under Holm and Hochberg alike p(rank) is then rejected
+ * exactly when `at` lies at or below the rank's threshold.
+ */
+function rankProbe(m: number, rank: number, at: number): number[] {
+  return Array.from({ length: m }, (_, i) => {
+    if (i < rank - 1) return 0;
+    return i === rank - 1 ? at : 1;
+  });
+}
+
+/**
+ * The rank thresholds alpha/(m − k + 1), k = 1…m, of Holm and Hochberg (the two
+ * share them; one steps down, the other up). One source: each threshold is
+ * confirmed to be the canonical procedure's decision boundary at its rank —
+ * `holmReject` / `hochbergReject` reject p(k) at the threshold and not just
+ * above it — and a canonical rule that disagrees refuses the design rather than
+ * let this service display thresholds the engine does not apply.
+ */
+function canonicalRankThresholds(procedure: RankProcedure, m: number, alpha: number): RankThreshold[] {
+  const reject = procedure === 'holm' ? holmReject : hochbergReject;
+  return Array.from({ length: m }, (_, i) => {
+    const rank = i + 1;
+    const threshold = alpha / (m - rank + 1);
+    // Beyond the canonical engine's absolute tolerance (1e-12).
+    const above = threshold + Math.max(threshold * 1e-9, 1e-11);
+    const rejectedAt = reject(rankProbe(m, rank, threshold), alpha)[rank - 1];
+    // No p-value lies above 1, so there is nothing to probe there.
+    const rejectedAbove = above <= 1 && reject(rankProbe(m, rank, above), alpha)[rank - 1];
+    if (!rejectedAt || rejectedAbove) {
+      throw new Error(
+        `${procedure} rank ${rank} of ${m} at alpha ${alpha}: alpha/(m − k + 1) = ${threshold} is not the canonical ` +
+        `${procedure}Reject boundary (stats/multiplicity.ts); the design is refused rather than displayed`,
+      );
+    }
+    return { rank, threshold };
+  });
+}
+
+/** Four significant figures for narrative; the exact values are in the result's fields. */
+const sig4 = (x: number): string => String(Number(x.toPrecision(4)));
+
+/** Holm or Hochberg: initial levels by hypothesis, thresholds by rank, and the wording that keeps them apart. */
+function rankProcedureDesign(
+  procedure: RankProcedure,
+  hypotheses: Hypothesis[],
+  alpha: number,
+): { alphaAllocation: Record<string, number>; rankThresholds: RankThreshold[]; description: string } {
+  const m = hypotheses.length;
+  const rankThresholds = canonicalRankThresholds(procedure, m, alpha);
+  const initial = rankThresholds[0].threshold; // alpha / m
+  const alphaAllocation = Object.fromEntries(hypotheses.map((h) => [h.id, initial]));
+  const byRank = rankThresholds.map((t) => `p(${t.rank}) ≤ ${sig4(t.threshold)}`).join(', ');
+  const common =
+    `Each hypothesis's initial significance level is alpha/${m} = ${sig4(initial)} (alphaAllocation): ` +
+    `a hypothesis whose p-value is at or below it is rejected whatever the other p-values. ` +
+    `Rank thresholds alpha/(m − k + 1) for the ordered p-values p(1) ≤ … ≤ p(${m}) (rankThresholds): ${byRank}. ` +
+    `These thresholds belong to the ranks of the ordered p-values, not to particular hypotheses, and are not initial levels; ` +
+    `the testing order is the order of the observed p-values, so none is fixed in advance.`;
+  const description = procedure === 'holm'
+    ? `Holm step-down procedure over ${m} hypotheses at overall alpha ${alpha}; family-wise error controlled under any dependence. ` +
+      `${common} Step down from the smallest p-value, rejecting each p(k) at or below its threshold, and stop at the first p(k) above it.`
+    : `Hochberg step-up procedure over ${m} hypotheses at overall alpha ${alpha}; family-wise error controlled under independence or ` +
+      `positive regression dependence of the test statistics, and, unlike Holm's, not under arbitrary dependence. ` +
+      `${common} Step up from the largest p-value: at the first p(k) at or below its threshold, reject it and every smaller p-value; ` +
+      `if there is none, reject nothing.`;
+  return { alphaAllocation, rankThresholds, description };
 }
 
 export class EstimandEngineService {
@@ -446,22 +641,22 @@ Respond in JSON with this exact structure:
     params: DesignMultiplicityParams,
     organizationId: number
   ): Promise<MultiplicityResult> {
+    // The default is visible in the result (overallAlpha). A refusal keeps its
+    // TypeError / RangeError and happens before anything is stored.
+    const overallAlpha = params.overallAlpha ?? 0.05;
+    refuseMultiplicityInput(params, overallAlpha);
     const database = this.getDb();
 
     try {
-      const overallAlpha = params.overallAlpha ?? 0.05;
       const hypotheses = params.hypotheses;
       const n = hypotheses.length;
-
-      if (n === 0) {
-        throw new Error('At least one hypothesis must be provided');
-      }
 
       let alphaAllocation: Record<string, number>;
       let transitionWeights: Record<string, Record<string, number>> | null = null;
       let testingOrder: string[] | null = null;
       let graphDefinition: object | null = null;
       let gatekeepingStrategy: string | null = null;
+      let rankThresholds: RankThreshold[] | null = null;
       let description: string;
 
       switch (params.approach) {
@@ -524,35 +719,18 @@ Respond in JSON with this exact structure:
           break;
         }
 
-        case 'holm': {
-          // Holm step-down procedure
-          alphaAllocation = {};
-          testingOrder = hypotheses.map((h) => h.id);
-          for (let i = 0; i < n; i++) {
-            alphaAllocation[hypotheses[i].id] =
-              Math.round((overallAlpha / (n - i)) * 10000) / 10000;
-          }
-          description = `Holm step-down procedure. Adjusted significance levels: ` +
-            hypotheses.map((h, i) => `${h.id}=${(overallAlpha / (n - i)).toFixed(4)}`).join(', ') +
-            `. Tests ordered by ascending p-value at each step.`;
-          break;
-        }
-
+        case 'holm':
         case 'hochberg': {
-          // Hochberg step-up procedure
-          alphaAllocation = {};
-          testingOrder = hypotheses.map((h) => h.id);
-          for (let i = 0; i < n; i++) {
-            alphaAllocation[hypotheses[i].id] =
-              Math.round((overallAlpha * (i + 1) / n) * 10000) / 10000;
-          }
-          description = `Hochberg step-up procedure. Adjusted significance levels (step-up): ` +
-            hypotheses.map((h, i) => `${h.id}=${(overallAlpha * (i + 1) / n).toFixed(4)}`).join(', ') +
-            `. Tests from largest p-value down; stop when first rejection occurs.`;
+          // Rank procedures: thresholds by rank of the ordered p-values (confirmed
+          // against the canonical holmReject / hochbergReject), initial level
+          // alpha/m by hypothesis, and no fixed testing order.
+          ({ alphaAllocation, rankThresholds, description } =
+            rankProcedureDesign(params.approach, hypotheses, overallAlpha));
           break;
         }
 
         default:
+          // Unreachable: refuseMultiplicityInput admits only the cases above.
           throw new Error(`Unsupported multiplicity approach: ${params.approach}`);
       }
 
@@ -579,6 +757,7 @@ Respond in JSON with this exact structure:
         alphaAllocation,
         transitionWeights,
         testingOrder,
+        rankThresholds,
         overallAlpha,
         graphDefinition,
         gatekeepingStrategy,

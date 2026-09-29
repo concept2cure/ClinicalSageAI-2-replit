@@ -38,7 +38,10 @@
  *  - The family is the design's confirmatory endpoints — the roles
  *    `ESTIMAND_REQUIRED_ROLES` names (primary, key secondary).
  *  - Every rate is the engine's `estimateFWER` under the global null with
- *    independent p-values, from one fixed seed, and names the rule it is for.
+ *    independent p-values, from one fixed seed, and names the rule it is for:
+ *    `rule` is the design's method, and `simulatedRule` the exact rule
+ *    simulated (weights, transitions or level), which the engine hashes into
+ *    the rate's provenance — two rules' rates never share an inputsSha256.
  *    The Monte Carlo SE is reported beside each rate, and "controlled" is
  *    decided by `fwerVerdict` against a stated tolerance, not eyeballed.
  *  - Independence is the simulation's assumption, and it is said: Hochberg's
@@ -82,6 +85,12 @@ type Method = MultiplicityStrategy['method'];
 export interface FwerRate {
   /** The rule simulated: the named procedure, or each hypothesis at the full alpha. */
   rule: Method | 'unadjusted';
+  /**
+   * The engine's identifier of the exact rejection rule simulated — procedure
+   * and the weights, transitions or level that fix it — hashed into
+   * `provenance.inputsSha256`, so two rules' rates never share a provenance.
+   */
+  simulatedRule: string;
   fwer: number;
   monteCarloSe: number;
   /** Simulations the rate is from. */
@@ -127,7 +136,7 @@ export interface MultiplicityCheck {
 type Rec = Record<string, unknown>;
 type RejectFn = (p: number[]) => boolean[];
 interface Entry { endpointName: string; alpha: number }
-interface Simulation { reject: RejectFn; simulated: ProcedureRate['simulated']; level: number; gaps: string[]; notes: string[] }
+interface Simulation { reject: RejectFn; rule: string; simulated: ProcedureRate['simulated']; level: number; gaps: string[]; notes: string[] }
 
 const isRecord = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -187,10 +196,14 @@ function unreachable(w: number[], g: number[][]): number[] {
   return reached.flatMap((r, i) => (r ? [] : [i]));
 }
 
-function rate(rule: FwerRate['rule'], reject: RejectFn, m: number, alpha: number): FwerRate {
-  const e = estimateFWER(reject, m, alpha, FWER_SIMULATIONS, FWER_SEED);
+/** The engine's rule identifier for a graphical procedure: the exact weights and transitions it is simulated with. */
+const graphicalRule = (w: number[], g: number[][]): string => `graphical(weights=${JSON.stringify(w)},transitions=${JSON.stringify(g)})`;
+const UNADJUSTED_RULE = 'unadjusted(each hypothesis at the full alpha)';
+
+function rate(rule: FwerRate['rule'], simulatedRule: string, reject: RejectFn, m: number, alpha: number): FwerRate {
+  const e = estimateFWER(reject, m, alpha, FWER_SIMULATIONS, FWER_SEED, simulatedRule);
   return {
-    rule, fwer: e.fwer, monteCarloSe: Math.sqrt((e.fwer * (1 - e.fwer)) / e.nSim),
+    rule, simulatedRule, fwer: e.fwer, monteCarloSe: Math.sqrt((e.fwer * (1 - e.fwer)) / e.nSim),
     simulations: e.nSim, provenance: reproducibleProvenance(e.provenance),
   };
 }
@@ -273,7 +286,7 @@ function textbook(method: Method, alpha: number): Simulation {
     : method === 'hochberg' ? (p) => hochbergReject(p, alpha) : (p) => fixedSequenceReject(p, alpha);
   const split = method === 'fixed_sequence' ? 'all of alpha on the first confirmatory endpoint, in design order' : 'alpha / m on each hypothesis';
   return {
-    reject, simulated: 'textbook_split', level: alpha, gaps: [],
+    reject, rule: `${method === 'fixed_sequence' ? 'fixed-sequence' : method}(textbook)`, simulated: 'textbook_split', level: alpha, gaps: [],
     notes: [`no allocation is recorded, so ${method} is simulated with its textbook split (${split}); the rate describes that procedure, not a recorded one`],
   };
 }
@@ -286,12 +299,16 @@ function recorded(method: Method, entries: Entry[], family: string[], alpha: num
     if (!levels.every((x) => Math.abs(x - levels[0]) <= SLACK * alpha)) {
       return 'a Hochberg procedure with an unequal allocation (weighted Hochberg) has no engine here: its error control cannot be checked';
     }
-    return { reject: (p) => hochbergReject(p, level), simulated: 'recorded_allocation', level, gaps: level > 0 ? [] : family.map((f) => neverGap(method, f)), notes: [] };
+    return {
+      reject: (p) => hochbergReject(p, level), rule: `hochberg(level=${level})`, simulated: 'recorded_allocation', level,
+      gaps: level > 0 ? [] : family.map((f) => neverGap(method, f)), notes: [],
+    };
   }
   const w = levels.map((x) => x / alpha);
   const g = method === 'holm' ? weightedHolmGraph(w) : chainGraph(entries.map((e) => family.indexOf(e.endpointName)), family.length);
   return {
     reject: (p) => graphicalReject(p, alpha, w, g),
+    rule: graphicalRule(w, g),
     simulated: 'recorded_allocation',
     level,
     gaps: unreachable(w, g).map((i) => neverGap(method, family[i])),
@@ -326,7 +343,7 @@ function recordedGaps(raw: unknown, alloc: ReturnType<typeof allocationOf>, fami
 
 /** Simulate the procedure and decide "controlled" by `fwerVerdict`. */
 function withRate(method: Method, sim: Simulation, gaps: string[], base: Base, alpha: number): MultiplicityCheck {
-  const r = rate(method, sim.reject, base.family.length, alpha);
+  const r = rate(method, sim.rule, sim.reject, base.family.length, alpha);
   const verdict = fwerVerdict(r.fwer, r.monteCarloSe, alpha);
   const all = [...(verdict.gap ? [verdict.gap] : []), ...gaps, ...sim.gaps];
   return {
@@ -341,7 +358,7 @@ function checkProcedure(strategy: Rec, method: Method | null, family: string[], 
   const gaps = recordedGaps(raw, alloc, family, alpha);
   const base: Base = {
     notes: method === 'hochberg' ? [HOCHBERG_NOTE] : [], family, method, alpha,
-    unadjusted: rate('unadjusted', (p) => p.map((x) => x <= alpha), family.length, alpha),
+    unadjusted: rate('unadjusted', UNADJUSTED_RULE, (p) => p.map((x) => x <= alpha), family.length, alpha),
     allocation: alloc?.check ?? null, basis: MULTIPLICITY_CHECK_BASIS,
   };
   if (!method || !SIMULATED.has(method)) {
