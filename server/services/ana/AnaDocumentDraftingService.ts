@@ -717,6 +717,16 @@ ${documentContent}`,
 
   /**
    * Quick completion using the Sonnet model (faster, cheaper for simple tasks).
+   *
+   * With a `framework` it is regulatory drafting, not a quick completion: the
+   * system turn is the framework's drafting persona (resolveSystemPrompt), so
+   * it goes to the gateway as `document_drafting` with no model pinned. An
+   * approved model drafts it; in production the gateway refuses it until a
+   * model passes PQ (ADR-0014 §3). Until 2026-09-28 (track GW review [10]) it
+   * was sent as `general` pinned to claude-sonnet-4 — not approved for
+   * high-risk work, PQ pending — so neither rule applied: a label bypass on
+   * POST /api/claude/quick. With no framework it is still a quick `general`
+   * completion on Sonnet.
    */
   async quickComplete(
     prompt: string,
@@ -737,11 +747,12 @@ ${documentContent}`,
     }
     messages.push({ role: 'user', content: prompt });
 
+    const drafting = messages[0]?.role === 'system';
     const response = await gateway.route({
-      taskType: 'general',
+      ...(drafting
+        ? { taskType: 'document_drafting' as const }
+        : { taskType: 'general' as const, provider: 'anthropic' as const, model: 'claude-sonnet-4' }),
       messages,
-      provider: 'anthropic',
-      model: 'claude-sonnet-4',
       maxTokens: options?.maxTokens || 2048,
       promptCache: options?.framework ? { enabled: true, type: 'ephemeral' } : undefined,
       organizationId: options?.organizationId,

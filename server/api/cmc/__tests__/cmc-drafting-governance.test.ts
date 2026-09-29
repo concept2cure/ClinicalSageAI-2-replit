@@ -87,7 +87,9 @@ describe('POST /generate-blueprint', () => {
       throw new ModelNotApprovedError('document_drafting', ['gpt-4o'], 'no-approved-model');
     });
     const res = await blueprint();
-    expect(res.status).toBe(503);
+    // 403 MODEL_NOT_QUALIFIED since 2026-09-28 (track GW review [23]): a
+    // governance refusal is not an outage, and a retry cannot change it.
+    expect(res.status).toBe(403);
     expect(res.body.error).toBe('NO_DRAFT_PRODUCED');
     expect(res.body.message).toMatch(/No model approved for regulatory drafting/);
     expect(projectInserts()).toHaveLength(0);

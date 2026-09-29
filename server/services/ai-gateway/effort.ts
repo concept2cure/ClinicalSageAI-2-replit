@@ -20,7 +20,7 @@ import {
   type ModelConfig,
   type RoutingStrategy,
 } from './types';
-import { governedMatch, governingEntry, type PqStatus } from '../ai-governance/approved-models';
+import { governedMatch, selectableEntry, type PqStatus } from '../ai-governance/approved-models';
 
 /** The picker's three effort options, in display order. */
 export const EFFORT_LEVELS: readonly EffortLevel[] = ['fast', 'balanced', 'thorough'] as const;
@@ -260,9 +260,11 @@ export function deriveRecommendedEffort(m: ModelConfig): EffortLevel {
 
 /**
  * Project the gateway's model registry into the picker's option list. Filters
- * to enabled models that are an approved-models entry ({@link governingEntry})
- * — the set {@link resolveModelOverride} will pin on normal-risk work, so the
- * picker never offers a model the route would refuse on every turn — and
+ * to enabled models that are an approved-models entry and may be selected here
+ * ({@link selectableEntry}: in production, not a placeholder pin such as
+ * `local-default`) — the set {@link resolveModelOverride} will pin on
+ * normal-risk work, so the picker never offers a model the route would refuse
+ * on every turn — and
  * derives `label` + `recommendedEffort`
  * (neither exists on {@link ModelConfig}). Each option carries its entry's
  * `approvedForHighRisk` and PQ status, so an option cannot read as more
@@ -273,7 +275,7 @@ export function projectModelsForPicker(models: ModelConfig[]): PickerModel[] {
   return models
     .flatMap((m): PickerModel[] => {
       if (!m.enabled) return [];
-      const entry = governingEntry(m);
+      const entry = selectableEntry(m);
       if (!entry) return [];
       return [
         {

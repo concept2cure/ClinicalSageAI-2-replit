@@ -803,7 +803,10 @@ for (const f of ENFORCEMENT_FLAGS) {
         : `${passed.length} of ${approved.length} approved model(s) have a passed PQ: ` +
           approved.map((e) => `${e.id}=${e.pq ?? 'unknown'}${e.note}`).join(', '),
     gate:
-      'server/services/ai-gateway/gateway.ts approvedForTask — only approvedForHighRisk models serve document_drafting / regulatory_review, at primary, fallback and explicit selection; PQ status in approved-models.ts',
+      'One rule, approved-models.ts isQualifiedForHighRiskDrafting (approvedForHighRisk, and in production pq.status passed; ADR-0014 §3), at two runtime points. ' +
+      '(1) The gateway, server/services/ai-gateway/model-governance.ts selectionRefusal, at explicit, strategy and fallback selection: only approvedForHighRisk entries serve document_drafting, and regulatory_review unless declared low/medium risk; in production document_drafting is refused unless its entry is PQ-passed, deterministic mode included. ' +
+      '(2) The governed-write gate, approved-models.ts isServedModelApprovedForHighRisk (AnaToolExecutor preHandlerRefusal): in production no tool stores model-authored text in a governed record unless the model that wrote it is PQ-passed. ' +
+      'Until this row is ready, production refuses both. Not covered: callers that draft under another task label (listed in docs/evidence/ANA-AGENTS/2026-09-27/H3-gateway-governance/README.md), and model text returned in an answer without being stored. PQ status in approved-models.ts',
     owner: 'Engineering (execute the PQ) + Ops (a product provider key)',
     unblock:
       'System owner approves server/eval/pq/pq-protocol.json (it is draft; a PQ against unapproved criteria cannot PASS). Engineering: ' +
