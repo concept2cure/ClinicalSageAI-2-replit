@@ -240,8 +240,24 @@ const ANA_CTX = {
   turnId: 'dbtest-place-turn',
 };
 
+/** The caller's membership. AnA's tool dispatch reads the role live from
+ *  organization_users before any confirmed write (AnaToolExecutor.ts
+ *  writeRoleRefusal, 2026-09-28); null means no membership at all. */
+async function setMembership(role: string | null): Promise<void> {
+  if (role === null) {
+    await owner.query('DELETE FROM organization_users WHERE organization_id = $1 AND user_id = $2', [orgId, userId]);
+    return;
+  }
+  await owner.query(
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`,
+    [orgId, userId, role],
+  );
+}
+
 /** place_project_document, resolved through the real executor registry. */
 async function anaPlaces(input: Record<string, unknown>, role: string | null = 'admin') {
+  await setMembership(role);
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
   const handler = getToolHandler('place_project_document');
   if (!handler) throw new Error('place_project_document is not registered');
@@ -533,9 +549,9 @@ describe('only a role that may write files into the Vault (D3)', () => {
     await markCataloged();
     const before = await row();
     const out = await anaPlaces({ folder_id: 'eng', rationale: 'Design history extract.' }, 'viewer');
-    // The tool's refusal shape: the service's code under `error`, its message for AnA to relay.
-    expect(out).toMatchObject({ ok: false, error: 'VAULT_WRITE_ROLE_REQUIRED' });
-    expect(out.message).toMatch(/viewer/);
+    // Refused at AnA's tool dispatch (the live organization_users role), before
+    // the handler and the service's own check (the cases above) are reached.
+    expect(out.error, JSON.stringify(out)).toMatch(/needs an editor role in this organization\. Nothing was changed\./);
     expect(await row()).toEqual(before);
     expect(await lastFilingAudit()).toBeNull();
   });
