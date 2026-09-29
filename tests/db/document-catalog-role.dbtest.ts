@@ -82,7 +82,20 @@ afterAll(async () => {
   await owner.end().catch(() => {});
 });
 
+/** The caller's membership. AnA's tool dispatch reads the role live from
+ *  organization_users before any confirmed write (AnaToolExecutor.ts
+ *  writeRoleRefusal, 2026-09-28), so the role under test is set there as well
+ *  as on the tenant scope a request carries. */
+async function setMembership(role: string): Promise<void> {
+  await owner.query(
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`,
+    [orgId, userId, role],
+  );
+}
+
 async function catalogAs(role: string) {
+  await setMembership(role);
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
   const { runWithTenantScope } = await import('../../server/db/tenantStore');
   const handler = getToolHandler('catalog_project_document');
@@ -119,8 +132,8 @@ describe('catalog_project_document — the comprehension record is a write', () 
     const out = await catalogAs('viewer');
     // The stored record first, so a regression shows what it WROTE.
     expect(await catalogRow()).toEqual(before);
-    expect(out.ok, JSON.stringify(out)).toBe(false);
-    expect(out.reason).toMatch(/viewer/);
+    // Refused at AnA's tool dispatch, before the handler runs.
+    expect(out.error, JSON.stringify(out)).toMatch(/needs an editor role in this organization\. Nothing was changed\./);
   });
 
   it('accepts a member — the positive control: nothing else stood in the way', async () => {

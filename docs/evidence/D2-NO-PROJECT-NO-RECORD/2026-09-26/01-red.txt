@@ -1,0 +1,93 @@
+# source at 6f752472 PF-13 (D5): a project that holds sealed, filed or transmitted records is archived, never deleted
+# the PF-07 tests, against the source before the change
+      Tests  7 failed | 68 passed (75)
+   → adopt/unscoped-upload-is-a-conversation-file FAILS and is not baselined — an upload with no project open records no Data Room source
+   → expected "vi.fn()" to be called with arguments: [ 503 ]
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+   → expected 201 to be 404 // Object.is equality
+   → expected false to be true // Object.is equality
+   → expected { id: 10, organizationId: 301, …(29) } to be null
+   → expected { sourceType: 'client_document' } to match object { clientWorkspaceId: 12, …(1) }
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+ FAIL  tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > a project-scoped source that cannot be written answers 503 — never 200 "ready" (PF-07)
+ FAIL  tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves identity within the project, never across the organization (PF-07 / VR-10)
+ FAIL  tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > with no project open, the file stays a conversation file: no Data Room source (PF-07)
+ Test Files  5 failed (5)
+ × client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > with no project open, New document is disabled, says why, and nothing is posted
+ × server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id's shape only)
+ × server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > resolves identity within one project: the same bytes in two projects are two sources (PF-07 / VR-10)
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+ × tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > a project-scoped source that cannot be written answers 503 — never 200 "ready" (PF-07)
+ × tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves identity within the project, never across the organization (PF-07 / VR-10)
+ × tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > with no project open, the file stays a conversation file: no Data Room source (PF-07)
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > creates the document in the open project
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > a download the browser blocks is never reported as exported to the device
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > a governance refusal (409, not frozen) is not blamed on the connection
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > creates a document via POST /docs and adopts the server row
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > creates a section via POST /sections in the open document
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > does not cry unbound when the document IS bound
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > exports a real PDF via POST /docs/:id/export {format: pdf}
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > exports the assembled document as Word via POST /docs/:id/export
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > offers no export on a draft document, and says why
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > tells the user when the new document is not bound to a filing
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on a provenance source it does not know
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on an empty section list — nothing written
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 without a programId
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 403 without a tenant
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > the root cause, demonstrated: the alias map admits ONE canonical document per filing
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > creates a client_document source carrying its upload provenance
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > does not match a different source type when one is requested
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > does not resolve one tenant's file to another tenant's identity
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > finds nothing for an unknown or empty checksum
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > records a failed extraction honestly rather than as extracted
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > records ingestion and extraction status instead of leaving them pending
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > rejects an invalid status rather than writing it
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > resolves a re-upload of the same bytes to the existing identity
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > returns the earliest identity when duplicates already exist
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > scopes a source to a UUID-keyed program
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > still defaults to pending when a caller says nothing
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > does not resolve another tenant's source
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > ignores malformed ids without querying
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > preserves the requested order and de-duplicates
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > resolves a selected source back to the upload its bytes live in
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > returns the readable subset of a mixed selection
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > skips a source that has no readable upload
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > does not widen to the whole tenant when a scope matches nothing
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > lists only client documents, not CSRs or letters
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > never returns another tenant's documents for the same program id
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > returns only the requested program's documents
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > returns ownerless documents only when asked, and never mixes them in
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > still supports the numeric workspace id-space
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s 
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbe
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be del
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+Error: adopt/unscoped-upload-is-a-conversation-file FAILS and is not baselined — an upload with no project open records no Data Room source
+adopt/adopt-is-once FAILS and is not baselined — adopting the same file again is not a second source and writes no second audit row
+adopt/adopt-makes-it-the-projects-source FAILS and is not baselined — one audited adopt makes the file a source of the project, keyed to it

@@ -53,7 +53,7 @@ import router from '../authoring.router';
 
 async function bearer(): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-  return `Bearer ${await new SignJWT({ sub: 'u1', organizationId: 7, email: 'ra@test.co' })
+  return `Bearer ${await new SignJWT({ sub: 'u1', organizationId: ORG_ID, email: 'ra@test.co' })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('5m')
@@ -67,12 +67,29 @@ function makeApp() {
   return app;
 }
 
+/* A document belongs to a project (PF-07; founder decision 2026-09-26): a create
+   with no client_program_id is refused 400 PROJECT_REQUIRED before the binding
+   path this file pins is ever reached. So every create here names a live
+   project owned by the caller's organization (org 7, from the bearer), and the
+   mock pool answers programInOrganization's ownership SELECT for that id only.
+   The binding question under test is unchanged: the governed-document resolver
+   is mocked to name a filing either way, so only the column state decides
+   bound vs unbound. */
+const ORG_ID = 7;
+const PROGRAM_ID = '0b2c7d4e-5f60-4a71-8b92-a3c4d5e6f701';
+
 /** `columnPresent` decides what information_schema reports for the binding column. */
 function wire(columnPresent: boolean) {
-  mockQuery.mockImplementation(async (sql: unknown) => {
+  mockQuery.mockImplementation(async (sql: unknown, params?: unknown[]) => {
     const s = String(sql);
     if (s.includes('information_schema.columns') && s.includes('c2c_document_id')) {
       return { rowCount: 1, rows: [{ ok: columnPresent }] };
+    }
+    // programInOrganization: a row for the owned, live program only; nothing
+    // for any other id or organization, as the real SELECT answers.
+    if (s.includes('FROM regulatory_programs') && s.includes('deleted_at IS NULL')) {
+      const owned = Array.isArray(params) && params[0] === PROGRAM_ID && params[1] === ORG_ID;
+      return owned ? { rowCount: 1, rows: [{ id: PROGRAM_ID }] } : { rowCount: 0, rows: [] };
     }
     return { rowCount: 0, rows: [] };
   });
@@ -95,7 +112,7 @@ async function createDoc() {
   return request(makeApp())
     .post('/api/authoring/docs')
     .set('Authorization', await bearer())
-    .send({ title: 'A doc', module: 'M3' });
+    .send({ title: 'A doc', module: 'M3', client_program_id: PROGRAM_ID });
 }
 
 beforeEach(() => {
@@ -121,6 +138,10 @@ describe('POST /docs — governed binding column', () => {
     wire(false);
     const res = await createDoc();
 
+    // Precondition: the document was actually created. Every assertion below is
+    // a negative, so a refused create (e.g. 400 PROJECT_REQUIRED, 404 project
+    // not found) would satisfy them without testing anything.
+    expect(res.status).toBe(201);
     // Reporting bound:true here would send every later save looking for a
     // filing that was never linked.
     const body = JSON.stringify(res.body);

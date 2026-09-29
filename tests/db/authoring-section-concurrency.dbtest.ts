@@ -58,6 +58,8 @@ let app: express.Express;
  *  with the same rotation-aware secret the server uses, which is the point:
  *  the suite exercises the real auth boundary rather than bypassing it. */
 let bearer: string;
+/** The project the document is created in: a document belongs to a project (PF-07). */
+let programId: string;
 
 async function buildApp(): Promise<express.Express> {
   const router = (await import('../../server/routes/authoring.router')).default;
@@ -108,6 +110,18 @@ beforeAll(async () => {
     [orgId, userId],
   );
 
+  /* A document is created in a project of its organization (PF-07): POST
+     /api/authoring/docs refuses one that names none, 400 PROJECT_REQUIRED.
+     Upserted on (organization_id, code), so a re-run reuses it. */
+  const program = await owner.query(
+    `INSERT INTO regulatory_programs (organization_id, name, code, program_type, product_type, primary_agency, product_name)
+       VALUES ($1, $2, $3, 'IND', 'drug', 'FDA', $4)
+     ON CONFLICT (organization_id, code) DO UPDATE SET name = EXCLUDED.name, deleted_at = NULL
+     RETURNING id`,
+    [orgId, `${PROBE} program`, 'DBTEST-CONCURRENCY', `${PROBE} product`],
+  );
+  programId = String(program.rows[0].id);
+
   /* Signed with the SAME secret the router verifies against.
      `server/utils/jwtVerify.ts` resolves `JWT_SECRET_<suffix> ?? JWT_SECRET`
      at CALL time, and maps NODE_ENV through ENV_SUFFIX_MAP where 'test' →
@@ -154,6 +168,7 @@ afterAll(async () => {
     .query('DELETE FROM authoring_sections WHERE code LIKE $1', [`${PROBE}%`])
     .catch(() => {});
   await owner.query('DELETE FROM authoring_documents WHERE title LIKE $1', [`${PROBE}%`]).catch(() => {});
+  await owner.query('DELETE FROM regulatory_programs WHERE organization_id = $1 AND code = $2', [orgId, 'DBTEST-CONCURRENCY']).catch(() => {});
   await owner.end().catch(() => {});
 });
 
@@ -161,7 +176,7 @@ describe('a second author cannot silently overwrite the first', () => {
   it('creates a document and a section to contend over', async () => {
     const doc = await request(app)
       .post('/api/authoring/docs').set('Authorization', `Bearer ${bearer}`)
-      .send({ title: `${PROBE} Module 3`, module: 'M3' });
+      .send({ title: `${PROBE} Module 3`, module: 'M3', client_program_id: programId });
     expect([200, 201]).toContain(doc.status);
     docId = String(doc.body?.doc?.id ?? doc.body?.document?.id ?? doc.body?.id);
     expect(docId, 'no document id returned').toBeTruthy();
