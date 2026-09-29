@@ -84,6 +84,7 @@ import {
 } from '../services/authoring/authoring-evidence';
 import { loadAuthoringRecord, resolveTurnRecordSource, textSha256 } from '../services/authoring/authoring-record';
 import { sendAuditedExport, walkTenantChain } from '../services/audit/audited-export';
+import { canReadAuditTrail } from '../services/audit/audit-api-authority';
 import {
   renderAuthoringExport,
   logExport,
@@ -129,6 +130,9 @@ router.use((req: Request, res: Response, next: any) => {
   delete (req.headers as any)['x-roles'];
   delete (req.headers as any)['x-user-email'];
   delete (req.headers as any)['x-tenant-id'];
+  // The trail's session id comes from the verified token's `sid` (below);
+  // a caller-sent x-session-id is not the session (DP-43).
+  delete (req.headers as any)['x-session-id'];
 
   const auth = req.headers.authorization || (req.headers as any).Authorization;
   if (!auth || !/^Bearer\s+\S+$/i.test(auth)) {
@@ -186,6 +190,7 @@ router.use((req: Request, res: Response, next: any) => {
     else (req.headers as any)[header] = value;
   };
   setOrClear('x-user-email', req.user.email);
+  setOrClear('x-session-id', typeof decoded.sid === 'string' && decoded.sid ? decoded.sid : undefined);
   const roleList = Array.isArray(req.user.roles) && req.user.roles.length ? req.user.roles : undefined;
   setOrClear('x-roles', roleList ? roleList.map((r) => String(r).toUpperCase()).join(',') : undefined);
   const tenantId = authedOrgId(req);
@@ -6166,6 +6171,52 @@ router.get('/docs/:docId/signatures', async (req: Request, res: Response) => {
 //
 // event_type/actor are kept as the response field names so the shape callers
 // were coded against is unchanged; they are aliased from the real columns.
+/**
+ * Whether the caller may read (`view`) or export (`export`) this document's
+ * audit trail, answering the refusal itself when not (DP-42, 2026-09-29).
+ *
+ * The trail holds every edit's text before and after, every comment, every
+ * rejected suggestion and every actor's address. It was tenant-scoped only —
+ * the object authorization middleware passes every GET — so a member with no
+ * grant on the document, or one whose grant was revoked, could read and
+ * download it. Now: a holder of the action on the document (doc_permissions,
+ * through decideAuthoringPermission — the same decision the writes use), or an
+ * organization audit reader (owner, admin, manager: canReadAuditTrail, the
+ * DP-18 rule every other audit read follows). 404 for a document this tenant
+ * does not have, 403 otherwise; fails closed on an error.
+ */
+async function auditTrailAccess(
+  req: Request,
+  res: Response,
+  docId: string,
+  action: 'view' | 'export',
+): Promise<boolean> {
+  const tenantId = getTenantId(req);
+  const scope = isUuid(docId) ? await resolveAuthoringDocumentScope(pool, tenantId, docId) : null;
+  if (!scope) {
+    res.status(404).json({ success: false, error: 'Document not found' });
+    return false;
+  }
+  if (canReadAuditTrail(req)) return true;
+  const decision = await decideAuthoringPermission({ pool, principal: authoringPrincipalFromRequest(req), scope, action });
+  if (decision.allowed) return true;
+  res.status(403).json({
+    success: false,
+    error: {
+      code: 'AUDIT_TRAIL_NOT_PERMITTED',
+      message:
+        action === 'export'
+          ? "Exporting this document's record needs export access to the document, or an audit role in the organization."
+          : "Reading this document's record needs access to the document, or an audit role in the organization.",
+    },
+  });
+  return false;
+}
+
+/** The rail reads the latest rows; the export carries the whole record. */
+const AUDIT_READ_MAX_ROWS = 500;
+const AUDIT_EXPORT_MAX_ROWS = 10000;
+
 router.get('/docs/:docId/audit', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
@@ -6178,8 +6229,9 @@ router.get('/docs/:docId/audit', async (req: Request, res: Response) => {
        is read to check it and is not returned — the response keeps the shape
        callers were coded against. */
     // A malformed id names no document: 404, not the uuid cast's 500.
-    if (!isUuid(String(docId))) return res.status(404).json({ success: false, error: 'Document not found' });
-    const record = await loadAuthoringRecord(pool, tenantId, String(docId), { limit: Number(limit) || 100 });
+    if (!(await auditTrailAccess(req, res, String(docId), 'view'))) return;
+    const rows = Math.min(Number(limit) || 100, AUDIT_READ_MAX_ROWS);
+    const record = await loadAuthoringRecord(pool, tenantId, String(docId), { limit: rows });
     const events = record.events.map((e) => ({
       id: e.id,
       doc_id: e.doc_id,
@@ -6212,13 +6264,15 @@ export const AUTHORING_RECORD_EXPORT_FORMAT = 'authoring-record-export/1';
  * and the decision on it, every section edit before and after), each row's
  * chained entry and verdict, the tenant chain walked now, and how to check it
  * all offline. Recorded on the chain before anything leaves, refused when that
- * record cannot be written. Readable by whoever may read the document's trail
- * (GET /docs/:docId/audit), which is tenant-scoped.
+ * record cannot be written. Exportable by a holder of `export` on the
+ * document or an organization audit reader (auditTrailAccess). A record longer
+ * than AUDIT_EXPORT_MAX_ROWS says so (summary.truncated) rather than reading
+ * as complete.
  */
 router.get('/docs/:docId/audit/export', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
-    if (!isUuid(String(docId))) return res.status(404).json({ success: false, error: 'Document not found' });
+    if (!(await auditTrailAccess(req, res, String(docId), 'export'))) return;
     const tenantId = getTenantId(req);
     const doc = await pool.query(
       'SELECT id, title, status, module FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
@@ -6227,7 +6281,12 @@ router.get('/docs/:docId/audit/export', async (req: Request, res: Response) => {
     if ((doc.rowCount ?? 0) === 0) {
       return res.status(404).json({ success: false, error: 'Document not found' });
     }
-    const record = await loadAuthoringRecord(pool, tenantId, String(docId), { limit: 10000, order: 'asc' });
+    const record = await loadAuthoringRecord(pool, tenantId, String(docId), { limit: AUDIT_EXPORT_MAX_ROWS, order: 'asc' });
+    const totalRows = Number(
+      (await pool.query('SELECT count(*)::int AS n FROM authoring_audit_trail WHERE doc_id = $1 AND tenant_id = $2', [docId, tenantId]))
+        .rows[0]?.n ?? record.events.length
+    );
+    const truncated = totalRows > record.events.length;
     const verdicts = Object.fromEntries(record.verdicts);
     const intact = [...record.verdicts.values()].filter((v) => v.intact === true).length;
     const broken = [...record.verdicts.values()].filter((v) => v.intact === false).length;
@@ -6246,6 +6305,7 @@ router.get('/docs/:docId/audit/export', async (req: Request, res: Response) => {
         intact,
         broken,
         tenantChainOk: tenantChain.ok,
+        truncated,
         exportedAt,
       },
       ipAddress: req.ip,
@@ -6260,7 +6320,14 @@ router.get('/docs/:docId/audit/export', async (req: Request, res: Response) => {
         events: record.events,
         chain: Object.fromEntries(record.chain),
         verdicts,
-        summary: { events: record.events.length, intact, broken, notChained: record.events.length - intact - broken },
+        summary: {
+          events: record.events.length,
+          intact,
+          broken,
+          notChained: record.events.length - intact - broken,
+          truncated,
+          ...(truncated ? { totalEvents: totalRows } : {}),
+        },
         tenantChain,
         howToVerify: [
           'For each event, find chain[event.id]; its details.trailId equals event.id.',
@@ -6404,7 +6471,8 @@ function describeProposer(authorName: unknown, authorId: unknown): {
   proposedBy?: string;
   proposedByVerified?: boolean;
 } {
-  if (typeof authorId === 'string' && MACHINE_AUTHOR_IDS[authorId]) {
+  // Own keys only: `constructor` or `toString` is not a machine author.
+  if (typeof authorId === 'string' && Object.hasOwn(MACHINE_AUTHOR_IDS, authorId)) {
     return { proposedBy: MACHINE_AUTHOR_IDS[authorId], proposedByVerified: true };
   }
   const claimed = typeof authorName === 'string' ? authorName : typeof authorId === 'string' ? authorId : null;
@@ -6536,12 +6604,20 @@ async function describeTrackedChange(
 ): Promise<Record<string, unknown>> {
   const text = typeof c.text === 'string' && c.text.length > 0 ? c.text : null;
   const source = await resolveTurnRecordSource(executor, tenantId, c.sourceRecord);
+  /* A machine author's name is canonical (describeProposer), but the claim
+     that the machine proposed this change is the editing client's until a
+     turn record of this organization is named for it: only then is it
+     `proposedByVerified` (DP-43, 2026-09-29). Any caller could send
+     authorId 'ana'. What the turn record proves is that the named turn
+     exists here; the text's own hash is recorded beside it. */
+  const proposer = describeProposer(c.authorName, c.authorId);
+  if (proposer.proposedByVerified && source?.verified !== true) proposer.proposedByVerified = false;
   return {
     changeId: typeof c.changeId === 'string' ? c.changeId : String(c.changeId ?? ''),
     changeType: decisionChangeType(c.changeType),
     text,
     textSha256: text ? textSha256(text) : null,
-    ...describeProposer(c.authorName, c.authorId),
+    ...proposer,
     proposedAt: typeof c.at === 'string' ? c.at : null,
     ...(source ? { source } : {}),
   };
