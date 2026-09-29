@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T21:30:50.825Z",
+  "generatedAt": "2026-09-29T21:59:03.443Z",
   "git": {
-    "sha": "dccbf51660ab159ae16f6cc013e351566c0e34a8",
+    "sha": "8c7f9a699c3532e85140f1757746ed679e5c4826",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1102768
+        "bytes": 1103661
       },
       {
         "file": "shared/schema.ts",
@@ -2077,7 +2077,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 132099
+        "bytes": 132309
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2159,7 +2159,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21361
+        "lines": 21359
       },
       {
         "file": "shared/schema.ts",
@@ -2406,12 +2406,12 @@
         "lines": 1931
       },
       {
-        "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
-        "lines": 1927
+        "file": "server/services/ana/evidence-literature-tool-defs.ts",
+        "lines": 1929
       },
       {
-        "file": "server/services/ana/evidence-literature-tool-defs.ts",
-        "lines": 1924
+        "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
+        "lines": 1927
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
