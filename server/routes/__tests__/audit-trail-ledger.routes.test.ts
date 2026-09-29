@@ -115,6 +115,12 @@ beforeAll(async () => {
   await pglite.exec(AUDIT_LOGS_PGLITE_DDL);
   await pglite.exec(fs.readFileSync(MIGRATION, 'utf8'));
   await pglite.exec(FIXTURE);
+  // The ledger resolves actor names through public.actor_name (D3 2026-09-29,
+  // migrations/20260929_actor_names.sql), applied from the real file; it reads
+  // organization_users, so a minimal one stands in. No enforcement is set here,
+  // so it names every account, as the users join it replaced did.
+  await pglite.exec('CREATE TABLE IF NOT EXISTS organization_users (user_id integer, organization_id integer);');
+  await pglite.exec(fs.readFileSync(path.join(process.cwd(), 'migrations/20260929_actor_names.sql'), 'utf8'));
 });
 afterAll(async () => {
   await pglite.close();

@@ -1,7 +1,17 @@
 /**
- * promote_artifact flips a concept2cure artifact to 'approved' under an explicit
- * human approval (requireHumanApproval). It is not the approval act, so it
- * records no approved version — and when the result is not filable it says so.
+ * promote_artifact creates the governed document from a concept2cure artifact
+ * under an explicit human confirmation (requireHumanApproval). It is not the
+ * approval act: it records no approved version, and since 2026-09-29 it does
+ * not change the artifact's status either — and when the result is not
+ * filable it says so.
+ *
+ * 2026-09-29 (D5): it flipped the artifact to 'approved' and wrote a
+ * 'signature_apply' audit event with no signature anywhere. The approval is
+ * now an electronic signature on the status route
+ * (server/services/artifact-signed-act.ts), so a promotion leaves the status
+ * where it was and records itself as 'data_modify' / 'artifact_promoted'. The
+ * cases below that expected status 'approved' after a promotion expect the
+ * status unchanged.
  *
  * 2026-09-23 (W5/D7, final pass): product decision — only the governed
  * approval act (the status route's review → approved and authoring-actions
@@ -26,9 +36,8 @@ const handlers = vi.hoisted(() => new Map<string, any>());
 vi.mock('../../action-registry', () => ({
   registerActionHandler: (h: any) => handlers.set(h.actionType, h),
 }));
-vi.mock('../../../auditService', () => ({
-  default: { logAction: vi.fn(async () => undefined) },
-}));
+const audit = vi.hoisted(() => ({ logAction: vi.fn() }));
+vi.mock('../../../auditService', () => ({ default: audit }));
 vi.mock('../../../contradiction-engine-service', () => ({
   contradictionEngineService: {
     checkPromotionBlocked: vi.fn(async () => ({ blocked: false, blockingFindings: [], warningFindings: [] })),
@@ -130,17 +139,21 @@ const expectTruthfulRemedy = (warnings: string[]) => {
   for (const f of FALSE_REMEDIES) expect(text).not.toContain(f);
 };
 const promote = (role?: string) => handlers.get('promote_artifact').execute(request(), ctx(role));
+beforeEach(() => {
+  audit.logAction.mockReset();
+  audit.logAction.mockResolvedValue({ persisted: true, chained: true });
+});
 
 describe('promote_artifact records no approved version', () => {
   it.each(['approver', 'editor', 'regulatory', 'super_admin'])(
-    'a %s promoting from review: status approved, no approved version, not filable, and the warning says so',
+    'a %s promoting from review: status unchanged, no approved version, not filable, and the warning says so',
     async role => {
       const out = await promote(role);
       expect(out.success).toBe(true);
       const r = await row();
-      expect(r.status).toBe('approved');
+      expect(r.status, 'a promotion approved the artifact with no signature').toBe('review');
       expect(r.approved_version_id).toBeNull();
-      expect(filable(r)).toMatchObject({ filable: false, reason: 'no-approved-version' });
+      expect(filable(r)).toMatchObject({ filable: false, reason: 'not-approved' });
       expectTruthfulRemedy(out.warnings);
     },
     30_000
@@ -151,8 +164,9 @@ describe('promote_artifact records no approved version', () => {
     const out = await promote();
     expect(out.success).toBe(true);
     const r = await row();
+    expect(r.status).toBe('draft');
     expect(r.approved_version_id).toBeNull();
-    expect(filable(r)).toMatchObject({ filable: false, reason: 'no-approved-version' });
+    expect(filable(r)).toMatchObject({ filable: false, reason: 'not-approved' });
     expectTruthfulRemedy(out.warnings);
   }, 30_000);
 
@@ -185,5 +199,24 @@ describe('promote_artifact records no approved version', () => {
     const r = await row();
     expect(r.status).toBe('review');
     expect(r.approved_version_id).toBeNull();
+  }, 30_000);
+});
+
+describe('what a promotion records', () => {
+  it('its audit entry is a promotion, not a signature: no signature was applied', async () => {
+    await promote();
+
+    expect(audit.logAction).toHaveBeenCalledTimes(1);
+    const [entry] = audit.logAction.mock.calls[0] as [Record<string, any>];
+    expect(entry.action, 'a signature recorded that no one applied').not.toBe('signature_apply');
+    expect(entry).toMatchObject({ action: 'data_modify', details: { event: 'artifact_promoted', reason: expect.any(String) } });
+  }, 30_000);
+
+  it('an audit entry that could not be written is said, not swallowed', async () => {
+    audit.logAction.mockResolvedValue({ persisted: false, chained: false });
+    const out = await promote();
+
+    expect(out.success).toBe(true);
+    expect(out.warnings.join(' ')).toMatch(/audit entry for this promotion could not be written/);
   }, 30_000);
 });

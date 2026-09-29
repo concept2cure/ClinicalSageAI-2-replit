@@ -1528,6 +1528,24 @@ jobs:
       - name: Deploy migration succeeds on the provisioned database
         run: node scripts/db/deploy-migrate.mjs
 
+      - name: RLS coverage after the FIRST deploy (a new database is isolated before any re-run)
+        # The coverage step below runs after the idempotency re-run, so a gap the
+        # first deploy leaves and the second closes is invisible to it. That is
+        # how regulatory_harmonization.export_job_audit_log stayed unscoped on
+        # every blank database's first deploy until 2026-09-29, when the child
+        # scope moved into the isolation tail
+        # (docs/evidence/D3/2026-09-29-child-scope-first-deploy/). A first
+        # deploy is the one a new customer's database gets.
+        run: |
+          set -euo pipefail
+          UNPROTECTED=$(psql "$DATABASE_URL" -tA -f scripts/db/rls-coverage-check.sql)
+          if [[ -n "$UNPROTECTED" ]]; then
+            echo "::error::unprotected table(s) after the FIRST deploy-migrate (closed only by a re-run):"
+            echo "$UNPROTECTED"
+            exit 1
+          fi
+          echo "RLS coverage OK after the first deploy."
+
       - name: Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it)
         # Runs the same second deploy-migrate as before, between two snapshots
         # of every constraint and index. A replay that drops and re-adds a
