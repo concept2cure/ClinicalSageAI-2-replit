@@ -1,0 +1,59 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P1: an Undo after the decision does not turn the cut off: Undo later reverses exactly what came after it 249ms
+   → decisionFloorAllows is not a function
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P2: a decision taken with nothing to undo still lets Redo re-apply the reviewer's later typing 19ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P3 (guard): with a cut between two decisions, Undo stops at the second 215ms
+   → decisionFloorAllows is not a function
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P4 (guard): with tracking off through three cuts, Undo reverses exactly the typing after the decision 221ms
+   → decisionFloorAllows is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P1: an Undo after the decision does not turn the cut off: Undo later reverses exactly what came after it
+TypeError: decisionFloorAllows is not a function
+ ❯ undoUntilRefused client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx:82:45
+     80|   while (undone <= 120) {
+     81|     const before = editor.state.doc;
+     82|     const foretold = editor.can().undo() && decisionFloorAllows(editor…
+       |                                             ^
+     83|     editor.commands.undo();
+     84|     const changed = !editor.state.doc.eq(before);
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx:104:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P3 (guard): with a cut between two decisions, Undo stops at the second
+TypeError: decisionFloorAllows is not a function
+ ❯ undoUntilRefused client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx:82:45
+     80|   while (undone <= 120) {
+     81|     const before = editor.state.doc;
+     82|     const foretold = editor.can().undo() && decisionFloorAllows(editor…
+       |                                             ^
+     83|     editor.commands.undo();
+     84|     const changed = !editor.state.doc.eq(before);
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx:143:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P4 (guard): with tracking off through three cuts, Undo reverses exactly the typing after the decision
+TypeError: decisionFloorAllows is not a function
+ ❯ undoUntilRefused client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx:82:45
+     80|   while (undone <= 120) {
+     81|     const before = editor.state.doc;
+     82|     const foretold = editor.can().undo() && decisionFloorAllows(editor…
+       |                                             ^
+     83|     editor.commands.undo();
+     84|     const changed = !editor.state.doc.eq(before);
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx:155:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  17:48:32
+   Duration  1.66s (transform 136ms, setup 151ms, import 127ms, tests 708ms, environment 507ms)
+

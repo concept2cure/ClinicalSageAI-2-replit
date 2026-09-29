@@ -43,7 +43,9 @@
  *   - Formatting-only changes (bold, heading level) are not tracked.
  *   - Undo/redo and remote collaboration transactions pass through untouched:
  *     an undo must restore the previous state, not generate counter-suggestions,
- *     and a collaborator's edits arrive already marked by their editor.
+ *     and a collaborator's edits arrive already marked by their editor. Undo
+ *     and Redo do stop at a recorded accept or reject (see
+ *     markRecordedDecision).
  *   - The markdown subset is a SUBSET (see MARKDOWN SUBSET below): no nested
  *     lists, no code fences, no images (the schema has no image node), no
  *     underscore emphasis, no inline links. Unsupported syntax survives
@@ -51,8 +53,9 @@
  */
 
 import { Extension, Mark } from '@tiptap/core';
+import { closeHistory, redoDepth, undoDepth } from '@tiptap/pm/history';
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
-import type { Transaction } from '@tiptap/pm/state';
+import type { EditorState, Transaction } from '@tiptap/pm/state';
 import { ReplaceStep, Transform } from '@tiptap/pm/transform';
 import { Fragment, Slice } from '@tiptap/pm/model';
 import type { Node as PMNode, Mark as PMMark, Schema } from '@tiptap/pm/model';
@@ -593,7 +596,137 @@ export interface AcceptedInsertion {
   text: string;
 }
 
-const trackKey = new PluginKey('c2cTrackChanges');
+/** The last recorded decision as an undo and a redo floor. */
+interface DecisionFloor {
+  /** Undo events from before the decision that history held before the last
+   *  transaction. `undoFloorAt` takes off any that transaction cut. */
+  undo: number;
+  /** Redo events from before the decision, until the redo stack empties. */
+  redo: number;
+  /** Undo depth before the last transaction. */
+  seen: number;
+  /** Whether the last transaction was an Undo. */
+  undid: boolean;
+}
+const NO_FLOOR: DecisionFloor = { undo: 0, redo: 0, seen: 0, undid: false };
+
+const trackKey = new PluginKey<DecisionFloor>('c2cTrackChanges');
+
+/* ── A recorded decision is an undo and redo floor ────────────── */
+
+/* Carried by accept/reject transactions only: the ones whose decision the host
+   records as they run. An AnA insert records nothing, so it sets no floor. */
+const DECISION_META = 'c2c-suggestion-decision';
+
+/**
+ * Mark `tr` as a recorded decision.
+ *
+ * Kept out of history, and more: the decision is posted to the audit trail at
+ * once, so nothing before it may be undone, or redone, either. The reviewer's
+ * own typing is the entry ⌘Z finds after they accept it, and the tracking
+ * plugin lets an undo through untracked, so Undo removed an accepted insertion
+ * of their own and brought back, unmarked, a deletion they had accepted, while
+ * the record kept "accept" (periodic review 2026-09-28, editor family, P11-B-4
+ * remaining gap (e)). Closing the history group keeps typing after the
+ * decision out of the entry before it, so that typing stays undoable on its
+ * own.
+ */
+function markRecordedDecision(tr: Transaction): void {
+  tr.setMeta(SUGGESTION_ACTION_META, true);
+  tr.setMeta('addToHistory', false);
+  tr.setMeta(DECISION_META, true);
+  closeHistory(tr);
+}
+
+/** Whether `tr` is an Undo or a Redo, from prosemirror-history's own meta. */
+function historyStepOf(tr: Transaction): 'undo' | 'redo' | null {
+  const history = tr.getMeta('history$') as { redo?: boolean } | undefined;
+  if (!history) return null;
+  return history.redo ? 'redo' : 'undo';
+}
+
+/**
+ * The undo floor as it stands in `state`. `floor` is the plugin state held
+ * with `state`, so `seen` and `undid` describe the transaction that made it.
+ *
+ * prosemirror-history keeps 100 undo events (its default depth) plus an
+ * overflow of 20, and on the next new event it cuts the oldest 21. A floor
+ * kept as the undo depth at the decision went on counting events that were
+ * gone, so it sat above the decision: in a long session, Undo of anything
+ * typed after an accept did nothing at all (second adversarial review of gap
+ * (e)). An Undo lowers the depth by exactly one and cuts nothing. Any other
+ * transaction adds at most one event, and a cut takes at least 21. So a depth
+ * lower than `seen` after anything but an Undo is a cut of `seen + 1 - depth`
+ * events, all from the bottom of the stack, where the events from before the
+ * decision are. The floor drops by as many, and stays at 0 once none of them
+ * is left.
+ */
+function undoFloorAt(floor: DecisionFloor, state: EditorState): number {
+  const depth = undoDepth(state);
+  if (floor.undo === 0 || floor.undid || depth >= floor.seen) return floor.undo;
+  return Math.max(0, floor.undo - (floor.seen + 1 - depth));
+}
+
+/**
+ * Depths are read from the old state: in the new one the history plugin may
+ * not have applied yet. So apply takes in a cut one transaction late, and
+ * decisionFloorAllows, reading the floor through the same `undoFloorAt`,
+ * takes it in at once.
+ *
+ * The redo floor is needed because a decision stays out of history, so
+ * prosemirror-history keeps the redo stack across it. A step undone before the
+ * decision could be redone after it: delete a pending insertion, undo the
+ * delete, accept the insertion, and Redo deleted the accepted text again
+ * (adversarial review of gap (e)). The floor lapses once the redo stack is
+ * empty. A new edit empties it, and the undo floor keeps anything from before
+ * the decision out of it after that. Noticing the empty stack one transaction
+ * late is still in time, because only an Undo refills it, and that Undo is a
+ * transaction of its own.
+ *
+ * The redo floor needs no adjustment for a cut. History cuts a stack only as it
+ * adds to it, and only an Undo adds to the redo stack. Until a new edit empties
+ * that stack, neither depth has moved since the decision, so every Undo is
+ * refused at the undo floor and nothing is added.
+ */
+const decisionFloor = {
+  init: (): DecisionFloor => NO_FLOOR,
+  apply: (tr: Transaction, floor: DecisionFloor, oldState: EditorState): DecisionFloor => {
+    const seen = undoDepth(oldState);
+    const undid = historyStepOf(tr) === 'undo';
+    if (tr.getMeta(DECISION_META)) return { undo: seen, redo: redoDepth(oldState), seen, undid };
+    const redo = floor.redo > 0 && redoDepth(oldState) === 0 ? 0 : floor.redo;
+    return { undo: undoFloorAt(floor, oldState), redo, seen, undid };
+  },
+};
+
+/**
+ * Whether the last recorded decision lets an Undo, or a Redo, through in
+ * `state`. False only when history holds one and it would reach past the
+ * floor. So it is true when there is nothing to undo or redo, and under live
+ * co-editing, where prosemirror-history holds nothing.
+ *
+ * filterTransaction asks this for every Undo and Redo. `can().undo()` and
+ * `can().redo()` do not run filterTransaction, so at a floor they stay true
+ * and a press does nothing. An Undo or Redo is applied exactly when both are
+ * true.
+ */
+export function decisionFloorAllows(state: EditorState, step: 'undo' | 'redo'): boolean {
+  const floor = trackKey.getState(state) ?? NO_FLOOR;
+  const depth = step === 'redo' ? redoDepth(state) : undoDepth(state);
+  return depth === 0 || depth > (step === 'redo' ? floor.redo : undoFloorAt(floor, state));
+}
+
+/**
+ * Refuse an undo or a redo that would reach past the last recorded decision.
+ *
+ * Yjs undo under live co-editing does not travel as `history$`, so this does
+ * not see it. Co-editing is off; before it is switched on, a decision must also
+ * clear the Yjs undo stack.
+ */
+function historyStepPassesFloor(tr: Transaction, state: EditorState): boolean {
+  const step = historyStepOf(tr);
+  return step === null || decisionFloorAllows(state, step);
+}
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -850,15 +983,15 @@ export const TrackChanges = Extension.create<
             tr.delete(range.from, range.to);
             pruneEmptiedContainers(tr, [range.from]);
           }
-          tr.setMeta(SUGGESTION_ACTION_META, true);
           /* Not undoable. The decision was reported above and the host records
              it at once, so ⌘Z restoring the suggestion left the recorded
              "accept" standing over a pending redline, on a canvas back at its
              saved baseline that no unsaved-work guard would flag. Both undo
              engines (prosemirror-history, and Yjs under live co-editing) honour
-             this flag. Rejecting is how an accept is reversed, and it is
-             recorded too. Periodic review 2026-09-28, editor family, P11-B-4. */
-          tr.setMeta('addToHistory', false);
+             the addToHistory flag. Rejecting is how an accept is reversed, and
+             it is recorded too. Periodic review 2026-09-28, editor family,
+             P11-B-4; the undo and redo floor is its remaining gap (e). */
+          markRecordedDecision(tr);
           if (dispatch) dispatch(tr);
           return true;
         },
@@ -882,9 +1015,8 @@ export const TrackChanges = Extension.create<
             }
           }
           pruneEmptiedContainers(tr, removedAt);
-          tr.setMeta(SUGGESTION_ACTION_META, true);
           // Every decision here was reported too — see resolveSuggestion.
-          tr.setMeta('addToHistory', false);
+          markRecordedDecision(tr);
           if (dispatch) dispatch(tr);
           return true;
         },
@@ -947,8 +1079,10 @@ export const TrackChanges = Extension.create<
     let deleteDir: 'back' | 'fwd' | null = null;
 
     return [
-      new Plugin({
+      new Plugin<DecisionFloor>({
         key: trackKey,
+        state: decisionFloor,
+        filterTransaction: historyStepPassesFloor,
         props: {
           handleKeyDown(_view, event) {
             if (event.key === 'Backspace') deleteDir = 'back';
