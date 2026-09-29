@@ -26,6 +26,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { estimateFWER, fixedSequenceReject, graphicalReject, hochbergReject, holmReject } from '../../stats/multiplicity';
+import { hashInputs } from '../../stats/computation-provenance';
 import type { StudyDesign } from '../study-design-types';
 import {
   FWER_SEED, FWER_SIMULATIONS, FWER_TOLERANCE_SE, MULTIPLICITY_CHECK_BASIS, checkMultiplicity, fwerVerdict, weightedHolmGraph,
@@ -129,10 +130,32 @@ describe('checkMultiplicity — the engine\'s rates, from the recorded allocatio
     expect(c.procedure!.fwer).toBe(engineRate(rule));
   });
 
-  it('each rate names the rule that produced it (the engine\'s provenance alone cannot)', () => {
+  it('no two rules share a provenance: textbook Holm, Hochberg and fixed sequence, and recorded Hochberg at two levels', () => {
+    const textbook = (['holm', 'hochberg', 'fixed_sequence'] as const).map((m) => {
+      const d = design(m);
+      delete d.statisticalPlan.multiplicity!.alphaAllocation;
+      return checkMultiplicity(d).procedure!;
+    });
+    expect(textbook.map((p) => p.simulated)).toEqual(['textbook_split', 'textbook_split', 'textbook_split']);
+    expect(new Set(textbook.map((p) => p.provenance.inputsSha256)).size).toBe(3);
+    const low = checkMultiplicity(design('hochberg', [0.01, 0.01, 0.01])).procedure!;
+    const full = checkMultiplicity(design('hochberg')).procedure!;
+    expect(low.level).not.toBe(full.level);
+    expect(low.provenance.inputsSha256).not.toBe(full.provenance.inputsSha256);
+  });
+
+  it('each rate names the rule that produced it, and the engine hashes that rule into its provenance', () => {
     const c = checkMultiplicity(design());
-    expect(c.procedure!.provenance).toEqual(c.unadjusted!.provenance);
     expect(c.procedure!.rule).not.toBe(c.unadjusted!.rule);
+    expect(c.procedure!.provenance.inputsSha256).not.toBe(c.unadjusted!.provenance.inputsSha256);
+    for (const r of [c.procedure!, c.unadjusted!]) {
+      expect(r.provenance.inputsSha256).toBe(hashInputs({ m: 3, alpha: 0.05, nSim: r.simulations, seed: r.provenance.seed, rule: r.simulatedRule }));
+    }
+    // Two recorded allocations of the same method are two rules: the weights are in the identifier.
+    const partial = checkMultiplicity(design('holm', [0.01, 0.01, 0.01]));
+    expect(partial.procedure!.rule).toBe(c.procedure!.rule);
+    expect(partial.procedure!.simulatedRule).not.toBe(c.procedure!.simulatedRule);
+    expect(partial.procedure!.provenance.inputsSha256).not.toBe(c.procedure!.provenance.inputsSha256);
   });
 
   it('is deterministic', () => {
