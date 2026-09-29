@@ -189,6 +189,21 @@ export function readShellProject(): ShellProject | null {
   }
 }
 
+const PROGRAM_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The open project's `regulatory_programs` id, or null when no project is open
+ * or the open one is not a project (a legacy numeric workspace id).
+ *
+ * A governed record is created in this project and nowhere else (PF-07,
+ * founder decision 2026-09-26: every governed record belongs to a project), so
+ * every create path asks here — and with null, does not create.
+ */
+export function shellProgramId(project: ShellProject | null = readShellProject()): string | null {
+  const id = project?.id;
+  return typeof id === 'string' && PROGRAM_UUID.test(id) ? id : null;
+}
+
 /**
  * How to NAME the open program to the assistant, or null when none is open.
  *

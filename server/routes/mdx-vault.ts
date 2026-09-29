@@ -124,8 +124,10 @@ router.get('/vault', async (req: Request, res: Response) => {
 
      EXISTS rather than a JOIN: an artifact must not be duplicated or dropped
      by the bridge, and the org predicate is repeated on `projects` so a
-     mis-anchored row (the anchor is deliberately FK-free — see the migration)
-     can never pull another tenant's project into the predicate. */
+     mis-anchored row can never pull another tenant's project into the
+     predicate. (The anchor is held to the project's organization by a key since
+     migrations/20260926b_program_same_org_keys.sql, but NOT VALID: a row written
+     before it may still name another organization's program.) */
   /* a.organization_id lives in the SQL literal below (not this array) so the
      tenant-isolation CI gate can verify the scope statically. */
   const filters: string[] = [`a.status != 'archived'`];

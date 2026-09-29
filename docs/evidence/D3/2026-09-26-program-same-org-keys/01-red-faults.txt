@@ -1,0 +1,38 @@
+# PF-04 fault injection: tests/schema-contract/program-same-org-keys.pglite.test.ts against seven faults, one at a time, each restored before the next.
+# With the file absent (the state before this change), the suite cannot load: that is the red run.
+# Re-run after the review finding that c2c_documents' key must be NO ACTION like its older key (fault 'c2c-set-null').
+
+## fault: no-file
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20260926b_program_same_org_keys.sql'
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20260926b_program_same_org_keys.sql' }
+      Tests  27 skipped (27)
+## fault: no-action
+ × tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay
+ × tests/schema-contract/program-same-org-keys.pglite.test.ts > a purge-shaped delete of an organization’s programs > in the operator’s order — clear what the pre-flight lists, delete c2c_documents, then the programs — each own record keeps its organi
+AssertionError: expected { convalidated: false, …(4) } to match object { convalidated: false, …(2) }
+AssertionError: expected '23503' to be null
+      Tests  2 failed | 25 passed (27)
+## fault: no-guard
+Serialized Error: { length: 524, severity: 'ERROR', code: '42710', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'SQL statement "ALTER TABLE public.authoring_documents\n      ADD CONSTRAI
+      Tests  27 skipped (27)
+## fault: no-check
+ × tests/schema-contract/program-same-org-keys.pglite.test.ts > the rest of the contract > a GLOBAL_PUBLIC source (no organization) carries no project
+AssertionError: expected null to be '23514' // Object.is equality
+      Tests  1 failed | 26 passed (27)
+## fault: after-sweep
+ × tests/schema-contract/program-same-org-keys.pglite.test.ts > 20260926b on the applier > runs after every file that creates what it keys, and before the tenant sweep
+AssertionError: expected 315 to be less than 314
+      Tests  1 failed | 26 passed (27)
+## fault: c2c-set-null
+ × tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay
+AssertionError: expected { convalidated: false, …(4) } to match object { convalidated: false, …(2) }
+      Tests  1 failed | 26 passed (27)
+## fault: old-comment
+ × tests/schema-contract/program-same-org-keys.pglite.test.ts > 20260926b on the applier > the creators’ replayed comments name the key, not "no FK" (amended in place, Rule 1)
+AssertionError: projects: expected 'Anchor to regulatory_programs.id (uui…' to contain 'projects_regulatory_program_same_org_…'
+      Tests  1 failed | 26 passed (27)
+
+## fault: study-design refusal mapping removed (.catch(refuseVanishedProgram)), persist-program-anchor.pglite.test.ts
+ × server/services/study-design/__tests__/persist-program-anchor.pglite.test.ts > persistStudyDesignTx — a design belongs to one project of its organization > a project deleted between the check and the write is the same refusal, not a server fault (PF-04)
+AssertionError: expected error: insert or update on table "cdisc_p… { …(18) } to be an instance of StudyDesignPersistRefusal
+      Tests  1 failed | 5 passed (6)

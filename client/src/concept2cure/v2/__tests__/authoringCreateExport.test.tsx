@@ -23,13 +23,20 @@ vi.mock('../C2CForm', () => ({
 }));
 
 import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
+import { startNewDocument } from '../newDocumentAction';
 
 function ok(payload: unknown, status = 200) {
   return { ok: status < 400, status, json: async () => payload } as Response;
 }
 
-afterEach(() => cleanup());
+const PROJECT = '11111111-1111-4111-8111-111111111111';
+afterEach(() => {
+  cleanup();
+  delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+});
 beforeEach(() => {
+  // A document is created in the open project (PF-07).
+  (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROJECT, title: 'BX-204 IND' };
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
     if (method === 'GET' && url === '/api/authoring/templates') return ok({ success: true, templates: [{ id: 't1', name: 'CTD Module 2 shell' }] });
@@ -45,6 +52,44 @@ beforeEach(() => {
 });
 
 const base = { docTitle: 'Nonclinical Overview', module: 'M2', fireToast: vi.fn(), onDocCreated: vi.fn(), onSectionCreated: vi.fn() };
+
+describe('AuthoringCreateExport — a document belongs to a project (PF-07)', () => {
+  it('with no project open, New document is disabled, says why, and nothing is posted', async () => {
+    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+    render(<AuthoringCreateExport {...base} docId={null} />);
+    const button = screen.getByRole('button', { name: /New document/ }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(screen.getByText(/Open a project first/)).toBeTruthy();
+    expect(apiRequest.mock.calls.some((c) => c[0] === 'POST' && c[1] === '/api/authoring/docs')).toBe(false);
+  });
+
+  it('the empty states’ New document (the event path) does not open a form that can only be refused', async () => {
+    // The document tree's and the canvas's empty states raise the event rather
+    // than click the button; the same rule holds there.
+    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+    const fireToast = vi.fn();
+    render(<AuthoringCreateExport {...base} fireToast={fireToast} docId={null} />);
+    startNewDocument();
+    await waitFor(() => expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Open a project first/), 'error'));
+    expect(screen.queryByTestId('form-submit')).toBeNull();
+  });
+
+  it('the event path opens the form when a project is open', async () => {
+    render(<AuthoringCreateExport {...base} docId={null} />);
+    startNewDocument();
+    expect(await screen.findByTestId('form-submit')).toBeTruthy();
+  });
+
+  it('creates the document in the open project', async () => {
+    render(<AuthoringCreateExport {...base} docId={null} />);
+    fireEvent.click(screen.getByRole('button', { name: /New document/ }));
+    fireEvent.click(await screen.findByTestId('form-submit'));
+    await waitFor(() => {
+      const call = apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/authoring/docs');
+      expect(call![2]).toMatchObject({ client_program_id: PROJECT });
+    });
+  });
+});
 
 describe('AuthoringCreateExport — create → publish', () => {
   it('creates a document via POST /docs and adopts the server row', async () => {
