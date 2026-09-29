@@ -121,7 +121,7 @@ router.get('/gateways/transmittals', async (req: Request, res: Response) => {
               t.ack_received_at, t.completed_at, t.metadata,
               u.name AS submitted_by_name
          FROM submission_transmittals t
-         LEFT JOIN users u ON u.id = t.submitted_by
+         LEFT JOIN LATERAL public.actor_name(t.submitted_by) u ON TRUE
         WHERE ${filters.join(' AND ')}
         ORDER BY t.submitted_at DESC
         LIMIT $${args.length}`,

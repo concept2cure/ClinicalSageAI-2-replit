@@ -2285,7 +2285,7 @@ export async function listArtifactVersions(
               u.name as created_by_name
        FROM concept2cure_artifact_versions v
        JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $2
-       LEFT JOIN users u ON u.id = v.created_by_id
+       LEFT JOIN LATERAL public.actor_name(v.created_by_id) u ON TRUE
        WHERE v.artifact_id = $1
        ORDER BY v.version DESC`,
       [params.artifactId, ctx.organizationId]
@@ -2557,10 +2557,10 @@ export async function compareVersions(
   try {
     const versions = await pool.query(
       `SELECT v.version, v.content, v.change_description, v.created_at,
-              u.name as author
+              COALESCE(u.name, 'user ' || v.created_by_id) as author
        FROM concept2cure_artifact_versions v
        JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4
-       LEFT JOIN users u ON u.id = v.created_by_id
+       LEFT JOIN LATERAL public.actor_name(v.created_by_id) u ON TRUE
        WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
        ORDER BY v.version`,
       [params.artifactId, params.versionA, params.versionB, ctx.organizationId]
@@ -2664,10 +2664,10 @@ export async function reviewVersionImpact(
     // 1. Load both versions
     const versions = await pool.query(
       `SELECT v.version, v.content, v.change_description, v.created_at,
-              u.name as author
+              COALESCE(u.name, 'user ' || v.created_by_id) as author
        FROM concept2cure_artifact_versions v
        JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4
-       LEFT JOIN users u ON u.id = v.created_by_id
+       LEFT JOIN LATERAL public.actor_name(v.created_by_id) u ON TRUE
        WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
        ORDER BY v.version`,
       [params.artifactId, params.versionA, params.versionB, ctx.organizationId]
