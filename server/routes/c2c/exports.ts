@@ -44,6 +44,7 @@ import {
 } from './shared';
 import { verifyProjectAccess } from './project-access';
 import { clientIpKey } from '../../utils/client-ip';
+import { resolveDocumentPath } from '../../utils/document-file-roots';
 
 const logger = createScopedLogger('concept2cure-exports');
 const router = Router();
@@ -436,16 +437,32 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
       return sendError(res, 400, 'Invalid filename');
     }
 
-    const { resolve, join } = await import('path');
+    // The tenant comes from the verified context, never from the request. The
+    // router sits behind requireOrganizationContext, so a miss here is a
+    // misconfigured chain; refuse rather than fall back to a shared directory.
+    let callerOrgId: number;
+    try {
+      callerOrgId = getOrganizationId(req);
+    } catch {
+      return sendError(res, 403, 'Tenant context required');
+    }
+
+    const { basename, join } = await import('path');
     const { access, stat } = await import('fs/promises');
     const { createReadStream } = await import('fs');
 
-    const docDir = resolve(process.cwd(), 'generated_documents');
-    const filePath = join(docDir, safe);
-
-    // Ensure the resolved path is within generated_documents (prevent traversal)
-    if (!filePath.startsWith(docDir)) {
-      return sendError(res, 400, 'Invalid path');
+    // IAM-07: a generated file lives under generated_documents/org-<id>/ (see
+    // services/tools documents.generate_docx) and the resolver, given the
+    // caller's organization, admits nothing outside that prefix. Another
+    // tenant's file — and a legacy flat file, which has no owner on disk — is
+    // therefore indistinguishable from a missing one. basename() is belt and
+    // braces: the character class above already forbids separators.
+    const filePath = resolveDocumentPath(
+      join('generated_documents', `org-${callerOrgId}`, basename(safe)),
+      { organizationId: callerOrgId }
+    );
+    if (!filePath) {
+      return sendError(res, 404, 'Document not found');
     }
 
     await access(filePath);

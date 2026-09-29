@@ -1,0 +1,274 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+[drafting] DB insert failed, using in-memory fallback: Failed query: insert into "drafting_tasks" ("id", "task_id", "project_id", "ectd_section", "document_title", "template", "status", "draft_content", "error_message", "created_by_id", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, $7, default, $8, default, default)
+params: task_1790424616175_3mqk6rfj0,prog-9,2.5,Clinical Overview,,COMPLETED,MODULE 2.2 - INTRODUCTION
+1. OVERVIEW
+This Common Technical Document (CTD) provides a comprehensive overview of Clinical Overview development program for the treatment of Primary Indication.
+2. DRUG SUBSTANCE AND DRUG PRODUCT
+2.1 Drug Substance
+Name: [DRUG_SUBSTANCE_NAME]
+Chemical Name: [CHEMICAL_NAME]
+Molecular Formula: [MOLECULAR_FORMULA]
+Molecular Weight: [MOLECULAR_WEIGHT]
+CAS Number: [CAS_NUMBER]
+2.2 Drug Product
+Dosage Form: [DOSAGE_FORM]
+Route of Administration: [ROUTE_OF_ADMINISTRATION]
+Strength(s): [STRENGTH]
+Container/Closure: [CONTAINER_CLOSURE]
+3. THERAPEUTIC INDICATION
+Clinical Overview is indicated for [INDICATION_DESCRIPTION].
+4. DEVELOPMENT RATIONALE
+4.1 Scientific Rationale
+[SCIENTIFIC_RATIONALE_DESCRIPTION]
+4.2 Clinical Rationale
+[CLINICAL_RATIONALE_DESCRIPTION]
+5. REGULATORY BACKGROUND
+5.1 Regulatory Status
+[REGULATORY_STATUS_DESCRIPTION]
+5.2 Regulatory Advice
+[REGULATORY_ADVICE_RECEIVED]
+6. RISK-BENEFIT ASSESSMENT
+6.1 Benefit Assessment
+[BENEFIT_ASSESSMENT]
+6.2 Risk Assessment
+[RISK_ASSESSMENT]
+6.3 Risk-Benefit Conclusion
+[RISK_BENEFIT_CONCLUSION]
+7. DOCUMENT ORGANIZATION
+This CTD is organized according to ICH M4 guidelines:
+• Module 1: Regional Administrative Information
+• Module 2: CTD Summaries
+• Module 3: Quality
+• Module 4: Nonclinical Study Reports
+• Module 5: Clinical Study Reports,1
+ × server/routes/__tests__/drafting-task-object-authz.test.ts > POST /api/v1/drafting/start_task: the program must be the organisation's own > records a task for a program the session's organisation owns (202), having read the program with the organisation as a predicate 110ms
+   → expected [] to have a length of 1 but got +0
+ × server/routes/__tests__/drafting-task-object-authz.test.ts > POST /api/v1/drafting/start_task: the program must be the organisation's own > refuses a program of another organisation (404) and writes nothing 16ms
+   → expected 202 to be 404 // Object.is equality
+ × server/routes/__tests__/drafting-task-object-authz.test.ts > POST /api/v1/drafting/start_task: the program must be the organisation's own > refuses a session with no organisation (401) before any read 8ms
+   → expected 202 to be 401 // Object.is equality
+ × server/routes/__tests__/drafting-task-object-authz.test.ts > POST /api/v1/drafting/start_task: the program must be the organisation's own > a task that could not be recorded is an error (503), never a success held in process memory 20ms
+   → expected 202 to be 503 // Object.is equality
+ × server/routes/__tests__/drafting-task-object-authz.test.ts > GET /api/v1/drafting/task_status/:task_id: the task is read within the organisation > returns the organisation's own task (200) 15ms
+   → expected {} to match object { id: 'task_1', …(3) }
+ × server/routes/__tests__/drafting-task-object-authz.test.ts > GET /api/v1/drafting/task_status/:task_id: the task is read within the organisation > is 404 for another organisation's task 6ms
+   → expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/drafting-task-object-authz.test.ts > GET /api/v1/drafting/task_status/:task_id: the task is read within the organisation > refuses a session with no organisation (401) 5ms
+   → expected 200 to be 401 // Object.is equality
+ × server/routes/__tests__/drafting-task-object-authz.test.ts > GET /api/v1/drafting/task_status/:task_id: the task is read within the organisation > a read that failed is an error (503), not "not found" and not a memory copy 5ms
+   → expected 404 to be 503 // Object.is equality
+ × server/src/routes/__tests__/stability-results-object-authz.test.ts > PATCH /results/:resultId > updates the tenant's own result in one transaction: read with the tenant predicate, write, audit with the previous value, COMMIT 31ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/src/routes/__tests__/stability-results-object-authz.test.ts > PATCH /results/:resultId > is 404 for a result outside the tenant, and writes nothing 9ms
+   → expected 200 to be 404 // Object.is equality
+ × server/src/routes/__tests__/stability-results-object-authz.test.ts > PATCH /results/:resultId > is 401 without a verified actor, before any connection is taken 4ms
+   → expected 200 to be 401 // Object.is equality
+ × server/src/routes/__tests__/stability-results-object-authz.test.ts > DELETE /results/:resultId > deletes the tenant's own result and records what was deleted, in one transaction 5ms
+   → expected 'delete from stab_results where result…' to match /tenant_id\s*=/
+ × server/src/routes/__tests__/stability-results-object-authz.test.ts > DELETE /results/:resultId > is 404 for a result outside the tenant, and deletes nothing 4ms
+   → expected 200 to be 404 // Object.is equality
+ × server/src/routes/__tests__/stability-results-object-authz.test.ts > DELETE /results/:resultId > is 401 without a verified actor 3ms
+   → expected 200 to be 401 // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/drafting-task-object-authz.test.ts > POST /api/v1/drafting/start_task: the program must be the organisation's own > records a task for a program the session's organisation owns (202), having read the program with the organisation as a predicate
+AssertionError: expected [] to have a length of 1 but got +0
+- Expected
++ Received
+- 1
++ 0
+ ❯ server/routes/__tests__/drafting-task-object-authz.test.ts:84:28
+     82|     expect(res.status).toBe(202);
+     83|     expect(res.body.task_id).toMatch(/^task_/);
+     84|     expect(programReads()).toHaveLength(1);
+       |                            ^
+     85|     expect(programReads()[0].sql).toMatch(/organization_id\s*=\s*\$2/);
+     86|     expect(String(programReads()[0].params[1])).toBe(String(OWNER_ORG)…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+ FAIL  server/routes/__tests__/drafting-task-object-authz.test.ts > POST /api/v1/drafting/start_task: the program must be the organisation's own > refuses a program of another organisation (404) and writes nothing
+AssertionError: expected 202 to be 404 // Object.is equality
+- Expected
++ Received
+- 404
++ 202
+ ❯ server/routes/__tests__/drafting-task-object-authz.test.ts:92:24
+     90|   it('refuses a program of another organisation (404) and writes nothi…
+     91|     const res = await request(app(OTHER_ORG)).post('/api/v1/drafting/s…
+     92|     expect(res.status).toBe(404);
+       |                        ^
+     93|     expect(taskInserts()).toHaveLength(0);
+     94|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+ FAIL  server/routes/__tests__/drafting-task-object-authz.test.ts > POST /api/v1/drafting/start_task: the program must be the organisation's own > refuses a session with no organisation (401) before any read
+AssertionError: expected 202 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 202
+ ❯ server/routes/__tests__/drafting-task-object-authz.test.ts:98:24
+     96|   it('refuses a session with no organisation (401) before any read', a…
+     97|     const res = await request(app(null)).post('/api/v1/drafting/start_…
+     98|     expect(res.status).toBe(401);
+       |                        ^
+     99|     expect(calls).toHaveLength(0);
+    100|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+ FAIL  server/routes/__tests__/drafting-task-object-authz.test.ts > POST /api/v1/drafting/start_task: the program must be the organisation's own > a task that could not be recorded is an error (503), never a success held in process memory
+AssertionError: expected 202 to be 503 // Object.is equality
+- Expected
++ Received
+- 503
++ 202
+ ❯ server/routes/__tests__/drafting-task-object-authz.test.ts:105:24
+    103|     failing.insert = true;
+    104|     const res = await request(app(OWNER_ORG)).post('/api/v1/drafting/s…
+    105|     expect(res.status).toBe(503);
+       |                        ^
+    106|     expect((global as any).draftingTasks).toBeUndefined();
+    107|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+ FAIL  server/routes/__tests__/drafting-task-object-authz.test.ts > GET /api/v1/drafting/task_status/:task_id: the task is read within the organisation > returns the organisation's own task (200)
+AssertionError: expected {} to match object { id: 'task_1', …(3) }
+- Expected
++ Received
+- {
+-   "draft_content": "body",
+-   "id": "task_1",
+-   "project_id": "prog-9",
+-   "status": "COMPLETED",
+- }
++ {}
+ ❯ server/routes/__tests__/drafting-task-object-authz.test.ts:114:22
+    112|     const res = await request(app(OWNER_ORG)).get('/api/v1/drafting/ta…
+    113|     expect(res.status).toBe(200);
+    114|     expect(res.body).toMatchObject({ id: 'task_1', project_id: 'prog-9…
+       |                      ^
+    115|     const read = calls.find(c => /from\s+"?drafting_tasks"?/i.test(c.s…
+    116|     expect(read?.sql).toMatch(/organization_id/);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+ FAIL  server/routes/__tests__/drafting-task-object-authz.test.ts > GET /api/v1/drafting/task_status/:task_id: the task is read within the organisation > is 404 for another organisation's task
+AssertionError: expected 200 to be 404 // Object.is equality
+- Expected
++ Received
+- 404
++ 200
+ ❯ server/routes/__tests__/drafting-task-object-authz.test.ts:122:24
+    120|   it('is 404 for another organisation\'s task', async () => {
+    121|     const res = await request(app(OTHER_ORG)).get('/api/v1/drafting/ta…
+    122|     expect(res.status).toBe(404);
+       |                        ^
+    123|   });
+    124|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+ FAIL  server/routes/__tests__/drafting-task-object-authz.test.ts > GET /api/v1/drafting/task_status/:task_id: the task is read within the organisation > refuses a session with no organisation (401)
+AssertionError: expected 200 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 200
+ ❯ server/routes/__tests__/drafting-task-object-authz.test.ts:127:24
+    125|   it('refuses a session with no organisation (401)', async () => {
+    126|     const res = await request(app(null)).get('/api/v1/drafting/task_st…
+    127|     expect(res.status).toBe(401);
+       |                        ^
+    128|     expect(calls).toHaveLength(0);
+    129|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+ FAIL  server/routes/__tests__/drafting-task-object-authz.test.ts > GET /api/v1/drafting/task_status/:task_id: the task is read within the organisation > a read that failed is an error (503), not "not found" and not a memory copy
+AssertionError: expected 404 to be 503 // Object.is equality
+- Expected
++ Received
+- 503
++ 404
+ ❯ server/routes/__tests__/drafting-task-object-authz.test.ts:134:24
+    132|     failing.select = true;
+    133|     const res = await request(app(OWNER_ORG)).get('/api/v1/drafting/ta…
+    134|     expect(res.status).toBe(503);
+       |                        ^
+    135|   });
+    136| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+ FAIL  server/src/routes/__tests__/stability-results-object-authz.test.ts > PATCH /results/:resultId > updates the tenant's own result in one transaction: read with the tenant predicate, write, audit with the previous value, COMMIT
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/src/routes/__tests__/stability-results-object-authz.test.ts:71:23
+     69|     expect(res.status).toBe(200);
+     70|     const read = state.calls.find(c => /^\s*select/i.test(c.sql) && /f…
+     71|     expect(read?.sql).toMatch(/tenant_id\s*=\s*\$2/);
+       |                       ^
+     72|     expect(String(read?.params[1])).toBe('7');
+     73|     expect(writes()).toHaveLength(1);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+ FAIL  server/src/routes/__tests__/stability-results-object-authz.test.ts > PATCH /results/:resultId > is 404 for a result outside the tenant, and writes nothing
+AssertionError: expected 200 to be 404 // Object.is equality
+- Expected
++ Received
+- 404
++ 200
+ ❯ server/src/routes/__tests__/stability-results-object-authz.test.ts:90:24
+     88|     state.owned = false;
+     89|     const res = await request(app()).patch('/api/stability/results/r-9…
+     90|     expect(res.status).toBe(404);
+       |                        ^
+     91|     expect(writes()).toHaveLength(0);
+     92|     expect(audits()).toHaveLength(0);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+ FAIL  server/src/routes/__tests__/stability-results-object-authz.test.ts > PATCH /results/:resultId > is 401 without a verified actor, before any connection is taken
+AssertionError: expected 200 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 200
+ ❯ server/src/routes/__tests__/stability-results-object-authz.test.ts:98:24
+     96|   it('is 401 without a verified actor, before any connection is taken'…
+     97|     const res = await request(app(null)).patch('/api/stability/results…
+     98|     expect(res.status).toBe(401);
+       |                        ^
+     99|     expect(connect).not.toHaveBeenCalled();
+    100|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+ FAIL  server/src/routes/__tests__/stability-results-object-authz.test.ts > DELETE /results/:resultId > deletes the tenant's own result and records what was deleted, in one transaction
+AssertionError: expected 'delete from stab_results where result…' to match /tenant_id\s*=/
+- Expected:
+/tenant_id\s*=/
++ Received:
+"delete from stab_results where result_id=$1"
+ ❯ server/src/routes/__tests__/stability-results-object-authz.test.ts:109:29
+    107|     expect(writes()).toHaveLength(1);
+    108|     expect(writes()[0].sql).toMatch(/^\s*delete from stab_results/i);
+    109|     expect(writes()[0].sql).toMatch(/tenant_id\s*=/);
+       |                             ^
+    110|     expect(audits()).toHaveLength(1);
+    111|     expect(audits()[0].params[2]).toBe('result_delete');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+ FAIL  server/src/routes/__tests__/stability-results-object-authz.test.ts > DELETE /results/:resultId > is 404 for a result outside the tenant, and deletes nothing
+AssertionError: expected 200 to be 404 // Object.is equality
+- Expected
++ Received
+- 404
++ 200
+ ❯ server/src/routes/__tests__/stability-results-object-authz.test.ts:121:24
+    119|     state.owned = false;
+    120|     const res = await request(app()).delete('/api/stability/results/r-…
+    121|     expect(res.status).toBe(404);
+       |                        ^
+    122|     expect(writes()).toHaveLength(0);
+    123|     expect(audits()).toHaveLength(0);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+ FAIL  server/src/routes/__tests__/stability-results-object-authz.test.ts > DELETE /results/:resultId > is 401 without a verified actor
+AssertionError: expected 200 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 200
+ ❯ server/src/routes/__tests__/stability-results-object-authz.test.ts:128:24
+    126|   it('is 401 without a verified actor', async () => {
+    127|     const res = await request(app(null)).delete('/api/stability/result…
+    128|     expect(res.status).toBe(401);
+       |                        ^
+    129|     expect(connect).not.toHaveBeenCalled();
+    130|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+ Test Files  2 failed (2)
+      Tests  14 failed (14)
+   Start at  12:10:12
+   Duration  5.50s (transform 2.32s, setup 252ms, import 7.99s, tests 250ms, environment 0ms)

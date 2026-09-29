@@ -64,6 +64,14 @@ export interface SuggestionAuthor {
   id: string;
   /** Display name as it should read in the redline. */
   name: string;
+  /**
+   * For AnA's drafts: the id of the retained turn record that produced the
+   * text (server/services/ana/turn-record.ts). It rides on the insertion mark
+   * as `data-source-record`, survives saves in the section HTML, and is sent
+   * with the reviewer's accept or reject so the decision record names the turn
+   * that proposed the words. The server verifies it; it is never trusted.
+   */
+  sourceRecord?: string;
 }
 
 /** Minute-bucket timestamp: one continuous typing run = one suggestion. */
@@ -94,6 +102,12 @@ const suggestionAttrs = {
     parseHTML: (el: HTMLElement) => el.getAttribute('data-at'),
     renderHTML: (attrs: Record<string, unknown>) =>
       attrs.at ? { 'data-at': String(attrs.at) } : {},
+  },
+  sourceRecord: {
+    default: null as string | null,
+    parseHTML: (el: HTMLElement) => el.getAttribute('data-source-record'),
+    renderHTML: (attrs: Record<string, unknown>) =>
+      attrs.sourceRecord ? { 'data-source-record': String(attrs.sourceRecord) } : {},
   },
 };
 
@@ -143,7 +157,28 @@ export interface SuggestionRange {
   authorId: string | null;
   authorName: string | null;
   at: string | null;
+  /** The AnA turn record the text came from, when the mark carries one. */
+  sourceRecord: string | null;
   text: string;
+}
+
+/**
+ * Whether a span extends the range before it: adjacent, same kind, same
+ * author — and, for AnA's drafts, the same turn. Two AnA drafts side by side
+ * are two proposals, from two turns, and are decided separately.
+ */
+function continuesRange(
+  prev: SuggestionRange,
+  pos: number,
+  kind: SuggestionRange['kind'],
+  attrs: Record<string, unknown>,
+): boolean {
+  return (
+    prev.to === pos &&
+    prev.kind === kind &&
+    prev.authorId === ((attrs.authorId as string | null) ?? null) &&
+    prev.sourceRecord === ((attrs.sourceRecord as string | null) ?? null)
+  );
 }
 
 /** Walk the doc and group adjacent same-kind, same-author suggestion spans. */
@@ -157,12 +192,7 @@ export function collectSuggestions(doc: PMNode): SuggestionRange[] {
     if (!mark) return;
     const kind = mark.type.name as 'insertion' | 'deletion';
     const prev = out[out.length - 1];
-    if (
-      prev &&
-      prev.to === pos &&
-      prev.kind === kind &&
-      prev.authorId === (mark.attrs.authorId ?? null)
-    ) {
+    if (prev && continuesRange(prev, pos, kind, mark.attrs)) {
       prev.to = pos + node.nodeSize;
       prev.text += node.text ?? '';
       return;
@@ -174,6 +204,7 @@ export function collectSuggestions(doc: PMNode): SuggestionRange[] {
       authorId: (mark.attrs.authorId as string | null) ?? null,
       authorName: (mark.attrs.authorName as string | null) ?? null,
       at: (mark.attrs.at as string | null) ?? null,
+      sourceRecord: (mark.attrs.sourceRecord as string | null) ?? null,
       text: node.text ?? '',
     });
   });
@@ -645,6 +676,54 @@ export function rememberAcceptedAuthor(
 }
 
 /**
+ * Keep only the accepted contributions the document being saved still carries.
+ *
+ * Both lists are appended on accept and cleared only by the save that reads
+ * them, where they decide the revision's origin ("AI draft accepted") and which
+ * clauses the lineage gate records as the machine's. Anything that took the
+ * text back out in between — deleting it, or an undo of the accept (periodic
+ * review 2026-09-28, editor family, P11-B-4) — left an entry naming a machine
+ * contributor for words the saved content does not hold, and the ledger wrote
+ * it permanently.
+ *
+ * An entry survives only when its text is present, unmarked, within one
+ * textblock of `doc`: text back under a pending insertion or deletion is a
+ * suggestion again, not accepted content. An author survives only while one of
+ * their texts does.
+ */
+export function settleAcceptedContributions(
+  store: Pick<TrackChangesStorage, 'acceptedAuthors' | 'acceptedInsertions'>,
+  doc: PMNode,
+): void {
+  const settled = settledTextblocks(doc);
+  store.acceptedInsertions = store.acceptedInsertions.filter((entry) =>
+    settled.some((block) => block.includes(entry.text)),
+  );
+  const present = new Set(store.acceptedInsertions.map((entry) => entry.authorId));
+  store.acceptedAuthors = store.acceptedAuthors.filter((author) => present.has(author.id));
+}
+
+/** Each textblock's text, with pending suggestions and inline nodes replaced by
+ *  a separator no accepted text contains, so a match cannot span them. An
+ *  accepted range never crosses a textblock (see collectSuggestions). */
+function settledTextblocks(doc: PMNode): string[] {
+  const out: string[] = [];
+  doc.descendants((node) => {
+    if (!node.isTextblock) return true;
+    let text = '';
+    node.forEach((child) => {
+      const pending = child.marks.some(
+        (m) => m.type.name === 'insertion' || m.type.name === 'deletion',
+      );
+      text += child.isText && !pending ? (child.text ?? '') : '\u0000';
+    });
+    out.push(text);
+    return false;
+  });
+  return out;
+}
+
+/**
  * A stable identifier for one tracked change, derived from its content.
  *
  * ── Why this is derived and not stored on the mark ───────────────────────────
@@ -701,6 +780,8 @@ export interface SuggestionDecision {
   authorId: string | null;
   authorName: string | null;
   at: string | null;
+  /** The AnA turn record the proposed text came from, when known. */
+  sourceRecord: string | null;
 }
 
 /** Build the decision record for one resolved range. */
@@ -716,6 +797,7 @@ export function decisionOf(
     authorId: range.authorId,
     authorName: range.authorName,
     at: range.at,
+    sourceRecord: range.sourceRecord,
   };
 }
 
@@ -803,6 +885,14 @@ export const TrackChanges = Extension.create<
             pruneEmptiedContainers(tr, [range.from]);
           }
           tr.setMeta(SUGGESTION_ACTION_META, true);
+          /* Not undoable. The decision was reported above and the host records
+             it at once, so ⌘Z restoring the suggestion left the recorded
+             "accept" standing over a pending redline, on a canvas back at its
+             saved baseline that no unsaved-work guard would flag. Both undo
+             engines (prosemirror-history, and Yjs under live co-editing) honour
+             this flag. Rejecting is how an accept is reversed, and it is
+             recorded too. Periodic review 2026-09-28, editor family, P11-B-4. */
+          tr.setMeta('addToHistory', false);
           if (dispatch) dispatch(tr);
           return true;
         },
@@ -827,6 +917,8 @@ export const TrackChanges = Extension.create<
           }
           pruneEmptiedContainers(tr, removedAt);
           tr.setMeta(SUGGESTION_ACTION_META, true);
+          // Every decision here was reported too — see resolveSuggestion.
+          tr.setMeta('addToHistory', false);
           if (dispatch) dispatch(tr);
           return true;
         },
@@ -840,6 +932,7 @@ export const TrackChanges = Extension.create<
             authorId: author.id,
             authorName: author.name,
             at: minuteBucket(),
+            sourceRecord: author.sourceRecord ?? null,
           });
           // AnA answers in markdown; a Module 3 answer IS a table. Convert the
           // subset we understand into real nodes, and fall back to flat
@@ -871,6 +964,11 @@ export const TrackChanges = Extension.create<
           }
           tr.replaceSelection(slice);
           tr.setMeta(SUGGESTION_ACTION_META, true);
+          /* Out of history as well, or it is the entry ⌘Z finds once the
+             decision on it is not: undo after accepting a fresh draft deleted
+             the accepted text and left the recorded "accept" behind. A draft
+             is withdrawn by rejecting it. */
+          tr.setMeta('addToHistory', false);
           if (dispatch) dispatch(tr);
           return true;
         },

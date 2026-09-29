@@ -15,7 +15,7 @@
  * interface, not on this module.
  */
 
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { csrReports, csrDetails } from 'shared/schema';
 import type { CorpusWriter, NormalizedStudyWriteResult } from './ingest-ctgov';
@@ -81,18 +81,27 @@ export class DrizzleCorpusWriter implements CorpusWriter {
       },
     };
 
-    // Look up an existing report by NCT id (when present) for idempotency.
+    // Look up this org's existing report by NCT id (when present) for
+    // idempotency. By NCT id alone, the lookup found another org's report of the
+    // same study wherever RLS was not enforcing, and the update below then moved
+    // it into this org and replaced its details (ledger L195). A study another
+    // org already holds now falls through to the insert, which the global
+    // uniqueness of nct_id / report_id refuses — the same outcome RLS gives, and
+    // ingest-ctgov counts it as an error.
     const existing = study.nctId
       ? await db
           .select({ id: csrReports.id })
           .from(csrReports)
-          .where(eq(csrReports.nctId, study.nctId))
+          .where(and(eq(csrReports.nctId, study.nctId), eq(csrReports.organizationId, this.organizationId)))
           .limit(1)
       : [];
 
     if (existing.length > 0) {
       const reportId = existing[0].id;
-      await db.update(csrReports).set(reportValues).where(eq(csrReports.id, reportId));
+      await db
+        .update(csrReports)
+        .set(reportValues)
+        .where(and(eq(csrReports.id, reportId), eq(csrReports.organizationId, this.organizationId)));
       // Refresh details: delete-then-insert keeps a single current detail row.
       await db.delete(csrDetails).where(eq(csrDetails.reportId, reportId));
       await db.insert(csrDetails).values({ ...detailValues, reportId });

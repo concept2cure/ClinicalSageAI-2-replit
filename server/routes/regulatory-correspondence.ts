@@ -400,6 +400,7 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
   });
 
   // Check for unresolved governed decisions
+  let governedDecisionCheckFailed = false;
   let governedDecisionWarning: {
     hasUnresolved: boolean;
     unresolvedCount: number;
@@ -409,7 +410,7 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
   try {
     const { hasUnresolvedGovernedDecisions } = await import('../services/governed-decision-repository.js');
     const unresolvedCheck = await hasUnresolvedGovernedDecisions(
-      Number(upd.rows[0].project_id),
+      String(upd.rows[0].project_id ?? ''),
       orgId
     );
     if (unresolvedCheck.hasUnresolved) {
@@ -428,7 +429,7 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
         await recordTransitionEvent({
           decisionId: 'correspondence-lifecycle-gate',
           organizationId: orgId,
-          projectId: Number(upd.rows[0].project_id),
+          projectRef: String(upd.rows[0].project_id ?? ''),
           fromState: 'unknown',
           toState: lifecycleState,
           action: 'correspondence_lifecycle_gate',
@@ -448,10 +449,17 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
       }
     }
   } catch {
-    // Non-blocking — governed decision check is advisory only
+    // Advisory, so the transition above stands. But a check that could not run
+    // must not read as one that found nothing, which is what an absent warning
+    // says (ledger L186).
+    governedDecisionCheckFailed = true;
   }
 
-  return res.json({ data: upd.rows[0], ...(governedDecisionWarning ? { governedDecisionWarning } : {}) });
+  return res.json({
+    data: upd.rows[0],
+    ...(governedDecisionWarning ? { governedDecisionWarning } : {}),
+    ...(governedDecisionCheckFailed ? { governedDecisionCheck: 'unavailable' } : {}),
+  });
 });
 
 router.post('/correspondence/intake', async (req, res) => {

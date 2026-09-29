@@ -1,0 +1,82 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd 13ms
+   → activity_reactions has no tenant_isolation_policy: expected false to be true // Object.is equality
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > chat_messages: each tenant sees its own row and not the other's 23ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_details: each tenant sees its own row and not the other's 17ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_sections: each tenant sees its own row and not the other's 14ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > rag_chunks: each tenant sees its own row and not the other's 12ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > complaints: each tenant sees its own row and not the other's 12ms
+ × tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's 10ms
+   → pdev_program_activities: tenant B can read tenant A's row: expected 1 to be +0 // Object.is equality
+ × tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's 10ms
+   → resolution_bundle_items: tenant B can read tenant A's row: expected 1 to be +0 // Object.is equality
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > leaves the three chained tables deny-all, deliberately and visibly 3ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > the policy is inert when enforcement is off, exactly like its siblings 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd
+AssertionError: activity_reactions has no tenant_isolation_policy: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/child-table-parent-scoped-rls.dbtest.ts:481:80
+    479|     // happen is a table that EXISTS and is left unprotected.
+    480|     for (const row of rows) {
+    481|       expect(row.policied, `${row.table_name} has no tenant_isolation_…
+       |                                                                                ^
+    482|       expect(row.relrowsecurity, `${row.table_name} has RLS disabled`)…
+    483|       // Without FORCE the table OWNER skips the policy entirely.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's
+AssertionError: pdev_program_activities: tenant B can read tenant A's row: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/db/child-table-parent-scoped-rls.dbtest.ts:521:90
+    519|
+    520|       // NEGATIVE half — the isolation this migration exists for.
+    521|       expect(await countFor(ORG_B, fkA), `${c.child}: tenant B can rea…
+       |                                                                                          ^
+    522|       expect(await countFor(ORG_A, fkB), `${c.child}: tenant A can rea…
+    523|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's
+AssertionError: resolution_bundle_items: tenant B can read tenant A's row: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/db/child-table-parent-scoped-rls.dbtest.ts:521:90
+    519|
+    520|       // NEGATIVE half — the isolation this migration exists for.
+    521|       expect(await countFor(ORG_B, fkA), `${c.child}: tenant B can rea…
+       |                                                                                          ^
+    522|       expect(await countFor(ORG_A, fkB), `${c.child}: tenant A can rea…
+    523|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+   Start at  19:56:33
+   Duration  1.09s (transform 114ms, setup 77ms, import 87ms, tests 627ms, environment 0ms)
+

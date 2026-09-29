@@ -1,0 +1,14 @@
+ × tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "Analyses followed the pre-specified SAP" as fact 23ms
+   → expected '# Statistical Methods (CSR §9.7, ICH …' not to contain 'Analyses followed the pre-specified S…'
+ × tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "analyzed on the ITT population" as fact 5ms
+   → expected '# Statistical Methods (CSR §9.7, ICH …' not to contain 'analyzed on the ITT population'
+ × tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "tipping-point sensitivity analyses" as fact 4ms
+   → expected '# Statistical Methods (CSR §9.7, ICH …' not to contain 'tipping-point sensitivity analyses'
+ × tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "tested within a pre-specified hierarchy" as fact 6ms
+   → expected '# Statistical Methods (CSR §9.7, ICH …' not to contain 'tested within a pre-specified hierarc…'
+ × tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "handled per the pre-specified SAP approach" as fact 3ms
+   → expected '# Statistical Methods (CSR §9.7, ICH …' not to contain 'handled per the pre-specified SAP app…'
+ × tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > marks what the sponsor must confirm, in the placeholder the CSR completeness check detects 2696ms
+   → expected false to be true // Object.is equality
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > still states what the plan and the engine do establish 1ms
+      Tests  6 failed | 1 passed | 121 skipped (128)

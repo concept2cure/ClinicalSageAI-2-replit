@@ -33,7 +33,11 @@ const IB_MD5_V2 = 'e'.repeat(32);
 // a leaf that a later sequence withdraws.
 const SEQ_0000 = [
   { ctdSection: 'm3.2.s.1', fileName: 'drug-substance.pdf', href: 'm3/32-s-1/drug-substance.pdf', md5: 'a'.repeat(32), operation: 'new' },
-  { ctdSection: 'm1.13', fileName: 'ib.pdf', href: 'm1/13-ib/ib.pdf', md5: IB_MD5_V1, operation: 'new' },
+  // Recorded as the packager records it: the ID the regional backbone carried.
+  {
+    ctdSection: 'm1.13', fileName: 'ib.pdf', href: 'm1/13-ib/ib.pdf', md5: IB_MD5_V1, operation: 'new',
+    leafId: 'leaf-m1-13-ib', backbone: 'm1/us/us-regional.xml',
+  },
   { ctdSection: 'm3.2.s.9', fileName: 'obsolete.pdf', href: 'm3/32-s-9/obsolete.pdf', md5: 'd'.repeat(32), operation: 'new' },
 ];
 
@@ -151,9 +155,10 @@ describe('lifecycle diff over the folded prior state', () => {
     expect(ib.operation).not.toBe('new');
     expect(summary.new).toBe(0);
     expect(summary.replace).toBe(1);
-    // And the pointer must traverse to 0000, where the superseded file actually
-    // lives — NOT to 0001, the most recent predecessor, which does not contain it.
-    expect(ib.modifiedFile).toBe('../0000/m1/13-ib/ib.pdf');
+    // And the pointer must traverse to 0000, whose backbone carries the
+    // superseded leaf — NOT to 0001, the most recent predecessor, which does not.
+    // It names the leaf (backbone + '#' + ID), not the file (2026-09-29, W5/D7).
+    expect(ib.modifiedFile).toBe('../0000/m1/us/us-regional.xml#leaf-m1-13-ib');
   });
 
   it('still emits new for a genuinely first-time leaf', async () => {

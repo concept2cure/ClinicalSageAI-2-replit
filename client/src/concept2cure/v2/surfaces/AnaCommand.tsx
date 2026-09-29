@@ -7,6 +7,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { AnaActivity } from '../AnaActivity';
 
 /* ════════════════════════════════════════════════════════════════════════
    AnA Command Center — re-anchored to the real orchestration backend.
@@ -347,7 +348,8 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
 
   /* Org-wide rollup — GET /api/report-os/portfolio/org (REAL). useLiveData
      unwraps the { data } envelope, so `data` is the OrgPortfolioSummary. */
-  const portfolio = useLiveData<OrgPortfolio>('/api/report-os/portfolio/org');
+  const [portfolioEpoch, setPortfolioEpoch] = useState(0);
+  const portfolio = useLiveData<OrgPortfolio>('/api/report-os/portfolio/org', ['/api/report-os/portfolio/org', portfolioEpoch]);
   const programs: PortfolioProgram[] = portfolio.data?.attentionRanked ?? EMPTY_PROGRAMS;
 
   const [pid, setPid] = useState<number | null>(null);
@@ -359,6 +361,9 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
      errored. Executing mutates + audits, so nothing fires until confirm. */
   const [pending, setPending] = useState<PendingRun | null>(null);
   const [running, setRunning] = useState(false);
+  /** What is running and since when, for the live record — `pending` is
+      cleared the moment the run starts. */
+  const [runLive, setRunLive] = useState<{ title: string; since: number } | null>(null);
   const [outcome, setOutcome] = useState<RunOutcome | null>(null);
   const [runErr, setRunErr] = useState('');
   const runOpen = pending != null || running || outcome != null || runErr !== '';
@@ -408,6 +413,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
     setRunErr('');
     setOutcome(null);
     setRunning(true);
+    setRunLive({ title: p.title, since: Date.now() });
     try {
       const res = await apiRequest('POST', p.endpoint, p.body);
       const body = await res.json().catch(() => null);
@@ -515,12 +521,26 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
       {portfolio.loading ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading portfolio…</div>
       ) : portfolio.error ? (
-        <EmptyState
-          tone="error"
-          icon={I.alertTriangle}
-          title="Couldn't load the portfolio rollup"
-          hint="The org-wide rollup didn't respond. It requires a signed-in tenant on an entitled plan — sign in and retry, or check your plan."
-        />
+        /* Said as what the server answered. Every failure used to read "didn't
+           respond … sign in and retry, or check your plan" — including an
+           empty org (then a 404) and a 500, where neither sign-in nor plan
+           was the cause. A 401 is the session; a 403 is the route's own
+           refusal (the plan gate or a missing tenant), in its own words, and
+           a retry cannot change either; anything else is a failure to answer,
+           which a retry can. */
+        portfolio.status === 401 ? (
+          <EmptyState tone="error" icon={I.lock} title="Couldn't load the portfolio rollup" hint="Your session has expired. Sign in again to see your organization's programs." />
+        ) : portfolio.status === 403 ? (
+          <EmptyState tone="error" icon={I.lock} title="Couldn't load the portfolio rollup" hint={portfolio.error} />
+        ) : (
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load the portfolio rollup"
+            hint="The rollup could not be read, so no programs are shown. This is not an empty portfolio."
+            retry={() => setPortfolioEpoch((n) => n + 1)}
+          />
+        )
       ) : programs.length === 0 ? (
         <EmptyState
           icon={Ico.folder || I.fileText}
@@ -552,13 +572,17 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
         {Ico.info || I.alertTriangle}<span>Org-wide rollup over every program in your organization — average readiness, worst risk, and attention-ranked members.</span>
       </div>
 
-      {/* Role lens -- jobs across client types */}
-      <div className="ac-roles">
-        <span className="ac-roles-l">Lens</span>
-        {AC_ROLES.map(r => (
-          <button key={r.id} className="ac-role" data-on={role === r.id || undefined} onClick={() => setRole(r.id)}>{r.label}</button>
-        ))}
-      </div>
+      {/* Role lens -- jobs across client types. It filters the program's
+          recommendations, so it is offered only when a program is loaded: with
+          none, clicking a chip moved its highlight and changed nothing. */}
+      {prog && (
+        <div className="ac-roles">
+          <span className="ac-roles-l">Lens</span>
+          {AC_ROLES.map(r => (
+            <button key={r.id} className="ac-role" data-on={role === r.id || undefined} onClick={() => setRole(r.id)}>{r.label}</button>
+          ))}
+        </div>
+      )}
 
       {prog && (
         <>
@@ -816,7 +840,17 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 hint={runErr}
               />
             ) : running ? (
-              <div className="scaf-note" style={{ padding: '28px 16px' }}>Running… executing every step server-side, then showing the real result.</div>
+              <div style={{ padding: '16px 2px' }}>
+                {/* The wait, in the same live record AnA shows everywhere else: what is
+                running, a pulse, and a clock — never a percentage, which the
+                request cannot know. Its polite live region is what a screen-reader
+                user hears; the button label alone said nothing to them. */}
+                <AnaActivity
+                  streaming
+                  phase={`Running ${runLive?.title ?? 'the command'} — every step runs server-side, then the real result is shown…`}
+                  startedAt={runLive?.since}
+                />
+              </div>
             ) : pending ? (
               <>
                 <p className="ac-lead-p" style={{ padding: '6px 2px 16px' }}>{pending.desc}</p>

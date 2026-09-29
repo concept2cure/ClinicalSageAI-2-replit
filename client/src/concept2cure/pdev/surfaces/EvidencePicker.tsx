@@ -24,6 +24,7 @@ import type {
   PdevEvidenceStrength,
 } from '../data/types';
 import { usePdevEvidenceAttach } from '../hooks/usePdevData';
+import { buildAuthHeaders } from '../../mdx/hooks/useFetchJson';
 import {
   GovernedConfirmDialog,
   type ConfirmConfig,
@@ -82,6 +83,12 @@ export function PdevEvidencePicker({
         }`;
         const res = await fetch(url, {
           credentials: 'include',
+          /* `credentials: 'include'` is not authentication in this app: the /api gate
+             reads `req.headers.authorization` and has no cookie fallback, and
+             /api/evidence-objects is mounted with authMiddleware inline — so without the bearer token this
+             answered 401 in every environment, not only production. The same headers
+             the read path sends (useFetchJson.buildAuthHeaders), not a second copy. */
+          headers: buildAuthHeaders(),
           signal: controller.signal,
         });
         if (res.status === 404) {

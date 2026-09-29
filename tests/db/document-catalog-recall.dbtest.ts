@@ -113,12 +113,12 @@ async function inTenantScope<T>(fn: () => Promise<T>): Promise<T> {
   );
 }
 
-async function callTool(name: string, input: Record<string, unknown>) {
+async function callTool(name: string, input: Record<string, unknown>, extra: { humanConfirmed?: boolean } = {}) {
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
   const handler = getToolHandler(name);
   if (!handler) throw new Error(`tool ${name} is not registered`);
   const raw = await inTenantScope(() =>
-    handler(input, { organizationId: orgId, userId, projectId }),
+    handler(input, { organizationId: orgId, userId, projectId, ...extra }),
   );
   return JSON.parse(raw);
 }
@@ -146,12 +146,13 @@ async function cleanupProbeRows(): Promise<void> {
   const client = await owner.connect();
   try {
     await client.query('BEGIN');
-    await client.query(`SET LOCAL app.audit_archive_bypass = 'on'`);
+    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
     await client.query(
       `DELETE FROM audit_logs WHERE action = 'vault.document.ingest'
          AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
       [`${PROBE_CODE}%`],
     );
+    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
     await client.query('COMMIT');
   } catch {
     await client.query('ROLLBACK').catch(() => {});
@@ -210,6 +211,11 @@ beforeAll(async () => {
     ['dbtest-recall@example.test', `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
+  // AnA's tool dispatch reads the caller's role live from organization_users
+  // before any confirmed write (AnaToolExecutor.ts writeRoleRefusal, 2026-09-28),
+  // not from the tenant scope, so the actor is a member of the organization.
+  await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
+     ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`, [orgId, userId]);
 
   await cleanupProbeRows();
 
@@ -313,7 +319,7 @@ describe('semantic search over the catalog', () => {
       purpose: 'Supports Module 4 repeat-dose toxicology for Recallin.',
       summary: 'TOX-77-A in rats; NOAEL 50 mg/kg/day; reversible hepatocellular hypertrophy at 150.',
       key_data: { study: 'TOX-77-A', noaelMgKgDay: 50 },
-    });
+    }, { humanConfirmed: true }); // a write in the tool register (P1-34)
     expect(done.ok).toBe(true);
     expect(done.embeddingStatus).toBe('embedded');
 
@@ -577,12 +583,15 @@ describe('filing a chat upload into the vault', () => {
       ],
     );
 
-    const filed = await callTool('file_chat_upload_to_vault', {
-      file_id: FILE_ID,
-      document_title: 'CoA batch 23-104',
-      document_type: 'REPORT',
-      program_id: programId,
-    });
+    const fileArgs = { file_id: FILE_ID, document_title: 'CoA batch 23-104', document_type: 'REPORT', program_id: programId };
+    // AnA proposes and a person confirms (P0-12, 69f93d988): on AnA's word
+    // alone the call is a proposal and nothing is filed. humanConfirmed is what
+    // POST /governed-action stamps when the person says yes.
+    const proposed = await callTool('file_chat_upload_to_vault', fileArgs);
+    expect(proposed.error).toBe('HUMAN_CONFIRMATION_REQUIRED');
+    const none = await owner.query(`SELECT 1 FROM vault.documents WHERE program_id = $1 AND document_title = $2`, [programId, 'CoA batch 23-104']);
+    expect(none.rowCount).toBe(0);
+    const filed = await callTool('file_chat_upload_to_vault', fileArgs, { humanConfirmed: true });
     expect(filed.ok).toBe(true);
     const docId = filed.documentId;
 

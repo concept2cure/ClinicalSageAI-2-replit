@@ -1,12 +1,8 @@
 import express, { type Express, type Request, type Response, type NextFunction } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { createServer as createViteServer, createLogger } from 'vite';
 import { type Server } from 'http';
-import viteConfig from '../vite.config';
 import { nanoid } from 'nanoid';
-
-const viteLogger = createLogger();
 
 /**
  * Inject the per-request CSP nonce into the SPA template:
@@ -41,6 +37,23 @@ export function log(message: string, source = 'express') {
 }
 
 export async function setupVite(app: Express, server: Server) {
+  // `vite`, and everything ../vite.config imports, are devDependencies. The
+  // production image prunes them (npm ci --omit=dev), and the server bundle
+  // keeps packages external — so a top-level import here became a top-level
+  // import of `vite` in dist/index.js, and the image died ERR_MODULE_NOT_FOUND
+  // at module linking, before any application code ran (2026-09-24, D1).
+  // Both are loaded here, on the dev path only. The config is loaded by vite
+  // itself rather than imported: a dynamic import() of a module esbuild bundles
+  // still hoists that module's external imports to the top of the bundle.
+  // Gate: scripts/ci/check-server-bundle-prod-imports.mjs.
+  const { createServer: createViteServer, createLogger, loadConfigFromFile } = await import('vite');
+  const viteLogger = createLogger();
+  const loaded = await loadConfigFromFile(
+    { command: 'serve', mode: 'development' },
+    path.resolve(import.meta.dirname, '..', 'vite.config.ts'),
+  );
+  if (!loaded) throw new Error('vite.config.ts could not be loaded; the dev server cannot start.');
+
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
@@ -48,7 +61,7 @@ export async function setupVite(app: Express, server: Server) {
   };
 
   const vite = await createViteServer({
-    ...viteConfig,
+    ...loaded.config,
     configFile: false,
     customLogger: {
       ...viteLogger,

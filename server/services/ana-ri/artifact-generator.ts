@@ -449,6 +449,10 @@ export async function generateArtifact(
       maxTokens,
       temperature: 0.2,
       strategy: 'quality_optimized',
+      // The tenant's placement policy governs where this draft is sent (D6).
+      organizationId,
+      userId,
+      callerModule: 'ana-ri/artifact-generator',
     });
   } catch (err: any) {
     return {

@@ -35,7 +35,7 @@ function deviceProgram(over: Record<string, unknown> = {}) {
     id: PID, code: 'DMN5', name: '[Demo · MDX] NeuroPanel-Dx 510(k)', program_type: '510k',
     status: 'active', phase: 'planning', priority: 'high', description: null,
     product_name: 'NeuroPanel-Dx', indication: 'Differential diagnosis of viral CNS infection',
-    intended_use: 'Qualitative multiplexed IVD test.', primary_agency: 'FDA', target_submission_date: null, progress_percent: 0,
+    intended_use: 'Qualitative multiplexed IVD test.', primary_agency: 'FDA', target_submission_date: null, readiness: 0,
     sponsor_name: 'Concept2Cure Diagnostics', application_number: null,
     product_type: 'ivd', device_class: 'II', regulatory_path: '510k', product_code: 'QNX',
     predicate_devices: [{ kNumber: 'K223456' }], review_panel: 'Microbiology', regulation_number: '866.3985',

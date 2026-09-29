@@ -1,0 +1,41 @@
+add_biological_agent | confirm | - | AnaToolExecutor.ts:10492 | INSERT ibc_biological_agents + audit
+add_effort_line | confirm | - | AnaToolExecutor.ts:13224 | INSERT effort_lines + audit
+add_labeling_symbol | confirm | - | AnaToolExecutor.ts:14204 | INSERT labeling_symbols
+add_protocol_risk | confirm | - | AnaToolExecutor.ts:11399 | INSERT protocol_risks + audit
+apply_fact_change | confirm | - | AnaToolExecutor.ts:5964 | re-versions a canonical fact; drift cascade; audit
+assign_protocol_reviewer | confirm | - | AnaToolExecutor.ts:10952 | INSERT protocol_review_assignments + audit
+categorize_clia_complexity | confirm | - | AnaToolExecutor.ts:8444 | INSERT ivd_clia_categorization
+commit_document_revision | confirm | - | document-spine.ts:414 | new artifact version; status -> review by default; audit
+create_biosketch | confirm | - | AnaToolExecutor.ts:11148 | INSERT biosketches + sections + audit
+create_coi_disclosure | confirm | - | AnaToolExecutor.ts:13259 | INSERT coi_disclosures (status submitted) + audit
+create_dms_plan | confirm | - | AnaToolExecutor.ts:11040 | INSERT dms_plans + elements + audit
+create_grant_proposal | confirm | - | AnaToolExecutor.ts:12047 | INSERT grant_proposals + audit
+create_inspection | confirm | - | AnaToolExecutor.ts:12788 | INSERT inspections + audit
+create_lifecycle_obligation | confirm | - | AnaToolExecutor.ts:12968 | INSERT lifecycle_obligations + events + audit
+create_per_document | conditional | input.per_status in (approved, superseded) -> refuse; else confirm | AnaToolExecutor.ts:8395 | INSERT ivdr_per_documents with model-chosen status
+create_q_sub | confirm | - | AnaToolExecutor.ts:7691 | INSERT q_submissions + audit
+create_rim_product | confirm | - | AnaToolExecutor.ts:12696 | INSERT rim_products + audit
+create_udi_record | confirm | - | AnaToolExecutor.ts:7907 | INSERT udi_records
+find_grant_opportunities | read | - | AnaToolExecutor.ts:11713 | none (Grants.gov GET)
+generate_schedule_of_events | confirm | - | AnaToolExecutor.ts:2351 | replaces AnA-sourced milestones; revision row
+list_report_definitions | read | - | AnaToolExecutor.ts:20316 | none
+log_study_ae | confirm | - | AnaToolExecutor.ts:13414 | INSERT clinical_study_aes
+override_import_mapping | confirm | - | AnaToolExecutor.ts:14375 | UPDATE import_job_files mapping
+qms_change_link | confirm | - | AnaToolExecutor.ts:13881 | INSERT qms_change_links + audit
+record_cost_share_contribution | confirm | - | AnaToolExecutor.ts:12395 | INSERT grant_cost_share_contributions + audit
+record_grant_opportunity | confirm | - | AnaToolExecutor.ts:12482 | INSERT grant_opportunities + audit
+record_validation_finding | confirm | - | AnaToolExecutor.ts:8779 | INSERT submission_validation_findings
+register_ldt | confirm | - | AnaToolExecutor.ts:8530 | INSERT ldt_inventory
+request_no_cost_extension | confirm | - | AnaToolExecutor.ts:12448 | INSERT grant_nce_records + audit
+review_commitment_portfolio | read | - | AnaToolExecutor.ts:10215 | none
+review_iacuc_protocol | read | - | AnaToolExecutor.ts:10317 | none
+review_label_currency | read | - | AnaToolExecutor.ts:12765 | none
+revise_qms_document | confirm | - | AnaToolExecutor.ts:13653 | opens a controlled revision (reason required): document back to draft, approval cleared; the effective version is withdrawn in place (hand-on) + governed-action row
+save_document_as_template | confirm | - | AnaToolExecutor.ts:10732 | INSERT protocol_templates + sections + audit
+screen_subaward | conditional | input.screen_status === 'cleared' -> refuse (compliance clearance); else confirm | AnaToolExecutor.ts:12268 | UPDATE grant_subawards screen + audit
+set_grant_milestone_status | confirm | - | AnaToolExecutor.ts:12136 | UPDATE grant_milestones + audit
+submit_invention_disclosure | confirm | - | AnaToolExecutor.ts:11248 | internal routing to TTO + audit
+update_consent_element | confirm | - | AnaToolExecutor.ts:11010 | UPDATE consent_form_elements + audit
+update_invention_disclosure | conditional | input.status in (elected, patent_filed, licensed, released, abandoned) or input.election_date -> refuse; else confirm | AnaToolExecutor.ts:11215 | UPDATE invention_disclosures + audit
+update_research_agreement | confirm | - | AnaToolExecutor.ts:11354 | UPDATE research_agreements + audit (executed refused by service)
+write_kit_section | confirm | - | AnaToolExecutor.ts:14526 | UPDATE cerv2_510k_sections + version + audit

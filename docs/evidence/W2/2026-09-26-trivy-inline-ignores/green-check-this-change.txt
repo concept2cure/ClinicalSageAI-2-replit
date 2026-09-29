@@ -1,0 +1,26 @@
+$ node scripts/ci/check-trivy-inline-ignores.mjs  (this change)
+[ci:trivy-inline-ignores] OK — 4 inline exception(s), each on the block it names:
+  AWS-0053 → resource "aws_lb" "this"  (terraform/modules/alb/main.tf:23)
+  AWS-0132 → resource "aws_s3_bucket_server_side_encryption_configuration" "frontend"  (terraform/modules/cloudfront/main.tf:43)
+  AWS-0011 → resource "aws_cloudfront_distribution" "this"  (terraform/modules/cloudfront/main.tf:157)
+  AWS-0104 → egress  (terraform/modules/ecs-fargate/main.tf:110)
+exit 0
+
+$ node scripts/ci/check-trivy-inline-ignores.mjs --selftest
+  ✓ directly above the resource: attached
+  ✓ the abc1c99a5 shape: another resource and its comments put between the ignore and its block
+  ✓ a blank line between the ignore and its block
+  ✓ chained ignores reach the first code line
+  ✓ an indented nested block (the ECS egress rule)
+  ✓ a trailing ignore on a code line is always attached
+  ✓ an ignore at the end of the file
+  ✓ the // comment form and tfsec prefix are read the same way
+[ci:trivy-inline-ignores] FAIL — 1 inline Trivy exception(s) attached to nothing:
+  - modules/main.tf:2 #trivy:ignore:AWS-0011 — line 3 below it is a comment ("# Security headers for the SPA (P0-15).")
+
+  Trivy applies an ignore comment to the line directly below it (or, chained, to the first
+  code line after a run of ignore lines). Move it so it sits on the resource or attribute it
+  excepts, with any explanation ABOVE it, not between it and the block.
+  ✓ the tree check exits 1 on a detached ignore
+[ci:trivy-inline-ignores:selftest] OK — 9 case(s) caught.
+exit 0

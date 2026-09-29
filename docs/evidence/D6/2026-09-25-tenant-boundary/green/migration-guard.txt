@@ -1,0 +1,5 @@
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-migration.test.ts > ai_placement_policies migration > is applied on every deploy, before the final tenant-isolation pair 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-migration.test.ts > ai_placement_policies migration > adds, on an existing table, every column the resolver reads 2ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+exit=0

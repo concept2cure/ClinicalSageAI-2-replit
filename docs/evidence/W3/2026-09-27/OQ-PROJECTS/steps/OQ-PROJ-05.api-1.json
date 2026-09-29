@@ -1,0 +1,194 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/projects?limit=50",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 32,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": "ebd39930-030c-44d6-98ce-b2662ea751ca",
+          "title": "OQ-001 IND program 20260928011900",
+          "ws": "Biotech",
+          "code": "OIP2-82UA",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 28"
+        },
+        {
+          "id": "27771a4d-45bc-4b35-b053-d8eb0f15aa25",
+          "title": "OQ-005 Readiness program 20260928010613",
+          "ws": "Biotech",
+          "code": "ORP2-QY72",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 28"
+        },
+        {
+          "id": "15f19a5c-43bc-4cb0-a5db-a2e8ddcbb3f9",
+          "title": "OQ-004 Submission-create program 20260928010545",
+          "ws": "Biotech",
+          "code": "OSP2-QE5T",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 28"
+        },
+        {
+          "id": "d3b700a9-7f07-4cef-81b3-1a547e2df7cb",
+          "title": "OQ-004 Submission program 20260928010545",
+          "ws": "Biotech",
+          "code": "OSP2-QCPW",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 28"
+        },
+        {
+          "id": "ad5aedb5-c298-4cb1-a940-c3efb11e6036",
+          "title": "OQ-003 Authoring program 20260928010516",
+          "ws": "Biotech",
+          "code": "OAP2-PQ2D",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 28"
+        },
+        {
+          "id": "c4c5a652-d444-456c-9446-01c65c1a66c3",
+          "title": "OQ-002 Vault program 20260928010458",
+          "ws": "Biotech",
+          "code": "OVP2-PBYH",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 28"
+        },
+        {
+          "id": "d6e46086-2816-4588-86ea-336644da02a0",
+          "title": "OQ-001 IND program 20260928004901",
+          "ws": "Biotech",
+          "code": "OIP2-5HP7",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 28"
+        },
+        {
+          "id": "1afec5c1-212c-4aed-b72d-fafbaea6ceca",
+          "title": "OQ-005 Readiness program 20260927235411",
+          "ws": "Biotech",
+          "code": "ORP2",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 27"
+        },
+        {
+          "id": "b40d9454-01f1-4f99-8f7b-71a6563db0ca",
+          "title": "OQ-004 Submission-create program 20260927235346",
+          "ws": "Biotech",
+          "code": "OSP2-5T0K",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 27"
+        },
+        {
+          "id": "76017627-f984-43a3-beed-388dcfa25475",
+          "title": "OQ-004 Submission program 20260927235346",
+          "ws": "Biotech",
+          "code": "OSP2",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 27"
+        },
+        {
+          "id": "89cd6c02-c325-4f99-b5b5-46ea66548e8d",
+          "title": "OQ-003 Authoring program 20260927235318",
+          "ws": "Biotech",
+          "code": "OAP2",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 27"
+        },
+        {
+          "id": "dc107197-6d9e-4192-ba98-98236bdf1dfc",
+          "title": "OQ-002 Vault program 20260927235303",
+          "ws": "Biotech",
+          "code": "OVP2",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 27"
+        },
+        {
+          "id": "243b63a1-01b7-49b8-a001-152a49ec21b2",
+          "title": "OQ-001 IND program 20260927235131",
+          "ws": "Biotech",
+          "code": "OIP2",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 27"
+        }
+      ],
+      "meta": {
+        "count": 13,
+        "limit": 50,
+        "offset": 0,
+        "hasMore": false
+      }
+    }
+  }
+}

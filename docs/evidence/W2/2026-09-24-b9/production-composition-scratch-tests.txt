@@ -1,0 +1,175 @@
+# SCRATCH ONLY — not in the repository. Reproduce: copy terraform/ to a scratch directory, add these,
+# terraform init -backend=false, then: terraform test  (must pass)  and  terraform test -test-directory=refusal  (each must fail).
+
+## appended to modules/ecs-fargate/outputs.tf
+# SCRATCH ONLY (B9 evidence, not in the repository): the rendered API container environment.
+output "b9_api_container_environment" {
+  value = jsondecode(aws_ecs_task_definition.api.container_definitions)[0].environment
+}
+
+## appended to environments/production/main.tf
+# SCRATCH ONLY (B9 evidence, not in the repository)
+output "b9_api_container_environment" {
+  value = module.ecs.b9_api_container_environment
+}
+
+## environments/production/tests/composition.tftest.hcl
+# SCRATCH ONLY (B9 evidence): the production composition under a mocked provider.
+mock_provider "aws" {
+  mock_resource "aws_lb" {
+    defaults = { arn = "arn:aws:elasticloadbalancing:us-east-1:111122223333:loadbalancer/app/c2c-prod/0123456789abcdef" }
+  }
+  mock_resource "aws_lb_target_group" {
+    defaults = { arn = "arn:aws:elasticloadbalancing:us-east-1:111122223333:targetgroup/c2c-prod-api/0123456789abcdef" }
+  }
+  mock_resource "aws_lb_listener" {
+    defaults = { arn = "arn:aws:elasticloadbalancing:us-east-1:111122223333:listener/app/c2c-prod/0123456789abcdef/0123456789abcdef" }
+  }
+  mock_resource "aws_cloudfront_function" {
+    defaults = { arn = "arn:aws:cloudfront::111122223333:function/c2c-prod-frontend-spa-routes" }
+  }
+  mock_resource "aws_kms_key" {
+    defaults = { arn = "arn:aws:kms:us-east-1:111122223333:key/00000000-0000-0000-0000-000000000000" }
+  }
+  mock_resource "aws_cloudwatch_log_group" {
+    defaults = { arn = "arn:aws:logs:us-east-1:111122223333:log-group:c2c-test" }
+  }
+  mock_resource "aws_db_instance" {
+    defaults = {
+      master_user_secret = [{
+        secret_arn    = "arn:aws:secretsmanager:us-east-1:111122223333:secret:rds-master-AbCdEf"
+        kms_key_id    = "arn:aws:kms:us-east-1:111122223333:key/00000000-0000-0000-0000-000000000000"
+        secret_status = "active"
+      }]
+    }
+  }
+  mock_resource "aws_iam_role" {
+    defaults = { arn = "arn:aws:iam::111122223333:role/c2c-test" }
+  }
+}
+
+variables {
+  image_tag                  = "v1.0.0"
+  acm_certificate_arn        = "arn:aws:acm:us-east-1:111122223333:certificate/alb"
+  cloudfront_certificate_arn = "arn:aws:acm:us-east-1:111122223333:certificate/cf"
+  domain_aliases             = ["app.example.com"]
+  jwt_secret                 = "test-jwt-secret"
+  openai_api_key             = "test-openai-key"
+  cloudfront_origin_secret   = "c2cTestOriginSecret_0123456789abcdef"
+}
+
+run "production_plans_with_a_domain_and_a_secret" {
+  command = plan
+}
+
+run "the_api_task_trusts_two_hops" {
+  command = apply
+  assert {
+    condition     = contains([for e in output.b9_api_container_environment : "${e.name}=${e.value}"], "TRUST_PROXY_HOPS=2")
+    error_message = "The API task definition must carry TRUST_PROXY_HOPS=2."
+  }
+}
+
+## environments/production/refusal/no-domain.tftest.hcl
+# SCRATCH ONLY (B9 evidence): EXPECTED TO FAIL — production without a custom domain must not plan.
+mock_provider "aws" {
+  mock_resource "aws_lb" {
+    defaults = { arn = "arn:aws:elasticloadbalancing:us-east-1:111122223333:loadbalancer/app/c2c-prod/0123456789abcdef" }
+  }
+  mock_resource "aws_lb_target_group" {
+    defaults = { arn = "arn:aws:elasticloadbalancing:us-east-1:111122223333:targetgroup/c2c-prod-api/0123456789abcdef" }
+  }
+  mock_resource "aws_lb_listener" {
+    defaults = { arn = "arn:aws:elasticloadbalancing:us-east-1:111122223333:listener/app/c2c-prod/0123456789abcdef/0123456789abcdef" }
+  }
+  mock_resource "aws_cloudfront_function" {
+    defaults = { arn = "arn:aws:cloudfront::111122223333:function/c2c-prod-frontend-spa-routes" }
+  }
+  mock_resource "aws_kms_key" {
+    defaults = { arn = "arn:aws:kms:us-east-1:111122223333:key/00000000-0000-0000-0000-000000000000" }
+  }
+  mock_resource "aws_cloudwatch_log_group" {
+    defaults = { arn = "arn:aws:logs:us-east-1:111122223333:log-group:c2c-test" }
+  }
+  mock_resource "aws_db_instance" {
+    defaults = {
+      master_user_secret = [{
+        secret_arn    = "arn:aws:secretsmanager:us-east-1:111122223333:secret:rds-master-AbCdEf"
+        kms_key_id    = "arn:aws:kms:us-east-1:111122223333:key/00000000-0000-0000-0000-000000000000"
+        secret_status = "active"
+      }]
+    }
+  }
+  mock_resource "aws_iam_role" {
+    defaults = { arn = "arn:aws:iam::111122223333:role/c2c-test" }
+  }
+}
+
+variables {
+  image_tag                  = "v1.0.0"
+  acm_certificate_arn        = "arn:aws:acm:us-east-1:111122223333:certificate/alb"
+  cloudfront_certificate_arn = "arn:aws:acm:us-east-1:111122223333:certificate/cf"
+  domain_aliases             = ["app.example.com"]
+  jwt_secret                 = "test-jwt-secret"
+  openai_api_key             = "test-openai-key"
+  cloudfront_origin_secret   = "c2cTestOriginSecret_0123456789abcdef"
+}
+
+run "production_without_a_custom_domain" {
+  command = plan
+  variables {
+    domain_aliases = []
+  }
+}
+
+## environments/production/refusal/weak-secret.tftest.hcl
+# SCRATCH ONLY (B9 evidence): EXPECTED TO FAIL — production with a weak origin secret must not plan.
+mock_provider "aws" {
+  mock_resource "aws_lb" {
+    defaults = { arn = "arn:aws:elasticloadbalancing:us-east-1:111122223333:loadbalancer/app/c2c-prod/0123456789abcdef" }
+  }
+  mock_resource "aws_lb_target_group" {
+    defaults = { arn = "arn:aws:elasticloadbalancing:us-east-1:111122223333:targetgroup/c2c-prod-api/0123456789abcdef" }
+  }
+  mock_resource "aws_lb_listener" {
+    defaults = { arn = "arn:aws:elasticloadbalancing:us-east-1:111122223333:listener/app/c2c-prod/0123456789abcdef/0123456789abcdef" }
+  }
+  mock_resource "aws_cloudfront_function" {
+    defaults = { arn = "arn:aws:cloudfront::111122223333:function/c2c-prod-frontend-spa-routes" }
+  }
+  mock_resource "aws_kms_key" {
+    defaults = { arn = "arn:aws:kms:us-east-1:111122223333:key/00000000-0000-0000-0000-000000000000" }
+  }
+  mock_resource "aws_cloudwatch_log_group" {
+    defaults = { arn = "arn:aws:logs:us-east-1:111122223333:log-group:c2c-test" }
+  }
+  mock_resource "aws_db_instance" {
+    defaults = {
+      master_user_secret = [{
+        secret_arn    = "arn:aws:secretsmanager:us-east-1:111122223333:secret:rds-master-AbCdEf"
+        kms_key_id    = "arn:aws:kms:us-east-1:111122223333:key/00000000-0000-0000-0000-000000000000"
+        secret_status = "active"
+      }]
+    }
+  }
+  mock_resource "aws_iam_role" {
+    defaults = { arn = "arn:aws:iam::111122223333:role/c2c-test" }
+  }
+}
+
+variables {
+  image_tag                  = "v1.0.0"
+  acm_certificate_arn        = "arn:aws:acm:us-east-1:111122223333:certificate/alb"
+  cloudfront_certificate_arn = "arn:aws:acm:us-east-1:111122223333:certificate/cf"
+  domain_aliases             = ["app.example.com"]
+  jwt_secret                 = "test-jwt-secret"
+  openai_api_key             = "test-openai-key"
+  cloudfront_origin_secret   = "c2cTestOriginSecret_0123456789abcdef"
+}
+
+run "production_with_a_weak_origin_secret" {
+  command = plan
+  variables {
+    cloudfront_origin_secret = "short"
+  }
+}

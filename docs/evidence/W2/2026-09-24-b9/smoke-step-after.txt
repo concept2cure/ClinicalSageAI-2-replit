@@ -1,0 +1,26 @@
+# deploy-aws.yml smoke-test step, run with stubbed aws/curl. AFTER: 'Readiness through the public URL'.
+
+=== A no distribution id configured / ALB not found
+::error::CLOUDFRONT_DISTRIBUTION_ID is not set, so the deployment cannot be checked where users reach it. It is not reported healthy.
+exit=1
+=== B distribution has no custom domain
+::error::Distribution E2TEST has no custom domain; the API is routed only on one (terraform/modules/cloudfront).
+exit=1
+=== C 200 with the app's HTML (CloudFront's old 403/404 -> index.html mapping)
+Attempt 5: HTTP 200
+::error::https://app.example.com/readyz did not report ready.
+exit=1
+=== D 503, not ready (AnA down)
+Attempt 5: HTTP 503
+::error::https://app.example.com/readyz did not report ready.
+exit=1
+=== E connection refused
+Attempt 5: HTTP 000
+::error::https://app.example.com/readyz did not report ready.
+exit=1
+=== F 200, ready
+  "ana": "ok",
+  "redis": "ok",
+  "worker": "ok"
+}
+exit=0

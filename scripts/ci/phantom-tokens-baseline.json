@@ -1,20 +1,15 @@
 {
   "$comment": "CSS custom properties used as var(--x, fallback) but declared nowhere, so the fallback always renders. This list may only SHRINK. Adding a name means a new un-anchored style shipped. Fix by pointing at a real token from design-system/colors_and_type.css — or, if none fits, add the token there first.",
-  "$generated": "2026-09-06",
-  "tokenCount": 14,
-  "siteCount": 63,
+  "$generated": "2026-09-25",
+  "tokenCount": 9,
+  "siteCount": 53,
   "tokens": [
     "--accent-050",
     "--danger",
-    "--danger-50",
-    "--danger-500",
-    "--danger-600",
     "--danger-subtle",
     "--m",
-    "--ok-600",
     "--success-strong",
     "--success-subtle",
-    "--surface-100",
     "--v2-radius-lg",
     "--v2-radius-md",
     "--v2-radius-xl"

@@ -1,0 +1,47 @@
+# gates, HEAD af833c44 working tree, 2026-09-25T02:19:59Z
+
+## npm run -s ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 309 migrations, 33 DROP(s), none re-created by the set, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+
+## npm run -s ci:migration-set-order
+[ci:migration-set-order] OK — 309 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
+exit=0
+
+## npm run -s db:sync-manifest:check
+Manifest is in sync.
+exit=0
+
+## npm run -s ci:runtime-ddl
+[ci:runtime-ddl] 84 DDL statement(s) in 14 runtime server file(s); 14 baselined
+[ci:runtime-ddl] ✅ no new runtime DDL.
+exit=0
+
+## npm run -s ci:migration-prefix-collisions
+[ci:migration-prefix-collisions] OK — no NEW collisions (3 baselined collision prefix(es) tolerated)
+exit=0
+
+## npm run -s ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 131 baselined across 59 file(s).
+exit=0
+
+## npm run -s ci:regulated-delete-audit
+[regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed).
+exit=0
+
+## npm run -s check:security-patterns
+check-security-patterns: 0 violations across 2840 file(s).
+exit=0
+
+## npm run -s ci:audit-logs-fixture
+[ci:audit-logs-fixture] audit_logs fixtures vs writeChainedAuditRow
+  columns the writer writes : 16
+  fixtures found            : 16
+
+✅ every audit_logs fixture accepts the writer's full column list.
+exit=0
+
+## npm run -s ci:unkeyed-request-tables
+[ci:unkeyed-request-tables] 1066 tables created; 592 read by a per-request path; 110 of those carry NO tenant column; 110 baselined, 104 still unreviewed
+[ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
+exit=0

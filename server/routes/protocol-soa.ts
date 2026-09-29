@@ -15,8 +15,14 @@ import { recordGovernedAction } from './c2c/actions';
 import { addAssessmentTx, setCellTx, clearCellTx, getSoaMatrix } from '../services/protocol-soa/protocol-soa-service';
 import { recordSoaAssessmentAdded, recordSoaCellSet, recordSoaMatrixView } from '../services/protocol-soa-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
+// A viewer reads a protocol and changes nothing on it (11.10(d), (g)).
+// 2026-09-28: gated by P11-C-1; the coverage-gap sweep's GP-P-1 is the same
+// finding and is closed here. The mount (register-inline-routes.ts) carries
+// authMiddleware only, so this line is the router's whole write authority.
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -30,7 +36,7 @@ function resolveOrgId(req: Request): number | null {
   const n = raw == null ? NaN : typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
 }
-const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, BAD_INPUT: 400 };
+const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, BAD_INPUT: 400, INVALID_STATE: 409 };
 function fail(res: Response, err: unknown): void {
   const code = (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) { res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } }); return; }

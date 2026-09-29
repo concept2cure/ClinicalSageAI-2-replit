@@ -179,7 +179,8 @@ describe('PATCH /sections/:id — revision + update + audit are atomic', () => {
     const res = await request(makeApp())
       .patch('/api/authoring/sections/S1')
       .set('Authorization', await bearer())
-      .send({ content: 'new text' });
+      // fde9d704: a content change carries its reason, or it is refused (400) before the transaction under test.
+      .send({ content: 'new text', changeReason: 'Corrected the section text after review.' });
 
     expect(res.status).toBe(200);
 
@@ -206,7 +207,8 @@ describe('PATCH /sections/:id — revision + update + audit are atomic', () => {
     const res = await request(makeApp())
       .patch('/api/authoring/sections/S1')
       .set('Authorization', await bearer())
-      .send({ content: 'new text' });
+      // fde9d704: a content change carries its reason, or it is refused (400) before the transaction under test.
+      .send({ content: 'new text', changeReason: 'Corrected the section text after review.' });
 
     expect(res.status).toBe(500);
     expect(sawBegin()).toBe(0);
@@ -340,6 +342,57 @@ describe('POST /docs/:id/sign — signature + workflow approval + audit are atom
       .post('/api/authoring/docs/D1/sign')
       .set('Authorization', await bearer(['REVIEWER']))
       .send({ password: PASSWORD, meaning: 'REVIEWER', reason: 'reviewed and approved' });
+
+    expect(res.status).toBe(500);
+    expect(sawRollback()).toBe(true);
+    expect(sawCommit()).toBe(-1);
+    expect(h.clientRelease).toHaveBeenCalledTimes(1);
+  });
+});
+
+/* GE-P-1 (coverage-gap sweep, 2026-09-28). Revert ran the section update, its
+   revision and the filing commit in one transaction, then wrote its Part 11
+   audit record AFTER COMMIT on the pool. A failed audit write left a committed,
+   unaudited revert: in production the author was told it failed although it had
+   happened; elsewhere it reported success with no audit row at all. */
+describe('POST /sections/:id/revert — update + revision + filing + audit are atomic', () => {
+  beforeEach(() => {
+    h.poolQuery.mockImplementation(async (sql: string) => {
+      if (/FROM doc_revisions WHERE id = \$1/i.test(sql)) {
+        return { rowCount: 1, rows: [{ id: 'R1', section_id: 'S1', content: 'earlier text', created_by: 41, created_at: '2026-09-01T00:00:00Z', tenant_id: 7 }] };
+      }
+      if (/FROM authoring_sections WHERE id = \$1/i.test(sql)) {
+        return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: 'current text' }] };
+      }
+      if (/JOIN authoring_documents/i.test(sql)) {
+        return { rowCount: 1, rows: [{ status: 'draft' }] };
+      }
+      return { rowCount: 0, rows: [] };
+    });
+  });
+
+  it('writes its audit record inside the same BEGIN…COMMIT, not on the pool after it', async () => {
+    const res = await request(makeApp())
+      .post('/api/authoring/sections/S1/revert')
+      .set('Authorization', await bearer())
+      .send({ rev_id: 'R1' });
+
+    expect(res.status).toBe(200);
+    const begin = sawBegin();
+    const commit = sawCommit();
+    expect(begin).toBe(0);
+    const audit = writeIndex(/INSERT INTO authoring_audit_trail/i);
+    expect(audit).toBeGreaterThan(begin);
+    expect(audit).toBeLessThan(commit);
+    expect(h.poolQuery.mock.calls.some((c) => /INSERT INTO authoring_audit_trail/i.test(String(c[0])))).toBe(false);
+  });
+
+  it('a failed audit write rolls the revert back and reports 500', async () => {
+    failOn = /INSERT INTO authoring_audit_trail/i;
+    const res = await request(makeApp())
+      .post('/api/authoring/sections/S1/revert')
+      .set('Authorization', await bearer())
+      .send({ rev_id: 'R1' });
 
     expect(res.status).toBe(500);
     expect(sawRollback()).toBe(true);

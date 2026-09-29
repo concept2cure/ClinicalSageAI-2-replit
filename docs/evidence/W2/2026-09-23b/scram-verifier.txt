@@ -1,0 +1,42 @@
+# app_service's password never reaches the server (review finding SEC-1, 2026-09-24)
+# Production's RDS parameter group has log_statement = 'ddl' and exports the server log to
+# CloudWatch, and ALTER/CREATE ROLE ... PASSWORD '<plaintext>' is DDL. The provisioner now
+# sends a client-computed SCRAM-SHA-256 verifier. PostgreSQL 16.13.
+
+## Before: plaintext password sent (verifier removed, ALTER ROLE fix kept)
+  the master really is RDS-shaped: CREATEROLE, not superuser, no BYPASSRLS
+  mints the existing runtime role: LOGIN, and still not superuser / BYPASSRLS / replication
+   → expected [ …(2) ] to deeply equal []
+  the minted role can connect with the password and read what it was granted
+  computes the same SCRAM verifier PostgreSQL computes for the same password and salt
+  REFUSES a pre-existing role it cannot make safe, instead of reporting it minted
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)
+
+## After: this change
+  the master really is RDS-shaped: CREATEROLE, not superuser, no BYPASSRLS
+  mints the existing runtime role: LOGIN, and still not superuser / BYPASSRLS / replication
+  the minted role can connect with the password and read what it was granted
+  computes the same SCRAM verifier PostgreSQL computes for the same password and salt
+  REFUSES a pre-existing role it cannot make safe, instead of reporting it minted
+      Tests  5 passed (5)
+
+## Mutation: verifier computed with 4095 PBKDF2 iterations, labelled 4096 — must fail the equivalence test
+  the master really is RDS-shaped: CREATEROLE, not superuser, no BYPASSRLS
+  mints the existing runtime role: LOGIN, and still not superuser / BYPASSRLS / replication
+  the minted role can connect with the password and read what it was granted
+  computes the same SCRAM verifier PostgreSQL computes for the same password and salt
+   → expected 'SCRAM-SHA-256$4096:xRo0uZ2LEJG6uTFETc…' to be 'SCRAM-SHA-256$4096:xRo0uZ2LEJG6uTFETc…' // Object.is equality
+  REFUSES a pre-existing role it cannot make safe, instead of reporting it minted
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)
+
+## Known answer: RFC 7677 §3 (server/db/__tests__/provision-app-role.test.ts > scramSha256Verifier)
+  produces the verifier RFC 7677 implies for its test vector
+  salts each verifier freshly
+  refuses a password outside printable ASCII rather than hash it unlike the server
+      Tests  3 passed | 29 skipped (32)
+
+# Note: the local server's pg_hba trusts 127.0.0.1, so the login test shows LOGIN and grants,
+# not the verifier. The equivalence test is what proves the verifier: PostgreSQL's own hash of
+# the same password, with the salt it chose, equals ours byte for byte.

@@ -27,6 +27,18 @@
  * Usage:
  *   node scripts/ci/typecheck-no-regression.mjs
  *   node scripts/ci/typecheck-no-regression.mjs --write-baseline
+ *   node scripts/ci/typecheck-no-regression.mjs --incremental
+ *
+ * --incremental (added 2026-09-24, for .husky/pre-push). Same gate, same guards,
+ * with tsc's --incremental and a build-info cache under node_modules/.cache, so a
+ * push that changed a few files re-checks those and their dependents instead of
+ * the whole tree. Measured on this repo: ~290 s cold, ~30 s warm. The cache holds
+ * each file's diagnostics, so errors in files the push did NOT touch are still
+ * reported from it — verified by making it fail (a cached error in an untouched
+ * file must still fail a warm run) before this was wired into the hook.
+ *
+ * CI does not pass it and should not: CI starts from a clean checkout, has no
+ * cache to reuse, and a full run is the ground truth this mode approximates.
  */
 
 import { spawnSync } from 'node:child_process';
@@ -47,6 +59,21 @@ function tscVersion() {
 
 const args = process.argv.slice(2);
 const writeBaseline = args.includes('--write-baseline');
+const incremental = args.includes('--incremental');
+// Under node_modules so it is never committed and a clean install discards it.
+const buildInfoFile = path.join(
+  repoRoot,
+  'node_modules',
+  '.cache',
+  'typecheck-no-regression',
+  'tsconfig.tsbuildinfo'
+);
+if (incremental && writeBaseline) {
+  // A baseline is a claim about the whole tree; write it from a full run only.
+  console.error('[ci:typecheck-no-regression] --write-baseline cannot be combined with --incremental');
+  process.exit(1);
+}
+if (incremental) fs.mkdirSync(path.dirname(buildInfoFile), { recursive: true });
 
 if (!fs.existsSync(baselinePath)) {
   console.error(`[ci:typecheck-no-regression] missing baseline file ${baselinePath}`);
@@ -60,7 +87,9 @@ if (typeof baselineCount !== 'number') {
   process.exit(1);
 }
 
-console.log(`[ci:typecheck-no-regression] running tsc --noEmit (baseline: ${baselineCount})`);
+console.log(
+  `[ci:typecheck-no-regression] running tsc --noEmit${incremental ? ' --incremental' : ''} (baseline: ${baselineCount})`
+);
 
 // Heap. tsc OOMs on this project at 6144 MB — reproduced on a 15 GB host, where
 // it thrashed for 379 s and then died with "Ineffective mark-compacts near heap
@@ -69,9 +98,12 @@ console.log(`[ci:typecheck-no-regression] running tsc --noEmit (baseline: ${base
 // compiler is indistinguishable from a clean run to the counter below.
 const heapMb = process.env.TYPECHECK_HEAP_MB || '24576';
 
+const tscArgs = ['tsc', '--noEmit', '-p', 'tsconfig.json'];
+if (incremental) tscArgs.push('--incremental', '--tsBuildInfoFile', buildInfoFile);
+
 const tsc = spawnSync(
   'npx',
-  ['tsc', '--noEmit', '-p', 'tsconfig.json'],
+  tscArgs,
   {
     cwd: repoRoot,
     encoding: 'utf8',

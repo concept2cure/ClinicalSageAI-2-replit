@@ -1,0 +1,163 @@
+# mutation M1: lumen_data_atoms RLS disabled; cortexQueryRoutes.ts as at eb1e557d (unfixed)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T18:28:56.403Z","pid":2206,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T18:28:56.405Z","pid":2206,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T18:28:56.405Z","pid":2206,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T18:28:56.846Z', poolSize: 1 }
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+Loaded 0 academic documents
+
+stderr | tests/db/cortex-query-tenant-header.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/cortex-query-tenant-header.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+{"level":30,"time":"2026-09-24T18:29:00.934Z","pid":2206,"hostname":"vm","context":{},"msg":"[cortex-unified] Mounted: /advisory (AI advisory)"}
+{"level":40,"time":"2026-09-24T18:29:00.934Z","pid":2206,"hostname":"vm","context":{},"msg":"[cortex-unified] Cortex management routes require explicit initialization with database pool"}
+{"level":30,"time":"2026-09-24T18:29:00.934Z","pid":2206,"hostname":"vm","context":{},"msg":"[cortex-unified] Mounted: /query (AI queries)"}
+{"level":30,"time":"2026-09-24T18:29:01.091Z","pid":2206,"hostname":"vm","context":{},"msg":"[cortex-unified] Mounted: /ana (AnA 1.0 RI integration)"}
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+✅ Unified Cortex Query API initialized
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's
+[database] Database connection successful { timestamp: '2026-09-24T18:29:01.132Z', poolSize: 2 }
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's
+✅ Enhanced Embedding Service initialized
+
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's 60ms
+stderr | tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > with no header, the query is scoped to the session rather than to nothing
+[Cortex] Missing organizationUuid; RLS may return empty results.
+
+stderr | tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > search mode asks for the session's tenant, whatever the header says
+[Cortex] Missing organizationUuid; RLS may return empty results.
+
+{"level":40,"time":"2026-09-24T18:29:01.232Z","pid":2206,"hostname":"vm","context":{"userId":163,"organizationId":0},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+stderr | tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > a session with no usable organization is refused, never served
+Cortex query error: Error: [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on
+    at missingTenantScopeError (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:178:10)
+    at BoundPool.instrumentedQuery [as query] (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:372:21)
+    at EnhancedEmbeddingService.searchSimilar (/home/user/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:465:38)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at handleGraphMode (/home/user/ClinicalSageAI-2-replit/server/routes/cortexQueryRoutes.ts:298:25)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/cortexQueryRoutes.ts:158:20
+
+{"level":40,"time":"2026-09-24T18:29:01.233Z","pid":2206,"hostname":"vm","context":{"method":"POST","path":"/api/cortex/query/query","statusCode":403},"msg":"[auth-boundary] Unauthenticated request passed through auth boundary (mode=warn). This route would be rejected in enforce mode."}
+{"level":40,"time":"2026-09-24T18:29:01.237Z","pid":2206,"hostname":"vm","context":{"op":"pool.query","caller":"server/services/enhancedEmbeddingService.ts:465:38","queryPreview":"SELECT a.id, a.content, a.title, a.atom_type, 1 - (a.embedding <=> $1::vector) as similarity FROM lumen_data_atoms a JOIN organizations o ON a.organization_i...","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+ × tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > tenant A naming tenant B in the header is served nothing of B's 19ms
+   → tenant B's atom must never reach tenant A: expected '{"success":true,"mode":"graph","query…' not to contain 'wo03_2206_mufv8kme-cortex-secret-B'
+ × tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > …and is served its OWN atom: the header is ignored, not merely contained by RLS 12ms
+   → expected '{"success":true,"mode":"graph","query…' to contain 'wo03_2206_mufv8kme-cortex-secret-A'
+ × tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > with no header, the query is scoped to the session rather than to nothing 8ms
+   → expected '{"success":true,"mode":"graph","query…' to contain 'wo03_2206_mufv8kme-cortex-secret-A'
+ × tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > search mode asks for the session's tenant, whatever the header says 15ms
+   → expected [ …(2) ] to deeply equal [ …(2) ]
+ × tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > a session with no usable organization is refused, never served 17ms
+   → expected 500 to be 403 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > tenant A naming tenant B in the header is served nothing of B's
+AssertionError: tenant B's atom must never reach tenant A: expected '{"success":true,"mode":"graph","query…' not to contain 'wo03_2206_mufv8kme-cortex-secret-B'
+
+Expected: "wo03_2206_mufv8kme-cortex-secret-B"
+Received: "{"success":true,"mode":"graph","query":"wo03cortexprobe","results":{"graph":{"nodes":[],"edges":[]},"sources":[{"id":11,"title":"wo03cortexprobe wo03_2206_mufv8kme-cortex-secret-B","content":"wo03cortexprobe wo03_2206_mufv8kme-cortex-secret-B...","score":1,"atomType":"fact"}]},"metadata":{"processingTimeMs":5,"tokensUsed":0}}"
+
+ ❯ tests/db/cortex-query-tenant-header.dbtest.ts:156:77
+    154|   it("tenant A naming tenant B in the header is served nothing of B's"…
+    155|     const res = await search(tokenA, { 'x-org-uuid': uuidOf.B }, 'grap…
+    156|     expect(text(res.body), "tenant B's atom must never reach tenant A"…
+       |                                                                             ^
+    157|   });
+    158|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > …and is served its OWN atom: the header is ignored, not merely contained by RLS
+AssertionError: expected '{"success":true,"mode":"graph","query…' to contain 'wo03_2206_mufv8kme-cortex-secret-A'
+
+Expected: "wo03_2206_mufv8kme-cortex-secret-A"
+Received: "{"success":true,"mode":"graph","query":"wo03cortexprobe","results":{"graph":{"nodes":[],"edges":[]},"sources":[{"id":11,"title":"wo03cortexprobe wo03_2206_mufv8kme-cortex-secret-B","content":"wo03cortexprobe wo03_2206_mufv8kme-cortex-secret-B...","score":1,"atomType":"fact"}]},"metadata":{"processingTimeMs":4,"tokensUsed":0}}"
+
+ ❯ tests/db/cortex-query-tenant-header.dbtest.ts:164:28
+    162|     const res = await search(tokenA, { 'x-org-uuid': uuidOf.B }, 'grap…
+    163|     expect(res.status).toBe(200);
+    164|     expect(text(res.body)).toContain(SECRET.A);
+       |                            ^
+    165|   });
+    166|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > with no header, the query is scoped to the session rather than to nothing
+AssertionError: expected '{"success":true,"mode":"graph","query…' to contain 'wo03_2206_mufv8kme-cortex-secret-A'
+
+Expected: "wo03_2206_mufv8kme-cortex-secret-A"
+Received: "{"success":true,"mode":"graph","query":"wo03cortexprobe","results":{"graph":{"nodes":[],"edges":[]}},"metadata":{"processingTimeMs":0,"tokensUsed":0}}"
+
+ ❯ tests/db/cortex-query-tenant-header.dbtest.ts:173:28
+    171|     expect(res.status).toBe(200);
+    172|     expect(text(res.body)).not.toContain(SECRET.B);
+    173|     expect(text(res.body)).toContain(SECRET.A);
+       |                            ^
+    174|   });
+    175|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > search mode asks for the session's tenant, whatever the header says
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "7e604d66-fd37-4399-9ae1-e127fb243bbb",
+-   "7e604d66-fd37-4399-9ae1-e127fb243bbb",
++   "a62dccfc-c487-4262-a661-ef6d50ef6110",
++   undefined,
+  ]
+
+ ❯ tests/db/cortex-query-tenant-header.dbtest.ts:190:19
+    188|       spy.mockRestore();
+    189|     }
+    190|     expect(asked).toEqual([uuidOf.A, uuidOf.A]);
+       |                   ^
+    191|   });
+    192|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > a session with no usable organization is refused, never served
+AssertionError: expected 500 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 500
+
+ ❯ tests/db/cortex-query-tenant-header.dbtest.ts:201:24
+    199|     expect(text(res.body)).not.toContain(SECRET.B);
+    200|     expect(text(res.body)).not.toContain(SECRET.A);
+    201|     expect(res.status).toBe(403);
+       |                        ^
+    202|   });
+    203| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  18:28:54
+   Duration  6.93s (transform 4.14s, setup 80ms, import 5.93s, tests 658ms, environment 0ms)
+

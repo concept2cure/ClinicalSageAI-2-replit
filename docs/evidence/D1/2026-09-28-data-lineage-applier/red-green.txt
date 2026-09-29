@@ -1,0 +1,39 @@
+-- data_lineage_records and evidence_chain_records existed on no deployed
+-- database. Same class as governed_decision_transitions, found the same way.
+
+-- ── RED ─────────────────────────────────────────────────────────────────────
+
+$ grep -c "20260327_data_lineage_tracking" scripts/db/migration-set.mjs
+0                                    -- ABSENT from C2C_MIGRATION_FILES
+
+-- deploy-migrate runs two DDL steps and no drizzle-kit push, so the only DDL
+-- for both tables never ran. They exist on developer boxes because the file was
+-- applied by hand.
+--
+-- Consequence: lineage-dossier's loadDataLineage hits 42P01, which
+-- isMissingTable DOES match, so it returns [] silently and
+-- computeLineageConfidence withholds its +10 -- a sealed lineage report scoring
+-- lower because a table was never provisioned, not because evidence was never
+-- recorded. GET /api/data-lineage/coverage/:type/:id answers 500.
+
+-- ── GREEN ───────────────────────────────────────────────────────────────────
+
+-- Added to C2C_MIGRATION_FILES before the final sweep pair. No in-place
+-- amendment needed: the file is fully IF NOT EXISTS-guarded (13 guarded
+-- statements, no unguarded CREATE), so it is replay-safe as written -- verified
+-- rather than assumed.
+
+$ node scripts/db/deploy-migrate.mjs
+  ✓ applied: migrations/20260327_data_lineage_tracking.sql
+  ✅ Schema migration complete — safe to roll services.
+
+$ npm run ci:migration-set-order
+  OK — 319 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
+$ npm run ci:migration-drop-safety
+  OK — 319 migrations, 34 DROP(s), none re-created by the set.
+
+-- And the same side effect as 0011: the tenant-isolation sweep runs last and
+-- polices every table the set created, so a table on no applier is invisible to
+-- it and carries no policy at all. After:
+evidence_chain_records rls=true policies=1
+data_lineage_records   rls=true policies=1

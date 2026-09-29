@@ -1,0 +1,13 @@
+F-34 — GREEN: the same tests against 893a4750f as committed
+Form 3881 defaulted to Prescription Use; Form 3654 pre-certified Part 54 "no financial interests"
+
+vitest exit code: 0
+
+ ✓ server/services/__tests__/FDAFormGenerator.no-fabricated-content.test.ts > FDAFormGenerator — no fabricated regulatory content > Form 3514 does not fabricate a device classification of "Class II" 2ms
+ ✓ server/services/__tests__/FDAFormGenerator.no-fabricated-content.test.ts > FDAFormGenerator — no fabricated regulatory content > Form 3654 does not auto-certify "clinical studies WERE NOT conducted" 1ms
+ ✓ server/services/__tests__/FDAFormGenerator.no-fabricated-content.test.ts > FDAFormGenerator — no fabricated regulatory content > Form 3654 does not fabricate the certifier's title (Part 11 capacity) 0ms
+ ✓ server/services/__tests__/FDAFormGenerator.no-fabricated-content.test.ts > FDAFormGenerator — no fabricated regulatory content > Form 3654 does not auto-check "No financial interests to disclose" when none is stated 0ms
+ ✓ server/services/__tests__/FDAFormGenerator.no-fabricated-content.test.ts > FDAFormGenerator — no fabricated regulatory content > Form 3601 does not fabricate the fee amount, category, or small-business status 0ms
+ ✓ server/services/__tests__/FDAFormGenerator.no-fabricated-content.test.ts > FDAFormGenerator — no fabricated regulatory content > Form 3881 does not default a device to Prescription Use 0ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)

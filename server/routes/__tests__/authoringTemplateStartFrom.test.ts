@@ -70,6 +70,34 @@ function makeApp() {
 const GLOBAL_TPL_ID = '11111111-2222-3333-4444-555555555555';
 const ORG_TPL_ID = '99999999-8888-7777-6666-555555555555';
 
+// PF-07 (founder decision 2026-09-26): a document belongs to a project, so
+// POST /docs refuses a create with no client_program_id (400 PROJECT_REQUIRED)
+// and, per LX-20, 404s one that is not a live regulatory_programs row of the
+// caller's organization. Every create below is therefore made IN this project,
+// owned by the token's organization (7). The template behaviour under test is
+// unchanged by the project; it only has to get past the anchor check.
+const ORG_ID = 7;
+const PROJECT_ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+
+/**
+ * The answer to programInOrganization's lookup
+ *   SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+ * — a row for the owned, live project and no row for anything else. Returns
+ * null for every other statement so the caller's own mock answers it.
+ */
+function programLookup(sql: string, params?: unknown[]): { rowCount: number; rows: unknown[] } | null {
+  if (!(sql.includes('SELECT id FROM regulatory_programs') && sql.includes('deleted_at IS NULL'))) return null;
+  const owned = params?.[0] === PROJECT_ID && params?.[1] === ORG_ID;
+  return owned ? { rowCount: 1, rows: [{ id: PROJECT_ID }] } : { rowCount: 0, rows: [] };
+}
+
+type QueryResult = { rowCount: number; rows: unknown[] };
+
+/** Install `impl` as the pool, with the project-anchor lookup answered first. */
+function mockDb(impl: (sql: string, params?: unknown[]) => Promise<QueryResult>): void {
+  mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => programLookup(sql, params) ?? impl(sql, params));
+}
+
 /** All calls whose SQL matches, in issue order. */
 function calls(fragment: string): Array<{ sql: string; params: unknown[] }> {
   return mockQuery.mock.calls
@@ -79,13 +107,14 @@ function calls(fragment: string): Array<{ sql: string; params: unknown[] }> {
 
 beforeEach(() => {
   mockQuery.mockReset();
-  mockQuery.mockResolvedValue({ rowCount: 0, rows: [] });
+  // Every lookup answers zero rows — except the owned project, which exists.
+  mockDb(async () => ({ rowCount: 0, rows: [] }));
 });
 
 describe('POST /docs — create from a template', () => {
   it('seeds the skeleton from the global reference store, resolved BEFORE the document is written', async () => {
     let sectionSeq = 0;
-    mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+    mockDb(async (sql: string, params?: unknown[]) => {
       if (sql.includes('FROM intelligence.template_sections ts')) {
         return {
           rowCount: 2,
@@ -108,7 +137,7 @@ describe('POST /docs — create from a template', () => {
     const res = await request(makeApp())
       .post('/api/authoring/docs')
       .set('Authorization', await bearer())
-      .send({ title: '3.2.S Drug Substance — BX-701', module: 'M3', template_id: GLOBAL_TPL_ID });
+      .send({ title: '3.2.S Drug Substance — BX-701', module: 'M3', template_id: GLOBAL_TPL_ID, client_program_id: PROJECT_ID });
 
     expect(res.status).toBe(201);
     expect(res.body.sections_seeded).toBe(2);
@@ -127,7 +156,7 @@ describe('POST /docs — create from a template', () => {
   });
 
   it('falls back to the org template store and seeds ITS content', async () => {
-    mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+    mockDb(async (sql: string, params?: unknown[]) => {
       if (sql.includes('FROM intelligence.template_sections ts')) return { rowCount: 0, rows: [] };
       if (sql.includes('FROM authoring_templates') && sql.includes('template_content')) {
         // Tenant scoping on the org store is part of the contract.
@@ -149,7 +178,7 @@ describe('POST /docs — create from a template', () => {
     const res = await request(makeApp())
       .post('/api/authoring/docs')
       .set('Authorization', await bearer())
-      .send({ title: 'House SOP doc', module: 'M3', template_id: ORG_TPL_ID });
+      .send({ title: 'House SOP doc', module: 'M3', template_id: ORG_TPL_ID, client_program_id: PROJECT_ID });
 
     expect(res.status).toBe(201);
     expect(res.body.sections_seeded).toBe(1);
@@ -159,11 +188,13 @@ describe('POST /docs — create from a template', () => {
   });
 
   it('refuses an id that resolves nothing in either store — and writes NO document', async () => {
-    // Default mock answers every lookup with zero rows.
+    // Default mock answers every template lookup with zero rows; only the
+    // owned project exists, so the 404 below is the TEMPLATE refusal, not the
+    // project anchor's "Project not found".
     const res = await request(makeApp())
       .post('/api/authoring/docs')
       .set('Authorization', await bearer())
-      .send({ title: 'Doomed', module: 'M3', template_id: GLOBAL_TPL_ID });
+      .send({ title: 'Doomed', module: 'M3', template_id: GLOBAL_TPL_ID, client_program_id: PROJECT_ID });
 
     expect(res.status).toBe(404);
     expect(String(res.body.error)).toMatch(/No template with this id has any sections/);
@@ -175,10 +206,16 @@ describe('POST /docs — create from a template', () => {
     const res = await request(makeApp())
       .post('/api/authoring/docs')
       .set('Authorization', await bearer())
-      .send({ title: 'Doomed', module: 'M3', template_id: 'not-a-uuid' });
+      .send({ title: 'Doomed', module: 'M3', template_id: 'not-a-uuid', client_program_id: PROJECT_ID });
 
     expect(res.status).toBe(400);
     expect(calls('INSERT INTO authoring_documents')).toHaveLength(0);
+    // The project is given (PF-07), so this 400 must be the template_id
+    // refusal — without it a bare 400 would also be satisfied by
+    // PROJECT_REQUIRED. The project-anchor lookup (a valid uuid) now runs
+    // first; the malformed template id itself must still reach no query.
+    expect(String(res.body.error)).toMatch(/template_id must be a valid UUID/);
+    expect(mockQuery.mock.calls.some((c) => ((c[1] ?? []) as unknown[]).includes('not-a-uuid'))).toBe(false);
   });
 });
 
@@ -273,7 +310,7 @@ describe('POST /docs — create-with-seed is one transaction', () => {
     // was persisted. The mock fails the SECOND section insert; the handler
     // must ROLLBACK and never COMMIT.
     let sectionInserts = 0;
-    mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+    mockDb(async (sql: string, params?: unknown[]) => {
       if (sql.includes('FROM intelligence.template_sections ts')) {
         return {
           rowCount: 2,
@@ -297,7 +334,7 @@ describe('POST /docs — create-with-seed is one transaction', () => {
     const res = await request(makeApp())
       .post('/api/authoring/docs')
       .set('Authorization', await bearer())
-      .send({ title: 'Doomed halfway', module: 'M3', template_id: GLOBAL_TPL_ID });
+      .send({ title: 'Doomed halfway', module: 'M3', template_id: GLOBAL_TPL_ID, client_program_id: PROJECT_ID });
 
     expect(res.status).toBe(500);
     const sqls = mockQuery.mock.calls.map((c) => String(c[0]));

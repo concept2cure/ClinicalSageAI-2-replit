@@ -42,6 +42,20 @@ interface VersionMeta {
   storedAt: string;
 }
 
+/** A name `put` may write inside a version directory, beside its sidecar. */
+export function isStorableFileName(name: unknown): name is string {
+  return (
+    typeof name === 'string' &&
+    name.length > 0 &&
+    !name.includes('\0') &&
+    name !== '.' &&
+    name !== '..' &&
+    name !== '_meta.json' &&
+    path.basename(name) === name &&
+    !name.includes('\\')
+  );
+}
+
 function ensureDir(dirPath: string): void {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
@@ -53,6 +67,18 @@ export class LocalStorageProvider implements IStorageProvider {
 
   async put(opts: StoragePutOptions): Promise<StoragePutResult> {
     const { orgId, projectId, filename, bytes, mime, metadata = {} } = opts;
+
+    // The same rule `get` applies on the way out, applied on the way in. The
+    // name reaches here from file_uploads.original_name, which AnA's
+    // edit_spreadsheet sets from the model's new_file_name; joined unchecked,
+    // `../../…` wrote outside the version directory — into another tenant's
+    // vault or the application — and `_meta.json` replaced the sidecar that
+    // records who owns the version (INJ-PATH-002). A name that is not its own
+    // basename is refused, not rewritten: the stored name is the document's
+    // name, and a silently different one would misdescribe it.
+    if (!isStorableFileName(filename)) {
+      throw new Error('A stored file name must be a single plain name, with no path in it.');
+    }
 
     const sha256 = computeSha256(bytes);
     const sizeBytes = bytes.length;
@@ -206,6 +232,9 @@ export class LocalStorageProvider implements IStorageProvider {
   async isAvailable(): Promise<boolean> {
     try {
       ensureDir(VAULT_ROOT);
+      // Existing is not enough: a volume mounted over storage/ as another user
+      // exists and refuses every write.
+      fs.accessSync(VAULT_ROOT, fs.constants.W_OK);
       return true;
     } catch {
       return false;

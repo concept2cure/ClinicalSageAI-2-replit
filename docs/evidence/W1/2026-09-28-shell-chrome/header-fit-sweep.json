@@ -1,0 +1,218 @@
+[
+ {
+  "view": "closed 1920 pdev",
+  "here": "Product development (PDEV \u2192 IND)",
+  "fits": true,
+  "orgW": 215,
+  "cmdkW": 230,
+  "overflow": false
+ },
+ {
+  "view": "closed 1920 identity-console",
+  "here": "Enterprise identity (SSO / SCIM)",
+  "fits": true,
+  "orgW": 215,
+  "cmdkW": 230,
+  "overflow": false
+ },
+ {
+  "view": "closed 1920 projects",
+  "here": "Projects",
+  "fits": true,
+  "orgW": 215,
+  "cmdkW": 230,
+  "overflow": false
+ },
+ {
+  "view": "closed 1440 pdev",
+  "here": "Product development (PDEV \u2192 IND)",
+  "fits": true,
+  "orgW": 203,
+  "cmdkW": 217,
+  "overflow": false
+ },
+ {
+  "view": "closed 1440 identity-console",
+  "here": "Enterprise identity (SSO / SCIM)",
+  "fits": true,
+  "orgW": 215,
+  "cmdkW": 230,
+  "overflow": false
+ },
+ {
+  "view": "closed 1440 projects",
+  "here": "Projects",
+  "fits": true,
+  "orgW": 215,
+  "cmdkW": 230,
+  "overflow": false
+ },
+ {
+  "view": "closed 1280 pdev",
+  "here": "Product development (PDEV \u2192 IND)",
+  "fits": true,
+  "orgW": 124,
+  "cmdkW": 136,
+  "overflow": false
+ },
+ {
+  "view": "closed 1280 identity-console",
+  "here": "Enterprise identity (SSO / SCIM)",
+  "fits": true,
+  "orgW": 168,
+  "cmdkW": 181,
+  "overflow": false
+ },
+ {
+  "view": "closed 1280 projects",
+  "here": "Projects",
+  "fits": true,
+  "orgW": 215,
+  "cmdkW": 230,
+  "overflow": false
+ },
+ {
+  "view": "closed 1024 pdev",
+  "here": "Product development (PDEV \u2192 IND)",
+  "fits": true,
+  "orgW": 34,
+  "cmdkW": 69,
+  "overflow": false
+ },
+ {
+  "view": "closed 1024 identity-console",
+  "here": "Enterprise identity (SSO / SCIM)",
+  "fits": true,
+  "orgW": 34,
+  "cmdkW": 69,
+  "overflow": false
+ },
+ {
+  "view": "closed 1024 projects",
+  "here": "Projects",
+  "fits": true,
+  "orgW": 34,
+  "cmdkW": 69,
+  "overflow": false
+ },
+ {
+  "view": "ana 1920 pdev",
+  "here": "Product development (PDEV \u2192 IND)",
+  "fits": true,
+  "orgW": 215,
+  "cmdkW": 230,
+  "overflow": false
+ },
+ {
+  "view": "ana 1920 identity-console",
+  "here": "Enterprise identity (SSO / SCIM)",
+  "fits": true,
+  "orgW": 215,
+  "cmdkW": 230,
+  "overflow": false
+ },
+ {
+  "view": "ana 1920 projects",
+  "here": "Projects",
+  "fits": true,
+  "orgW": 215,
+  "cmdkW": 230,
+  "overflow": false
+ },
+ {
+  "view": "ana 1600 pdev",
+  "here": "Product development (PDEV \u2192 IND)",
+  "fits": true,
+  "orgW": 111,
+  "cmdkW": 122,
+  "overflow": false
+ },
+ {
+  "view": "ana 1600 identity-console",
+  "here": "Enterprise identity (SSO / SCIM)",
+  "fits": true,
+  "orgW": 154,
+  "cmdkW": 167,
+  "overflow": false
+ },
+ {
+  "view": "ana 1600 projects",
+  "here": "Projects",
+  "fits": true,
+  "orgW": 215,
+  "cmdkW": 230,
+  "overflow": false
+ },
+ {
+  "view": "ana 1440 pdev",
+  "here": "Product development (PDEV \u2192 IND)",
+  "fits": true,
+  "orgW": 123,
+  "cmdkW": 69,
+  "overflow": false
+ },
+ {
+  "view": "ana 1440 identity-console",
+  "here": "Enterprise identity (SSO / SCIM)",
+  "fits": true,
+  "orgW": 212,
+  "cmdkW": 69,
+  "overflow": false
+ },
+ {
+  "view": "ana 1440 projects",
+  "here": "Projects",
+  "fits": true,
+  "orgW": 215,
+  "cmdkW": 69,
+  "overflow": false
+ },
+ {
+  "view": "ana 1280 pdev",
+  "here": "Product development (PDEV \u2192 IND)",
+  "fits": true,
+  "orgW": 28,
+  "cmdkW": 69,
+  "overflow": false
+ },
+ {
+  "view": "ana 1280 identity-console",
+  "here": "Enterprise identity (SSO / SCIM)",
+  "fits": true,
+  "orgW": 52,
+  "cmdkW": 69,
+  "overflow": false
+ },
+ {
+  "view": "ana 1280 projects",
+  "here": "Projects",
+  "fits": true,
+  "orgW": 215,
+  "cmdkW": 69,
+  "overflow": false
+ },
+ {
+  "view": "ana 1100 pdev",
+  "here": "Product development (PDEV \u2192 IND)",
+  "fits": false,
+  "orgW": 28,
+  "cmdkW": 69,
+  "overflow": false
+ },
+ {
+  "view": "ana 1100 identity-console",
+  "here": "Enterprise identity (SSO / SCIM)",
+  "fits": false,
+  "orgW": 28,
+  "cmdkW": 69,
+  "overflow": false
+ },
+ {
+  "view": "ana 1100 projects",
+  "here": "Projects",
+  "fits": true,
+  "orgW": 34,
+  "cmdkW": 69,
+  "overflow": false
+ }
+]

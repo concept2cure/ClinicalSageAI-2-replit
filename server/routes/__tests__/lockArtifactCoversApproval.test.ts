@@ -194,6 +194,34 @@ describe('POST /approve-artifact applies the P12 review quorum', () => {
     expect(approveWrite()).toBeUndefined();
   });
 
+  it('a decision recorded against an earlier version refuses the approval: the version reviewed must be the version approved', async () => {
+    st.row = { ...REVIEW }; // version 3
+    st.execute = async (text) => ({
+      rows: /concept2cure_review_assignments/.test(text)
+        ? [{ review_round: 1, status: 'completed' }]
+        : /concept2cure_review_decisions/.test(text)
+          ? [{ decision: 'approve', version_reviewed: 2 }]
+          : [],
+    });
+    const res = await approve();
+    expect(res.body.approved).toBe(false);
+    expect(res.body.message).toMatch(/recorded against version 2; the artifact is now version 3/);
+    expect(approveWrite()).toBeUndefined();
+  });
+
+  it('decisions on the current version approve it and record that version', async () => {
+    st.row = { ...REVIEW };
+    st.execute = async (text) => ({
+      rows: /concept2cure_review_assignments/.test(text)
+        ? [{ review_round: 1, status: 'completed' }]
+        : /concept2cure_review_decisions/.test(text)
+          ? [{ decision: 'approve', version_reviewed: 3 }]
+          : [],
+    });
+    await approve();
+    expect(approveWrite()?.approvedVersionId).toBe(3);
+  });
+
   it('a quorum that cannot be read is not met: refused, nothing recorded', async () => {
     st.row = { ...REVIEW };
     st.execute = async () => {
@@ -211,7 +239,7 @@ describe('POST /approve-artifact applies the P12 review quorum', () => {
       rows: /concept2cure_review_assignments/.test(text)
         ? [{ review_round: 1, status: 'completed' }]
         : /concept2cure_review_decisions/.test(text)
-          ? [{ decision: 'approve' }]
+          ? [{ decision: 'approve', version_reviewed: 3 }]
           : [],
     });
     const res = await approve();

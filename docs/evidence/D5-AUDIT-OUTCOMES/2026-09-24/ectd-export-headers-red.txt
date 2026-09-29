@@ -1,0 +1,20 @@
+# RED — ectd-export-headers: tests run against the unfixed implementation (server/routes/ectd-export.ts server/services/ectd/assemble-from-core.ts server/services/audit/audit-write-outcome.ts stashed at 5ecf194c4)
+ × server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > a lost row: persisted false and the stable code, never the store text 4ms
+ × server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > a written row: persisted true and no code 1ms
+ × server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > no outcome (no audited write happened): no headers 1ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 1: no options → ZIP-level validation only (backward compat) 29ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 2: options.region=FDA + non-regional leaves → MISSING_REGIONAL_FDA finding 8ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 3: priorSequenceNumbers=["0000","0002"] + sequenceNumber="0003" → SEQUENCE_GAP for 0001 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 4: valid leaf array → leaf-only ValidationResult 5ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 5: authenticated principal WITHOUT organizationId → 403 (route uses requireTenant) 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 6: invalid region string ("XX") → 400 from zod enum guard 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > GET /api/ectd/export/by-run/:runId/signed > returns the §11.50 manifestation of the release signature (review P11-4) 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the canonical export > returns the package bytes as a zip when it validates 5ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the canonical export > refuses a package that fails structural validation, and returns no zip 5ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the canonical export > refuses an incomplete package when requireComplete is set 4ms
+ × tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the assembly's audit rows > a download whose rows were lost says so in its headers, and still returns the package 8ms
+ × tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the assembly's audit rows > a download whose rows were written says so, with no code 3ms
+ × tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the assembly's audit rows > a refused (invalid) package carries the outcome in its JSON body 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  6 failed | 10 passed (16)

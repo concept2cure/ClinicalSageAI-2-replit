@@ -4017,7 +4017,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Report a protocol deviation. Category + severity (and whether it affects safety) drive the deterministic reportability + timeliness assessment (45 CFR 46.108 / ICH E6). Governed + audited.",
+      "description": "Record a protocol deviation. Severity and affects_safety are a PERSON'S assessment: pass them only when the user has stated them — never propose, infer or default them yourself. Omitted, the deviation is recorded as NOT ASSESSED; it then reports 'assessment_required' and cannot be closed until a person assesses it on the deviation register. Returns what the assessment indicates (prompt IRB report indicated / not indicated / assessment required) with its basis, and the fixed regulatory clocks that apply only if their condition is separately determined (EU CTR Art. 52 serious breach, 7 days; 21 CFR 812.150(a)(4) device emergency deviation, 5 working days). There are no other fixed day counts — relay the status and basis as given. Governed + audited.",
       "scope": "project",
       "governed": true,
       "renderer": "result-card",
@@ -4045,13 +4045,13 @@
           "name": "severity",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "Only the severity the user stated. Omit if they did not."
         },
         {
           "name": "affects_safety",
           "type": "boolean",
           "required": false,
-          "description": ""
+          "description": "Only if the user stated whether it affected subject safety. Omit if not."
         },
         {
           "name": "root_cause",
@@ -34778,10 +34778,10 @@
         "id": "qms",
         "label": "Quality management"
       },
-      "description": "Approve a draft / in-review QMS document and flip status to 'effective'. Stamps approver_id + approved_at; sets effective_date to today (or to the provided override).",
+      "description": "AnA cannot sign. Approving a QMS controlled document makes it effective and is an electronic signature (21 CFR 11.50): it needs the approver's password and second factor, which a chat turn cannot collect. This tool writes nothing; it tells the user to approve on the document in the Quality register. Use it only to explain that.",
       "scope": "project",
       "governed": true,
-      "renderer": "document-canvas",
+      "renderer": "result-card",
       "example": "",
       "inputs": [
         {
@@ -34830,7 +34830,7 @@
         "id": "qms",
         "label": "Quality management"
       },
-      "description": "Create a controlled QMS document (SOP, WI, form, spec, policy, manual, protocol). Starts in draft; flip to effective via approve_qms_document. Use when the user agrees to write a new procedure or AnA derives one from regulatory analysis.",
+      "description": "Create a controlled QMS document (SOP, WI, form, spec, policy, manual, protocol). Starts in draft. It becomes effective only when a person other than the author approves it with an electronic signature in the Quality register; AnA cannot do that. Use when the user agrees to write a new procedure or AnA derives one from regulatory analysis.",
       "scope": "global",
       "governed": true,
       "renderer": "document-canvas",
@@ -36313,7 +36313,7 @@
           "name": "leaves",
           "type": "array",
           "required": true,
-          "description": "List of eCTD leaves. Each leaf is { ctd_section, operation, source_path, file_name, title }."
+          "description": "List of eCTD leaves. Each leaf is { ctd_section, operation, source_path, file_name, title, modified_file }. new / append / replace leaves carry the file to ship in source_path. A delete (withdrawal) ships no content: omit source_path and gi"
         },
         {
           "name": "output_dir",

@@ -1,0 +1,35 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > sanitizeLine > flattens newlines so a value cannot forge extra lines 2ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > sanitizeLine > strips C0/C1 control characters 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > sanitizeLine > neutralises the fence marker so a value cannot close the block 1ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > sanitizeLine > caps length with an ellipsis rather than truncating silently 1ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > sanitizeLine > renders non-strings without throwing 1ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > buildSurfaceContextBlock — honesty > returns nothing at all when the screen published nothing 1ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > buildSurfaceContextBlock — honesty > returns nothing when there is neither a surface nor a summary 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > buildSurfaceContextBlock — honesty > includes exactly what was published, and nothing more 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > buildSurfaceContextBlock — honesty > omits empty facts rather than emitting hollow keys 1ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > buildSurfaceContextBlock — honesty > keeps a false or zero fact — they are values, not absences 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > buildSurfaceContextBlock — honesty > tells the model this is data about the user, not instruction 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > buildSurfaceContextBlock — containment > a hostile summary cannot escape the fence or forge an instruction 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > buildSurfaceContextBlock — containment > a hostile fact key or action cannot break out either 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > buildSurfaceContextBlock — containment > bounds the block no matter how large the payload is 10ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > buildSurfaceContextBlock — containment > ignores a facts value that is an array or object rather than exploding 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > buildSurfaceContextBlock — containment > ignores non-array available_actions 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > screen_actions — the operable vocabulary > renders ids with labels, required-param stars, and enums 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > screen_actions — the operable vocabulary > sanitizes hostile entries and drops malformed ones, capped 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > screen_actions — the operable vocabulary > omits the section entirely when the list is absent or empty 1ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > selection — what the user selected, as quoted data (SEC-C-4 (a)) > renders a block from a selection alone, inside the fence, labelled as quoted data 1ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > selection — what the user selected, as quoted data (SEC-C-4 (a)) > sits beside the rest of the screen state in the same fence 1ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > selection — what the user selected, as quoted data (SEC-C-4 (a)) > a hostile selection cannot close the fence, start a line, or forge an instruction 2ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > selection — what the user selected, as quoted data (SEC-C-4 (a)) > an embedded quote cannot end the quotation and pose as text outside it 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > selection — what the user selected, as quoted data (SEC-C-4 (a)) > caps the selection at 1000 characters, with an ellipsis 0ms
+ ✓ server/services/ana-ri/__tests__/surface-context-block.test.ts > selection — what the user selected, as quoted data (SEC-C-4 (a)) > an absent, empty, blank or non-string selection changes nothing 0ms
+
+ Test Files  1 passed (1)
+      Tests  25 passed (25)
+   Start at  19:13:00
+   Duration  349ms (transform 116ms, setup 89ms, import 54ms, tests 29ms, environment 0ms)
+

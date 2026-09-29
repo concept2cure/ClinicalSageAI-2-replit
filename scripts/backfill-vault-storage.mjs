@@ -20,10 +20,10 @@
  * Resumable: rows that already carry a storage_version_id are not candidates,
  * so a rerun continues a partial run and a second full run finds nothing.
  *
- * Usage:
- *   node scripts/backfill-vault-storage.mjs --org 42
- *   node scripts/backfill-vault-storage.mjs --org 42 --apply
- *   node scripts/backfill-vault-storage.mjs --org 42 --limit 200 --apply
+ * Usage (tsx, because it imports the server's TypeScript):
+ *   npm run db:backfill-vault-storage -- --org 42
+ *   npm run db:backfill-vault-storage -- --org 42 --apply
+ *   npm run db:backfill-vault-storage -- --org 42 --limit 200 --apply
  */
 import process from 'node:process';
 
@@ -37,16 +37,35 @@ const limit = Number(arg('limit', '50'));
 const apply = process.argv.includes('--apply');
 
 if (!Number.isInteger(orgId) || orgId <= 0) {
-  console.error('Usage: node scripts/backfill-vault-storage.mjs --org <id> [--limit N] [--apply]');
+  console.error('Usage: npm run db:backfill-vault-storage -- --org <id> [--limit N] [--apply]');
   console.error('  --org is required and must be a positive integer (one tenant per run).');
   process.exit(2);
 }
 
-const { pool } = await import('../server/db/index.ts');
-const { getStorageProvider } = await import('../server/services/storage/index.ts');
-const { migrateVaultStorage } = await import(
-  '../server/services/vault/storage-migration.service.ts'
-);
+/* Imported AFTER the argument check, so a usage error needs no database.
+   The paths are the ones tsx resolves (`.js` → the `.ts` source), as in
+   scripts/tenant-storage-report.ts. This first shipped importing
+   '../server/db/index.ts' — a module that has never existed — so the script
+   could not start at all, and the service's own tests stayed green because
+   they never ran this entry point. server/services/vault/__tests__/
+   backfill-vault-storage-cli.test.ts runs it now. */
+const { pool } = await import('../server/db.js');
+const { getStorageProvider } = await import('../server/services/storage/index.js');
+const { migrateVaultStorage } = await import('../server/services/vault/storage-migration.service.js');
+
+/* Prove the database is there before examining anything. server/db.js's
+   `pool` is a lazy proxy — never null, so a null check cannot see a missing
+   database; the first use throws "Database connection not available" instead.
+   Use it once, and say what that means rather than printing a stack trace. */
+try {
+  await pool.query('SELECT 1');
+} catch (err) {
+  const why = /Database connection not available/.test(String(err?.message ?? err))
+    ? 'No database is configured (DATABASE_URL / APP_DATABASE_URL, or .env.local / .env in the working directory).'
+    : `The database could not be reached: ${err?.message ?? err}`;
+  console.error(`[backfill-vault-storage] ${why} Nothing was examined.`);
+  process.exit(1);
+}
 
 console.log(`[backfill-vault-storage] org=${orgId} limit=${limit} mode=${apply ? 'APPLY' : 'dry-run'}`);
 

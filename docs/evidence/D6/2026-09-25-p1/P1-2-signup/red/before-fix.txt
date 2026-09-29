@@ -1,0 +1,10 @@
+ FAIL  server/routes/__tests__/auth-signup-verification.test.ts [ server/routes/__tests__/auth-signup-verification.test.ts ]
+Error: Cannot find module '/server/services/email-verification' imported from /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/auth-signup-verification.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ FAIL  client/src/concept2cure/auth/__tests__/SignupVerifyStep.test.tsx [ client/src/concept2cure/auth/__tests__/SignupVerifyStep.test.tsx ]
+Error: Failed to resolve import "../SignupVerifyStep" from "client/src/concept2cure/auth/__tests__/SignupVerifyStep.test.tsx". Does the file exist?
+ FAIL  client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx [ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx ]
+Error: Failed to resolve import "../VerifyEmail" from "client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx". Does the file exist?
+ Test Files  3 failed (3)
+      Tests  no tests
+exit=1

@@ -1,0 +1,291 @@
+# P1-7b — the neighbouring suites that import or mock the changed modules, after the change (2026-09-26T13:00Z)
+# NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts server/services/vault/__tests__/document-chunking.tenancy.test.ts server/startup/__tests__/document-catalog-bootstrap.test.ts server/__tests__/routes/smoke.test.ts server/middleware/__tests__/strictPositiveInt.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > a refused foreign document leaves the other tenant's ledger row alone
+{
+  "timestamp": "2026-09-26T13:00:01.945Z",
+  "level": "warn",
+  "message": "[document-chunking] Vault chunking failed — recorded on the catalog ledger",
+  "context": {
+    "documentId": "5b1f0d1e-0000-4000-8000-00000000abcd",
+    "error": "Document is not in the caller's organization; refusing to index it."
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > refuses a document that is not in the caller's organization, writing nothing 46ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > refuses a foreign document before any embedding call 4ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > embeds an owned document under that organization's tenant scope 2ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > every statement that touches vault.document_chunks is bound to the organization 4ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > a refused foreign document leaves the other tenant's ledger row alone 3ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > the ledger write for an owned document is bound to the organization too 1ms
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > currentTenantOrgUuid — the UUID tenant key, from the verified tenant scope only > returns the organization UUID the auth boundary verified, without a query 27ms
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > currentTenantOrgUuid — the UUID tenant key, from the verified tenant scope only > reads the session's own organization row when the scope carries no UUID 2ms
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > currentTenantOrgUuid — the UUID tenant key, from the verified tenant scope only > does not pass a scope value that is not a UUID to a uuid column; it asks the org row 3ms
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > currentTenantOrgUuid — the UUID tenant key, from the verified tenant scope only > answers null when the session names an organization with no row 2ms
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > currentTenantOrgUuid — the UUID tenant key, from the verified tenant scope only > fails closed with no scope, and under the system and pre-auth scopes 2ms
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > Compliance Routes > should define audit trail routes 2ms
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > Cognitive Ecosystem Routes > should define cognitive ecosystem routes 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > FHIR Routes > should define FHIR routes 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > Compatibility Facade Routes > should define compatibility facade contracts 1ms
+stdout | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+{
+  "timestamp": "2026-09-26T13:00:03.552Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T13:00:03.553Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+{
+  "timestamp": "2026-09-26T13:00:03.554Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/startup/__tests__/document-catalog-bootstrap.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/startup/__tests__/document-catalog-bootstrap.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/startup/__tests__/document-catalog-bootstrap.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes the verified UUID, not the header
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes the verified UUID, not the header
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes the verified UUID, not the header
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > names both feature keys, so the line is searchable against the toggle table 2ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > when off, says what is inactive AND both ways to turn it on 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > does not claim every tenant is off — a per-org enablement is invisible here 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > distinguishes an env override from a toggle so the source of ON is not guessed at 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > says passage search has no index when the catalog is on but chunking is not 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > confirms the whole surface when both are on 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > a store it could not read is not a feature somebody turned off > says UNKNOWN, and says the flag was not turned off 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > a store it could not read is not a feature somebody turned off > an ordinary off still reads as off, with the two ways to turn it on 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > a store it could not read is not a feature somebody turned off > one unreadable flag is enough to stop claiming the other is simply off 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > bootstrapDocumentCatalogToggles — a row it could not create is said, not swallowed > warns with the key and the reason when a toggle row cannot be created 2ms
+ ✓ server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable 1638ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > protects /api/cortex/chat with requireAuth 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > protects /api/ana-cortex/regulatory-analysis with requireAuth 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > keeps /api/knowledge-base generation endpoints behind authenticateToken 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > mounts core workflow routes in server index 1ms
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes no UUID at all when only the header offers one
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes no UUID at all when only the header offers one
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes no UUID at all when only the header offers one
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes the verified UUID, not the header 1804ms
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > still keeps the integer org id from the JWT
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > still keeps the integer org id from the JWT
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > still keeps the integer org id from the JWT
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes no UUID at all when only the header offers one 180ms
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > still keeps the integer org id from the JWT 191ms
+ ✓ server/middleware/__tests__/strictPositiveInt.test.ts > strictPositiveInt > accepts clean positive integer strings 2ms
+ ✓ server/middleware/__tests__/strictPositiveInt.test.ts > strictPositiveInt > accepts integer number values too 0ms
+ ✓ server/middleware/__tests__/strictPositiveInt.test.ts > strictPositiveInt > rejects zero 1ms
+ ✓ server/middleware/__tests__/strictPositiveInt.test.ts > strictPositiveInt > rejects values that parseInt would silently truncate 0ms
+ ✓ server/middleware/__tests__/strictPositiveInt.test.ts > strictPositiveInt > rejects missing / non-numeric values 0ms
+ ✓ server/middleware/__tests__/strictPositiveInt.test.ts > strictPositiveInt > rejects values beyond safe integer range 0ms
+ ✓ server/middleware/__tests__/strictPositiveInt.test.ts > getRequestDbClient > returns the request-scoped client 0ms
+ ✓ server/middleware/__tests__/strictPositiveInt.test.ts > getRequestDbClient > fails closed for an invalid request client: undefined 1ms
+ ✓ server/middleware/__tests__/strictPositiveInt.test.ts > getRequestDbClient > fails closed for an invalid request client: null 0ms
+ ✓ server/middleware/__tests__/strictPositiveInt.test.ts > getRequestDbClient > fails closed for an invalid request client: {} 0ms
+ ✓ server/middleware/__tests__/strictPositiveInt.test.ts > requireTenantContext bootstrap scope contract > scopes tenant and membership lookups but authorizes from membership 0ms
+ ✓ server/middleware/__tests__/strictPositiveInt.test.ts > organization membership availability posture > fails closed when live membership cannot be verified 0ms
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+{
+  "timestamp": "2026-09-26T13:00:04.937Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat
+{
+  "timestamp": "2026-09-26T13:00:05.054Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the store is missing (42P01)
+{
+  "timestamp": "2026-09-26T13:00:06.020Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42P01",
+    "detail": "relation \"projects\" does not exist"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when a column is missing (42703)
+{
+  "timestamp": "2026-09-26T13:00:06.022Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42703",
+    "detail": "column \"owner_id\" does not exist"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when permission is refused (42501)
+{
+  "timestamp": "2026-09-26T13:00:06.024Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42501",
+    "detail": "permission denied for table projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the connection drops (08006)
+{
+  "timestamp": "2026-09-26T13:00:06.026Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "08006",
+    "detail": "connection failure"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the statement is cancelled (57014)
+{
+  "timestamp": "2026-09-26T13:00:06.028Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "57014",
+    "detail": "canceling statement due to statement timeout"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > denies on a genuine no-match, with no error 6ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > denies an unparseable project id 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the store is missing (42P01) 3ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when a column is missing (42703) 2ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when permission is refused (42501) 2ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the connection drops (08006) 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the statement is cancelled (57014) 2ms
+stdout | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat
+Loaded 0 academic documents
+
+stdout | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+{
+  "timestamp": "2026-09-26T13:00:08.579Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+{
+  "timestamp": "2026-09-26T13:00:08.579Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+{
+  "timestamp": "2026-09-26T13:00:08.594Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+{
+  "timestamp": "2026-09-26T13:00:08.775Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /ana (AnA 1.0 RI integration)",
+  "context": {}
+}
+
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat 4805ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > enforces auth on POST /api/ana-cortex/regulatory-analysis 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx 542ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > enforces auth on GET /api/knowledge-base/search-connectors (DMS cross-repo search mount) 4ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > mounts beta-critical route families via bootstrap registrars 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > wires the ui-v2 backend gap closures (DMS search, rollup, registrations, validation-kit, HAQ, eTMF) 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps concept2cure router tenant-scoped and envelope-based 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps ana-ri core endpoints reachable via mount* functions 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps CERV2, document data center, and eCTD/IND entry routes visible 0ms
+
+ Test Files  6 passed (6)
+      Tests  61 passed (61)
+   Start at  13:00:01
+   Duration  7.62s (transform 6.73s, setup 385ms, import 4.29s, tests 9.33s, environment 1ms)
+
+exit=0

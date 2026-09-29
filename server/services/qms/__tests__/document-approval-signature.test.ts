@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   computeQmsDocumentContentDigest,
+  computeQmsDocumentRetirementDigest,
   QMS_DOCUMENT_APPROVAL_MEANING,
   QMS_DOCUMENT_BINDING_BASIS,
   type QmsDocumentRow,
@@ -53,6 +54,32 @@ describe('computeQmsDocumentContentDigest', () => {
   it('treats a Date and its YYYY-MM-DD string as the same review date', () => {
     const asDate = computeQmsDocumentContentDigest({ ...base, next_review_date: new Date('2027-01-01T00:00:00.000Z') });
     expect(asDate).toBe(computeQmsDocumentContentDigest(base));
+  });
+});
+
+/* P1-29 / DP-32: retiring a controlled document is a signed transition. Its
+   signature binds the same version content, with the stamp the retirement
+   itself writes (metadata.retired, which carries this digest) excluded — the
+   same reason the approval recipe excludes metadata.approval. The approval
+   recipe is NOT changed: a retired document can be revised back to draft and
+   approved again, and that approval's digest keeps covering the row as it is. */
+describe('computeQmsDocumentRetirementDigest', () => {
+  it('is the version-content digest with the retirement stamp excluded, so it recomputes from the stored retired row', () => {
+    const d = computeQmsDocumentContentDigest(base);
+    expect(computeQmsDocumentRetirementDigest(base)).toBe(d);
+    const retired: QmsDocumentRow = {
+      ...base,
+      status: 'retired',
+      updated_at: '2026-09-26T12:00:00.000Z',
+      metadata: { ...base.metadata, retired: { reason: 'Superseded by SOP-002.', meaning: 'APPROVED', contentDigest: d, by: 7 } },
+    };
+    expect(computeQmsDocumentRetirementDigest(retired)).toBe(d);
+  });
+
+  it('still changes when the controlled content changes, and still ignores metadata.approval', () => {
+    const d = computeQmsDocumentRetirementDigest(base);
+    expect(computeQmsDocumentRetirementDigest({ ...base, title: 'Design control, rev B' })).not.toBe(d);
+    expect(computeQmsDocumentRetirementDigest({ ...base, metadata: { ...base.metadata, approval: { reason: 'x' } } })).toBe(d);
   });
 });
 

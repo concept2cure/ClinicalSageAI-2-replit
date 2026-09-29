@@ -68,7 +68,7 @@ vi.mock('../../../lib/unified-ai-client.js', () => ({
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { resolveReleaseSignatureStatus } from '../release-signature-status';
+import { resolveReleaseSignatureStatus, signingNowResolvesRelease } from '../release-signature-status';
 
 const ORG = 42;
 const SUBMISSION = 7;
@@ -530,6 +530,143 @@ describe('a release signed on the submissions spine', () => {
     expect(status.verdict).toBe('unsigned');
     expect(mockSequenceSpine).not.toHaveBeenCalled();
   });
+});
+
+/**
+ * P11-28b. The Dispatch button records the sequence's dispatch signature and
+ * then dispatches, and on the submissions spine that signature IS the release
+ * signature. Whether signing now can satisfy the requirement depends on which
+ * spine decided — the orchestrator's verdict stands unless it is `unsigned` —
+ * so the resolver reports it, and signingNowResolvesRelease reads it. These run
+ * through the real resolver, so `decidedBy` is what the precedence produced,
+ * not what a fixture asserted.
+ */
+describe('which spine decided — and so whether the dispatch signature can supply the release', () => {
+  function noOrchestratorRuns() {
+    runsAre();
+    unlinkedRunsAre(0);
+  }
+  const resolveThis = () =>
+    resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      sequenceId: SEQUENCE_ID,
+    });
+
+  it('neither spine holds one: the sequence decides, and signing now supplies it', async () => {
+    // The state every IND/NDA/BLA/MAA sequence is in before its first dispatch.
+    noOrchestratorRuns();
+    const status = await resolveThis();
+    expect(status.verdict).toBe('unsigned');
+    expect(status.decidedBy).toBe('sequence');
+    expect(signingNowResolvesRelease(status), 'the Dispatch button is gated on a signature its own click creates').toBe(true);
+  });
+
+  it('a revoked sequence signature: the new one is newest, so signing now supplies it', async () => {
+    noOrchestratorRuns();
+    mockSequenceSpine.mockResolvedValue({ verdict: 'revoked', detail: 'superseded' });
+    const status = await resolveThis();
+    expect(status.decidedBy).toBe('sequence');
+    expect(signingNowResolvesRelease(status)).toBe(true);
+  });
+
+  it('a sequence signature that no longer binds its content is NOT resolved by signing again', async () => {
+    // On a frozen sequence this is evidence the leaves changed after a dispatch
+    // signature. A fresh signature would bind the changed content and read
+    // `signed` — which is exactly why it must not be offered: it would paper
+    // over the tamper evidence the gate exists to surface.
+    noOrchestratorRuns();
+    mockSequenceSpine.mockResolvedValue({ verdict: 'invalid', detail: 'changed after signing' });
+    const status = await resolveThis();
+    expect(status.decidedBy).toBe('sequence');
+    expect(signingNowResolvesRelease(status)).toBe(false);
+  });
+
+  it('an orchestrator run awaiting its signer: the sequence spine is never consulted, so signing it cannot help', async () => {
+    runsAre('run-a');
+    mockResolveSignedPackageForExport.mockResolvedValue({
+      ok: false,
+      refusal: 'awaiting-signature',
+      detail: 'the package.sign step has not been signed',
+    });
+    const status = await resolveThis();
+    expect(status.verdict).toBe('awaiting');
+    expect(status.decidedBy).toBe('orchestrator');
+    expect(
+      signingNowResolvesRelease(status),
+      'offering the button here records a signature the resolver will never read, then refuses',
+    ).toBe(false);
+  });
+
+  it('a REVOKED orchestrator signature: revoked is resolvable on the sequence spine, and precedence is what says no here', async () => {
+    // The case that tests the precedence rule itself. `revoked` IS in the set
+    // signing resolves — on the sequence spine, where the new signature becomes
+    // the newest. Here the orchestrator decided, the sequence spine is never
+    // consulted, and a signature recorded on it would never be read: the click
+    // would sign, then be refused. Only `decidedBy` tells the two apart.
+    runsAre('run-a');
+    mockResolveSignedPackageForExport.mockResolvedValue({
+      ok: false,
+      refusal: 'signature-revoked',
+      detail: 'the package.sign signature was revoked',
+    });
+    const status = await resolveThis();
+    expect(status.verdict).toBe('revoked');
+    expect(status.decidedBy).toBe('orchestrator');
+    expect(signingNowResolvesRelease(status)).toBe(false);
+    expect(mockSequenceSpine, 'the sequence spine was consulted over a definite orchestrator verdict').not.toHaveBeenCalled();
+  });
+
+  it('a tampered orchestrator signature: the orchestrator decides, and nothing is offered over it', async () => {
+    runsAre('run-a');
+    mockResolveSignedPackageForExport.mockResolvedValue({
+      ok: false,
+      refusal: 'digest-drift',
+      detail: 'the package content changed after signing',
+    });
+    const status = await resolveThis();
+    expect(status.decidedBy).toBe('orchestrator');
+    expect(signingNowResolvesRelease(status)).toBe(false);
+  });
+
+  it('a failed lookup: undetermined is not absent, and nothing is offered on it', async () => {
+    mockDbExecute.mockRejectedValue(new Error('connection reset'));
+    const status = await resolveThis();
+    expect(status.verdict).toBe('undetermined');
+    expect(status.decidedBy).toBe('orchestrator');
+    expect(signingNowResolvesRelease(status)).toBe(false);
+  });
+
+  it('no sequence id: the resolver cannot see a sequence signature, so it is the orchestrator that decided', async () => {
+    noOrchestratorRuns();
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+    });
+    expect(status.verdict).toBe('unsigned');
+    expect(status.decidedBy).toBe('orchestrator');
+    expect(signingNowResolvesRelease(status)).toBe(false);
+  });
+});
+
+describe('signingNowResolvesRelease — the whole table', () => {
+  const verdicts = ['signed', 'unsigned', 'awaiting', 'invalid', 'revoked', 'undetermined'] as const;
+  const RESOLVED_BY_SIGNING = new Set(['sequence:unsigned', 'sequence:revoked']);
+
+  for (const decidedBy of ['sequence', 'orchestrator', undefined] as const) {
+    for (const verdict of verdicts) {
+      const key = `${decidedBy}:${verdict}`;
+      const expected = RESOLVED_BY_SIGNING.has(key);
+      it(`${decidedBy ?? '(unreported)'} / ${verdict} → ${expected}`, () => {
+        // An unreported spine is never assumed to be the sequence: absent
+        // evidence of which spine decided is not permission to offer a
+        // signature the resolver may never read.
+        expect(signingNowResolvesRelease({ verdict, decidedBy })).toBe(expected);
+      });
+    }
+  }
 });
 
 describe('the assessor actually passes the sequence', () => {

@@ -1,0 +1,91 @@
+# The deploy gate's scan on the merged tree (after 7925a33d3 arrived upstream)
+
+
+Report Summary
+
+┌────────────────────────────────────────────────────┬────────────┬───────────────────┐
+│                       Target                       │    Type    │ Misconfigurations │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ .claude/skills/gstack/.github/docker/Dockerfile.ci │ dockerfile │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ Dockerfile.optimized                               │ dockerfile │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ infra/k8s/bff-with-predicate-shadow.yaml           │ kubernetes │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/bootstrap                                │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/bootstrap/main.tf                        │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/environments/production                  │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/environments/staging                     │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/alb/main.tf                      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/cloudfront/main.tf               │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/compliance-evidence/main.tf      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/ecr/main.tf                      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/ecs-fargate/main.tf              │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/rds/main.tf                      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/stack/vault_storage.tf                   │ terraform  │         2         │
+└────────────────────────────────────────────────────┴────────────┴───────────────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+terraform/stack/vault_storage.tf (terraform)
+============================================
+Tests: 2 (SUCCESSES: 0, FAILURES: 2)
+Failures: 2 (HIGH: 2, CRITICAL: 0)
+
+AWS-0132 (HIGH): Bucket does not encrypt data with a customer managed key.
+════════════════════════════════════════
+Encryption using AWS keys provides protection for your S3 buckets. To gain greater control over encryption, such as key rotation, access policies, and auditability, use customer managed keys (CMKs) with SSE-KMS.
+Note that SSE-KMS is not supported for S3 server access logging destination buckets; in such cases, use SSE-S3 instead.
+
+
+See https://avd.aquasec.com/misconfig/aws-0132
+────────────────────────────────────────
+ terraform/stack/vault_storage.tf:55-62
+   via terraform/environments/production/main.tf:42-88 (module.stack)
+────────────────────────────────────────
+  55 ┌ resource "aws_s3_bucket_server_side_encryption_configuration" "vault" {
+  56 │   bucket = aws_s3_bucket.vault.id
+  57 │   rule {
+  58 │     apply_server_side_encryption_by_default {
+  59 │       sse_algorithm = "AES256"
+  60 │     }
+  61 │   }
+  62 └ }
+────────────────────────────────────────
+
+
+AWS-0132 (HIGH): Bucket does not encrypt data with a customer managed key.
+════════════════════════════════════════
+Encryption using AWS keys provides protection for your S3 buckets. To gain greater control over encryption, such as key rotation, access policies, and auditability, use customer managed keys (CMKs) with SSE-KMS.
+Note that SSE-KMS is not supported for S3 server access logging destination buckets; in such cases, use SSE-S3 instead.
+
+
+See https://avd.aquasec.com/misconfig/aws-0132
+────────────────────────────────────────
+ terraform/stack/vault_storage.tf:55-62
+   via terraform/environments/staging/main.tf:42-91 (module.stack)
+────────────────────────────────────────
+  55 ┌ resource "aws_s3_bucket_server_side_encryption_configuration" "vault" {
+  56 │   bucket = aws_s3_bucket.vault.id
+  57 │   rule {
+  58 │     apply_server_side_encryption_by_default {
+  59 │       sse_algorithm = "AES256"
+  60 │     }
+  61 │   }
+  62 └ }
+────────────────────────────────────────
+
+
+exit=1

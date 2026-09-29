@@ -1,0 +1,14 @@
+ × tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > a non-inferiority design sized for 90% reports 90%, not the superiority power of δ 9ms
+   → expected 0.04999986173681237 to be greater than or equal to 0.9
+ × tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > holds for a positive true difference and an unequal allocation 1ms
+   → expected 0.07497279364641068 to be greater than or equal to 0.9
+ × tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > an equivalence design sized for 80% reports 80% 1ms
+   → expected 0.04999986173681237 to be greater than or equal to 0.8
+ × tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > the judgment does not call a correctly sized non-inferiority design underpowered 3ms
+   → expected 'inadequate' not to be 'inadequate' // Object.is equality
+ × tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > missing-data power loss is measured against the same test, not collapsed to the superiority power 1ms
+   → expected 0.04999986173681237 to be greater than 0.85
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > superiority is unchanged: sized for 80%, reports 80% 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+    1503|     // (1+1)·1·(1.96+1.2816)²/0.2² = 525.4 → 526 per group
+      Tests  5 failed | 1 passed | 102 skipped (108)

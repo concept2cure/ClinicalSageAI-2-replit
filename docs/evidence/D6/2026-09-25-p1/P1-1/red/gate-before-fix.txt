@@ -1,0 +1,53 @@
+# 2026-09-26T03:11:13Z — HEAD e38c9c2f, before the fix (the service module exists; no authenticator or refresh reads it yet)
+$ npx vitest run server/middleware/__tests__/auth-inactivity-logoff.test.ts
+       |                                                                ^
+    119|     expect(r.status).toBe(401);
+    120|     expect(r.body?.error?.code).toBe('SESSION_IDLE');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+ FAIL  server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > a request is activity: a session used every 14 minutes stays open, and one left alone for 16 is over
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ server/middleware/__tests__/auth-inactivity-logoff.test.ts:130:30
+    128|     clock = T0 + 14 * MINUTE + 16 * MINUTE;
+    129|     const r = await drive(token);
+    130|     expect(r.reachedHandler).toBe(false);
+       |                              ^
+    131|     expect(r.body?.error?.code).toBe('SESSION_IDLE');
+    132|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+ FAIL  server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > answers 401 SESSION_LIFETIME for a session that began more than 12 hours ago, however active
+AssertionError: a 13-hour-old session opened the API: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ server/middleware/__tests__/auth-inactivity-logoff.test.ts:142:70
+    140|     const token = sessionToken(T0 - 5 * MINUTE, { sst: seconds(T0 - 13…
+    141|     const r = await drive(token);
+    142|     expect(r.reachedHandler, 'a 13-hour-old session opened the API').t…
+       |                                                                      ^
+    143|     expect(r.status).toBe(401);
+    144|     expect(r.body?.error?.code).toBe('SESSION_LIFETIME');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+ FAIL  server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > a token minted before sessions had ids is measured from its own issue
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ server/middleware/__tests__/auth-inactivity-logoff.test.ts:150:30
+    148|     const legacy = jwt.sign({ ...baseClaims, iat: seconds(T0 - 20 * MI…
+    149|     const r = await drive(legacy);
+    150|     expect(r.reachedHandler).toBe(false);
+       |                              ^
+    151|     expect(r.body?.error?.code).toBe('SESSION_IDLE');
+    152|     const fresh = jwt.sign({ ...baseClaims, iat: seconds(T0 - 2 * MINU…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  03:11:14
+   Duration  599ms (transform 214ms, setup 78ms, import 64ms, tests 194ms, environment 0ms)
+exit=1

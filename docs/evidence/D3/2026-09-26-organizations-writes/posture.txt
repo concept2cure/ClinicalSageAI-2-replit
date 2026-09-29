@@ -1,0 +1,14 @@
+# c2c_d3b after this change
+rls | force
+t | t
+(1 row)
+policyname | cmd | qual | with_check
+organizations_create | INSERT |  | true
+organizations_own_delete | DELETE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text)) | 
+organizations_own_update | UPDATE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text)) | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))
+organizations_read | SELECT | true | 
+(4 rows)
+tgname | tgenabled
+organizations_tenant_key_immutable | O
+trg_sync_org_to_identity | O
+(2 rows)

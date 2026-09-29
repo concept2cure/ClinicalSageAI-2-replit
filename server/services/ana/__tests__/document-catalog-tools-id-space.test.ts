@@ -36,6 +36,13 @@ const loadUploadedFile = vi.hoisted(() =>
 const ingestVaultDocument = vi.hoisted(() => vi.fn());
 
 vi.mock('../uploaded-file-access.js', () => ({ loadUploadedFile }));
+/* The request scope a tool runs in, carrying a writing role: catalog_project_document
+   now refuses a role that may not change the Vault before anything else, and this
+   file is about the id space, not the role (tests/db/document-catalog-role.dbtest.ts). */
+vi.mock('../../../db/tenantStore.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../db/tenantStore.js')>()),
+  getTenantScope: () => ({ tenantId: '7', role: 'member', source: 'request' }),
+}));
 vi.mock('../../vault/vault-ingest.service.js', () => ({ ingestVaultDocument }));
 
 vi.mock('../../vault/document-catalog.service.js', () => ({

@@ -1,0 +1,51 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T17:37:34.746Z","pid":1330,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T17:37:34.747Z","pid":1330,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T17:37:34.747Z","pid":1330,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-vanishing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/actor-vanishing.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-09-29T17:37:35.557Z","pid":1330,"hostname":"vm","context":{"userId":1158,"tenantId":90301,"resourceId":"wo03_1330_mumylp8o"},"msg":"[audit-service] [AUDIT] data_modify actor_vanishing_contract"}
+ ↓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the sentinel still reports the leaver's over-allocation, by name
+ ↓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the CRO portfolio keeps the leaver as lead of record, not the next assignee
+ ↓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the RBM board names the approver and owners who left, and never calls an owned action "Unassigned"
+[database] Database connection successful { timestamp: '2026-09-29T17:37:35.659Z', poolSize: 1 }
+
+(node:1330) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ × tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the RBM board names the approver and owners who left, and never calls an owned action "Unassigned" 118ms
+   → expected null to be 'WO03 vanishing-leaver' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the RBM board names the approver and owners who left, and never calls an owned action "Unassigned"
+AssertionError: expected null to be 'WO03 vanishing-leaver' // Object.is equality
+
+- Expected:
+"WO03 vanishing-leaver"
+
++ Received:
+null
+
+ ❯ tests/db/actor-vanishing.dbtest.ts:192:46
+    190|       .set(auth(accessToken(userA, ORG_A, 'member')));
+    191|     expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(20…
+    192|     expect(res.body.data.plan?.approval?.by).toBe(leaverName);
+       |                                              ^
+    193|     const owners = (res.body.data.actions as Array<{ title: string; ow…
+    194|       .map(a => [a.title, a.owner])
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  17:37:32
+   Duration  2.97s (transform 1.40s, setup 72ms, import 2.17s, tests 461ms, environment 0ms)
+

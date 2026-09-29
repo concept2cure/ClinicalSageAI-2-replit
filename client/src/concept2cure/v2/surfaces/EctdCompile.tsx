@@ -35,11 +35,13 @@ import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { assessmentState } from '../assessmentState';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
+import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
 
 interface ModuleReadiness {
   moduleCode: string;
@@ -97,6 +99,11 @@ interface CompiledLifecycle {
   operations: Array<{ operation: string; ctdSection: string; fileName: string; href: string; modifiedFile: string | null }>;
   /** Placed leaves the package does not hold, and why. */
   leftOut: Array<{ sectionCode: string; reason: string }>;
+  /** 'rehearsal': bound against the latest recorded compile of each earlier
+   *  sequence, filed or not — for an agency validator only. */
+  priorState?: 'filed' | 'rehearsal';
+  /** Under a rehearsal, the earlier sequences bound against that were never filed. */
+  unfiledPriorSequences?: string[];
 }
 
 interface CompileResult {
@@ -299,7 +306,18 @@ interface SignedPackageView {
   totalSizeBytes: number;
   gatewayReady: boolean;
   hardenedScore: number;
-  signature: { payloadDigest: string; signatureId: number; sealVerdict: string };
+  signature: {
+    payloadDigest: string;
+    signatureId: number;
+    sealVerdict: string;
+    /* §11.50 manifestation. Null means the signature row does not hold it; the
+       panel says so. Optional only for a server that predates 1de2678e5. */
+    signerId?: number | null;
+    signerName?: string | null;
+    signerTitle?: string | null;
+    signatureMeaning?: string | null;
+    signedAt?: string | null;
+  };
   leaves: Array<{ filePath: string }>;
 }
 
@@ -419,12 +437,20 @@ function readBranch(el: Element): BackboneNode | null {
   return leaves.length || children.length ? { name: el.localName, leaves, children } : null;
 }
 
-/** Parse a backbone; null when it is not well-formed XML. */
-function backboneTree(xml: string): BackboneNode | null {
+/**
+ * Parse a backbone: its tree; 'empty' when it is well-formed and carries no
+ * leaf; null only when it is not well-formed XML. 2026-09-29 (W5/D7): a
+ * sequence that files nothing in Module 1 has a leafless regional backbone, and
+ * that read as "not well-formed" — an empty result reported as an error.
+ */
+function backboneTree(xml: string): BackboneNode | 'empty' | null {
   const doc = new DOMParser().parseFromString(xml, 'application/xml');
   if (doc.getElementsByTagName('parsererror').length > 0 || !doc.documentElement) return null;
-  return readBranch(doc.documentElement);
+  return readBranch(doc.documentElement) ?? 'empty';
 }
+
+/** What a lifecycle leaf does to the filed leaf its modified-file names. */
+const ACT_ON_FILED: Record<string, string> = { delete: 'withdraws', append: 'appends to', replace: 'supersedes' };
 
 function BackboneBranch({ node }: { node: BackboneNode }) {
   return (
@@ -434,8 +460,10 @@ function BackboneBranch({ node }: { node: BackboneNode }) {
         {node.leaves.map((l, i) => (
           <li key={`leaf-${i}`} style={{ fontSize: 12.5, padding: '2px 0' }}>
             {l.title} <span className="rd-chip tone-dim">{l.operation || 'no operation'}</span>{' '}
-            <span className="mono" style={{ color: 'var(--text-400)' }}>{l.href}</span>
-            {l.modifiedFile && <> · supersedes <span className="mono">{l.modifiedFile}</span></>}
+            {l.href && <span className="mono" style={{ color: 'var(--text-400)' }}>{l.href}</span>}
+            {l.modifiedFile && (
+              <> · {ACT_ON_FILED[l.operation] ?? 'acts on'} <span className="mono">{l.modifiedFile}</span></>
+            )}
           </li>
         ))}
         {node.children.map((c, i) => <li key={`branch-${i}`}><BackboneBranch node={c} /></li>)}
@@ -449,7 +477,9 @@ function BackboneView({ label, xml }: { label: string; xml: string }) {
   return (
     <div style={{ marginBottom: 8 }}>
       <div style={{ fontSize: 12, fontWeight: 600 }}>{label}</div>
-      {tree ? <BackboneBranch node={tree} /> : (
+      {tree === 'empty' ? (
+        <div style={{ fontSize: 12 }}>It carries no leaves — this sequence files nothing in it.</div>
+      ) : tree ? <BackboneBranch node={tree} /> : (
         <div className="sp-tone-warn" style={{ fontSize: 12 }}>This backbone is not well-formed XML, so its hierarchy cannot be shown.</div>
       )}
     </div>
@@ -550,7 +580,7 @@ function EvalidatorImport({ identPath, row, onImported }: { identPath: string; r
       evalidatorReport: { compilationId: Number(row.id), fileName: file.name, text },
     });
     setBusy(false);
-    if (!ok) { setError(body?.error?.message ?? 'The report was not imported.'); return; }
+    if (!ok) { setError(serverMessage(body) ?? 'The report was not imported.'); return; }
     onImported();
   };
 
@@ -644,7 +674,7 @@ function CompilationHistoryTable({ history, identPath, onImported }: { history: 
             <td>{h.compilation_name}</td>
             <td className="mono">{h.sequence_number ?? '—'}</td>
             <td>{h.has_manifest ? 'manifest recorded' : 'no manifest — cannot anchor a lifecycle'}</td>
-            <td>{h.compilation_type}</td><td className="mono">{h.version}</td>
+            <td>{h.compilation_type === 'rehearsal' ? 'rehearsal — prior not filed' : h.compilation_type}</td><td className="mono">{h.version}</td>
             <td><span className={'rd-chip tone-' + (h.status === 'completed' ? 'ok' : h.status === 'failed' ? 'err' : 'dim')}>{h.status}</span></td>
             <td>
               {h.external_validation && <div>{reportCounts(h.external_validation)}</div>}
@@ -653,6 +683,39 @@ function CompilationHistoryTable({ history, identPath, onImported }: { history: 
             <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{h.compiled_at ? new Date(h.compiled_at).toLocaleString() : '—'}</td>
           </tr>))}</tbody></table>
       {history.map((h) => <EvalidatorReportView key={`report-${String(h.id)}`} row={h} />)}
+    </>
+  );
+}
+
+/**
+ * What an export asks for: the sequence this compile built — not whichever is
+ * latest now — in the mode it was built, so a rehearsal exports as one.
+ */
+function exportRequestBody(result: CompileResult | null, regionBody: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...regionBody,
+    ...(result?.sequenceNumber ? { sequenceNumber: result.sequenceNumber } : {}),
+    ...(result?.lifecycle?.priorState === 'rehearsal' ? { rehearsal: true } : {}),
+  };
+}
+
+/** What a rehearsal was bound against, and what it is for. */
+function RehearsalStatement({ life }: { life: CompiledLifecycle }) {
+  const unfiled = life.unfiledPriorSequences ?? [];
+  if (!life.priorSequence) {
+    return (
+      <>
+        <b>Rehearsal.</b> No earlier sequence has a recorded compile, so nothing is on file to act on: a declared replace,
+        append or delete is left out of the package.
+      </>
+    );
+  }
+  return (
+    <>
+      <b>Rehearsal.</b> Acts are bound to the latest recorded compile of each earlier sequence, through
+      sequence <span className="mono">{life.priorSequence}</span>
+      {unfiled.length > 0 ? <>; <span className="mono">{unfiled.join(', ')}</span> {unfiled.length === 1 ? 'was' : 'were'} never filed</> : null}.
+      For an agency validator only: transmit binds only against filed sequences.
     </>
   );
 }
@@ -669,7 +732,7 @@ function LifecycleView({ result }: { result: CompileResult }) {
     <section aria-label="Lifecycle" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
       <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>Lifecycle</div>
       <p style={{ fontSize: 12, margin: '0 0 6px' }}>
-        {life.priorSequence ? (
+        {life.priorState === 'rehearsal' ? <RehearsalStatement life={life} /> : life.priorSequence ? (
           <>
             Acts are bound to what is on file through sequence <span className="mono">{life.priorSequence}</span>, read from the
             leaf manifests recorded for the filed sequences.
@@ -897,6 +960,12 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   const recordedRegion = status?.sequence?.region ?? null;
   const regionBody = useMemo(() => (recordedRegion ? {} : { region }), [recordedRegion, region]);
 
+  /* A rehearsal (WO-9 Click 6) binds a follow-up sequence against the latest
+     recorded compile of each earlier sequence, filed or not — for an agency
+     validator only. Asked for explicitly; an original has nothing before it. */
+  const followUp = status?.sequence != null && status.sequence.sequenceNumber !== '0000';
+  const [rehearsal, setRehearsal] = useState(false);
+
   const doValidate = useCallback(async () => {
     if (identPath == null) return;
     setBusy('validate');
@@ -927,11 +996,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     if (subId == null) return;
     setBusy('export');
     try {
-      // Pinned to the sequence this compile built, not whichever is latest now.
-      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, {
-        ...regionBody,
-        ...(compileResult?.sequenceNumber ? { sequenceNumber: compileResult.sequenceNumber } : {}),
-      });
+      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, exportRequestBody(compileResult, regionBody));
       if (!res.ok) {
         const pj = (await res.json().catch(() => null)) as { error?: string } | null;
         fireToast('The package was not returned — ' + (pj?.error ?? `HTTP ${res.status}`) + '.', 'error');
@@ -947,7 +1012,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     } catch (e) {
       // apiRequest throws on a refused build (422: validation failure or the
       // completeness gate) with the server's own sentence — say it verbatim.
-      fireToast('The package was not returned — ' + (e instanceof Error ? e.message : String(e)), 'error');
+      fireToast('The package was not returned — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.', 'error');
     } finally {
       setBusy(null);
     }
@@ -957,7 +1022,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     if (identPath == null) return;
     setBusy('compile');
     try {
-      const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, { submissionType, ...regionBody });
+      const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, {
+        submissionType,
+        ...regionBody,
+        ...(followUp && rehearsal ? { rehearsal: true } : {}),
+      });
       if (!ok || !body) {
         const refusal = (body as { error?: { message?: string } } | null)?.error?.message;
         fireToast(
@@ -983,7 +1052,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       );
       void loadStatus(); void loadHistory();
     } finally { setBusy(null); }
-  }, [identPath, submissionType, regionBody, fireToast, loadStatus, loadHistory]);
+  }, [identPath, submissionType, regionBody, followUp, rehearsal, fireToast, loadStatus, loadHistory]);
 
   /* WHAT ANA SEES HERE. Published ABOVE the no-program early return, because
      `usePublishSurfaceContext` is a hook and a hook below a conditional return
@@ -1052,6 +1121,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
               signatureId: signed.signature.signatureId,
               payloadDigest: signed.signature.payloadDigest,
               sealVerdict: signed.signature.sealVerdict,
+              // Who signed, when, and what it meant (§11.50). null = not recorded.
+              signerName: signed.signature.signerName ?? null,
+              signerTitle: signed.signature.signerTitle ?? null,
+              signatureMeaning: signed.signature.signatureMeaning ?? null,
+              signedAt: signed.signature.signedAt ?? null,
               gatewayReady: signed.gatewayReady,
             }
           : null,
@@ -1132,6 +1206,13 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
           <select id="ectd-subtype" className="c2c-input" style={{ height: 30 }} value={submissionType} onChange={(e) => setSubmissionType(e.target.value as any)}>
             {SUB_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
+          {followUp && (
+            <label style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              title="For an agency validator only. Binds this sequence's replace, append and delete against the latest recorded compile of each earlier sequence, filed or not. The package, its record and its download say so; transmit binds only against filed sequences.">
+              <input type="checkbox" checked={rehearsal} disabled={busy != null} onChange={(e) => setRehearsal(e.target.checked)} />
+              Rehearsal — bind against recorded, unfiled sequences
+            </label>
+          )}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             <button className="nda-open" onClick={doValidate} disabled={busy != null}>{I.checkCircle} {busy === 'validate' ? 'Validating…' : 'Validate'}</button>
             <button className="btn primary" style={{ height: 32 }} onClick={doCompile} disabled={busy != null}>{I.layers} {busy === 'compile' ? 'Compiling…' : 'Compile eCTD'}</button>
@@ -1232,9 +1313,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                 </ul>
               </div>
             )}
-            {/* The deliverable itself — only a spine-backed compile with
-                rendered leaves has a package to hand over. */}
-            {compileResult.submissionId != null && (compileResult.leafFilesRendered ?? 0) > 0 && (
+            {/* The deliverable itself — any spine-backed compile that built a
+                package. A sequence whose only act is a withdrawal ships no
+                content file and is still a package (2026-09-29, W5/D7: this
+                was gated on rendered leaf files, so it could not be exported). */}
+            {compileResult.submissionId != null && compileResult.package != null && (
               <button
                 className="btn primary"
                 style={{ height: 32, marginRight: 8 }}
@@ -1249,12 +1332,13 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                 <button className="btn primary" style={{ height: 32 }} onClick={() => downloadXml(`ectd-backbone-${ident.replace(/[^a-zA-Z0-9._-]/g, '_')}-${region.toLowerCase()}.xml`, compileResult.xmlBackbone)}>
                   {I.download} Download eCTD backbone XML
                 </button>
-                {/* Draft-backbone compiles (no leaf files rendered) get the
+                {/* Draft-backbone compiles (no package built) get the
                     working-document caveat. A spine-backed compile returned the
-                    package's REAL index.xml — its leaves are rendered files, so
-                    this caveat would be false there; the blockers panel above
-                    already says what still stands between it and transmission. */}
-                {!compileResult.submissionReady && (compileResult.leafFilesRendered ?? 0) === 0 && (
+                    package's REAL index.xml, so this caveat would be false there
+                    — even one that ships no content file (a withdrawal); the
+                    blockers panel above says what still stands between it and
+                    transmission. */}
+                {!compileResult.submissionReady && compileResult.package == null && (
                   <div style={{ fontSize: 11.5, marginTop: 6, color: 'var(--text-400)' }}>
                     The backbone describes the authored section content and marks every leaf
                     <span className="mono"> rendered=&quot;false&quot;</span>. It is a working document,
@@ -1435,6 +1519,32 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                     <div style={{ fontSize: 22, fontWeight: 700 }}>{fmtSize(signed.totalSizeBytes)}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-400)' }}>Package size</div>
                   </div>
+                </div>
+                {/* §11.50(b): the printed name, the date and time, and the meaning. */}
+                <div style={{ display: 'grid', gridTemplateColumns: '96px 1fr', gap: '4px 8px', fontSize: 12, marginBottom: 12 }}>
+                  <span style={{ color: 'var(--text-400)' }}>Signed by</span>
+                  <span>
+                    {signed.signature.signerName ? (
+                      <>
+                        <span>{signed.signature.signerName}</span>
+                        {signed.signature.signerTitle && (
+                          <span style={{ color: 'var(--text-400)' }}>{', ' + signed.signature.signerTitle}</span>
+                        )}
+                      </>
+                    ) : (
+                      'Printed name not recorded'
+                    )}
+                  </span>
+                  <span style={{ color: 'var(--text-400)' }}>Signed at</span>
+                  <span>
+                    {signed.signature.signedAt ? (
+                      <GovernedTimestamp value={signed.signature.signedAt} layout="inline" />
+                    ) : (
+                      'Not recorded'
+                    )}
+                  </span>
+                  <span style={{ color: 'var(--text-400)' }}>Meaning</span>
+                  <span>{signatureMeaningLabel(signed.signature.signatureMeaning)}</span>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-400)', wordBreak: 'break-all' }}>
                   Bound digest <span className="mono">{signed.signature.payloadDigest}</span> · seal {signed.signature.sealVerdict}

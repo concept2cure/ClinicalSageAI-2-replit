@@ -21,6 +21,7 @@
 import { createRequire } from 'node:module';
 import OpenAI from 'openai';
 import { createScopedLogger } from '../../../utils/logger.js';
+import { bedrockClientRegion, vertexClientRegion } from './placement';
 
 const log = createScopedLogger('ai-gateway:providers');
 const requireOptional = createRequire(import.meta.url);
@@ -49,7 +50,8 @@ export function createBedrockClient(): any | null {
   const AnthropicBedrock = mod.AnthropicBedrock || mod.default;
   try {
     return new AnthropicBedrock({
-      awsRegion: process.env.AI_BEDROCK_REGION || process.env.AWS_REGION,
+      // The same region the placement registry derives residency from.
+      awsRegion: bedrockClientRegion(),
     });
   } catch (e: any) {
     log.warn(`[AI Gateway] Bedrock client init failed: ${e.message}`);
@@ -68,7 +70,7 @@ export function createVertexClient(): any | null {
   try {
     return new AnthropicVertex({
       projectId: process.env.AI_VERTEX_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT,
-      region: process.env.AI_VERTEX_REGION || 'us-east5',
+      region: vertexClientRegion(),
     });
   } catch (e: any) {
     log.warn(`[AI Gateway] Vertex client init failed: ${e.message}`);

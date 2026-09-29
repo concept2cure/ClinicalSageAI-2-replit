@@ -13,8 +13,13 @@ import {
   assertAuditSealPostureForProduction,
   assertAuditChainSecretForProduction,
 } from '../services/audit/auditSealPosture';
-import { assertAiGovernancePostureForProduction } from '../startup/ai-governance-posture';
+import {
+  assertAiGovernancePostureForProduction,
+  assertDeterministicModePostureForProduction,
+} from '../startup/ai-governance-posture';
 import { assertSensitivePlacementConfiguration } from '../services/ai-gateway/sensitive-placement-policy';
+import { assertPlacementRegistryConsistency } from '../services/ai-gateway/providers/placement';
+import { assertDurableStorageForProduction } from '../services/storage/storage-posture';
 
 type Environment = 'development' | 'staging' | 'production' | 'test';
 
@@ -311,7 +316,18 @@ assertAuditChainSecretForProduction();
 // import (same contract as the asserts above). No-op outside production. See
 // server/startup/ai-governance-posture.ts.
 assertAiGovernancePostureForProduction();
+// Deterministic mode (2026-09-28, launch row D2): AI_GATEWAY_DETERMINISTIC in
+// production makes AnA answer with fixed responses that can enter a governed
+// draft. It refuses to boot unless AI_GATEWAY_ACCEPT_DETERMINISTIC=true records
+// that risk, and AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses it regardless. The
+// gateway enforces the same rule per request. No-op outside production.
+assertDeterministicModePostureForProduction();
 assertSensitivePlacementConfiguration();
+// Private-cloud residency (D6, 2026-09-25): a declared AI_BEDROCK_RESIDENCY /
+// AI_VERTEX_RESIDENCY that the region the client calls does not serve refuses
+// to boot, instead of making every residency-constrained tenant "compliant" on
+// the wrong continent. No-op outside production. See providers/placement.ts.
+assertPlacementRegistryConsistency();
 
 // Export configuration for the current environment
 export const config = {
@@ -390,5 +406,12 @@ export const config = {
       !(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY),
   },
 };
+
+// Vault byte storage: production must name a durable store. Unset meant local
+// disk, which on Fargate and in a compose container is lost with the container
+// while the vault's rows remain. Fires on import, like the asserts above, but
+// after `config` is built so the secret checks it runs keep reporting first.
+// No-op outside production. See server/services/storage/storage-posture.ts.
+assertDurableStorageForProduction();
 
 export default config;

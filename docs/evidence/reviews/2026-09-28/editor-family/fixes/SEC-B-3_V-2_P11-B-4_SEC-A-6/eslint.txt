@@ -1,0 +1,45 @@
+ESLint (default formatter; eslint-formatter-unix is not installed in this repo, so -f unix exits 2 without linting)
+before (pre-change files):
+
+<repo>/client/src/concept2cure/v2/editor/RichSectionEditor.tsx
+   451:3   warning  Function 'RichSectionEditor' has too many lines (1745). Maximum allowed is 100  max-lines-per-function
+   451:3   warning  Function 'RichSectionEditor' has a complexity of 170. Maximum allowed is 15     complexity
+   906:19  warning  The value assigned to 'drift' is not used in subsequent statements              no-useless-assignment
+   932:1   warning  File has too many lines (1962). Maximum allowed is 500                          max-lines
+  1284:11  warning  The value assigned to 'id' is not used in subsequent statements                 no-useless-assignment
+
+<repo>/client/src/concept2cure/v2/editor/suggestions.ts
+  627:8   warning  Function 'rememberAcceptedAuthor' has too many parameters (6). Maximum allowed is 5  max-params
+  800:1   warning  File has too many lines (673). Maximum allowed is 500                                max-lines
+  880:3   warning  Method 'addProseMirrorPlugins' has too many lines (104). Maximum allowed is 100      max-lines-per-function
+  897:9   warning  Method 'appendTransaction' has a complexity of 17. Maximum allowed is 15             complexity
+  958:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
+  964:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                               max-depth
+  969:23  warning  Blocks are nested too deeply (7). Maximum allowed is 4                               max-depth
+  984:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
+
+✖ 13 problems (0 errors, 13 warnings)
+
+
+after (changed + added files):
+
+<repo>/client/src/concept2cure/v2/editor/RichSectionEditor.tsx
+  457:3   warning  Function 'RichSectionEditor' has too many lines (1780). Maximum allowed is 100  max-lines-per-function
+  457:3   warning  Function 'RichSectionEditor' has a complexity of 171. Maximum allowed is 15     complexity
+  919:19  warning  The value assigned to 'drift' is not used in subsequent statements              no-useless-assignment
+  941:1   warning  File has too many lines (2000). Maximum allowed is 500                          max-lines
+
+<repo>/client/src/concept2cure/v2/editor/suggestions.ts
+   627:8   warning  Function 'rememberAcceptedAuthor' has too many parameters (6). Maximum allowed is 5  max-params
+   817:1   warning  File has too many lines (703). Maximum allowed is 500                                max-lines
+   943:3   warning  Method 'addProseMirrorPlugins' has too many lines (104). Maximum allowed is 100      max-lines-per-function
+   960:9   warning  Method 'appendTransaction' has a complexity of 17. Maximum allowed is 15             complexity
+  1021:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
+  1027:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                               max-depth
+  1032:23  warning  Blocks are nested too deeply (7). Maximum allowed is 4                               max-depth
+  1047:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
+
+✖ 12 problems (0 errors, 12 warnings)
+
+
+Counts: RichSectionEditor.tsx 5 -> 4 (the removed one: no-useless-assignment on 'id', a line this change rewrote); suggestions.ts 8 -> 8 (same rules, shifted lines); richSectionEditorSaveIntegrity.test.tsx 0; trackedChangeUndo.test.tsx 0; insertReferenceText.test.tsx 0

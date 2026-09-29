@@ -171,6 +171,22 @@ describe('toSurfaceActionChips', () => {
     });
   });
 
+  // With Live Drive off an open is offered as a chip. The program the server
+  // resolved must ride on it, or a program past the Projects screen's page is
+  // refused when the person presses it.
+  it('carries the program the server resolved, and keeps opens of two programs apart', () => {
+    const open = (id: string) => ({
+      ...actionDirective('projects.open-program', { program: 'zeta' }),
+      program: { id, name: `Program ${id}` },
+    });
+    const chips = toSurfaceActionChips([open('p-7'), open('p-7'), open('p-9')]);
+    expect(chips.map(c => c.program)).toEqual([
+      { id: 'p-7', name: 'Program p-7' },
+      { id: 'p-9', name: 'Program p-9' },
+    ]);
+    expect(toSurfaceActionChips([actionDirective('vault.search')])[0]).not.toHaveProperty('program');
+  });
+
   it('dedups identical operations and caps like the navigation chips', () => {
     expect(
       toSurfaceActionChips([actionDirective('vault.search'), actionDirective('vault.search')]),

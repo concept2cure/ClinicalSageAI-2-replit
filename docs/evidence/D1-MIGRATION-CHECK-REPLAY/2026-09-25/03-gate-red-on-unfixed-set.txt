@@ -1,0 +1,47 @@
+[ci:migration-drop-safety] FAIL — 4 replay-unsafe DROP(s) or replacement(s).
+
+  constraint:public.submission_orchestrator_runs.submission_orchestrator_runs_status_check
+    replaced by : db/migrations/20260725_submission_orchestrator_store_port.sql  (unconditionally)
+    redefined by: db/migrations/20260725_esig_gate_columns_port.sql  (later in the set)
+    effect      : NARROWED — every deploy re-imposes this file's definition before the
+                  later one, and ADD CONSTRAINT validates every existing row. From the
+                  first row only the later definition admits, every deploy fails here.
+    fix         : amend this file in place (RULE 1) so the replacement runs only while
+                  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = '<table>'::regclass
+                    AND conname = '<name>' AND pg_get_constraintdef(oid) LIKE '%''<value it adds>''%')
+
+  constraint:public.c2c_documents.c2c_documents_doc_type_check
+    replaced by : migrations/20260806b_anda_ide_filing_types.sql  (unconditionally)
+    redefined by: migrations/20260810b_eu_mdr_ivdr_outlines.sql  (later in the set)
+    effect      : NARROWED — every deploy re-imposes this file's definition before the
+                  later one, and ADD CONSTRAINT validates every existing row. From the
+                  first row only the later definition admits, every deploy fails here.
+    fix         : amend this file in place (RULE 1) so the replacement runs only while
+                  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = '<table>'::regclass
+                    AND conname = '<name>' AND pg_get_constraintdef(oid) LIKE '%''<value it adds>''%')
+
+  constraint:public.document_span_lineage.document_span_lineage_kind_valid
+    replaced by : migrations/20260907_span_lineage_accepted_machine_draft.sql  (unconditionally)
+    redefined by: migrations/20260908_span_lineage_machine_draft.sql  (later in the set)
+    effect      : NARROWED — every deploy re-imposes this file's definition before the
+                  later one, and ADD CONSTRAINT validates every existing row. From the
+                  first row only the later definition admits, every deploy fails here.
+    fix         : amend this file in place (RULE 1) so the replacement runs only while
+                  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = '<table>'::regclass
+                    AND conname = '<name>' AND pg_get_constraintdef(oid) LIKE '%''<value it adds>''%')
+
+  constraint:public.document_span_lineage.document_span_lineage_kind_shape
+    replaced by : migrations/20260907_span_lineage_accepted_machine_draft.sql  (unconditionally)
+    redefined by: migrations/20260908_span_lineage_machine_draft.sql  (later in the set)
+    effect      : NARROWED — every deploy re-imposes this file's definition before the
+                  later one, and ADD CONSTRAINT validates every existing row. From the
+                  first row only the later definition admits, every deploy fails here.
+    fix         : amend this file in place (RULE 1) so the replacement runs only while
+                  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = '<table>'::regclass
+                    AND conname = '<name>' AND pg_get_constraintdef(oid) LIKE '%''<value it adds>''%')
+
+[ci:migration-drop-safety] The applier re-runs every file on every deploy, so a DROP cannot remove
+  something another file in the set re-creates. Amend the creating migration in
+  place (CLAUDE.md RULE 1) instead of appending a DROP. If a pairing is genuinely
+  safe, record it in scripts/ci/migration-drop-safety-baseline.json with a reason.
+exit 1

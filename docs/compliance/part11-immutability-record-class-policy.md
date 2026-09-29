@@ -27,7 +27,10 @@ must derive from "which records can ever change", not the other way round.
 
 | Record family                                   | Class                     | Policy |
 | ----------------------------------------------- | ------------------------- | ------ |
-| Final electronic signature (`electronic_signatures`) | Immutable            | No UPDATE, no DELETE. Correction = insert a superseding row; the old row's `superseded_by` is a **write-once** pointer (NULL → id, never re-pointed, never cleared). Enforced at the database (see below). |
+| Final electronic signature (`electronic_signatures`) | Immutable            | No UPDATE, no DELETE. Correction = insert a superseding row; the old row's `superseded_by` is a **write-once** pointer (NULL → id, never re-pointed, never cleared). In that same statement, and only there, the verification column group (`is_valid`, `verification_status`, `verification_date`) may move to the invalid, revoked state the governed revocation records; the attested columns never change. Enforced at the database (see below; amended 2026-09-25, audit finding DP-03). |
+| Artifact approval / release signature (`concept2cure_signatures`) | Immutable | No UPDATE, no DELETE, no TRUNCATE, for every role, and no cascade from deleting the artifact or its version (the delete is refused with it). No code updates or deletes it; a correction is a new row. Enforced at the database since 2026-09-29 (see below). |
+| Artifact lock snapshot (`concept2cure_submission_snapshots`) | Append-only | No UPDATE, no DELETE, no TRUNCATE. Enforced at the database since 2026-09-29. |
+| Vault document version (`vault.documents`) | Immutable record, governed metadata | A version's identity and bytes never change: `id`, `program_id`, `version`, `content_hash`, `file_size`, `mime_type`, `created_by`, `created_at` are frozen. Organization, document code, file name, storage handle, retention policy, lineage and `deleted_at` are **write-once** (NULL → value, never changed or cleared, so a soft delete cannot be undone); the one exception is storage adoption, where a record with no `storage_version_id` takes one together with its key, bucket and provider, the hash unchanged. No TRUNCATE. Title, type, classification, filing and processing state stay mutable, each only through a named writer that records a chained audit row (`scripts/ci/check-vault-document-writers.mjs`). A new version is a new row. Enforced at the database since 2026-09-26 (VR-06; see below). |
 | Signed object/version binding (`bound_payload_digest`, `version_id`, `document_id` on the signature row) | Immutable | Written at INSERT, never after. The post-insert UPDATE the sign-release route used to perform was removed 2026-07-30. |
 | Signature verification evidence (`signature_hash`, `signature_manifest`, `authentication_*`) | Immutable | Same row, same rule. |
 | Audit event (`device_audit_trail`, `audit_logs`) | Append-only               | No UPDATE, no DELETE, ever. Corrections are new events. `device_audit_trail` is enforced at the database (see below). |
@@ -43,9 +46,28 @@ must derive from "which records can ever change", not the other way round.
 1. **Database (authoritative):**
    `db/migrations/20260730_esign_audit_db_level_immutability.sql`
    - `electronic_signatures`: trigger refuses DELETE and any UPDATE except
-     the write-once `superseded_by` transition (+ `updated_at` bookkeeping).
+     the write-once `superseded_by` transition (+ `updated_at` bookkeeping),
+     which may also set `is_valid = false`, `verification_status = 'revoked'`
+     and `verification_date` — never the reverse, never an attested column,
+     never on a row already superseded (`db/migrations/20260730_esign_audit_db_level_immutability.sql`,
+     pinned by `server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts`).
    - `device_audit_trail`: trigger refuses UPDATE and DELETE outright.
    - Proven by `tests/schema-contract/esig-audit-immutability.contract.test.ts`.
+   - `concept2cure_signatures` and `concept2cure_submission_snapshots`:
+     triggers refuse UPDATE, DELETE and TRUNCATE outright
+     (`migrations/20260929_concept2cure_signatures_append_only.sql`, pinned by
+     `server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts`).
+     Until 2026-09-29 their only triggers were in `db/migrations/_legacy/`,
+     which no applier runs.
+   - `vault.documents`: a row trigger refuses a change to a frozen column and
+     any change to a write-once column once it holds a value, with the
+     storage-adoption exception; a statement trigger refuses TRUNCATE
+     (`migrations/20260926_vault_documents_record_immutability.sql`, pinned by
+     `tests/db/vault-record-immutability.dbtest.ts` as the runtime role under
+     RLS). Evidence `docs/evidence/D5/2026-09-26-vault-record-immutability/`.
+   - The triggers on `electronic_signatures`, `concept2cure_signatures`,
+     `concept2cure_submission_snapshots` and `vault.documents` are required at
+     boot by `server/services/audit/audit-immutability-triggers.ts`.
    The database layer is the floor: HTTP-layer gaps can no longer reach the
    records themselves.
 

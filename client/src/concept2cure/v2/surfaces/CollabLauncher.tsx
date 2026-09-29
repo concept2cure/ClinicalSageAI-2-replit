@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { useLiveRows, liveGetOrNull } from '../dataConnect';
+import { liveGetOrNull } from '../dataConnect';
 import { useDialog } from '../useDialog';
+import { getSurfaceMeta } from '../registryModel';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import {
-  SURFACE_CTX, CL_MOD, CL_TYPE, CL_PRI,
+  SURFACE_CTX, CL_MOD, CL_MOD_OPTIONS, CL_TYPE, CL_PRI, CL_PRI_LABEL, clModLabel,
   type C2CTask, type ActivityItem, type TeamMember, type ProjectEntry,
 } from '../fixtures/collab-data';
+import { MODULE_COLOR_UNKNOWN } from '../fixtures/task-board-data';
 
 /* ================================================================
    Collaboration layer -- universal "add to tasking / assign / collaborate"
@@ -209,7 +211,7 @@ export const C2C = {
   mod: CL_MOD,
 
   modColor(m: string): string {
-    return CL_MOD[m] || '#888';
+    return CL_MOD[m] || MODULE_COLOR_UNKNOWN;
   },
   list(): C2CTask[] {
     return tasks;
@@ -243,7 +245,7 @@ export const C2C = {
     const d = SURFACE_CTX[id] || SURFACE_CTX.home;
     ctx = {
       surfaceId: id,
-      surfaceLabel: label || id,
+      surfaceLabel: label || getSurfaceMeta(id).label,
       project: ctx.project,
       entityType: d.et,
       entityId: null,
@@ -294,7 +296,9 @@ export const C2C = {
         if (id && SURFACE_CTX[id]) {
           const d = SURFACE_CTX[id];
           live.surfaceId = id;
-          live.surfaceLabel = id;
+          // The surface's name, not its URL slug: the form said "From projects"
+          // and the task was saved with sourceLabel "projects" (finding 139).
+          live.surfaceLabel = getSurfaceMeta(id).label;
           live.entityType = d.et;
           live.moduleType = d.mod;
         }
@@ -513,8 +517,9 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
     <div className="cl-field-grp">
       <div className="cl-ctxbar">
         <span className="cl-ctx-k">From</span>
-        <span className="cl-ctx-chip"><span className="ico">{I.target || I.crosshair || I.zap}</span>{surfaceCtx.entityLabel || surfaceCtx.surfaceLabel}</span>
-        <span className="cl-ctx-meta">stamped as <code>sourceEntityType: {surfaceCtx.entityType}</code></span>
+        <span className="cl-ctx-chip"><span className="ico">{I.target}</span>{surfaceCtx.entityLabel || surfaceCtx.surfaceLabel}</span>
+        {/* It printed the payload field — "stamped as sourceEntityType: portfolio" (finding 139). */}
+        <span className="cl-ctx-meta">Linked to this {C2C.surfaceNoun(surfaceCtx.surfaceId)}</span>
       </div>
       <div className="cl-field"><label htmlFor="cl-task">Task<i>*</i></label>
         <input id="cl-task" type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)}
@@ -528,7 +533,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
         </div>
         <div className="cl-field"><label htmlFor="cl-module">Module</label>
           <select id="cl-module" value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>
-            {Object.keys(C2C.mod).map(m => <option key={m} value={m}>{m}</option>)}
+            {CL_MOD_OPTIONS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
         </div>
       </div>
@@ -540,7 +545,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
         </div>
         <div className="cl-field"><label htmlFor="cl-priority">Priority</label>
           <select id="cl-priority" value={f.priority} onChange={e => set('priority', e.target.value)}>
-            {CL_PRI.map(p => <option key={p} value={p}>{p}</option>)}
+            {CL_PRI.map(p => <option key={p} value={p}>{CL_PRI_LABEL[p] ?? p}</option>)}
           </select>
         </div>
         <div className="cl-field"><label htmlFor="cl-due-in-days">Due in (days)</label>
@@ -578,9 +583,12 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           serverTask.assigneeId), so nothing here has to guess it. */}
       {f.assignee === 'auto' && (
         <div className="cl-note">
-          <span className="ico">{I.sparkles}</span>Auto-assign: the assignee is chosen when you save, from your
-          organisation&rsquo;s roster for <b>{f.moduleType}</b>, balanced on current workload. Pick a name above
-          if you want to decide it yourself.
+          {/* One text node beside the icon: .cl-note is a flex row, so bare text
+              around a <b> became three side-by-side columns (finding 137). */}
+          <span className="ico">{I.sparkles}</span>
+          <span>Auto-assign: the assignee is chosen when you save, from your
+          organisation&rsquo;s roster for <b>{clModLabel(f.moduleType)}</b>, balanced on current workload. Pick a name above
+          if you want to decide it yourself.</span>
         </div>
       )}
       <div className="cl-field"><label>Flags</label>
@@ -900,50 +908,32 @@ function CollabModal({ tab, setTab, onClose, ctx, onCreated, onGoToBoard }: {
   );
 }
 
-/* ── The layer: launcher (FAB) + modal. Mounted once, lives on every screen. ── */
+/* ── The layer: the launcher modal. Mounted once, lives on every screen, and is
+   opened by the header's Task and Collaborate buttons (Shell.tsx TopBar, via
+   C2C.open) or ⌘⇧T.
+
+   It also drew a floating button, bottom-right on every screen, whose menu
+   offered New task, Collaborate and Open task board — the header's Task and
+   Collaborate buttons and the task tray's board link, a second time. Fixed to
+   the viewport corner, it sat on the editor's AnA Send button and over the
+   docks of Conversation and Risk-based monitoring (launch sweep finding 136).
+   Removed 2026-09-28; every entry it had is one click away in the header. ── */
 
 export function CollabLayer({ onNav }: CollabLayerProps) {
   const [, setTick] = useState(0);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('task');
   const [toast, setToast] = useState<ToastState | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const fabRef = React.useRef<HTMLButtonElement>(null);
-
-  // Org-wide open-task count for the launcher menu -- REAL persisted data from
-  // the unifiedTasks board (GET /api/task-management/board), never the retired
-  // fixture store. Fetched only while the menu is open (fresh each open). Honest
-  // states: a real count on success (0 included), and a neutral label (no
-  // fabricated number) while loading or on a failed load. Read in render only,
-  // so there is no re-seed loop from the hook's fresh-[] identity.
-  const board = useLiveRows<{ status: string }>(menuOpen ? '/api/task-management/board' : null);
-  const openAcrossOrg = board.rows.filter(t => t.status !== 'completed').length;
 
   useEffect(() => C2C.subscribe(() => setTick(x => x + 1)), []);
-
-  /* The launcher menu dismissed on onMouseLeave and nothing else: a keyboard
-     user who opened it had no way to close it, and the pointer straying off it
-     closed it for everyone. Escape closes it and hands focus back to the FAB
-     that opened it, which is the one thing a mouseleave can never do. */
-  useEffect(() => {
-    if (!menuOpen) return undefined;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      e.stopPropagation();
-      setMenuOpen(false);
-      fabRef.current?.focus();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [menuOpen]);
 
   // Load the real org directory (roster + programmes) the first time the
   // launcher is actually opened, rather than on every app boot — it is only
   // needed by these forms. loadDirectory is re-entrant-safe and emits when it
   // settles, which re-renders through the subscription above.
   useEffect(() => {
-    if (open || menuOpen) void C2C.loadDirectory();
-  }, [open, menuOpen]);
+    if (open) void C2C.loadDirectory();
+  }, [open]);
 
   useEffect(() => {
     const openH = (e: Event) => {
@@ -976,33 +966,6 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
 
   return (
     <>
-      {/* floating launcher -- present on every surface */}
-      <div className="cl-fab-wrap">
-        {menuOpen && (
-          <div className="cl-fab-menu" role="menu" aria-label="Add a task or collaborate"
-            onMouseLeave={() => setMenuOpen(false)}>
-            <button role="menuitem" className="cl-fab-mi" onClick={() => { setTab('task'); setOpen(true); setMenuOpen(false); }}>
-              <span className="ico">{I.checkSquare || I.check}</span>
-              <span><b>New task</b><em>Assign &amp; track from here</em></span>
-            </button>
-            <button role="menuitem" className="cl-fab-mi" onClick={() => { setTab('collab'); setOpen(true); setMenuOpen(false); }}>
-              <span className="ico">{I.messageSquare}</span>
-              <span><b>Collaborate</b><em>Message — @mention — route</em></span>
-            </button>
-            <button role="menuitem" className="cl-fab-mi" onClick={() => { onNav?.('tasks'); setMenuOpen(false); }}>
-              <span className="ico">{I.layoutPanels || I.grid}</span>
-              <span><b>Open task board</b><em>{board.loading || board.error ? 'View the org-wide board' : `${openAcrossOrg} open across the org`}</em></span>
-            </button>
-          </div>
-        )}
-        <button className="cl-fab" ref={fabRef} data-open={menuOpen || undefined}
-          aria-haspopup="true" aria-expanded={menuOpen}
-          onClick={() => setMenuOpen(o => !o)} title="Add a task or collaborate"
-          aria-label="Add a task or collaborate">
-          <span className="ico">{menuOpen ? I.close : (I.checkSquare || I.plus)}</span>
-        </button>
-      </div>
-
       {/* the modal */}
       {open && (
         <CollabModal

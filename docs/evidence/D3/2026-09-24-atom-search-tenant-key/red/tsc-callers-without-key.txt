@@ -1,0 +1,6 @@
+# tsc -p <tsconfig extending tsconfig.json, files = the seven callers of searchHybrid>, with searchHybrid's key made required and no caller changed yet.
+# The config pulls in transitive imports that carry 11 errors of their own (the same 11 after the fix; the project's real typecheck has 0). These are the 4 lines about searchHybrid:
+server/routes/authoring.router.ts(2877,52): error TS2554: Expected 4-5 arguments, but got 3.
+server/routes/cortexQueryRoutes.ts(226,5): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+server/routes/deep-research.ts(352,48): error TS2554: Expected 4-5 arguments, but got 3.
+server/routes/evidence-ask.ts(207,11): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.

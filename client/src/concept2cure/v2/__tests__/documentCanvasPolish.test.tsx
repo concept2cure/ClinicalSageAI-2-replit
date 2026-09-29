@@ -200,6 +200,30 @@ describe('DocumentCanvas — keyboard', () => {
     expect(document.activeElement).toBe(screen.getByTestId('dc-open-editor'));
   });
 
+  /* 2026-09-28, coverage-gap sweep GA-4: a workbench rail open inside the
+     expanded canvas now closes on Escape. Both listeners are on the document,
+     so without the canvas yielding the first Escape collapsed the whole
+     canvas with the rail still open behind it. One Escape, one layer. */
+  it('Escape with a workbench rail open closes the rail first, then the canvas', async () => {
+    render(<Host />);
+    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+    fireEvent.click(screen.getByTestId('dc-open-editor'));
+    await screen.findByTestId('dc-expanded');
+    await waitFor(() => expect(document.querySelector('.ed')).not.toBeNull());
+    const bar = document.querySelector('.ed-doc-actions') as HTMLElement;
+    fireEvent.click(within(bar).getByRole('button', { name: /^\s*History/ }));
+    await waitFor(() => expect(document.querySelector('aside.ed-comments')).not.toBeNull());
+
+    (document.activeElement as HTMLElement | null)?.blur();
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    await waitFor(() => expect(document.querySelector('aside.ed-comments')).toBeNull());
+    expect(screen.getByTestId('dc-expanded').hasAttribute('hidden'), 'the first Escape collapsed the canvas').toBe(false);
+
+    (document.activeElement as HTMLElement | null)?.blur();
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    await waitFor(() => expect(screen.getByTestId('dc-expanded').hasAttribute('hidden')).toBe(true));
+  });
+
   it('offers exactly one way back while expanded', async () => {
     render(<Host />);
     await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
@@ -271,25 +295,85 @@ describe('the canvas stylesheet — motion', () => {
     return css.slice(start);
   })();
 
+  /* Transitions name the design system's motion tokens (`var(--dur)
+     var(--ease)`, 92d0fe0b9), so the rule is judged on what they RESOLVE to,
+     not on the spelling. Every declaration of a name in the files the canvas
+     is styled by counts: the canonical token file, the global shim, the v2
+     shell's aliases and this stylesheet. A name declared twice is judged on
+     every value it can take, and a var() that resolves to nothing fails. */
+  const TOKENS = new Map<string, string[]>();
+  for (const f of [
+    path.join(REPO, 'design-system', 'colors_and_type.css'),
+    path.join(REPO, 'client', 'src', 'index.css'),
+    path.join(CSS_DIR, 'app-v2.css'),
+    path.join(CSS_DIR, 'authoring-v2.css'),
+  ]) {
+    const css = fs.readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const m of css.matchAll(/(--[\w-]+)\s*:\s*([^;{}]+);/g)) {
+      TOKENS.set(m[1], [...(TOKENS.get(m[1]) ?? []), m[2].trim()]);
+    }
+  }
+  /** Every value `value` can take once each var() is substituted. */
+  function resolve(value: string, depth = 0): string[] {
+    const at = value.indexOf('var(');
+    if (at < 0 || depth > 16) return [value];
+    let end = at + 4;
+    for (let open = 1; open > 0 && end < value.length; end++) open += value[end] === '(' ? 1 : value[end] === ')' ? -1 : 0;
+    const inner = value.slice(at + 4, end - 1);
+    const comma = inner.indexOf(',');
+    const name = (comma < 0 ? inner : inner.slice(0, comma)).trim();
+    const subs = TOKENS.get(name) ?? (comma < 0 ? [] : [inner.slice(comma + 1).trim()]);
+    if (subs.length === 0) return [value];
+    return subs.flatMap(s => resolve(value.slice(0, at) + s + value.slice(end), depth + 1));
+  }
+  /** Split a transition/animation list on its top-level commas. */
+  const segments = (value: string) => value.split(/,(?![^(]*\))/).map(s => s.trim());
+  /** A cubic-bezier eases out when it never leaves [0,1] (no overshoot, no
+      wind-up), comes to rest (flat exit tangent), and is front-loaded — more
+      than half the distance is covered in the first half of the time. The
+      canonical --ease, cubic-bezier(0.4, 0, 0.2, 1), is; ease-in, a symmetric
+      ease-in-out and every spring or bounce are not. */
+  function bezierEasesOut([x1, y1, x2, y2]: number[]): boolean {
+    if ([x1, y1, x2, y2].some(n => !Number.isFinite(n))) return false;
+    if ([x1, x2].some(n => n < 0 || n > 1) || [y1, y2].some(n => n < 0 || n > 1)) return false;
+    if (!(y2 === 1 && x2 < 1)) return false;
+    const b = (p: number, q: number, s: number) => 3 * p * s * (1 - s) ** 2 + 3 * q * s * s * (1 - s) + s ** 3;
+    let lo = 0;
+    let hi = 1;
+    for (let i = 0; i < 50; i++) {
+      const s = (lo + hi) / 2;
+      if (b(x1, x2, s) < 0.5) lo = s;
+      else hi = s;
+    }
+    return b(y1, y2, (lo + hi) / 2) > 0.5 + 1e-6;
+  }
+
   it('every transition and animation is at most 200ms and eases out — no spring, no bounce, no overshoot', () => {
     const tooSlow: string[] = [];
     const notEaseOut: string[] = [];
+    const unresolved: string[] = [];
     for (const m of CANVAS_BLOCK.matchAll(/(?:transition|animation)\s*:\s*([^;]+);/g)) {
       const value = m[1].replace(/\s+/g, ' ').trim();
       if (value === 'none') continue;
-      for (const dur of value.matchAll(/(\d*\.?\d+)(ms|s)\b/g)) {
-        const ms = dur[2] === 's' ? parseFloat(dur[1]) * 1000 : parseFloat(dur[1]);
-        if (ms > 200) tooSlow.push(value);
-      }
-      if (!/\bease-out\b|\blinear\b/.test(value)) notEaseOut.push(value);
-      // A cubic-bezier that leaves [0,1] on either control point overshoots.
-      const cb = /cubic-bezier\(([^)]*)\)/.exec(value);
-      if (cb) {
-        const n = cb[1].split(',').map(Number);
-        if (n[1] < 0 || n[3] > 1) notEaseOut.push(value);
+      for (const resolved of new Set(resolve(value))) {
+        const shown = resolved === value ? value : `${value} → ${resolved}`;
+        if (resolved.includes('var(')) {
+          unresolved.push(shown);
+          continue;
+        }
+        for (const dur of resolved.matchAll(/(\d*\.?\d+)(ms|s)\b/g)) {
+          const ms = dur[2] === 's' ? parseFloat(dur[1]) * 1000 : parseFloat(dur[1]);
+          if (ms > 200) tooSlow.push(shown);
+        }
+        // Each transition in a list is judged on its own curve.
+        for (const seg of segments(resolved)) {
+          const cb = /cubic-bezier\(([^)]*)\)/.exec(seg);
+          const ok = cb ? bezierEasesOut(cb[1].split(',').map(Number)) : /\bease-out\b|\blinear\b/.test(seg);
+          if (!ok) notEaseOut.push(shown);
+        }
       }
     }
-    expect({ tooSlow, notEaseOut }).toEqual({ tooSlow: [], notEaseOut: [] });
+    expect({ tooSlow, notEaseOut, unresolved }).toEqual({ tooSlow: [], notEaseOut: [], unresolved: [] });
   });
 
   it('every animation and transition it declares is removed under prefers-reduced-motion', () => {
@@ -350,5 +434,49 @@ describe('the canvas — microcopy', () => {
       }
     }
     expect(hits).toEqual([]);
+  });
+});
+
+/* 2026-09-28, coverage-gap sweep GE-P-3: the canvas offered File to vault and
+   Assign review to every member who could read the document. The read now
+   carries the caller's `access`; a refused act is disabled and described by
+   the server's reason, and an unknown one is left for the server to decide. */
+describe('DocumentCanvas — acts the server will refuse', () => {
+  const describedBy = (el: Element) =>
+    (el.getAttribute('aria-describedby') ?? '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .join(' ');
+  function withAccess(access: unknown) {
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string, ...rest: unknown[]) => {
+      if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) return ok({ ...DOC_ROW, access });
+      return base(method, url, ...rest);
+    });
+  }
+
+  it('disables File to vault and Assign review with the reason as described text', async () => {
+    withAccess({
+      fileToVault: { allowed: false, reason: 'Filing to the vault needs an Owner or Author grant on this document. Your grants on it: Reviewer.' },
+      assignReview: { allowed: false, reason: 'Assigning a review needs an editing role in this organization. Your role: viewer.' },
+      freeze: null,
+      esign: null,
+    });
+    render(<Host />);
+    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+    const vault = screen.getByTestId('dc-file-to-vault') as HTMLButtonElement;
+    const assign = screen.getByTestId('dc-assign-review') as HTMLButtonElement;
+    await waitFor(() => expect(vault.disabled).toBe(true));
+    expect(describedBy(vault)).toMatch(/Owner or Author grant/);
+    expect(assign.disabled).toBe(true);
+    expect(describedBy(assign)).toMatch(/Your role: viewer/);
+  });
+
+  it('leaves them enabled when the document read returns no access', async () => {
+    render(<Host />);
+    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+    await waitFor(() => expect((screen.getByTestId('dc-file-to-vault') as HTMLButtonElement).disabled).toBe(false));
+    expect((screen.getByTestId('dc-assign-review') as HTMLButtonElement).disabled).toBe(false);
   });
 });

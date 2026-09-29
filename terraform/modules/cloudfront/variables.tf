@@ -21,6 +21,19 @@ variable "api_domain_name" {
   default     = ""
 }
 
+variable "api_origin_secret_header_name" {
+  type        = string
+  description = "Header the ALB requires on every request it forwards (modules/alb output origin_secret_header_name)."
+  default     = ""
+}
+
+variable "api_origin_secret" {
+  type        = string
+  sensitive   = true
+  description = "Value of that header; the same value the ALB module is given as origin_secret."
+  default     = ""
+}
+
 variable "price_class" {
   type    = string
   default = "PriceClass_100" # US, Canada, Europe

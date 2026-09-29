@@ -10,8 +10,9 @@
  * Proves: the vault row exists with the SHA-256 of the rendered bytes, filed
  * in the CTD module folder; the export is in the document's export history;
  * ONE governed action `authoring.document.file_to_vault` sits in the tenant's
- * hash chain and the chain verifies; a document with no program and a
- * document mid-freeze are refused 409; and a failure after the vault row was
+ * hash chain and the chain verifies; a document with no program (a pre-PF-07
+ * org-wide row — the create route no longer makes one) and a document
+ * mid-freeze are refused 409; and a failure after the vault row was
  * admitted reverts it (never a partial write).
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
@@ -50,6 +51,10 @@ vi.mock('../../services/vault/document-chunking.service', () => ({
    one program do not collide on the vault's (program, content_hash) rule the
    way one shared buffer would. A real '%PDF-' header so the magic-byte check
    the ingest runs is exercised for real. */
+vi.mock('../../services/vault/vault-placement.service', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services/vault/vault-placement.service')>();
+  return { ...actual, placeVaultDocument: vi.fn(actual.placeVaultDocument) };
+});
 vi.mock('../../export/renderers', () => ({
   renderHtmlToPdf: async (html: string) => Buffer.from(`%PDF-1.7\n% rendered by the test engine\n${html}`),
 }));
@@ -58,6 +63,7 @@ const lastStoredBytes = (): Buffer => (h.put.mock.calls.at(-1)?.[0] as { bytes: 
 const T = 180_000;
 let jdb: JourneyDb;
 let app: express.Express;
+let viewerApp: express.Express;
 let author: (r: request.Test) => request.Test;
 
 beforeAll(async () => {
@@ -96,23 +102,46 @@ beforeAll(async () => {
   author = asToken(await mint(AUTHOR));
   const { default: router } = await import('../authoring.router');
   app = makeApp(router);
+  viewerApp = makeApp(router, { role: 'viewer' });
 }, T);
 
 afterAll(async () => {
   await jdb?.close();
 });
 
-async function draftDocument(title: string, programId: string | null = PROGRAM): Promise<string> {
-  if (programId) {
-    const res = await author(request(app).post('/api/authoring/docs/from-draft')).send({
-      programId, title, module: 'M2', sections: M25_SECTIONS, provenance: { source: 'ana' },
-    });
-    expect(res.status, JSON.stringify(res.body)).toBe(201);
-    return res.body.data.doc.id;
-  }
-  const res = await author(request(app).post('/api/authoring/docs')).send({ title, module: 'M2' });
+async function draftDocument(title: string): Promise<string> {
+  const res = await author(request(app).post('/api/authoring/docs/from-draft')).send({
+    programId: PROGRAM, title, module: 'M2', sections: M25_SECTIONS, provenance: { source: 'ana' },
+  });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
-  return res.body.document.id;
+  return res.body.data.doc.id;
+}
+
+/*
+ * An org-wide (project-less) document, as a row written BEFORE PF-07 has one.
+ * PF-07 (founder decision 2026-09-26): a document belongs to a project, so
+ * POST /docs now refuses a create with no client_program_id (400
+ * PROJECT_REQUIRED) — the route can no longer make this row. Rows it made
+ * before that decision still sit in deployed tenants, and file-to-vault's 409
+ * DOCUMENT_HAS_NO_PROGRAM is what guards them. So the document is created IN
+ * the project, through the same POST /docs route the case used before, and
+ * then unscoped directly — client_program_id and the governed binding both
+ * NULL, exactly the state a pre-PF-07 org-wide create left behind.
+ */
+async function legacyOrgWideDocument(title: string): Promise<string> {
+  const refused = await author(request(app).post('/api/authoring/docs')).send({ title, module: 'M2' });
+  expect(refused.status, JSON.stringify(refused.body)).toBe(400);
+  expect(refused.body.code).toBe('PROJECT_REQUIRED');
+  const res = await author(request(app).post('/api/authoring/docs')).send({ title, module: 'M2', client_program_id: PROGRAM });
+  expect(res.status, JSON.stringify(res.body)).toBe(201);
+  const docId: string = res.body.document.id;
+  await jdb.pool.query(
+    `UPDATE authoring_documents SET client_program_id = NULL, c2c_document_id = NULL WHERE id = $1 AND tenant_id = $2`,
+    [docId, ORG],
+  );
+  const row = await jdb.pool.query(`SELECT client_program_id FROM authoring_documents WHERE id = $1`, [docId]);
+  expect(row.rows).toEqual([{ client_program_id: null }]);
+  return docId;
 }
 
 describe('POST /docs/:docId/file-to-vault', () => {
@@ -177,7 +206,7 @@ describe('POST /docs/:docId/file-to-vault', () => {
   });
 
   it('refuses 409 DOCUMENT_HAS_NO_PROGRAM for an org-wide document — nothing filed', async () => {
-    const docId = await draftDocument('Org-wide working notes', null);
+    const docId = await legacyOrgWideDocument('Org-wide working notes');
     const before = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.documents');
     const res = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
     expect(res.status).toBe(409);
@@ -192,6 +221,16 @@ describe('POST /docs/:docId/file-to-vault', () => {
     const res = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'docx' });
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('DOCUMENT_MID_FREEZE');
+  });
+
+  it('refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not', async () => {
+    const docId = await draftDocument('Drafted by a member, filed by a viewer');
+    const before = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.documents');
+    const res = await author(request(viewerApp).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(res.body.error.code).toBe('VAULT_WRITE_ROLE_REQUIRED');
+    const after = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.documents');
+    expect(after.rows[0]).toEqual(before.rows[0]);
   });
 
   it('refuses 400 on a format it does not file', async () => {
@@ -246,4 +285,37 @@ describe('POST /docs/:docId/file-to-vault', () => {
     );
     expect(reverted.rows.length).toBeGreaterThanOrEqual(1);
   });
+});
+
+/* The 2026-09-22 review's handed-off items #9 and #13, run last so their rows do
+   not enter the ledger counts the earlier cases assert. */
+describe('POST /docs/:docId/file-to-vault — handed-off items #9 and #13', () => {
+  const liveRows = async (): Promise<number> => {
+    const r = await jdb.pool.query(
+      `SELECT count(*)::int AS n FROM vault.documents WHERE program_id = $1 AND deleted_at IS NULL`, [PROGRAM],
+    );
+    return (r.rows[0] as { n: number }).n;
+  };
+
+  it('a placement that throws reverts the vault row it admitted — nothing is left behind (#9)', async () => {
+    const docId = await draftDocument('Module 2.5 — placement throws');
+    const before = await liveRows();
+    const { placeVaultDocument } = await import('../../services/vault/vault-placement.service');
+    vi.mocked(placeVaultDocument).mockRejectedValueOnce(new Error('placement exploded'));
+    const res = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
+    expect(res.status).toBe(500);
+    // On the previous head this was before + 1: the admitted row stayed while the route answered 500.
+    expect(await liveRows()).toBe(before);
+  }, T);
+
+  it('an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)', async () => {
+    const created = await author(request(app).post('/api/authoring/docs/from-draft')).send({
+      programId: PROGRAM, title: 'Untyped AnA draft', sections: M25_SECTIONS, provenance: { source: 'ana' },
+    });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const res = await author(request(app).post(`/api/authoring/docs/${created.body.data.doc.id}/file-to-vault`)).send({ format: 'pdf' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    // On the previous head the assumed module filed it as confirmed into module-2.
+    expect(res.body.data.folder.placementStatus).not.toBe('confirmed');
+  }, T);
 });

@@ -130,3 +130,45 @@ describe('ChangeControl — the change-control log', () => {
     expect(onAsk.mock.calls[0][0]).toMatch(/CC-/);
   });
 });
+
+/* HS-1 (docs/evidence/reviews/2026-09-24/lenses.md): a failed register read
+   rendered "No changes at this stage." under a flowchart of zeroes. */
+describe('ChangeControl — a failed read is not an empty log', () => {
+  const renderLog = (p: { changes?: typeof FIXTURE_CHANGES; loading?: boolean; error?: string | null; onRetry?: () => void }) =>
+    render(
+      <ChangeControl
+        onAsk={() => {}}
+        stage="all"
+        onStageChange={() => {}}
+        openId={null}
+        onOpenIdChange={() => {}}
+        changes={p.changes ?? []}
+        loading={p.loading ?? false}
+        showingSample={false}
+        error={p.error}
+        onRetry={p.onRetry}
+      />,
+    );
+
+  it('renders a failed read as a failure with a retry, and no stage counts', () => {
+    const onRetry = vi.fn();
+    renderLog({ error: 'Request failed (500)', onRetry });
+    expect(screen.getByTestId('change-log-failed').textContent).toMatch(/change log could not be read/);
+    expect(screen.queryByText('No changes at this stage.')).toBeNull();
+    expect(screen.queryByText(/0 changes/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('claims nothing while the log is loading', () => {
+    renderLog({ loading: true });
+    expect(screen.getAllByText('Loading the change log…').length).toBeGreaterThan(0);
+    expect(screen.queryByText('No changes at this stage.')).toBeNull();
+  });
+
+  it('shows a log that answered empty as empty', () => {
+    renderLog({});
+    expect(screen.getByText('No changes at this stage.')).toBeTruthy();
+    expect(screen.queryByTestId('change-log-failed')).toBeNull();
+  });
+});

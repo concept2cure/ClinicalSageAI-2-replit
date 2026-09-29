@@ -38,7 +38,7 @@ vi.mock('@/hooks/useGlobalRiCatalog', () => ({
 
 import { Review } from '../surfaces/Review';
 import { TaskBoard } from '../surfaces/TaskBoard';
-import { GlobalRiBrowser } from '../surfaces/Surfaces';
+import { GlobalRiBrowser } from '../surfaces/GlobalRiBrowser';
 import {
   __resetSurfaceActionBus,
   applySurfaceAction,
@@ -215,7 +215,7 @@ describe('TaskBoard — the aliased surface obeys nav-target-addressed directive
       ) as typeof outcome;
     });
     expect(outcome.status).toBe('failed');
-    expect(outcome.reason).toContain('No programme named');
+    expect(outcome.reason).toContain('No project named');
   });
 
   it('tasking.open-task opens the detail, and a second open is refused while it holds the canvas', async () => {

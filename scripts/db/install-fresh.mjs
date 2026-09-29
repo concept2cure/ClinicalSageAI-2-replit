@@ -1619,6 +1619,52 @@ async function main() {
           'governed-content tree may carry no RLS policy',
       );
     }
+
+    // ── Scope the children of what the sweep just policied ──────────────────
+    // The sweep covers tables with a tenant column. A child has none: it
+    // belongs to its parent's tenant through a foreign key. The canonical way
+    // a child is scoped is db/migrations/20260813_child_table_parent_scoped_rls.sql,
+    // a C2C_MIGRATION_FILES entry, so until 2026-09-24 it reached a fresh
+    // database only when deploy-migrate ran afterwards. That day the coverage
+    // gate step 8/8 runs (rls-coverage-check.sql) learned to flag children
+    // (ledger L201), and every install from blank failed on 80 of them: the
+    // same gap, now named. Applied here for the sweep's reason, from the same
+    // file, so there is still one canonical child scope. It skips a table that
+    // does not exist yet and leaves an already-policied child alone, so
+    // deploy-migrate's re-run of it is a no-op.
+    //
+    // A child outside `public` is scoped through its parent's own policy, and
+    // some of those parents (global_dossier.dossier_instances) are uuid-keyed:
+    // their policy comes from 20260801_uuid_tenant_isolation_nonpublic.sql, the
+    // other half of the pair the set runs last. So that half is applied first,
+    // or those children are skipped as "parent is not scoped". It is guarded
+    // the same way (absent table skipped, existing policy left alone).
+    const uuidSweepPath = path.resolve(gccDir, '20260801_uuid_tenant_isolation_nonpublic.sql');
+    try {
+      await pool.query(fs.readFileSync(uuidSweepPath, 'utf8'));
+      console.log('  ✓ non-public uuid-tenant tables policied');
+    } catch (err) {
+      const why = (err.message || '').split('\n')[0];
+      console.log(`  ⚠ non-public uuid-tenant policies failed: ${why}`);
+      recordIncomplete(
+        'non-public tenant isolation',
+        `20260801_uuid_tenant_isolation_nonpublic.sql failed: ${why} — uuid-keyed tables outside ` +
+          'public, and the children scoped through them, may carry no RLS policy',
+      );
+    }
+    const childScopePath = path.resolve(gccDir, '20260813_child_table_parent_scoped_rls.sql');
+    try {
+      await pool.query(fs.readFileSync(childScopePath, 'utf8'));
+      console.log('  ✓ child tables scoped to their tenant-keyed parents');
+    } catch (err) {
+      const why = (err.message || '').split('\n')[0];
+      console.log(`  ⚠ child-table scoping failed: ${why}`);
+      recordIncomplete(
+        'child table scoping',
+        `20260813_child_table_parent_scoped_rls.sql failed: ${why} — child tables of tenant-keyed ` +
+          'parents may carry no RLS policy',
+      );
+    }
   });
 
   recordSchemaSource('governed content (db/migrations/*_gcc_*)', await snapshotPublicTables());

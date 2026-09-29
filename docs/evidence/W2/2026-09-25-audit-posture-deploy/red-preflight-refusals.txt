@@ -1,0 +1,18 @@
+# the preflight step (deploy-aws.yml, byte for byte, via --td-json) against the rendered task definition, mutated four ways
+== unsealed
+::error::The task definition carries production override flag(s): AUDIT_SEAL_ACCEPT_UNSEALED. Each switches a production refusal off; remove it from terraform/stack.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+exit 1
+== localdisk-secret
+::error::The task definition carries production override flag(s): STORAGE_ACCEPT_LOCAL_DISK. Each switches a production refusal off; remove it from terraform/stack.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+exit 1
+== trail-false
+::error::AUDIT_TRAIL_ENABLED must be exactly 'true' in production; got 'false'.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+exit 1
+== enforce-missing
+::error::Task definition c2c-production-api (container api) is missing required production env: AUDIT_REQUIRE_ENFORCE
+::error::The app refuses to boot without each of these, except SMTP_*: without those it boots and no one can sign in (login OTP is the mandatory second factor). Add them to the task definition (terraform/stack) before deploying.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+exit 1

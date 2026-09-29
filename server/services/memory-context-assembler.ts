@@ -118,10 +118,24 @@ export interface MemoryAssemblyDiagnostics {
   semanticSearchMs?: number;
 }
 
+/**
+ * One memory item that actually reached the model: rendered into the block
+ * and not cut by the character budget. `atoms` is every ranked candidate;
+ * this is the subset the turn really read, which is what "Used in this
+ * session" may say.
+ */
+export interface MemoryReadEntry {
+  layer: MemoryLayer;
+  title: string;
+  documentName?: string;
+}
+
 export interface MemoryContextAssemblerResult {
   memoryBlock: string;
   atoms: RetrievedMemoryAtom[];
   diagnostics: MemoryAssemblyDiagnostics;
+  /** Items present in `memoryBlock` after trimming. Absent on fallback paths. */
+  read?: MemoryReadEntry[];
 }
 
 function clampLimit(limit?: number): number {
@@ -361,10 +375,17 @@ export async function buildMemoryContextForChat(
   } = orchestrateAtoms(atoms, maxAgeDays, memoryPolicy);
 
   const sections: string[] = [];
+  // Each rendered item with the line that carries it, so the ones the
+  // character budget cut can be told apart from the ones the model read.
+  const rendered: Array<{ entry: MemoryReadEntry; line: string }> = [];
 
   const wm = sorted.find(a => a.layer === 'working_memory');
   if (wm) {
     sections.push(`## Working Memory\n${wm.content}`);
+    rendered.push({
+      entry: { layer: 'working_memory', title: wm.title },
+      line: `## Working Memory\n${wm.content}`.slice(0, 80),
+    });
   }
 
   const renderSemanticLayer = (
@@ -383,13 +404,14 @@ export async function buildMemoryContextForChat(
               a.metadata?.confidence != null
                 ? ` | confidence: ${Math.round((a.metadata.confidence as number) * 100)}%`
                 : '';
-            const sourceText = a.metadata?.source?.documentName
-              ? ` | doc: ${a.metadata.source.documentName}`
-              : '';
-            return `- [${categoryTag} | "${a.title}"${confidenceText}${sourceText}] ${trimContent(
+            const documentName = a.metadata?.source?.documentName || undefined;
+            const sourceText = documentName ? ` | doc: ${documentName}` : '';
+            const line = `- [${categoryTag} | "${a.title}"${confidenceText}${sourceText}] ${trimContent(
               a.content,
               400
             )}`;
+            rendered.push({ entry: { layer, title: a.title, ...(documentName ? { documentName } : {}) }, line: line.slice(0, 80) });
+            return line;
           })
           .join('\n')
     );
@@ -418,5 +440,9 @@ export async function buildMemoryContextForChat(
     semanticSearchMs,
   };
 
-  return { memoryBlock, atoms: sorted, diagnostics };
+  // An item whose opening survived the character budget was read; one the
+  // trim cut off was not, and is not reported as read.
+  const read = rendered.filter(r => memoryBlock.includes(r.line)).map(r => r.entry);
+
+  return { memoryBlock, atoms: sorted, diagnostics, read };
 }

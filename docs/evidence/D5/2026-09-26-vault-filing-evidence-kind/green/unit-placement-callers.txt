@@ -1,0 +1,598 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stderr | server/routes/__tests__/vault-file-authorization.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/__tests__/vault-file-authorization.test.ts
+{
+  "timestamp": "2026-09-26T19:09:55.656Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > renders the filing cabinet with the upload inside its suggested folder 192ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > shows the unfiled queue and the header review count 105ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > a failed vault read is an error, never "no documents" 53ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > reports the derived pipeline stages and lists sources on demand 130ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable data room renders as a failure, never an empty room 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an empty data room says it is empty 85ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable branch is said, never silently omitted from the tree 52ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > labels the classifier's proposal as the classifier's, with its confidence 111ms
+stdout | server/routes/__tests__/vault-file-authorization.test.ts
+{
+  "timestamp": "2026-09-26T19:09:56.369Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T19:09:56.374Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/__tests__/vault-file-authorization.test.ts
+{
+  "timestamp": "2026-09-26T19:09:56.374Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > does not label AnA's suggestion as the classifier's 107ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses with 403 and never reaches the governed write 38ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses whatever case the role arrives in 5ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses a caller with no role at all 8ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits member 14ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits manager 4ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits admin 8ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits owner 4ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits super_admin 3ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > organization context is still required > refuses a writing role with no organization 6ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > confirming a suggested filing POSTs to /file and re-reads the tree 97ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > a rejected filing (expired session) is reported as refused, never as recorded 70ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > POST /api/vault/ingest — who may put bytes in the vault > gates the role BEFORE the upload is parsed 166ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > POST /api/vault/ingest — who may put bytes in the vault > lets a writing role past the gate 11ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > renders a search input the human can actually use 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > searches on the server and shows the hits, not a substring filter 140ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches 294ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > says how many of the total are shown when the page is not all of them 118ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > files a cataloged document and reports where it now lives 5ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > refuses to file a document whose comprehension was never recorded 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > refuses a document that has never been cataloged at all 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > says a failed extraction leaves nothing to base a placement on 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > allows unfiling an uncataloged document — it retracts a claim, not makes one 2ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > hands the service her provenance, so the write cannot pass for a person's decision 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > records a model it was not told about as unknown, never a guessed one 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > names the gateway request that proposed the placement, so the row joins its ledger row 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > refuses confirm_suggested — confirming a filing is a person's act, in the Vault 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > is described to the model as a suggestion a person confirms, not a filing 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > tells the model the placement awaits a person, not that the document is filed 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > answers a chat-upload id with the wrong-store refusal, not absence 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > requires a rationale — the audit trail records why, not just what 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > requires a destination rather than guessing one 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > reports a document this organization does not hold as unknown, with the discovery tool 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > passes the service refusal through instead of claiming a move 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > states the window and the real total when the server truncated the page 98ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > says nothing when the whole cabinet fits — no note on the common case 50ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > leaves the unfiled queue alone — it is programme-wide, not a page count 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — placing a document into a submission > offers the action on an uploaded document and files it by BARE uuid 378ms
+stderr | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stdout | server/services/ana/__tests__/tool-authorization.test.ts
+{
+  "timestamp": "2026-09-26T19:10:00.317Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T19:10:00.318Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/services/ana/__tests__/tool-authorization.test.ts
+{
+  "timestamp": "2026-09-26T19:10:00.318Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stdout | server/services/ana/__tests__/tool-authorization.test.ts
+[database] Database connection successful
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts
+✅ Template tables initialized
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-09-26T19:10:01.104Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1836790f-3714-424d-8bec-89181b26ace0 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-09-26T19:10:01.137Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1836790f-3714-424d-8bec-89181b26ace0 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-09-26T19:10:01.151Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1836790f-3714-424d-8bec-89181b26ace0 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-09-26T19:10:01.378Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Module_2_5_Clinical_Overview___to_file.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-09-26T19:10:01.379Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-09-26T19:10:01.397Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "0e05272c-b487-4be3-b4ac-a7fdc1ee3cae",
+    "code": "authoring-1836790f-3714-424d-8bec-89181b26ace0",
+    "type": "MODULE_2",
+    "size": 4027,
+    "hasText": true
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-09-26T19:10:01.421Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 1836790f-3714-424d-8bec-89181b26ace0 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status
+{
+  "timestamp": "2026-09-26T19:10:01.510Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc acc61f85-4783-4651-b61c-5685a38729b1 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status
+{
+  "timestamp": "2026-09-26T19:10:01.523Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc acc61f85-4783-4651-b61c-5685a38729b1 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status
+{
+  "timestamp": "2026-09-26T19:10:01.541Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc acc61f85-4783-4651-b61c-5685a38729b1 by a***@canvas.example",
+  "context": {}
+}
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256 444ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_HAS_NO_PROGRAM for an org-wide document — nothing filed 34ms
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not
+{
+  "timestamp": "2026-09-26T19:10:01.604Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c605eb0b-92fd-4def-8936-dfb251e074f4 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not
+{
+  "timestamp": "2026-09-26T19:10:01.617Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c605eb0b-92fd-4def-8936-dfb251e074f4 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not
+{
+  "timestamp": "2026-09-26T19:10:01.631Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c605eb0b-92fd-4def-8936-dfb251e074f4 by a***@canvas.example",
+  "context": {}
+}
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status 98ms
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 400 on a format it does not file
+{
+  "timestamp": "2026-09-26T19:10:01.708Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 38a68156-e461-458d-9650-82cc011896da by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 400 on a format it does not file
+{
+  "timestamp": "2026-09-26T19:10:01.728Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 38a68156-e461-458d-9650-82cc011896da by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 400 on a format it does not file
+{
+  "timestamp": "2026-09-26T19:10:01.744Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 38a68156-e461-458d-9650-82cc011896da by a***@canvas.example",
+  "context": {}
+}
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not 96ms
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-09-26T19:10:01.798Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3abb2c30-05cb-4ac3-90f3-81b923b0cc0f by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-09-26T19:10:01.810Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3abb2c30-05cb-4ac3-90f3-81b923b0cc0f by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-09-26T19:10:01.821Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3abb2c30-05cb-4ac3-90f3-81b923b0cc0f by a***@canvas.example",
+  "context": {}
+}
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 400 on a format it does not file 101ms
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-09-26T19:10:01.955Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Module_2_5___docx.docx",
+    "declaredMime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-09-26T19:10:01.955Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-09-26T19:10:01.964Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "eba6613a-56f0-4e51-a5f7-fd97913f5c92",
+    "code": "authoring-3abb2c30-05cb-4ac3-90f3-81b923b0cc0f",
+    "type": "MODULE_2",
+    "size": 8315,
+    "hasText": true
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-09-26T19:10:01.981Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 3abb2c30-05cb-4ac3-90f3-81b923b0cc0f by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-09-26T19:10:02.022Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b2ce1444-4eaf-44ce-bdac-2a4197dc6d0c by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-09-26T19:10:02.046Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b2ce1444-4eaf-44ce-bdac-2a4197dc6d0c by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-09-26T19:10:02.057Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b2ce1444-4eaf-44ce-bdac-2a4197dc6d0c by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-09-26T19:10:02.090Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Compensation_case.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-09-26T19:10:02.090Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-09-26T19:10:02.099Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f3a225c0-67af-4747-bc20-1e597af43498",
+    "code": "authoring-b2ce1444-4eaf-44ce-bdac-2a4197dc6d0c",
+    "type": "MODULE_2",
+    "size": 4004,
+    "hasText": true
+  }
+}
+stderr | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-09-26T19:10:02.113Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "b2ce1444-4eaf-44ce-bdac-2a4197dc6d0c",
+    "why": "relation \"authoring_export_history\" does not exist"
+  }
+}
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder 222ms
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+{
+  "timestamp": "2026-09-26T19:10:02.177Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f43d2c9c-6f07-4789-a9b5-708b449ee6ef by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+{
+  "timestamp": "2026-09-26T19:10:02.198Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f43d2c9c-6f07-4789-a9b5-708b449ee6ef by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+{
+  "timestamp": "2026-09-26T19:10:02.209Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f43d2c9c-6f07-4789-a9b5-708b449ee6ef by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+{
+  "timestamp": "2026-09-26T19:10:02.234Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Module_2_5___placement_throws.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+{
+  "timestamp": "2026-09-26T19:10:02.235Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+{
+  "timestamp": "2026-09-26T19:10:02.246Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b23dd46d-608c-4d38-bd4f-2c17dfb42f67",
+    "code": "authoring-f43d2c9c-6f07-4789-a9b5-708b449ee6ef",
+    "type": "MODULE_2",
+    "size": 4018,
+    "hasText": true
+  }
+}
+stdout | server/services/ana-ri/__tests__/persona-client-files.test.ts
+{
+  "timestamp": "2026-09-26T19:10:02.204Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T19:10:02.205Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/services/ana-ri/__tests__/persona-client-files.test.ts
+{
+  "timestamp": "2026-09-26T19:10:02.205Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+File-to-vault error: Error: placement exploded
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts:281:57
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+{
+  "timestamp": "2026-09-26T19:10:02.258Z",
+  "level": "error",
+  "message": "[authoring-router] filing to vault failed",
+  "context": {
+    "docId": "f43d2c9c-6f07-4789-a9b5-708b449ee6ef",
+    "err": "placement exploded",
+    "correlationId": null,
+    "code": null
+  }
+}
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500 141ms
+stdout | server/services/ana-ri/__tests__/persona-client-files.test.ts
+[database] Database connection successful
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-09-26T19:10:02.293Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9922a118-e312-48fd-b37f-b2c6615edbff by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-09-26T19:10:02.304Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9922a118-e312-48fd-b37f-b2c6615edbff by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-09-26T19:10:02.315Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9922a118-e312-48fd-b37f-b2c6615edbff by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-09-26T19:10:02.343Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Untyped_AnA_draft.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-09-26T19:10:02.344Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-09-26T19:10:02.352Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8e06cda4-5ba5-4215-ab30-a449f4e21ccc",
+    "code": "authoring-9922a118-e312-48fd-b37f-b2c6615edbff",
+    "type": "MODULE_2",
+    "size": 4004,
+    "hasText": true
+  }
+}
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-09-26T19:10:02.357Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 9922a118-e312-48fd-b37f-b2c6615edbff by a***@canvas.example",
+  "context": {}
+}
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9) 133ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13) 101ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > names the tools rather than gesturing at a capability 2ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > list_project_documents is a real, executable tool 1ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > read_uploaded_document is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > search_project_documents is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > search_document_passages is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > file_chat_upload_to_vault is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > read_project_document is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > catalog_project_document is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > place_project_document is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > tells her a listing is a page, and that absence is a claim about the whole vault 1ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > says what to do when the catalog tools are not offered — without naming internal settings 1ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > tells her to LOOK before reporting a file absent 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > says a file is not part of the context snapshot, so the "not in my context" reply does not apply to it 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > requires the whole document, not a sample, and says a scan is a document 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > requires the comprehension to be recorded, and only what the text states 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > points at the passage index for a question the text settles, without licensing a sample 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > requires the file to be PUT somewhere, and unfiling to be the honest fallback 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > requires an unreadable file to be reported as such 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > carries no backtick — the persona body is a template literal 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every registered tool has a class 3ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every entry names a registered tool 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > is the whole surface, not a sample of it 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every conditional entry has its rule, and every rule an entry 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every refusal says where the person does it 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > only the command carrier defers to the command partition 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > cast_committee_vote is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > ack_training is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > approve_qms_document is refuse 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > retire_qms_document is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > transmit_submission is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > raise_monitoring_signal is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > predict_change_impact is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > catalog_project_document is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > check_consistency is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > assess_site_risk is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > set_protocol_budget_params is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > save_document_to_vault is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > seed_tmf is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > list_vault_documents is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > global_ri_exclusivity is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > set_specifications is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > answer_intelligence_question is self 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > a tool the register does not know is proposed, not run 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":"under_assessment"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":"approved"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":" Closed "} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > create_clinical_study {"title":"P1"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > create_clinical_study {"title":"P1","irb_approved":true} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > update_tmf_artifact_status {"status":"received"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > update_tmf_artifact_status {"status":"final"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > set_registration_status {"market_status":"submitted"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > set_registration_status {"market_status":"approved"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > log_cs_transaction {"quantity":2} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > log_cs_transaction {"quantity":2,"witnessed_by":"R. Ortiz"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > report_protocol_deviation {"severity":"major"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > report_protocol_deviation {"severity":"major","affects_safety":false} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > review_schedule_of_events_health {"apply":false} is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > review_schedule_of_events_health {} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > run_rbm_assessment {} is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > run_rbm_assessment {"seed":true} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > commit_intelligence_flow {"dry_run":true} is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > commit_intelligence_flow {} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"tmp/docbuilder/a/x.docx"} is self 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"tmp/docbuilder/a/x.docx","output_pdf_path":"uploads/7/x.pdf"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"uploads/7/x.docx"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > generate_document {"output_format":"docx"} is self 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > generate_document {"output_format":"xml"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > place_project_document {"document_id":3} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > place_project_document {"document_id":3,"confirm_suggested":true} is refuse 0ms
+ Test Files  6 passed (6)
+      Tests  124 passed (124)
+   Start at  19:09:52
+   Duration  9.90s (transform 11.36s, setup 447ms, import 16.04s, tests 10.82s, environment 590ms)

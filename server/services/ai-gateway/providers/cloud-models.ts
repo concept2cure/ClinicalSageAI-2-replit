@@ -9,8 +9,10 @@
  * as it does for the shared frontier providers.
  *
  * Model identifiers here are the substrate-specific IDs:
- *   - Bedrock: 'anthropic.<model>' (a regional inference-profile prefix such as
- *     'us.' / 'eu.' is added at call time from AI_BEDROCK_RESIDENCY when set).
+ *   - Bedrock: 'anthropic.<model>', sent as-is. No cross-region inference-profile
+ *     prefix ('us.' / 'eu.') is added; an earlier version of this comment said
+ *     one was, and no code ever did. Residency follows the region the client
+ *     calls (providers/placement.ts bedrockClientRegion).
  *   - Vertex: the bare Claude model id (the SDK targets it by project+region).
  *   - Azure: the deployment name (defaults to the OpenAI model id).
  *   - Local: a logical name resolved by the self-hosted server / LiteLLM map.

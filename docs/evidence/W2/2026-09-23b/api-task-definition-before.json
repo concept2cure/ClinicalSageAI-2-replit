@@ -1,0 +1,74 @@
+{
+  "family": "c2c-production-api",
+  "containerDefinitions": [
+    {
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PORT",
+          "value": "5000"
+        },
+        {
+          "name": "TRUST_PROXY_HOPS",
+          "value": "1"
+        },
+        {
+          "name": "CONCEPT2CURE_SIGNER_MODE",
+          "value": "kms"
+        },
+        {
+          "name": "CONCEPT2CURE_SIGNER_KMS_KEY_ID",
+          "value": "alias/fda-signing-key-2026"
+        },
+        {
+          "name": "CONCEPT2CURE_SIGNER_KMS_REGION",
+          "value": "us-east-1"
+        }
+      ],
+      "essential": true,
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:5000/api/health || exit 1"
+        ],
+        "interval": 30,
+        "retries": 3,
+        "startPeriod": 60,
+        "timeout": 10
+      },
+      "image": "x9qpchjl:probe-0000",
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/c2c-production/api",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "api"
+        }
+      },
+      "name": "api",
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:rds-master-mock"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "8enjmo64"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "valueFrom": "b70ypvqx"
+        }
+      ]
+    }
+  ]
+}

@@ -12,7 +12,13 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { createHash } from 'crypto';
-import { leafPackagePath, type EctdLeaf, type PackagerInput } from '../../submission-gateways/regional-packager';
+import {
+  baseLeafId,
+  isModule1Section,
+  regionalBackbonePath,
+  type EctdLeaf,
+  type PackagerInput,
+} from '../../submission-gateways/regional-packager';
 import type { Region } from '../../submission-gateways/types';
 import type { RpsMessageInput } from '../ectd4';
 import { submissionUnitId, contextOfUseId, documentId } from '../ectd4';
@@ -75,14 +81,17 @@ export function v3GoldenInput(opts: {
   const { region, sequence, applicationId, outputDir, paths, lifecycle, priorSequence } = opts;
   const op = (base: EctdLeaf['operation']): EctdLeaf['operation'] => (lifecycle ? base : 'new');
 
-  // For a lifecycle sequence, the prior leaf lives at the same section path in
-  // the prior sequence's package; modified-file points back at it.
-  const m1Sub: Record<string, string> = { fda: 'us', ema: 'eu', pmda: 'jp', ca: 'ca' };
-  const sub = m1Sub[region] ?? region;
-  const modFile = (section: string, fileName: string) =>
-    lifecycle && priorSequence
-      ? `../../../../${priorSequence}/m1/${sub}/${section.replace(/\./g, '-')}/${fileName}`
-      : undefined;
+  // For a lifecycle sequence, modified-file names the leaf the prior sequence
+  // filed: that sequence's backbone, '#', and the ID it carries there — from the
+  // sequence root (the packager rebases a Module 1 pointer onto the regional
+  // backbone). 2026-09-29 (W5/D7): this pinned a FILE path, at a depth that
+  // resolved nowhere, and the append named no leaf at all. The golden prior has
+  // no colliding leaves, so each ID is the packager's base ID for it.
+  const modFile = (section: string, fileName: string) => {
+    if (!lifecycle || !priorSequence) return undefined;
+    const backbone = isModule1Section(section) ? regionalBackbonePath(region) : 'index.xml';
+    return `../${priorSequence}/${backbone}#${baseLeafId({ ctdSection: section, fileName })}`;
+  };
 
   // Form FDA 356h is a DOCUMENT in the package at 1.1, not only an entry in the
   // fda.forms list, and it must be the SAME OBJECT in both places. The packager
@@ -110,6 +119,7 @@ export function v3GoldenInput(opts: {
     {
       ctdSection: '2.2', operation: op('append'), sourcePath: paths.byName['intro.pdf'],
       fileName: 'intro.pdf', title: 'Introduction',
+      modifiedFile: modFile('2.2', 'intro.pdf'),
     },
     // 2026-09-23 (W5/D7, round-2 skeptic): in the lifecycle sequence this leaf
     // is a withdrawal, and a withdrawal ships no bytes. The fixture pinned the
@@ -124,7 +134,7 @@ export function v3GoldenInput(opts: {
           ctdSection: '3.2.p.1', operation: 'delete', sourcePath: '',
           fileName: 'description-composition.pdf', title: 'Description and Composition',
           md5: createHash('md5').update(goldenPdf('Description and Composition')).digest('hex'),
-          modifiedFile: `../${priorSequence}/${leafPackagePath({ ctdSection: '3.2.p.1', fileName: 'description-composition.pdf' }, region).relPath}`,
+          modifiedFile: modFile('3.2.p.1', 'description-composition.pdf'),
         }
       : {
           ctdSection: '3.2.p.1', operation: op('delete'), sourcePath: paths.byName['description-composition.pdf'],

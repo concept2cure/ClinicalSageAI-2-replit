@@ -30,7 +30,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { AuthProvider } from '@/services/portal/authService';
 import { TenantProvider } from '@/contexts/TenantContext';
-import { V2App, readDirectiveProgram } from '../V2App';
+import { V2App } from '../V2App';
+import { readDirectiveProgram } from '../surfaceActions';
 import { locationForSurface } from '../routing';
 import { LiveDriveControlsContext, LiveDriveSwitch, type LiveDriveControlsValue } from '../LiveDriveSwitch';
 import { setAnaLockedScreens } from '../../components/ana/anaLockedScreens';

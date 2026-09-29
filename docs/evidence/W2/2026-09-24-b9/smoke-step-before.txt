@@ -1,0 +1,21 @@
+# deploy-aws.yml smoke-test step, run with stubbed aws/curl. BEFORE: the 'Health check' step at 53c1f3c01.
+# Case B is meaningful only for the new step (the old one looked up the ALB, not a CloudFront alias).
+
+=== A no distribution id configured / ALB not found
+⚠️ Could not resolve ALB DNS — skipping health check
+exit=0
+=== B distribution has no custom domain
+✅ API health check passed
+exit=0
+=== C 200 with the app's HTML (CloudFront's old 403/404 -> index.html mapping)
+✅ API health check passed
+exit=0
+=== D 503, not ready (AnA down)
+⚠️ API health check returned 503
+exit=1
+=== E connection refused
+⚠️ API health check returned 000
+exit=1
+=== F 200, ready
+✅ API health check passed
+exit=0

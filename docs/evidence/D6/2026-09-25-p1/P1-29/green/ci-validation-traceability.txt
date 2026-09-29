@@ -1,0 +1,2 @@
+✓ validation traceability: every file cited by 6 URS document(s) resolves; every OQ step carries its protocol's kind
+exit=0

@@ -42,7 +42,13 @@ const hoisted = vi.hoisted(() => {
     validateEctdPackage: vi.fn(),
     registerExportGovernanceQuick: vi.fn(),
     auditLogAction: vi.fn(),
+    resolveSignedPackageForExport: vi.fn(),
+    resolveProgramProjectAnchor: vi.fn(),
     reset() {
+      this.resolveSignedPackageForExport.mockReset();
+      this.resolveProgramProjectAnchor.mockReset();
+      // The submission's program is anchored to project 77 (projects.regulatory_program_id).
+      this.resolveProgramProjectAnchor.mockResolvedValue(77);
       this.assembleSubmissionEctd.mockReset();
       this.validateEctdPackage.mockReset();
       this.registerExportGovernanceQuick.mockReset();
@@ -58,6 +64,12 @@ const hoisted = vi.hoisted(() => {
         materialized: 9,
         unresolvedLeaves: [],
         skipped: [],
+        // The assembler always states what lifecycle acts were bound against
+        // (84e935e9b); an export for filing binds against filed sequences.
+        priorState: 'filed',
+        unfiledPriorSequences: [],
+        // The submission's program (submissions.program_id).
+        programId: '5eb50a2e-235a-4605-bd1b-af2d75e8518c',
         stats: {
           totalModules: 5,
           totalFiles: 12,
@@ -115,6 +127,24 @@ vi.mock('../../server/services/compute/exportGovernance', () => ({
 }));
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// MOCK the signed-package resolver (GET /by-run/:runId/signed). Its refusal
+// logic has its own suite (signed-package-export.test.ts); here only the
+// route's response shape is under test, so the resolver is stubbed and the
+// rest of the module (refusalHttpStatus) stays real.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+vi.mock('../../server/services/ectd/signed-package-export', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../server/services/ectd/signed-package-export')
+  >('../../server/services/ectd/signed-package-export');
+  return {
+    ...actual,
+    resolveSignedPackageForExport: (...args: unknown[]) =>
+      hoisted.resolveSignedPackageForExport(...args),
+  };
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // MOCK auditService — default export with logAction
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -129,6 +159,13 @@ vi.mock('../../server/services/auditService', () => ({
 // ectd4-validator and regional-rules modules may pull it through transitives.
 // Provide a no-op facade so any incidental import resolves.
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// The program → project anchor (Document Identity Contract C1) and the
+// request-scoped DB it reads through.
+vi.mock('../../server/services/c2c/program-project-anchor', () => ({
+  resolveProgramProjectAnchor: (...args: unknown[]) => hoisted.resolveProgramProjectAnchor(...args),
+}));
+vi.mock('../../server/db/requestDb', () => ({ requestDb: () => ({}) }));
 
 vi.mock('../../server/db', () => {
   const db = { execute: vi.fn(), select: vi.fn(), update: vi.fn(), insert: vi.fn() };
@@ -391,5 +428,263 @@ describe('POST /api/ectd/validate/preflight', () => {
     expect(res.body.error).toMatch(/Invalid preflight body/i);
     // zod's flattened error should mention the offending key.
     expect(JSON.stringify(res.body.details ?? {})).toMatch(/region/);
+  });
+});
+
+describe('GET /api/ectd/export/by-run/:runId/signed', () => {
+  const descriptor = {
+    runId: 'run-0001',
+    submissionId: 'sub-001',
+    organizationId: 100,
+    applicationNumber: 'IND123456',
+    sequenceNumber: '0001',
+    region: 'US',
+    submissionType: 'IND',
+    leaves: [],
+    backboneXml: '',
+    totalSizeBytes: 0,
+    payloadDigest: 'a'.repeat(64),
+    signatureId: 7,
+    signerId: 12,
+    signerName: 'A. Reviewer',
+    signerTitle: null,
+    signatureMeaning: 'approval',
+    signedAt: '2026-09-20T14:03:05.000Z',
+    sealVerdict: 'ok',
+    signatureVerdict: 'unsigned',
+    gatewayReady: true,
+    hardenedScore: 100,
+  };
+
+  it('returns the §11.50 manifestation of the release signature (review P11-4)', async () => {
+    hoisted.resolveSignedPackageForExport.mockResolvedValue({ ok: true, descriptor });
+
+    const res = await request(makeApp()).get('/api/ectd/export/by-run/run-0001/signed');
+
+    expect(res.status).toBe(200);
+    expect(res.body.signature).toEqual({
+      payloadDigest: 'a'.repeat(64),
+      signatureId: 7,
+      sealVerdict: 'ok',
+      signerId: 12,
+      signerName: 'A. Reviewer',
+      // Not recorded on the row: stays null on the wire, never a stand-in.
+      signerTitle: null,
+      signatureMeaning: 'approval',
+      signedAt: '2026-09-20T14:03:05.000Z',
+    });
+    expect(hoisted.resolveSignedPackageForExport).toHaveBeenCalledWith({
+      runId: 'run-0001',
+      organizationId: 100,
+    });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/ectd/export/:submissionId — the ONE eCTD export
+//
+// The download itself had no route-level test: this file covered /validate,
+// /preflight and /by-run only. That mattered twice over. The route's two
+// refusals — a structurally invalid package (ECTD_PACKAGE_INVALID) and an
+// incomplete one under requireComplete (ECTD_INCOMPLETE) — were unpinned, so a
+// refactor could return to shipping `200 + zip` with only an X-ECTD-Valid
+// header as the signal. And POST /api/audit-services/export/ectd, a second
+// endpoint over the same assembler that did exactly that, is deleted on the
+// strength of this route being the reachable replacement; these cases are what
+// prove it is.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('POST /api/ectd/export/:submissionId — the canonical export', () => {
+  const REVIEWED = {
+    governance: {
+      aiGenerated: true,
+      humanReviewApproved: true,
+      reviewerName: 'Dana Reviewer',
+      reviewerRole: 'Regulatory Affairs',
+      reviewTimestamp: '2026-09-24T10:00:00.000Z',
+    },
+  };
+
+  it('returns the package bytes as a zip when it validates', async () => {
+    const res = await request(makeApp())
+      .post('/api/ectd/export/42')
+      .send({ applicationNumber: '123456', ...REVIEWED })
+      .buffer(true)
+      .parse((r, cb) => {
+        const chunks: Buffer[] = [];
+        r.on('data', (c: Buffer) => chunks.push(c));
+        r.on('end', () => cb(null, Buffer.concat(chunks)));
+      });
+    expect(res.status, (res.body as Buffer).toString('utf8').slice(0, 300)).toBe(200);
+    expect(res.headers['content-type']).toMatch(/application\/zip/);
+    expect((res.body as Buffer).toString('utf8')).toBe('FAKE-ZIP-BYTES');
+    expect(hoisted.assembleSubmissionEctd).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses a package that fails structural validation, and returns no zip', async () => {
+    /* The failure this route used to have, and the one the deleted
+       audit-services endpoint still had: an invalid package delivered as a
+       normal download, the verdict only in a response header a script saving
+       the file never reads. */
+    hoisted.validateEctdPackage.mockResolvedValueOnce({
+      valid: false,
+      errors: [{ code: 'DTD_NO_BACKBONE', message: 'index.xml has no backbone' }],
+      warnings: [],
+    });
+    const res = await request(makeApp())
+      .post('/api/ectd/export/42')
+      .send({ applicationNumber: '123456', ...REVIEWED });
+    expect(res.status).toBe(422);
+    expect(res.headers['content-type']).toMatch(/application\/json/);
+    expect(res.body.code).toBe('ECTD_PACKAGE_INVALID');
+    expect(res.body.errorCount).toBe(1);
+  });
+
+  it('refuses an incomplete package when requireComplete is set', async () => {
+    const { EctdCompletenessError } = await import('../../server/services/ectd/completeness');
+    hoisted.assembleSubmissionEctd.mockRejectedValueOnce(
+      new EctdCompletenessError({
+        totalLeaves: 9, completeLeaves: 7, placeholderLeaves: 1, unfinalizedLeaves: 1,
+        completenessPct: 78, complete: false, incompleteSections: ['3.2.S.4.1'],
+      } as never),
+    );
+    const res = await request(makeApp())
+      .post('/api/ectd/export/42')
+      .send({ applicationNumber: '123456', requireComplete: true, ...REVIEWED });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('ECTD_INCOMPLETE');
+    expect(res.body.completeness.completenessPct).toBe(78);
+  });
+});
+
+/* WO-16C. assembleSubmissionEctd now carries the assembly's §11.10(e) outcome
+   (ECTD_PACKAGED_FROM_CORE + ECTD_ASSEMBLED). The download answers a ZIP, so
+   the outcome travels as X-Audit-Row-Persisted / X-Audit-Row-Code, which the
+   client transport reads before it looks at the content type. Before this,
+   eCTD Compile's download (EctdCompile.tsx, apiRequest POST) could not tell a
+   package whose records were lost from one whose records were written. */
+describe('POST /api/ectd/export/:submissionId — the assembly\'s audit rows', () => {
+  const REVIEWED = {
+    governance: {
+      aiGenerated: true, humanReviewApproved: true, reviewerName: 'Dana Reviewer',
+      reviewerRole: 'Regulatory Affairs', reviewTimestamp: '2026-09-24T10:00:00.000Z',
+    },
+  };
+  const LOST = { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'lost' };
+
+  async function withAudit(auditTrail: unknown) {
+    const base = await hoisted.assembleSubmissionEctd.getMockImplementation()?.();
+    hoisted.assembleSubmissionEctd.mockResolvedValueOnce({ ...(base as object), auditTrail });
+    return request(makeApp()).post('/api/ectd/export/42').send({ applicationNumber: '123456', ...REVIEWED });
+  }
+
+  it('a download whose rows were lost says so in its headers, and still returns the package', async () => {
+    const res = await withAudit(LOST);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/application\/zip/);
+    expect(res.headers['x-audit-row-persisted']).toBe('false');
+    expect(res.headers['x-audit-row-code']).toBe('AUDIT_ROW_NOT_PERSISTED');
+  });
+
+  it('a download whose rows were written says so, with no code', async () => {
+    const res = await withAudit({ persisted: true, chained: true });
+    expect(res.headers['x-audit-row-persisted']).toBe('true');
+    expect(res.headers['x-audit-row-code']).toBeUndefined();
+  });
+
+  it('a refused (invalid) package carries the outcome in its JSON body', async () => {
+    hoisted.validateEctdPackage.mockResolvedValueOnce({
+      valid: false, errors: [{ code: 'DTD_NO_BACKBONE', message: 'index.xml has no backbone' }], warnings: [],
+    });
+    const res = await withAudit(LOST);
+    expect(res.status).toBe(422);
+    expect(res.body.auditTrail).toEqual(LOST);
+  });
+});
+
+/**
+ * Who a governed eCTD export is recorded against. 2026-09-29 (W5/D7, WO-9
+ * Click 6): the route registered the export with projectId = the SUBMISSION id.
+ * concept2cure_artifacts.project_id is a foreign key to projects.id, a
+ * different id space: on a database where no project shares the submission's
+ * id the export 500'd (found on a clean demo build: submission 6, no project 6),
+ * and where one did, the governed record was filed under an unrelated project.
+ * The project is the one that anchors the submission's program
+ * (projects.regulatory_program_id); with no anchor the export is delivered
+ * audited-unplaced, as the CER and eSTAR exports are.
+ */
+describe('POST /api/ectd/export/:submissionId — the project a governed export is recorded against', () => {
+  const REVIEWED = {
+    governance: {
+      aiGenerated: true, humanReviewApproved: true, reviewerName: 'Dana Reviewer',
+      reviewerRole: 'Regulatory Affairs', reviewTimestamp: '2026-09-24T10:00:00.000Z',
+    },
+  };
+  const post = () => request(makeApp())
+    .post('/api/ectd/export/42')
+    .send({ applicationNumber: '123456', ...REVIEWED })
+    .buffer(true)
+    .parse((r, cb) => {
+      const chunks: Buffer[] = [];
+      r.on('data', (c: Buffer) => chunks.push(c));
+      r.on('end', () => cb(null, Buffer.concat(chunks)));
+    });
+  const exportRows = () => hoisted.auditLogAction.mock.calls.map((c) => c[0]).filter((e: any) => e?.action === 'EXPORT_GENERATED');
+
+  it('records it against the project that anchors the submission\'s program — not a project that shares the submission\'s id', async () => {
+    const res = await post();
+    expect(res.status, (res.body as Buffer).toString('utf8').slice(0, 300)).toBe(200);
+    expect(hoisted.resolveProgramProjectAnchor).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ programId: '5eb50a2e-235a-4605-bd1b-af2d75e8518c', orgId: 100 }),
+    );
+    expect(hoisted.registerExportGovernanceQuick).toHaveBeenCalledWith(expect.objectContaining({ projectId: 77 }));
+    expect(hoisted.registerExportGovernanceQuick).not.toHaveBeenCalledWith(expect.objectContaining({ projectId: 42 }));
+    expect(res.headers['x-export-registry']).toBe('placed');
+  });
+
+  it('a program with no project anchor is delivered audited-unplaced, and says so', async () => {
+    hoisted.resolveProgramProjectAnchor.mockResolvedValueOnce(null);
+    const res = await post();
+    expect(res.status, (res.body as Buffer).toString('utf8').slice(0, 300)).toBe(200);
+    expect((res.body as Buffer).toString('utf8')).toBe('FAKE-ZIP-BYTES');
+    expect(hoisted.registerExportGovernanceQuick).not.toHaveBeenCalled();
+    expect(res.headers['x-export-registry']).toBe('unplaced');
+    expect(exportRows()).toEqual([
+      expect.objectContaining({
+        organizationId: 100,
+        details: expect.objectContaining({
+          artifactRegistry: 'unplaced_pending_document_identity_contract',
+          sha256: require('crypto').createHash('sha256').update(Buffer.from('FAKE-ZIP-BYTES')).digest('hex'),
+        }),
+      }),
+    ]);
+  });
+
+  it('a submission with no program is delivered audited-unplaced — nothing is attributed by an id that happens to match', async () => {
+    hoisted.assembleSubmissionEctd.mockResolvedValueOnce({
+      buffer: Buffer.from('FAKE-ZIP-BYTES'), filename: 'SEQ-1-0000-fda.zip', sequenceId: 1, sequenceNumber: '0000',
+      region: 'fda', sha256: 'a'.repeat(64), materialized: 9, unresolvedLeaves: [], skipped: [],
+      priorState: 'filed', unfiledPriorSequences: [], programId: null,
+      stats: { totalModules: 5, totalFiles: 12, totalGranules: 9, generatedAt: '2026-06-29T00:00:00.000Z',
+        completeness: { totalLeaves: 9, completeLeaves: 9, placeholderLeaves: 0, unfinalizedLeaves: 0, completenessPct: 100, complete: true, incompleteSections: [] } },
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(hoisted.resolveProgramProjectAnchor).not.toHaveBeenCalled();
+    expect(hoisted.registerExportGovernanceQuick).not.toHaveBeenCalled();
+    expect(res.headers['x-export-registry']).toBe('unplaced');
+  });
+
+  it('an unplaced export whose audit row did not persist is refused, and no package is returned', async () => {
+    hoisted.resolveProgramProjectAnchor.mockResolvedValueOnce(null);
+    hoisted.auditLogAction.mockImplementation(async (e: any) =>
+      e?.action === 'EXPORT_GENERATED'
+        ? { persisted: false, error: 'audit store unavailable' }
+        : { persisted: true, chained: true, tamperProof: true });
+    const res = await post();
+    expect(res.status).toBeGreaterThanOrEqual(500);
+    expect((res.body as Buffer).toString('utf8')).not.toBe('FAKE-ZIP-BYTES');
+    expect(res.headers['content-type']).not.toMatch(/application\/zip/);
   });
 });

@@ -21,11 +21,11 @@ import { submissions, ectdSequences, submissionLeaves } from '../../../shared/sc
 import { packageEctdSubmission } from '../submission-gateways/regional-packager';
 import type { SubmissionBundle } from '../submission-gateways/types';
 import { buildPackagerInputFromCore, coreLeafFromSubmissionLeaf, type LeafFileResolver } from './core-to-packager';
-import { loadLatestPriorManifestBySubmission } from './prior-sequence-loader';
+import { loadLatestPriorManifestBySubmission, loadRehearsalPriorManifestBySubmission } from './prior-sequence-loader';
 import { computeLifecycleOperations, type DesiredLeaf, type PriorLeaf } from './lifecycle-operator';
 import { computeSequencePrefix } from './sequence-manifest';
 import { leafFileCarriesKey, leafSourceKey } from './leaf-source-resolver';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 
 export interface PackageFromCoreParams {
   sequenceId: number;
@@ -38,7 +38,16 @@ export interface PackageFromCoreParams {
   /** Resolves each leaf's document to an on-disk file (storage-specific). */
   resolveFile: LeafFileResolver;
   emitUnzipped?: boolean;
+  /**
+   * What a follow-up sequence's lifecycle acts bind against. 'filed' (the
+   * default, and the only state transmit uses): sequences the agency received.
+   * 'rehearsal': the latest recorded compile of each earlier sequence, filed or
+   * not — for validation only; see loadRehearsalPriorManifestBySubmission.
+   */
+  priorState?: PriorState;
 }
+
+export type PriorState = 'filed' | 'rehearsal';
 
 export interface PackageFromCoreResult {
   bundle: SubmissionBundle;
@@ -50,6 +59,14 @@ export interface PackageFromCoreResult {
    * act is refused.
    */
   priorSequence: string | null;
+  /** The prior state the acts were bound against. */
+  priorState: PriorState;
+  /** Under a rehearsal, the earlier sequences bound against that were never
+   *  filed; always empty for 'filed'. */
+  unfiledPriorSequences: string[];
+  /** Whether this package's §11.10(e) ECTD_PACKAGED_FROM_CORE row was written.
+   *  The package stands either way; the caller is told which. */
+  auditTrail: AuditRowOutcome;
 }
 
 /** The author-declared lifecycle acts: each one acts ON a leaf already filed. */
@@ -254,13 +271,21 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
   // prior manifest (first sequence, or none persisted yet) leaves declared `new`
   // stay new, and a declared replace/append/delete is refused — there is nothing
   // on record for it to act on.
+  const priorState: PriorState = params.priorState ?? 'filed';
+  if (priorState === 'rehearsal' && sequence.sequenceNumber === '0000') {
+    throw new Error(
+      'A rehearsal binds a follow-up sequence against earlier ones; sequence 0000 has none.',
+    );
+  }
   let priorSequence: string | null = null;
+  let unfiledPriorSequences: string[] = [];
   if (sequence.sequenceNumber !== '0000') {
-    const prior = await loadLatestPriorManifestBySubmission(pool, {
-      organizationId,
-      submissionId: submission.id,
-      currentSequence: sequence.sequenceNumber,
-    });
+    const where = { organizationId, submissionId: submission.id, currentSequence: sequence.sequenceNumber };
+    const prior =
+      priorState === 'rehearsal'
+        ? await loadRehearsalPriorManifestBySubmission(pool, where)
+        : { ...(await loadLatestPriorManifestBySubmission(pool, where)), unfiledSequences: [] as string[] };
+    unfiledPriorSequences = prior.unfiledSequences;
     // A filed sequence can be on record with nothing left on file (every leaf
     // it filed since withdrawn); it is still the state these acts meet.
     priorSequence = prior.priorSequenceNumber || null;
@@ -335,9 +360,13 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
           continue;
         }
         if (DECLARED_ACTS.has(l.operation) && !l.modifiedFile) {
+          // The filed leaf's backbone ID is what modified-file names; a manifest
+          // recorded before 2026-09-29 carries none (W5/D7).
           skipped.push({
             sectionCode: l.ctdSection,
-            reason: `${l.operation} of ${l.fileName}: the filed leaf it acts on has no recorded path, so the act cannot name it (no modified-file)`,
+            reason:
+              `${l.operation} of ${l.fileName}: the filed leaf it acts on has no recorded backbone ID, so the act ` +
+              'cannot name it (no modified-file) — its sequence was recorded before leaf IDs were',
           });
           continue;
         }
@@ -357,7 +386,9 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
         skipped,
         priorSequence
           ? `nothing is on file after sequence ${priorSequence} to act on`
-          : 'no filed prior sequence is on record to act on',
+          : priorState === 'rehearsal'
+            ? 'no earlier sequence has a recorded compile to act on'
+            : 'no filed prior sequence is on record to act on',
       );
     }
   } else {
@@ -366,7 +397,8 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
 
   const bundle = await packageEctdSubmission(input);
 
-  await auditService.logAction({
+  // WO-16C: was `await auditService.logAction(…)` with its outcome discarded.
+  const auditTrail = await recordAuditRow({
     organizationId,
     userId,
     action: 'ECTD_PACKAGED_FROM_CORE',
@@ -377,10 +409,12 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
       sequence: input.sequence,
       leafCount: input.leaves.length,
       skipped: skipped.length,
+      priorState,
+      unfiledPriorSequences,
     },
   });
 
-  return { bundle, skipped, priorSequence };
+  return { bundle, skipped, priorSequence, priorState, unfiledPriorSequences, auditTrail };
 }
 
 export default { packageSequenceFromCore };

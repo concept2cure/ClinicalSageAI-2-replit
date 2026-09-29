@@ -15,6 +15,10 @@ import { createScopedLogger } from '../utils/logger';
 import { ok, clientError, orgRequired, serverError } from '../lib/api-response';
 import { pool } from '../db';
 
+// People are named through public.actor_name, not a join on users: since users
+// took row-level security (D3, 2026-09-28) a tenant scope reads only current
+// members, so the join dropped the name of anyone who had left
+// (docs/evidence/D3/2026-09-29-actor-names/).
 const router = Router();
 const log = createScopedLogger('mdx-audit');
 
@@ -102,7 +106,7 @@ router.get('/audit', async (req: Request, res: Response) => {
               al.new_values, al.created_at, al.sha256_chain, al.hmac_seal,
               COALESCE(u.name, u.email) AS actor_name
          FROM audit_logs al
-         LEFT JOIN users u ON u.id = al.user_id
+         LEFT JOIN LATERAL public.actor_name(al.user_id) u ON TRUE
         WHERE al.tenant_id = $1${extraFilters}
         ORDER BY al.created_at DESC
         LIMIT $${args.length}`,

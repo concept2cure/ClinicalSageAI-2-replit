@@ -33,13 +33,14 @@ import { requestDb } from '../db/requestDb';
 import {
   rbmRiskAssessments, rbmRiskItems, rbmKris, rbmKriValues, rbmQtls,
   rbmSignals, rbmSiteRiskScores, rbmPatientProfiles, rbmMonitoringPlans,
-  rbmMonitoringActions, rbmDataRuns, users,
+  rbmMonitoringActions, rbmDataRuns,
 } from '../../shared/schema';
 import {
   buildRiskReview, renderRiskReviewMarkdown, buildAttentionFeed,
   type RiskReviewInput, type AttentionItem,
 } from '../services/rbm/risk-report';
 import { freshnessFromRun, type SourceFreshness } from '../services/rbm/metric-ingestion';
+import { actorLabel, resolveActorNames } from '../services/tenant/actor-names';
 
 const log = createScopedLogger('mdx-rbm-board');
 
@@ -141,20 +142,18 @@ export default function createRbmBoardRoutes(): Router {
     try {
       // ── Fetch the raw, tenant-scoped rows for every board section. ──────────
       const [
-        assessmentRows, itemRows, kriRows, qtlRows, signalRows,
-        siteRows, patientRows, planRows,
+        rawAssessmentRows, rawItemRows, kriRows, qtlRows, signalRows,
+        siteRows, patientRows, rawPlanRows,
       ] = await Promise.all([
-        db.select({ a: rbmRiskAssessments, approver: users.name })
+        db.select({ a: rbmRiskAssessments })
           .from(rbmRiskAssessments)
-          .leftJoin(users, eq(users.id, rbmRiskAssessments.approvedBy))
           .where(and(
             eq(rbmRiskAssessments.organizationId, orgId),
             eq(rbmRiskAssessments.programId, programId),
             isNull(rbmRiskAssessments.deletedAt),
           )),
-        db.select({ it: rbmRiskItems, owner: users.name })
+        db.select({ it: rbmRiskItems })
           .from(rbmRiskItems)
-          .leftJoin(users, eq(users.id, rbmRiskItems.assignedTo))
           .where(and(
             eq(rbmRiskItems.organizationId, orgId),
             eq(rbmRiskItems.programId, programId),
@@ -189,9 +188,8 @@ export default function createRbmBoardRoutes(): Router {
             eq(rbmPatientProfiles.programId, programId),
             isNull(rbmPatientProfiles.deletedAt),
           )),
-        db.select({ p: rbmMonitoringPlans, approver: users.name })
+        db.select({ p: rbmMonitoringPlans })
           .from(rbmMonitoringPlans)
-          .leftJoin(users, eq(users.id, rbmMonitoringPlans.approvedBy))
           .where(and(
             eq(rbmMonitoringPlans.organizationId, orgId),
             eq(rbmMonitoringPlans.programId, programId),
@@ -223,14 +221,29 @@ export default function createRbmBoardRoutes(): Router {
 
       // Monitoring actions for the program (scoped through their plan), with
       // the owner's display name resolved.
-      const actionRows = await db.select({ act: rbmMonitoringActions, owner: users.name })
+      const rawActionRows = await db.select({ act: rbmMonitoringActions })
         .from(rbmMonitoringActions)
         .innerJoin(rbmMonitoringPlans, eq(rbmMonitoringPlans.id, rbmMonitoringActions.planId))
-        .leftJoin(users, eq(users.id, rbmMonitoringActions.owner))
         .where(and(
           eq(rbmMonitoringActions.organizationId, orgId),
           eq(rbmMonitoringPlans.programId, programId),
         ));
+
+      // People — approvers, risk owners, action owners — are named through
+      // public.actor_name, not a join on users: since users took row-level
+      // security (D3, 2026-09-28) a tenant scope reads only current members, so
+      // anyone who had left lost their name, and an owned action read
+      // "Unassigned" (tenant/actor-names.ts; docs/evidence/D3/2026-09-29-actor-names/).
+      const people = await resolveActorNames([
+        ...rawAssessmentRows.map(r => r.a.approvedBy),
+        ...rawItemRows.map(r => r.it.assignedTo),
+        ...rawPlanRows.map(r => r.p.approvedBy),
+        ...rawActionRows.map(r => r.act.owner),
+      ]);
+      const assessmentRows = rawAssessmentRows.map(r => ({ ...r, approver: actorLabel(people, r.a.approvedBy) }));
+      const itemRows = rawItemRows.map(r => ({ ...r, owner: actorLabel(people, r.it.assignedTo) }));
+      const planRows = rawPlanRows.map(r => ({ ...r, approver: actorLabel(people, r.p.approvedBy) }));
+      const actionRows = rawActionRows.map(r => ({ ...r, owner: actorLabel(people, r.act.owner) }));
 
       // ── Per-source data freshness: the newest run per feed. ────────────────
       // Queried defensively in its own try/catch rather than inside the board's

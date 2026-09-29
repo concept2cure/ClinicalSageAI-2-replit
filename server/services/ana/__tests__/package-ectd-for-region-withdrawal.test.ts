@@ -11,16 +11,36 @@
  * and is carried through, and a delete that still names a source_path reaches
  * the packager's refusal instead of being shipped.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { promises as fs } from 'fs';
-import * as os from 'os';
 import * as path from 'path';
 import JSZip from 'jszip';
 
+// 2026-09-28: confirmed writes now need an editor role (registry wrapper,
+// writeRoleRefusal); CTX models a confirmed person who may edit, so the
+// membership lookup answers 'member'. The pg stub has no organization_users row.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { PACKAGE_ECTD_FOR_REGION } from '../AnaToolDefinitions';
 import { getToolHandler } from '../AnaToolExecutor';
+import { anaScratchDir } from '../document-workspace';
 
-const CTX = { organizationId: 1, userId: 1 };
+/**
+ * The tool reads leaves and writes the package only inside the tenant's own
+ * AnA workspace (INJ-PATH-002), so the fixtures live there too — not in the
+ * system temp directory, which it now refuses.
+ */
+async function tenantWorkDir(): Promise<string> {
+  const dir = anaScratchDir(CTX.organizationId, 'submissions');
+  await fs.mkdir(dir, { recursive: true });
+  return dir;
+}
+
+const CTX = { organizationId: 1, userId: 1, humanConfirmed: true };
 const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
 
 type LeafSchema = { properties: Record<string, unknown>; required: string[] };
@@ -47,33 +67,33 @@ describe('package_ectd_for_region — withdrawal', () => {
   });
 
   it('packages a delete declared by modified_file, shipping no bytes for it', async () => {
-    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ana-del-'));
+    const work = await tenantWorkDir();
     try {
       const cover = path.join(work, 'cover.pdf');
       await fs.writeFile(cover, pdf('cover'));
       const out = await run(base(path.join(work, 'out'), [
         { ctd_section: '3.2.S.2', operation: 'delete', file_name: 'old-manufacture.pdf', title: 'Old Manufacture',
-          modified_file: '../0000/m3/3-2-s-2/old-manufacture.pdf' },
+          modified_file: '../0000/index.xml#leaf-3-2-S-2-old-manufacture' },
         { ctd_section: '1.2', operation: 'new', source_path: cover, file_name: 'cover.pdf', title: 'Cover' },
       ]));
       expect(out.error).toBeUndefined();
       const zip = await JSZip.loadAsync(await fs.readFile(out.bundlePath!));
       expect(Object.keys(zip.files).some((f) => f.endsWith('old-manufacture.pdf'))).toBe(false);
       const xml = (await zip.file('index.xml')?.async('string')) ?? '';
-      expect(xml).toMatch(/<leaf operation="delete" modified-file="\.\.\/0000\/m3\/3-2-s-2\/old-manufacture\.pdf"/);
+      expect(xml).toMatch(/<leaf operation="delete" modified-file="\.\.\/0000\/index\.xml#leaf-3-2-S-2-old-manufacture" xlink:type="simple"/);
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }
   });
 
   it('refuses a delete that still carries a source_path, naming the leaf', async () => {
-    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ana-del-'));
+    const work = await tenantWorkDir();
     try {
       const withdrawn = path.join(work, 'old-manufacture.pdf');
       await fs.writeFile(withdrawn, pdf('WITHDRAWN DOCUMENT BYTES'));
       const out = await run(base(path.join(work, 'out'), [
         { ctd_section: '3.2.S.2', operation: 'delete', source_path: withdrawn, file_name: 'old-manufacture.pdf',
-          title: 'Old Manufacture', modified_file: '../0000/m3/3-2-s-2/old-manufacture.pdf' },
+          title: 'Old Manufacture', modified_file: '../0000/index.xml#leaf-3-2-S-2-old-manufacture' },
       ]));
       expect(out.ok).toBeUndefined();
       expect(out.error).toMatch(/old-manufacture\.pdf/);
@@ -83,7 +103,7 @@ describe('package_ectd_for_region — withdrawal', () => {
   });
 
   it('refuses a non-delete leaf with no source_path instead of reading an empty path', async () => {
-    const out = await run(base(os.tmpdir(), [
+    const out = await run(base(await tenantWorkDir(), [
       { ctd_section: '1.2', operation: 'new', file_name: 'cover.pdf', title: 'Cover' },
     ]));
     expect(out.error).toMatch(/source_path/);
@@ -93,7 +113,7 @@ describe('package_ectd_for_region — withdrawal', () => {
   // 2026-09-23 (W5/D7, round-2 skeptic, second pass): a delete in 0000 with no
   // modified_file returned ok:true and filed a delete of a file on record nowhere.
   it('refuses a delete in sequence 0000, naming the leaf', async () => {
-    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ana-del-'));
+    const work = await tenantWorkDir();
     try {
       const cover = path.join(work, 'cover.pdf');
       await fs.writeFile(cover, pdf('cover'));

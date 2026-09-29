@@ -1,0 +1,15 @@
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > exports inside a tenant-stamped transaction, with the chain verifier
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > passes the record filters
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > refuses a malformed filter rather than exporting everything
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > exports inside a tenant-stamped transaction, with the chain verifier
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > passes the record filters
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > refuses a malformed filter rather than exporting everything
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > contains the Vault events, each with its chain hash, sequence and source
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > never carries another tenant's rows
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > still carries the audit_events rows it always did
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > narrows to one document when asked, and the manifest says so
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > verifies, and refuses after a one-byte change to a row
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > states the audit_logs chain verdict it was given — and never "intact" without one
+      Tests  14 passed (14)

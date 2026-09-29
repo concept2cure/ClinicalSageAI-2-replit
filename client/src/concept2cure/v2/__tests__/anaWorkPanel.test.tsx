@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 /**
- * AnA at work — the live dock.
+ * AnA's progress — the panel.
  *
  * What is pinned is the same pair as the activity record: that the work is
- * SHOWN (numbered phases, the step in flight, a running clock, the tools and
- * their durations, the background queue) and that nothing is shown which did
- * not happen (no phases for a turn that reported none, no queue for a read
- * that failed, no "finished" for a turn that was stopped).
+ * SHOWN (her plan or the phases on one rail, the step in flight, a running
+ * clock, what the session used, the background queue) and that nothing is
+ * shown which did not happen (no steps for a turn that reported none, no count
+ * for a plan she did not declare, no "done" for a step she did not finish, a
+ * failed read said as failed, no "finished" for a turn that was stopped).
  */
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -108,21 +109,28 @@ describe('AnaWorkPanel — the work is visible while it happens', () => {
     expect(screen.queryByText(/Finished in/)).toBeNull();
   });
 
-  it('opens Outputs itself when the first output lands, and still lets the person collapse it', () => {
-    const { rerender } = render(<AnaWorkPanel messages={liveTurn()} streaming />);
-    const header = () => screen.getByRole('button', { name: /^Outputs/ });
-    expect(header().getAttribute('aria-expanded')).toBe('false');
-    rerender(
-      <AnaWorkPanel
-        messages={liveTurn({ generatedDraft: { title: 'Clinical Overview 2.5', content: '#' } })}
-        streaming
-      />,
-    );
-    expect(header().getAttribute('aria-expanded')).toBe('true');
-    fireEvent.click(header());
-    // The regression: `open || outputs.length > 0` made this a button that did nothing.
-    expect(header().getAttribute('aria-expanded')).toBe('false');
-    expect(document.getElementById(header().getAttribute('aria-controls') as string)?.hasAttribute('hidden')).toBe(true);
+  it('says a turn that failed before its first phase did not finish', () => {
+    // The connection failed before any status event: no phase exists to mark
+    // stopped, so only the turn's own flag can say it did not finish.
+    const failed = liveTurn({ streaming: false, completedAt: T0 + 3_000, progress: [], interrupted: true });
+    render(<AnaWorkPanel messages={failed} streaming={false} />);
+    expect(screen.getByText('Did not finish · 3s')).toBeTruthy();
+    expect(screen.queryByText(/Finished in/)).toBeNull();
+  });
+
+  it('lists no outputs — the conversation shows each one where it happened', () => {
+    const msgs = liveTurn({
+      streaming: false,
+      completedAt: T0 + 5_000,
+      generatedDraft: { title: 'Clinical Overview 2.5', content: '#', artifactId: 'art_1', version: 2 },
+      executedActions: [{ label: 'Validated the draft', actionType: 'run_validation', executed: true }],
+      pendingSignoffs: [{ command: 'seal_document', params: {}, reason: 'Part 11' } as never],
+    });
+    render(<AnaWorkPanel messages={msgs} streaming={false} />);
+    expect(screen.queryByRole('heading', { name: 'Outputs' })).toBeNull();
+    expect(screen.queryByText(/Clinical Overview 2\.5/)).toBeNull();
+    expect(screen.queryByText('Validated the draft')).toBeNull();
+    expect(screen.queryByText(/waiting for sign-off/)).toBeNull();
   });
 
   it('says a stopped turn was stopped, never finished', () => {
@@ -139,35 +147,176 @@ describe('AnaWorkPanel — the work is visible while it happens', () => {
     expect(screen.getByText('Paused · 20s')).toBeTruthy();
   });
 
-  it('lists every tool with its server-measured duration and an inputs disclosure', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(T0 + 5_000);
+  it('leaves tool durations and inputs to the transcript, never repeats them here', () => {
     render(<AnaWorkPanel messages={liveTurn()} streaming />);
-    // Tools starts closed — its rows restate the Work queue in forensic
-    // form — so the section is opened first, like a person would.
-    const tools = screen.getByRole('button', { name: /^Tools/ });
-    expect(tools.getAttribute('aria-expanded')).toBe('false');
-    fireEvent.click(tools);
-    // Summary line built from the real labels.
-    expect(
-      screen.getByText('Searching the literature, sample size — biostatistics engine · 2 tools'),
-    ).toBeTruthy();
-    expect(screen.getByText('2.3s')).toBeTruthy();
-    // The inputs are behind a disclosure, never inline: mounted (so the
-    // button's aria-controls resolves) but hidden until opened.
-    const inputs = screen.getByText(/"alpha": 0.05/);
-    expect(inputs.hasAttribute('hidden')).toBe(true);
-    const inputsBtn = screen.getByRole('button', { name: 'Inputs' });
-    expect(inputsBtn.getAttribute('aria-controls')).toBe(inputs.id);
-    fireEvent.click(inputsBtn);
-    expect(inputs.hasAttribute('hidden')).toBe(false);
-    expect(inputs.getAttribute('role')).toBe('region');
+    // The forensic detail is behind each step's own chevron in AnaActivity.
+    expect(screen.queryByText(/"alpha": 0.05/)).toBeNull();
+    expect(screen.queryByText('2.3s')).toBeNull();
+    // The tools she called are one line under "Used in this session".
+    expect(screen.getByRole('heading', { name: 'Used in this session' })).toBeTruthy();
+    expect(screen.getByText('Searching the literature, Sample size — biostatistics engine')).toBeTruthy();
   });
 
   it('shows steers waiting for the next round', () => {
     render(<AnaWorkPanel messages={liveTurn()} streaming pendingSteers={['Use the FDA guidance, not EMA']} />);
+    expect(screen.getByText('Waiting for the next round')).toBeTruthy();
     expect(screen.getByText('Use the FDA guidance, not EMA')).toBeTruthy();
-    expect(screen.getByText('queued')).toBeTruthy();
+  });
+
+});
+
+describe('AnaWorkPanel — a turn the loop cut short', () => {
+  /* A turn the loop cut short. The server says why on `done` (stoppedReason);
+     until it did, a turn the round cap stopped read "Finished in", because
+     nothing else on it was different from a turn she chose to end. */
+  const settledPhases = [
+    { phase: 'orchestrating', label: 'Planning response…', status: 'done', startedAt: T0, endedAt: T0 + 800 },
+    { phase: 'running_tools', label: 'Running 2 steps…', status: 'done', startedAt: T0 + 800, endedAt: T0 + 72_000 },
+  ] as AnaChatMessage['progress'];
+
+  it('says a turn stopped at the round limit stopped there — never "Finished"', () => {
+    const capped = liveTurn({
+      streaming: false,
+      completedAt: T0 + 72_000,
+      progress: settledPhases,
+      stoppedReason: 'max_rounds',
+      rounds: 12,
+    });
+    render(<AnaWorkPanel messages={capped} streaming={false} />);
+    expect(screen.getByText('Stopped at the round limit · 1m 12s')).toBeTruthy();
+    expect(screen.queryByText(/Finished/)).toBeNull();
+  });
+
+  it('says a turn whose answer was cut off stopped — never "Finished"', () => {
+    const cut = liveTurn({
+      streaming: false,
+      completedAt: T0 + 72_000,
+      progress: settledPhases,
+      stoppedReason: 'answer_cut_off',
+      rounds: 1,
+    });
+    render(<AnaWorkPanel messages={cut} streaming={false} />);
+    expect(screen.getByText('Stopped: answer cut off · 1m 12s')).toBeTruthy();
+    expect(screen.queryByText(/Finished/)).toBeNull();
+  });
+
+  it('says a turn stopped for repeating a step stopped there', () => {
+    const thrash = liveTurn({
+      streaming: false,
+      completedAt: T0 + 72_000,
+      progress: settledPhases,
+      stoppedReason: 'duplicate_thrash',
+      rounds: 3,
+    });
+    render(<AnaWorkPanel messages={thrash} streaming={false} />);
+    // Said as the CAUSE of the stop. "Stopped repeating a step" reads as
+    // "she quit repeating and carried on" — good news, on the one line meant
+    // to warn that the turn was cut off.
+    expect(screen.getByText('Stopped: repeating a step · 1m 12s')).toBeTruthy();
+    expect(screen.queryByText(/^Stopped repeating/)).toBeNull();
+    expect(screen.queryByText(/Finished/)).toBeNull();
+  });
+
+  it('a server-side stop whose stream then dropped did not finish — the stop does not outrank the lost connection', () => {
+    // `done` carried cancelled, then the stream ended before post_done: the
+    // hook marks the turn interrupted and cuts its progress short. That turn
+    // did not finish, and says so, as every other interrupted turn does.
+    const cut = liveTurn({
+      streaming: false,
+      completedAt: T0 + 30_000,
+      progress: settledPhases,
+      stoppedReason: 'cancelled',
+      interrupted: true,
+    });
+    render(<AnaWorkPanel messages={cut} streaming={false} />);
+    expect(screen.getByText('Did not finish · 30s')).toBeTruthy();
+    expect(screen.queryByText(/^Stopped/)).toBeNull();
+  });
+
+  it("the person's own Stop still reads as a stop, even when the stream then dropped", () => {
+    // `stopped` is this client's own Stop and keeps its place ahead of the
+    // interrupted check (unchanged).
+    const own = liveTurn({ streaming: false, completedAt: T0 + 30_000, progress: settledPhases, stopped: true, interrupted: true });
+    render(<AnaWorkPanel messages={own} streaming={false} />);
+    expect(screen.getByText('Stopped after 30s')).toBeTruthy();
+  });
+
+  it('says a run that was stopped at a round boundary was stopped, even when the stream closed cleanly', () => {
+    // The Stop control cancels server-side first; when the server's done and
+    // post_done arrive before the local abort, `stopped` is never set, and
+    // only the loop's own reason says the turn did not finish.
+    const cancelled = liveTurn({ streaming: false, completedAt: T0 + 30_000, progress: settledPhases, stoppedReason: 'cancelled' });
+    render(<AnaWorkPanel messages={cancelled} streaming={false} />);
+    expect(screen.getByText('Stopped after 30s')).toBeTruthy();
+    expect(screen.queryByText(/Finished/)).toBeNull();
+  });
+
+  it('says it for a reopened turn too, which has no clock to show', () => {
+    // A reloaded thread restores the stop from the message metadata but no
+    // send or end time, so the line carries no clock — and no dangling "·".
+    const reopened: AnaChatMessage[] = [
+      { id: 'u1', role: 'user', text: 'Compare every endpoint' },
+      { id: 'a1', role: 'assistant', text: 'Partial comparison.', stoppedReason: 'max_rounds', rounds: 12 },
+    ];
+    render(<AnaWorkPanel messages={reopened} streaming={false} />);
+    expect(screen.getByText('Stopped at the round limit')).toBeTruthy();
+    expect(screen.queryByText(/Finished/)).toBeNull();
+  });
+
+  it('still says "Finished" for a turn she ended herself', () => {
+    const done = liveTurn({ streaming: false, completedAt: T0 + 72_000, progress: settledPhases, stoppedReason: 'no_more_tools', rounds: 2 });
+    render(<AnaWorkPanel messages={done} streaming={false} />);
+    expect(screen.getByText('Finished in 1m 12s')).toBeTruthy();
+  });
+});
+
+describe('AnaWorkPanel — her plan', () => {
+  it('shows her declared plan on the rail, the current step marked, and counts nothing she did not declare', () => {
+    render(
+      <AnaWorkPanel
+        messages={liveTurn({
+          plan: [
+            { title: 'Read the protocol synopsis', status: 'completed' },
+            { title: 'Run the sample-size engine', status: 'in_progress' },
+            { title: 'Draft the justification', status: 'pending' },
+          ],
+        })}
+        streaming
+      />,
+    );
+    // Her plan replaces the phase list: the phases are still in the transcript.
+    expect(screen.queryByRole('list', { name: 'Progress' })).toBeNull();
+    const items = screen.getByRole('list', { name: 'Plan' }).querySelectorAll('li');
+    expect(items).toHaveLength(3);
+    expect(items[1].getAttribute('aria-current')).toBe('step');
+    // State in words for assistive tech, not colour alone.
+    expect(items[0].textContent).toContain('done');
+    expect(items[1].textContent).toContain('in progress');
+    expect(items[2].textContent).toContain('not started');
+    // The step in flight is named under the current plan step.
+    expect(items[1].textContent).toContain('Sample size — biostatistics engine');
+  });
+
+  it('never shows an unfinished step as done once the turn has ended', () => {
+    render(
+      <AnaWorkPanel
+        messages={liveTurn({
+          streaming: false,
+          stopped: true,
+          completedAt: T0 + 30_000,
+          plan: [
+            { title: 'Read the protocol synopsis', status: 'completed' },
+            { title: 'Run the sample-size engine', status: 'in_progress' },
+            { title: 'Draft the justification', status: 'pending' },
+          ],
+        })}
+        streaming={false}
+      />,
+    );
+    const items = screen.getByRole('list', { name: 'Plan' }).querySelectorAll('li');
+    expect(items[1].textContent).toContain('not finished');
+    expect(items[1].getAttribute('aria-current')).toBeNull();
+    expect(items[2].textContent).toContain('not started');
   });
 });
 
@@ -179,9 +328,10 @@ describe('AnaWorkPanel — nothing is shown that did not happen', () => {
     ];
     render(<AnaWorkPanel messages={bare} streaming={false} />);
     expect(screen.queryByRole('list', { name: 'Progress' })).toBeNull();
-    expect(screen.getByText('This turn did not report its phases.')).toBeTruthy();
-    expect(screen.getByText('This turn needed no tool steps.')).toBeTruthy();
-    expect(screen.getByText('No tools were called this turn.')).toBeTruthy();
+    expect(screen.getByText('This turn did not report its steps.')).toBeTruthy();
+    // No plan, no tools: no invented rows, and no "Used in this session".
+    expect(screen.queryByRole('list', { name: 'Plan' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Used in this session' })).toBeNull();
   });
 
   it('is honest before the first turn', () => {
@@ -220,74 +370,122 @@ describe('AnaWorkPanel — nothing is shown that did not happen', () => {
     expect(screen.getByText(/stalled — no heartbeat since restart/)).toBeTruthy();
   });
 
-  it('says the queue is not shown when no read was wired, rather than showing an empty one', () => {
-    render(<AnaWorkPanel messages={liveTurn()} streaming />);
-    expect(screen.getByText('Not shown on this surface.')).toBeTruthy();
+  it('adds no Background section when no read was wired, or the queue is empty', () => {
+    const { rerender } = render(<AnaWorkPanel messages={liveTurn()} streaming />);
+    expect(screen.queryByRole('heading', { name: 'Background' })).toBeNull();
+    rerender(<AnaWorkPanel messages={liveTurn()} streaming queue={queueReady([])} />);
+    expect(screen.queryByRole('heading', { name: 'Background' })).toBeNull();
   });
 });
 
-describe('AnaWorkPanel — outputs and context', () => {
-  it('lists drafts with their save state and governed actions waiting for sign-off', () => {
+describe('AnaWorkPanel — used in this session', () => {
+  it('says what the session used — only what reached the model, and a failed read as failed', () => {
     const msgs = liveTurn({
-      streaming: false,
-      completedAt: T0 + 5_000,
-      generatedDraft: { title: 'Clinical Overview 2.5', content: '#', artifactId: 'art_1', version: 2 },
-      pendingSignoffs: [{ command: 'seal_document', params: {}, reason: 'Part 11' } as never],
+      effortUsed: 'thorough',
+      detectedLens: 'risk',
+      contextUsed: {
+        uploads: [
+          { fileId: 'f1', fileName: 'Protocol v3.pdf', mimeType: 'application/pdf', read: 'content' },
+          { fileId: 'f2', fileName: 'SAP.docx', mimeType: 'application/octet-stream', read: 'name_only' },
+        ],
+        unresolvedUploads: 1,
+        memory: [
+          { layer: 'project_memory', title: 'Estimand decision' },
+          { layer: 'project_memory', title: 'Stability arm' },
+        ],
+        memoryStatus: 'read',
+      },
     });
-    render(<AnaWorkPanel messages={msgs} streaming={false} />);
-    expect(screen.getByText('Drafted Clinical Overview 2.5')).toBeTruthy();
-    expect(screen.getByText('Saved · version 2')).toBeTruthy();
-    expect(screen.getByText('1 governed action waiting for sign-off')).toBeTruthy();
-  });
-
-  it('leaves draft rows to a host that lists them as artifact cards', () => {
-    const msgs = liveTurn({
-      streaming: false,
-      completedAt: T0 + 5_000,
-      generatedDraft: { title: 'Clinical Overview 2.5', content: '#', artifactId: 'art_1', version: 2 },
-      executedActions: [{ label: 'Validated the draft', actionType: 'run_validation', executed: true }],
-    });
-    render(<AnaWorkPanel messages={msgs} streaming={false} omitDrafts />);
-    expect(screen.queryByText('Drafted Clinical Overview 2.5')).toBeNull();
-    expect(screen.getByText('Validated the draft')).toBeTruthy();
-  });
-
-  it('shows the grounding context it was given and nothing it was not', () => {
     render(
       <AnaWorkPanel
-        messages={liveTurn({ effortUsed: 'thorough', detectedLens: 'risk' })}
+        messages={msgs}
         streaming
         context={{ project: 'ONC-221 · Phase II', module: 'CMC', engine: 'Balanced' }}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /Context/ }));
-    expect(screen.getByText('ONC-221 · Phase II')).toBeTruthy();
-    expect(screen.getByText('CMC')).toBeTruthy();
-    expect(screen.getByText('thorough')).toBeTruthy();
-    // The lens is a classifier code on the wire; the row says it as a phrase.
-    expect(screen.getByText('a risk question')).toBeTruthy();
-    expect(screen.queryByText('risk')).toBeNull();
-    expect(screen.queryByText('Surface')).toBeNull();
+    expect(screen.getByText('Protocol v3.pdf +1')).toBeTruthy();
+    expect(screen.getByText('1 attached by name only · 1 could not be opened')).toBeTruthy();
+    expect(screen.getByText('Read · Estimand decision, Stability arm')).toBeTruthy();
+    expect(screen.getByText('ONC-221 · Phase II · CMC · Balanced · thorough effort')).toBeTruthy();
+    // The lens belongs to the turn's record in the transcript, not here.
+    expect(screen.queryByText(/a risk question/)).toBeNull();
   });
 
-  it('keeps every section header pointing at an element that exists, open or collapsed', () => {
-    const { container } = render(<AnaWorkPanel messages={liveTurn()} streaming />);
-    const headers = container.querySelectorAll('.ana-work-sec-h');
-    expect(headers.length).toBe(5);
-    // Titles are real headings, so a screen reader can browse to them.
-    expect(container.querySelectorAll('h3.ana-work-sec-hh').length).toBe(5);
-    for (const h of headers) {
-      const id = h.getAttribute('aria-controls') as string;
-      const body = document.getElementById(id);
-      expect(body).not.toBeNull();
-      // Collapsed bodies stay in the DOM, hidden — never unmounted.
-      expect(body!.hasAttribute('hidden')).toBe(h.getAttribute('aria-expanded') === 'false');
-    }
-    // Collapse one and the reference still resolves.
-    fireEvent.click(screen.getByRole('button', { name: /^Progress/ }));
-    const progress = screen.getByRole('button', { name: /^Progress/ });
-    expect(progress.getAttribute('aria-expanded')).toBe('false');
-    expect(document.getElementById(progress.getAttribute('aria-controls') as string)?.hasAttribute('hidden')).toBe(true);
+  it('names the effort only when it differs from the engine she was given', () => {
+    const { rerender } = render(
+      <AnaWorkPanel messages={liveTurn({ effortUsed: 'balanced' })} streaming context={{ project: 'ONC-221', engine: 'Balanced' }} />,
+    );
+    expect(screen.getByText('ONC-221 · Balanced')).toBeTruthy();
+    rerender(<AnaWorkPanel messages={liveTurn({ effortUsed: 'thorough' })} streaming context={{ project: 'ONC-221', engine: 'Balanced' }} />);
+    expect(screen.getByText('ONC-221 · Balanced · thorough effort')).toBeTruthy();
+  });
+
+  it('says memory could not be read rather than that nothing matched', () => {
+    render(
+      <AnaWorkPanel
+        messages={liveTurn({ contextUsed: { uploads: [], unresolvedUploads: 0, memory: [], memoryStatus: 'unavailable' } })}
+        streaming
+      />,
+    );
+    expect(screen.getByText('Could not be read')).toBeTruthy();
+    expect(screen.queryByText(/Nothing in memory matched/)).toBeNull();
+  });
+
+  it('counts a file once however many turns it rode, at the best read it got', () => {
+    const turn = (id: string, read: 'content' | 'name_only', unresolved: number): AnaChatMessage => ({
+      id,
+      role: 'assistant',
+      text: 'ok',
+      contextUsed: {
+        uploads: [{ fileId: 'f1', fileName: 'Protocol v3.pdf', mimeType: 'application/pdf', read }],
+        unresolvedUploads: unresolved,
+        memory: [],
+        memoryStatus: 'none',
+      },
+    });
+    // A pinned file named on three turns and a pinned source that failed on
+    // all three: one file, one failure.
+    const { rerender } = render(
+      <AnaWorkPanel messages={[turn('a1', 'name_only', 1), turn('a2', 'name_only', 1), turn('a3', 'name_only', 1)]} streaming={false} />,
+    );
+    expect(screen.getByText('Protocol v3.pdf')).toBeTruthy();
+    expect(screen.getByText('1 attached by name only · 1 could not be opened')).toBeTruthy();
+    // Read in full on one turn: not "by name only" because others only named it.
+    rerender(<AnaWorkPanel messages={[turn('a1', 'content', 0), turn('a2', 'name_only', 0)]} streaming={false} />);
+    expect(screen.queryByText(/by name only/)).toBeNull();
+  });
+
+  it('says nothing about memory when no turn reported what it read', () => {
+    render(<AnaWorkPanel messages={liveTurn()} streaming />);
+    expect(screen.queryByText('Memory')).toBeNull();
+  });
+
+});
+
+describe('AnaWorkPanel — structure and announcements', () => {
+  it('is one h2 over h3 sections, each present only when it has something to say', () => {
+    const { container } = render(
+      <AnaWorkPanel
+        messages={liveTurn({
+          generatedDraft: { title: 'IB', content: '#' },
+          contextUsed: { uploads: [], unresolvedUploads: 0, memory: [], memoryStatus: 'none' },
+        })}
+        streaming
+      />,
+    );
+    expect(container.querySelectorAll('h2')).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 2, name: 'Progress' })).toBeTruthy();
+    const h3 = [...container.querySelectorAll('h3')].map((h) => h.textContent);
+    expect(h3).toEqual(['Used in this session']);
+  });
+
+  it('offers a close only when the host asks for one', () => {
+    const onClose = vi.fn();
+    const { rerender } = render(<AnaWorkPanel messages={liveTurn()} streaming />);
+    expect(screen.queryByRole('button', { name: 'Close progress' })).toBeNull();
+    rerender(<AnaWorkPanel messages={liveTurn()} streaming onClose={onClose} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Close progress' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('speaks the same placeholder the list shows before the first phase arrives', () => {

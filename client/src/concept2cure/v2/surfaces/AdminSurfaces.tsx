@@ -47,6 +47,7 @@ import type {
 } from '../fixtures/admin-data';
 import { useIndustryProfile } from '../../mdx/hooks/useIndustryProfile';
 import {
+  CLIENT_TYPE_LABEL,
   CLIENT_TYPE_OPTIONS,
   buildOrgProfilePatch,
   governedToPicker,
@@ -335,7 +336,6 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
 
   const nameDirty = orgLoaded && name.trim() !== savedName;
   const txwDirty = settingsLoaded && JSON.stringify(txw) !== JSON.stringify(savedTxw);
-  const dirty = nameDirty || txwDirty;
   const editable = !loading && !loadError;
 
   const setTxwField = <K extends keyof TranslationPolicy>(k: K, v: TranslationPolicy[K]) =>
@@ -373,6 +373,12 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
       );
       if (r.error) failures.push(`Organization name — ${saveFailure(r.error, r.status)}`);
       else setSavedName(r.data?.organization?.name ?? name.trim());
+    }
+
+    if (clientTypeDirty) {
+      const patch = buildOrgProfilePatch(clientType, govSpec);
+      const saved = patch ? await saveProfile(patch, why) : false;
+      if (!saved) failures.push('Client type — not saved to the governed industry profile.');
     }
 
     if (txwDirty) {
@@ -419,14 +425,21 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
     );
   }, [govPrimary, govSpec]);
 
-  const chooseClientType = (t: string) => {
-    setClientType(t);
-    const patch = buildOrgProfilePatch(t, govSpec);
-    if (patch) void saveProfile(patch);
-  };
+  /* A chip is a pending change, saved by "Save to organization" under the
+     page's one reason for change like every other field here. It used to
+     PATCH the governed profile on click, with no reason and no confirmation
+     (launch sweep finding 122). */
+  const chooseClientType = (t: string) => setClientType(t);
+  const clientTypeDirty =
+    profile.status === 'ready' || profile.status === 'empty'
+      ? Boolean(clientType) && (govPrimary == null || !pickerMatchesProfile(clientType, govPrimary, govSpec))
+      : false;
+  const dirty = nameDirty || txwDirty || clientTypeDirty;
 
   const clientTypeStatus: string =
-    profile.status === 'error'
+    clientTypeDirty && saveState.status !== 'saving'
+      ? 'Not saved yet — give a reason above and save to the organization.'
+      : profile.status === 'error'
       ? 'Governed profile unreachable — the client type could not be read and cannot be changed.'
       : saveState.status === 'saving'
         ? 'Saving to governed org profile…'
@@ -656,7 +669,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                       disabled={profile.status === 'loading' || saveState.status === 'saving'}
                       onClick={() => chooseClientType(t)}
                     >
-                      {t}
+                      {CLIENT_TYPE_LABEL[t]}
                     </button>
                   ))}
                 </div>
@@ -773,7 +786,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                         <span
                           style={{
                             color: txw.targets.includes(l.id)
-                              ? 'rgba(255,255,255,.7)'
+                              ? 'color-mix(in srgb, var(--accent-on-strong) 70%, transparent)'
                               : 'var(--text-400)',
                             fontSize: 10,
                           }}
@@ -937,14 +950,14 @@ function chainSummary(v: ChainVerdictView): string {
   if (v.verdict === 'unverified') {
     return 'The server returned no chain verdict on this read, so the chain is not verified here';
   }
-  const span = `${v.rowsChecked} chained entry(ies) verified server-side (${v.sequencedRows} sequenced, ${v.legacyRows} legacy)`;
+  const span = `${v.rowsChecked} chained ${v.rowsChecked === 1 ? 'entry' : 'entries'} verified server-side (${v.sequencedRows} sequenced, ${v.legacyRows} legacy)`;
   if (v.verdict === 'intact') return `Hash chain verifies intact over ${span}`;
   return `Hash chain breaks at entry ${v.brokenAt?.id ?? 'unknown'} (${v.brokenAt?.segment ?? 'unknown'} segment, ${
     v.brokenAt?.commitsTo ? `commits to ${v.brokenAt.commitsTo}` : 'content does not derive from any predecessor'
   }) over ${span}`;
 }
 
-/* ════════════ Audit trail — immutable hash-chain viewer (ss11.10(e)) ════════════
+/* ════════════ Audit trail — immutable hash-chain viewer (§11.10(e)) ════════════
    Live-anchored to GET /api/audit-trail/ledger (mounted in
    server/bootstrap/register-regulatory-routes.ts, router
    server/routes/audit-trail-ledger.routes.ts). REAL: an org-scoped, newest-first
@@ -993,6 +1006,16 @@ async function downloadSignedAuditExport(): Promise<{ ok: boolean; error?: strin
   }
 }
 
+/** The account beside an actor's name: a name alone does not say which account acted (VSR-001 F-42). */
+function ActorRef({ value }: { value?: string | null }) {
+  if (!value) return null;
+  return (
+    <span className="mono" style={{ marginLeft: 6, fontSize: 10.5, color: 'var(--text-400)' }}>
+      {value}
+    </span>
+  );
+}
+
 export function AuditTrail({ onAsk }: SurfaceViewProps) {
   const [kind, setKind] = useState('all');
   const [q, setQ] = useState('');
@@ -1012,7 +1035,9 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       (!term ||
         e.event.toLowerCase().includes(term) ||
         e.actor.toLowerCase().includes(term) ||
+        (e.actorRef ?? '').toLowerCase().includes(term) ||
         e.target.toLowerCase().includes(term) ||
+        (e.targetRef ?? '').toLowerCase().includes(term) ||
         e.id.toLowerCase().includes(term)),
   );
 
@@ -1080,7 +1105,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
     const filtered = kind !== 'all' || term.length > 0;
     return {
       summary:
-        `Audit trail: ${entries.length} hash-chained entry(ies)` +
+        `Audit trail: ${entries.length} hash-chained ${entries.length === 1 ? 'entry' : 'entries'}` +
         (filtered ? `, filtered to ${log.length} by kind "${kind}"${term ? ` and the search "${q}"` : ''}` : '') +
         `. ${chainSummary(chainStatus)}` +
         (entry ? ` Entry ${entry.id} is open.` : ''),
@@ -1130,7 +1155,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       <AdminHeader
         eyebrow="Admin — compliance"
         title="Audit trail"
-        sub={`${entries.length} entries — hash-chained — append-only — 21 CFR Part 11 ss11.10(e)`}
+        sub={`${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} — hash-chained — append-only — 21 CFR Part 11 §11.10(e)`}
         actions={
           <React.Fragment>
             <button
@@ -1372,7 +1397,10 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             <div className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>
               {e.when}
             </div>
-            <div style={{ fontSize: 12 }}>{e.actor}</div>
+            <div style={{ fontSize: 12 }}>
+              {e.actor}
+              <ActorRef value={e.actorRef} />
+            </div>
             <div style={{ fontWeight: 400, fontSize: 12 }}>
               <span
                 style={{
@@ -1390,7 +1418,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             <div style={{ color: 'var(--text-400)', fontSize: 11.5 }}>{e.target}</div>
             <div>
               {e.sig ? (
-                <span className="esig">{I.shieldCheck}</span>
+                <span className="esig" role="img" aria-label="E-signed (21 CFR Part 11)">{I.shieldCheck}</span>
               ) : (
                 <span style={{ color: 'var(--text-500)' }}>--</span>
               )}
@@ -1406,7 +1434,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
           style={{
             marginTop: 16,
             padding: 16,
-            borderRadius: 10,
+            borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border)',
             background: 'var(--bg-100)',
             maxWidth: 720,
@@ -1436,11 +1464,26 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Event</span>
             <span style={{ fontWeight: 500 }}>{entry.event}</span>
             <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Actor</span>
-            <span>{entry.actor}</span>
+            <span>
+              {entry.actor}
+              <ActorRef value={entry.actorRef} />
+            </span>
             <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Timestamp</span>
             <span className="mono">{entry.when}</span>
             <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Target</span>
             <span>{entry.target}</span>
+            {entry.targetRef && (
+              <React.Fragment>
+                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Record</span>
+                <span className="mono">{entry.targetRef}</span>
+              </React.Fragment>
+            )}
+            {entry.signatureRef && (
+              <React.Fragment>
+                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Signature record</span>
+                <span className="mono">{entry.signatureRef}</span>
+              </React.Fragment>
+            )}
             <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Kind</span>
             <span>
               <span
@@ -1472,10 +1515,10 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
                   Signature meaning
                 </span>
                 <span>
-                  <span className="esig" style={{ marginRight: 6 }}>
+                  <span className="esig" style={{ marginRight: 6 }} role="img" aria-label="E-signed (21 CFR Part 11)">
                     {I.shieldCheck}
                   </span>
-                  {entry.meaning} (ss11.50)
+                  {entry.meaning} (§11.50)
                 </span>
               </React.Fragment>
             )}
@@ -1504,7 +1547,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             >
               {I.shieldCheck}
               <span>
-                This entry was digitally signed per 21 CFR ss11.50. Meaning:{' '}
+                This entry was digitally signed per 21 CFR §11.50. Meaning:{' '}
                 <strong>{entry.meaning}</strong>. Signature is hash-bound and tamper-evident.
               </span>
             </div>
@@ -1541,10 +1584,18 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
    Sample-data pill. Fields the backend cannot truthfully supply (renewsAt — no
    renewal column is read anywhere server-side) are left empty, never invented.
 
-   ENTITLEMENT HONESTY. Every card states one of five things, and they are not
-   interchangeable: the module is on; it is in the plan and simply not switched
-   on; an administrator switched it off; the plan does not include it; it is not
-   offered for this workspace's industry. The reason and the remedy travel
+   ENTITLEMENT HONESTY. Every card states one of four things, and they are not
+   interchangeable: the module is open to this organization (subscribed, or in
+   the plan with no row written — the server's 'included', which needs none);
+   an administrator switched it off; the plan does not include it; it is not
+   offered for this workspace's industry.
+
+   "In the plan, no row written" used to be a fifth state, drawn locked with no
+   Open button: "Included in your plan. Not switched on for this organization."
+   The server has never treated it as locked — decideNavEntitlement answers
+   'included', entitled; canAccessModule admits it — so the rail beside this
+   screen opened every module this screen said was off (launch sweep finding
+   44). `on` is now the verdict's own answer (open ⇔ no lock). The reason and the remedy travel
    together — the last one has no remedy on this screen and is given none,
    rather than a plans button that would resolve nothing. The wording is the
    shell's own (lockNotice / lockShortReason in navEntitlements.tsx), so the
@@ -1726,23 +1777,35 @@ function mapLiveCatalog(payload: unknown, orgTier: string | null, launchScopeEnf
     return {
       group: cat.charAt(0).toUpperCase() + cat.slice(1),
       note: `${mods.length} module${mods.length === 1 ? '' : 's'} — live subscription state for this organization`,
-      apps: mods.map((m) => ({
-        id: m.moduleId,
-        name: m.name,
-        tier: tierBandLabel(m),
-        on: m.isEnabled,
-        desc: m.description || m.name,
-        lock: moduleVerdict(m, orgTier, launchScopeEnforced),
-        /* canAccessModule() allows the write when the module is already in the
-           org's enabled set OR its tier and industry match — so an org that
-           downgraded can still switch OFF a module it is currently running,
-           and nothing else outside the plan can be switched at all. */
-        /* No switch for a module the release excludes: a toggle that writes a
-           grant nothing honours is a dead control. */
-        toggleable: (m.isAvailable || m.isEnabled) && !(launchScopeEnforced && m.launchScope === 'later'),
-      })),
+      apps: mods.map((m) => {
+        const lock = moduleVerdict(m, orgTier, launchScopeEnforced);
+        return {
+          id: m.moduleId,
+          name: m.name,
+          tier: tierBandLabel(m),
+          // Open to this organization ⇔ no lock — not `isEnabled`, which is
+          // false for a module the plan includes with no row written.
+          on: lock === null,
+          desc: m.description || m.name,
+          lock,
+          /* canAccessModule() allows the write when the module is already in the
+             org's enabled set OR its tier and industry match — so an org that
+             downgraded can still switch OFF a module it is currently running,
+             and nothing else outside the plan can be switched at all. */
+          /* No switch for a module the release excludes: a toggle that writes a
+             grant nothing honours is a dead control. */
+          toggleable: (m.isAvailable || m.isEnabled) && !(launchScopeEnforced && m.launchScope === 'later'),
+        };
+      }),
     };
   });
+}
+
+/** Whether this organization can open the module — the catalog verdict's own
+ *  answer, for a list that only needs yes or no (the tier decides only the
+ *  reason, so it is not needed here). */
+function moduleIsOpen(m: LiveModuleEntry, launchScopeEnforced: boolean): boolean {
+  return moduleVerdict(m, null, launchScopeEnforced) === null;
 }
 
 /** Map GET /license into the fixture display shape, or null on shape mismatch.
@@ -1969,7 +2032,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   return (
     <div className="page-inner">
       <AdminHeader
-        eyebrow="Workspace — /api/module-subscriptions"
+        eyebrow="Workspace — apps"
         title="Apps catalog"
         sub="Every application — the destinations you open and work in — entitlement-aware. Active apps launch; anything you cannot open states which of the reasons applies and the step that resolves it, never a dead button. Platform services (below) are the capabilities that run inside these apps."
         actions={
@@ -2137,11 +2200,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                         told to buy a plan for a module their administrator had
                         switched off — and told an administrator had switched
                         off a module nobody had ever touched. */}
-                    {a.lock
-                      ? `${label} is ${lockShortReason(a.lock)}.`
-                      : a.on
-                        ? a.desc
-                        : 'Included in your plan. Not switched on for this organization.'}
+                    {a.lock ? `${label} is ${lockShortReason(a.lock)}.` : a.desc}
                   </div>
                   <div className="launch-foot">
                     <span
@@ -2537,7 +2596,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
               <div style={{ color: 'var(--text-400)' }}>{a.when}</div>
               <div>
                 {a.sig ? (
-                  <span className="esig" title="E-signed (21 CFR Part 11)">
+                  <span className="esig" role="img" aria-label="E-signed (21 CFR Part 11)" title="E-signed (21 CFR Part 11)">
                     {I.shieldCheck}
                   </span>
                 ) : (
@@ -2738,7 +2797,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
   }, [liveGrants]);
   // Live module catalog (real per-org enabled/disabled state) for the Modules
   // section, and live org API keys for the API-keys section.
-  const modState = useLiveData<{ modules: LiveModuleEntry[] }>(
+  const modState = useLiveData<{ modules: LiveModuleEntry[]; launchScope?: { enforced?: boolean } }>(
     sec === 'modules' ? '/api/module-subscriptions/catalog' : null,
   );
   const liveModules = (modState.data?.modules ?? []).filter(isLiveModuleEntry);
@@ -3036,7 +3095,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                   <div className="ac-val-row">
                     <div className="ac-val-main">
-                      <b>E-signatures (21 CFR ss11.50 / ss11.70)</b>
+                      <b>E-signatures (21 CFR §11.50 / §11.70)</b>
                       <span>
                         Password + TOTP verification; signature meaning recorded on every signing.
                       </span>
@@ -3369,20 +3428,22 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   />
                 ) : (
                   <div className="ob-mods">
-                    {liveModules.map((m) => (
-                      <span
-                        key={m.moduleId}
-                        className="ob-mod"
-                        style={m.isEnabled ? undefined : { opacity: 0.55 }}
-                        title={
-                          m.isEnabled
-                            ? 'Enabled for this organization'
-                            : 'Not enabled for this organization'
-                        }
-                      >
-                        {m.isEnabled ? I.check : I.lock} {m.name}
-                      </span>
-                    ))}
+                    {/* Open or not by the Apps catalog's own verdict: `isEnabled`
+                        read a module the plan includes, with no row written, as
+                        locked (finding 44). */}
+                    {liveModules.map((m) => {
+                      const open = moduleIsOpen(m, modState.data?.launchScope?.enforced === true);
+                      return (
+                        <span
+                          key={m.moduleId}
+                          className="ob-mod"
+                          style={open ? undefined : { opacity: 0.55 }}
+                          title={open ? 'Open to this organization' : 'Not open to this organization — see the Apps catalog'}
+                        >
+                          {open ? I.check : I.lock} {m.name}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -3442,7 +3503,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     dismissed, never persisted or logged. */}
                 {mintedKey && (
                   <div
-                    style={{ marginTop: 14, padding: 14, border: '1px solid var(--accent-100, var(--border))', borderRadius: 10, background: 'var(--bg-050)' }}
+                    style={{ marginTop: 14, padding: 14, border: '1px solid var(--accent-100, var(--border))', borderRadius: 'var(--radius-lg)', background: 'var(--bg-050)' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                       <span className="sp-q-ic">{I.key || I.terminal}</span>

@@ -1,0 +1,16 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > inserts the first upload 8ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > is idempotent for identical bytes — a retry still succeeds 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > returns NO row for different bytes, which the route turns into a 409 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > leaves the original hash and storage key untouched 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > accepts the new bytes under a new version 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > raises 23505 for the same bytes under a different code 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > is handled by the route rather than falling through to INGEST_FAILED 0ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > keeps the stored copy it names, its file name, retention policy and lineage 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > a record with no storage handle takes the retry's as one unit 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the defect the predicate prevents is still demonstrable > WITHOUT the predicate, the same upload overwrites the recorded hash 4ms
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  13:43:12
+   Duration  2.62s (transform 82ms, setup 83ms, import 40ms, tests 2.20s, environment 0ms)

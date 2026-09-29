@@ -1,0 +1,78 @@
+# RED B — migrations/20260924_license_requests.sql applied by deploy-migrate, OLD handler. A store failure is injected by trigger.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T00:42:46.966Z","pid":7389,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T00:42:46.967Z","pid":7389,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T00:42:46.967Z","pid":7389,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/enterprise-onboarding-intake.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T00:42:47.279Z', poolSize: 1 }
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/enterprise-onboarding-intake.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake
+{
+  "timestamp": "2026-09-24T00:42:47.992Z",
+  "level": "info",
+  "message": "[auth] License request received",
+  "context": {
+    "email": "dbtlr-ok-7389_muet5ce9@example.invalid",
+    "organization": "dbtlr Biologics 7389_muet5ce9"
+  }
+}
+
+stderr | tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded
+{
+  "timestamp": "2026-09-24T00:42:48.018Z",
+  "level": "error",
+  "message": "[auth] License request error",
+  "context": {
+    "err": "Failed query: CREATE TABLE IF NOT EXISTS license_requests (\n            id SERIAL PRIMARY KEY,\n            name VARCHAR(200) NOT NULL,\n            email VARCHAR(254) NOT NULL,\n            organization VARCHAR(300) NOT NULL,\n            message TEXT DEFAULT '',\n            status VARCHAR(20) DEFAULT 'pending',\n            created_at TIMESTAMPTZ DEFAULT NOW(),\n            reviewed_at TIMESTAMPTZ,\n            reviewed_by INTEGER\n          )\nparams: "
+  }
+}
+
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > posture — the connection is production's > server/db talks to Postgres as the non-superuser runtime role, RLS enforcing 5ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > posture — the connection is production's > the runtime role cannot CREATE in public — so no handler can provision a table at runtime 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > the schema — created by an applier, not by a request > license_requests exists on the provisioned database 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > the schema — created by an applier, not by a request > it is under RLS with exactly the intake and platform policies 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake > answers 200 and says the request was submitted 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake > records exactly one row carrying what the prospect typed 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the pre-auth scope that wrote it cannot read it back 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > a signed-in tenant member cannot read it — another company's contact details 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the platform scope can — that is who works the request 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > answers 500, not success 0ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > stores nothing 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > does not put the database error text in the response 0ms
+ × tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > logs the prospect's contact so the lead can be recovered, with the real cause 2ms
+   → no error logged for the unrecorded request; saw: [auth] License request error: expected undefined to be defined
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > logs the prospect's contact so the lead can be recovered, with the real cause
+AssertionError: no error logged for the unrecorded request; saw: [auth] License request error: expected undefined to be defined
+ ❯ tests/db/enterprise-onboarding-intake.dbtest.ts:316:8
+    314|     const hit = logged.find((l) => l.message.includes('enterprise onbo…
+    315|     expect(hit, `no error logged for the unrecorded request; saw: ${lo…
+    316|       .toBeDefined();
+       |        ^
+    317|     expect(hit!.context).toMatchObject({
+    318|       email: FAIL_EMAIL,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  00:42:44
+   Duration  3.86s (transform 1.81s, setup 70ms, import 172ms, tests 3.35s, environment 0ms)
+

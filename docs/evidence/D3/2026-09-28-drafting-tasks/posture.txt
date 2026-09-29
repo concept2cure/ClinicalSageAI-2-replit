@@ -1,0 +1,18 @@
+c2c_d3u after deploy-migrate
+ rls | force 
+-----+-------
+ t   | t
+(1 row)
+
+       policyname        | cmd |                                                                                                                                            qual                                                                                                                                            
+-------------------------+-----+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ tenant_isolation_policy | ALL | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1                                                                                 +
+                         |     |    FROM regulatory_programs p                                                                                                                                                                                                                                                             +
+                         |     |   WHERE (((p.id)::text = drafting_tasks.project_id) AND ((p.organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (p.organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer))))))
+(1 row)
+
+   rolname   | rolsuper | rolbypassrls 
+-------------+----------+--------------
+ app_service | f        | f
+(1 row)
+

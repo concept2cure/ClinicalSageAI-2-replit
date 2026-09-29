@@ -16,25 +16,34 @@
  * bytes. Purging the underlying storage object is a separate lifecycle concern
  * the job does not perform.
  *
- * Standalone job module (mirrors server/jobs/driftSentinelSweep.ts): it is not
- * auto-registered at boot. Invoke runRetentionJob() from server/bin/run-retention.ts
- * or an external scheduler.
+ * Scheduled by the process (startRetentionSchedule, from server/index.ts) the
+ * way the audit-chain sweep is: explicit ENABLE_RETENTION_SWEEP wins, production
+ * defaults on, anything else is opt-in (security audit 2026-09-24, DP-20; plan
+ * P1-22). server/bin/run-retention.ts still runs one sweep by hand.
+ *
+ * Each disposition is ONE transaction: the archive snapshot, the delete (soft
+ * or hard) and the chained audit_logs row (writeChainedAuditRow) commit
+ * together or not at all. A deletion that cannot be audited — no organisation
+ * to chain it under, or the row cannot be written — is not made. Until
+ * 2026-09-26 the record of a deletion was a line in logs/audit.log on the
+ * task's disk.
  */
 
 import nodemailer from 'nodemailer';
+import cron from 'node-cron';
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import { db } from '../db';
+import { db, pool } from '../db';
 import {
   vaultDocuments,
   vaultRetentionPolicies,
-  vaultDocumentArchives,
   vaultLegalHolds,
 } from '../../shared/schema/vault';
-// audit-logger is plain JS; logAction is fire-and-forget, logSystemEvent records
-// job-level events. Typed via the adjacent audit-logger.d.ts.
-import { logSystemEvent, logAction } from '../utils/audit-logger.js';
+import { writeChainedAuditRow } from '../services/auditService';
 import { reportSecurityAlert } from '../services/security-alerts';
 import { runWithSystemTenantScope } from '../db/tenantStore';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('retention-sweep');
 
 type VaultDocument = typeof vaultDocuments.$inferSelect;
 type RetentionPolicy = typeof vaultRetentionPolicies.$inferSelect;
@@ -75,19 +84,76 @@ async function loadPolicies(): Promise<Map<string, RetentionPolicy>> {
   return new Map(rows.map(p => [p.policyName, p]));
 }
 
-/** Snapshot a document's record into the immutable archive table. */
-async function archiveDocument(doc: VaultDocument): Promise<void> {
-  await db.insert(vaultDocumentArchives).values({
-    originalDocumentId: doc.id,
-    programId: doc.programId,
-    documentCode: doc.documentCode,
-    documentTitle: doc.documentTitle,
-    documentType: doc.documentType,
-    retentionPolicy: doc.retentionPolicy,
-    snapshot: doc,
-    archiveReason: 'retention_policy',
-    archivedBy: 'system:retention-job',
-  });
+interface TxClient {
+  query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount?: number | null }>;
+  release: () => void;
+}
+
+/** The organisation a document's audit row chains under: its own column, else its program's. */
+async function organisationOf(client: TxClient, doc: VaultDocument): Promise<number | null> {
+  const own = Number((doc as { organizationId?: unknown }).organizationId);
+  if (Number.isInteger(own) && own > 0) return own;
+  const r = await client.query('SELECT organization_id FROM regulatory_programs WHERE id = $1 LIMIT 1', [doc.programId]);
+  const viaProgram = Number(r.rows[0]?.organization_id);
+  return Number.isInteger(viaProgram) && viaProgram > 0 ? viaProgram : null;
+}
+
+/**
+ * Dispose of one expired document: the archive snapshot when the policy asks
+ * for one, the soft or hard delete, and the chained audit row, in one
+ * transaction. Throws (after ROLLBACK) when any of it cannot be done; the
+ * caller counts the error and the document stays.
+ */
+async function disposeDocument(
+  doc: VaultDocument,
+  behaviour: { archiveBeforeDelete: boolean; hardDelete: boolean; policyMatched: boolean },
+): Promise<void> {
+  const client = (await pool.connect()) as unknown as TxClient;
+  try {
+    await client.query('BEGIN');
+    const organizationId = await organisationOf(client, doc);
+    if (organizationId === null) {
+      throw new Error('no organisation for the document: the deletion cannot be audited, so it is not made');
+    }
+    if (behaviour.archiveBeforeDelete) {
+      await client.query(
+        `INSERT INTO vault.document_archives
+           (original_document_id, program_id, document_code, document_title, document_type, retention_policy, snapshot, archive_reason, archived_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, 'retention_policy', 'system:retention-job')`,
+        [doc.id, doc.programId, doc.documentCode, doc.documentTitle, doc.documentType, doc.retentionPolicy, JSON.stringify(doc)],
+      );
+    }
+    if (behaviour.hardDelete) {
+      await client.query('DELETE FROM vault.documents WHERE id = $1', [doc.id]);
+    } else {
+      await client.query('UPDATE vault.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL', [doc.id]);
+    }
+    await writeChainedAuditRow(
+      client,
+      {
+        action: behaviour.hardDelete ? 'vault.document.retention_hard_delete' : 'vault.document.retention_soft_delete',
+        resourceType: 'vault_document',
+        resourceId: doc.id,
+        details: {
+          programId: doc.programId,
+          documentCode: doc.documentCode,
+          retentionPolicy: doc.retentionPolicy ?? null,
+          policyMatched: behaviour.policyMatched,
+          retentionUntil: doc.retentionUntil,
+          archived: behaviour.archiveBeforeDelete,
+          actor: 'system:retention-job',
+        },
+      },
+      organizationId,
+      doc.id,
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 /**
@@ -152,18 +218,11 @@ export async function runRetentionSweep(): Promise<RetentionSummary> {
            thing in this job that cannot be undone. */
         if (holds.documents.has(doc.id) || holds.programs.has(doc.programId)) {
           summary.heldByLegalHold += 1;
-          logAction({
-            action: 'document.retention_skipped_legal_hold',
-            userId: 'system',
-            username: 'retention-job',
-            entityType: 'vault_document',
-            entityId: doc.id,
-            details: {
-              programId: doc.programId,
-              documentCode: doc.documentCode,
-              retentionUntil: doc.retentionUntil,
-              heldBy: holds.documents.has(doc.id) ? 'document' : 'program',
-            },
+          logger.info('Expired document left in place: legal hold', {
+            documentId: doc.id,
+            programId: doc.programId,
+            retentionUntil: doc.retentionUntil,
+            heldBy: holds.documents.has(doc.id) ? 'document' : 'program',
           });
           continue;
         }
@@ -174,43 +233,16 @@ export async function runRetentionSweep(): Promise<RetentionSummary> {
           : DEFAULT_BEHAVIOR.archiveBeforeDelete;
         const hardDelete = policy ? policy.hardDelete : DEFAULT_BEHAVIOR.hardDelete;
 
-        if (archiveBeforeDelete) {
-          await archiveDocument(doc);
-          summary.archived += 1;
-        }
-
-        if (hardDelete) {
-          await db.delete(vaultDocuments).where(eq(vaultDocuments.id, doc.id));
-          summary.hardDeleted += 1;
-        } else {
-          await db
-            .update(vaultDocuments)
-            .set({ deletedAt: new Date() })
-            .where(and(eq(vaultDocuments.id, doc.id), isNull(vaultDocuments.deletedAt)));
-          summary.softDeleted += 1;
-        }
-
-        logAction({
-          action: hardDelete ? 'document.retention_hard_delete' : 'document.retention_soft_delete',
-          userId: 'system',
-          username: 'retention-job',
-          entityType: 'vault_document',
-          entityId: doc.id,
-          details: {
-            programId: doc.programId,
-            documentCode: doc.documentCode,
-            retentionPolicy: doc.retentionPolicy ?? null,
-            policyMatched: Boolean(policy),
-            retentionUntil: doc.retentionUntil,
-            archived: archiveBeforeDelete,
-          },
-        });
+        await disposeDocument(doc, { archiveBeforeDelete, hardDelete, policyMatched: Boolean(policy) });
+        if (archiveBeforeDelete) summary.archived += 1;
+        if (hardDelete) summary.hardDeleted += 1;
+        else summary.softDeleted += 1;
       } catch (error) {
         summary.errors += 1; // per-document best-effort; keep sweeping
-        console.error(
-          `[RETENTION] Failed to process document ${doc.id}:`,
-          error instanceof Error ? error.message : error
-        );
+        logger.error('Expired document not disposed of', {
+          documentId: doc.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
@@ -273,34 +305,74 @@ async function notifyAdmins(summary: RetentionSummary): Promise<void> {
  * without an enumeration-level failure.
  */
 export async function runRetentionJob(): Promise<boolean> {
-  console.log('[RETENTION] Starting document retention sweep...');
+  logger.info('Document retention sweep starting');
   try {
     const summary = await runRetentionSweep();
-
-    logSystemEvent({
-      event: 'retention_sweep_complete',
-      component: 'retention_job',
-      severity: summary.errors > 0 ? 'warning' : 'info',
-      details: { ...summary },
-    });
-
-    console.log(
-      `[RETENTION] Done — scanned ${summary.scanned}, archived ${summary.archived}, ` +
-        `soft-deleted ${summary.softDeleted}, hard-deleted ${summary.hardDeleted}, errors ${summary.errors}`
-    );
-
+    if (summary.errors > 0) logger.warn('Document retention sweep complete with errors', { ...summary });
+    else logger.info('Document retention sweep complete', { ...summary });
     await notifyAdmins(summary);
     return summary.errors === 0;
   } catch (error) {
-    console.error('[RETENTION] Sweep failed:', error instanceof Error ? error.message : error);
-    logSystemEvent({
-      event: 'retention_sweep_failure',
-      component: 'retention_job',
-      severity: 'error',
-      details: { error: error instanceof Error ? error.message : String(error) },
+    logger.error('Document retention sweep failed', { error: error instanceof Error ? error.message : String(error) });
+    reportSecurityAlert({
+      kind: 'retention_sweep_failed',
+      message: 'Document retention sweep failed before disposing of anything',
+      detail: { error: error instanceof Error ? error.message : String(error) },
     });
     return false;
   }
 }
 
 export default { runRetentionJob, runRetentionSweep };
+
+// ── Scheduling ───────────────────────────────────────────────────────────────
+
+export interface RetentionSweepPosture {
+  enabled: boolean;
+  controlledBy: 'ENABLE_RETENTION_SWEEP';
+  reason: string;
+}
+
+/**
+ * Whether the process schedules the nightly sweep. The same gating shape as
+ * the audit-chain sweep (startup/audit-enforcement.ts): an explicit
+ * ENABLE_RETENTION_SWEEP wins; production defaults ON, because a retention
+ * policy nobody runs is a promise nobody keeps (Annex 11 §17, GDPR 5(1)(e));
+ * anything else is opt-in.
+ */
+export function resolveRetentionSweepPosture(env: NodeJS.ProcessEnv = process.env): RetentionSweepPosture {
+  const controlledBy = 'ENABLE_RETENTION_SWEEP' as const;
+  const explicit = env.ENABLE_RETENTION_SWEEP;
+  if (explicit === 'false') return { enabled: false, controlledBy, reason: 'explicitly disabled (ENABLE_RETENTION_SWEEP=false)' };
+  if (explicit === 'true') return { enabled: true, controlledBy, reason: 'explicitly enabled (ENABLE_RETENTION_SWEEP=true)' };
+  if ((env.NODE_ENV ?? '').toLowerCase() === 'production') {
+    return { enabled: true, controlledBy, reason: 'production default (retention policies are enforced)' };
+  }
+  return { enabled: false, controlledBy, reason: 'opt-in outside production (set ENABLE_RETENTION_SWEEP=true)' };
+}
+
+export const DEFAULT_RETENTION_SWEEP_CRON = '30 3 * * *';
+
+/** Schedule the nightly sweep, or say why not. Called once at boot (server/index.ts). */
+export function startRetentionSchedule(): void {
+  const posture = resolveRetentionSweepPosture(process.env);
+  if (!posture.enabled) {
+    if ((process.env.NODE_ENV ?? '').toLowerCase() === 'production') {
+      logger.warn('Document retention sweep DISABLED in production: retention policies are not enforced', posture);
+    } else {
+      logger.info('Document retention sweep disabled', posture);
+    }
+    return;
+  }
+  const expr = process.env.RETENTION_SWEEP_CRON || DEFAULT_RETENTION_SWEEP_CRON;
+  try {
+    cron.schedule(expr, () => {
+      void runRetentionJob().catch((err) =>
+        logger.error('Scheduled retention sweep failed', { error: err instanceof Error ? err.message : String(err) }),
+      );
+    });
+    logger.info(`Document retention sweep scheduled (${expr})`, { enabled: true, controlledBy: posture.controlledBy, schedule: expr });
+  } catch (err) {
+    logger.error('Failed to schedule the document retention sweep', { error: err instanceof Error ? err.message : String(err) });
+  }
+}

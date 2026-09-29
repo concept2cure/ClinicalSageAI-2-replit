@@ -1,0 +1,30 @@
+$ npm run --silent ci:jwt-verify-pinned
+[ci:jwt-verify-pinned] OK — every production jwt.verify call pins an algorithm
+exit=0
+
+$ npm run --silent ci:tenant-isolation:no-regression
+    L85  tables=[]
+      `SELECT strategy, AVG(quality_score)::float AS avg_quality, COUNT(*)::int AS samples
+
+  server/services/kernel-observability.ts  (4)
+    L53  tables=[]
+      `SELECT
+    L63  tables=[]
+      `SELECT
+    L72  tables=[]
+      `SELECT
+    … 1 more
+
+Total: 8 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] 1 previously-flagged finding(s) resolved — consider re-running with --write-baseline to ratchet down.
+[ci:tenant-isolation] OK — no new findings above baseline (8 current, 9 baseline)
+exit=0
+
+$ npm run --silent check:security-patterns
+check-security-patterns: 0 violations across 2837 file(s).
+exit=0
+
+$ npm run --silent ci:client-ip-single-source
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+exit=0
+

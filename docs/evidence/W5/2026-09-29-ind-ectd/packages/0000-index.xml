@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="util/style/ectd-2-0.xsl"?>
+<!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
+<ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
+           xmlns:xlink="http://www.w3.org/1999/xlink"
+           dtd-version="3.2">
+  <m1-administrative-information-and-prescribing-information>
+    <leaf operation="new" checksum="db764fc05d239fb2cf5fb1246aa4c6c6" checksum-type="md5" xlink:href="m1/us/us-regional.xml" xlink:type="simple" ID="leaf-m1-regional-backbone">
+      <title>Module 1 regional backbone (us-regional.xml)</title>
+    </leaf>
+  </m1-administrative-information-and-prescribing-information>
+  <m3-quality>
+    <m3-2-body-of-data>
+      <m3-2-s-drug-substance>
+        <leaf operation="new" checksum="77d0921ab022cecfa295f853c49eb560" checksum-type="md5" xlink:href="m3/3-2-s-4-2/3-2-s-4-2-coauthor-documents-52.pdf" xlink:type="simple" ID="leaf-3-2-S-4-2-3-2-s-4-2-coauthor-documents-52">
+          <title>Control of Drug Substance (CTD 3.2.S.4)</title>
+        </leaf>
+      </m3-2-s-drug-substance>
+    </m3-2-body-of-data>
+  </m3-quality>
+</ectd:ectd>

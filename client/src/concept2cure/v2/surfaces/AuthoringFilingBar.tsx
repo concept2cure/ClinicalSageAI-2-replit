@@ -27,7 +27,7 @@
  * host refetch so the document's new status (FROZEN / APPROVED) comes from the
  * server, not an optimistic guess.
  */
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -52,6 +52,13 @@ export interface AuthoringFilingBarProps {
   fireToast: (m: string, tone?: 'ok' | 'error') => void;
   /** Who the signature dialog shows as signing (the host's signed-in user). */
   signer?: EsignSigner;
+  /* GE-P-3 (2026-09-28): the server's refusal of Freeze / E-sign for THIS
+     caller, as the sentence to show (the host reads it from GET /docs/:id
+     `access`). A string disables the control and is its visible, described
+     reason. Null or absent means allowed OR unknown — the control stays
+     enabled and the server decides; the bar never infers a denial. */
+  freezeRefusal?: string | null;
+  esignRefusal?: string | null;
 }
 
 type Dialog = 'freeze' | 'esign' | null;
@@ -106,7 +113,7 @@ const FREEZE_FORM = (title: string, unresolved: Unresolved | null): C2CFormConfi
           ],
         }]
       : []),
-    { key: 'reason', label: 'Reason for freeze', type: 'textarea', required: true, placeholder: 'e.g. Locking for QA review prior to approval' },
+    { key: 'reason', label: 'Reason for freeze (at least 8 characters)', type: 'textarea', required: true, placeholder: 'e.g. Locking for QA review prior to approval' },
     { key: 'version', label: 'Version label (optional)', type: 'text', placeholder: 'e.g. v1.0.frozen' },
   ],
 });
@@ -154,7 +161,18 @@ async function postAuthoringSignature(
   return { meaning, hash: json?.documentHash, signedAt: json?.signedAt };
 }
 
-export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer }: AuthoringFilingBarProps) {
+/** The server's refusal of a governed act, as visible text the disabled control is described by (GE-P-3). */
+function RefusalNote({ id, testId, text }: { id: string; testId: string; text: string }) {
+  return (
+    <span id={id} data-testid={testId} style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 240 }}>
+      {text}
+    </span>
+  );
+}
+
+export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal, esignRefusal }: AuthoringFilingBarProps) {
+  const freezeNoteId = useId();
+  const esignNoteId = useId();
   const [dialog, setDialog] = useState<Dialog>(null);
   /** Set when the server refused the freeze because work is outstanding. */
   const [unresolved, setUnresolved] = useState<Unresolved | null>(null);
@@ -233,13 +251,18 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
 
   return (
     <>
-      <button className="btn ghost" style={{ height: 30 }} onClick={() => setDialog('freeze')} disabled={frozen}
-        title={frozen ? 'Document is already frozen' : 'Snapshot and seal this document'}>
+      <button className="btn ghost" style={{ height: 30 }} onClick={() => setDialog('freeze')} disabled={frozen || !!freezeRefusal}
+        aria-describedby={!frozen && freezeRefusal ? freezeNoteId : undefined}
+        title={frozen ? 'Document is already frozen' : freezeRefusal ?? 'Snapshot and seal this document'}>
         {I.lock} {frozen ? 'Frozen' : 'Freeze'}
       </button>
-      <button className="btn ghost" style={{ height: 30 }} onClick={() => setDialog('esign')}>
+      {!frozen && freezeRefusal && <RefusalNote id={freezeNoteId} testId="freeze-refusal" text={freezeRefusal} />}
+      <button className="btn ghost" style={{ height: 30 }} onClick={() => setDialog('esign')} disabled={!!esignRefusal}
+        aria-describedby={esignRefusal ? esignNoteId : undefined}
+        title={esignRefusal ?? undefined}>
         {I.penLine} E-sign
       </button>
+      {esignRefusal && <RefusalNote id={esignNoteId} testId="esign-refusal" text={esignRefusal} />}
 
       {dialog === 'freeze' && (
         <C2CForm

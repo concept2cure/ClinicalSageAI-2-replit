@@ -20,7 +20,9 @@ import { describe, it, expect } from 'vitest';
 import {
   describeServerToolStep,
   summariseServerToolResult,
+  serverToolEvidence,
   MAX_LISTED_SOURCES,
+  MAX_SERVER_TOOL_EVIDENCE_CHARS,
 } from '../server-tool-steps.js';
 
 describe('the label says what was actually done', () => {
@@ -184,5 +186,49 @@ describe('the stream route puts the step in the trace, and closes it', () => {
     // A fetch result is an entire document.
     expect(HELPER).toMatch(/summariseServerToolResult\(step\)/);
     expect(HELPER).not.toMatch(/result: JSON\.stringify\(step\.result\)/);
+  });
+});
+
+describe('what a hosted web step contributes to the grounding corpus (D6, WS2)', () => {
+  // Until 2026-09-26 a search or fetch Anthropic ran never reached the corpus
+  // the answer is grounded against, so a citation taken from one could not be
+  // credited.
+  it('a search contributes each source it returned', () => {
+    const evidence = serverToolEvidence({
+      name: 'web_search',
+      result: [
+        { type: 'web_search_result', title: 'E6(R3) Guideline', url: 'https://www.ich.org/page/efficacy-guidelines' },
+        { type: 'web_search_result', title: 'FDA E6(R3)', url: 'https://www.fda.gov/e6r3' },
+      ],
+    });
+    expect(evidence).toBe(
+      '[web_search] E6(R3) Guideline — https://www.ich.org/page/efficacy-guidelines\n' +
+        '[web_search] FDA E6(R3) — https://www.fda.gov/e6r3',
+    );
+  });
+
+  it('a fetch contributes the text it read', () => {
+    const evidence = serverToolEvidence({
+      name: 'web_fetch',
+      result: {
+        type: 'web_fetch_result',
+        url: 'https://www.ecfr.gov/current/title-21/section-312.23',
+        content: { type: 'document', source: { type: 'text', media_type: 'text/plain', data: '312.23 IND content and format.' } },
+      },
+    });
+    expect(evidence).toContain('https://www.ecfr.gov/current/title-21/section-312.23');
+    expect(evidence).toContain('312.23 IND content and format.');
+  });
+
+  it('a failed step contributes nothing — no result was seen', () => {
+    expect(serverToolEvidence({ name: 'web_search', isError: true, result: { error_code: 'max_uses_exceeded' } })).toBeNull();
+  });
+
+  it('a long document is capped', () => {
+    const evidence = serverToolEvidence({
+      name: 'web_fetch',
+      result: { url: 'https://www.fda.gov/x', content: { source: { type: 'text', data: 'a'.repeat(50_000) } } },
+    });
+    expect(evidence?.length).toBe(MAX_SERVER_TOOL_EVIDENCE_CHARS);
   });
 });

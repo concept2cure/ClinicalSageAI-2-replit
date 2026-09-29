@@ -57,6 +57,9 @@ import { liveGetOrNull } from '../dataConnect';
 import {
   useFilingTarget,
   FilingTargetFields,
+  PlacementReasonField,
+  placementReasonOk,
+  PLACEMENT_REASON_REQUIRED,
   judgeSectionCode,
   isLocked,
 } from './filingTarget';
@@ -168,6 +171,7 @@ export function AuthoringPlaceIntoFiling({
 
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
+  const [reason, setReason] = React.useState('');
   const [placing, setPlacing] = React.useState(false);
   const [verdict, setVerdict] = React.useState<Verdict>(null);
   const [placement, setPlacement] = React.useState<Placement | null>(null);
@@ -192,8 +196,15 @@ export function AuthoringPlaceIntoFiling({
   const sectionIsPlaceable = sectionJudged.placeable;
   const sectionNote = sectionJudged.note;
 
+  const reasonOk = placementReasonOk(reason);
   const canPlace =
-    !placing && !dirty && seq != null && !isLocked(seq.status) && section.trim() !== '' && sectionIsPlaceable;
+    !placing &&
+    !dirty &&
+    seq != null &&
+    !isLocked(seq.status) &&
+    section.trim() !== '' &&
+    sectionIsPlaceable &&
+    reasonOk;
   /* Where a placement goes, or null when one cannot be made. It files at the
      code the note announces ("Files as 3.2.S.4.2"), not at the keystrokes:
      upsertLeaf stores a section code as sent, and the Vault filing dialog,
@@ -264,6 +275,7 @@ export function AuthoringPlaceIntoFiling({
         lifecycleOp: op,
         documentTable: 'coauthor_documents',
         documentId: snapshotId,
+        reason: reason.trim(),
       });
       if (!put.data || typeof put.data.id !== 'number') {
         setVerdict({
@@ -374,6 +386,8 @@ export function AuthoringPlaceIntoFiling({
                 </select>
               </div>
 
+              <PlacementReasonField value={reason} onChange={setReason} idPrefix="apf" disabled={placing} />
+
               {dirty && (
                 <div className="de-err" role="status">
                   This section has unsaved changes. Placement snapshots the SAVED document, so
@@ -429,7 +443,9 @@ export function AuthoringPlaceIntoFiling({
                         ? 'A section code is required'
                         : !sectionIsPlaceable
                           ? 'The section code must name a CTD section a document can be filed at'
-                          : 'Snapshot the saved document and place it as a leaf'
+                          : !reasonOk
+                            ? PLACEMENT_REASON_REQUIRED
+                            : 'Snapshot the saved document and place it as a leaf'
                 }
               >
                 {I.layers} {placing ? 'Placing…' : 'Place leaf in the sequence'}

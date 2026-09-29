@@ -1,0 +1,32 @@
+# c2c_d3b (from empty) after this change
+rolname | rolsuper | rolbypassrls
+app_service | f | f
+(1 row)
+rel | rls | ins | upd | del
+public.organizations | f | t | t | t
+(1 row)
+tgname | tgenabled | pg_get_triggerdef
+organizations_tenant_key_immutable | O | CREATE TRIGGER organizations_tenant_key_immutable BEFORE UPDATE OF id, uuid ON public.organizations FOR EACH ROW EXECUTE FUNCTION organizations_tenant_key_immutable()
+trg_sync_org_to_identity | O | CREATE TRIGGER trg_sync_org_to_identity AFTER INSERT ON public.organizations FOR EACH ROW EXECUTE FUNCTION sync_org_to_identity()
+(2 rows)
+-- core.get_program_org_id (reads organizations.uuid):
+CREATE OR REPLACE FUNCTION core.get_program_org_id(p_program_id uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ STABLE
+AS $function$
+BEGIN
+  -- The canonical registry first: see the 2026-09-24 note above.
+  RETURN COALESCE(
+    (SELECT o.uuid
+       FROM public.regulatory_programs rp
+       JOIN public.organizations o ON o.id = rp.organization_id
+      WHERE rp.id = p_program_id),
+    (SELECT org_id FROM core.programs WHERE id = p_program_id),
+    (SELECT org_id FROM core.program_ownerships
+      WHERE program_id = p_program_id AND is_active = TRUE
+        AND ownership_role = 'OWNER' LIMIT 1)
+  );
+END;
+$function$
+

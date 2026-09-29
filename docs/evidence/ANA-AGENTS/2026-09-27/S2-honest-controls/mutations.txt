@@ -1,0 +1,107 @@
+# S2 mutations against the finished tree (the bytes in tree.sha256; surfaceViews.ts is mutated for B13 only and restored), 2026-09-28T06:19:38Z. Each: exact-once replace, run the named test file, restore the original bytes, verify sha256.
+# B = an S2 behaviour or a review fix (the objection number is in the name). O = an overcorrection: a gate that refused too much must also go red.
+== B1 Home ignores the mode prop [client/src/concept2cure/v2/surfaces/Surfaces.tsx -> client/src/concept2cure/v2/__tests__/homeEngine.test.tsx]: RED ['Tests  3 failed | 6 passed (9)'] exit=1 restored sha256 0eb844b97738 ok
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > shows the mode its host gives it, not a local default 69ms
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > reports a choice to its host instead of keeping it 228ms
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > follows the host when the host changes the mode 15ms
+== B2 V2App passes another pref as mode [client/src/concept2cure/v2/V2App.tsx -> client/src/concept2cure/v2/__tests__/homeEngine.test.tsx]: RED ['Tests  1 failed | 8 passed (9)'] exit=1 restored sha256 068fb8d7b87a ok
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > Home is rendered with mode={prefs.anaMode} and setMode writing anaMode 9ms
+== B3a V2App setMode writes segment [client/src/concept2cure/v2/V2App.tsx -> client/src/concept2cure/v2/__tests__/homeEngine.test.tsx]: RED ['Tests  1 failed | 8 passed (9)'] exit=1 restored sha256 068fb8d7b87a ok
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > Home is rendered with mode={prefs.anaMode} and setMode writing anaMode 7ms
+== B3b Home keeps a choice local when bound [client/src/concept2cure/v2/surfaces/Surfaces.tsx -> client/src/concept2cure/v2/__tests__/homeEngine.test.tsx]: RED ['Tests  2 failed | 7 passed (9)'] exit=1 restored sha256 0eb844b97738 ok
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > reports a choice to its host instead of keeping it 76ms
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > follows the host when the host changes the mode 51ms
+== B4a resolveModelOverride skips the approval check [server/services/ai-gateway/effort.ts -> server/services/ai-gateway/__tests__/effort.test.ts]: RED ['Tests  5 failed | 39 passed (44)'] exit=1 restored sha256 1340c9b2c572 ok
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an enabled model with no approved entry — by id and by wire model 9ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an approved alias whose wire model is not the pinned version 1ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, still refuses the unapproved model 1ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses a row whose wire model is the alias id, not the pinned version 1ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses the pinned version under an id the entry does not carry — the gateway would refuse it on high-risk work 1
+== B4b approval by wire lookup alone (pre-review gate) [server/services/ai-gateway/effort.ts -> server/services/ai-gateway/__tests__/effort.test.ts]: RED ['Tests  3 failed | 41 passed (44)'] exit=1 restored sha256 1340c9b2c572 ok
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses a row whose wire model is the alias id, not the pinned version 9ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses the pinned version under an id the entry does not carry — the gateway would refuse it on high-risk work 2
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes a row that is not exactly its approved entry 4ms
+== B4c approval ignores the registry id (objection 11/16) [server/services/ai-gateway/effort.ts -> server/services/ai-gateway/__tests__/effort.test.ts]: RED ['Tests  2 failed | 42 passed (44)'] exit=1 restored sha256 1340c9b2c572 ok
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses the pinned version under an id the entry does not carry — the gateway would refuse it on high-risk work 1
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes a row that is not exactly its approved entry 4ms
+== B4d approval ignores the pinned version (objection 9/10) [server/services/ai-gateway/effort.ts -> server/services/ai-gateway/__tests__/effort.test.ts]: RED ['Tests  2 failed | 42 passed (44)'] exit=1 restored sha256 1340c9b2c572 ok
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses a row whose wire model is the alias id, not the pinned version 9ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes a row that is not exactly its approved entry 4ms
+== B5a resolveModelOverride skips the high-risk check [server/services/ai-gateway/effort.ts -> server/services/ai-gateway/__tests__/effort.test.ts]: RED ['Tests  2 failed | 42 passed (44)'] exit=1 restored sha256 1340c9b2c572 ok
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, refuses an approved model not approved for high risk 14ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the high-risk question has no default, and an unanswered one is the strict case 2ms
+== B5b missing highRisk answer fails open (objection 12) [server/services/ai-gateway/effort.ts -> server/services/ai-gateway/__tests__/effort.test.ts]: RED ['Tests  1 failed | 43 passed (44)'] exit=1 restored sha256 1340c9b2c572 ok
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the high-risk question has no default, and an unanswered one is the strict case 9ms
+== B6 picker lists an unapproved model [server/services/ai-gateway/effort.ts -> server/services/ai-gateway/__tests__/effort.test.ts]: RED ['Tests  3 failed | 41 passed (44)'] exit=1 restored sha256 1340c9b2c572 ok
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes an enabled model with no approved entry 10ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes an approved alias drifted off its pinned version 3ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes a row that is not exactly its approved entry 2ms
+== B7a picker claims PQ passed [server/services/ai-gateway/effort.ts -> server/services/ai-gateway/__tests__/effort.test.ts]: RED ['Tests  2 failed | 42 passed (44)'] exit=1 restored sha256 1340c9b2c572 ok
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > carries approvedForHighRisk and pqStatus from the approved entry 9ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > claims no PQ pass the governed data does not record 2ms
+== B7b picker claims high-risk approval [server/services/ai-gateway/effort.ts -> server/services/ai-gateway/__tests__/effort.test.ts]: RED ['Tests  1 failed | 43 passed (44)'] exit=1 restored sha256 1340c9b2c572 ok
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > carries approvedForHighRisk and pqStatus from the approved entry 10ms
+== B8 stream passes highRisk: false [server/routes/ana-ri/stream.ts -> server/routes/ana-ri/__tests__/stream-model-override.test.ts]: RED ['Tests  1 failed | 6 passed (7)'] exit=1 restored sha256 77a784ee72a2 ok
+     × server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > computes it with isHighRiskRequest from the routing plan’s taskType and riskTier 6ms
+== B9a stream guard back to != null / !== "" (objection 5) [server/routes/ana-ri/stream.ts -> server/routes/ana-ri/__tests__/stream-model-override.test.ts]: RED ['Tests  1 failed | 6 passed (7)'] exit=1 restored sha256 77a784ee72a2 ok
+     × server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelle
+== B9b stream guard drops the not-trimmed check [server/routes/ana-ri/stream.ts -> server/routes/ana-ri/__tests__/stream-model-override.test.ts]: RED ['Tests  1 failed | 6 passed (7)'] exit=1 restored sha256 77a784ee72a2 ok
+     × server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelle
+== B9c stream guard drops !resolvedOverride [server/routes/ana-ri/stream.ts -> server/routes/ana-ri/__tests__/stream-model-override.test.ts]: RED ['Tests  1 failed | 6 passed (7)'] exit=1 restored sha256 77a784ee72a2 ok
+     × server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelle
+== B9d stream guard drops !res.writableEnded (objection 20) [server/routes/ana-ri/stream.ts -> server/routes/ana-ri/__tests__/stream-model-override.test.ts]: RED ['Tests  1 failed | 6 passed (7)'] exit=1 restored sha256 77a784ee72a2 ok
+     × server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelle
+== B10 refusal copy back to past tense + governed (objections 1/2) [server/routes/ana-ri/stream.ts -> server/routes/ana-ri/__tests__/stream-model-override.test.ts]: RED ['Tests  1 failed | 6 passed (7)'] exit=1 restored sha256 77a784ee72a2 ok
+     × server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message 10ms
+== B11 Home half-bound again (objection 17) [client/src/concept2cure/v2/surfaces/Surfaces.tsx -> client/src/concept2cure/v2/__tests__/homeEngine.test.tsx]: RED ['Tests  1 failed | 8 passed (9)'] exit=1 restored sha256 0eb844b97738 ok
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > a mode with no setter is not a binding: the menu still works (review objection 17) 55ms
+== B12 conversation screen off the shell chat (objection 4) [client/src/concept2cure/v2/V2App.tsx -> client/src/concept2cure/v2/__tests__/homeEngine.test.tsx]: RED ['Tests  1 failed | 8 passed (9)'] exit=1 restored sha256 068fb8d7b87a ok
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > the conversation screen is mounted on that chat (review objection 4) 6ms
+== B13 conversation-thread no longer owns the conversation (objection 4) [client/src/concept2cure/v2/surfaceViews.ts -> client/src/concept2cure/v2/__tests__/homeEngine.test.tsx]: RED ['Tests  1 failed | 8 passed (9)'] exit=1 restored sha256 dd02d6e51aaa ok
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > the conversation screen is mounted on that chat (review objection 4) 6ms
+== B14 Home sends to the rail (objection 4) [client/src/concept2cure/v2/surfaces/Surfaces.tsx -> client/src/concept2cure/v2/__tests__/homeEngine.test.tsx]: RED ['Tests  1 failed | 8 passed (9)'] exit=1 restored sha256 0eb844b97738 ok
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > sends the question to the conversation screen, not the rail 25ms
+== B15 shell chat effort unbound [client/src/concept2cure/v2/V2App.tsx -> client/src/concept2cure/v2/__tests__/homeEngine.test.tsx]: RED ['Tests  1 failed | 8 passed (9)'] exit=1 restored sha256 068fb8d7b87a ok
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > the shell chat, `anaChat`, sends effortForMode(prefs.anaMode) 6ms
+== B16a first gw.route sends another riskTier than the one highRisk was asked of [server/routes/ana-ri/stream.ts -> server/routes/ana-ri/__tests__/stream-model-override.test.ts]: RED ['Tests  1 failed | 6 passed (7)'] exit=1 restored sha256 77a784ee72a2 ok
+     × server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > the gateway is sent that same taskType and riskTier on every call that carries the pin 13ms
+== B16b agentic-round gw.route sends another riskTier [server/routes/ana-ri/stream.ts -> server/routes/ana-ri/__tests__/stream-model-override.test.ts]: RED ['Tests  1 failed | 6 passed (7)'] exit=1 restored sha256 77a784ee72a2 ok
+     × server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > the gateway is sent that same taskType and riskTier on every call that carries the pin 9ms
+== O1 resolveModelOverride refuses every override [server/services/ai-gateway/effort.ts -> server/services/ai-gateway/__tests__/effort.test.ts]: RED ['Tests  6 failed | 38 passed (44)'] exit=1 restored sha256 1340c9b2c572 ok
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > resolves a valid override by registry id 9ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > resolves a valid override by wire model string 1ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > resolves an approved entry — by id and by wire model 2ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, resolves an approvedForHighRisk entry — by id and by wire model 1ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the high-risk question has no default, and an unanswered one is the strict case 1ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > offers every enabled model in today's registry — the drift gate keeps each
+== O2 picker offers nothing [server/services/ai-gateway/effort.ts -> server/services/ai-gateway/__tests__/effort.test.ts]: RED ['Tests  6 failed | 38 passed (44)'] exit=1 restored sha256 1340c9b2c572 ok
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > filters to enabled models only 11ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > derives label + recommendedEffort and sorts by quality desc 2ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes an enabled model with no approved entry 2ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > offers every enabled model in today's registry — the drift gate keeps each
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > carries approvedForHighRisk and pqStatus from the approved entry 1ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > claims no PQ pass the governed data does not record 2ms
+== O3 every override treated as high-risk [server/services/ai-gateway/effort.ts -> server/services/ai-gateway/__tests__/effort.test.ts]: RED ['Tests  4 failed | 40 passed (44)'] exit=1 restored sha256 1340c9b2c572 ok
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > resolves a valid override by wire model string 9ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > resolves an approved entry — by id and by wire model 2ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the high-risk question has no default, and an unanswered one is the strict case 1ms
+     × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > offers every enabled model in today's registry — the drift gate keeps each
+== O4 stream warns on every turn [server/routes/ana-ri/stream.ts -> server/routes/ana-ri/__tests__/stream-model-override.test.ts]: RED ['Tests  1 failed | 6 passed (7)'] exit=1 restored sha256 77a784ee72a2 ok
+     × server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelle
+== O5 stream treats every turn as high-risk [server/routes/ana-ri/stream.ts -> server/routes/ana-ri/__tests__/stream-model-override.test.ts]: RED ['Tests  1 failed | 6 passed (7)'] exit=1 restored sha256 77a784ee72a2 ok
+     × server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > computes it with isHighRiskRequest from the routing plan’s taskType and riskTier 13ms
+== O6 Home always bound, even with no host [client/src/concept2cure/v2/surfaces/Surfaces.tsx -> client/src/concept2cure/v2/__tests__/homeEngine.test.tsx]: RED ['Tests  2 failed | 7 passed (9)'] exit=1 restored sha256 0eb844b97738 ok
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > without a host binding, still renders and switches on local state 57ms
+     × client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > a mode with no setter is not a binding: the menu still works (review objection 17) 43ms
+# 32/32 red
+# Type-level mutations, checked by tsc (not vitest) because the gate they pin is the compiler: 2026-09-28T06:11:35Z.
+# Run once, before the vitest pass above; the tree then differed from tree.sha256 only in stream-model-override.test.ts's header comment and one test title (edited afterwards). T1 and T2 mutate effort.ts and Surfaces.tsx and go red in effort.test.ts and homeEngine.test.tsx, none of which changed.
+# Both applied together, one narrowed tsc run over the S2 files (tsconfig.s2.json extends the repo tsconfig, files = the S2 sources and tests),
+# then both files restored and every S2 file's sha256 re-verified against the pre-pass hash list: all OK.
+# The narrowed run reports 31 errors in files outside S2 (ambient declarations a narrowed include does not load); the same 31 appear on the unmutated tree, 0 in any S2 file.
+== T1 resolveModelOverride's highRisk optional again, default {} (objection 12) [effort.ts -> tsc]: RED
+    server/services/ai-gateway/__tests__/effort.test.ts(300,5): error TS2578: Unused '@ts-expect-error' directive.
+    server/services/ai-gateway/__tests__/effort.test.ts(302,5): error TS2578: Unused '@ts-expect-error' directive.
+== T2 Home's mode/setMode typed as two independent optionals again (objection 17) [Surfaces.tsx -> tsc]: RED
+    client/src/concept2cure/v2/__tests__/homeEngine.test.tsx(150,5): error TS2578: Unused '@ts-expect-error' directive.
+# Total: 34/34 red (32 vitest: 26 on S2 behaviour and review fixes, 6 overcorrections; 2 tsc).

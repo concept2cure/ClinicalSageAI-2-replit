@@ -1,0 +1,17 @@
+# Does the api service wait for the ALB listener on a first apply? (review finding D6, 2026-09-24)
+#
+# ECS refuses CreateService for a target group no listener attaches to a load
+# balancer. module.ecs sees only the target group's ARN. `terraform graph` on a
+# copy of terraform/environments/production with the s3 backend block removed
+# (graph needs an initialised backend; nothing else changed), then a walk of
+# every node module.ecs.aws_ecs_service.api transitively depends on:
+
+## Without `depends_on = [module.alb]` on module "ecs" (the tree before this change)
+api service depends on aws_lb_listener.https: False | on aws_lb.this: False | on aws_db_instance: True
+
+## With it (this change)
+api service depends on aws_lb_listener.https: True  | on aws_lb.this: True
+
+# Before, the service waited only on RDS (the composed-URL secrets read the RDS
+# address), which usually outlasts the ALB. That masked the race by accident: any
+# refactor that stopped the task definition reading an RDS-derived value exposed it.

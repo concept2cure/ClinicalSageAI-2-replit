@@ -1,0 +1,136 @@
+# SG green: HEAD 85cb5654b, unmodified. Recorded 2026-09-28T05:12:52Z
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+{
+  "timestamp": "2026-09-28T05:12:56.322Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T05:12:56.323Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+{
+  "timestamp": "2026-09-28T05:12:56.324Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-09-28T05:12:56.523Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-09-28T05:12:56.524Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-09-28T05:12:56.524Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 3 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T05:12:56.524Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-4-8 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-09-28T05:12:56.525Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 4 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T05:12:56.525Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-09-28T05:12:56.525Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 5 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T05:12:56.526Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-4-6 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-09-28T05:12:56.526Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 6 failures — recovery in 120s",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T05:12:56.526Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-haiku-4-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-09-28T05:12:56.526Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-09-28T05:12:56.526Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o-mini failed: upstream 503",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > passes the abort signal through to the provider call 8ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > keeps the text already streamed when the user stops mid-answer 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > never opens a provider call for a run that is already cancelled 8ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > never falls back to another model 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > never counts against the provider circuit breaker 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > is not retried by the backoff loop 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > an abort that lands mid-call (the SDK error) never counts against the circuit breaker 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > an abort that lands mid-call is not re-run on the next model 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > one Stop leaves Anthropic healthy for everyone — it used to count once per fallback rung 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors 6ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  05:12:53
+   Duration  3.02s (transform 1.43s, setup 121ms, import 2.50s, tests 43ms, environment 0ms)
+

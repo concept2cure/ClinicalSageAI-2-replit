@@ -26,7 +26,23 @@
  * that printed it, that records nothing, and the user goes round in a circle.
  * These name the governed act that does record the version and say the
  * calling surface records none.
+ * 2026-09-28 (D5): the status route's approve and lock are electronic
+ * signatures: the act's own meaning (ARTIFACT_ACT_MEANING), re-authentication
+ * before anything is written, and the status, the signature and the ledger pair
+ * on one transaction. authoring-actions approve-artifact / lock-artifact do not
+ * sign yet (handed on in docs/work-orders/README.md).
  */
+
+import type { GovernedSignMeaning } from './part11/signature-meanings';
+
+/**
+ * The meaning each signed act of the status route is signed with (§11.50(a)(3)).
+ * The act fixes it; the signer confirms it, and a different one is refused.
+ */
+export const ARTIFACT_ACT_MEANING = {
+  approved: 'approval',
+  locked: 'release',
+} as const satisfies Record<'approved' | 'locked', GovernedSignMeaning>;
 
 /** A pg-style client: the pool, or queryableFromDrizzle(db | tx). */
 export interface ApprovalActQueryable {
@@ -44,11 +60,20 @@ export type ReviewQuorumVerdict = { met: true } | { met: false; message: string 
  * `artifactPk` is concept2cure_artifacts.id (the serial key the review tables
  * reference), not artifact_id. A read error propagates: the caller must not
  * record an approval it could not check.
+ *
+ * `currentVersion` is the artifact version the caller is about to record as
+ * approved_version_id. Every decision in the round carries version_reviewed
+ * (written at decision time from artifact.version), and each must equal it:
+ * an edit made after a reviewer decided bumps the version, and approving the
+ * bumped version on the strength of that decision would file content no
+ * reviewer saw (§11.10(a)/(e)). Reviewed version and approved version are one
+ * version, or there is no quorum.
  */
 export async function reviewQuorumVerdict(
   q: ApprovalActQueryable,
   artifactPk: number,
-  organizationId: number
+  organizationId: number,
+  currentVersion: number
 ): Promise<ReviewQuorumVerdict> {
   const assignments = (
     await q.query(
@@ -76,11 +101,11 @@ export async function reviewQuorumVerdict(
 
   const decisions = (
     await q.query(
-      `SELECT decision FROM concept2cure_review_decisions
+      `SELECT decision, version_reviewed FROM concept2cure_review_decisions
        WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3`,
       [artifactPk, latestRound, organizationId]
     )
-  ).rows as Array<{ decision: string }>;
+  ).rows as Array<{ decision: string; version_reviewed: number | string | null }>;
   const nonApprovals = decisions.filter(d => d.decision !== 'approve');
   if (nonApprovals.length > 0) {
     return {
@@ -90,16 +115,25 @@ export async function reviewQuorumVerdict(
         .join(', ')})`,
     };
   }
+  const stale = decisions.filter(d => Number(d.version_reviewed) !== Number(currentVersion));
+  if (stale.length > 0) {
+    const seen = [...new Set(stale.map(d => String(d.version_reviewed)))].join(', ');
+    return {
+      met: false,
+      message: `Cannot approve: ${stale.length} reviewer decision(s) were recorded against version ${seen}; the artifact is now version ${currentVersion}. Route it for review again so reviewers decide on what would be approved.`,
+    };
+  }
   return { met: true };
 }
 
 /** The governed approval act — the only writer of approved_version_id. */
 export const GOVERNED_APPROVE_ACTION =
-  "the review workflow's Approve action (the status route's review → approved, which takes an attestation " +
-  'and applies the review quorum, or authoring-actions approve-artifact)';
+  "the review workflow's Approve action (the status route's review → approved, an electronic signature with the " +
+  "meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact)";
 /** The governed lock act — the only writer of published_version_id on a lock. */
 export const GOVERNED_LOCK_ACTION =
-  "the review workflow's Lock action (the status route's approved → locked, or authoring-actions lock-artifact)";
+  "the review workflow's Lock action (the status route's approved → locked, an electronic signature with the " +
+  "meaning 'release', or authoring-actions lock-artifact)";
 
 /**
  * The remedy an approved-but-not-filable artifact needs, told by a surface

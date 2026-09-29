@@ -47,11 +47,14 @@ import { promises as fs } from 'node:fs';
 import { createHash } from 'node:crypto';
 
 import { pool } from '../../db.js';
+import type { PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger.js';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import {
   filingTypesForView,
   foldersForView,
+  VAULT_FOLDER_PRESETS,
+  VAULT_VIEWS,
   VAULT_DOC_KINDS,
   type VaultViewId,
   vaultIngestTypeLabel,
@@ -63,8 +66,10 @@ import {
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
+import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
+import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
-import { getStorageProvider } from '../../services/storage/index.js';
+import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
 /* The one translation from a CMC TEXT project id to the integer the
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
@@ -80,7 +85,9 @@ interface VaultDoc {
   title: string;
   type: string;
   status: string;
-  pct: number;
+  /** Authoring completion, 0–100. Null for an upload: it has none, and a 0
+   *  there was read to AnA as "0% complete". */
+  pct: number | null;
   owner: string;
   ver: string;
   updated: string;
@@ -93,7 +100,14 @@ interface VaultDoc {
   docId?: string;
   sizeLabel?: string;
   hash?: string;
+  /** vault.documents.mime_type, verified against the magic bytes at ingest.
+   *  The surface offers "Place into submission" only for a PDF: the packager
+   *  refuses any other leaf. */
+  mimeType?: string | null;
   filing?: UploadFiling;
+  /** The version's recorded descriptive fields, as stored (uploads only):
+   *  what Edit details starts from. */
+  details?: { documentTitle: string | null; documentType: string | null; classification: string | null };
 }
 
 /** The placement block for an uploaded document — mirrors vault-ingest. */
@@ -123,9 +137,12 @@ interface DataRoomRow {
   addedAt: string;
   /** captured → classified → filed; DERIVED, never stored guesswork:
    *  'filed' = its checksum matches a vault document in this program,
-   *  'classified' = the capture path stamped a dossier classification,
-   *  'captured' = neither. */
-  stage: 'captured' | 'classified' | 'filed';
+   *  'classified' = the classifier proposed a folder for it,
+   *  'needs_review' = the classifier ran and refused to propose one,
+   *  'captured' = the classifier has not run on it.
+   *  ("Classified" used to mean "the classifier ran", so a refusal read as a
+   *  classification.) */
+  stage: 'captured' | 'needs_review' | 'classified' | 'filed';
   readState: string;
   suggestedFolder: string | null;
   suggestedFolderLabel: string;
@@ -136,16 +153,41 @@ interface DataRoomRow {
 
 interface DataRoomBlock {
   captured: number;
+  /** Sources the classifier placed, filed ones included (the pipeline is cumulative). */
   classified: number;
   filed: number;
+  /** Sources the classifier refused to place: a person has to decide. */
+  needsReview: number;
   sources: DataRoomRow[];
+  /** The lane reads the newest DATA_ROOM_WINDOW current sources. When there
+   *  are more, every count above covers the window only and is a floor. */
+  window: { shown: number; truncated: boolean };
 }
+
+/** How many current sources the lane reads. One more is asked for, so a full
+ *  window can say it is full without a second query. */
+const DATA_ROOM_WINDOW = 200;
 
 interface VaultDisplayShape {
   program: string;
   spine: string;
   standard: string;
+  /** Documents, not tree leaves: the sum of `documentCounts` over the branches
+   *  that could be read. */
   documentCount: number;
+  /**
+   * What `documentCount` is made of. A branch that could not be read is null —
+   * unknown, not zero (`unavailable` says why). Absent on the pending-store
+   * answer, which has no branches at all.
+   */
+  documentCounts?: {
+    /** Authored documents — one each, however many rule-pack sections. */
+    authored: number;
+    /** Governed Module 3 (CMC) artifacts filed for the programme. */
+    cmcArtifacts: number | null;
+    /** Uploads in the whole programme, not the page the tree carries. */
+    uploads: number | null;
+  };
   tree: VaultFolder[];
   /** Honest signal: the c2c document store is not provisioned in this env. */
   pendingStore?: boolean;
@@ -233,8 +275,14 @@ interface SpecNode {
  * answered with a gap, and an audit trail that drops writes under load is not
  * one. The filing path takes the same position by writing inside its
  * transaction.
+ *
+ * In a transaction of its own, because the chain requires one
+ * (services/audit/chain.ts): the position lock and the INSERT must share it.
+ * Written through the pool, each ran as its own statement and the audit_logs
+ * trigger recorded every download as a LEGACY row (chain_seq NULL), outside
+ * the sequenced chain every other governed Vault event joins.
  */
-async function recordVaultDownload(
+export async function recordVaultDownload(
   req: Request,
   d: {
     orgId: number;
@@ -246,8 +294,11 @@ async function recordVaultDownload(
     contentHash: string | null;
   },
 ): Promise<boolean> {
+  let client: PoolClient | undefined;
   try {
-    await writeChainedAuditRow(pool, {
+    client = await pool.connect();
+    await client.query('BEGIN');
+    await writeChainedAuditRow(client, {
       tenantId: d.orgId,
       userId: (req as any).user?.id ?? undefined,
       action: 'vault.document.download',
@@ -266,13 +317,17 @@ async function recordVaultDownload(
         contentHash: d.contentHash,
       },
     });
+    await client.query('COMMIT');
     return true;
   } catch (auditErr) {
+    await client?.query('ROLLBACK').catch(() => undefined);
     logger.error('vault download refused: audit write failed', {
       documentId: d.documentId,
       err: auditErr instanceof Error ? auditErr.message : String(auditErr),
     });
     return false;
+  } finally {
+    client?.release();
   }
 }
 
@@ -363,6 +418,7 @@ export interface UploadRow {
   document_code: string | null;
   document_title: string | null;
   document_type: string | null;
+  classification?: string | null;
   version: string | null;
   file_name: string | null;
   file_size: string | number | null;
@@ -421,8 +477,10 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
     title,
     type: uploadTypeLabel(row),
     status: placementStatus,
-    // Uploads have no authoring completion; 0 rather than a fabricated figure.
-    pct: 0,
+    // Uploads have no authoring completion, so no figure at all. It was 0,
+    // "rather than a fabricated figure" — but 0 is a figure, and AnA's screen
+    // context reported every uploaded file as 0% complete.
+    pct: null,
     owner: row.owner_name ?? '—',
     ver: row.version ? `v${row.version}` : '—',
     updated: relativeTime(row.updated_at),
@@ -432,6 +490,7 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
     docId: row.id,
     sizeLabel: size,
     hash: row.content_hash ?? undefined,
+    mimeType: row.mime_type ?? null,
     filing: {
       folderId: row.folder_id,
       folderLabel: folderLabel(view, row.folder_id),
@@ -441,11 +500,26 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
       confidence: row.placement_confidence,
       rationale: row.placement_rationale,
     },
+    details: {
+      documentTitle: row.document_title,
+      documentType: row.document_type,
+      classification: row.classification ?? null,
+    },
   };
   if (placementStatus === 'unfiled') {
     leaf.flag = row.placement_rationale ?? 'Not filed into the dossier yet.';
   }
   return leaf;
+}
+
+/** A folder id's label and the view it belongs to, for a folder the current
+ *  view does not have. Names the raw id only when no view knows it. */
+function whereFiled(folderId: string): string {
+  for (const v of VAULT_VIEWS) {
+    const f = (VAULT_FOLDER_PRESETS[v.value] ?? []).find(x => x.id === folderId);
+    if (f) return `“${f.label}” (${v.label} view)`;
+  }
+  return `a folder this vault no longer defines (${folderId})`;
 }
 
 /**
@@ -457,9 +531,20 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
  */
 export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFolder {
   const unfiled = uploads.filter(u => !u.folder_id || (u.placement_status || 'unfiled') === 'unfiled');
+  const inView = new Set(foldersForView(view).map(f => f.id));
   const byFolder = new Map<string, UploadRow[]>();
+  /* Filed to a folder this view does not have. The view is resolved per read
+     and not stored on the row, so a document filed under a device folder on a
+     program that now reads as pharma (or one filed while the view lookup had
+     fallen back) belongs to no folder here. It used to be dropped from the tree
+     while still counted; it is shown, with where it was filed. */
+  const otherView: UploadRow[] = [];
   for (const u of uploads) {
     if (!u.folder_id || (u.placement_status || 'unfiled') === 'unfiled') continue;
+    if (!inView.has(u.folder_id)) {
+      otherView.push(u);
+      continue;
+    }
     const list = byFolder.get(u.folder_id) ?? [];
     list.push(u);
     byFolder.set(u.folder_id, list);
@@ -477,6 +562,17 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
       code: '',
       label: folder.label,
       children: (byFolder.get(folder.id) ?? []).map(u => uploadLeaf(view, u)),
+    });
+  }
+  if (otherView.length > 0) {
+    children.push({
+      id: 'cab-other-view',
+      code: '',
+      label: 'Filed under another view · needs review',
+      children: otherView.map(u => ({
+        ...uploadLeaf(view, u),
+        flag: `Filed to ${whereFiled(u.folder_id!)}, which is not a folder in this program's current view. Move it to a folder here, or check the program's product type.`,
+      })),
     });
   }
   return {
@@ -604,16 +700,6 @@ function documentFolder(doc: DocRow, live: Map<string, LiveSection>): VaultFolde
   };
 }
 
-/** Count leaf VaultDocs in a tree. */
-function countDocs(nodes: Array<VaultFolder | VaultDoc>): number {
-  let n = 0;
-  for (const node of nodes) {
-    if ('children' in node) n += countDocs(node.children);
-    else n += 1;
-  }
-  return n;
-}
-
 /** Missing table (42P01) / missing column (42703) — a store this environment
  *  has not provisioned. The branch degrades honestly instead of 500ing. */
 function isMissingStore(err: unknown): boolean {
@@ -672,6 +758,9 @@ export interface VaultByteSource {
   /** The caller's organization. Required: object storage sits outside Postgres
    *  RLS, so for provider-backed bytes this argument IS the tenant boundary. */
   organizationId: number;
+  /** `vault.documents.storage_provider`: the store the bytes were written to,
+   *  which is where they are read from (NULL on rows predating the column). */
+  storageProvider: string | null;
 }
 
 export async function readVerifiedVaultBytes(
@@ -686,9 +775,29 @@ export async function readVerifiedVaultBytes(
     // "belongs to another organization" — the interface refuses to distinguish
     // them, because a 403 on a foreign id confirms the id exists. Either way
     // there are no bytes to serve, and that is what we report.
+    let store: ReturnType<typeof getStorageProvider>;
+    try {
+      store = getStorageProviderFor(source.storageProvider);
+    } catch (err) {
+      // The recorded store cannot be opened here. Not "missing": the bytes may
+      // exist, and asking the configured store instead would answer for a
+      // different one. The provider is named in the log, not to the user.
+      logger.error('vault download: the store this document was saved in cannot be opened', {
+        documentId,
+        recorded: source.storageProvider,
+        reason: err instanceof Error ? err.message : 'unknown',
+      });
+      return {
+        ok: false,
+        status: 409,
+        error: 'STORED_FILE_UNREADABLE',
+        message:
+          'The vault record exists, but this server cannot open the store its file was saved in. Nothing was downloaded.',
+      };
+    }
     let got: Awaited<ReturnType<ReturnType<typeof getStorageProvider>['get']>>;
     try {
-      got = await getStorageProvider().get(source.storageVersionId, source.organizationId);
+      got = await store.get(source.storageVersionId, source.organizationId);
     } catch (err) {
       logger.error('vault download: storage provider read failed', {
         documentId,
@@ -887,6 +996,8 @@ export default function createProjectVaultRoutes(): Router {
       const view: VaultViewId = projSegs[0] ?? (await resolveOrgVaultView(orgId));
 
       // 3) The project's active document builds + their rule-pack section specs.
+      //    Owners are named through public.actor_name, not users, so an owner who
+      //    has left is still named (D3, 2026-09-29; docs/evidence/D3/2026-09-29-actor-names/).
       const docsRes = await pool.query(
         `SELECT d.id, d.doc_type, d.agency, d.rule_pack_version, d.title,
                 d.status, d.readiness, d.updated_at,
@@ -896,7 +1007,7 @@ export default function createProjectVaultRoutes(): Router {
            LEFT JOIN c2c_rule_packs rp
              ON rp.doc_type = d.doc_type AND rp.agency = d.agency
                 AND rp.version = d.rule_pack_version
-           LEFT JOIN users du ON du.id = d.owner_id
+           LEFT JOIN LATERAL public.actor_name(d.owner_id) du ON TRUE
           WHERE d.project_id = $1 AND d.org_id = $2
           ORDER BY d.updated_at DESC`,
         [id, orgId],
@@ -922,7 +1033,7 @@ export default function createProjectVaultRoutes(): Router {
                   ${sectionHasContentSql('ds.content')} AS has_content,
                   COALESCE(u.name, u.email) AS owner_name
              FROM c2c_document_sections ds
-             LEFT JOIN users u ON u.id = ds.owner_id
+             LEFT JOIN LATERAL public.actor_name(ds.owner_id) u ON TRUE
             WHERE ds.document_id = ANY($1::text[])
               AND EXISTS (SELECT 1 FROM c2c_documents d
                            WHERE d.id = ds.document_id AND d.org_id = $2)`,
@@ -949,10 +1060,14 @@ export default function createProjectVaultRoutes(): Router {
       //    empty branch (which would read as "no documents"); any other
       //    failure is a real error and 500s.
       const unavailable: Array<{ branch: string; reason: string }> = [];
+      let cmcArtifacts: number | null = null;
       try {
         const m3 = await module3Branch(id, orgId);
         if (m3.kind === 'branch') {
           tree.push(m3.folder);
+          cmcArtifacts = m3.folder.children.length;
+        } else if (m3.kind === 'empty') {
+          cmcArtifacts = 0;
         } else if (m3.kind === 'unaddressable') {
           // Not an empty branch: the registry cannot be asked about this
           // program at all, and the resolver's own sentence says why and what
@@ -1010,14 +1125,14 @@ export default function createProjectVaultRoutes(): Router {
       try {
         // cap + 1 detects the overflow without a second round trip.
         const upRes = await pool.query(
-          `SELECT d.id, d.document_code, d.document_title, d.document_type,
+          `SELECT d.id, d.document_code, d.document_title, d.document_type, d.classification::text AS classification,
                   d.version, d.file_name, d.file_size, d.mime_type, d.content_hash,
                   d.folder_id, d.evidence_kind, d.ctd_section,
                   d.placement_status, d.placement_confidence, d.placement_rationale,
                   d.updated_at,
                   COALESCE(u.name, u.email) AS owner_name
              FROM vault.documents d
-             LEFT JOIN users u ON u.id = d.created_by
+             LEFT JOIN LATERAL public.actor_name(d.created_by) u ON TRUE
             WHERE ${uploadsWhere}
             ORDER BY d.updated_at DESC
             LIMIT $3`,
@@ -1069,7 +1184,17 @@ export default function createProjectVaultRoutes(): Router {
         });
       } else {
         try {
-          const sources = await listClientDocuments(orgId, { programId: id });
+          /* Current sources only: a re-upload retires its predecessor
+             (is_current = false), and counting both made one file two. One
+             past the window, so a program with more says so; the reader's
+             default cap was 200 and nothing said when it was reached. */
+          const read = await listClientDocuments(orgId, {
+            programId: id,
+            currentOnly: true,
+            limit: DATA_ROOM_WINDOW + 1,
+          });
+          const truncated = read.length > DATA_ROOM_WINDOW;
+          const sources = truncated ? read.slice(0, DATA_ROOM_WINDOW) : read;
           // `filed` asks whether THIS source's bytes already exist in the
           // program's vault. Ask the database that, about exactly these
           // checksums, instead of deriving it from the page of documents
@@ -1099,7 +1224,9 @@ export default function createProjectVaultRoutes(): Router {
                   confidence?: string | null; needsReview?: boolean }
               | null;
             const filed = Boolean(s.checksum && vaultHashes.has(s.checksum));
-            const stage: DataRoomRow['stage'] = filed ? 'filed' : dossier ? 'classified' : 'captured';
+            const proposed = Boolean(dossier?.suggestedFolder);
+            const stage: DataRoomRow['stage'] =
+              filed ? 'filed' : proposed ? 'classified' : dossier ? 'needs_review' : 'captured';
             const mime = typeof meta.mimeType === 'string' ? meta.mimeType : '';
             const kind =
               /pdf/i.test(mime) ? 'PDF'
@@ -1130,9 +1257,11 @@ export default function createProjectVaultRoutes(): Router {
           });
           dataRoom = {
             captured: rows.length,
-            classified: rows.filter(r => r.stage !== 'captured').length,
+            classified: rows.filter(r => r.stage === 'classified' || r.stage === 'filed').length,
             filed: rows.filter(r => r.stage === 'filed').length,
+            needsReview: rows.filter(r => r.stage === 'needs_review').length,
             sources: rows,
+            window: { shown: rows.length, truncated },
           };
         } catch (err) {
           if (!isMissingStore(err)) throw err;
@@ -1143,11 +1272,22 @@ export default function createProjectVaultRoutes(): Router {
         }
       }
 
+      /* Documents, not leaves. `countDocs(tree)` counted every leaf: each
+         rule-pack section of an authored document (one IND with a 40-section
+         pack read "40 documents") and the capped uploads page rather than the
+         programme's uploads — beside a note saying the page was partial. */
+      const documentCounts = {
+        authored: docsRes.rows.length,
+        cmcArtifacts,
+        uploads: uploadsWindow ? uploadsWindow.total : null,
+      };
       const data: VaultDisplayShape = {
         program: project.name || 'Vault',
         spine: vaultViewLabel(view),
         standard: view,
-        documentCount: countDocs(tree),
+        documentCount:
+          documentCounts.authored + (documentCounts.cmcArtifacts ?? 0) + (documentCounts.uploads ?? 0),
+        documentCounts,
         tree,
         unfiledCount,
         ...(uploadsWindow ? { uploadsWindow } : {}),
@@ -1355,6 +1495,62 @@ export default function createProjectVaultRoutes(): Router {
     }
   });
 
+  /* ── GET /:id/documents/:documentId/history ──────────────────────────────
+     The document's own audit trail (VR-01, docs/design/VAULT_VEEVA_PARITY_PLAN_2026-09-24.md):
+     every chained audit_logs row recorded against it — ingest, filing
+     decisions, downloads — newest first, each with its hash and its
+     predecessor in the tenant chain, plus the server's verdict on that chain.
+     Read from the one ledger (readRecordAuditHistory beside readAuditLedger),
+     in a transaction stamped with the tenant so RLS sees the org the SQL names.
+     The document must be this program's and this org's before anything is
+     read, exactly as for a download. */
+  router.get('/:id/documents/:documentId/history', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    const documentId = String(req.params.documentId ?? '');
+    if (!UUID_RE.test(id) || !UUID_RE.test(documentId)) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    }
+    let client: PoolClient | undefined;
+    try {
+      const docRes = await pool.query(
+        `SELECT d.id FROM vault.documents d
+          WHERE d.id = $1 AND d.program_id = $2
+            AND EXISTS (
+              SELECT 1 FROM regulatory_programs rp
+               WHERE rp.id = d.program_id AND rp.organization_id = $3 AND rp.deleted_at IS NULL
+            )
+          LIMIT 1`,
+        [documentId, id, orgId],
+      );
+      if (docRes.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+
+      client = await pool.connect();
+      await client.query('BEGIN');
+      await setTenantContextTx(client, orgId);
+      const history = await readRecordAuditHistory(client, orgId, {
+        tableName: 'vault_document',
+        recordId: documentId,
+      });
+      await client.query('COMMIT');
+      return res.json({ success: true, data: { entries: history.data, chain: history.meta.chain } });
+    } catch (err) {
+      await client?.query('ROLLBACK').catch(() => undefined);
+      logger.error('vault document history read failed', {
+        documentId,
+        err: err instanceof Error ? err.message : String(err),
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'HISTORY_UNAVAILABLE',
+        message: "This document's history could not be read. Nothing is shown rather than an incomplete history.",
+      });
+    } finally {
+      client?.release();
+    }
+  });
+
   router.get('/:id/documents/:documentId/download', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
@@ -1375,7 +1571,7 @@ export default function createProjectVaultRoutes(): Router {
 
       const docRes = await pool.query(
         `SELECT id, file_name, document_title, mime_type, file_size, s3_key,
-                storage_version_id, content_hash
+                storage_version_id, storage_provider, content_hash
            FROM vault.documents
           WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
             AND EXISTS (
@@ -1391,7 +1587,7 @@ export default function createProjectVaultRoutes(): Router {
       const doc = docRes.rows[0] as {
         id: string; file_name: string | null; document_title: string | null;
         mime_type: string | null; file_size: string | number | null;
-        s3_key: string | null; storage_version_id: string | null; content_hash: string | null;
+        s3_key: string | null; storage_version_id: string | null; storage_provider: string | null; content_hash: string | null;
       };
 
       if (!doc.storage_version_id && !doc.s3_key) {
@@ -1413,6 +1609,7 @@ export default function createProjectVaultRoutes(): Router {
           storageVersionId: doc.storage_version_id,
           storageKey: doc.s3_key,
           organizationId: orgId,
+          storageProvider: doc.storage_provider,
         },
         doc.content_hash,
         documentId,
@@ -1535,6 +1732,42 @@ export default function createProjectVaultRoutes(): Router {
         err: err instanceof Error ? err.message : String(err),
       });
       return res.status(500).json({ success: false, error: 'Failed to record the filing decision' });
+    }
+  });
+
+  /* POST /:id/documents/:documentId/details — Edit details (VR-05, D5).
+     A version's title, type and classification, changed by a person with a
+     reason for change. The writer (vault-metadata-edit.service.ts) checks the
+     role, the reason, the vocabularies and program ownership, and records each
+     field's before and after with the reason in one chained audit row; this
+     route only carries the request to it, behind the same governed-write gate
+     as filing. */
+  router.post('/:id/documents/:documentId/details', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const text = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+    try {
+      const { editVaultDocumentMetadata } = await import('../../services/vault/vault-metadata-edit.service.js');
+      const outcome = await editVaultDocumentMetadata({
+        programId: String(req.params.id),
+        documentId: String(req.params.documentId),
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        documentTitle: text(body.documentTitle),
+        documentType: text(body.documentType),
+        classification: text(body.classification),
+        reason: body.reason,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, unchanged: outcome.unchanged, changes: outcome.changes });
+    } catch (err: unknown) {
+      logger.error('project vault details error', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'The details could not be saved. Nothing was changed.' });
     }
   });
 

@@ -301,16 +301,25 @@ async function lookupAtomMetadata(
   if (atomIds.length === 0) return result;
   try {
     const { rows } = await getPool().query(
-      `SELECT id, source_type, source_id, metadata
+      /* `metadata` does not exist on lumen_data_atoms — the column is
+         `structured_data` — and `id` is INTEGER, so the uuid[] cast could not
+         have matched either. Both failed together, the catch below returned an
+         empty Map, and `atom` was ALWAYS undefined: every citation this engine
+         has ever written carries sectionCode null and pageRef null, and the
+         artifactId degrades to the raw vault chunk id — the "opaque chunk ids"
+         the comment further down says this code exists to prevent. Those nulls
+         freeze into the immutable ana_artifact_citation_runs row and export as
+         primarySourceSection / primarySourcePageRef. */
+      `SELECT id, source_type, source_id, structured_data
          FROM lumen_data_atoms
-        WHERE id = ANY($1::uuid[])`,
+        WHERE id = ANY($1::int[])`,
       [atomIds]
     );
     for (const r of rows) {
       result.set(r.id, {
         sourceType: r.source_type,
         sourceId: r.source_id,
-        metadata: r.metadata,
+        metadata: r.structured_data,
       });
     }
   } catch (err: any) {

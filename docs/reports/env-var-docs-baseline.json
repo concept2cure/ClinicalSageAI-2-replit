@@ -1,13 +1,11 @@
 {
   "description": "Accepted set of env vars read by server/ + shared/ but not yet documented in .env.example. New undocumented vars fail CI; document them in .env.example (preferred) or, if intentional, re-run npm run ci:env-var-docs:write-baseline. Ratchet this list down over time.",
-  "count": 244,
+  "count": 241,
   "vars": [
-    "AI_GATEWAY_DETERMINISTIC",
     "AI_GATEWAY_MAX_CONCURRENCY",
     "AI_GATEWAY_SCAN_ALL_ROLES",
     "AI_GATEWAY_STRATEGY",
     "ALLOWED_TEST_ASSEMBLY_TENANTS",
-    "ANA_ALLOW_NONPROD_CONTROL_PLANE",
     "ANA_CITATION_MAX_SOURCES_PER_SENTENCE",
     "ANA_CITATION_READINESS_STALE_FACTOR",
     "ANA_CITATION_RUN_KEEP_LAST_N",
@@ -65,7 +63,6 @@
     "DATA_PATH",
     "DATABASE_NEON_NEW_SECRET",
     "DEFAULT_FIRECRAWL_DAILY_FREE_SCRAPES",
-    "DETERMINISTIC_MODE",
     "DEV_ORG_FALLBACK",
     "DOCLING_BASE_URL",
     "DOCLING_TIMEOUT_MS",

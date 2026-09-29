@@ -82,16 +82,17 @@ import type {
   LeafRef,
   ChecksumEntry,
 } from './ectd-packager/types';
-import { leafIdSlug, createLeafIdAssigner } from './ectd-packager/leaf-id';
+import { leafIdSlug, baseLeafId, createLeafIdAssigner } from './ectd-packager/leaf-id';
 import { buildMd5Index } from './ectd-packager/md5-index';
 import { escapeXml, studyFolderSlug, commonDir } from './ectd-packager/paths';
+import { isPathWithin } from '../../utils/document-file-roots';
 import { buildIchModuleTree, findDroppedLeaves, type RenderedLeaf } from './ectd-packager/ich-headings';
 import { normalizeCtdCode } from '../ectd/section-to-ctd';
 import { ctdFolderSlug } from '../../../shared/regulatory/section-code';
 
 // Re-export the public packager surface (barrel).
 export type { EctdLeaf, FdaApplicantContact, FdaFormLeaf, FdaRegionalAdmin };
-export { leafIdSlug, createLeafIdAssigner, buildMd5Index, studyFolderSlug, commonDir };
+export { leafIdSlug, baseLeafId, createLeafIdAssigner, buildMd5Index, studyFolderSlug, commonDir };
 
 /** Region → the Module 1 folder its regional backbone and leaves live under. */
 export const M1_FOLDER_BY_REGION: Record<Region, string> = {
@@ -160,10 +161,31 @@ export function isModule1Section(ctdSection: string): boolean {
   return normalizeCtdCode(ctdSection)?.charAt(0) === '1';
 }
 
+/**
+ * A single file-name segment: no separator, no NUL, not `.` or `..`.
+ *
+ * Leaf file names and the application id reach this packager from AnA's tool
+ * arguments (package_ectd_for_region), i.e. from the model. A `fileName` of
+ * `../../x.pdf` became a zip entry outside its CTD folder — shipped to an agency
+ * as such, and written outside the extraction directory when a caller asked for
+ * the unzipped tree — and an `applicationId` of `../../x` put the zip itself
+ * anywhere the process could write (INJ-PATH-002).
+ */
+function isPlainName(value: string): boolean {
+  return value.length > 0 && value !== '.' && value !== '..' && !/[\\/\0]/.test(value);
+}
+
 export function leafPackagePath(
   leaf: Pick<EctdLeaf, 'ctdSection' | 'fileName'> & { studyId?: string },
   region: Region,
 ): { relPath: string; href: string; backboneDir: string } {
+  if (!isPlainName(leaf.fileName)) {
+    throw new ValidationError(
+      `A leaf's file name must be a single name with no path in it; '${leaf.fileName}' is not. ` +
+        `The CTD section decides the folder.`,
+      [{ ruleId: 'LEAF-FILE-NAME-NOT-PLAIN', severity: 'error', filePath: leaf.fileName }],
+    );
+  }
   const section = normalizeCtdCode(leaf.ctdSection);
   if (!section) {
     throw new ValidationError(
@@ -319,13 +341,27 @@ function rebaseToBackbone(pointer: string, backboneDir: string): string {
  * Build one `<leaf>` element with the full ICH attribute set: operation,
  * inline `checksum`/`checksum-type="md5"` (matching the shipped bytes), the
  * backbone-relative `xlink:href`, and — for a lifecycle operation — the
- * `modified-file` pointer at the superseded leaf.
+ * `modified-file` pointer at the superseded leaf (its backbone + '#' + ID).
+ *
+ * A delete ships no file, so it carries no `xlink:href` and no checksum: only
+ * its operation, its `modified-file` and its title. FDA's eCTD validation
+ * criteria say a checksum is not specified for a delete. 2026-09-29 (W5/D7):
+ * it carried the withdrawn file's path as its href and that file's checksum.
+ *
+ * The ID is the one assigned once for this leaf's backbone (`ref.id`), which is
+ * also what the leaf manifest records — see `assignBackboneIds`.
  */
-function leafElement(leaf: EctdLeaf, id: string, ref: LeafRef): string {
+function leafElement(leaf: EctdLeaf, ref: LeafRef): string {
+  if (!ref.id) {
+    throw new Error(`regional-packager: leaf "${leaf.fileName}" (section ${leaf.ctdSection}) has no backbone ID assigned.`);
+  }
   const modified = leaf.modifiedFile
     ? ` modified-file="${escapeXml(rebaseToBackbone(leaf.modifiedFile, ref.backboneDir))}"`
     : '';
-  return `<leaf operation="${leaf.operation}"${modified} checksum="${ref.md5}" checksum-type="md5" xlink:href="${escapeXml(ref.href)}" xlink:type="simple" ID="${escapeXml(id)}">
+  const content = leaf.operation === 'delete'
+    ? ''
+    : ` checksum="${ref.md5}" checksum-type="md5" xlink:href="${escapeXml(ref.href)}"`;
+  return `<leaf operation="${leaf.operation}"${modified}${content} xlink:type="simple" ID="${escapeXml(ref.id)}">
   <title>${escapeXml(leaf.title)}</title>
 </leaf>`;
 }
@@ -354,12 +390,11 @@ ${rows}
 
 /** Render the `<form>` elements nested under submission-information. */
 function fdaFormsBlock(forms: FdaFormLeaf[], resolve: (l: EctdLeaf) => LeafRef): string {
-  const assignId = createLeafIdAssigner();
   return forms
     .map((f) => {
       const code = resolveFormTypeCode(f.formType) ?? 'fdaft2';
       return `          <form form-type="${code}">
-${leafElement(f.leaf, assignId(f.leaf), resolve(f.leaf)).split('\n').map((l) => '            ' + l).join('\n')}
+${leafElement(f.leaf, resolve(f.leaf)).split('\n').map((l) => '            ' + l).join('\n')}
           </form>`;
     })
     .join('\n');
@@ -469,12 +504,11 @@ function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRe
   const forms = fda.forms?.length ? '\n' + fdaFormsBlock(fda.forms, resolve) : '';
 
   // Group Module 1 content leaves under FDA section heading elements.
-  const assignId = createLeafIdAssigner();
   const bySection = new Map<string, string[]>();
   for (const l of input.leaves.filter((x) => isModule1Section(x.ctdSection))) {
     const el = usRegionalSectionElement(l.ctdSection);
     const list = bySection.get(el) ?? [];
-    list.push(leafElement(l, assignId(l), resolve(l)));
+    list.push(leafElement(l, resolve(l)));
     bySection.set(el, list);
   }
   const m1Regional = [...bySection.entries()]
@@ -512,10 +546,9 @@ ${m1Regional}
  * Module 1 sits under m1/eu/ with eu-regional.xml at the m1/eu/ root.
  */
 function buildEmaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
-  const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => isModule1Section(l.ctdSection))
-    .map((l) => leafElement(l, assignId(l), resolve(l)))
+    .map((l) => leafElement(l, resolve(l)))
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -549,10 +582,9 @@ ${m1Leaves}
  * sits under m1/jp/ with multi-byte titles permitted.
  */
 function buildPmdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
-  const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => isModule1Section(l.ctdSection))
-    .map((l) => leafElement(l, assignId(l), resolve(l)))
+    .map((l) => leafElement(l, resolve(l)))
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -588,10 +620,9 @@ ${m1Leaves}
  * Electronic Submissions Gateway (CESG).
  */
 function buildHcBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
-  const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => isModule1Section(l.ctdSection))
-    .map((l) => leafElement(l, assignId(l), resolve(l)))
+    .map((l) => leafElement(l, resolve(l)))
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -655,8 +686,6 @@ function buildIndexXml(
   resolve: (l: EctdLeaf) => LeafRef,
   regional: RegionalBackboneRef | null,
 ): string {
-  // One assigner for the whole index.xml document (all of m2–m5 live here).
-  const assignId = createLeafIdAssigner();
   // Fail loudly on any leaf that maps to no ICH module — otherwise it would be
   // silently dropped from the backbone (a submission document vanishing without
   // a trace). Module-1 leaves are already filtered out upstream, so anything
@@ -676,7 +705,7 @@ function buildIndexXml(
   // See ectd-packager/ich-headings.
   const rendered: RenderedLeaf[] = m2to5.map((l) => ({
     leaf: l,
-    xml: leafElement(l, assignId(l), resolve(l)),
+    xml: leafElement(l, resolve(l)),
   }));
   const moduleBlocks = buildIchModuleTree(rendered, 2);
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -687,6 +716,63 @@ function buildIndexXml(
            dtd-version="3.2">
 ${regional ? regionalBackboneReference(regional) : ''}${moduleBlocks}
 </ectd:ectd>`;
+}
+
+/**
+ * Give every leaf its backbone ID, once per carrying backbone, after every leaf
+ * (content, withdrawals, generated study tagging files) is known. The builders
+ * render the ID from the ref and the leaf manifest records the same value, so a
+ * later sequence's modified-file names exactly the ID this backbone carries.
+ *
+ * 2026-09-29 (W5/D7): each builder ran its own assigner and nothing recorded
+ * the result, so no later sequence could name a leaf, and modified-file carried
+ * the file's path instead of the ID. A Module 1 leaf is carried by the regional
+ * backbone; every other leaf by index.xml.
+ */
+function assignBackboneIds(leaves: EctdLeaf[], refByLeaf: Map<EctdLeaf, LeafRef>, regionalBackbone: string): void {
+  const assigners = new Map<string, ReturnType<typeof createLeafIdAssigner>>();
+  for (const leaf of leaves) {
+    const ref = refByLeaf.get(leaf);
+    if (!ref || ref.id) continue;
+    const backbone = ref.backboneDir ? regionalBackbone : 'index.xml';
+    let assign = assigners.get(backbone);
+    if (!assign) {
+      assign = createLeafIdAssigner();
+      assigners.set(backbone, assign);
+    }
+    ref.id = assign(leaf);
+    ref.backbone = backbone;
+  }
+}
+
+/**
+ * A modified-file, from the sequence root: one or more '../', a relative path
+ * to a prior sequence's backbone (.xml), '#', and an XML ID — e.g.
+ * `../0000/index.xml#leaf-3-2-S-1-general`, or the grouped form
+ * `../../nda456789/0001/m1/us/us-regional.xml#id2`. No '..' past the prefix.
+ */
+const MODIFIED_FILE_NAMES_A_LEAF =
+  /^(?:\.\.\/)+(?:[A-Za-z0-9_-][A-Za-z0-9._-]*\/)+[A-Za-z0-9_-][A-Za-z0-9._-]*\.xml#[A-Za-z_][A-Za-z0-9._-]*$/;
+
+/** Each region's Module 1 backbone, from the sequence root. */
+const REGIONAL_BACKBONE_BY_REGION: Record<Region, string> = {
+  fda:  `${M1_FOLDER_BY_REGION.fda}/us-regional.xml`,
+  ema:  `${M1_FOLDER_BY_REGION.ema}/eu-regional.xml`,
+  pmda: `${M1_FOLDER_BY_REGION.pmda}/jp-regional.xml`,
+  ca:   `${M1_FOLDER_BY_REGION.ca}/ca-regional.xml`,
+  uk:   `${M1_FOLDER_BY_REGION.uk}/uk-regional.xml`,
+  ch:   `${M1_FOLDER_BY_REGION.ch}/ch-regional.xml`,
+  au:   `${M1_FOLDER_BY_REGION.au}/au-regional.xml`,
+  cn:   `${M1_FOLDER_BY_REGION.cn}/cn-regional.xml`,
+  br:   `${M1_FOLDER_BY_REGION.br}/br-regional.xml`,
+  in:   `${M1_FOLDER_BY_REGION.in}/in-regional.xml`,
+  kr:   `${M1_FOLDER_BY_REGION.kr}/kr-regional.xml`,
+  sg:   `${M1_FOLDER_BY_REGION.sg}/sg-regional.xml`,
+};
+
+/** The region's Module 1 backbone path from the sequence root, e.g. `m1/us/us-regional.xml`. */
+export function regionalBackbonePath(region: Region): string {
+  return REGIONAL_BACKBONE_BY_REGION[region];
 }
 
 /* ─── Top-level packager ──────────────────────────────────────────── */
@@ -711,21 +797,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   };
 
   const region = input.region;
-  const m1FolderByRegion = M1_FOLDER_BY_REGION;
-  const backboneFileByRegion: Record<Region, string> = {
-    fda:  `${m1FolderByRegion.fda}/us-regional.xml`,
-    ema:  `${m1FolderByRegion.ema}/eu-regional.xml`,
-    pmda: `${m1FolderByRegion.pmda}/jp-regional.xml`,
-    ca:   `${m1FolderByRegion.ca}/ca-regional.xml`,
-    uk:   `${m1FolderByRegion.uk}/uk-regional.xml`,
-    ch:   `${m1FolderByRegion.ch}/ch-regional.xml`,
-    au:   `${m1FolderByRegion.au}/au-regional.xml`,
-    cn:   `${m1FolderByRegion.cn}/cn-regional.xml`,
-    br:   `${m1FolderByRegion.br}/br-regional.xml`,
-    in:   `${m1FolderByRegion.in}/in-regional.xml`,
-    kr:   `${m1FolderByRegion.kr}/kr-regional.xml`,
-    sg:   `${m1FolderByRegion.sg}/sg-regional.xml`,
-  };
+  const backboneFileByRegion = REGIONAL_BACKBONE_BY_REGION;
 
   const zip = new JSZip();
   const checksums: ChecksumEntry[] = [];
@@ -742,6 +814,17 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   const withdrawn: EctdLeaf[] = [];
   const refByLeaf = new Map<EctdLeaf, LeafRef>();
   for (const leaf of input.leaves) {
+    // A modified-file names a filed LEAF — the backbone of the sequence that
+    // filed it, '#', and its ID — never a file (ICH eCTD v3.2.2). Refused here,
+    // the one sink every path reaches, so no caller can ship a pointer that
+    // resolves to no leaf. 2026-09-29 (W5/D7).
+    if (leaf.modifiedFile && !MODIFIED_FILE_NAMES_A_LEAF.test(leaf.modifiedFile)) {
+      throw new ValidationError(
+        `Leaf '${leaf.fileName}' (section ${leaf.ctdSection}) has modified-file "${leaf.modifiedFile}", which names no filed leaf. ` +
+          `It must name the prior sequence's backbone and that leaf's ID, e.g. ../0000/index.xml#leaf-…`,
+        [{ ruleId: 'LEAF-MODIFIED-FILE-NOT-A-LEAF', severity: 'error', filePath: leaf.fileName }],
+      );
+    }
 
     // A lifecycle delete is ALWAYS backbone-only: the withdrawn document lives
     // in a PRIOR sequence, so the delete leaf carries no bytes of its own —
@@ -787,24 +870,33 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       if (!leaf.modifiedFile) {
         throw new ValidationError(
           `Leaf '${leaf.fileName}' (section ${leaf.ctdSection}) is a delete in sequence ${input.sequence} with no ` +
-            `modified-file. A withdrawal must name the filed leaf it withdraws (its path in the prior sequence, ` +
-            `e.g. ../0000/m3/…/file.pdf); without it the agency cannot tell which document is withdrawn.`,
+            `modified-file. A withdrawal must name the filed leaf it withdraws (the prior sequence's backbone and ` +
+            `that leaf's ID, e.g. ../0000/index.xml#leaf-…); without it the agency cannot tell which document is withdrawn.`,
           [{ ruleId: 'LEAF-DELETE-NO-MODIFIED-FILE', severity: 'error', filePath: leaf.fileName }],
         );
       }
       const { backboneDir } = leafPackagePath(leaf, region);
-      // A withdrawal has no bytes of its own, so its href IS the pointer at the
-      // prior sequence — and therefore needs the same rebasing onto the
-      // backbone that carries it. (2026-09-23, second pass: every delete that
-      // reaches here names its modified-file, so there is no in-sequence
-      // fallback href to a file that is not in the package.)
-      refByLeaf.set(leaf, {
-        href: rebaseToBackbone(leaf.modifiedFile, backboneDir),
-        md5: leaf.md5 ?? '',
-        backboneDir,
-      });
+      // A withdrawal has no bytes of its own: no href and no checksum reach the
+      // backbone (leafElement), only its modified-file, rebased onto the
+      // backbone that carries it. 2026-09-29 (W5/D7): its href used to be the
+      // pointer and its checksum the withdrawn file's.
+      refByLeaf.set(leaf, { href: '', md5: '', backboneDir });
       withdrawn.push(leaf);
       continue; // no bytes → no prepared entry, no ZIP file, no checksum line
+    }
+
+    // A replace or append in a follow-up acts on a filed leaf and must say
+    // which, exactly as a delete must. Without modified-file the backbone files
+    // a second current version beside the one it meant to supersede. This is
+    // the one sink every path reaches (the canonical spine reports such an act
+    // before it gets here). 2026-09-29 (W5/D7).
+    if ((leaf.operation === 'replace' || leaf.operation === 'append') && input.sequence.trim() !== '0000' && !leaf.modifiedFile) {
+      throw new ValidationError(
+        `Leaf '${leaf.fileName}' (section ${leaf.ctdSection}) is a ${leaf.operation} in sequence ${input.sequence} with no ` +
+          `modified-file. It must name the filed leaf it acts on (the prior sequence's backbone and that leaf's ID, ` +
+          `e.g. ../0000/index.xml#leaf-…); without it the version it supersedes stays current at the agency.`,
+        [{ ruleId: 'LEAF-ACT-NO-MODIFIED-FILE', severity: 'error', filePath: leaf.fileName }],
+      );
     }
 
     const raw = await fs.readFile(leaf.sourcePath);
@@ -908,6 +1000,8 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       }
     }
   }
+
+  assignBackboneIds([...input.leaves, ...stfSyntheticLeaves], refByLeaf, backboneFileByRegion[region]);
 
   const backboneByRegion: Record<Region, () => string> = {
     fda:  () => buildFdaBackbone(normalizedInput, resolve),
@@ -1031,6 +1125,13 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   zip.file('util/index-md5.txt', buildMd5Index(checksums));
 
   /* Generate the zip + write to disk. */
+  if (!isPlainName(input.applicationId) || !isPlainName(input.sequence)) {
+    throw new ValidationError(
+      'The application id and the sequence number name the package file, so each must be a single name ' +
+        'with no path in it.',
+      [{ ruleId: 'PACKAGE-NAME-NOT-PLAIN', severity: 'error', filePath: `${input.applicationId}-${input.sequence}` }],
+    );
+  }
   await fs.mkdir(input.outputDir, { recursive: true });
   const buffer = await zip.generateAsync({
     type: 'nodebuffer',
@@ -1050,6 +1151,14 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     for (const [relPath, file] of Object.entries(zip.files)) {
       if (file.dir) continue;
       const dest = path.join(extractDir, relPath);
+      // Every entry name is built here from plain names and fixed folders, so
+      // this cannot fire today; it is what keeps a future entry from writing
+      // outside the tree it is extracted into.
+      if (!isPathWithin(extractDir, dest)) {
+        throw new ValidationError(`Package entry '${relPath}' would extract outside its directory.`, [
+          { ruleId: 'PACKAGE-ENTRY-ESCAPES', severity: 'error', filePath: relPath },
+        ]);
+      }
       await fs.mkdir(path.dirname(dest), { recursive: true });
       const content = await (file as JSZip.JSZipObject).async('nodebuffer');
       await fs.writeFile(dest, content);
@@ -1057,7 +1166,9 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   }
 
   // Per-sequence leaf manifest for cross-sequence lifecycle diffing: each shipped
-  // leaf's CTD section + final href + md5 (+ op/modified-file/title). The NEXT sequence loads
+  // leaf's CTD section + final href + md5 (+ op/modified-file/title), and the
+  // backbone ID it carries there (leafId + backbone) — what the next sequence's
+  // modified-file names. The NEXT sequence loads
   // this (loadPriorSequenceManifest) and diffs against it to derive
   // replace/append/delete. Raw shape (not built via sequence-manifest) to keep
   // the packager free of an ectd/ import; the ectd-side caller runs
@@ -1072,22 +1183,27 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       ...(p.leaf.modifiedFile ? { modifiedFile: p.leaf.modifiedFile } : {}),
       ...(p.leaf.title ? { title: p.leaf.title } : {}),
       ...(p.leaf.leafKey ? { leafKey: p.leaf.leafKey } : {}),
+      ...(p.ref.id && p.ref.backbone ? { leafId: p.ref.id, backbone: p.ref.backbone } : {}),
     })),
     // A withdrawal ships no file, but it is a filing act: the prior-state fold
     // drops a leaf whose last operation is a delete, and it can only do that if
     // the delete is recorded. Left out, the withdrawn leaf stayed on file for
     // every later sequence. Its href is the pointer the backbone carries, from
     // this sequence's root. 2026-09-23 (W5/D7).
-    ...withdrawn.map((leaf) => ({
-      ctdSection: leaf.ctdSection,
-      fileName: leaf.fileName,
-      href: leaf.modifiedFile ?? refByLeaf.get(leaf)?.href ?? '',
-      md5: leaf.md5 ?? '',
-      operation: 'delete' as const,
-      ...(leaf.modifiedFile ? { modifiedFile: leaf.modifiedFile } : {}),
-      ...(leaf.title ? { title: leaf.title } : {}),
-      ...(leaf.leafKey ? { leafKey: leaf.leafKey } : {}),
-    })),
+    ...withdrawn.map((leaf) => {
+      const ref = refByLeaf.get(leaf);
+      return {
+        ctdSection: leaf.ctdSection,
+        fileName: leaf.fileName,
+        href: leaf.modifiedFile ?? '',
+        md5: leaf.md5 ?? '',
+        operation: 'delete' as const,
+        ...(leaf.modifiedFile ? { modifiedFile: leaf.modifiedFile } : {}),
+        ...(leaf.title ? { title: leaf.title } : {}),
+        ...(leaf.leafKey ? { leafKey: leaf.leafKey } : {}),
+        ...(ref?.id && ref.backbone ? { leafId: ref.id, backbone: ref.backbone } : {}),
+      };
+    }),
   ];
 
   return {

@@ -1,0 +1,17 @@
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > runs the spine authoring → approved with gates, re-verified signatures and a verified audit chain, and refuses to place without a sequence
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > scopes reads to the tenant — another org cannot see the document
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > instantiates the type's blueprint outline at creation (blueprints reach the document)
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > refuses a sign-off with no password, and with a wrong one
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > records the server role, never the one in the request body
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > approving signs: no password, no approval — and the stage does not move
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a signatureRef in the body is never cited: the approval carries a server-minted reference
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a role without signing authority cannot sign, even re-verified
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a viewer can create, sign and advance nothing
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > no user, no write: the actor is the authenticated user or nothing — never "unknown"
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > an illegal jump is refused by the gate and costs the signer no credential check
+ × tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the writer's refusals keep their status > a frozen sequence is a 409 in the orchestrator's shape, not a 500
+   → expected 500 to be 409 // Object.is equality
+ × tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the writer's refusals keep their status > a sequence that does not exist is a 404
+   → expected 500 to be 404 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 11 passed (13)

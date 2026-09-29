@@ -1,0 +1,55 @@
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx
+# 2026-09-28T05:07:37Z at 26e0b3a8 (working tree)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > who signed, as what, and when, from the signature row 156ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for 26ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a revoked signature says it is revoked 21ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a recorded disposition with no signature on record says so 20ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a signature record that could not be read is said, not left blank 19ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > an open review, with nothing signed, says nothing about a signature 18ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a finalized protocol with no live signature says so, never nothing 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a protocol that is not finalized, with no signature, renders nothing 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a read model without the facet is treated as unreadable, not as unsigned 10ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > the meaning is printed in words 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded: shows the signed state and opens nothing 440ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a completed review, disposition column empty: shows the signed state and opens nothing 76ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded, status not yet moved: shows the signed state and opens nothing 58ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > an open review still offers the signature, to anyone who may record it 41ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > an open review assigned to someone else stays disabled, with that reason 40ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds a visit through the governed visit route and re-reads the protocol 833ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renames a visit through the visit PATCH, carrying the visit id 596ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes a visit through the governed remove route 367ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds an assessment through the SoA router 404ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes an assessment through the governed remove route 350ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renders the assembler’s findings rather than an empty list 201ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > risk register — residual rating, owner and mitigation > writes the residual rating through the risk PATCH 616ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > says plainly that no budget has been entered instead of printing a verdict 194ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > adds a line item through the budget router 342ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > sets the feasibility parameters through the params PUT 345ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > requests a review through the reviewers route 360ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > assigns the review to a member's account, so the reviewer signs their own review 361ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > when the member list cannot be read it says so, and a reviewer can still be named without an account 334ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > neither an account nor a name: nothing is sent 328ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > a disposition is signed, not submitted: nothing is sent until the signer re-authenticates 536ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > finalize — the replacement for the deleted reason-only drawer is reachable > Finalize protocol opens the e-signature and posts the signed finalization 455ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > cover page — sponsor and principal investigator > writes both through the cover-page PATCH and re-reads 300ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > consent — the tab shows what the read model returns > reports the element the assembled consent form holds 208ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a governed write does not take the protocol off screen > stays on the register being edited while the record is re-read 449ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an empty object reads as a failed load 9ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an envelope around an object reads as a failed load 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an error carried on a 200 reads as a failed load 4ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > rows with no fields reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row with an id and nothing else reads as a failed load 8ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row whose fields are present but null reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a store that is not provisioned says so, and offers no start 8ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > empty state > names the open project and offers both a start and an AnA draft 29ms
+
+ Test Files  3 passed (3)
+      Tests  42 passed (42)
+   Start at  05:07:39
+   Duration  11.54s (transform 2.30s, setup 786ms, import 3.45s, tests 8.63s, environment 3.27s)
+
+# exit=0

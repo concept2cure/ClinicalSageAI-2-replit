@@ -1,0 +1,8 @@
+ × server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses another organization’s project, before anything is written 15ms
+   → expected { kind: 'created', document: {}, …(2) } to match object { kind: 'refused', status: 404 }
+ × server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses a project that does not exist, before anything is written 6ms
+   → expected { kind: 'created', document: {}, …(2) } to match object { kind: 'refused', status: 404 }
+ × server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses a deleted project, before anything is written 2ms
+   → expected { kind: 'created', document: {}, …(2) } to match object { kind: 'refused', status: 404 }
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > still refuses a malformed id with 400 2ms
+      Tests  3 failed | 1 passed (4)

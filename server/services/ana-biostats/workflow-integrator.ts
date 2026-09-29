@@ -127,11 +127,13 @@ export class WorkflowIntegrator {
       const db = await getDb();
       const schema = await getSchema();
       if (!db || !schema) {
+        // Nothing was stored, so this is not a success, and there is no id to
+        // hand out: it used to report success with Date.now() as the artifact
+        // id, which every caller then presented as a stored document.
         return {
           action: 'create_artifact',
-          success: true,
-          artifactId: Date.now(), // Fallback for environments without DB
-          message: `Artifact prepared (no DB): ${document.title}`,
+          success: false,
+          message: `Not stored: no database is available to this process (${document.title}).`,
         };
       }
 

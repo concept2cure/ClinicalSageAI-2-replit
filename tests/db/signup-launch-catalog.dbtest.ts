@@ -44,6 +44,9 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+// Sign-up mails a verification link (IAM-17, P1-2): observed here, never sent.
+vi.mock('../../server/services/emailService', async importOriginal => ({ ...(await importOriginal<typeof import('../../server/services/emailService')>()),
+  isEmailConfigured: () => true, sendVerificationEmail: vi.fn(async () => undefined), sendWelcomeEmail: vi.fn(async () => undefined) }));
 import type { MockInstance } from 'vitest';
 import express from 'express';
 import request from 'supertest';
@@ -94,7 +97,10 @@ const runtimeRole = resolveAppServiceRole({ APP_SERVICE_DB_ROLE: `dbtsu_rt_${RUN
 /** The signup body: a medtech sign-up carrying every optional industry signal. */
 const SIGNUP = {
   email: `${TAG}-signup-${RUN}@example.invalid`,
-  password: 'Dbtsu-Launch-Catalog-2026!',
+  // Shares no word with the account (dd6632dd0 refuses a password built from
+  // the account's own words; the old one carried the 'dbtsu' tag in its email
+  // and company name).
+  password: 'Quartz-Meridian-Harbor-7391!',
   companyName: `${TAG} signup ${RUN}`,
   industryMode: 'medtech' as const,
   firstName: 'Lane',

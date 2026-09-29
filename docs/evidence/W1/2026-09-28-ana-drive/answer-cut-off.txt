@@ -1,0 +1,57 @@
+A cut-off answer says so — 2026-09-28 (fourth pass)
+
+What was wrong: AnA's stream route never read why the model stopped writing.
+The gateway reports it (finishReason). The canonical check for "cut off with
+more to say", isTruncated in server/services/ai-gateway/finish-reason.ts, was
+used by document drafting and batch drafting but not by the chat stream.
+
+An answer that hit the model's length limit, or a stream that stalled
+mid-answer, therefore reached the person as a finished one. The status line
+read "Finished", no note was shown, and no Continue was offered. The next turn
+was handed it as a complete answer. With models that always think (Opus 5.5)
+or think by default (Sonnet 5), the thinking counts against the same budget
+(6,144 tokens at balanced effort), so long answers are where this lands.
+
+The change uses the existing stop-reason channel end to end:
+  - server/services/ana/tool-trace.ts turnEndingReason: a loop that ended for
+    want of tools, on an answer isTruncated() calls cut off, ended
+    "answer_cut_off". Any stop the loop already reports stands. An unknown
+    finish reason is not treated as a cut: that would be its own fabrication.
+  - server/routes/ana-ri/stream.ts: the finish reason of the latest model call
+    (the first answer, then each round) is kept, and the ending is decided after
+    the loop. That is before the done frame, the turn-record warning, the saved
+    message and the run row, all of which read it.
+  - Words on every surface that had words for a stop:
+      transcript note  "AnA's answer was cut off before she finished it. It
+                        ends where it stopped." (with Continue)
+      status line      "Stopped: answer cut off · <time>"
+      next turn        "Your previous turn had its answer cut off before it
+                        was finished. …"
+      turn record      "The answer was cut off …, before AnA finished writing
+                        it. What the person saw ends where it stopped."
+  - No migration: ana_runs.stopped_reason is text with no CHECK.
+
+── In the browser (harness/, the stand-in's FAKE_CUT_OFF=biostat ends the answer
+   after the move halfway, with stop_reason "max_tokens") ──
+  Before (the implementation stashed, app restarted):
+    FAIL  cut-off answer: the turn says it was cut off
+    FAIL  cut-off answer: the note says so under the answer
+    FAIL  cut-off answer: it never reads "Finished"
+    answer-cut-off-before.png: "Navigation result: navigation_rea" under
+    Progress "Finished in 1s".
+  After:
+    PASS  cut-off answer: the turn says it was cut off  — Stopped: answer cut off · 1s
+    PASS  cut-off answer: the note says so under the answer
+    PASS  cut-off answer: it never reads "Finished"
+    PASS  no uncaught page errors
+    answer-cut-off-after.png: Progress "Stopped: answer cut off · 1s".
+
+── Tests: 9 new cases across 6 files, all failing against the implementation
+   stashed, all passing with it ──
+  server/services/ana/__tests__/tool-trace-stopped-turn.test.ts (4)
+  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts (1 wiring; plus
+    1 behavioural that post-processing stores it)
+  client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts (1)
+  client/src/concept2cure/v2/__tests__/anaActivity.test.tsx (1)
+  client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx (1)
+  client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx (1)

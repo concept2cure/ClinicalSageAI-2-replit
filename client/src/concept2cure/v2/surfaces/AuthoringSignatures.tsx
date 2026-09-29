@@ -37,6 +37,7 @@ import { EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { describeSignatureMethod } from '@shared/part11/signature-method';
+import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
 
 /** A row of `authoring_signatures`, as GET /docs/:docId/signatures returns it. */
 export interface AuthoringSignature {
@@ -54,23 +55,6 @@ export interface AuthoringSignature {
   covered_content_hash: string | null;
   pin_verified: boolean | null;
   signed_at: string | null;
-}
-
-/**
- * §11.50(a)(3) wording. The store holds `AUTHOR` / `REVIEWER` / `APPROVER`;
- * rendering those tokens raw would put a database enum where the regulation
- * asks for the meaning of the signature.
- */
-const MEANING_LABEL: Record<string, string> = {
-  AUTHOR: 'Authorship',
-  REVIEWER: 'Review',
-  APPROVER: 'Approval',
-};
-
-/** Unrecognised meanings render verbatim rather than being mapped to a guess. */
-function meaningLabel(m: string | null): string {
-  if (!m) return 'Not recorded';
-  return MEANING_LABEL[m.toUpperCase()] ?? m;
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -172,7 +156,7 @@ function SignatureManifest({ docId }: { docId: string | null }) {
                 </span>
               )}
           </Row>
-          <Row label="Meaning">{meaningLabel(s.meaning)}</Row>
+          <Row label="Meaning">{signatureMeaningLabel(s.meaning)}</Row>
           <Row label="Executed">
             <GovernedTimestamp value={s.signed_at} layout="inline" />
           </Row>

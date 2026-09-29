@@ -1,0 +1,53 @@
+# Red — the same suites against HEAD (80cbd718a) behaviour, 2026-09-28
+
+## 1. blueprint-milestones.pglite.integration.test.ts, against HEAD's seeding
+# (server/routes/concept2cure.ts ~1238-1263 at 80cbd718a, verbatim as a function: head-seeding-shim.ts.txt)
+ × server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > each reach the board with a task.create row naming its creator, in the order they were seeded 36ms
+   → a seeded milestone has no task.create row: expected [] to deeply equal [ 'task:TASK-BP-41-pre-ind', …(2) ]
+ × server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > seeded twice, the second run adds no task and no row 12ms
+   → expected [] to have a length of 3 but got +0
+ × server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > with no creator to name, nothing is seeded — no board task without its record 7ms
+ × server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > when the ledger cannot be written, no milestone stays on the board 7ms
+ × server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > a milestone that cannot be written takes the ones before it back: all or none 11ms
+   → part of the blueprint was seeded: expected [ { …(4) } ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > each reach the board with a task.create row naming its creator, in the order they were seeded
+AssertionError: a seeded milestone has no task.create row: expected [] to deeply equal [ 'task:TASK-BP-41-pre-ind', …(2) ]
+- Expected
++ Received
+ FAIL  server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > seeded twice, the second run adds no task and no row
+AssertionError: expected [] to have a length of 3 but got +0
+- Expected
++ Received
+ FAIL  server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > with no creator to name, nothing is seeded — no board task without its record
+AssertionError: promise resolved "[ 'TASK-BP-41-pre-ind', …(2) ]" instead of rejecting
+- Expected:
++ Received:
+ FAIL  server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > when the ledger cannot be written, no milestone stays on the board
+AssertionError: promise resolved "[ 'TASK-BP-41-pre-ind', …(2) ]" instead of rejecting
+- Expected:
++ Received:
+ FAIL  server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > a milestone that cannot be written takes the ones before it back: all or none
+AssertionError: part of the blueprint was seeded: expected [ { …(4) } ] to deeply equal []
+- Expected
++ Received
+      Tests  5 failed (5)
+
+## 2. tests/routes/concept2cure.test.ts -t 'seeds the blueprint', against HEAD's server/routes/concept2cure.ts
+ × tests/routes/concept2cure.test.ts > Concept2Cure API > seeds the blueprint’s milestones through the ledgered seeder, as the project’s creator 486ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: the milestones did not go through the ledgered seeder: expected "vi.fn()" to be called 1 times, but got 0 times
+      Tests  1 failed | 9 skipped (10)
+
+## 3. bridge-tasks-ledger.pglite.integration.test.ts, against HEAD's bridge-service.ts (unchanged at the time of the run)
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > the design proposes at least two tasks (the cases below need a selection of more than one) 6ms
+ × server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > each reach the board naming its creator, with a task.create row, in the order raised 113ms
+ × server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > when the ledger cannot be written, nothing is raised and nothing is answered "created" 107ms
+ × server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > with no creator to name, nothing is raised 34ms
+ × server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > a task that cannot be written takes the ones before it back: all or none 41ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: a raised task does not name its creator: expected false to be true // Object.is equality
+AssertionError: tasks with no ledger row were answered "created": expected { created: [ { …(4) }, …(6) ], …(1) } to be null
+AssertionError: promise resolved "{ created: [ { …(4) }, …(6) ], …(1) }" instead of rejecting
+AssertionError: part of the selection was raised: expected [ { …(3) } ] to deeply equal []
+      Tests  4 failed | 1 passed (5)

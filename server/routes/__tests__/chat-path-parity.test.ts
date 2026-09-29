@@ -101,12 +101,24 @@ describe('the canonical chat paths stay in parity', () => {
       'server/routes/chat/send-message.ts',
       'server/routes/ana-ri/stream.ts',
       'server/services/ana/deep-investigation.ts',
+      // The /ana realtime socket. Until 2026-09-26 it passed getAllEnabledTools()
+      // straight to relevance selection: no deny-list, no catalog gate, and
+      // every Anthropic-hosted tool the deployment enabled (D6, WS2).
+      'server/services/ana/ana-realtime.ts',
     ];
     for (const file of composers) {
       const src = read(file);
       expect(src, `${file} should compose via governedToolsetFor`).toContain('governedToolsetFor');
       expect(src, `${file} should not re-implement the filter`).not.toContain('filterToolsByPolicy');
     }
+  });
+
+  it('the realtime turn runs in the tenant scope its socket was authenticated for', () => {
+    // Without it every query the turn makes refuses under RLS_ENFORCE=on, and the
+    // fail-soft tool-policy read degrades to "every tool allowed".
+    const src = read('server/services/ana/ana-realtime.ts');
+    expect(src).toMatch(/runWithTenantScope\(\s*\{\s*tenantId: String\(input\.organizationId\)/);
+    expect(src).not.toMatch(/selectToolsForTurn\(\s*getAllEnabledTools\(\)/);
   });
 
   it('the helper applies the deny-list and says why it does not apply the allowlist', () => {
