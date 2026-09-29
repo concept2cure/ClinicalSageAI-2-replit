@@ -361,7 +361,10 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   old_values   JSON,
   new_values   JSON,
   ip_address   TEXT,
-  user_agent   TEXT
+  user_agent   TEXT,
+  -- Production has it (migrations/20260527_mutation_primitives.sql, on the
+  -- deploy set): the stated reason the inspector's ledger shows.
+  reason       TEXT
 );
 `;
 

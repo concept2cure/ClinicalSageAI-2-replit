@@ -36,6 +36,7 @@ const range = (over: Partial<SuggestionRange> = {}): SuggestionRange => ({
   authorId: 'u1',
   authorName: 'R. Author',
   at: '2026-08-24T16:30:00Z',
+  sourceRecord: null,
   text: 'the proposed sentence',
   ...over,
 });
