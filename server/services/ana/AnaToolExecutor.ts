@@ -198,7 +198,13 @@ import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
-import { assertWithinDocumentWorkspace } from './document-workspace.js';
+import {
+  anaScratchDir,
+  assertWithinDocumentWorkspace,
+  resolveWithinDocumentWorkspace,
+  workspaceFileName,
+  workspacePathOrRefusal,
+} from './document-workspace.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -6732,7 +6738,12 @@ registerToolHandler('open_device_capa', async (input: Record<string, unknown>, c
 // Document Generation Tools (Master Document Builder)
 // ─────────────────────────────────────────────────────────────────────────────
 
-registerToolHandler('generate_document', async (input: Record<string, unknown>) => {
+registerToolHandler('generate_document', async (input: Record<string, unknown>, ctx) => {
+  // INJ-PATH-002: this handler took no ToolContext, so it could not know whose
+  // workspace it wrote to or whose template it read.
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'generate_document requires tenant context (organizationId).' });
+  }
   const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
   const builder = getMasterDocumentBuilder();
 
@@ -6745,11 +6756,14 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>) 
 
   // Template mode: copy + unpack + string replace + XML inject
   if (templatePath && input.replacements) {
+    const template = workspacePathOrRefusal(templatePath, 'template_path', ctx.organizationId);
+    if (!template.ok) return template.refusal;
     const result = await builder.buildFromTemplate({
-      templatePath,
+      templatePath: template.path,
       replacements: input.replacements as Record<string, string>,
       outputFormat: outputFormat as 'docx' | 'pdf',
       documentTitle: title,
+      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
     });
     return JSON.stringify({
       success: true,
@@ -6770,6 +6784,7 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>) 
       agencies,
       outputFormat: outputFormat as 'docx' | 'pdf' | 'xml',
       documentTitle: title,
+      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
     });
     return JSON.stringify({
       success: true,
@@ -6802,11 +6817,21 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>) 
   });
 });
 
-registerToolHandler('build_from_template', async (input: Record<string, unknown>) => {
+registerToolHandler('build_from_template', async (input: Record<string, unknown>, ctx) => {
+  // INJ-PATH-002: registered with no ToolContext, it read whatever path the
+  // model named — another tenant's upload, repacked into a fresh docx.
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'build_from_template requires tenant context (organizationId).' });
+  }
   const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
   const builder = getMasterDocumentBuilder();
 
-  const templatePath = input.template_path as string;
+  let templatePath: string;
+  try {
+    templatePath = assertWithinDocumentWorkspace(input.template_path, 'template_path', ctx.organizationId);
+  } catch (err) {
+    return JSON.stringify({ error: err instanceof Error ? err.message : String(err) });
+  }
   const replacements = input.replacements as Record<string, string> || {};
   const xmlInjections = input.xml_injections as Array<{ position: string; xml: string; placeholder?: string }> || [];
   const outputFormat = (input.output_format as string) || 'docx';
@@ -6823,6 +6848,7 @@ registerToolHandler('build_from_template', async (input: Record<string, unknown>
     })),
     outputFormat: outputFormat as 'docx' | 'pdf',
     documentTitle,
+    outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
   });
 
   return JSON.stringify({
@@ -7138,14 +7164,32 @@ registerToolHandler('fetch_template_and_fill', async (input, ctx) => {
       });
     }
 
+    // The row is this tenant's, but the path on it is only as trustworthy as
+    // whoever set it: the template update route used to take it from the
+    // request body. Confined like any model-supplied path (INJ-PATH-002);
+    // templates now live under the tenant's own uploads prefix. One uploaded
+    // before that (`/uploads/templates/…`, shared by every tenant) is refused
+    // and has to be uploaded again.
+    const templateFile = resolveWithinDocumentWorkspace(
+      String(template.fileUrl).replace(/^\/+/, ''),
+      ctx.organizationId,
+    );
+    if (!templateFile) {
+      return JSON.stringify({
+        error:
+          `Template ${templateId}'s file is not stored in this organization's workspace, so it was not read. ` +
+          'Upload the template file again from the template library, then fill it.',
+      });
+    }
     const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
     const builder = getMasterDocumentBuilder();
     const outputFormat: 'docx' | 'pdf' = input.output_format === 'pdf' ? 'pdf' : 'docx';
     const result = await builder.buildFromTemplate({
-      templatePath: template.fileUrl,
+      templatePath: templateFile,
       replacements: fillData,
       outputFormat,
       documentTitle: template.name,
+      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
     });
 
     return JSON.stringify({
@@ -7215,7 +7259,6 @@ registerToolHandler('author_docx_native', async (input, ctx) => {
     const { runIsolatedCompute } = await import('../compute/workerClient.js');
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    const { randomUUID } = await import('crypto');
 
     /* runIsolatedCompute spawns the python-docx subprocess in an ephemeral
        tempdir, parses output JSON, returns the .docx as a Buffer. The
@@ -7247,7 +7290,7 @@ registerToolHandler('author_docx_native', async (input, ctx) => {
        have a stable path. The compute worker itself uses an ephemeral
        tempdir that gets cleaned; we move our copy into the builder
        tempdir so it persists for the session. */
-    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    const outDir = anaScratchDir(ctx.organizationId, 'docbuilder');
     await fs.mkdir(outDir, { recursive: true });
     const docxPath = path.join(outDir, docx.fileName);
     await fs.writeFile(docxPath, docx.buffer);
@@ -7336,11 +7379,11 @@ registerToolHandler('convert_docx_to_pdf', async (input, ctx) => {
   let safeInputDocxPath: string;
   let safeOutputPdfPath: string | undefined;
   try {
-    safeInputDocxPath = assertWithinDocumentWorkspace(inputDocxPath, 'input_docx_path');
+    safeInputDocxPath = assertWithinDocumentWorkspace(inputDocxPath, 'input_docx_path', ctx.organizationId);
     safeOutputPdfPath =
       outputPdfPath === undefined
         ? undefined
-        : assertWithinDocumentWorkspace(outputPdfPath, 'output_pdf_path');
+        : assertWithinDocumentWorkspace(outputPdfPath, 'output_pdf_path', ctx.organizationId);
   } catch (err) {
     return JSON.stringify({ error: err instanceof Error ? err.message : String(err) });
   }
@@ -7401,6 +7444,33 @@ function truncateForModel(s: string, cap = SCRIPT_OUTPUT_CAP): string {
   return `${s.slice(0, cap)}\n…[truncated ${s.length - cap} chars]`;
 }
 
+/**
+ * Save the files a code-execution tool produced into this tenant's own scratch
+ * area, under safe names, and describe them for the model. One place for
+ * run_python_script and run_in_container, which wrote the same way to a
+ * shared tmp/ directory every tenant could name (INJ-PATH-002).
+ */
+async function persistToolOutputs(
+  outputFiles: Record<string, string> | undefined,
+  organizationId: number,
+  kind: 'ana-scripts' | 'ana-container',
+): Promise<Array<{ name: string; path: string; bytes: number }>> {
+  const entries = Object.entries(outputFiles ?? {});
+  if (entries.length === 0) return [];
+  const { promises: fs } = await import('fs');
+  const path = await import('path');
+  const outDir = anaScratchDir(organizationId, kind);
+  await fs.mkdir(outDir, { recursive: true });
+  const saved: Array<{ name: string; path: string; bytes: number }> = [];
+  for (const [name, b64] of entries) {
+    const dest = path.join(outDir, workspaceFileName(name, 'output'));
+    const buf = Buffer.from(b64, 'base64');
+    await fs.writeFile(dest, buf);
+    saved.push({ name, path: dest, bytes: buf.length });
+  }
+  return saved;
+}
+
 registerToolHandler('run_python_script', async (input, ctx) => {
   const code = typeof input.code === 'string' ? input.code : '';
   if (!code.trim()) {
@@ -7410,62 +7480,56 @@ registerToolHandler('run_python_script', async (input, ctx) => {
     return JSON.stringify({ error: 'run_python_script requires tenant context (organizationId).' });
   }
 
+  /* The script is the model's, and the model reads documents other people
+     wrote. It used to run as `python3` on the application host, as the server's
+     own user, with CPU and memory limits and a scrubbed environment — and the
+     whole filesystem: every organization's uploads, and the server process's
+     environment under /proc. The runtime's comment said production ran it in a
+     container; nothing did (INJ-PATH-002). It now runs only in the hardened
+     container run_in_container uses (no network unless opted in, read-only
+     root, all capabilities dropped, non-root, only its own work mount), and
+     where that is not enabled it does not run at all. */
+  const { getContainerExecConfig, runInContainer } = await import('../compute/containerExec.js');
+  if (!getContainerExecConfig().enabled) {
+    return JSON.stringify({
+      ok: false,
+      available: false,
+      error:
+        'run_python_script is not available in this deployment: scripts run only in the isolated container, ' +
+        'and container execution is not enabled here. Nothing was run. Use the structured tools for this ' +
+        '(surgical_docx_xml_edit, the statistics and document tools) or tell the user what the script would do.',
+    });
+  }
+
   const inputFiles =
     input.input_files && typeof input.input_files === 'object'
       ? (input.input_files as Record<string, string>)
-      : undefined;
-  const cpuSeconds = typeof input.cpu_seconds === 'number' ? input.cpu_seconds : undefined;
+      : {};
   const timeoutMs = typeof input.timeout_ms === 'number' ? input.timeout_ms : undefined;
 
   try {
-    const { runPythonScriptIsolated } = await import('../compute/scriptWorker.js');
-    const { promises: fs } = await import('fs');
-    const path = await import('path');
-    const { randomUUID } = await import('crypto');
-
-    const result = await runPythonScriptIsolated({
-      code,
-      inputFiles,
-      cpuSeconds,
+    const result = await runInContainer({
+      script: 'exec python3 /work/__script.py',
+      inputFiles: { ...inputFiles, '__script.py': Buffer.from(code, 'utf8').toString('base64') },
       timeoutMs,
     });
-
-    // Persist produced files so downstream tools / the user have stable paths.
-    const outputFilePaths: Array<{ name: string; path: string; bytes: number } | { name: string; tooLarge: true }> = [];
-    const entries = Object.entries(result.outputFiles ?? {});
-    if (entries.length > 0) {
-      const outDir = path.resolve(process.cwd(), 'tmp', 'ana-scripts', randomUUID().slice(0, 8));
-      await fs.mkdir(outDir, { recursive: true });
-      for (const [name, b64] of entries) {
-        if (b64 == null) {
-          outputFilePaths.push({ name, tooLarge: true });
-          continue;
-        }
-        const safe = path.basename(name);
-        const dest = path.join(outDir, safe);
-        const buf = Buffer.from(b64, 'base64');
-        await fs.writeFile(dest, buf);
-        outputFilePaths.push({ name, path: dest, bytes: buf.length });
-      }
-    }
+    const outputFilePaths = await persistToolOutputs(result.outputFiles, ctx.organizationId, 'ana-scripts');
 
     return JSON.stringify({
       ok: result.ok,
-      engine: 'python-script (isolated, no-network)',
+      engine: `python-script (container, network ${result.network})`,
       stdout: truncateForModel(result.stdout),
       stderr: truncateForModel(result.stderr),
-      error: result.error ? truncateForModel(result.error) : null,
+      error: result.timedOut ? 'The script was stopped at its time limit.' : null,
       outputFiles: outputFilePaths,
       network: result.network,
       message: result.ok
         ? `Script ran successfully${outputFilePaths.length ? ` and produced ${outputFilePaths.length} file(s)` : ''}.`
-        : 'Script raised an error — see error/stderr.',
+        : 'Script exited with an error — see stderr.',
     });
   } catch (err) {
     return JSON.stringify({
-      error: `run_python_script failed: ${
-        err instanceof Error ? err.message : String(err)
-      }. Verify python3 is available on the host (see services/Dockerfile).`,
+      error: `run_python_script failed: ${err instanceof Error ? err.message : String(err)}`,
     });
   }
 });
@@ -7489,6 +7553,10 @@ registerToolHandler('insert_document_content', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'insert_document_content requires tenant context (organizationId).' });
   }
+  // INJ-PATH-002: the path is the model's. Open only the real path of a file
+  // in this tenant's own workspace, never the string it wrote.
+  const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
+  if (!docx.ok) return docx.refusal;
 
   const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
 
@@ -7510,13 +7578,12 @@ registerToolHandler('insert_document_content', async (input, ctx) => {
     const { runDocxInsertIsolated } = await import('../compute/scriptWorker.js');
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    const { randomUUID } = await import('crypto');
 
-    const sourceBuf = await fs.readFile(inputDocxPath);
-    const baseName = path.basename(inputDocxPath, path.extname(inputDocxPath));
+    const sourceBuf = await fs.readFile(docx.path);
+    const baseName = path.basename(docx.path, path.extname(docx.path));
     const result = await runDocxInsertIsolated(sourceBuf, insertions, `${baseName}.edited.docx`);
 
-    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    const outDir = anaScratchDir(ctx.organizationId, 'docbuilder');
     await fs.mkdir(outDir, { recursive: true });
     const docxPath = path.join(outDir, result.fileName);
     await fs.writeFile(docxPath, result.buffer);
@@ -7578,6 +7645,10 @@ registerToolHandler('surgical_docx_xml_edit', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'surgical_docx_xml_edit requires tenant context (organizationId).' });
   }
+  // INJ-PATH-002: the path is the model's. Open only the real path of a file
+  // in this tenant's own workspace, never the string it wrote.
+  const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
+  if (!docx.ok) return docx.refusal;
 
   const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
   const operations = (input.operations as Array<Record<string, unknown>>).map(o => ({
@@ -7595,13 +7666,12 @@ registerToolHandler('surgical_docx_xml_edit', async (input, ctx) => {
     const { runDocxXmlSurgeryIsolated } = await import('../compute/scriptWorker.js');
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    const { randomUUID } = await import('crypto');
 
-    const sourceBuf = await fs.readFile(inputDocxPath);
-    const baseName = path.basename(inputDocxPath, path.extname(inputDocxPath));
+    const sourceBuf = await fs.readFile(docx.path);
+    const baseName = path.basename(docx.path, path.extname(docx.path));
     const result = await runDocxXmlSurgeryIsolated(sourceBuf, operations, `${baseName}.xml-edited.docx`);
 
-    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    const outDir = anaScratchDir(ctx.organizationId, 'docbuilder');
     await fs.mkdir(outDir, { recursive: true });
     const docxPath = path.join(outDir, result.fileName);
     await fs.writeFile(docxPath, result.buffer);
@@ -7673,6 +7743,10 @@ registerToolHandler('insert_clause_template', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'insert_clause_template requires tenant context (organizationId).' });
   }
+  // INJ-PATH-002: the path is the model's. Open only the real path of a file
+  // in this tenant's own workspace, never the string it wrote.
+  const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
+  if (!docx.ok) return docx.refusal;
 
   const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
   const fields = (input.fields && typeof input.fields === 'object'
@@ -7718,13 +7792,12 @@ registerToolHandler('insert_clause_template', async (input, ctx) => {
     const { runDocxInsertIsolated } = await import('../compute/scriptWorker.js');
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    const { randomUUID } = await import('crypto');
 
-    const sourceBuf = await fs.readFile(inputDocxPath);
-    const baseName = path.basename(inputDocxPath, path.extname(inputDocxPath));
+    const sourceBuf = await fs.readFile(docx.path);
+    const baseName = path.basename(docx.path, path.extname(docx.path));
     const result = await runDocxInsertIsolated(sourceBuf, rendered.insertions, `${baseName}.clause.docx`);
 
-    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    const outDir = anaScratchDir(ctx.organizationId, 'docbuilder');
     await fs.mkdir(outDir, { recursive: true });
     const docxPath = path.join(outDir, result.fileName);
     await fs.writeFile(docxPath, result.buffer);
@@ -7782,12 +7855,16 @@ registerToolHandler('validate_docx', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'validate_docx requires tenant context (organizationId).' });
   }
+  // INJ-PATH-002: the path is the model's. Open only the real path of a file
+  // in this tenant's own workspace, never the string it wrote.
+  const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
+  if (!docx.ok) return docx.refusal;
 
   try {
     const { runDocxValidateIsolated } = await import('../compute/scriptWorker.js');
     const { promises: fs } = await import('fs');
 
-    const buf = await fs.readFile(inputDocxPath);
+    const buf = await fs.readFile(docx.path);
     const report = await runDocxValidateIsolated(buf);
 
     return JSON.stringify({
@@ -7821,6 +7898,10 @@ registerToolHandler('verify_docx_against_source', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'verify_docx_against_source requires tenant context (organizationId).' });
   }
+  // INJ-PATH-002: the path is the model's. Open only the real path of a file
+  // in this tenant's own workspace, never the string it wrote.
+  const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
+  if (!docx.ok) return docx.refusal;
 
   const expectedText = typeof input.expected_text === 'string' ? input.expected_text : '';
   const requiredStrings = Array.isArray(input.required_strings)
@@ -7838,9 +7919,9 @@ registerToolHandler('verify_docx_against_source', async (input, ctx) => {
     const path = await import('path');
     const { extractDocumentText } = await import('../ocr/index.js');
 
-    const buf = await fs.readFile(inputDocxPath);
+    const buf = await fs.readFile(docx.path);
     const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    const extracted = await extractDocumentText(buf, DOCX_MIME, path.basename(inputDocxPath));
+    const extracted = await extractDocumentText(buf, DOCX_MIME, path.basename(docx.path));
     const docText = extracted.text ?? '';
 
     // (1) Required-string verbatim check (exact substring match).
@@ -7936,27 +8017,13 @@ registerToolHandler('run_in_container', async (input, ctx) => {
         ok: false,
         enabled: false,
         message:
-          'The container-execution capability is not enabled in this deployment. Use run_python_script (sandboxed Python) or surgical_docx_xml_edit instead, or ask an administrator to enable ANA_ENABLE_CONTAINER_EXEC.',
+          'The container-execution capability is not enabled in this deployment, so nothing was run. Use surgical_docx_xml_edit or the structured tools instead, or ask an administrator to enable ANA_ENABLE_CONTAINER_EXEC.',
       });
     }
 
     const result = await runInContainer({ script, inputFiles, timeoutMs });
 
-    const { promises: fs } = await import('fs');
-    const path = await import('path');
-    const { randomUUID } = await import('crypto');
-    const outputFilePaths: Array<{ name: string; path: string; bytes: number }> = [];
-    const entries = Object.entries(result.outputFiles ?? {});
-    if (entries.length > 0) {
-      const outDir = path.resolve(process.cwd(), 'tmp', 'ana-container', randomUUID().slice(0, 8));
-      await fs.mkdir(outDir, { recursive: true });
-      for (const [name, b64] of entries) {
-        const dest = path.join(outDir, path.basename(name));
-        const buf = Buffer.from(b64, 'base64');
-        await fs.writeFile(dest, buf);
-        outputFilePaths.push({ name, path: dest, bytes: buf.length });
-      }
-    }
+    const outputFilePaths = await persistToolOutputs(result.outputFiles, ctx.organizationId, 'ana-container');
 
     return JSON.stringify({
       ok: result.ok,
@@ -8880,6 +8947,38 @@ registerToolHandler('register_ldt', async (input, ctx) => {
 // EUDAMED / PMDA Gateway. Wraps server/services/submission-gateways/.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * package_ectd_for_region's paths, confined (INJ-PATH-002). Every source_path
+ * is the model's, and the packager reads each one and ships its bytes, so an
+ * unconfined path put another tenant's document — or a host file — into this
+ * tenant's eCTD zip; and output_dir was written to wherever it named. Both are
+ * confined to this tenant's own workspace, and the packager gets the real
+ * paths, never the strings. A delete carries no bytes, so its source_path goes
+ * through as given for the packager to refuse by name.
+ */
+function confinePackagerPaths(
+  leaves: Array<Record<string, unknown>>,
+  outputDirInput: unknown,
+  organizationId: number,
+): { ok: true; sourcePaths: string[]; outputDir: string } | { ok: false; refusal: string } {
+  const sourcePaths: string[] = [];
+  for (const leaf of leaves) {
+    if (String(leaf.operation) === 'delete') {
+      sourcePaths.push(typeof leaf.source_path === 'string' ? leaf.source_path : '');
+      continue;
+    }
+    const src = workspacePathOrRefusal(leaf.source_path, `leaves[].source_path (${String(leaf.file_name)})`, organizationId);
+    if (!src.ok) return src;
+    sourcePaths.push(src.path);
+  }
+  if (typeof outputDirInput === 'string' && outputDirInput.trim()) {
+    const out = workspacePathOrRefusal(outputDirInput, 'output_dir', organizationId);
+    if (!out.ok) return out;
+    return { ok: true, sourcePaths, outputDir: out.path };
+  }
+  return { ok: true, sourcePaths, outputDir: anaScratchDir(organizationId, 'submissions') };
+}
+
 registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
@@ -8905,13 +9004,11 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
         `the file it ships (${missingSource.map((l) => String(l.file_name)).join(', ')}). Only a delete omits it.`,
     });
   }
+  const paths = confinePackagerPaths(leaves, input.output_dir, ctx.organizationId);
+  if (!paths.ok) return paths.refusal;
+  const { sourcePaths, outputDir } = paths;
   try {
     const { packageEctdSubmission } = await import('../submission-gateways/index.js');
-    const path = await import('path');
-    const outputDir =
-      typeof input.output_dir === 'string'
-        ? input.output_dir
-        : path.resolve(process.cwd(), 'tmp', 'submissions', String(ctx.organizationId));
     const bundle = await packageEctdSubmission({
       region: region as any,
       applicationId: String(input.application_id),
@@ -8931,10 +9028,10 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
       // packager refuses a delete that carries one, by name, instead of this
       // mapping silently ignoring what the caller asked to ship. modified_file
       // names the filed leaf a delete (or replace / append) acts on.
-      leaves: leaves.map((l) => ({
+      leaves: leaves.map((l, i) => ({
         ctdSection: String(l.ctd_section),
         operation:  (String(l.operation) as 'new' | 'append' | 'replace' | 'delete'),
-        sourcePath: typeof l.source_path === 'string' ? l.source_path : '',
+        sourcePath: sourcePaths[i],
         fileName:   String(l.file_name),
         title:      String(l.title),
         ...(typeof l.modified_file === 'string' && l.modified_file.trim()
@@ -14620,8 +14717,17 @@ registerToolHandler('global_search', async (input, ctx) => {
 
 registerToolHandler('start_legacy_import', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'start_legacy_import requires tenant context.' });
-  const sourcePath = typeof input.source_path === 'string' ? input.source_path : '';
-  if (!sourcePath) return JSON.stringify({ error: 'source_path (string) is required.' });
+  if (!(typeof input.source_path === 'string' && input.source_path)) {
+    return JSON.stringify({ error: 'source_path (string) is required.' });
+  }
+  // INJ-PATH-002: the detector reads, hashes and lists every entry of the
+  // archive at this path, and the listing is stored in THIS tenant's import
+  // job. Unconfined, `uploads/org-2/…` put another tenant's eCTD inventory —
+  // names, sizes, hashes, sponsor, application id — into the caller's rows.
+  // The job row keeps the real path, so nothing later re-reads the string.
+  const source = workspacePathOrRefusal(input.source_path, 'source_path', ctx.organizationId);
+  if (!source.ok) return source.refusal;
+  const sourcePath = source.path;
   try {
     const { getPool } = await import('../../db.js');
     const { detectArchive } = await import('../legacy-importer/detector.js');
@@ -15080,6 +15186,7 @@ registerToolHandler('assemble_ectd_module_from_artifacts', async (input, ctx) =>
       sections,
       outputFormat,
       documentTitle: `eCTD Module ${moduleNumber}`,
+      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
     });
     return JSON.stringify({
       module_number: moduleNumber,

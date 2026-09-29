@@ -1,0 +1,4 @@
+ × tests/ana-tool-tenant-and-path-scope.contract.test.ts > every AnA tool that takes a path runs it through the workspace guard > has no unguarded path argument 10ms
+   → tool handlers that read a path argument without the workspace guard: expected [ 'convert_to_rps_v4', …(2) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 45 passed (46)

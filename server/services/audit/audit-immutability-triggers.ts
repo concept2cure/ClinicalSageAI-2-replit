@@ -70,6 +70,8 @@ export const EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS: readonly ExpectedImmutability
   // A recorded Vault version's identity, hash and lineage (VR-06, 2026-09-26, D5).
   { schema: 'vault', table: 'documents', trigger: 'vault_documents_record_guard', source: 'migrations/20260926_vault_documents_record_immutability.sql' },
   { schema: 'vault', table: 'documents', trigger: 'vault_documents_truncate_guard', source: 'migrations/20260926_vault_documents_record_immutability.sql' },
+  // ...and no DELETE but the tenant purge's owner-run function (VR-07, 2026-09-29, D5/D6).
+  { schema: 'vault', table: 'documents', trigger: 'vault_documents_delete_guard', source: 'migrations/20260926_vault_documents_record_immutability.sql' },
 ];
 
 /** Anything with a `.query` — a pg Pool, a PoolClient, a PGlite instance. */

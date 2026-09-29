@@ -1,0 +1,15 @@
+# the council migration and the RLS sweep at b61fccb1, applied to an empty PostgreSQL 16 database
+NOTICE:  database "council_rls" does not exist, skipping
+[rls-sweep] tenant_isolation_policy applied to 0 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+          table           | has_org_column 
+--------------------------+----------------
+ lumen.agent_executions   | f
+ lumen.council_sessions   | f
+ lumen.data_verifications | f
+
+          table           | rls | forced | tenant_policy 
+--------------------------+-----+--------+---------------
+ lumen.agent_executions   | f   | f      | f
+ lumen.council_sessions   | f   | f      | f
+ lumen.data_verifications | f   | f      | f
+

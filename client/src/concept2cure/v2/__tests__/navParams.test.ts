@@ -19,7 +19,7 @@ import {
   resolveSurfaceIdForTarget,
   stashNavParamsForTarget,
 } from '../navParams';
-import { matchIntelligenceGroup } from '../surfaces/Surfaces';
+import { matchIntelligenceGroup } from '../surfaces/GlobalRiBrowser';
 import { INITIAL_DRIVE_STATE, driveReducer } from '../liveDrive';
 
 afterEach(() => clearNavParams());

@@ -62,14 +62,14 @@ import type {
  *     no kit code of its own (that is what tests/ui/shell-kit-lazy.test.ts
  *     holds in place). Splitting the map away from its own lazy boundary would
  *     emit a chunk whose only job is to load a chunk.
- *   GlobalRiBrowser  lives in `surfaces/Surfaces.tsx`, which V2App imports
- *     statically for `Home` and `KitSurfaceScaffold`. That module is in the
- *     entry graph whichever way this file names it, so a dynamic import here
- *     would emit nothing and only disguise the fact.
+ *   GlobalRiBrowser  has its own module since 2026-09-29 (it lived in
+ *     `surfaces/Surfaces.tsx`, which V2App imports for `Home`). It is imported
+ *     statically here as before; making it lazy is a separate, bundle-only
+ *     change.
  */
 import { DeviceSurfaces } from './surfaces/DeviceSurfaces';
 import { PdevSurfaces } from './surfaces/PdevSurfaces';
-import { GlobalRiBrowser } from './surfaces/Surfaces';
+import { GlobalRiBrowser } from './surfaces/GlobalRiBrowser';
 
 export interface SurfaceViewProps {
   surface: UiSurface;

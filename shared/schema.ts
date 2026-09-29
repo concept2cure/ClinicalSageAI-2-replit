@@ -6607,7 +6607,9 @@ export const c2cProjectWorkItems = pgTable(
     // | 'correspondence' (agency letters/issues, via regulatory-correspondence)
     sourceType: text('source_type').notNull(),
     // Integer key of the source row. Together with (source_type, org_id) this is
-    // the upsert/dedup key — see upsertProjectWorkItem.
+    // upsertProjectWorkItem's dedup key. The database key also includes
+    // source_ref (c2c_pwi_org_source_key_unique, NULLS NOT DISTINCT; see
+    // db/migrations/20260810_c2c_work_items_source_uniqueness.sql).
     sourceId: integer('source_id').notNull(),
     // Stable reference for sources keyed by a STRING/UUID rather than an integer
     // (e.g. a correspondence issue id). Those sources previously had to pass
