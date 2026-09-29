@@ -24,7 +24,7 @@
  * @module server/routes/study-design-planning
  */
 import type { Request, Response } from 'express';
-import { pool } from '../db';
+import { requestConnectable } from '../db/requestDb';
 import { recordGovernedAction } from './c2c/actions';
 import {
   validateDesign,
@@ -100,7 +100,15 @@ export async function recordPlanningInput(req: Request, res: Response) {
   if ('status' in pre) return res.status(pre.status).json(pre.body);
   const { input, reason, expected } = pre;
 
-  const client = await pool.connect();
+  // The request's own connection, which carries its tenant session; never the
+  // shared pool. A request without one is refused before anything is read.
+  let client: Awaited<ReturnType<ReturnType<typeof requestConnectable>['connect']>>;
+  try {
+    client = await requestConnectable(req).connect();
+  } catch (err: unknown) {
+    console.error('[study-design/planning] no request connection', err instanceof Error ? err.message : String(err));
+    return res.status(500).json({ error: 'PLANNING_WRITE_FAILED' });
+  }
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, orgId);
