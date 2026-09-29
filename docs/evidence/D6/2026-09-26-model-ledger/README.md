@@ -156,7 +156,7 @@ and each was first shown red against `213fbebc`: `review/red/` holds the red run
 - A backfill of the WS1–WS3 rows (2 of 3 skeptics accepted a note instead). No deployed database holds such rows, and the
   migration's header now says rows written before this change leave the new columns NULL.
 
-**Not done, added by this round:** served embeddings still write no ledger row. `authorizeEmbedding` decides placement and
+**Not done, added by this round:** (closed 2026-09-29, `../2026-09-29-embedding-ledger/`) served embeddings still write no ledger row. `authorizeEmbedding` decides placement and
 returns, and the embedding call is made outside the gateway's dispatch, so the gateway never learns that it was served.
 Recording that call needs a write from the embedding provider after `embeddings.create`. It is left for the next change.
 Refused embeddings were always recorded.
