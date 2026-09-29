@@ -13,6 +13,7 @@
  * that a reviewer refused a deletion of the safety paragraph is recorded
  * nowhere.
  */
+import { createHash } from 'node:crypto';
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
@@ -60,6 +61,12 @@ function auditMetadata(): any {
   return typeof raw === 'string' ? JSON.parse(raw) : raw;
 }
 
+/** The section the audit row is filed against — its own column ($2), not metadata. */
+function auditSectionId(): unknown {
+  const call = mockQuery.mock.calls.find(c => String(c[0]).includes('INSERT INTO authoring_audit_trail'));
+  return call ? (call[1] as unknown[])[1] : undefined;
+}
+
 beforeEach(() => {
   mockQuery.mockReset();
   mockQuery.mockImplementation(async () => ({ rowCount: 1, rows: [{ id: 'row-1' }] }));
@@ -85,12 +92,17 @@ describe('POST /documents/:id/tracked-change-decisions', () => {
     expect(md.decision).toBe('reject');
     expect(md.changeType).toBe('deletion');
     expect(md.text).toBe('Patients with hepatic impairment were excluded.');
-    expect(md.sectionId).toBe('S1');
+    // The row is filed against the section (verified to be in the document).
+    expect(auditSectionId()).toBe('S1');
     // Who PROPOSED it — distinct from the actor who decided it.
     expect(md.proposedBy).toBe('R. Author');
   });
 
-  it('bounds the recorded text — an audit row is not a copy of the section', async () => {
+  it('keeps the whole proposed text, with its hash — accepting strips the mark, so this is the only copy', async () => {
+    /* It was cut to 500 characters. The record is append-only and the only
+       place the proposed words survive once a suggestion is resolved; a
+       record that keeps a prefix of what was accepted is not a record of it
+       (D5, 2026-09-26). */
     await request(makeApp())
       .post('/api/authoring/documents/D1/tracked-change-decisions')
       .set('Authorization', await bearer())
@@ -101,7 +113,9 @@ describe('POST /documents/:id/tracked-change-decisions', () => {
         text: 'x'.repeat(5000),
       });
 
-    expect(auditMetadata().text.length).toBe(500);
+    const md = auditMetadata();
+    expect(md.text.length).toBe(5000);
+    expect(md.textSha256).toBe(createHash('sha256').update('x'.repeat(5000)).digest('hex'));
   });
 
   it('still records the decision when no context is supplied', async () => {
@@ -114,7 +128,9 @@ describe('POST /documents/:id/tracked-change-decisions', () => {
     expect(res.status).toBe(200);
     const md = auditMetadata();
     expect(md.decision).toBe('accept');
-    expect(md.text).toBeUndefined();
+    // Stated as absent, never invented.
+    expect(md.text).toBeNull();
+    expect(md.textSha256).toBeNull();
   });
 
   it('refuses a verdict that is neither accept nor reject', async () => {
@@ -139,7 +155,7 @@ describe('POST /documents/:id/tracked-change-decisions/bulk', () => {
     const res = await request(makeApp())
       .post('/api/authoring/documents/D1/tracked-change-decisions/bulk')
       .set('Authorization', await bearer())
-      .send({ decision: 'reject', changeIds: ['a', 'b'], changes: many(2) });
+      .send({ decision: 'reject', changeIds: many(2).map(c => c.changeId), changes: many(2) });
 
     expect(res.status).toBe(200);
     const md = auditMetadata();
@@ -149,7 +165,10 @@ describe('POST /documents/:id/tracked-change-decisions/bulk', () => {
     expect(md.changes[0].text).toBe('proposed text 0');
   });
 
-  it('caps the summary AND says how many it left out', async () => {
+  it('records every change of an "Accept all", whole — no cap, nothing left out', async () => {
+    /* It kept the first 20 and said how many it left out. Honest, but an
+       "Accept all" is the one click that adopts a whole AI draft, and the
+       record of it now holds every change it adopted (D5, 2026-09-26). */
     await request(makeApp())
       .post('/api/authoring/documents/D1/tracked-change-decisions/bulk')
       .set('Authorization', await bearer())
@@ -160,9 +179,9 @@ describe('POST /documents/:id/tracked-change-decisions/bulk', () => {
       });
 
     const md = auditMetadata();
-    expect(md.changes).toHaveLength(20);
-    // A truncated record that reads as complete is the failure mode.
-    expect(md.changesOmittedFromSummary).toBe(30);
+    expect(md.changes).toHaveLength(50);
+    expect(md.changes[49].text).toBe('proposed text 49');
+    expect(md.changesOmittedFromSummary).toBeUndefined();
   });
 
   it('records the bulk act even when no per-change context is sent', async () => {
@@ -174,7 +193,8 @@ describe('POST /documents/:id/tracked-change-decisions/bulk', () => {
     expect(res.status).toBe(200);
     const md = auditMetadata();
     expect(md.count).toBe(3);
-    expect(md.changes).toBeUndefined();
+    // Each change is still named; what the client did not send is stated as absent.
+    expect(md.changes.map((c: any) => [c.changeId, c.text])).toEqual([['a', null], ['b', null], ['c', null]]);
     expect(md.changesOmittedFromSummary).toBeUndefined();
   });
 });
@@ -276,8 +296,8 @@ describe('bulk audit metadata carries what the single route already carries', ()
 
     expect(res.status).toBe(200);
     const md = auditMetadata();
-    // The single route records this at the top level of its metadata.
-    expect(md.sectionId).toBe('S9');
+    // Filed against the section, as the single route is.
+    expect(auditSectionId()).toBe('S9');
     expect(md.changes[0].proposedAt).toBe('2026-08-24T16:30:00Z');
     expect(md.changes[1].proposedAt).toBe('2026-08-24T16:31:00Z');
   });
@@ -288,7 +308,7 @@ describe('bulk audit metadata carries what the single route already carries', ()
       .set('Authorization', await bearer())
       .send({ decision: 'accept', changeIds: ['a'] });
     expect(res.status).toBe(200);
-    expect(auditMetadata().sectionId).toBeUndefined();
+    expect(auditSectionId()).toBeNull();
   });
 });
 

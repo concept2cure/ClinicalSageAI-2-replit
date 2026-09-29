@@ -21,6 +21,7 @@
  */
 
 import crypto from 'crypto';
+import { stableStringify } from '../../../shared/canonical-json';
 import { writeChainedAuditRow } from '../auditService';
 import { recordAuditRow } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
@@ -95,6 +96,20 @@ export interface AuthoringAuditEntry {
 const sha256 = (v: string): string => crypto.createHash('sha256').update(v).digest('hex');
 
 /**
+ * The metadata exactly as JSONB will hold it: a JSON round trip first (a Date
+ * becomes its ISO string, an undefined member is dropped), so the hash taken
+ * here is the hash a verifier takes of the stored value.
+ */
+function storedMetadata(metadata: Record<string, unknown> | undefined): Record<string, unknown> {
+  return JSON.parse(JSON.stringify(metadata ?? {}));
+}
+
+/** The SHA-256 of a trail row's metadata as stored — carried by its chained entry. */
+export function metadataSha256(metadata: unknown): string {
+  return sha256(stableStringify(metadata ?? {}));
+}
+
+/**
  * The secondary index entry / chained ledger entry for an audit row — the
  * half of the writer that depends on WHICH executor the row was written on.
  * Split out of {@link writeAuthoringAuditTrail} only so each half stays under
@@ -104,7 +119,13 @@ async function writeAuditIndexOrChain(
   ctx: AuthoringAuditContext,
   entry: AuthoringAuditEntry,
   executor: Queryable,
-  hashes: { before: string | null; after: string | null; sessionId: string },
+  hashes: {
+    before: string | null;
+    after: string | null;
+    sessionId: string;
+    trailId: string | null;
+    metadata: string;
+  },
 ): Promise<void> {
   // Reflect into the central audit_logs table so the unified audit query
   // sees authoring events alongside every other governed mutation. The
@@ -122,6 +143,12 @@ async function writeAuditIndexOrChain(
   // with the mutation. The secondary index is skipped for transactional
   // mutations rather than written on a competing transaction that can
   // disagree with the outcome.
+  /* What the chain carries for this trail row. The row id and the hash of its
+     metadata were added 2026-09-26: the metadata is where a comment's quoted
+     passage, a tracked change's proposed text and the decision on it live, and
+     before then nothing chained covered it — a rewrite of it past the table's
+     guard would have left every chained value intact. With them, each trail
+     row can be checked against its own chain entry (verifyAuthoringTrailRow). */
   const chainDetails = {
     docId: entry.docId,
     sectionId: entry.sectionId,
@@ -131,6 +158,9 @@ async function writeAuditIndexOrChain(
     changeReason: entry.changeReason ?? null,
     actorRole: ctx.actorRole,
     sessionId: hashes.sessionId,
+    trailId: hashes.trailId,
+    metadataSha256: hashes.metadata,
+    actorEmail: ctx.actorEmail,
   };
   const action = `authoring.section.${entry.operationType}`;
   const resourceType = entry.sectionId ? 'authoring_section' : 'authoring_document';
@@ -182,6 +212,7 @@ async function writeAuditIndexOrChain(
       ipAddress: ctx.ipAddress,
       userAgent: ctx.userAgent,
       details: chainDetails,
+      reason: entry.changeReason,
     });
   }
 }
@@ -201,13 +232,15 @@ export async function writeAuthoringAuditTrail(
     // Calculate content hashes
     const hashBefore = entry.beforeContent ? sha256(entry.beforeContent) : null;
     const hashAfter = entry.afterContent ? sha256(entry.afterContent) : null;
+    const metadata = storedMetadata(entry.metadata);
 
-    await executor.query(
+    const inserted = await executor.query(
       `INSERT INTO authoring_audit_trail
        (doc_id, section_id, operation_type, actor_email, actor_role,
         before_content, after_content, content_hash_before, content_hash_after,
-        change_reason, metadata, ip_address, user_agent, session_id, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+       RETURNING id`,
       [
         entry.docId,
         entry.sectionId,
@@ -219,13 +252,15 @@ export async function writeAuthoringAuditTrail(
         hashBefore,
         hashAfter,
         entry.changeReason,
-        entry.metadata ?? {},
+        metadata,
         ctx.ipAddress,
         ctx.userAgent,
         sessionId,
         ctx.tenantId,
+        ctx.actorId ?? null,
       ],
     );
+    const trailId: string | null = inserted?.rows?.[0]?.id ?? null;
 
     logger.info(`Audit trail created: ${entry.operationType} on doc ${entry.docId} by ${ctx.actorEmail}`);
 
@@ -233,6 +268,8 @@ export async function writeAuthoringAuditTrail(
       before: hashBefore,
       after: hashAfter,
       sessionId,
+      trailId,
+      metadata: metadataSha256(metadata),
     });
   } catch (error) {
     // Audit logging must never fail silently in production
@@ -247,6 +284,51 @@ export async function writeAuthoringAuditTrail(
       throw new Error('Audit logging failed - operation aborted for compliance', { cause: error });
     }
   }
+}
+
+/** One authoring_audit_trail row as read back. */
+export interface StoredTrailRow {
+  id: string;
+  operation_type: string;
+  before_content: string | null;
+  after_content: string | null;
+  content_hash_before: string | null;
+  content_hash_after: string | null;
+  change_reason: string | null;
+  metadata: unknown;
+}
+
+export interface TrailRowVerdict {
+  /** A chained entry naming this row was found. */
+  chained: boolean;
+  /** Before/after content, metadata, reason and operation all match what the chain carries. */
+  intact: boolean | null;
+  /** Which of them do not, when not intact. */
+  mismatches: string[];
+}
+
+/**
+ * Check one trail row against its chained entry. Pure: the caller reads both.
+ *
+ * The chain row's details carry the SHA-256 of the before and after content
+ * and of the metadata, the reason and the operation, as they were when the
+ * row was written; each is recomputed here from the row as it is now. A row
+ * written before 2026-09-26 has no chained `trailId` and verifies as
+ * `chained: false` — unknown, never as intact.
+ */
+export function verifyAuthoringTrailRow(
+  row: StoredTrailRow,
+  chainDetails: Record<string, unknown> | null,
+): TrailRowVerdict {
+  if (!chainDetails || chainDetails.trailId !== row.id) return { chained: false, intact: null, mismatches: [] };
+  const mismatches: string[] = [];
+  const hashOf = (v: string | null) => (v ? sha256(v) : null);
+  if (hashOf(row.before_content) !== (chainDetails.contentHashBefore ?? null)) mismatches.push('before_content');
+  if (hashOf(row.after_content) !== (chainDetails.contentHashAfter ?? null)) mismatches.push('after_content');
+  if (metadataSha256(row.metadata ?? {}) !== chainDetails.metadataSha256) mismatches.push('metadata');
+  if ((row.change_reason ?? null) !== (chainDetails.changeReason ?? null)) mismatches.push('change_reason');
+  if (row.operation_type !== chainDetails.operationType) mismatches.push('operation_type');
+  return { chained: true, intact: mismatches.length === 0, mismatches };
 }
 
 /**

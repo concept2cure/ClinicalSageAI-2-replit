@@ -42,6 +42,10 @@ CREATE TABLE IF NOT EXISTS electronic_signatures (
 `;
 
 const TRIGGER_MIGRATIONS = Array.from(new Set(EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS.map((t) => t.source)));
+/* The authoring trigger files amend tables the authoring subsystem unit
+   creates first (scripts/db/authoring-subsystem.mjs applies this file before
+   them); applied here in the same order. */
+const PREREQUISITES = ['db/migrations/20260725_authoring_document_loop_tables.sql'];
 
 let pglite: PGlite;
 /** PGlite's query(sql, params) is the whole contract the probe needs. */
@@ -50,8 +54,12 @@ const catalog = () => pglite as unknown as TriggerCatalogClient;
 async function provision(): Promise<void> {
   await pglite.exec('DROP SCHEMA IF EXISTS audit CASCADE;');
   await pglite.exec('DROP TABLE IF EXISTS audit_logs, audit_events, electronic_signatures CASCADE;');
+  await pglite.exec(
+    'DROP TABLE IF EXISTS authoring_audit_trail, authoring_comments, doc_revisions, authoring_sections, authoring_documents CASCADE;',
+  );
   await pglite.exec(AUDIT_LOGS_PGLITE_DDL);
   await pglite.exec(STORES_DDL);
+  for (const file of PREREQUISITES) await pglite.exec(migration(file));
   for (const file of TRIGGER_MIGRATIONS) await pglite.exec(migration(file));
 }
 
