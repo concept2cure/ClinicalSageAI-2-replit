@@ -1,0 +1,152 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T19:52:35.807Z","pid":22324,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T19:52:35.808Z","pid":22324,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T19:52:35.808Z","pid":22324,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a change to the recorded hash 1434ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a new version label, document code, program or tenant 14ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses re-pointing a stored copy, or rewriting lineage or retention 9ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses TRUNCATE 4ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > still allows what the named writers do 14ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > allows a soft delete, and refuses undoing one 5ms
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses a DELETE by the runtime role, in a tenant scope or the platform scope 11ms
+   → the change was applied: expected true to be false // Object.is equality
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > has no settable bypass: session settings made before the DELETE change nothing 3ms
+   → the change was applied: expected true to be false // Object.is equality
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > the purge function refuses an organization that is not pending deletion 4ms
+   → expected 'function public.purge_tenant_vault_re…' to match /VAULT_PURGE_REFUSED: .*not pending de…/
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses while a legal hold on the organization is active 5ms
+   → expected 'function public.purge_tenant_vault_re…' to match /VAULT_PURGE_REFUSED: .*legal hold/
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses a caller in a tenant scope, even for its own organization 3ms
+   → expected 'function public.purge_tenant_vault_re…' to match /VAULT_PURGE_REFUSED: .*platform scope/
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > deletes that organization's versions, and only those, once pending deletion with no active hold 4ms
+   → expected 'function public.purge_tenant_vault_re…' to be 2 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses a DELETE by the runtime role, in a tenant scope or the platform scope
+AssertionError: the change was applied: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ refused tests/db/vault-record-immutability.dbtest.ts:76:42
+     74|
+     75| const refused = (r: Awaited<ReturnType<typeof asRuntime>>) => {
+     76|   expect(r.ok, 'the change was applied').toBe(false);
+       |                                          ^
+     77|   if (!r.ok) expect(r.message).toMatch(/IMMUTABILITY_VIOLATION/);
+     78| };
+ ❯ tests/db/vault-record-immutability.dbtest.ts:230:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > has no settable bypass: session settings made before the DELETE change nothing
+AssertionError: the change was applied: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ refused tests/db/vault-record-immutability.dbtest.ts:76:42
+     74|
+     75| const refused = (r: Awaited<ReturnType<typeof asRuntime>>) => {
+     76|   expect(r.ok, 'the change was applied').toBe(false);
+       |                                          ^
+     77|   if (!r.ok) expect(r.message).toMatch(/IMMUTABILITY_VIOLATION/);
+     78| };
+ ❯ tests/db/vault-record-immutability.dbtest.ts:236:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > the purge function refuses an organization that is not pending deletion
+AssertionError: expected 'function public.purge_tenant_vault_re…' to match /VAULT_PURGE_REFUSED: .*not pending de…/
+
+- Expected:
+/VAULT_PURGE_REFUSED: .*not pending deletion/
+
++ Received:
+"function public.purge_tenant_vault_records(unknown) does not exist"
+
+ ❯ purgeRefused tests/db/vault-record-immutability.dbtest.ts:199:34
+    197|   const purgeRefused = (r: Outcome, why: RegExp) => {
+    198|     expect(r.ok, 'the purge function deleted').toBe(false);
+    199|     if (!r.ok) expect(r.message).toMatch(why);
+       |                                  ^
+    200|   };
+    201|
+ ❯ tests/db/vault-record-immutability.dbtest.ts:252:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses while a legal hold on the organization is active
+AssertionError: expected 'function public.purge_tenant_vault_re…' to match /VAULT_PURGE_REFUSED: .*legal hold/
+
+- Expected:
+/VAULT_PURGE_REFUSED: .*legal hold/
+
++ Received:
+"function public.purge_tenant_vault_records(unknown) does not exist"
+
+ ❯ purgeRefused tests/db/vault-record-immutability.dbtest.ts:199:34
+    197|   const purgeRefused = (r: Outcome, why: RegExp) => {
+    198|     expect(r.ok, 'the purge function deleted').toBe(false);
+    199|     if (!r.ok) expect(r.message).toMatch(why);
+       |                                  ^
+    200|   };
+    201|
+ ❯ tests/db/vault-record-immutability.dbtest.ts:263:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses a caller in a tenant scope, even for its own organization
+AssertionError: expected 'function public.purge_tenant_vault_re…' to match /VAULT_PURGE_REFUSED: .*platform scope/
+
+- Expected:
+/VAULT_PURGE_REFUSED: .*platform scope/
+
++ Received:
+"function public.purge_tenant_vault_records(unknown) does not exist"
+
+ ❯ purgeRefused tests/db/vault-record-immutability.dbtest.ts:199:34
+    197|   const purgeRefused = (r: Outcome, why: RegExp) => {
+    198|     expect(r.ok, 'the purge function deleted').toBe(false);
+    199|     if (!r.ok) expect(r.message).toMatch(why);
+       |                                  ^
+    200|   };
+    201|
+ ❯ tests/db/vault-record-immutability.dbtest.ts:270:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > deletes that organization's versions, and only those, once pending deletion with no active hold
+AssertionError: expected 'function public.purge_tenant_vault_re…' to be 2 // Object.is equality
+
+- Expected:
+2
+
++ Received:
+"function public.purge_tenant_vault_records(unknown) does not exist"
+
+ ❯ tests/db/vault-record-immutability.dbtest.ts:277:51
+    275|     await setStatus('pending_deletion');
+    276|     const r = await purge();
+    277|     expect(r.ok ? r.rows[0]?.deleted : r.message).toBe(purgeDocs.lengt…
+       |                                                   ^
+    278|     for (const id of purgeDocs) expect(await exists(id)).toBe(false);
+    279|     expect(await exists(bystander)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 6 passed (12)
+   Start at  19:52:34
+   Duration  1.99s (transform 784ms, setup 71ms, import 40ms, tests 1.58s, environment 0ms)
+

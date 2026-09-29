@@ -471,21 +471,45 @@ interface StoredObject {
   provider: string | null;
 }
 
-/** The tenant's provider-backed vault objects, read inside the transaction while the rows exist. */
-async function readStoredVaultObjects(client: PoolClient, organizationId: number): Promise<StoredObject[]> {
-  const present = await client.query(`SELECT to_regclass('vault.documents') IS NOT NULL AS present`);
+/**
+ * Delete the tenant's vault versions (and their chunks) through the one door
+ * the database leaves open, and return where each deleted version's bytes are
+ * stored (VR-07, migrations/20260926_vault_documents_record_immutability.sql).
+ *
+ * vault.documents refuses DELETE from anyone but its owner.
+ * public.purge_tenant_vault_records runs as that owner. It refuses unless the
+ * caller is in the platform scope and the organization is pending deletion
+ * with no active legal hold, then deletes with VAULT_DOCUMENT_TENANCY's
+ * predicate. A generic DELETE from here matched nothing on the purge route's
+ * own connection (the runtime role in the platform scope: the Vault's policies
+ * have no platform arm), nor did the read of the bytes' addresses. So a purged
+ * tenant kept its versions and their bytes while the purge reported success.
+ *
+ * A deployment without the vault schema has nothing to delete. One with the
+ * table but not the function is refused: its versions would survive.
+ */
+async function purgeVaultVersions(client: PoolClient, organizationId: number): Promise<StoredObject[]> {
+  const present = await client.query(
+    `SELECT to_regclass('vault.documents') IS NOT NULL AS present,
+            to_regprocedure('public.purge_tenant_vault_records(integer)') IS NOT NULL AS door`
+  );
   if (!present.rows[0]?.present) return [];
+  if (!present.rows[0]?.door) {
+    throw new OffboardingStateError(
+      'VAULT_PURGE_UNAVAILABLE',
+      'This database has the vault but not public.purge_tenant_vault_records; run node scripts/db/deploy-migrate.mjs. Nothing was purged.'
+    );
+  }
   const { rows } = await client.query(
-    // tenant-isolation-safe: VAULT_DOCUMENT_TENANCY carries `organization_id = $1`.
-    `SELECT storage_version_id, storage_provider
-       FROM vault.documents
-      WHERE ${VAULT_DOCUMENT_TENANCY} AND storage_version_id IS NOT NULL`,
+    'SELECT storage_version_id, storage_provider FROM public.purge_tenant_vault_records($1)',
     [organizationId]
   );
-  return rows.map((r: { storage_version_id: string; storage_provider: string | null }) => ({
-    versionId: r.storage_version_id,
-    provider: r.storage_provider,
-  }));
+  return rows
+    .filter((r: { storage_version_id: string | null }) => r.storage_version_id)
+    .map((r: { storage_version_id: string; storage_provider: string | null }) => ({
+      versionId: r.storage_version_id,
+      provider: r.storage_provider,
+    }));
 }
 
 /**
@@ -534,14 +558,12 @@ export async function purgeTenant(
     await client.query('BEGIN');
     try {
       await assertNoActiveLegalHold(client, organizationId);
-      // Read the bytes' addresses while the rows that hold them still exist,
-      // and only when those rows are being purged: bytes whose records survive
-      // must survive too.
-      if (childTables.includes('vault.documents')) {
-        storedObjects = await readStoredVaultObjects(client, organizationId);
-      }
       for (const table of childTables) {
-        await purgeChildTable(client, table, organizationId);
+        // The bytes' addresses come back from the rows actually deleted, and
+        // only when those rows are purged: bytes whose records survive must
+        // survive too.
+        if (table === 'vault.documents') storedObjects = await purgeVaultVersions(client, organizationId);
+        else await purgeChildTable(client, table, organizationId);
       }
 
       await client.query(
