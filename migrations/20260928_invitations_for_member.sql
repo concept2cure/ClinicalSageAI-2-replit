@@ -45,42 +45,55 @@
 --
 -- Converges on every run (CREATE OR REPLACE). Nothing is dropped (Rule 1).
 
-CREATE OR REPLACE FUNCTION public.invitations_for_member(p_user_id integer)
-RETURNS TABLE (
-  id              integer,
-  organization_id integer,
-  email           text,
-  role            text,
-  status          text,
-  invited_by_id   integer,
-  created_at      timestamp,
-  responded_at    timestamp
-)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = pg_catalog, public
-SET app.current_user_role = 'app_super_admin'
-AS $$
-  SELECT i.id, i.organization_id, i.email, i.role, i.status, i.invited_by_id,
-         i.created_at, i.responded_at
-    FROM public.organization_invitations i
-   WHERE i.user_id = p_user_id
-     AND EXISTS (
-       SELECT 1 FROM public.organization_users ou
-        WHERE ou.user_id = p_user_id
-          AND ou.organization_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::integer
-     )
-   ORDER BY i.created_at DESC, i.id DESC
-$$;
-
-REVOKE ALL ON FUNCTION public.invitations_for_member(integer) FROM PUBLIC;
-
-DO $$
+-- AMENDED IN PLACE 2026-09-29 (Rule 1): the function was created
+-- unconditionally, and a LANGUAGE sql body is validated when it is created, so
+-- on a database without organization_invitations (the schema-contract suites'
+-- minimal bases) the whole set halted at this file — tests/schema-contract/
+-- tenant-isolation-sweep.contract.test.ts went red with it. Now guarded on the
+-- two tables it reads, like every sibling: absent, it is skipped with a NOTICE.
+DO $do$
 BEGIN
+  IF to_regclass('public.organization_invitations') IS NULL
+     OR to_regclass('public.organization_users') IS NULL THEN
+    RAISE NOTICE '[invitations-for-member] skipped — public.organization_invitations or public.organization_users not provisioned';
+    RETURN;
+  END IF;
+
+  EXECUTE $fn$
+    CREATE OR REPLACE FUNCTION public.invitations_for_member(p_user_id integer)
+    RETURNS TABLE (
+      id              integer,
+      organization_id integer,
+      email           text,
+      role            text,
+      status          text,
+      invited_by_id   integer,
+      created_at      timestamp,
+      responded_at    timestamp
+    )
+    LANGUAGE sql
+    STABLE
+    SECURITY DEFINER
+    SET search_path = pg_catalog, public
+    SET app.current_user_role = 'app_super_admin'
+    AS $body$
+      SELECT i.id, i.organization_id, i.email, i.role, i.status, i.invited_by_id,
+             i.created_at, i.responded_at
+        FROM public.organization_invitations i
+       WHERE i.user_id = p_user_id
+         AND EXISTS (
+           SELECT 1 FROM public.organization_users ou
+            WHERE ou.user_id = p_user_id
+              AND ou.organization_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::integer
+         )
+       ORDER BY i.created_at DESC, i.id DESC
+    $body$
+  $fn$;
+
+  REVOKE ALL ON FUNCTION public.invitations_for_member(integer) FROM PUBLIC;
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_service') THEN
     GRANT EXECUTE ON FUNCTION public.invitations_for_member(integer) TO app_service;
   END IF;
   RAISE NOTICE '[invitations-for-member] an invitee finds their own invitations from their own organization';
 END
-$$;
+$do$;

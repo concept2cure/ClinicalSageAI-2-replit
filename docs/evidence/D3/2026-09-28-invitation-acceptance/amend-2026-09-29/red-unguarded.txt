@@ -1,0 +1,4 @@
+# tests/schema-contract/tenant-isolation-sweep.contract.test.ts with migrations/20260928_invitations_for_member.sql as committed in 7347a3e2 (unguarded)
+ FAIL  tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated
+Error: pass 1: migrations/20260928_invitations_for_member.sql failed — relation "public.organization_invitations" does not exist
+      Tests  16 passed | 3 skipped (19)
