@@ -82,6 +82,8 @@ import {
   type AuthoringAuditContext,
   type CreateAuditTrailOptions,
 } from '../services/authoring/authoring-evidence';
+import { loadAuthoringRecord, resolveTurnRecordSource, textSha256 } from '../services/authoring/authoring-record';
+import { sendAuditedExport, walkTenantChain } from '../services/audit/audited-export';
 import {
   renderAuthoringExport,
   logExport,
@@ -2449,6 +2451,99 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
 
 // ============= Comments & Review =============
 
+/**
+ * What a comment's trail row records beside its words (after_content): the
+ * passage it quotes with that passage's own hash, and the hash of the section
+ * content the quote was taken from — so a quote can be matched to the
+ * revision it read.
+ */
+function commentRecordMetadata(
+  commentId: string,
+  sectionId: string,
+  parentCommentId: unknown,
+  anchor: unknown,
+  sectionContent: unknown,
+): Record<string, unknown> {
+  const quote =
+    anchor && typeof anchor === 'object' && typeof (anchor as { quote?: unknown }).quote === 'string'
+      ? (anchor as { quote: string }).quote
+      : null;
+  return {
+    comment_id: commentId,
+    section_id: sectionId,
+    parent_comment_id: parentCommentId ?? null,
+    anchor: anchor ?? null,
+    quote,
+    quoteSha256: quote ? textSha256(quote) : null,
+    sectionContentSha256: textSha256(String(sectionContent ?? '')),
+  };
+}
+
+/**
+ * The comment and its record, on the caller's transaction. The section must be
+ * this tenant's; the document is the SECTION's, and a body doc_id that names
+ * another is refused; a reply belongs to a thread on the same section. Returns
+ * the refusal rather than answering (nothing has been written by then), so the
+ * caller responds once, after the transaction ends.
+ */
+async function writeAttributedComment(
+  client: Queryable,
+  req: Request,
+  c: {
+    commentId: string;
+    sectionId: string;
+    tenantId: number;
+    body: string;
+    anchor: unknown;
+    claimedDocId: unknown;
+    parentCommentId: unknown;
+    positionData: unknown;
+    createdBy: string;
+    userName: string;
+    userEmail: string | null;
+  },
+): Promise<{ ok: true; comment: Record<string, unknown> } | { ok: false; status: number; error: string }> {
+  const section = await client.query(
+    'SELECT id, doc_id, content FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
+    [c.sectionId, c.tenantId]
+  );
+  if ((section.rowCount ?? 0) === 0) return { ok: false, status: 404, error: 'Section not found' };
+  const docId = String(section.rows[0].doc_id);
+  if (c.claimedDocId != null && String(c.claimedDocId).toLowerCase() !== docId.toLowerCase()) {
+    return { ok: false, status: 400, error: 'doc_id is not the document this section belongs to. Nothing was saved.' };
+  }
+  if (c.parentCommentId) {
+    const parent = await client.query(
+      'SELECT 1 FROM authoring_comments WHERE id::text = $1 AND section_id = $2 AND tenant_id = $3',
+      [String(c.parentCommentId), c.sectionId, c.tenantId]
+    );
+    if ((parent.rowCount ?? 0) === 0) {
+      return { ok: false, status: 400, error: 'The comment being replied to is not on this section. Nothing was saved.' };
+    }
+  }
+  const result = await client.query(
+    `INSERT INTO authoring_comments
+     (id, section_id, doc_id, body, anchor, status, created_by, user_name, user_email,
+      parent_comment_id, position_data, created_at, tenant_id)
+     VALUES ($1, $2, $3, $4, $5, 'open', $6, $7, $8, $9, $10, NOW(), $11)
+     RETURNING *`,
+    [c.commentId, c.sectionId, docId, c.body, c.anchor, c.createdBy, c.userName, c.userEmail,
+      c.parentCommentId, c.positionData, c.tenantId]
+  );
+  await createAuditTrail(
+    req,
+    docId,
+    c.sectionId,
+    c.parentCommentId ? 'reply_added' : 'comment_added',
+    null,
+    c.body,
+    null,
+    commentRecordMetadata(c.commentId, c.sectionId, c.parentCommentId, c.anchor, section.rows[0].content),
+    client
+  );
+  return { ok: true, comment: result.rows[0] };
+}
+
 // POST /api/authoring/sections/:sectionId/comment - Add comment
 // THE comment-creation endpoint. There used to be two: this one, which the
 // editor calls (DocumentAuthoring.tsx:471), and a `POST /comments` that wrote
@@ -2484,75 +2579,37 @@ router.post('/sections/:sectionId/comment', async (req: Request, res: Response) 
       });
     }
 
-    /* The comment belongs to the document its SECTION belongs to — the section
-       the guard authorised. doc_id and parent_comment_id came from the body
-       and were inserted as sent, so a grant on one document let a caller file
-       comments and audit rows under another, frozen ones included, and hold
-       up its freeze with a thread its own reviewers could not resolve
-       (periodic review 2026-09-28, editor family, SEC-A-2). A body doc_id
-       that disagrees is refused rather than overridden, so a client bug
-       surfaces; a parent must be a comment on this same section. The comment
-       and its audit row commit together. */
-    const outcome = await inTransaction(async (client) => {
-      // The section must belong to this tenant before anything is attached to
-      // it; without the check 201-vs-500 confirmed foreign section ids.
-      const section = await client.query(
-        'SELECT id, doc_id FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
-        [sectionId, tenantId]
-      );
-      if ((section.rowCount ?? 0) === 0) return { status: 404, error: 'Section not found' };
-      const docId = String(section.rows[0].doc_id);
-      if (doc_id != null && String(doc_id).toLowerCase() !== docId.toLowerCase()) {
-        return { status: 400, error: 'doc_id is not the document this section belongs to. Nothing was saved.' };
-      }
-      if (parent_comment_id) {
-        const parent = await client.query(
-          'SELECT 1 FROM authoring_comments WHERE id::text = $1 AND section_id = $2 AND tenant_id = $3',
-          [String(parent_comment_id), sectionId, tenantId]
-        );
-        if ((parent.rowCount ?? 0) === 0) {
-          return { status: 400, error: 'The comment being replied to is not on this section. Nothing was saved.' };
-        }
-      }
-
-      const inserted = await client.query(
-        `INSERT INTO authoring_comments
-         (id, section_id, doc_id, body, anchor, status, created_by, user_name, user_email,
-          parent_comment_id, position_data, created_at, tenant_id)
-         VALUES ($1, $2, $3, $4, $5, 'open', $6, $7, $8, $9, $10, NOW(), $11)
-         RETURNING *`,
-        [
-          commentId,
-          sectionId,
-          docId,
-          body,
-          anchor,
-          createdBy,
-          userName,
-          userEmail,
-          parent_comment_id || null,
-          position_data ?? null,
-          tenantId,
-        ]
-      );
-
-      await createAuditEvent(
-        docId,
-        parent_comment_id ? 'reply_added' : 'comment_added',
-        userName,
-        { comment_id: commentId, section_id: sectionId, anchor },
+    /* The comment and its record commit together, or neither does (D5,
+       2026-09-26). This used to INSERT on the pool in autocommit and then
+       write the audit row separately through the legacy wrapper — with no
+       body, the reason "Legacy audit event" and the actor lost, so the
+       inspector's ledger showed the comment as made by "System", and a failed
+       audit write left a comment nobody had recorded. The comment belongs to
+       the document its SECTION belongs to: a body doc_id that disagrees is
+       refused rather than overridden, so a client bug surfaces, and a parent
+       must be a comment on this same section (SEC-A-2, periodic review
+       2026-09-28). */
+    const written = await inTransaction((client) =>
+      writeAttributedComment(client, req, {
+        commentId,
+        sectionId: String(sectionId),
         tenantId,
-        client
-      );
-      return { status: 201, comment: inserted.rows[0] };
-    });
+        body: String(body),
+        anchor,
+        claimedDocId: doc_id,
+        parentCommentId: parent_comment_id ?? null,
+        positionData: position_data ?? null,
+        createdBy,
+        userName,
+        userEmail,
+      })
+    );
+    if (!written.ok) return res.status(written.status).json({ success: false, error: written.error });
+    const created = written.comment;
 
-    if (!('comment' in outcome)) {
-      return res.status(outcome.status).json({ success: false, error: outcome.error });
-    }
     res.status(201).json({
       success: true,
-      comment: outcome.comment,
+      comment: created,
       message: 'Comment added successfully',
     });
   } catch (error) {
@@ -2560,6 +2617,77 @@ router.post('/sections/:sectionId/comment', async (req: Request, res: Response) 
     return serverError(res, logger, 'saving comment', error);
   }
 });
+
+/**
+ * The record of a comment's status change, written with the REAL request: the
+ * legacy wrapper this used rebuilt a request with no user id, so the chained
+ * row had no actor and the ledger showed a person's resolution as "System".
+ * The resolution note is the person's stated reason for closing the thread;
+ * before and after content are the previous and new notes.
+ */
+async function recordCommentStatusChange(
+  client: Queryable,
+  req: Request,
+  change: {
+    commentId: string;
+    status: unknown;
+    before: { status: string; resolution_note: string | null };
+    updated: { doc_id: string | null; section_id: string; status: string; resolution_note: string | null };
+  },
+): Promise<void> {
+  const { commentId, status, before, updated } = change;
+  const transition =
+    status === 'resolved' ? 'resolved' : status === 'open' ? 'reopened' : status ? String(status) : 'note';
+  await createAuditTrail(
+    req,
+    updated.doc_id ?? undefined,
+    updated.section_id,
+    status === 'resolved' ? 'comment_resolved' : 'comment_updated',
+    before.resolution_note ?? null,
+    updated.resolution_note ?? null,
+    status === 'resolved' ? (updated.resolution_note ?? null) : null,
+    {
+      comment_id: commentId,
+      section_id: updated.section_id,
+      transition,
+      previous_status: before.status,
+      status: updated.status,
+      previous_resolution_note: before.resolution_note ?? null,
+      resolution_note: updated.resolution_note ?? null,
+    },
+    client
+  );
+}
+
+/** The SET clauses and their values for a comment status change; empty when nothing changes. */
+function commentStatusUpdate(
+  status: unknown,
+  resolutionNote: unknown,
+  resolver: string,
+): { updates: string[]; values: unknown[] } {
+  const updates: string[] = [];
+  const values: unknown[] = [];
+  const param = (v: unknown) => `$${values.push(v)}`;
+  if (status) {
+    updates.push(`status = ${param(status)}`);
+    if (status === 'resolved') {
+      updates.push(`resolved_at = NOW(), resolved_by = ${param(resolver)}`);
+      // The resolution RECORD is this resolution's, whole: a re-resolve
+      // without a stated reason must not display the PREVIOUS resolver's
+      // note under the new resolver's name. The prior resolution stays in
+      // the audit ledger; the row carries only the current one.
+      updates.push(`resolution_note = ${param(resolutionNote || null)}`);
+    } else if (status === 'open') {
+      // Reopen clears the resolution fields — the row reflects CURRENT
+      // state ("this thread is open"), and the who/when/why of the earlier
+      // resolution lives in the audit trail, not on an open thread.
+      updates.push('resolved_at = NULL, resolved_by = NULL, resolution_note = NULL');
+    }
+  } else if (resolutionNote) {
+    updates.push(`resolution_note = ${param(resolutionNote)}`);
+  }
+  return { updates, values };
+}
 
 // PATCH /api/authoring/comments/:commentId - Update comment status
 router.patch('/comments/:commentId', async (req: Request, res: Response) => {
@@ -2580,41 +2708,12 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
       });
     }
 
-    const updates = [];
-    const values = [];
-    let paramCount = 0;
-
-    if (status) {
-      paramCount++;
-      updates.push(`status = $${paramCount}`);
-      values.push(status);
-
-      if (status === 'resolved') {
-        paramCount++;
-        updates.push(`resolved_at = NOW(), resolved_by = $${paramCount}`);
-        // The same principal convention comment CREATION records (user_name =
-        // verified email, falling back to the actor id): the rail displays
-        // this value, and "Resolved by 1" is an attribution no reader can use.
-        // Still JWT-sourced either way — never a header, never the body.
-        values.push(req.user?.email ?? resolvedBy);
-        // The resolution RECORD is this resolution's, whole: a re-resolve
-        // without a stated reason must not display the PREVIOUS resolver's
-        // note under the new resolver's name. The prior resolution stays in
-        // the audit ledger; the row carries only the current one.
-        paramCount++;
-        updates.push(`resolution_note = $${paramCount}`);
-        values.push(resolution_note || null);
-      } else if (status === 'open') {
-        // Reopen clears the resolution fields — the row reflects CURRENT
-        // state ("this thread is open"), and the who/when/why of the earlier
-        // resolution lives in the audit trail, not on an open thread.
-        updates.push('resolved_at = NULL, resolved_by = NULL, resolution_note = NULL');
-      }
-    } else if (resolution_note) {
-      paramCount++;
-      updates.push(`resolution_note = $${paramCount}`);
-      values.push(resolution_note);
-    }
+    // The same principal convention comment CREATION records (user_name =
+    // verified email, falling back to the actor id): the rail displays this
+    // value, and "Resolved by 1" is an attribution no reader can use. Still
+    // JWT-sourced either way — never a header, never the body.
+    const { updates, values } = commentStatusUpdate(status, resolution_note, req.user?.email ?? resolvedBy);
+    const paramCount = values.length;
 
     if (updates.length === 0) {
       // An empty body used to build `SET  WHERE id = $1` — malformed SQL
@@ -2648,23 +2747,12 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
       );
 
       const updated = result.rows[0];
-      const eventType = status === 'resolved' ? 'comment_resolved' : 'comment_updated';
-      const actor = req.user?.email ?? resolvedBy;
-      await createAuditEvent(
-        updated.doc_id,
-        eventType,
-        actor,
-        {
-          comment_id: commentId,
-          section_id: updated.section_id,
-          previous_status: before.rows[0].status,
-          status: updated.status,
-          previous_resolution_note: before.rows[0].resolution_note ?? null,
-          resolution_note: updated.resolution_note ?? null,
-        },
-        tenantId,
-        client
-      );
+      await recordCommentStatusChange(client, req, {
+        commentId: String(commentId),
+        status,
+        before: before.rows[0],
+        updated,
+      });
 
       await client.query('COMMIT');
       res.json({
@@ -3549,6 +3637,10 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     let generator: Record<string, unknown> | null = null;
     /* Whether the caller's accepted text still IS the generated draft. */
     let draftModifiedOnAccept = false;
+    /* The draft as the model wrote it. When the author edited it before
+       accepting, the saved content no longer contains it, and the candidate
+       row is consumed below — so it is recorded here or nowhere. */
+    let generatedDraft = '';
     /* Whether the accepted content reached the bound filing, and when it did
        not, why — surfaced on the response exactly as the manual save does. */
     let governedCommit: CommitSectionResult | null = null;
@@ -3577,6 +3669,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       acceptedContent =
         typeof req.body?.content === 'string' ? req.body.content : candidate.content;
       draftModifiedOnAccept = acceptedContent !== candidate.content;
+      generatedDraft = candidate.content;
 
       saved = await client.query(
         `UPDATE authoring_sections SET content = $1, updated_at = NOW()
@@ -3646,6 +3739,40 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         draftSource: 'ana',
       });
 
+      /* The revision and the Part 11 record, IN this transaction (D5,
+         2026-09-26). They used to be written after COMMIT, on their own
+         connections, with a failure logged as non-fatal — so an accepted AI
+         draft could stand in the document with no revision and no record of
+         who accepted it. The accept now lands with both or not at all. */
+      await createRevision(String(sectionId), acceptedContent, actor, tenantId, client, 'ai-draft-accept');
+      await createAuditTrail(
+        req,
+        saved.rows[0]?.doc_id,
+        sectionId,
+        'UPDATE',
+        priorContent,
+        acceptedContent,
+        /* THE REASON IS THE AUTHOR'S, OR NOT STATED — never "Accepted AI draft".
+           Accepting an AI draft is provenance (the revision origin
+           'ai-draft-accept' and the metadata below), not a reason WHY this
+           regulatory text was chosen. */
+        typeof req.body?.changeReason === 'string' && req.body.changeReason.trim()
+          ? req.body.changeReason
+          : null,
+        /* Which model, which provider, which prompt; whether the author edited
+           the draft before accepting; and, when they did, the draft as the
+           model wrote it, so "accepted AI draft" never vouches for words the
+           model did not produce and the words it did produce are not lost. */
+        {
+          source: 'ai-draft-accept',
+          generator,
+          draft_modified_on_accept: draftModifiedOnAccept,
+          generated_draft_sha256: textSha256(generatedDraft),
+          ...(draftModifiedOnAccept ? { generated_draft: generatedDraft } : {}),
+        },
+        client,
+      );
+
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
@@ -3659,53 +3786,13 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         error: {
           code: 'LINEAGE_REQUIRED',
           message:
-            'The draft was not saved: its source/author lineage could not be recorded. ' +
-            'Saving content without provenance is not permitted.',
+            'The draft was not saved: its source/author lineage or its audit record could not be written. ' +
+            'Saving content without provenance or a record is not permitted.',
         },
       });
     } finally {
       client.release();
     }
-
-    // Revision + Part 11 audit record, mirroring PATCH /sections — additive, on
-    // their own connections, after the content+lineage commit, and non-fatal (the
-    // edit already landed; failing here would report failure for a change that
-    // succeeded).
-    try {
-      await createRevision(String(sectionId), acceptedContent, actor, tenantId, pool, 'ai-draft-accept');
-    } catch (revErr: any) {
-      console.warn('[Authoring] AI draft accept: revision write failed (non-fatal):', revErr?.message);
-    }
-    await createAuditTrail(
-      req,
-      saved.rows[0]?.doc_id,
-      sectionId,
-      'UPDATE',
-      priorContent,
-      acceptedContent,
-      /* THE REASON IS THE AUTHOR'S, OR NOT STATED — never "Accepted AI draft".
-         That fallback put a MECHANISM in the reason-for-change field, where it
-         read as a human's justification for the edit; it is the same pattern
-         removed from the manual save's `app.reason` default. Accepting an AI
-         draft is provenance (recorded on the revision origin 'ai-draft-accept'
-         and in the metadata below), not a reason WHY this regulatory text was
-         chosen. When the author states a reason it is used; when they do not,
-         the record says so rather than inventing one. */
-      typeof req.body?.changeReason === 'string' && req.body.changeReason.trim()
-        ? req.body.changeReason
-        : null,
-      /* Which model, which provider, which prompt. All three existed at draft
-         time and used to reach the browser and stop there, so "what produced
-         this text?" was answerable for about as long as the tab stayed open —
-         the first question an assessor asks about AI-assisted content, and the
-         one piece of provenance being collected and then discarded. */
-      /* draft_modified_on_accept: the accept endpoint allows the author to
-         hand-edit the draft before accepting, so the provenance must not vouch
-         for words the model never produced. True here means the saved text
-         differs from the generated candidate — the generator metadata
-         describes the draft's origin, not the final wording. */
-      { source: 'ai-draft-accept', generator, draft_modified_on_accept: draftModifiedOnAccept },
-    );
 
     res.json({
       success: true,
@@ -6135,24 +6222,107 @@ router.get('/docs/:docId/audit', async (req: Request, res: Response) => {
     const { limit = 100 } = req.query;
     const tenantId = getTenantId(req);
 
-    const result = await pool.query(
-      `SELECT id, doc_id, section_id,
-              operation_type AS event_type,
-              actor_email    AS actor,
-              actor_role, change_reason,
-              content_hash_before, content_hash_after,
-              metadata, created_at, tenant_id
-         FROM authoring_audit_trail
-        WHERE doc_id = $1 AND tenant_id = $2
-        ORDER BY created_at DESC
-        LIMIT $3`,
-      [docId, tenantId, limit]
-    );
+    /* Each row now carries `integrity`: whether a chained entry names it and,
+       when one does, whether its content, metadata, reason and operation still
+       match what the chain carries (D5, 2026-09-26). The before/after content
+       is read to check it and is not returned — the response keeps the shape
+       callers were coded against. */
+    const record = await loadAuthoringRecord(pool, tenantId, String(docId), { limit: Number(limit) || 100 });
+    const events = record.events.map((e) => ({
+      id: e.id,
+      doc_id: e.doc_id,
+      section_id: e.section_id,
+      event_type: e.operation_type,
+      actor: e.actor_email,
+      actor_role: e.actor_role,
+      change_reason: e.change_reason,
+      content_hash_before: e.content_hash_before,
+      content_hash_after: e.content_hash_after,
+      metadata: e.metadata,
+      created_at: e.created_at,
+      tenant_id: tenantId,
+      integrity: record.verdicts.get(e.id) ?? null,
+    }));
 
-    res.json({ success: true, events: result.rows, count: result.rowCount });
+    res.json({ success: true, events, count: events.length });
   } catch (error) {
     console.error('Error getting audit trail:', error);
     res.status(500).json({ error: 'Failed to get audit trail' });
+  }
+});
+
+export const AUTHORING_RECORD_EXPORT_FORMAT = 'authoring-record-export/1';
+
+/**
+ * GET /api/authoring/docs/:docId/audit/export — the document's whole authoring
+ * record for an inspector: every trail row with its full content (the words of
+ * every comment and the passage it quoted, every tracked change's proposed text
+ * and the decision on it, every section edit before and after), each row's
+ * chained entry and verdict, the tenant chain walked now, and how to check it
+ * all offline. Recorded on the chain before anything leaves, refused when that
+ * record cannot be written. Readable by whoever may read the document's trail
+ * (GET /docs/:docId/audit), which is tenant-scoped.
+ */
+router.get('/docs/:docId/audit/export', async (req: Request, res: Response) => {
+  try {
+    const { docId } = req.params;
+    const tenantId = getTenantId(req);
+    const doc = await pool.query(
+      'SELECT id, title, status, module FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+      [docId, tenantId]
+    );
+    if ((doc.rowCount ?? 0) === 0) {
+      return res.status(404).json({ success: false, error: 'Document not found' });
+    }
+    const record = await loadAuthoringRecord(pool, tenantId, String(docId), { limit: 10000, order: 'asc' });
+    const verdicts = Object.fromEntries(record.verdicts);
+    const intact = [...record.verdicts.values()].filter((v) => v.intact === true).length;
+    const broken = [...record.verdicts.values()].filter((v) => v.intact === false).length;
+    const tenantChain = await walkTenantChain(tenantId);
+    const exportedAt = new Date().toISOString();
+    const actorId = getActorId(req);
+    return sendAuditedExport(pool, res, {
+      tenantId,
+      userId: actorId,
+      action: 'authoring.record.exported',
+      resourceType: 'authoring_document',
+      resourceId: String(docId),
+      details: {
+        format: AUTHORING_RECORD_EXPORT_FORMAT,
+        events: record.events.length,
+        intact,
+        broken,
+        tenantChainOk: tenantChain.ok,
+        exportedAt,
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') ?? undefined,
+      filename: `authoring-record-${docId}.json`,
+      refusalCode: 'AUTHORING_RECORD_EXPORT_NOT_RECORDED',
+      body: {
+        format: AUTHORING_RECORD_EXPORT_FORMAT,
+        exportedAt,
+        exportedBy: { userId: actorId },
+        document: doc.rows[0],
+        events: record.events,
+        chain: Object.fromEntries(record.chain),
+        verdicts,
+        summary: { events: record.events.length, intact, broken, notChained: record.events.length - intact - broken },
+        tenantChain,
+        howToVerify: [
+          'For each event, find chain[event.id]; its details.trailId equals event.id.',
+          'SHA-256 of before_content and of after_content (UTF-8) equal details.contentHashBefore / contentHashAfter (null when empty).',
+          'SHA-256 of the canonical JSON (keys sorted, no whitespace) of event.metadata equals details.metadataSha256 — the metadata holds a comment\'s quoted passage and a tracked change\'s proposed text.',
+          'event.change_reason equals details.changeReason and event.operation_type equals details.operationType.',
+          'SHA-256 of JSON.stringify(details) equals the chain entry\'s payloadHash — the value its chain link was computed over.',
+          'Events with no chain entry were written before 2026-09-26 or on the standalone index path: unverifiable here, not intact.',
+          "tenantChain is the server's walk of the organization's whole audit chain at export time; `npm run ops:verify-audit-chain` repeats it.",
+        ],
+      },
+    });
+  } catch (error) {
+    console.error('Error exporting authoring record:', error);
+    return serverError(res, logger, 'exporting the authoring record', error);
   }
 });
 
@@ -6329,6 +6499,101 @@ const SECTION_NOT_IN_DOCUMENT = {
   },
 } as const;
 
+/**
+ * Write one reviewer act on tracked changes — a single decision or an "Accept
+ * all" — inside the caller's transaction: the current-verdict upserts (an
+ * index), then ONE trail row describing every change decided, whole. Returns
+ * the upserted rows.
+ */
+async function recordTrackedChangeAct(
+  client: Queryable,
+  req: Request,
+  act: {
+    artifactId: string;
+    tenantId: number;
+    userId: string;
+    userName: string;
+    decision: 'accept' | 'reject';
+    sectionId: string | null;
+    changes: Array<{ changeId: string; context: Record<string, unknown> }>;
+    bulk: boolean;
+  },
+): Promise<any[]> {
+  const rows: any[] = [];
+  const described: Record<string, unknown>[] = [];
+  for (const { changeId, context } of act.changes) {
+    const result = await client.query(
+      `INSERT INTO authoring_tracked_change_decisions
+         (artifact_id, change_id, decision, user_id, user_name, tenant_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (artifact_id, change_id, tenant_id)
+       DO UPDATE SET decision = $3, user_id = $4, user_name = $5, decided_at = NOW()
+       RETURNING *`,
+      [act.artifactId, changeId, act.decision, act.userId, act.userName, act.tenantId]
+    );
+    rows.push(result.rows[0]);
+    described.push(
+      await describeTrackedChange(client, act.tenantId, {
+        changeId,
+        changeType: context.changeType,
+        text: context.text,
+        authorName: context.authorName,
+        authorId: context.authorId,
+        at: context.at,
+        sourceRecord: context.sourceRecord,
+      })
+    );
+  }
+  // sectionId in the details as well as the row's own column: readers of the
+  // details (the rail, an export) name the section without a join.
+  const section = act.sectionId ? { sectionId: act.sectionId } : {};
+  const metadata = act.bulk
+    ? { changeIds: act.changes.map((c) => c.changeId), decision: act.decision, count: act.changes.length, ...section, changes: described }
+    : { decision: act.decision, ...section, ...described[0] };
+  await createAuditTrail(
+    req,
+    act.artifactId,
+    act.sectionId,
+    act.bulk ? 'tracked_change_bulk_decision' : 'tracked_change_decision',
+    null,
+    null,
+    statedReason(req.body?.reason),
+    metadata,
+    client
+  );
+  return rows;
+}
+
+
+/** A reason the person stated, or null — never one this server makes up. */
+function statedReason(reason: unknown): string | null {
+  return typeof reason === 'string' && reason.trim() ? reason.trim().slice(0, 2000) : null;
+}
+
+/**
+ * What was decided, whole: the change, its full proposed text and that text's
+ * hash, who proposed it as the editing client recorded it (describeProposer),
+ * when, and the AnA turn record it came from — verified in this tenant, or
+ * recorded as claimed-but-unverified with why.
+ */
+async function describeTrackedChange(
+  executor: Queryable,
+  tenantId: number,
+  c: { changeId: unknown; changeType: unknown; text: unknown; authorName: unknown; authorId: unknown; at: unknown; sourceRecord: unknown },
+): Promise<Record<string, unknown>> {
+  const text = typeof c.text === 'string' && c.text.length > 0 ? c.text : null;
+  const source = await resolveTurnRecordSource(executor, tenantId, c.sourceRecord);
+  return {
+    changeId: typeof c.changeId === 'string' ? c.changeId : String(c.changeId ?? ''),
+    changeType: decisionChangeType(c.changeType),
+    text,
+    textSha256: text ? textSha256(text) : null,
+    ...describeProposer(c.authorName, c.authorId),
+    proposedAt: typeof c.at === 'string' ? c.at : null,
+    ...(source ? { source } : {}),
+  };
+}
+
 // authoring_tracked_change_decisions is now provisioned by
 // db/migrations/20260730_authoring_runtime_ddl.sql. Retained as a no-op so
 // existing call sites need no change; the router no longer issues runtime DDL.
@@ -6384,49 +6649,27 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
       return res.status(400).json(SECTION_NOT_IN_DOCUMENT);
     }
 
-    const result = await pool.query(
-      `INSERT INTO authoring_tracked_change_decisions
-         (artifact_id, change_id, decision, user_id, user_name, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (artifact_id, change_id, tenant_id)
-       DO UPDATE SET decision = $3, user_id = $4, user_name = $5, decided_at = NOW()
-       RETURNING *`,
-      [artifactId, changeId, decision, userId, userName, tenantId]
-    );
-
-    /* Audit trail for regulatory compliance.
-       `authoring_tracked_change_decisions` stores the id and the verdict and
-       nothing about the change itself — and accepting a suggestion STRIPS its
-       mark, so by the time anyone reads the row the id it names no longer
-       exists in the document. The row is an index; this is where the change is
-       actually recorded, so the decision can be read back as a sentence rather
-       than as an opaque key. The text is bounded: an audit row is not a place
-       to mirror a section. */
-    await createAuditEvent(
-      artifactId,
-      'tracked_change_decision',
-      userName,
-      {
-        changeId,
+    /* The decision and its record commit together (D5, 2026-09-26). The
+       upsert below is the CURRENT verdict per change — an index; the record is
+       the trail row, append-only, and it keeps every decision ever made on the
+       change with the whole proposed text. That text used to be cut to 500
+       characters and the row written after the upsert had already committed,
+       through a wrapper that lost the actor. Accepting a suggestion strips its
+       mark, so this row is the only place the proposed words survive. */
+    const rows = await inTransaction((client) =>
+      recordTrackedChangeAct(client, req, {
+        artifactId: String(artifactId),
+        tenantId,
+        userId,
+        userName,
         decision,
-        ...(decisionChangeType(req.body?.changeType) ? { changeType: decisionChangeType(req.body?.changeType) } : {}),
-        ...(typeof req.body?.text === 'string' && req.body.text.length > 0
-          ? { text: req.body.text.slice(0, 500) }
-          : {}),
-        ...(typeof req.body?.sectionId === 'string' ? { sectionId: req.body.sectionId } : {}),
-        /* Who PROPOSED the change, which is not who decided it — that is the
-           audit row's own actor. A redline record that cannot tell the two
-           apart says nothing about review at all. See describeProposer above
-           for why this is canonicalised only for a machine author and
-           otherwise recorded as caller-asserted text, never validated as a
-           human identity. */
-        ...describeProposer(req.body?.authorName, req.body?.authorId),
-        ...(typeof req.body?.at === 'string' ? { proposedAt: req.body.at } : {}),
-      },
-      tenantId
+        sectionId: typeof req.body?.sectionId === 'string' ? req.body.sectionId : null,
+        changes: [{ changeId: String(changeId), context: req.body ?? {} }],
+        bulk: false,
+      })
     );
 
-    res.json({ success: true, decision: result.rows[0] });
+    res.json({ success: true, decision: rows[0] });
   } catch (error) {
     console.error('Error persisting tracked change decision:', error);
     return serverError(res, logger, 'saving tracked change decisions', error);
@@ -6479,64 +6722,25 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
       return res.status(400).json(SECTION_NOT_IN_DOCUMENT);
     }
 
-    // Upsert each decision
-    const results = [];
-    for (const changeId of changeIds) {
-      const result = await pool.query(
-        `INSERT INTO authoring_tracked_change_decisions
-           (artifact_id, change_id, decision, user_id, user_name, tenant_id)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (artifact_id, change_id, tenant_id)
-         DO UPDATE SET decision = $3, user_id = $4, user_name = $5, decided_at = NOW()
-         RETURNING *`,
-        [artifactId, changeId, decision, userId, userName, tenantId]
-      );
-      results.push(result.rows[0]);
-    }
-
-    /* Single audit event for the bulk action.
-       Ids alone would make this row unresolvable for exactly the case that
-       needs it most: rejecting changes alters no text, so no revision records
-       what was refused. A bounded per-change summary travels with it, and when
-       it is bounded the row SAYS how many it left out — a truncated record
-       that looks complete is worse than one that admits its limit. */
-    const MAX_SUMMARISED = 20;
-    const rawChanges = Array.isArray(req.body?.changes) ? req.body.changes : [];
-    const summarised = rawChanges.slice(0, MAX_SUMMARISED).map((c: any) => {
-      // See describeProposer above (single-decision route): canonical name for
-      // a recognised machine author, otherwise caller-asserted text flagged as
-      // such via proposedByVerified.
-      const proposer = describeProposer(c?.authorName, c?.authorId);
-      return {
-      changeId: typeof c?.changeId === 'string' ? c.changeId : null,
-      changeType: decisionChangeType(c?.changeType),
-      proposedBy: proposer.proposedBy ?? null,
-      proposedByVerified: proposer.proposedByVerified ?? null,
-      text: typeof c?.text === 'string' ? c.text.slice(0, 200) : null,
-      // The single-decision route above records this; the client already sends
-      // it (DocumentAuthoring.tsx's flushDecisions puts `at` on every change in
-      // the batch), and "Accept all" is the case that adopts the most text at
-      // once — the case that most needs to say when each change was proposed.
-      proposedAt: typeof c?.at === 'string' ? c.at : null,
-      };
-    });
-    await createAuditEvent(
-      artifactId,
-      'tracked_change_bulk_decision',
-      userName,
-      {
-        changeIds,
+    /* "Accept all" is the one click by which a whole AI draft is adopted, so
+       its record is complete: every change, with its whole proposed text and
+       the AnA turn it came from — no longer the first 20, cut to 200
+       characters each. One act, one trail row; the upserts and that row commit
+       together or not at all. */
+    const rawChanges: any[] = Array.isArray(req.body?.changes) ? req.body.changes : [];
+    const byId = new Map<string, any>();
+    for (const c of rawChanges) if (c && typeof c.changeId === 'string') byId.set(c.changeId, c);
+    const results = await inTransaction((client) =>
+      recordTrackedChangeAct(client, req, {
+        artifactId: String(artifactId),
+        tenantId,
+        userId,
+        userName,
         decision,
-        count: changeIds.length,
-        // Same client field the single route records at the top level of its
-        // metadata (authoring.router.ts, POST /documents/:id/tracked-change-decisions).
-        ...(typeof req.body?.sectionId === 'string' ? { sectionId: req.body.sectionId } : {}),
-        ...(summarised.length > 0 ? { changes: summarised } : {}),
-        ...(rawChanges.length > MAX_SUMMARISED
-          ? { changesOmittedFromSummary: rawChanges.length - MAX_SUMMARISED }
-          : {}),
-      },
-      tenantId
+        sectionId: typeof req.body?.sectionId === 'string' ? req.body.sectionId : null,
+        changes: changeIds.map((id: unknown) => ({ changeId: String(id), context: byId.get(String(id)) ?? {} })),
+        bulk: true,
+      })
     );
 
     res.json({ success: true, decisions: results, count: results.length });

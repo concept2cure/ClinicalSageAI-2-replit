@@ -87,6 +87,7 @@ import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { getTenantScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { getContentClassifier } from '../ai-governance/classification/index.js';
+import { currentRunScope } from './run-scope';
 import { approvedEntryFor, isApprovedForHighRisk, isHighRiskRequest } from '../ai-governance/approved-models.js';
 import {
   extractRequestText,
@@ -1512,6 +1513,7 @@ export class AIGateway {
         if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(selectedModel.id);
+        await this.endOnTerminalDecline(error, selectedModel, { request, requestId, startTime, strategy, triedModels, contentPolicy });
         this.noteRungFailure(selectedModel, error, declines);
         log.warn(
           `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`
@@ -1541,6 +1543,7 @@ export class AIGateway {
         if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(fallback.id);
+        await this.endOnTerminalDecline(error, fallback, { request, requestId, startTime, strategy, triedModels, contentPolicy });
         this.noteRungFailure(fallback, error, declines);
         log.warn(
           `[AI Gateway] Fallback ${fallback.provider}/${fallback.model} failed: ${error.message}`
@@ -1549,17 +1552,7 @@ export class AIGateway {
     }
 
     // All providers failed — log and throw
-    const errorResponse: GatewayResponse = {
-      content: '',
-      provider: selectedModel.provider,
-      model: selectedModel.model,
-      usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0 },
-      latencyMs: Date.now() - startTime,
-      requestId,
-      cached: false,
-      deterministic: false,
-      finishReason: 'error',
-    };
+    const errorResponse = failedCallResponse(selectedModel, requestId, startTime);
     // When every candidate was refused for size, no provider was ever called.
     // That is not "all providers failed" — it is "this request cannot be served
     // in one call" — and it is reported as such, with the numbers the caller
@@ -3473,15 +3466,13 @@ export class AIGateway {
         ...request,
         metadata: {
           ...(request.metadata ?? {}),
+          // Only what has no typed column: the reason code, resolution, binding
+          // and provenance are columns (ledgerProvenance), written once.
           tenantPlacement: {
-            reasonCode: error.reasonCode,
             detail: error.detail,
             stage: error.stage,
             providers,
-            resolution: tenant?.resolution,
             unknownReason: tenant?.unknownReason,
-            boundFrom: tenant?.boundFrom,
-            payloadProvenance: request.payloadProvenance ?? 'tenant_governed',
           },
         },
       },
@@ -3614,6 +3605,36 @@ export class AIGateway {
    * that may not run elsewhere ends the walk. Anything else is a provider
    * failure as before.
    */
+  /**
+   * A decline no other model may run ends the call. It is recorded before it is
+   * rethrown: the provider received the payload, and until 2026-09-26 such a
+   * call left no ledger row (noteRungFailure threw past both audit writes).
+   */
+  private async endOnTerminalDecline(
+    error: unknown,
+    model: ModelConfig,
+    call: {
+      request: GatewayRequest;
+      requestId: string;
+      startTime: number;
+      strategy: RoutingStrategy;
+      triedModels: string[];
+      contentPolicy?: { action: ContentPolicyAction; findings: PolicyFinding[] };
+    },
+  ): Promise<void> {
+    if (!(error instanceof GatewayModelDeclinedError) || error.retryable) return;
+    await this.logAudit(
+      call.request,
+      failedCallResponse(model, call.requestId, call.startTime),
+      call.strategy,
+      false,
+      error.message,
+      call.triedModels,
+      call.contentPolicy,
+    );
+    throw error;
+  }
+
   private noteRungFailure(
     model: ModelConfig,
     error: Error,
@@ -3763,14 +3784,13 @@ export class AIGateway {
         // rather than asserting a value the provider never saw. Exactly the
         // rule the temperature field above follows.
         seed: response.effectiveSeed,
-        promptHash: this.hashPrompt(request.messages),
+        promptHash: this.hashPrompt(request),
         promptVersion,
         triedModels: triedModels && triedModels.length > 0 ? triedModels : undefined,
         // Placement / residency evidence.
         substrate: placement.substrate,
-        region: servingRegion(placement, request),
         retentionPolicy: placement.zeroDataRetention ? 'zero_retention' : 'standard',
-        ...ledgerProvenance(request, response),
+        ...ledgerServedFields(placement, request, response, success),
         // Content-policy findings carry only detector names, classes and
         // classifier-redacted excerpts — never raw content (the prompt itself
         // is represented by promptHash alone).
@@ -3826,7 +3846,7 @@ export class AIGateway {
         error: refusal.code,
         cached: false,
         deterministic: false,
-        promptHash: this.hashPrompt(request.messages),
+        promptHash: this.hashPrompt(request),
         ...ledgerProvenance(request),
         metadata: {
           ...(request.metadata ?? {}),
@@ -3875,7 +3895,7 @@ export class AIGateway {
         error: reason,
         cached: false,
         deterministic: false,
-        promptHash: this.hashPrompt(request.messages),
+        promptHash: this.hashPrompt(request),
         ...ledgerProvenance(request),
         // A placement refusal's reason code; other content blocks keep theirs in `error`.
         ...(reason && /^DENY_/.test(reason) ? { placementReasonCode: reason } : {}),
@@ -3929,19 +3949,20 @@ export class AIGateway {
     });
   }
 
-  /** SHA-256 of the canonicalized prompt messages, for reproducibility audit. */
   /**
    * SHA-256 over the prompt: each message's role and text, and — when it has
-   * them — a digest of each image or document block's source. Until 2026-09-26
-   * the blocks were left out, so two requests differing only in the scan or
-   * PDF they carried hashed the same. A text-only prompt hashes exactly as
-   * before, so existing ledger rows stay comparable.
+   * them — a digest of each image or document block's source, including the
+   * request-level imageContent the executor attaches to the user turn. Until
+   * 2026-09-26 the blocks were left out, so two requests differing only in the
+   * scan or PDF they carried hashed the same. A text-only prompt hashes exactly
+   * as before, so existing ledger rows stay comparable.
    */
-  private hashPrompt(messages: GatewayMessage[]): string {
-    const canonical = messages
+  private hashPrompt(request: Pick<GatewayRequest, 'messages' | 'imageContent'>): string {
+    const canonical = request.messages
       .map(m => `${m.role}:${m.content}${contentBlocksDigest(m.contentBlocks)}`)
       .join('\n');
-    return createHash('sha256').update(canonical, 'utf8').digest('hex');
+    const images = contentBlocksDigest(request.imageContent);
+    return createHash('sha256').update(images ? `${canonical}\nimageContent${images}` : canonical, 'utf8').digest('hex');
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -4291,12 +4312,11 @@ function ledgerProvenance(
   const used = (served as { serverToolUses?: Array<{ name: string }> } | undefined)?.serverToolUses;
   return {
     payloadProvenance: request.payloadProvenance ?? 'tenant_governed',
-    dataClass: request.sensitiveDataClass,
+    dataClass: ledgerDataClass(request),
     tenantPolicyResolution: tenant?.resolution,
     tenantBoundFrom: tenant?.boundFrom,
     riskTier: request.riskTier,
-    runId: request.runId,
-    parentRunId: request.parentRunId,
+    ...ledgerRun(request),
     ...(served
       ? {
           placementReasonCode: served.placementReasonCode,
@@ -4311,6 +4331,59 @@ function ledgerProvenance(
 }
 
 /**
+ * A row's region and provenance. Only a lane that served the call has a region
+ * to record: a failed or size-refused row names no region and carries no
+ * served-model governance (2026-09-26 review).
+ */
+function ledgerServedFields(
+  placement: ProviderPlacement,
+  request: GatewayRequest,
+  response: GatewayResponse,
+  success: boolean,
+): Partial<AuditLogEntry> {
+  if (!success) return { region: undefined, ...ledgerProvenance(request) };
+  return { region: servingRegion(placement, request), ...ledgerProvenance(request, response) };
+}
+
+/** The request's own run, else the run a tool call inside it belongs to (run-scope.ts). */
+function ledgerRun(request: GatewayRequest): Pick<AuditLogEntry, 'runId' | 'parentRunId'> {
+  if (request.runId) return { runId: request.runId, parentRunId: request.parentRunId };
+  const scope = currentRunScope();
+  return { runId: scope?.runId, parentRunId: request.parentRunId ?? scope?.parentRunId };
+}
+
+/**
+ * The payload's class as the ledger states it. The screen reads text only
+ * (pii-screen.ts), so a payload that also carried an image or a document body
+ * is 'unscreened_media' where the text alone found nothing: 'none' would claim
+ * a screen of content nothing read (2026-09-26 review). A PII or PHI hit in
+ * the text stands.
+ */
+function ledgerDataClass(request: GatewayRequest): string | undefined {
+  const cls = request.sensitiveDataClass;
+  if (cls && cls !== 'none') return cls;
+  const media =
+    (request.imageContent?.length ?? 0) > 0 ||
+    request.messages.some(m => (m.contentBlocks ?? []).some(b => b?.type !== 'text'));
+  return media ? 'unscreened_media' : cls;
+}
+
+/** The response a call nothing served is recorded with. */
+function failedCallResponse(model: ModelConfig, requestId: string, startTime: number): GatewayResponse {
+  return {
+    content: '',
+    provider: model.provider,
+    model: model.model,
+    usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0 },
+    latencyMs: Date.now() - startTime,
+    requestId,
+    cached: false,
+    deterministic: false,
+    finishReason: 'error',
+  };
+}
+
+/**
  * Where the serving lane processed the request. A self-hosted lane is on-prem;
  * otherwise the requested residency when the lane serves it, else every region
  * the lane claims ('global' for a shared API). Until 2026-09-26 the requested
@@ -4321,7 +4394,9 @@ function servingRegion(placement: ProviderPlacement, request: GatewayRequest): s
   if (placement.substrate === 'self_hosted') return 'on_prem';
   const requested = request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : null;
   if (requested && placement.regions.includes(requested)) return requested;
-  return placement.regions.join(',').slice(0, 16);
+  // Every region the lane claims, whole: the list is of known codes only
+  // (placement.ts envRegions), so it fits the VARCHAR(64) column.
+  return placement.regions.join(',');
 }
 
 /** A digest of each non-text block's source, appended to its message in the prompt hash. */
@@ -4329,10 +4404,14 @@ function contentBlocksDigest(blocks: GatewayMessage['contentBlocks']): string {
   if (!blocks || blocks.length === 0) return '';
   return blocks
     .map(b => {
-      if (b.type === 'text') return `|text:${createHash('sha256').update(b.text, 'utf8').digest('hex')}`;
-      const src = b.source as Record<string, unknown>;
+      // Total over malformed blocks: a throw here dropped the whole ledger row.
+      if (b?.type === 'text') {
+        const text = typeof b.text === 'string' ? b.text : String(b.text ?? '');
+        return `|text:${createHash('sha256').update(text, 'utf8').digest('hex')}`;
+      }
+      const src = ((b as { source?: unknown } | undefined)?.source ?? {}) as Record<string, unknown>;
       const body = String(src.data ?? src.file_id ?? src.url ?? '');
-      return `|${b.type}:${String(src.type)}:${createHash('sha256').update(body, 'utf8').digest('hex')}`;
+      return `|${String(b?.type)}:${String(src.type)}:${createHash('sha256').update(body, 'utf8').digest('hex')}`;
     })
     .join('');
 }

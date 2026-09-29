@@ -98,6 +98,16 @@
 -- both in CREATE TABLE and by ADD COLUMN IF NOT EXISTS for tables that exist.
 -- Written by server/services/ai-gateway/audit.ts; evidence
 -- docs/evidence/D6/2026-09-26-model-ledger/.
+--
+-- Rows written before this change are not backfilled: their new columns are
+-- NULL. Served rows written between the WS1 and WS3 changes (2026-09-25..26)
+-- carry the same facts under metadata.tenantPlacement and metadata.serverTools.
+-- No deployed database holds such rows (D1 is not yet applied).
+--
+-- `region` is widened from VARCHAR(16) to VARCHAR(64), in CREATE TABLE and by a
+-- conditional ALTER below (a no-op once widened; widening a varchar rewrites no
+-- rows). A lane that claims several regions records all of them, and
+-- 'us,eu,apac,global' did not fit (2026-09-26 review).
 
 BEGIN;
 
@@ -147,7 +157,7 @@ CREATE TABLE IF NOT EXISTS ai.gateway_audit_log (
 
   -- Placement evidence: where regulated data was actually processed.
   substrate          VARCHAR(20),
-  region             VARCHAR(16),
+  region             VARCHAR(64),
   retention_policy   VARCHAR(20),
 
   -- Provenance and governance (2026-09-26, see the header note).
@@ -176,7 +186,7 @@ ALTER TABLE ai.gateway_audit_log
   ADD COLUMN IF NOT EXISTS prompt_version   VARCHAR(64),
   ADD COLUMN IF NOT EXISTS tried_models     JSONB,
   ADD COLUMN IF NOT EXISTS substrate        VARCHAR(20),
-  ADD COLUMN IF NOT EXISTS region           VARCHAR(16),
+  ADD COLUMN IF NOT EXISTS region           VARCHAR(64),
   ADD COLUMN IF NOT EXISTS retention_policy VARCHAR(20);
 
 -- 2026-09-26: provenance and governance columns (see the header note).
@@ -194,6 +204,16 @@ ALTER TABLE ai.gateway_audit_log
   ADD COLUMN IF NOT EXISTS parent_run_id            VARCHAR(64),
   ADD COLUMN IF NOT EXISTS server_tools_used        JSONB,
   ADD COLUMN IF NOT EXISTS server_tools_withheld    JSONB;
+
+-- 2026-09-26: region VARCHAR(16) -> VARCHAR(64) on a table that already exists
+-- (see the header note). Conditional, so a re-run takes no lock.
+DO $$
+BEGIN
+  IF (SELECT character_maximum_length FROM information_schema.columns
+       WHERE table_schema = 'ai' AND table_name = 'gateway_audit_log' AND column_name = 'region') < 64 THEN
+    ALTER TABLE ai.gateway_audit_log ALTER COLUMN region TYPE VARCHAR(64);
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_gateway_audit_org         ON ai.gateway_audit_log(organization_id);
 CREATE INDEX IF NOT EXISTS idx_gateway_audit_timestamp   ON ai.gateway_audit_log(timestamp);
