@@ -83,12 +83,13 @@ beforeAll(async () => {
 
   // Prior (0000) manifest: it contained the DS leaf AND a manufacture leaf that
   // 0001 DROPS. Persisted keyed on submission_id=1 (the stable key). The dropped
-  // leaf's href is the pointer the delete op must reference.
+  // leaf's backbone ID is what the delete's modified-file must name.
+  const idx = { backbone: 'index.xml' };
   const priorManifest = [
-    { ctdSection: 'm3.2.s.1', fileName: 'drug-substance-general.pdf', href: 'm3/32-s-1/drug-substance-general.pdf', md5: 'a'.repeat(32), operation: 'new' },
-    { ctdSection: 'm3.2.s.2', fileName: 'old-manufacture.pdf', href: 'm3/32-s-2/old-manufacture.pdf', md5: 'b'.repeat(32), operation: 'new' },
+    { ctdSection: 'm3.2.s.1', fileName: 'drug-substance-general.pdf', href: 'm3/32-s-1/drug-substance-general.pdf', md5: 'a'.repeat(32), operation: 'new', leafId: 'leaf-m3-2-s-1-drug-substance-general', ...idx },
+    { ctdSection: 'm3.2.s.2', fileName: 'old-manufacture.pdf', href: 'm3/32-s-2/old-manufacture.pdf', md5: 'b'.repeat(32), operation: 'new', leafId: 'leaf-m3-2-s-2-old-manufacture', ...idx },
     // Present in 0000, unmentioned by 0001: still on file, must NOT be deleted.
-    { ctdSection: 'm3.2.s.3', fileName: 'stability.pdf', href: 'm3/32-s-3/stability.pdf', md5: 'c'.repeat(32), operation: 'new' },
+    { ctdSection: 'm3.2.s.3', fileName: 'stability.pdf', href: 'm3/32-s-3/stability.pdf', md5: 'c'.repeat(32), operation: 'new', leafId: 'leaf-m3-2-s-3-stability', ...idx },
   ];
   await harness.pglite.query(
     `INSERT INTO ectd_compilations (organization_id, submission_id, sequence_number, leaf_manifest)
@@ -118,7 +119,7 @@ describe('lifecycle from the canonical spine (submission-id keyed)', () => {
     // This is only possible if the prior manifest was located by submission_id
     // and diffed.
     expect(indexXml).toMatch(/operation="delete"/);
-    expect(indexXml).toContain('../0000/m3/32-s-2/old-manufacture.pdf');
+    expect(indexXml).toContain('modified-file="../0000/index.xml#leaf-m3-2-s-2-old-manufacture"');
 
     // The prior leaf 0001 does not mention (m3.2.s.3 / stability.pdf) is still
     // on file, unchanged. It used to be withdrawn too — every leaf a follow-up

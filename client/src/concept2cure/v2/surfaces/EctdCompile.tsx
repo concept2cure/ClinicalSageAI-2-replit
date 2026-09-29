@@ -437,12 +437,20 @@ function readBranch(el: Element): BackboneNode | null {
   return leaves.length || children.length ? { name: el.localName, leaves, children } : null;
 }
 
-/** Parse a backbone; null when it is not well-formed XML. */
-function backboneTree(xml: string): BackboneNode | null {
+/**
+ * Parse a backbone: its tree; 'empty' when it is well-formed and carries no
+ * leaf; null only when it is not well-formed XML. 2026-09-29 (W5/D7): a
+ * sequence that files nothing in Module 1 has a leafless regional backbone, and
+ * that read as "not well-formed" — an empty result reported as an error.
+ */
+function backboneTree(xml: string): BackboneNode | 'empty' | null {
   const doc = new DOMParser().parseFromString(xml, 'application/xml');
   if (doc.getElementsByTagName('parsererror').length > 0 || !doc.documentElement) return null;
-  return readBranch(doc.documentElement);
+  return readBranch(doc.documentElement) ?? 'empty';
 }
+
+/** What a lifecycle leaf does to the filed leaf its modified-file names. */
+const ACT_ON_FILED: Record<string, string> = { delete: 'withdraws', append: 'appends to', replace: 'supersedes' };
 
 function BackboneBranch({ node }: { node: BackboneNode }) {
   return (
@@ -452,8 +460,10 @@ function BackboneBranch({ node }: { node: BackboneNode }) {
         {node.leaves.map((l, i) => (
           <li key={`leaf-${i}`} style={{ fontSize: 12.5, padding: '2px 0' }}>
             {l.title} <span className="rd-chip tone-dim">{l.operation || 'no operation'}</span>{' '}
-            <span className="mono" style={{ color: 'var(--text-400)' }}>{l.href}</span>
-            {l.modifiedFile && <> · supersedes <span className="mono">{l.modifiedFile}</span></>}
+            {l.href && <span className="mono" style={{ color: 'var(--text-400)' }}>{l.href}</span>}
+            {l.modifiedFile && (
+              <> · {ACT_ON_FILED[l.operation] ?? 'acts on'} <span className="mono">{l.modifiedFile}</span></>
+            )}
           </li>
         ))}
         {node.children.map((c, i) => <li key={`branch-${i}`}><BackboneBranch node={c} /></li>)}
@@ -467,7 +477,9 @@ function BackboneView({ label, xml }: { label: string; xml: string }) {
   return (
     <div style={{ marginBottom: 8 }}>
       <div style={{ fontSize: 12, fontWeight: 600 }}>{label}</div>
-      {tree ? <BackboneBranch node={tree} /> : (
+      {tree === 'empty' ? (
+        <div style={{ fontSize: 12 }}>It carries no leaves — this sequence files nothing in it.</div>
+      ) : tree ? <BackboneBranch node={tree} /> : (
         <div className="sp-tone-warn" style={{ fontSize: 12 }}>This backbone is not well-formed XML, so its hierarchy cannot be shown.</div>
       )}
     </div>
@@ -1301,9 +1313,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                 </ul>
               </div>
             )}
-            {/* The deliverable itself — only a spine-backed compile with
-                rendered leaves has a package to hand over. */}
-            {compileResult.submissionId != null && (compileResult.leafFilesRendered ?? 0) > 0 && (
+            {/* The deliverable itself — any spine-backed compile that built a
+                package. A sequence whose only act is a withdrawal ships no
+                content file and is still a package (2026-09-29, W5/D7: this
+                was gated on rendered leaf files, so it could not be exported). */}
+            {compileResult.submissionId != null && compileResult.package != null && (
               <button
                 className="btn primary"
                 style={{ height: 32, marginRight: 8 }}
@@ -1318,12 +1332,13 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                 <button className="btn primary" style={{ height: 32 }} onClick={() => downloadXml(`ectd-backbone-${ident.replace(/[^a-zA-Z0-9._-]/g, '_')}-${region.toLowerCase()}.xml`, compileResult.xmlBackbone)}>
                   {I.download} Download eCTD backbone XML
                 </button>
-                {/* Draft-backbone compiles (no leaf files rendered) get the
+                {/* Draft-backbone compiles (no package built) get the
                     working-document caveat. A spine-backed compile returned the
-                    package's REAL index.xml — its leaves are rendered files, so
-                    this caveat would be false there; the blockers panel above
-                    already says what still stands between it and transmission. */}
-                {!compileResult.submissionReady && (compileResult.leafFilesRendered ?? 0) === 0 && (
+                    package's REAL index.xml, so this caveat would be false there
+                    — even one that ships no content file (a withdrawal); the
+                    blockers panel above says what still stands between it and
+                    transmission. */}
+                {!compileResult.submissionReady && compileResult.package == null && (
                   <div style={{ fontSize: 11.5, marginTop: 6, color: 'var(--text-400)' }}>
                     The backbone describes the authored section content and marks every leaf
                     <span className="mono"> rendered=&quot;false&quot;</span>. It is a working document,

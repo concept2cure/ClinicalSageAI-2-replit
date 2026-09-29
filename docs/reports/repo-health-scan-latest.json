@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T23:51:27.741Z",
+  "generatedAt": "2026-09-29T01:00:27.124Z",
   "git": {
-    "sha": "9d90e7f5709ad05ad090175cd7c4d3e66b970c96",
+    "sha": "de531086f981c661ca8c1da0e9444345db813934",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1092404
+        "bytes": 1092604
       },
       {
         "file": "shared/schema.ts",
@@ -2081,7 +2081,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 131374
+        "bytes": 131728
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2159,7 +2159,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21035
+        "lines": 21039
       },
       {
         "file": "shared/schema.ts",
@@ -2259,7 +2259,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2867
+        "lines": 2868
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2554,6 +2554,10 @@
         "lines": 1623
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+        "lines": 1616
+      },
+      {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
         "lines": 1606
       },
@@ -2564,10 +2568,6 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
-        "lines": 1601
       },
       {
         "file": "server/routes/mdx-qms.ts",

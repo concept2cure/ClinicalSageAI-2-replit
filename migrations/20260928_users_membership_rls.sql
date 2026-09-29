@@ -57,18 +57,32 @@
 -- Converges on every run: ALTER POLICY when a policy exists, CREATE when it does
 -- not; CREATE OR REPLACE for the function. Nothing is dropped (Rule 1).
 
-CREATE OR REPLACE FUNCTION public.user_id_for_email(p_email text)
-RETURNS integer
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = pg_catalog, public
-SET app.current_user_role = 'app_super_admin'
-AS $$
-  SELECT id FROM public.users WHERE email = p_email
-$$;
-
-REVOKE ALL ON FUNCTION public.user_id_for_email(text) FROM PUBLIC;
+-- AMENDED IN PLACE 2026-09-29 (Rule 1): this function was created
+-- unconditionally, and a LANGUAGE sql body is validated when it is created, so
+-- a database without public.users would halt the set here. Guarded like the
+-- block below; the same defect in 20260928_invitations_for_member.sql turned
+-- tests/schema-contract/tenant-isolation-sweep.contract.test.ts red.
+DO $do$
+BEGIN
+  IF to_regclass('public.users') IS NULL THEN
+    RAISE NOTICE '[users-membership-rls] user_id_for_email skipped — public.users not provisioned';
+    RETURN;
+  END IF;
+  EXECUTE $fn$
+    CREATE OR REPLACE FUNCTION public.user_id_for_email(p_email text)
+    RETURNS integer
+    LANGUAGE sql
+    STABLE
+    SECURITY DEFINER
+    SET search_path = pg_catalog, public
+    SET app.current_user_role = 'app_super_admin'
+    AS $body$
+      SELECT id FROM public.users WHERE email = p_email
+    $body$
+  $fn$;
+  REVOKE ALL ON FUNCTION public.user_id_for_email(text) FROM PUBLIC;
+END
+$do$;
 
 DO $$
 DECLARE
