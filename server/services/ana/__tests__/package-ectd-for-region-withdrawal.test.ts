@@ -62,14 +62,14 @@ describe('package_ectd_for_region — withdrawal', () => {
       await fs.writeFile(cover, pdf('cover'));
       const out = await run(base(path.join(work, 'out'), [
         { ctd_section: '3.2.S.2', operation: 'delete', file_name: 'old-manufacture.pdf', title: 'Old Manufacture',
-          modified_file: '../0000/m3/3-2-s-2/old-manufacture.pdf' },
+          modified_file: '../0000/index.xml#leaf-3-2-S-2-old-manufacture' },
         { ctd_section: '1.2', operation: 'new', source_path: cover, file_name: 'cover.pdf', title: 'Cover' },
       ]));
       expect(out.error).toBeUndefined();
       const zip = await JSZip.loadAsync(await fs.readFile(out.bundlePath!));
       expect(Object.keys(zip.files).some((f) => f.endsWith('old-manufacture.pdf'))).toBe(false);
       const xml = (await zip.file('index.xml')?.async('string')) ?? '';
-      expect(xml).toMatch(/<leaf operation="delete" modified-file="\.\.\/0000\/m3\/3-2-s-2\/old-manufacture\.pdf"/);
+      expect(xml).toMatch(/<leaf operation="delete" modified-file="\.\.\/0000\/index\.xml#leaf-3-2-S-2-old-manufacture" xlink:type="simple"/);
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }
@@ -82,7 +82,7 @@ describe('package_ectd_for_region — withdrawal', () => {
       await fs.writeFile(withdrawn, pdf('WITHDRAWN DOCUMENT BYTES'));
       const out = await run(base(path.join(work, 'out'), [
         { ctd_section: '3.2.S.2', operation: 'delete', source_path: withdrawn, file_name: 'old-manufacture.pdf',
-          title: 'Old Manufacture', modified_file: '../0000/m3/3-2-s-2/old-manufacture.pdf' },
+          title: 'Old Manufacture', modified_file: '../0000/index.xml#leaf-3-2-S-2-old-manufacture' },
       ]));
       expect(out.ok).toBeUndefined();
       expect(out.error).toMatch(/old-manufacture\.pdf/);

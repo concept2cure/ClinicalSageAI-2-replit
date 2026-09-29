@@ -360,9 +360,13 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
           continue;
         }
         if (DECLARED_ACTS.has(l.operation) && !l.modifiedFile) {
+          // The filed leaf's backbone ID is what modified-file names; a manifest
+          // recorded before 2026-09-29 carries none (W5/D7).
           skipped.push({
             sectionCode: l.ctdSection,
-            reason: `${l.operation} of ${l.fileName}: the filed leaf it acts on has no recorded path, so the act cannot name it (no modified-file)`,
+            reason:
+              `${l.operation} of ${l.fileName}: the filed leaf it acts on has no recorded backbone ID, so the act ` +
+              'cannot name it (no modified-file) — its sequence was recorded before leaf IDs were',
           });
           continue;
         }

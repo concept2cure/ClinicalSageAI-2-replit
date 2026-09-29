@@ -37,11 +37,21 @@ export interface SequenceLeafManifestEntry {
   /**
    * For replace/append/delete: the ICH modified-file pointer the backbone
    * carried — the filed leaf this one acts on, from this sequence's root
-   * (e.g. '../0000/m3/…'). What an act was bound to is part of the record.
+   * (e.g. '../0000/index.xml#leaf-3-2-S-4-2-…'). What an act was bound to is
+   * part of the record.
    */
   modifiedFile?: string;
   /** Optional display title. */
   title?: string;
+  /**
+   * The XML ID this leaf carries in its backbone, and that backbone's path from
+   * the sequence root ('index.xml', 'm1/us/us-regional.xml'). A later
+   * sequence's modified-file names the leaf by exactly these. Absent on
+   * manifests recorded before 2026-09-29 (W5/D7); such a leaf cannot be acted
+   * on until its sequence is recorded again.
+   */
+  leafId?: string;
+  backbone?: string;
 }
 
 /** The minimal leaf shape the manifest builder reads (satisfied by the export
@@ -58,6 +68,8 @@ export interface PublishableLeaf {
   operation?: string;
   modifiedFile?: string;
   title?: string;
+  leafId?: string;
+  backbone?: string;
 }
 
 /** POSIX basename of a package href. */
@@ -83,6 +95,7 @@ export function buildLeafManifest(leaves: PublishableLeaf[]): SequenceLeafManife
       ...(l.operation ? { operation: l.operation } : {}),
       ...(l.modifiedFile ? { modifiedFile: l.modifiedFile } : {}),
       ...(l.title ? { title: l.title } : {}),
+      ...(l.leafId && l.backbone ? { leafId: l.leafId, backbone: l.backbone } : {}),
     });
   }
   return out;
@@ -115,6 +128,10 @@ export function manifestToPriorLeaves(manifest: unknown): PriorLeaf[] {
       // Carried through so a caller folding several sequences into one effective
       // prior state can drop a leaf whose last operation was a withdrawal.
       ...(typeof e.operation === 'string' ? { operation: e.operation } : {}),
+      // What a later act's modified-file names; the operator validates both.
+      ...(typeof e.leafId === 'string' && typeof e.backbone === 'string'
+        ? { leafId: e.leafId, backbone: e.backbone }
+        : {}),
     });
   }
   return out;
