@@ -1610,7 +1610,7 @@ export class AIGateway {
     provider: 'openai' | 'local';
     texts: string[];
     requestId?: string;
-  }): Promise<void> {
+  }): Promise<EmbeddingAuthorization> {
     const requestId = input.requestId ?? randomUUID();
     const startTime = Date.now();
 
@@ -1689,11 +1689,46 @@ export class AIGateway {
 
     // (b) The last-mile sensitive-dispatch gate, exactly as executeProvider
     // applies it before a chat SDK call, with intended use 'embedding'.
-    await this.assertSensitiveDispatchAllowed(
+    const placementReasonCode = await this.assertSensitiveDispatchAllowed(
       { provider: input.provider } as ModelConfig,
       request,
       requestId,
       startTime,
+    );
+    return { requestId, startTime, request, placementReasonCode };
+  }
+
+  /**
+   * Record an embedding call once the provider has answered: a served row, or
+   * a failure row with the error. authorizeEmbedding decides and records only a
+   * refusal; the call itself is made outside route(), so until 2026-09-29 an
+   * allowed embedding left no ledger row at all (D6). Written through logAudit,
+   * like a chat row: the provenance, placement decision, region and prompt hash
+   * of the authorised request, and never its text. Never throws.
+   */
+  async recordEmbeddingCall(
+    authorization: EmbeddingAuthorization,
+    call: { provider: ProviderName; model: string; inputTokens?: number; error?: string },
+  ): Promise<void> {
+    const inputTokens = call.inputTokens ?? 0;
+    await this.logAudit(
+      authorization.request,
+      {
+        content: '',
+        provider: call.provider,
+        model: call.model,
+        usage: { inputTokens, outputTokens: 0, totalTokens: inputTokens, estimatedCostUsd: 0 },
+        latencyMs: Date.now() - authorization.startTime,
+        requestId: authorization.requestId,
+        cached: false,
+        deterministic: false,
+        ...(call.error ? { finishReason: 'error' } : {}),
+        ...(authorization.placementReasonCode ? { placementReasonCode: authorization.placementReasonCode } : {}),
+      },
+      authorization.request.strategy || this.config.defaultStrategy,
+      !call.error,
+      call.error,
+      [call.provider],
     );
   }
 
@@ -4328,6 +4363,15 @@ function ledgerProvenance(
         }
       : {}),
   };
+}
+
+/** What authorizeEmbedding decided, for the row recordEmbeddingCall writes once the provider answers. */
+export interface EmbeddingAuthorization {
+  requestId: string;
+  startTime: number;
+  /** The governed request: the tenant's floor merged in, the content classified. */
+  request: GatewayRequest;
+  placementReasonCode?: string;
 }
 
 /**
