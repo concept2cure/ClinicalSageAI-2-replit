@@ -144,7 +144,10 @@ const PREREQ = `
     old_values    JSON,
     new_values    JSON,
     ip_address    TEXT,
-    user_agent    TEXT
+    user_agent    TEXT,
+    -- The person's stated reason, as migrations/20260527_mutation_primitives.sql
+    -- adds it; writeChainedAuditRow writes it when an act states one (D5).
+    reason        TEXT
   );
   -- \`uuid\` as db/migrations/20260129_add_org_uuid_alignment.sql adds it; the
   -- org-membership middleware LEFT JOINs it on every request and, without it,
