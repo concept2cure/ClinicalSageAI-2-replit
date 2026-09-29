@@ -386,6 +386,22 @@ export function servedModelOf(
   return { provider: response?.provider ?? null, model: response?.model ?? null, requestId: response?.requestId ?? null };
 }
 
+/**
+ * The model call that wrote the answer's command blocks, for their Part 11
+ * rows: the one round whose text holds them. When several rounds wrote
+ * blocks, the answer cannot say which call proposed which, so the record says
+ * so (nulls) rather than naming the last round (2026-09-26 review). With no
+ * block there is nothing to attribute.
+ */
+export function commandBlockProposer<T extends { provider: string | null; model: string | null; requestId: string | null }>(
+  rounds: T[],
+  last: T,
+): { provider: string | null; model: string | null; requestId: string | null } {
+  if (rounds.length === 0) return last;
+  if (rounds.length === 1) return rounds[0];
+  return { provider: null, model: null, requestId: null };
+}
+
 /** What a governed-write tool returns instead of writing, when the model is not approved. */
 export function governedWriteRefusal(
   tool: string,

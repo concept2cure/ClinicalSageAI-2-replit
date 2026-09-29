@@ -120,18 +120,28 @@ function bedrockZeroRetention(env: NodeJS.ProcessEnv = process.env): boolean {
   return raw === undefined || raw.trim() === '' || raw.trim().toLowerCase() === 'true';
 }
 
-/** A residency list declared in env, or the fallback when none is declared. */
+/** The residency codes a cloud lane can claim. */
+const CLOUD_RESIDENCY_CODES: ReadonlyArray<DataResidency | 'global'> = ['us', 'eu', 'apac', 'global'];
+
+/** The tokens of a declared residency list, lower-cased. */
+function declaredTokens(raw: string | undefined): string[] {
+  return (raw ?? '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+}
+
+/**
+ * A residency list declared in env, or the fallback when none is declared.
+ * Known codes only, each once: a token that is not one (a cloud region name
+ * such as 'eastus2') claims nothing and is reported by
+ * placementConfigurationProblems, rather than recorded as a region.
+ */
 function envRegions(
   envVar: string,
   fallback: Array<DataResidency | 'global'>,
 ): Array<DataResidency | 'global'> {
-  const raw = process.env[envVar];
-  if (!raw) return fallback;
-  const parsed = raw
-    .split(',')
-    .map(s => s.trim().toLowerCase())
-    .filter(Boolean) as Array<DataResidency | 'global'>;
-  return parsed.length > 0 ? parsed : fallback;
+  const known = [
+    ...new Set(declaredTokens(process.env[envVar]).filter(t => CLOUD_RESIDENCY_CODES.includes(t as DataResidency))),
+  ] as Array<DataResidency | 'global'>;
+  return known.length > 0 ? known : fallback;
 }
 
 /**
@@ -280,6 +290,15 @@ export function placementConfigurationProblems(env: NodeJS.ProcessEnv = process.
   const bedrockZdrRaw = env.AI_BEDROCK_ZERO_RETENTION?.trim().toLowerCase();
   if (env.AI_BEDROCK_ENABLED === 'true' && bedrockZdrRaw && bedrockZdrRaw !== 'true' && bedrockZdrRaw !== 'false') {
     problems.push(`AI_BEDROCK_ZERO_RETENTION=${env.AI_BEDROCK_ZERO_RETENTION} is neither true nor false`);
+  }
+  const azureUnknown = declaredTokens(env.AI_AZURE_RESIDENCY).filter(
+    t => !CLOUD_RESIDENCY_CODES.includes(t as DataResidency),
+  );
+  if (azureUnknown.length > 0) {
+    problems.push(
+      `AI_AZURE_RESIDENCY=${env.AI_AZURE_RESIDENCY} names ${azureUnknown.join(', ')}, which is not a residency code ` +
+        `(${CLOUD_RESIDENCY_CODES.join(', ')}); the Azure lane claims no residency for it`,
+    );
   }
   for (const { lane, enabled, declaredVar, region } of lanes) {
     const declared = env[declaredVar];
