@@ -1,0 +1,2 @@
+# GREEN — ci:launch-scope-api after narrowing and moving GlobalRiBrowser out of the shell's import graph
+ci:launch-scope-api: 266 API paths named by launch and shell screens; none refused. {"launch":224,"never-gated":40,"infrastructure":2}

@@ -214,7 +214,9 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'workspace',
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): ProjectHome reads and generates the schedule of events.
-    apiPrefixes: ['/api/projects', '/api/programs', '/api/rim', '/api/concept2cure/projects'],
+    // 2026-09-29: '/api/rim' removed: ProjectHome does not call it; it is the
+    // hidden Registrations app's API.
+    apiPrefixes: ['/api/projects', '/api/programs', '/api/concept2cure/projects'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -322,7 +324,11 @@ export const UI_SURFACES: UiSurface[] = [
     // exactly that reason. The surface reads /api/submissions,
     // /api/region-profiles, /api/510k/estar/* and /api/c2c/projects.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): the Submission Center signs governed actions.
-    apiPrefixes: ['/api/submissions', '/api/region-profiles', '/api/510k/estar', '/api/c2c/projects', '/api/c2c/actions/sign'],
+    // 2026-09-29: '/api/510k/estar' narrowed to the two sub-paths
+    // SubmissionCenter.tsx calls (the eSTAR tracker and the assembly verdict).
+    // The rest of eSTAR (build, official fields, registration, filing
+    // readiness) is the hidden device 510(k) kit.
+    apiPrefixes: ['/api/submissions', '/api/region-profiles', '/api/510k/estar/submissions', '/api/510k/estar/assemble', '/api/c2c/projects', '/api/c2c/actions/sign'],
     anaToolFamilies: ['plan_submission', 'validate_submission'],
     sharedContract: '@shared/types/submission-ui',
     discoveryCatalog: 'SUBMISSION_WORKSPACES (shared/types/submission-ui.ts)',
@@ -559,7 +565,10 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'submission',
     uiKit: null,
     // Launch-scope API (2026-09-25, ci:launch-scope-api): DossierMap reads the map.
-    apiPrefixes: ['/api/rim', '/api/global-ri', '/api/dossier-map'],
+    // 2026-09-29: '/api/rim' and '/api/global-ri' removed. DossierMap calls
+    // neither; they are the hidden Registrations and Global RI apps, and the
+    // claim made both answer as launch in production.
+    apiPrefixes: ['/api/dossier-map'],
     anaToolFamilies: ['global_ri_dossier'],
     sharedContract: null,
     discoveryCatalog: null,
