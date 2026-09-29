@@ -1,0 +1,96 @@
+## 1. A project, a document in it, and two sections
+   POST /api/c2c/projects -> 201 f3d9bcea-c9ea-4c5b-b4c5-9ab80f9dd3c8
+   POST /docs -> 201 55883318-8e62-4659-92b2-2797f6fed240
+   POST /sections -> 201 c12b9ab1-e367-463c-8ca2-3532e3a0cf4f | 201 929361c2-caa7-44ef-a8bc-57d25169b55c
+
+## 2. A comment on a quoted passage, a reply, refusals, resolve, reopen
+   comment naming another document -> 400 doc_id is not the document this section belongs to. Nothing was saved.
+   comment -> 201 b7c812c9-1786-44e1-be57-2a4e243f3f65 | filed under the section's document: True
+   reply -> 201
+   reply filed on another section -> 400 The comment being replied to is not on this section. Nothing was saved.
+   resolve -> 200
+   reopen -> 200
+
+## 3. Decisions on AnA's tracked changes, linked to a real AnA turn record
+   an AnA turn record of this organization: 14bb550c-c0dc-48f0-9267-1a1e4a87f9b5
+   accept one (1,200 characters, with a reason) -> 200
+   reject all 25 in one act -> 200
+   a decision filed against a section not in the document -> 400 SECTION_NOT_IN_DOCUMENT
+   a decision on a document this organization does not have -> 404 {'code': 'AUTHORING_OBJECT_NOT_FOUND', 'message': 'Authoring object not found.'}
+
+## 3b. Acts a legacy wrapper used to write as "System": a review with its reason, a reorder
+   review (changes requested) -> 200
+   reorder -> 200
+
+## 4. The trail as the editor reads it, with a verdict per row
+   REORDER_SECTIONS               actor=inspector.demo@example.test reason=None integrity={"chained": true, "intact": true, "mismatches": [], "chainPayloadIntact": true}
+   document_reviewed              actor=inspector.demo@example.test reason='Cite SAP v2.0 §9.4.1 for the landmark analysis.' integrity={"chained": true, "intact": true, "mismatches": [], "chainPayloadIntact": true}
+   tracked_change_bulk_decision   actor=inspector.demo@example.test reason=None integrity={"chained": true, "intact": true, "mismatches": [], "chainPayloadIntact": true} changes=25 full-text=True verified=13/25
+   tracked_change_decision        actor=inspector.demo@example.test reason='Matches SAP v2.0 wording.' integrity={"chained": true, "intact": true, "mismatches": [], "chainPayloadIntact": true} text=1200 chars source.verified=True
+   comment_updated                actor=inspector.demo@example.test reason=None integrity={"chained": true, "intact": true, "mismatches": [], "chainPayloadIntact": true}
+   comment_resolved               actor=inspector.demo@example.test reason='Confirmed against SAP v2.0 §9.4.1.' integrity={"chained": true, "intact": true, "mismatches": [], "chainPayloadIntact": true}
+   reply_added                    actor=inspector.demo@example.test reason=None integrity={"chained": true, "intact": true, "mismatches": [], "chainPayloadIntact": true}
+   comment_added                  actor=inspector.demo@example.test reason=None integrity={"chained": true, "intact": true, "mismatches": [], "chainPayloadIntact": true} quote='progression-free survival at 12 months' quoteSha256 ok=True
+   CREATE                         actor=inspector.demo@example.test reason=None integrity={"chained": true, "intact": true, "mismatches": [], "chainPayloadIntact": true}
+   CREATE                         actor=inspector.demo@example.test reason=None integrity={"chained": true, "intact": true, "mismatches": [], "chainPayloadIntact": true}
+
+## 5. The chain rows these acts wrote (actor and reason are what the ledger shows)
+authoring.section.CREATE|2|—
+authoring.section.CREATE|2|—
+authoring.section.comment_added|2|—
+authoring.section.reply_added|2|—
+authoring.section.comment_resolved|2|Confirmed against SAP v2.0 §9.4.1.
+authoring.section.comment_updated|2|—
+authoring.section.tracked_change_decision|2|Matches SAP v2.0 wording.
+authoring.section.tracked_change_bulk_decision|2|—
+authoring.section.document_reviewed|2|Cite SAP v2.0 §9.4.1 for the landmark analysis.
+authoring.section.REORDER_SECTIONS|2|—
+   rows with no actor: 0 | rows with the reason "Legacy audit event": 0
+
+## 6. Export, recorded first, and checked offline
+   export -> 200
+   summary {'events': 10, 'intact': 10, 'broken': 0, 'notChained': 0} | tenantChain {'ok': True, 'rowsChecked': 81}
+   export audited: 1
+   independent verifier (exit 0):
+     events: 10; checked against the chain: 10; with no chain entry: 0
+     PASS  every chained event matches its chain entry
+     server's walk of the tenant chain at export: {"ok":true,"rowsChecked":81}
+
+## 7. Changing the record, as the database owner
+    update authoring_comments set body='I never asked that' where id -> ERROR:  IMMUTABILITY_VIOLATION: an authoring comment's words, quoted passage, author and thread cannot be changed once w
+    update authoring_comments set anchor='{}'::jsonb where id='b7c81 -> ERROR:  IMMUTABILITY_VIOLATION: an authoring comment's words, quoted passage, author and thread cannot be changed once w
+    update authoring_comments set status='resolved' where id='b7c812 -> UPDATE 1
+    update authoring_audit_trail set change_reason='x' where doc_id= -> ERROR:  IMMUTABILITY_VIOLATION: authoring_audit_trail row cannot be update — it is a retained authoring record (21 CFR P
+    delete from authoring_audit_trail where doc_id='55883318-8e62-46 -> ERROR:  IMMUTABILITY_VIOLATION: authoring_audit_trail row cannot be delete — it is a retained authoring record (21 CFR P
+    truncate authoring_audit_trail -> ERROR:  IMMUTABILITY_VIOLATION: authoring_audit_trail cannot be truncated — it holds retained authoring records (21 CFR 
+
+## 8. A rewrite of a quoted passage past a disabled trigger
+    ALTER TABLE
+    UPDATE 1
+    ALTER TABLE
+   verdict for the rewritten row: {"chained": true, "intact": false, "mismatches": ["metadata"], "chainPayloadIntact": true}
+   independent verifier on the new export (exit 1):
+     events: 10; checked against the chain: 10; with no chain entry: 0
+     FAIL  f6f8a140-a62a-49a5-b45d-ed1bb3e799f7 comment_added: metadata
+     FAIL  f6f8a140-a62a-49a5-b45d-ed1bb3e799f7 comment_added: quote hash
+     2 check(s) failed
+     server's walk of the tenant chain at export: {"ok":true,"rowsChecked":82}
+
+## 9. The boot / sweep trigger check, and the whole chain
+   ok: 24/24 present and enabled
+   verify-audit-chain @ 2026-09-29T20:48:39.330Z
+   verdict: OK
+   
+   audit.tamper_proof_log: OK
+     rows: 107
+     chainedRows: 107
+     signedRows: 107
+   public.audit_logs: OK
+     rows: 86
+     chainedRows: 86
+     sealedRows: 0
+   public.audit_events: OK
+     rows: 0
+     chainedRows: 0
+     unchainedRows: 0
+     sealedRows: 0
