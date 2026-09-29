@@ -129,23 +129,19 @@ beforeAll(async () => {
 
   const org = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
     [`${PROBE_PREFIX}tenant`, 'dbtest-catalog-tenant'],
   );
   orgId = Number(org.rows[0].id);
-  orgUuid = String(
-    (await owner.query('SELECT uuid FROM organizations WHERE id = $1', [orgId])).rows[0].uuid,
-  );
+  orgUuid = String(org.rows[0].uuid);
 
   const other = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
     [`${PROBE_PREFIX}other tenant`, 'dbtest-catalog-other'],
   );
   otherOrgId = Number(other.rows[0].id);
-  otherOrgUuid = String(
-    (await owner.query('SELECT uuid FROM organizations WHERE id = $1', [otherOrgId])).rows[0].uuid,
-  );
+  otherOrgUuid = String(other.rows[0].uuid);
 
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
@@ -153,6 +149,11 @@ beforeAll(async () => {
     ['dbtest-catalog@example.test', `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
+  // AnA's tool dispatch reads the caller's role live from organization_users
+  // before any confirmed write (AnaToolExecutor.ts writeRoleRefusal, 2026-09-28),
+  // not from the tenant scope, so the actor is a member of the organization.
+  await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
+     ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`, [orgId, userId]);
 
   await cleanupProbeRows();
 

@@ -92,6 +92,17 @@ describe('Global compliance GDPR rights endpoints', () => {
     expect(mockQuery).not.toHaveBeenCalled();
   });
 
+  it('DELETE answers only for the caller\'s own organization, like every sibling route', async () => {
+    const mod = await import('../../routes/global-compliance');
+    const app = express();
+    app.use(express.json());
+    app.use('/api/compliance', mod.default);
+    const res = await request(app).delete('/api/compliance/gdpr/3/data-subject/10');
+    expect(res.status).toBe(403);
+    expect(res.body.error).toMatch(/organization scope mismatch/);
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
   it('GET export denies cross-subject access for non-admin users', async () => {
     authState.role = 'user';
     authState.id = 11;

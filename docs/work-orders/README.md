@@ -169,6 +169,7 @@ Items in this lane's own code are fixed in this lane, not listed here.
 
 **→ `…01KiDof7` (and the AnA client-files lane `…01DiJJAk`) — four Vault/catalog suites red since `9d2134b52` (found by `…01J935DZ`, 2026-09-29, on a database provisioned from empty at `8b9d18c6d`)**
 - `tests/db/document-catalog.dbtest.ts` (5), `document-catalog-recall.dbtest.ts` (2), `vault-placement.dbtest.ts` (3) and `document-catalog-role.dbtest.ts` (2) answer *"Insufficient permissions: this change needs an editor role in this organization. Nothing was changed."* where the case expects success. `9d2134b52` ("one shared editor-role decision") made AnA's governed tools (`AnaToolExecutor.ts` → `services/part11/editor-role.ts`) read the role live from `organization_users`; these suites give their actor a role only in the tenant scope (`runWithTenantScope({ role })`) and write no membership row, so the live read finds none. The live read is the stronger rule and not in question; the suites need a membership row carrying the role they put in the scope. Not edited here (two other lanes' files). Also red on that database, unrelated: `server/services/ana/__tests__/run-control-cross-instance.dbtest.ts` (1, a steer drained twice). The whole `tests/db` tier there: 798/811.
+- **Done 2026-09-29 by `…01DiJJAk`.** Each suite's actor now has an `organization_users` row with the role its case puts in the scope. The viewer cases assert the dispatch's refusal, and the record stays untouched with no filing audit; the service's own refusals remain pinned by the direct `place(...)` cases. `run-control-cross-instance` expected the drain's pre-`eeedc6231` string shape, where each entry is now `{ kind, text }`; the assertion now matches that. The whole tier on a from-blank database, as `app_service` with RLS enforcing: 814 passed. `vault-passage-search` (and the VR-06 test) now also remove the `doc_rp_…` document each deploy's `20260529_phase9_backfill.sql` gives a probe program an interrupted run left behind, so a local re-run recovers.
 
 **→ `…01LjrcEe` / `…01TtwRHm` (D7)**
 - Vault leaves are exempt from the approval ('finalized') transmit gate: an unapproved upload can be placed and transmitted.
@@ -1113,6 +1114,7 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
       stub as a reviewed exception.
     - Reproduced by this lane's local Lint job at `d73b215d`. Its other three
       reds are items 8 and 9 and the D5 lane's item 4.
+    - **Done 2026-09-29 by `…01DiJJAk` (window past):** the 410 runs `enforceOrgScope` first (another organization's id → 403, pinned in `global-compliance.gdpr-rights.test.ts`, red without it); `ci:org-path-param-guards` 43/43.
 
 ### Found by the D5 lane's CI check (`…01P6GWSv`, 2026-09-28) — handed on
 
@@ -1143,6 +1145,8 @@ in all of them. Reproduced locally at `6bd237ca9`.
    `node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression` fails:
    *"1 NEW route(s) on the shared pool above baseline of 229 … New
    tenant-facing routes must use requestDb(req): server/routes/study-design-planning.ts"*.
+   **Done 2026-09-29 by `…01DiJJAk` (window past):** the planning write runs on `requestConnectable(req)`; a request without its own connection is refused 500 before anything is read, never the shared pool (pinned in `study-design-planning.route.test.ts`). Baseline 229 → 228, removing only `server/routes/templates.ts`, deleted in `83849bfdd`. `--write-baseline` used to delete the file's `_comment` (its rebaseline history); it now keeps it.
+   **→ The D3 lane (`…01YZFCXR`, `72c4c6ee6`, inside its window, not edited):** `ci:audit-logs-fixture` is red on `server/routes/__tests__/approval-workflow.contract.test.ts:217`. The stand-in `CREATE TABLE audit_logs (id, tenant_id, actor_id)` added for `public.actor_name` lacks the columns the chained audit writer writes. `AUDIT_LOGS_PGLITE_DDL` (`server/db/pglite-harness.ts`) carries `tenant_id` and `actor_id` too, so importing it in place of the stand-in should satisfy both.
 5. **→ Whoever owns project rules (Projects), found by the D5 lane, not fixed:
    the rules engine cannot create a task, and could not record one if it did.**
    - `POST /api/project-rules` (`server/routes/project-rules.ts:159`) binds
@@ -1181,6 +1185,7 @@ in all of them. Reproduced locally at `6bd237ca9`.
    - `tests/artifact-change-invalidates-bundles.contract.test.ts` fails with
      *"BACKSTOP_ONLY lists files that no longer write those columns; remove
      them"*, naming this file.
+   - **Both done 2026-09-29 by `…01DiJJAk`** (item 16; the stale `BACKSTOP_ONLY` entry removed, its comment now names `erasePersonalData` as the one erasure).
 9. ~~**→ `…01PwLFr8` (`f0147f452` / `7b00c78de`).** Trunk CI 12615 fails two
    gates on this session's files:~~ **Done 2026-09-29.** `ci:tenant-entry-points`
    was fixed in `8686a321`. The CSS shadowing is fixed; see the validation-package

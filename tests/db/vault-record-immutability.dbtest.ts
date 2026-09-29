@@ -83,6 +83,12 @@ beforeAll(async () => {
   orgId = Number(org.rows[0].id);
   orgUuid = String((await owner.query('SELECT uuid FROM organizations WHERE id = $1', [orgId])).rows[0].uuid);
   await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
+  // A probe program an interrupted run left behind carries the document each
+  // deploy's backfill gives every program (20260529_phase9_backfill.sql).
+  await owner.query(
+    'DELETE FROM c2c_documents WHERE project_id IN (SELECT id FROM regulatory_programs WHERE name LIKE $1)',
+    [`${PROBE}%`],
+  );
   await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
   const prog = async (code: string) =>
     String(
