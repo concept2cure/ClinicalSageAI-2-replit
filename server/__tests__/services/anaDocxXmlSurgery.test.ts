@@ -1,40 +1,47 @@
 import { describe, it, expect } from 'vitest';
 import { Buffer } from 'node:buffer';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import {
-  runPythonScriptIsolated,
   runDocxXmlSurgeryIsolated,
   runDocxValidateIsolated,
 } from '../../services/compute/scriptWorker';
 
 // These suites need python-docx + lxml on the runner (ships in the services/
 // image). Probe once and skip when absent.
-const docxStackAvailable = await (async () => {
-  try {
-    const probe = await runPythonScriptIsolated({ code: 'import docx, lxml.etree' });
-    return probe.ok;
-  } catch {
-    return false;
-  }
-})();
+const docxStackAvailable =
+  spawnSync('python3', ['-c', 'import docx, lxml.etree'], { stdio: 'ignore' }).status === 0;
 
-// Build a source .docx (bold run + justified heading + placeholder) in the
-// sandbox so no JS docx dependency is needed.
+// Build a source .docx (bold run + justified heading + placeholder) with
+// python-docx directly, so no JS docx dependency is needed.
 async function buildSourceDocx(): Promise<Buffer> {
-  const built = await runPythonScriptIsolated({
-    code: [
-      'from docx import Document',
-      'from docx.enum.text import WD_ALIGN_PARAGRAPH',
-      'd = Document()',
-      "h = d.add_heading('10.3 Statistical Methods', level=2)",
-      'h.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY',
-      'p = d.add_paragraph()',
-      "r = p.add_run('Prepared for {{SPONSOR}} '); r.bold = True",
-      "p.add_run('confidential.')",
-      "d.save('source.docx')",
-    ].join('\n'),
-  });
-  expect(built.ok).toBe(true);
-  return Buffer.from(built.outputFiles['source.docx'] as string, 'base64');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'docx-xml-src-'));
+  try {
+    const built = spawnSync(
+      'python3',
+      [
+        '-c',
+        [
+          'from docx import Document',
+          'from docx.enum.text import WD_ALIGN_PARAGRAPH',
+          'd = Document()',
+          "h = d.add_heading('10.3 Statistical Methods', level=2)",
+          'h.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY',
+          'p = d.add_paragraph()',
+          "r = p.add_run('Prepared for {{SPONSOR}} '); r.bold = True",
+          "p.add_run('confidential.')",
+          "d.save('source.docx')",
+        ].join('\n'),
+      ],
+      { cwd: dir },
+    );
+    expect(built.status).toBe(0);
+    return fs.readFileSync(path.join(dir, 'source.docx'));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 describe.skipIf(!docxStackAvailable)('surgical_docx_xml_edit (raw OOXML surgery)', () => {
