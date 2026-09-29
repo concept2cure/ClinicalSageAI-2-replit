@@ -1,0 +1,13 @@
+# scripts/db/provision.mjs on an EMPTY database (c2c_empty_0929) with the amended 20260810 file
+90:✅ Application schema install complete.
+208:  ✓ applied: db/migrations/20260810_c2c_work_items_source_uniqueness.sql
+823:✅ Schema migration complete — safe to roll services.
+836:✅ Database provisioned and the /readyz schema contract holds.
+EXIT=0
+## unique constraints on c2c_project_work_items after provision
+c2c_project_work_items_work_item_id_unique|UNIQUE (work_item_id)
+c2c_pwi_org_source_key_unique|UNIQUE NULLS NOT DISTINCT (org_id, source_type, source_id, source_ref)
+
+# deploy-migrate replay on the reference DB already carrying the widened key
+  ✓ applied: db/migrations/20260810_c2c_work_items_source_uniqueness.sql
+✅ Schema migration complete — safe to roll services.
