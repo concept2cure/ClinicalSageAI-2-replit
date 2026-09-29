@@ -140,9 +140,9 @@ same change:
   `PART11_ESIGN_COMMANDS`. It records no version, so the result is not
   filable, but the artifact reads as approved or locked with no signature. It
   is inside `…01KiDof7`'s window (item 10).
-- **`promote_artifact`** (`server/services/ai-actions/handlers/promote-artifact.ts:275`)
-  sets status `approved` unsigned in the same way. It is outside every window.
-  It is the D5 lane's next item after this one.
+- ~~**`promote_artifact`** set status `approved` unsigned.~~ Done 2026-09-29:
+  promotion leaves the status unchanged and no longer records a signature
+  (`docs/evidence/D5/2026-09-29-promotion-is-not-approval/`).
 - ~~**`concept2cure_signatures` is not append-only on any applier.**~~
   Done 2026-09-29: UPDATE, DELETE, TRUNCATE and the cascade are refused on the
   signatures and the lock snapshots, and the triggers are required at boot
