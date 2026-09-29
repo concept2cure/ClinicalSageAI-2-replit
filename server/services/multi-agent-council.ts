@@ -469,8 +469,13 @@ export class MultiAgentCouncilService {
     sectionPath: string,
     requirements: Record<string, any>,
     contextAtomIds: string[],
-    programId?: string
+    scope: { organizationId: number; programId?: string }
   ): Promise<string> {
+    // A session runs for one tenant, which it records: its rows are tenant
+    // content under the RLS sweep, and every model call names it (D6).
+    if (!scope?.organizationId) {
+      throw new Error('A council session needs the organization it runs for');
+    }
     const sessionId = uuidv4();
 
     // Get default agents
@@ -480,11 +485,11 @@ export class MultiAgentCouncilService {
       `INSERT INTO lumen.council_sessions (
         id, program_id, section_path, requirements, context_atom_ids,
         drafter_agent_id, statistician_agent_id, critic_agent_id, synthesizer_agent_id,
-        status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'INITIALIZED')`,
+        status, organization_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'INITIALIZED', $10)`,
       [
         sessionId,
-        programId || null,
+        scope.programId || null,
         sectionPath,
         JSON.stringify(requirements),
         contextAtomIds,
@@ -492,6 +497,7 @@ export class MultiAgentCouncilService {
         agents.statistician?.agentId,
         agents.critic?.agentId,
         agents.synthesizer?.agentId,
+        scope.organizationId,
       ]
     );
 
@@ -703,7 +709,7 @@ export class MultiAgentCouncilService {
         { role: 'user', content: `Draft the ${session.section_path} section.` },
       ],
       correlationId,
-      { temperature: agent.temperature, maxTokens: agent.maxTokens }
+      { temperature: agent.temperature, maxTokens: agent.maxTokens, organizationId: session.organization_id }
     );
 
     const draftText = llmResponse.content || '';
@@ -779,7 +785,7 @@ export class MultiAgentCouncilService {
         { role: 'user', content: 'Extract and verify all numerical claims in the draft.' },
       ],
       correlationId,
-      { temperature: 0, maxTokens: agent.maxTokens, responseFormat: 'json' } // Statistician needs determinism
+      { temperature: 0, maxTokens: agent.maxTokens, responseFormat: 'json', organizationId: session.organization_id } // Statistician needs determinism
     );
 
     const latencyMs = llmResponse.latencyMs;
@@ -1011,7 +1017,7 @@ export class MultiAgentCouncilService {
         { role: 'user', content: 'Perform critical review of the draft.' },
       ],
       correlationId,
-      { temperature: agent.temperature, maxTokens: agent.maxTokens, responseFormat: 'json' }
+      { temperature: agent.temperature, maxTokens: agent.maxTokens, responseFormat: 'json', organizationId: session.organization_id }
     );
 
     const latencyMs = llmResponse.latencyMs;
@@ -1082,7 +1088,7 @@ export class MultiAgentCouncilService {
         },
       ],
       correlationId,
-      { temperature: agent.temperature, maxTokens: agent.maxTokens }
+      { temperature: agent.temperature, maxTokens: agent.maxTokens, organizationId: session.organization_id }
     );
 
     const latencyMs = llmResponse.latencyMs;
@@ -1240,14 +1246,17 @@ export class MultiAgentCouncilService {
     data: Record<string, any>
   ): Promise<void> {
     await this.pool.query(
+      // The tenant is the session's, read from its row: the one place it is
+      // recorded, and under RLS a session only its own tenant can see (D6).
       `INSERT INTO lumen.agent_executions (
-        session_id, agent_id, agent_role, execution_order,
+        organization_id, session_id, agent_id, agent_role, execution_order,
         input_text, output_text, output_data,
         verifications, corrections_made,
         issues_found, overall_assessment,
         model_used, tokens_input, tokens_output, latency_ms,
         status, started_at, completed_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())`,
+      ) SELECT s.organization_id, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW()
+          FROM lumen.council_sessions s WHERE s.id = $1`,
       [
         sessionId,
         agentId,
@@ -1293,10 +1302,11 @@ export class MultiAgentCouncilService {
 
     await this.pool.query(
       `INSERT INTO lumen.data_verifications (
-        execution_id, session_id, claim_text, claimed_value,
+        organization_id, execution_id, session_id, claim_text, claimed_value,
         actual_value, status, discrepancy_type,
         correction_applied, corrected_value
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      ) SELECT s.organization_id, $1, $2, $3, $4, $5, $6, $7, $8, $9
+          FROM lumen.council_sessions s WHERE s.id = $2`,
       [
         execResult.rows[0].id,
         sessionId,
