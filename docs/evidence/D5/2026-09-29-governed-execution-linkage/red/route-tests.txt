@@ -1,0 +1,25 @@
+# server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts against the route at aadbde6a (before this change)
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > an ordinary write runs with no reason and no password, confirmed by a person
+   → expected [ 'ana.governed_action.confirm' ] to deeply equal [ 'ana.governed_action.confirm', …(1) ]
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > an approval proposed by AnA asks for a reason, not a click
+   → expected [ 'ana.governed_action.reason' ] to deeply equal [ 'ana.governed_action.reason', …(1) ]
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > runs on a yes, with the run's own context and the confirmation stamped
+   → expected [ 'ana.governed_action.confirm' ] to deeply equal [ 'ana.governed_action.confirm', …(1) ]
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > a signer who declares Authorship is recorded as Authorship, not Approval — on the sign-off and the audit row
+   → expected [ 'ana.governed_action.esign' ] to deeply equal [ 'ana.governed_action.esign', …(1) ]
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > the sign-off names the run, the tool call, the model call and a hash of the params authorised
+   → expected { …(2) } to match object { …(2) }
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row follows, with the outcome, the duration and the same trace
+   → expected [ 'ana.governed_action.confirm' ] to deeply equal [ 'ana.governed_action.confirm', …(1) ]
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a command its own gate refused is recorded refused, not ok
+   → expected undefined to be 'refused' // Object.is equality
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution is recorded failed, with what failed
+   → expected undefined to match object { outcome: 'failed', …(1) }
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution whose row did not persist says that too
+   → expected '{"success":false,"error":{"message":"…' to match /AUDIT_ROW_NOT_PERSISTED/
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row that did not persist is said, to the person and to the waiting run
+   → expected '{"success":true,"data":{"success":tru…' to match /AUDIT_ROW_NOT_PERSISTED/
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a command posted without its run still gets both rows, with no run and no model call
+   → expected [ 'ana.governed_action.confirm' ] to deeply equal [ 'ana.governed_action.confirm', …(1) ]
+      Tests  11 failed | 28 passed (39)
+exit=1
