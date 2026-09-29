@@ -1,0 +1,73 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T17:44:24.804Z","pid":5398,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T17:44:24.806Z","pid":5398,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T17:44:24.806Z","pid":5398,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-displays.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/actor-displays.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-09-29T17:44:26.554Z","pid":5398,"hostname":"vm","context":{"userId":1196,"tenantId":90301,"resourceId":"407:m2.5-actor-displays"},"msg":"[audit-service] [AUDIT] data_modify project_section"}
+{"level":30,"time":"2026-09-29T17:44:26.573Z","pid":5398,"hostname":"vm","context":{"userId":1196,"tenantId":90301,"resourceId":"8184ade9-a45b-4de8-875c-a36f5cb3d5a7"},"msg":"[audit-service] [AUDIT] data_modify regulatory_programs"}
+ ↓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the comment thread keeps every comment, named where A knows the author
+ ↓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section's history names who changed it
+ ↓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the team workload keeps sections assigned to people who left
+ ↓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section list names the leaver as assignee
+ ↓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > the lead who left is still named on the program
+ ↓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > activity names the editor, and never calls a person "System"
+ ↓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the project activity feed answers
+ ↓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx audit list names the leaver's audit entries
+stdout | tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the c2c program portfolio names the lead who left
+[database] Database connection successful { timestamp: '2026-09-29T17:44:26.654Z', poolSize: 1 }
+
+ × tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx admin audit band names the leaver, not 'Unknown account' 63ms
+   → ["Unknown account","WO03 A"]: expected false to be true // Object.is equality
+ × tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the c2c program portfolio names the lead who left 24ms
+   → expected '—' to be 'WO03 displays-leaver' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx admin audit band names the leaver, not 'Unknown account'
+AssertionError: ["Unknown account","WO03 A"]: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/actor-displays.dbtest.ts:249:65
+    247|     const audit = (res.body.data?.audit ?? res.body.audit) as Array<{ …
+    248|     const actors = new Set(audit.map(a => a.actor));
+    249|     expect(actors.has(leaverName), JSON.stringify([...actors])).toBe(t…
+       |                                                                 ^
+    250|     expect(actors.has('Unknown account')).toBe(false);
+    251|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the c2c program portfolio names the lead who left
+AssertionError: expected '—' to be 'WO03 displays-leaver' // Object.is equality
+
+Expected: "WO03 displays-leaver"
+Received: "—"
+
+ ❯ tests/db/actor-displays.dbtest.ts:257:60
+    255|     expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(20…
+    256|     const rows = (res.body.data ?? res.body.programs ?? res.body) as A…
+    257|     expect(rows.find(r => String(r.id) === program)?.lead).toBe(leaver…
+       |                                                            ^
+    258|   });
+    259| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 skipped (10)
+   Start at  17:44:22
+   Duration  4.12s (transform 1.73s, setup 81ms, import 3.32s, tests 439ms, environment 0ms)
+

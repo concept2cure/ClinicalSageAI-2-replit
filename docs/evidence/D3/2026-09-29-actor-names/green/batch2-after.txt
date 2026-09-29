@@ -1,0 +1,211 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T18:02:36.615Z","pid":10786,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T18:02:36.616Z","pid":10786,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T18:02:36.617Z","pid":10786,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-displays.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/actor-displays.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-09-29T18:02:38.307Z","pid":10786,"hostname":"vm","context":{"userId":1203,"tenantId":90301,"resourceId":"409:m2.5-actor-displays"},"msg":"[audit-service] [AUDIT] data_modify project_section"}
+{"level":30,"time":"2026-09-29T18:02:38.327Z","pid":10786,"hostname":"vm","context":{"userId":1203,"tenantId":90301,"resourceId":"58103ea1-3f9f-4821-82a7-6ee81ef2fad2"},"msg":"[audit-service] [AUDIT] data_modify regulatory_programs"}
+stdout | tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section's history names who changed it
+[database] Database connection successful { timestamp: '2026-09-29T18:02:38.393Z', poolSize: 1 }
+
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the comment thread keeps every comment, named where A knows the author 46ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section's history names who changed it 18ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the team workload keeps sections assigned to people who left 12ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section list names the leaver as assignee 323ms
+ ✓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > the lead who left is still named on the program 7ms
+ ✓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > activity names the editor, and never calls a person "System" 8ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the project activity feed answers 26ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx audit list names the leaver's audit entries 14ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx admin audit band names the leaver, not 'Unknown account' 22ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the c2c program portfolio names the lead who left 11ms
+{"level":30,"time":"2026-09-29T18:02:40.081Z","pid":10804,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T18:02:40.082Z","pid":10804,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T18:02:40.083Z","pid":10804,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/users-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > reads none of B's user rows, by id, by email, or by scanning 8ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > cannot rewrite B's password hash, MFA secret or reset token, nor delete B's user 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > reads its own organization's members, the caller included 2ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > updates its own member's profile 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > INSERT … RETURNING of a non-member is refused, so tenant-users takes the id first 6ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > user_id_for_email answers an existing account’s id, and nothing else 3ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > pre-auth: the sign-in lookup by email finds any tenant’s user, and writes it 4ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > system: SCIM and platform administration read and write every tenant’s users 3ms
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-29T18:02:40.450Z', poolSize: 1 }
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-29T18:02:40.451Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-29T18:02:40.520Z","pid":10804,"hostname":"vm","context":{"userId":1210,"tenantId":90301,"resourceId":"1212"},"msg":"[audit-service] [AUDIT] user_invited user"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account 254ms
+{"level":30,"time":"2026-09-29T18:02:40.696Z","pid":10804,"hostname":"vm","context":{"userId":1210,"tenantId":90302,"resourceId":"1213"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-09-29T18:02:40.703Z","pid":10804,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:485:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of failing or duplicating it 19ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into 156ms
+{"level":30,"time":"2026-09-29T18:02:41.829Z","pid":10823,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T18:02:41.830Z","pid":10823,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T18:02:41.830Z","pid":10823,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-names.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-09-29T18:02:42.042Z","pid":10823,"hostname":"vm","context":{"userId":1218,"tenantId":90301,"resourceId":"wo03_10823_mumzhzni-actor-names-record"},"msg":"[audit-service] [AUDIT] data_modify actor_names_contract"}
+ ✓ tests/db/actor-names.dbtest.ts > the audit trail after someone leaves the organization (D3) > names the person who acted, not only their id 12ms
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers nothing about an account that never belonged to or acted in A 3ms
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers name and email only — no credential column exists on it 2ms
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > the users table itself still refuses the leaver's row to A 2ms
+{"level":30,"time":"2026-09-29T18:02:43.277Z","pid":10838,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T18:02:43.278Z","pid":10838,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T18:02:43.278Z","pid":10838,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-vanishing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/actor-vanishing.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-09-29T18:02:43.896Z","pid":10838,"hostname":"vm","context":{"userId":1223,"tenantId":90301,"resourceId":"wo03_10838_mumzi12t"},"msg":"[audit-service] [AUDIT] data_modify actor_vanishing_contract"}
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the CRO portfolio keeps the leaver as lead of record, not the next assignee
+[database] Database connection successful { timestamp: '2026-09-29T18:02:43.951Z', poolSize: 1 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the CRO portfolio keeps the leaver as lead of record, not the next assignee
+[database] Database connection successful { timestamp: '2026-09-29T18:02:43.952Z', poolSize: 2 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.027Z', poolSize: 3 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.031Z', poolSize: 4 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.031Z', poolSize: 5 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.033Z', poolSize: 6 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.033Z', poolSize: 7 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.034Z', poolSize: 8 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.036Z', poolSize: 9 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.037Z', poolSize: 10 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.040Z', poolSize: 11 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.041Z', poolSize: 12 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.041Z', poolSize: 13 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.041Z', poolSize: 14 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.043Z', poolSize: 15 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.050Z', poolSize: 16 }
+
+stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+[database] Database connection successful { timestamp: '2026-09-29T18:02:44.050Z', poolSize: 17 }
+
+ ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the sentinel still reports the leaver's over-allocation, by name 11ms
+ ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the CRO portfolio keeps the leaver as lead of record, not the next assignee 14ms
+stderr | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the RBM board names the approver and owners who left, and never calls an owned action "Unassigned"
+[recommendation-engine] Generator failed: DrizzleQueryError: Failed query: 
+      SELECT id, name, target_date, status, progress
+      FROM program_milestones
+      WHERE program_id IN (
+        SELECT id FROM regulatory_programs
+        WHERE project_id = $1
+          AND organization_id = $2
+      )
+      AND status NOT IN ('completed', 'cancelled')
+      AND target_date IS NOT NULL
+      AND target_date < NOW() + INTERVAL '14 days'
+      ORDER BY target_date ASC
+      LIMIT 5
+    
+params: 417,90301
+    at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:20
+    ... 3 lines matching cause stack trace ...
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:67:31)
+    at async Promise.allSettled (index 1)
+    at async Promise.all (index 0)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/project-home-routes.ts:177:38 {
+  query: '\n' +
+    '      SELECT id, name, target_date, status, progress\n' +
+    '      FROM program_milestones\n' +
+    '      WHERE program_id IN (\n' +
+    '        SELECT id FROM regulatory_programs\n' +
+    '        WHERE project_id = $1\n' +
+    '          AND organization_id = $2\n' +
+    '      )\n' +
+    "      AND status NOT IN ('completed', 'cancelled')\n" +
+    '      AND target_date IS NOT NULL\n' +
+    "      AND target_date < NOW() + INTERVAL '14 days'\n" +
+    '      ORDER BY target_date ASC\n' +
+    '      LIMIT 5\n' +
+    '    ',
+  params: [ 417, 90301 ],
+  cause: error: column "project_id" does not exist
+      at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at runQueryScoped (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:198:21)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:113:20
+      at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:39:16)
+      at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:20
+      at async Promise.allSettled (index 2)
+      at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:299:19)
+      at async Promise.all (index 0)
+      at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:67:31) {
+    length: 111,
+    severity: 'ERROR',
+    code: '42703',
+    detail: undefined,
+    hint: undefined,
+    position: '170',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_relation.c',
+    line: '3722',
+    routine: 'errorMissingColumn'
+  }
+}
+
+(node:10838) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead 111ms
+ ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the RBM board names the approver and owners who left, and never calls an owned action "Unassigned" 64ms
+ ✓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > task analytics keeps the leaver's work in team productivity 19ms
+
+ Test Files  4 passed (4)
+      Tests  30 passed (30)
+   Start at  18:02:34
+   Duration  9.72s (transform 2.25s, setup 167ms, import 6.37s, tests 2.45s, environment 0ms)
+

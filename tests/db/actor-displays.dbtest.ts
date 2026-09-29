@@ -24,6 +24,8 @@ import { createAuthBoundary } from '../../server/middleware/authBoundary';
 import projectSections from '../../server/routes/project-sections';
 import projectKnowledgeRoutes from '../../server/routes/c2c/project-knowledge';
 import mdxAuditRoutes from '../../server/routes/mdx-audit';
+import mdxAdminRoutes from '../../server/routes/mdx-admin';
+import c2cProjectsRoutes from '../../server/routes/c2c/projects';
 import { authenticateToken } from '../../server/middleware/auth';
 import { getActivity, getProgramById } from '../../server/services/regulatory-programs.service';
 import {
@@ -45,6 +47,7 @@ let leaver = 0; // acted in A's audit trail, then left
 let silentLeaver = 0; // never in A's audit trail, then left
 let leaverName = '';
 let program = ''; // led by the leaver
+let adminA = 0;
 
 async function leave(user: number) {
   await owner.query('DELETE FROM organization_users WHERE organization_id = $1 AND user_id = $2', [
@@ -56,6 +59,7 @@ async function leave(user: number) {
 beforeAll(async () => {
   await provisionTwoTenantFixture();
   project = Number(ids.A.projects);
+  adminA = await provisionMember(ORG_A, 'admin', 'displays-admin');
   leaver = await provisionMember(ORG_A, 'member', 'displays-leaver');
   silentLeaver = await provisionMember(ORG_A, 'member', 'displays-silent');
   leaverName = (await owner.query('SELECT name FROM users WHERE id = $1', [leaver])).rows[0].name;
@@ -125,6 +129,8 @@ beforeAll(async () => {
   app.use('/api/project-sections', projectSections);
   app.use('/api/concept2cure', authenticateToken, projectKnowledgeRoutes);
   app.use('/api/mdx', mdxAuditRoutes);
+  app.use('/api/mdx', mdxAdminRoutes);
+  app.use('/api/c2c/projects', c2cProjectsRoutes);
 }, 60_000);
 
 afterAll(async () => {
@@ -233,5 +239,21 @@ describe('activity feeds and the MDx audit list name people who left (D3)', () =
     const mine = rows.filter(r => r.actor === `u-${leaver}`);
     expect(mine.length).toBeGreaterThan(0);
     expect(new Set(mine.map(r => r.actorName))).toEqual(new Set([leaverName]));
+  });
+
+  it("the MDx admin audit band names the leaver, not 'Unknown account'", async () => {
+    const res = await request(app).get('/api/mdx/admin').set(auth(accessToken(adminA, ORG_A, 'admin')));
+    expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
+    const audit = (res.body.data?.audit ?? res.body.audit) as Array<{ actor: string }>;
+    const actors = new Set(audit.map(a => a.actor));
+    expect(actors.has(leaverName), JSON.stringify([...actors])).toBe(true);
+    expect(actors.has('Unknown account')).toBe(false);
+  });
+
+  it('the c2c program portfolio names the lead who left', async () => {
+    const res = await request(app).get('/api/c2c/projects?limit=200').set(asA());
+    expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
+    const rows = (res.body.data ?? res.body.programs ?? res.body) as Array<{ id: string; lead: string }>;
+    expect(rows.find(r => String(r.id) === program)?.lead).toBe(leaverName);
   });
 });

@@ -79,6 +79,10 @@ import {
 import { serverError } from '../../lib/api-response.js';
 import { createSource, findSourceByChecksum } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 
+// People are named through public.actor_name, not a join on users: since users
+// took row-level security (D3, 2026-09-28) a tenant scope reads only current
+// members, so the join dropped the name of anyone who had left
+// (docs/evidence/D3/2026-09-29-actor-names/).
 const router = Router();
 
 /**
@@ -552,7 +556,7 @@ router.get('/', async (req: Request, res: Response) => {
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.organization_id = $1 AND p.deleted_at IS NULL
           AND ($4::boolean OR p.status <> 'archived')
         ORDER BY p.updated_at DESC
@@ -944,7 +948,7 @@ router.post('/', async (req: Request, res: Response) => {
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.id = $1 AND p.organization_id = $2`,
       [newId, orgId],
     );
@@ -1122,7 +1126,7 @@ router.get('/:id/team', async (req: Request, res: Response) => {
     const { rows } = await pool.query(
       `SELECT p.lead_user_id, p.team_members, u.name, u.email
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.id = $1 AND p.organization_id = $2
         LIMIT 1`,
       [req.params.id, orgId],
@@ -1314,7 +1318,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
          COALESCE(u.name, u.email) AS actor_name,
          al.occurred_at, al.ip_address
        FROM audit_logs al
-       LEFT JOIN users u ON u.id = COALESCE(al.actor_id, al.user_id)
+       LEFT JOIN LATERAL public.actor_name(COALESCE(al.actor_id, al.user_id)) u ON TRUE
        WHERE al.tenant_id = $2
          AND (al.record_id = $1
               OR al.target = 'regulatory_program:' || $1

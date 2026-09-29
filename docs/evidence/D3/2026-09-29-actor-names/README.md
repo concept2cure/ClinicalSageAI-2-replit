@@ -93,13 +93,43 @@ Their two PGlite suites create the real function from the real migration file.
 - `green/ledger-suites.txt`: the ledger's route test, the vault document
   history route and PGlite tests, and the client's signed-row test, 24/24.
 
+## The display conversions
+
+The 46 other joins on `users` were triaged into actor-of-record displays,
+which convert, and membership listings or authorization lookups, which stay
+(an authorization check must not start answering for people who left).
+Per-row SQL now reads `LEFT JOIN LATERAL public.actor_name(<id>) u ON TRUE`;
+code that collects ids first uses `resolveActorNames` / `actorLabel`
+(`server/services/tenant/actor-names.ts`). An actor that cannot be named
+renders as `user <id>`, never "System", "Unknown" or "Unassigned", which would
+attribute the act to someone else.
+
+Where the join was INNER the record itself disappeared, not only the name:
+
+| Surface | Before (red) | Case |
+| --- | --- | --- |
+| Section comments, workload, history, list | `red/displays-before.txt`: the leaver's comment and assigned section vanished; history and assignee read `null` | `actor-displays` |
+| Program lead and activity | `red/programs-before.txt`: lead `null`, editor shown as "System" | `actor-displays` |
+| Project activity feed, MDx audit list | `red/feeds-before.txt`: feed 500 (it selected `u.full_name`); audit list `User <id>` | `actor-displays` |
+| MDx admin audit band, c2c program list | `red/admin-portfolio-before.txt`: "Unknown account", lead "—" | `actor-displays` |
+| Sentinel over-allocation, CRO lead, project home | `red/vanishing-before.txt`: finding missing, next assignee promoted to lead | `actor-vanishing` |
+| RBM board | `red/rbm-before.txt`: approver `null` | `actor-vanishing` |
+| Task analytics | `red/task-analytics-before.txt`: leaver's work gone from productivity | `actor-vanishing` |
+
+Also converted, display-only and covered by their route suites:
+`audit-trail-ledger.routes.ts`, `project-hierarchy.ts`, `project-rollup-service.ts`,
+`mdx-audit.ts`, `c2c/project-vault.ts`, `submission-ops.ts`,
+`ApprovalOrchestrator.ts`, `ana-ri/command-executor.ts`,
+`mdx-submission-gateway.ts`. The PGlite suites and golden journeys that reach
+these paths now apply the real migration rather than a stub.
+
+`green/batch2-after.txt`: `actor-displays`, `actor-vanishing`, `actor-names`
+and `users-rls`, 30/30, as `app_service` with RLS enforcing.
+
 ## Still open on this row
 
-The other display joins on `users` are being triaged, one by one, into:
-
-- **actor-of-record displays**, where the person may have left. These convert
-  to `actor_name`.
-- **membership listings and authorization lookups**, which stay as they are.
-
-Converting a join needs a real-database case for its surface, so the triage
-and the conversions follow as their own commits under this row.
+Three sites sit in files another lane changed in the last 24 hours and are
+handed on rather than raced: `server/routes/concept2cure.ts` (one display
+join), `server/routes/artifacts.ts` (an inner join that drops a leaver's
+artifacts, and an "Unknown" fallback) and `authoring.router.ts` (a text
+`created_by`, which needs a guarded numeric cast).
