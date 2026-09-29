@@ -87,6 +87,16 @@ function getDbMock(): any { return {
   },
 }; }
 
+/* The URL's project resolved by the one translation rule (its own suite
+   proves it; PF-17 resolves the URL before deciding access): these cases
+   address a project by its integer id, which resolves to itself. */
+vi.mock('../server/services/cmc/resolve-cmc-artifact-project', () => ({
+  resolveCmcArtifactProject: vi.fn(async (_org: number, raw: string) =>
+    /^\d+$/.test(raw)
+      ? { state: 'linked', artifactProjectId: Number(raw), via: 'numeric' }
+      : { state: 'unaddressable', artifactProjectId: null, detail: 'not a project' },
+  ),
+}));
 vi.mock('../server/db', () => ({
   get db() { return getDbMock(); },
   pool: { query: vi.fn(async () => ({ rows: [] })), connect: vi.fn() },
