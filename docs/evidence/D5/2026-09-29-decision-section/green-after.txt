@@ -1,0 +1,28 @@
+$ npx vitest run server/routes/__tests__/authoringTrackedChangeDecisions.test.ts   # with the fix
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > records the refused TEXT, not just an id the document no longer holds
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > bounds the recorded text — an audit row is not a copy of the section
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > still records the decision when no context is supplied
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > refuses a verdict that is neither accept nor reject
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions/bulk > records one act, with the changes it covered
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions/bulk > caps the summary AND says how many it left out
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions/bulk > records the bulk act even when no per-change context is sent
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > refuses a single accept/reject against a FROZEN document — no row written
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > refuses a single accept/reject against an APPROVED document
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > still accepts against an ordinary DRAFT document — the fix is not a blanket deny
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > refuses a bulk accept against a FROZEN document — no rows written
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > still accepts a bulk decision against an ordinary DRAFT document
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > bulk audit metadata carries what the single route already carries > records sectionId and each change's proposedAt, mirroring the single route
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > bulk audit metadata carries what the single route already carries > omits sectionId when the caller sends none, same as the single route
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an authorId of "ana" is canonicalised — the caller-supplied authorName is IGNORED
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an ordinary human proposer is recorded as unverified, caller-asserted text
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an unrecognised authorId (not "ana") is NOT treated as a machine — recorded as its own text
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > bounds an unverified proposer name — an audit row is not a place for arbitrary text
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > bulk: a machine author is canonicalised per change, mirroring the single route
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > single: another document's section is refused 400 SECTION_NOT_IN_DOCUMENT — no row, no audit event
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > the lookup is scoped to this document AND this tenant
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > single: a section of this document is recorded, as before
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > a sectionId that is not a uuid is refused without a query — Postgres would answer 22P02, a 500
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > bulk: another document's section is refused — no rows, no audit event
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > a decision that names no section is recorded, as before
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > a changeType the editor does not have is not recorded (single: omitted; bulk: null)
+      Tests  26 passed (26)

@@ -977,8 +977,17 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
         `ana_turn_records`.
       - The fix is for the PATCH to call it: an unverified claim is saved as
         the saver's own text, with the claim and reason disclosed.
-      - Also, a tracked-change decision's `sectionId` must be a section of
-        `:id`, refused otherwise with 400 `SECTION_NOT_IN_DOCUMENT`.
+      - ~~Also, a tracked-change decision's `sectionId` must be a section of
+        `:id`, refused otherwise with 400 `SECTION_NOT_IN_DOCUMENT`.~~ **Done
+        2026-09-29** (`…01PwLFr8`, `docs/evidence/D5/2026-09-29-decision-section/`):
+        both decision routes check the section after the lock and before any
+        write, using a uuid guard and then a tenant-scoped lookup, and
+        `changeType` is recorded only as `insertion` or `deletion`. The before
+        and after runs were live, and five mutants each turn the suite red.
+      - **Status 2026-09-29 02:30 (`…01PwLFr8`):** `machine-claim-verify.ts` is
+        **not on trunk** at `081317f42`. No file is tracked, and nothing uses its
+        reason codes. It was not built here because this lane's round-2 claim
+        names it.
     - **SEC-B-FO-b2: the figure rule (`ce56754d`) is not applied on three
       router writers.**
       - AI draft accept: the one real bypass of the PATCH's refusal.
