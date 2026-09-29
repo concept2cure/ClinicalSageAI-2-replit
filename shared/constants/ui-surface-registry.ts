@@ -195,7 +195,13 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'evidence',
     uiKit: null,
     // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx ArtifactsCenter reads and exports the gallery.
-    apiPrefixes: ['/api/biotech-artifacts', '/api/atoms', '/api/corpus', '/api/artifacts-center'],
+    // 2026-09-29: '/api/biotech-artifacts' removed. It generates ICSRs, PSURs,
+    // CIOMS forms, expedited safety reports, clinical-operations reports and
+    // eCTD cover letters from the request body and records none of them (no
+    // vault document, version or audit row). No screen calls it, and PV and
+    // clinical operations are outside the release. A regulated document is
+    // produced only through a path that records it (Authoring → Vault).
+    apiPrefixes: ['/api/atoms', '/api/corpus', '/api/artifacts-center'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
