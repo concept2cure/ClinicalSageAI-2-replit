@@ -121,6 +121,11 @@ export interface SubmissionBundle {
      *  through a file-name change. Absent on manifests filed before it existed;
      *  the diff falls back to the path for those. */
     leafKey?: string;
+    /** The leaf's XML ID, and the backbone that carries it (from the sequence
+     *  root) — what a later sequence's modified-file names. Absent on
+     *  manifests recorded before 2026-09-29, which cannot be acted on. */
+    leafId?: string;
+    backbone?: string;
   }>;
   /** Optional human-readable display name. */
   displayName?: string;
