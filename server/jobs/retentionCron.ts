@@ -55,7 +55,14 @@ export interface RetentionSummary {
   scanned: number;
   archived: number;
   softDeleted: number;
-  hardDeleted: number;
+  /**
+   * Expired documents whose policy asks for destruction, left untouched. The
+   * database refuses to delete a recorded version (VR-07), and whether
+   * retention may ever destroy one is founder decision FD3
+   * (docs/design/VAULT_VEEVA_PARITY_PLAN_2026-09-24.md). Until then the sweep
+   * reports these instead of attempting a delete that would fail.
+   */
+  destructionRefused: number;
   /** Expired documents left in place because a legal hold covers them. */
   heldByLegalHold: number;
   errors: number;
@@ -100,13 +107,14 @@ async function organisationOf(client: TxClient, doc: VaultDocument): Promise<num
 
 /**
  * Dispose of one expired document: the archive snapshot when the policy asks
- * for one, the soft or hard delete, and the chained audit row, in one
- * transaction. Throws (after ROLLBACK) when any of it cannot be done; the
- * caller counts the error and the document stays.
+ * for one, the soft delete, and the chained audit row, in one transaction.
+ * Throws (after ROLLBACK) when any of it cannot be done; the caller counts the
+ * error and the document stays. A policy that asks for destruction never
+ * reaches here (see RetentionSummary.destructionRefused).
  */
 async function disposeDocument(
   doc: VaultDocument,
-  behaviour: { archiveBeforeDelete: boolean; hardDelete: boolean; policyMatched: boolean },
+  behaviour: { archiveBeforeDelete: boolean; policyMatched: boolean },
 ): Promise<void> {
   const client = (await pool.connect()) as unknown as TxClient;
   try {
@@ -123,15 +131,11 @@ async function disposeDocument(
         [doc.id, doc.programId, doc.documentCode, doc.documentTitle, doc.documentType, doc.retentionPolicy, JSON.stringify(doc)],
       );
     }
-    if (behaviour.hardDelete) {
-      await client.query('DELETE FROM vault.documents WHERE id = $1', [doc.id]);
-    } else {
-      await client.query('UPDATE vault.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL', [doc.id]);
-    }
+    await client.query('UPDATE vault.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL', [doc.id]);
     await writeChainedAuditRow(
       client,
       {
-        action: behaviour.hardDelete ? 'vault.document.retention_hard_delete' : 'vault.document.retention_soft_delete',
+        action: 'vault.document.retention_soft_delete',
         resourceType: 'vault_document',
         resourceId: doc.id,
         details: {
@@ -194,7 +198,7 @@ export async function runRetentionSweep(): Promise<RetentionSummary> {
       scanned: 0,
       archived: 0,
       softDeleted: 0,
-      hardDeleted: 0,
+      destructionRefused: 0,
       heldByLegalHold: 0,
       errors: 0,
     };
@@ -232,11 +236,22 @@ export async function runRetentionSweep(): Promise<RetentionSummary> {
           ? policy.archiveBeforeDelete
           : DEFAULT_BEHAVIOR.archiveBeforeDelete;
         const hardDelete = policy ? policy.hardDelete : DEFAULT_BEHAVIOR.hardDelete;
+        if (hardDelete) {
+          // Nothing is archived or tombstoned either: the policy asked for
+          // destruction, not for this, and the record stays as it is.
+          summary.destructionRefused += 1;
+          logger.warn('Expired document left untouched: its policy asks for destruction, which is refused', {
+            documentId: doc.id,
+            programId: doc.programId,
+            retentionPolicy: doc.retentionPolicy,
+            retentionUntil: doc.retentionUntil,
+          });
+          continue;
+        }
 
-        await disposeDocument(doc, { archiveBeforeDelete, hardDelete, policyMatched: Boolean(policy) });
+        await disposeDocument(doc, { archiveBeforeDelete, policyMatched: Boolean(policy) });
         if (archiveBeforeDelete) summary.archived += 1;
-        if (hardDelete) summary.hardDeleted += 1;
-        else summary.softDeleted += 1;
+        summary.softDeleted += 1;
       } catch (error) {
         summary.errors += 1; // per-document best-effort; keep sweeping
         logger.error('Expired document not disposed of', {
@@ -272,13 +287,13 @@ async function notifyAdmins(summary: RetentionSummary): Promise<void> {
     await transport.sendMail({
       from: process.env.EMAIL_FROM || 'Concept2Cure Vault <no-reply@trialsage.ai>',
       to: recipients.join(', '),
-      subject: `[Retention] ${summary.softDeleted + summary.hardDeleted} document(s) processed`,
+      subject: `[Retention] ${summary.softDeleted} document(s) processed, ${summary.destructionRefused} destruction(s) refused`,
       html: `<p>Document retention sweep complete.</p>
         <ul>
           <li>Scanned (expired): ${summary.scanned}</li>
           <li>Archived: ${summary.archived}</li>
           <li>Soft-deleted: ${summary.softDeleted}</li>
-          <li>Hard-deleted: ${summary.hardDeleted}</li>
+          <li>Destruction refused (policy asks to destroy; awaiting the retention decision): ${summary.destructionRefused}</li>
           <li>Errors: ${summary.errors}</li>
         </ul>`,
     });
@@ -292,7 +307,7 @@ async function notifyAdmins(summary: RetentionSummary): Promise<void> {
         error: message,
         scanned: summary.scanned,
         softDeleted: summary.softDeleted,
-        hardDeleted: summary.hardDeleted,
+        destructionRefused: summary.destructionRefused,
         errors: summary.errors,
       },
     });

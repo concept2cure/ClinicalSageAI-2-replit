@@ -912,7 +912,7 @@ export const GENERATE_DOCUMENT: AnaTool = {
       },
       template_path: {
         type: 'string',
-        description: 'Optional: path to a client-uploaded DOCX template to use as base',
+        description: 'Optional: a DOCX template in your organization\'s AnA workspace (one of your uploads, or a path an earlier document tool returned) to use as base; other paths are refused',
       },
       replacements: {
         type: 'object',
@@ -932,7 +932,7 @@ export const BUILD_FROM_TEMPLATE: AnaTool = {
     properties: {
       template_path: {
         type: 'string',
-        description: 'Path to the uploaded DOCX template file',
+        description: 'The DOCX template, in your organization\'s AnA workspace (one of your uploads, or a path an earlier document tool returned); other paths are refused',
       },
       replacements: {
         type: 'object',
@@ -1334,7 +1334,7 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
           properties: {
             ctd_section:   { type: 'string' },
             operation:     { type: 'string', enum: ['new', 'append', 'replace', 'delete'] },
-            source_path:   { type: 'string', description: 'The file to ship. Required for new / append / replace; must be omitted for delete.' },
+            source_path:   { type: 'string', description: 'The file to ship, in your organization\'s AnA workspace (a path an earlier document tool returned, or one of your uploads). Required for new / append / replace; must be omitted for delete.' },
             file_name:     { type: 'string' },
             title:         { type: 'string' },
             modified_file: { type: 'string', description: 'The filed leaf this one acts on, from this sequence root: the prior sequence\'s backbone, \'#\', and the leaf ID it recorded (e.g. ../0000/index.xml#leaf-3-2-S-2-file, or ../0000/m1/us/us-regional.xml#leaf-1-2-cover for Module 1). Never a file path. Required for every delete, and for a replace / append after 0000 (a delete in sequence 0000 is refused).' },
@@ -1342,7 +1342,7 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
           required: ['ctd_section', 'operation', 'file_name', 'title'],
         },
       },
-      output_dir: { type: 'string', description: 'Where to write the zip. Defaults to tmp/submissions.' },
+      output_dir: { type: 'string', description: 'Where to write the zip: a directory in your organization\'s AnA workspace. Omit it to use a fresh one.' },
     },
     required: ['region', 'application_id', 'sequence', 'submission_type', 'sponsor_id', 'sponsor_name', 'product_name', 'leaves'],
   },
