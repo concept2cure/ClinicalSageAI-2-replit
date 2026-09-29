@@ -54,7 +54,7 @@ beforeAll(async () => {
   holder.pglite = harness.pglite;
   await harness.pglite.exec(`
     CREATE TABLE IF NOT EXISTS ectd_compilations (
-      id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER,
+      id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT,
       sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW()
     );
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES

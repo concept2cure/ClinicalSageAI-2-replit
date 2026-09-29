@@ -99,6 +99,11 @@ interface CompiledLifecycle {
   operations: Array<{ operation: string; ctdSection: string; fileName: string; href: string; modifiedFile: string | null }>;
   /** Placed leaves the package does not hold, and why. */
   leftOut: Array<{ sectionCode: string; reason: string }>;
+  /** 'rehearsal': bound against the latest recorded compile of each earlier
+   *  sequence, filed or not — for an agency validator only. */
+  priorState?: 'filed' | 'rehearsal';
+  /** Under a rehearsal, the earlier sequences bound against that were never filed. */
+  unfiledPriorSequences?: string[];
 }
 
 interface CompileResult {
@@ -657,7 +662,7 @@ function CompilationHistoryTable({ history, identPath, onImported }: { history: 
             <td>{h.compilation_name}</td>
             <td className="mono">{h.sequence_number ?? '—'}</td>
             <td>{h.has_manifest ? 'manifest recorded' : 'no manifest — cannot anchor a lifecycle'}</td>
-            <td>{h.compilation_type}</td><td className="mono">{h.version}</td>
+            <td>{h.compilation_type === 'rehearsal' ? 'rehearsal — prior not filed' : h.compilation_type}</td><td className="mono">{h.version}</td>
             <td><span className={'rd-chip tone-' + (h.status === 'completed' ? 'ok' : h.status === 'failed' ? 'err' : 'dim')}>{h.status}</span></td>
             <td>
               {h.external_validation && <div>{reportCounts(h.external_validation)}</div>}
@@ -666,6 +671,39 @@ function CompilationHistoryTable({ history, identPath, onImported }: { history: 
             <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{h.compiled_at ? new Date(h.compiled_at).toLocaleString() : '—'}</td>
           </tr>))}</tbody></table>
       {history.map((h) => <EvalidatorReportView key={`report-${String(h.id)}`} row={h} />)}
+    </>
+  );
+}
+
+/**
+ * What an export asks for: the sequence this compile built — not whichever is
+ * latest now — in the mode it was built, so a rehearsal exports as one.
+ */
+function exportRequestBody(result: CompileResult | null, regionBody: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...regionBody,
+    ...(result?.sequenceNumber ? { sequenceNumber: result.sequenceNumber } : {}),
+    ...(result?.lifecycle?.priorState === 'rehearsal' ? { rehearsal: true } : {}),
+  };
+}
+
+/** What a rehearsal was bound against, and what it is for. */
+function RehearsalStatement({ life }: { life: CompiledLifecycle }) {
+  const unfiled = life.unfiledPriorSequences ?? [];
+  if (!life.priorSequence) {
+    return (
+      <>
+        <b>Rehearsal.</b> No earlier sequence has a recorded compile, so nothing is on file to act on: a declared replace,
+        append or delete is left out of the package.
+      </>
+    );
+  }
+  return (
+    <>
+      <b>Rehearsal.</b> Acts are bound to the latest recorded compile of each earlier sequence, through
+      sequence <span className="mono">{life.priorSequence}</span>
+      {unfiled.length > 0 ? <>; <span className="mono">{unfiled.join(', ')}</span> {unfiled.length === 1 ? 'was' : 'were'} never filed</> : null}.
+      For an agency validator only: transmit binds only against filed sequences.
     </>
   );
 }
@@ -682,7 +720,7 @@ function LifecycleView({ result }: { result: CompileResult }) {
     <section aria-label="Lifecycle" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
       <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>Lifecycle</div>
       <p style={{ fontSize: 12, margin: '0 0 6px' }}>
-        {life.priorSequence ? (
+        {life.priorState === 'rehearsal' ? <RehearsalStatement life={life} /> : life.priorSequence ? (
           <>
             Acts are bound to what is on file through sequence <span className="mono">{life.priorSequence}</span>, read from the
             leaf manifests recorded for the filed sequences.
@@ -910,6 +948,12 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   const recordedRegion = status?.sequence?.region ?? null;
   const regionBody = useMemo(() => (recordedRegion ? {} : { region }), [recordedRegion, region]);
 
+  /* A rehearsal (WO-9 Click 6) binds a follow-up sequence against the latest
+     recorded compile of each earlier sequence, filed or not — for an agency
+     validator only. Asked for explicitly; an original has nothing before it. */
+  const followUp = status?.sequence != null && status.sequence.sequenceNumber !== '0000';
+  const [rehearsal, setRehearsal] = useState(false);
+
   const doValidate = useCallback(async () => {
     if (identPath == null) return;
     setBusy('validate');
@@ -940,11 +984,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     if (subId == null) return;
     setBusy('export');
     try {
-      // Pinned to the sequence this compile built, not whichever is latest now.
-      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, {
-        ...regionBody,
-        ...(compileResult?.sequenceNumber ? { sequenceNumber: compileResult.sequenceNumber } : {}),
-      });
+      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, exportRequestBody(compileResult, regionBody));
       if (!res.ok) {
         const pj = (await res.json().catch(() => null)) as { error?: string } | null;
         fireToast('The package was not returned — ' + (pj?.error ?? `HTTP ${res.status}`) + '.', 'error');
@@ -970,7 +1010,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     if (identPath == null) return;
     setBusy('compile');
     try {
-      const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, { submissionType, ...regionBody });
+      const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, {
+        submissionType,
+        ...regionBody,
+        ...(followUp && rehearsal ? { rehearsal: true } : {}),
+      });
       if (!ok || !body) {
         const refusal = (body as { error?: { message?: string } } | null)?.error?.message;
         fireToast(
@@ -996,7 +1040,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       );
       void loadStatus(); void loadHistory();
     } finally { setBusy(null); }
-  }, [identPath, submissionType, regionBody, fireToast, loadStatus, loadHistory]);
+  }, [identPath, submissionType, regionBody, followUp, rehearsal, fireToast, loadStatus, loadHistory]);
 
   /* WHAT ANA SEES HERE. Published ABOVE the no-program early return, because
      `usePublishSurfaceContext` is a hook and a hook below a conditional return
@@ -1150,6 +1194,13 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
           <select id="ectd-subtype" className="c2c-input" style={{ height: 30 }} value={submissionType} onChange={(e) => setSubmissionType(e.target.value as any)}>
             {SUB_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
+          {followUp && (
+            <label style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              title="For an agency validator only. Binds this sequence's replace, append and delete against the latest recorded compile of each earlier sequence, filed or not. The package, its record and its download say so; transmit binds only against filed sequences.">
+              <input type="checkbox" checked={rehearsal} disabled={busy != null} onChange={(e) => setRehearsal(e.target.checked)} />
+              Rehearsal — bind against recorded, unfiled sequences
+            </label>
+          )}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             <button className="nda-open" onClick={doValidate} disabled={busy != null}>{I.checkCircle} {busy === 'validate' ? 'Validating…' : 'Validate'}</button>
             <button className="btn primary" style={{ height: 32 }} onClick={doCompile} disabled={busy != null}>{I.layers} {busy === 'compile' ? 'Compiling…' : 'Compile eCTD'}</button>

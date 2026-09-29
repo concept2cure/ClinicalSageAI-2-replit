@@ -1,0 +1,42 @@
+# Green — 2026-09-28, working tree on b49c04a0d
+
+## The new suite
+ ✓ approving an artifact is an electronic signature > no re-authentication: refused 401, and the artifact, the signatures and the ledger are untouched 51ms
+ ✓ approving an artifact is an electronic signature > a wrong password: refused 401, and the artifact, the signatures and the ledger are untouched 15ms
+ ✓ approving an artifact is an electronic signature > no meaning: refused 400 before the password is checked, nothing written 9ms
+ ✓ approving an artifact is an electronic signature > free text: refused 400 before the password is checked, nothing written 8ms
+ ✓ approving an artifact is an electronic signature > another act’s meaning: refused 400 before the password is checked, nothing written 11ms
+ ✓ approving an artifact is an electronic signature > re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row 43ms
+ ✓ approving: what the signature binds, and what goes back with it > enrolled in TOTP: signed with password and a verified code; without the code, refused 33ms
+ ✓ approving: what the signature binds, and what goes back with it > no stored row for the version: the act records it from the content and signs that — never approved unsigned 36ms
+ ✓ approving: what the signature binds, and what goes back with it > a provenance event that cannot be written takes the whole act back 27ms
+ ✓ approving: what the signature binds, and what goes back with it > a signature that cannot be written takes the approval back with it 24ms
+ ✓ locking an approved artifact is an electronic signature > without re-authentication: refused 401, not locked, no snapshot 10ms
+ ✓ locking an approved artifact is an electronic signature > re-authenticated with the meaning release: locked at the version, with its snapshot, signature and ledger row 28ms
+ ✓ the signed act commits only from the state the signer was shown > approved in between (a second approval racing the first): not signed, nothing written 14ms
+ ✓ the signed act commits only from the state the signer was shown > edited in between (a new version): not signed, nothing written 10ms
+ ✓ the signed act commits only from the state the signer was shown > re-approved in between with no version recorded (the lock would cover nothing): not signed, nothing written 10ms
+      Tests  15 passed (15)
+
+## Every suite that imports artifacts.ts or artifact-approval-act.ts, the phase 10/11 checks, the authoring-actions lock/approve suites
+      Tests  1 failed | 221 passed (222)
+ FAIL  tests/artifact-change-invalidates-bundles.contract.test.ts > every writer of a fingerprint-covered artifact column is accounted for > is exactly the wired routes plus the baselined backstop-only writers
+ Test Files  1 failed | 16 passed (17)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+(the one failing file, artifact-change-invalidates-bundles.contract, fails on trunk: BACKSTOP_ONLY names server/routes/global-compliance.ts, which 80cbd718a stopped writing; this change touches neither — handed on, work-orders item 8)
+
+## Gates
+ci:discarded-audit-write exit=0 :: check-discarded-audit-write: no new occurrences. 123 baselined across 55 file(s).
+ci:sign-ceremony exit=0 :: [ci:sign-ceremony] OK — no new sign write without the ceremony. 24 baselined site(s) remain, exactly as baselined.
+ci:server-error-leaks exit=0 :: [ci:server-error-leaks] OK — 117 baselined site(s) across 75 file(s); no file gained one.
+ci:fabricated-identity exit=0 :: [ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+check:security-patterns exit=0 :: check-security-patterns: 0 violations across 2909 file(s).
+ci:tenant-isolation:no-regression exit=0 :: [ci:tenant-isolation] OK — no new findings above baseline (8 current, 8 baseline)
+ci:drizzle-tenant-scope :: first run FAIL — the provenance insert built its values in a helper, so the gate could not see organizationId; now written explicitly at both insert sites. Re-run: [ci:drizzle-tenant-scope] OK — 125 site(s), all baselined; 26 fixed since the baseline was written.
+ci:check-unrun-tests exit=0 :: [ci:unrun-tests] OK — every test file is reachable by a runner, or explained.
+ci:db-test-isolation exit=0 :: [ci:db-test-isolation] OK — 75 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+ci:unreferenced-modules exit=0 :: Unreferenced modules: 86 (baseline 86)
+ci:regulated-delete-audit exit=0 :: [regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed).
+ci:writerless-stores exit=0 :: [ci:writerless-stores] OK — 29 declared writerless store(s); no new ones.
+
+Scoped type check: no errors in any changed file. ESLint: artifacts.ts 25 warnings (HEAD 25); phase10 1 (HEAD 2); every other changed or new file 0.

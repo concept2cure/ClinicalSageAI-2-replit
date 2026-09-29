@@ -1,0 +1,9 @@
+# The three stale-state cases with the UPDATE's status, version and approved-version conditions removed from commitSignedArtifactAct (updateFromStateAsRead), then restored
+ × the signed act commits only from the state the signer was shown > approved in between (a second approval racing the first): not signed, nothing written 41ms
+   → promise resolved "{ row: { id: 1, …(27) }, …(4) }" instead of rejecting
+ × the signed act commits only from the state the signer was shown > edited in between (a new version): not signed, nothing written 18ms
+   → promise resolved "{ row: { id: 2, …(27) }, …(4) }" instead of rejecting
+ × the signed act commits only from the state the signer was shown > re-approved in between with no version recorded (the lock would cover nothing): not signed, nothing written 20ms
+   → promise resolved "{ row: { id: 3, …(27) }, …(4) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 12 skipped (15)

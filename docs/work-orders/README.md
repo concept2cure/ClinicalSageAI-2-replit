@@ -87,19 +87,27 @@ to one line; edit only your own row to limit merge conflicts.
 - P11-C-4 (`8e72b9bf`, `d848acf3`); SEC-C-7 (`6b442012`); P11-C-2 (`fb69b716`).
 
 `…01KiDof7`'s same-day coverage-gap sweep fixed SEC-A-9 (`59b0d8f9`), part of HS-B-1 (`59b0d8f9`), and the protocol tab strip half of A-C-2 (`780a0639`). Its lane has no row here, and it works in this lane's files, so any further work in the editor family should be claimed first. Handed on: items 5–7 of this lane's list below. **Second round, claimed 2026-09-28 18:00 (cold files only, none changed by another lane in 24 h):**
-  - SEC-A-10/B-5 server half: `server/services/collab/collab-authorization.ts`, `server/services/hocuspocus-server.ts`;
   - SEC-C-4 (a) server half: `server/services/ana-ri/surface-context-block.ts`; the SEC-C-4 class in `client/src/concept2cure/v2/editor/askAnaToDraft.ts`;
   - the SEC-C-7 follow-on: `C2CForm.tsx`, `ProtocolDevForms.tsx`;
   - the P11-B-4 undo floor: `client/src/concept2cure/v2/editor/suggestions.ts`;
   - the SEC-B-1/2 figure rule on the remaining writers: `server/export/authoring-images.ts`, `server/services/authoring/authoring-documents.ts`, `server/services/authoring/section-generation-service.ts`, `server/routes/batch-draft-routes.ts` (with the AI-authorship door there);
   - NEW-P11-B-1a: `server/services/ingestion/ingestion-service.ts`;
-  - P11-C-3-SNAP server half: `server/services/part11/signature-persistence.ts`, `server/services/protocol-development/{protocol-development-service,pdev-view-assembler}.ts`.
+
+  **Corrected 2026-09-28 18:40:** as first pushed, this claim also listed
+  - SEC-A-10/B-5 (`hocuspocus-server.ts`), and
+  - P11-C-3-SNAP (`signature-persistence.ts`, `protocol-development-service.ts`).
+
+  Other lanes changed those three files minutes before the claim (`dd91ded4`
+  and `dc48d926` by `…01KiDof7`, `25cfc551` by `…01M8bGFS`), so they are not
+  claimed here. SEC-A-10/B-5 is handed on as item 12. P11-C-3-SNAP waits for
+  the holds to lapse.
 
   Work in held files is handed on, or waits for the hold to lapse. |
 | **D7 / D5 — P11-28b: the Dispatch button is gated on a signature its own click creates.** From `docs/evidence/reviews/2026-09-28/ectd-lane-second-pass/part11-ux.md`. For IND / NDA / BLA / MAA the Submission Center's Dispatch button reads `gate`, which requires a release signature to already exist, and the signature it would accept is the one the click records — so no such sequence can be dispatched through the product's own screen, which D7's test sequence needs. Fix: the server states whether signing now clears the dispatch gate (the resolver's spine precedence lives there, and re-deriving it in the client is how P11-28a happened); the client reads that. `server/services/ectd/{assess-dispatch-readiness,release-signature-status}.ts` (the resolver's return and the assessment's verdicts only), `SubmissionSeqWorkspaces.tsx` (`DispatchWorkspace` only), their tests | `…session_01VB8JEGfy93uohAfBxSwmYx` | **released** 2026-09-28 — row **D7**. Done: server reports `dispatchGateOnSigning` (`composeStepVerdicts`, `signingNowResolvesRelease`), Dispatch reads it; 12 probes red-then-green (`docs/evidence/D7/2026-09-28-dispatch-reachable/`). Owed: a pglite sign→dispatch case for an IND |
 | **D5 — a quality-gating verdict is never chosen by an empty collection.** `server/services/qms/quality-gating-verdict.ts` (new: `assessSection`, `batchVerdict`, the one assessment both routes run), `server/routes/{tenant-quality-validation,quality-management-api}.ts` (validate-section, batch-validate, the plan dashboard, `GET /plans/:id` only), `client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx`, the two QMS entries in `scripts/ci/writerless-stores-baseline.json`, both quality API references. Closes the fail-open `7983d7299` handed to the QMS lane ("report 'not assessed'") and the three `= ANY(($1, …))` routes that always answered 500 | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done `da00b021a`: red 28/28 against HEAD and 20/28 against the first version (adversarially reviewed), green 28/28; client red 3/5, green 18/18. Evidence: `docs/evidence/D5-GOVERNED-PATH/2026-09-22/` (README "CI, 2026-09-23") |
 | **D5 — AnA's completion cascade commits its ledger rows with the completion.** `server/services/ana-ri/command-executor.ts` `updateTask`'s board block and `boardWriteWithLineage` only; `server/services/tasking/task-side-effects.ts` if a pool-client entry point is needed. The cascade AnA runs after `boardWriteWithLineage` COMMITs is on the pool with no ledger row for the dependents it unblocks; the HTTP routes already run it in the completion's transaction (`cascadeUnblockOnCompletionInTx`) | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: the cascade runs on the completion's transaction (`cascadeUnblockOnCompletionOnClient`), its rows after the completion's; red 2/2 on HEAD, green; the two older AnA task suites moved onto one pool fixture (`__tests__/pglite-pool.fixture.ts`). Evidence: `docs/evidence/D5/2026-09-28-ana-cascade-ledger/` |
 | **D5 — every task put on the board at project creation, or raised from a statistical assessment, has its task.create row.** `server/services/tasking/blueprint-milestones.ts` (new: the one blueprint-milestone seeder), the milestone block of `POST /projects` in `server/routes/concept2cure.ts`, `createTasksForDesign` in `server/services/biostatistics-bridge/bridge-service.ts`, its entry in `scripts/ci/discarded-audit-write-baseline.json`. Both wrote board tasks outside any transaction: the seeder with no ledger row at all, the bridge best-effort with the outcome discarded | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: one transaction each, every task with its row, all or none, nothing when the creator cannot be named; red 5/5 (seeder, HEAD's code), 1/1 (route), 4/4 (bridge), green 20/20. Evidence: `docs/evidence/D5/2026-09-28-task-create-ledger/` |
+| **D5 — approving or locking an artifact is an electronic signature.** The status route's review → approved and approved → locked (`server/routes/c2c/artifacts.ts`), `server/services/artifact-signed-act.ts` (new: the one transaction), `ARTIFACT_ACT_MEANING` in `server/services/artifact-approval-act.ts`, and the three suites that pinned the old contract. Taken over from `…01Wcyqbq` (handed on 2026-09-24, "Found by the vault re-baseline"; that lane's last commit was 2026-09-25 07:23) | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: the act's own meaning, re-authentication before any write, then status + version signed + ledger pair + signature (+ lock snapshot, provenance) on one transaction, only from the state the signer was shown; adversarially reviewed and its findings fixed; red 12/12 on HEAD, green 15/15. Next in this lane: `concept2cure_signatures` append-only on an applier, and `promote_artifact`'s unsigned 'approved'. Evidence: `docs/evidence/D5/2026-09-28-artifact-approval-signature/`. The authoring-actions twins are handed on below (item 6) |
 
 If you are one of the sessions above, correct your own row. If a lane you want
 is claimed, take the next unclaimed finding in §3 rather than duplicating it.
@@ -112,7 +120,7 @@ adversarial skeptic; 2026-09-24). Every item below was upheld by its skeptic.
 Items in this lane's own code are fixed in this lane, not listed here.
 
 **→ `…01Wcyqbq` (launch-catalog follow-through, D2/D5/D6)**
-- `server/routes/c2c/artifacts.ts` status route writes Part 11 'approval'/'publish' signatures to `concept2cure_signatures` from the session alone (no re-verification); the printed signer name falls back to 'unknown'; the signature is not atomic with the status change and is skipped silently when no version row exists; the removal note and its pinning test say this router writes no signature substrate (false). The seal-verified route persists a client-supplied `signerRole`.
+- ~~`server/routes/c2c/artifacts.ts` status route writes Part 11 'approval'/'publish' signatures to `concept2cure_signatures` from the session alone (no re-verification); the printed signer name falls back to 'unknown'; the signature is not atomic with the status change and is skipped silently when no version row exists; the removal note and its pinning test say this router writes no signature substrate (false).~~ **Done 2026-09-28 by `…01P6GWSv`** (the claim was stale): re-authentication, the act's own meaning, one transaction, the note corrected; evidence `docs/evidence/D5/2026-09-28-artifact-approval-signature/`. Still open: the seal-verified route persists a client-supplied `signerRole`.
 - AnA `approve_qms_document` makes a QMS controlled document effective with no password/MFA, no signing-authority and no self-approval check; the QMS router accepts `status: 'effective'` directly on create and patch; three paths bypass the signed approval; two parallel QMS document-control backends, the guarded one unreached.
 - `AUTH_BOUNDARY_MODE=warn` is honoured in production: one env var turns default-deny off with an info log.
 - Submission Center shows a passing Validation gate when the readiness read fails.
@@ -706,6 +714,27 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      - In both routes (`coauthor.ts`, `ectd-documents.ts`), require
        `requireGovernedReason(req.body?.changeReason)`.
      - In `EctdCoauthor.tsx`, collect the author's reason before Save.
+   - **Status 2026-09-28 23:10 (re-checked at `3c87da01`: still open).**
+     - A second holder: `EctdCoauthor.tsx` is held by `…01PwLFr8` until
+       2026-09-29 11:44.
+     - **P11-B-3 folds in here.** The co-author canvas never reflects the
+       document's lock state: an approved row gets an enabled Save. It
+       needs the same two files. The server marks each row
+       `readOnly: isCoauthorVerdictStatus(status)`, and the client hides
+       Save and the reason field on a read-only row.
+     - **A hazard to handle in the same change:**
+       `coauthor_document_versions` references the document with ON DELETE
+       NO ACTION. Once an ordinary save writes a version row, deleting an
+       edited co-author document becomes a 500 unless the delete handles
+       it.
+     - **SEC-B-FO-b3:** `applyCoauthorDocumentPut` should also hold content
+       to the figure rule. It can use the sanitizer's `refusedFigures`,
+       with the module's own refusal shape. That covers both PUT routes
+       without editing `coauthor.ts`.
+     - If no lane has claimed this by the time the `coauthor.ts` hold lapses
+       (2026-09-29 02:15), `…01TTTQ1h` takes it back. It is the review's
+       only open blocker.
+     - Full triage: `docs/evidence/reviews/2026-09-28/editor-family/triage/coauthor-and-ribbon.md`.
 6. **→ `…01KZK3jg` (AnA drive; changed `DocumentWorkbench.tsx` at `a75e3845` and
    `df10de68`, 2026-09-28 01:16 and 01:58), until 2026-09-29 01:58 — the
    editor-family findings in `DocumentWorkbench.tsx`.** After that time, this
@@ -745,6 +774,34 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      - When an anchor is refused because the quoted words changed
        (`b43ec3af`), the host's "anchoring it…" toast gets no follow-up. Pass
        an `onAnchorRefused` in `commentsApi` and toast from it.
+   - **Added 2026-09-28 23:10 (round 2 triage; status of every item above:
+     `…/triage/handons-status.md`, where nothing is fully fixed yet):**
+     - **SEC-C-4 class, two workbench sites.** Each still sends stored text
+       as the person's own words:
+       - "Draft with AnA" splices the section title and code;
+       - "Ask what changed" splices the source title.
+
+       Use a fixed sentence ("Draft this section from the linked section
+       evidence.", as the editor itself sends) and carry the source as a
+       fenced fact. The empty state's "Ask AnA to draft" is fixed in the
+       helper (`f569d49d`). Its workbench test should also click it with a
+       planted program name.
+     - **P11-A-3 / P11-A-4.** The Sources rail's write controls stay live on
+       a frozen document. Add `|| docSealed` to their `disabled`, with the
+       Revert pattern's title. Its tooltip also claims a per-citation freeze
+       that nothing sets (router half: item 13).
+     - **P11-B-2, the client half.** Use the server's `access.edit` (item 13)
+       for `readOnly` and to gate Save, Draft with AnA, AI draft, rename,
+       reorder and Revert.
+     - **SEC-A-10, the client half:** `!docSealed` on the collab condition
+       (item 12).
+     - **NEW-AIACCEPT-POSTCOMMIT.** This is in the router, so it is in
+       item 13's file.
+       - `POST /sections/:id/ai/draft/accept` commits the content, then
+         writes its revision and its audit row on the pool after COMMIT. A
+         failed audit write answers 500 for content already saved, the
+         shape GE-P-1 removed from revert.
+       - Fix: move both writes inside the transaction.
 7. **→ The AnA lanes (`AnaToolExecutor.ts` changed by `…01KiDof7` at
    `41e7c539`), 2026-09-28 — SEC-C-5 (medium).** `update_protocol_section`
    records `fcoiReason(input, 'Protocol section edited via AnA')`: a reason
@@ -767,7 +824,17 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
    - While this step is red, the Lint job fails. Every job that `needs: lint`
      then skips (Integration, Blank DB, Coverage), for every lane.
 9. **→ `…01PwLFr8` (the D2 launch sweep, `53237f62`), 2026-09-28 16:50 — trunk's
-   Lint job is red at `ci:tenant-entry-points`.**
+   Lint job is red at `ci:tenant-entry-points`.** **Status 2026-09-28 23:10:**
+   - The entry-point half is **done by this lane** (`8686a321`). The baseline
+     file is cold. The justification was re-read against `53237f62`, holds,
+     and carries a dated note.
+   - The CSS half below is **still red**. `app-v2.css` is held (`7b00c78d`),
+     so it stays with `…01PwLFr8`.
+   - Also for this lane, from this lane's SEC-C-7 follow-on (`e6822dac`):
+     `.c2c-v2 .de-input` (`journey-v2.css:490`, held by `53237f62`) has no
+     `[readonly]` rule. The reviewer name, now read-only, therefore looks
+     editable. Give `.c2c-v2 .de-input[readonly]` a muted background from
+     the stone tokens.
    - `server/routes/mdx-admin.ts` is a baselined entry point
      (`alternative-auth-router`). Its code changed in `53237f62` (the Part 11
      console's chain verdict) without the justification being re-read, so the
@@ -781,8 +848,12 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      at lines 1480 and 1484 of `client/src/concept2cure/v2/styles/app-v2.css`.
      The later rule silently wins. The fix is to merge the two declarations into
      one rule.
-10. **→ `…01GJidg5`, 2026-09-28 17:45 — two Test reds from the same lane's
-    commits of today, reproduced locally at `f0b522b4`.**
+10. ~~**→ `…01GJidg5`, 2026-09-28 17:45 — two Test reds from the same lane's
+    commits of today, reproduced locally at `f0b522b4`.**~~ **Done 2026-09-28
+    23:10 by this lane (`20f237ca`).** Both test files are cold. The lane had
+    been quiet since 18:54, and the reds skipped the Test job for every lane.
+    Each fix was shown failing first, with a mutant; evidence is in
+    `docs/evidence/W3/2026-09-28-trunk-ci/` (second pass).
     - `tests/governed-decision-db-integration.test.ts`, 2 tests, fails with
       *"decisionRecordService.getByDecisionCode is not a function"*.
       - `resolveGovernedDecisionRow` (`governed-decision-ledger.ts:94`) now
@@ -797,9 +868,9 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
       - Since `288411a4` (16:21), a CMC register lists the open program's rows
         only.
       - The fixture's rows need the program the test opens.
-11. **→ `…01M8bGFS` (protocol build), 2026-09-28 17:45 — Test red:
+11. ~~**→ `…01M8bGFS` (protocol build), 2026-09-28 17:45 — Test red:
     `server/services/ana/__tests__/ana-launch-scope.test.ts` › "classifies every
-    enabled tool".**
+    enabled tool".**~~ **Done by `…01KiDof7`, `759049b5`.** Green at `1f5c009b`.
     - 16 AnA tools added today are in no launch-scope class, hiddenApp or
       inScope:
       - `review_trial_schema`, `review_spirit_conformance`,
@@ -813,6 +884,191 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
     - Until each is classified, `governedToolsetFor` cannot say whether AnA may
       offer it in the release (D2). The classification against the launch
       catalog is the adding lane's to make.
+12. **→ `…01KiDof7` (holds `server/services/hocuspocus-server.ts` since
+    `dd91ded4`, 2026-09-28 17:32), 2026-09-28 — SEC-A-10 / SEC-B-5: the live
+    co-editing room authorises by tenant only.** Medium while co-editing is
+    off (both flags are off in every configuration found). It is a blocker the
+    moment `ENABLE_COLLAB_CRDT` is set; CloudFront already routes `/collab` to
+    the ALB.
+    - **What happens.** `authorizeResource` (`collab/collab-authorization.ts`)
+      checks that the document or section belongs to the tenant, and nothing
+      else. So:
+      - a tenant member with no grant gets a read-write room;
+      - a VIEWER grant gets a read-write room;
+      - a FROZEN or APPROVED document, or one with `locked_at`, is writable
+        through the room, and `onStoreDocument` persists it with no seal
+        check.
+
+      The HTTP twin refuses all three: `canEditSection` and
+      `authoringObjectAuthorization`.
+    - **Fix (triage, read-only, verified against the code):**
+      - **`authorizeResource(resource, tenantId, principal)`.** It returns
+        `read-write | read-only | denied | unavailable`:
+        - resolve the scope with `resolveAuthoring{Section,Document}Scope`;
+        - refuse when `scope.docId !== resource.documentId`;
+        - require `decideAuthoringPermission` 'view';
+        - it is read-write only when 'edit' is allowed AND
+          `check{Section,Document}Writable` passes.
+      - **In `hocuspocus-server.ts`:**
+        - build the principal the way HTTP does
+          (`expandRoleClaims(payload.role, payload.roles)`);
+        - `denied` and `unavailable` are refused;
+        - `read-only` sets `connectionConfig.readOnly`, and is refused when
+          the connection cannot be downgraded;
+        - `onStoreDocument` re-checks `checkDocumentWritable` before
+          `storeCollabState`.
+      - Your `dd91ded4` already closed the non-integer-subject skip at
+        admission and the periodic re-check (IAM-19).
+    - **Test first:** `collab-governance.pglite.integration.test.ts`. Also
+      apply `20260727_authoring_object_permissions.sql`, and seed an AUTHOR
+      grant for the two existing "admits…" cases. These cases are red at
+      HEAD:
+      - a member with no grant is refused;
+      - a VIEWER grant opens read-only;
+      - a FROZEN document is read-only even for its OWNER;
+      - a revoked grant is refused.
+    - **Client half, in held files; the same hold rule applies:**
+      - `DocumentWorkbench.tsx`: `collab={liveCoedit && activeDoc && !docSealed …}`.
+      - `RichSectionEditor.tsx` `onSynced`: when the room is non-empty,
+        compare it with the stored record through the same schema before
+        saying "All changes saved". If they differ, stay dirty and say the
+        live session holds text that is not in the saved section.
+13. **→ `…01KiDof7` and `…01PwLFr8` (hold `server/routes/authoring.router.ts`;
+    `d4176395`, `f0147f45`, until 2026-09-29 17:05), 2026-09-28 — the
+    editor-family findings whose fix is in the authoring router.** After
+    that time this lane takes back whatever is still open, as with item 6.
+    Evidence and the fix for each item:
+    `docs/evidence/reviews/2026-09-28/editor-family/`.
+    - **SEC-A-7 / SEC-B-7 (high): AI authorship is a client claim the ledger
+      records as fact.** The section PATCH takes contributor and origin from
+      the body.
+      - The verifier now exists: `server/services/authoring/machine-claim-verify.ts`.
+        It landed with the batch-draft door in this lane's round 2. It checks
+        a claimed machine text against the tenant's immutable
+        `ana_turn_records`.
+      - The fix is for the PATCH to call it: an unverified claim is saved as
+        the saver's own text, with the claim and reason disclosed.
+      - Also, a tracked-change decision's `sectionId` must be a section of
+        `:id`, refused otherwise with 400 `SECTION_NOT_IN_DOCUMENT`.
+    - **SEC-B-FO-b2: the figure rule (`ce56754d`) is not applied on three
+      router writers.**
+      - AI draft accept: the one real bypass of the PATCH's refusal.
+      - Revert: restoring a revision can put a refused image back.
+      - POST /templates.
+      - Use the sanitizer's `refusedFigures`, with one refusal shape.
+    - **SEC-B-3, server half: an anchor-only save is not checked to change
+      only the anchor.** The client half is fixed (`b43ec3af`). When
+      `changeReason` is "Comment anchor applied", the server should refuse a
+      body that changes anything but new `data-comment-id` marks. A
+      mark-signature prototype passes 8 of 8.
+    - **SEC-A-FO-c: freezing a document never sets
+      `authoring_citations.frozen_at`.** The fix sets it at the three seal
+      points, on the transaction client, with the count in each seal's audit
+      details. The helper goes in `source-usage.service.ts`.
+    - **P11-B-2: the editing ribbon is offered to people the server will
+      refuse.** Add `edit` to `callerDocumentAccess`, as GE-P-3 did for its
+      acts, and per section. The client half is in `DocumentWorkbench.tsx`
+      (item 6).
+14. **→ `…01KZK3jg` (AnA drive; holds `server/routes/ana-ri/stream.ts` since
+    `baa6a7e8`, 2026-09-28 19:17), 2026-09-28 — the screen state that
+    surfaces publish to AnA reaches no model.**
+    - `useAnaChat.ts` sends `module_context` on every turn. The server
+      renders it only in `buildSurfaceContextBlock` (the "OBSERVED SCREEN
+      STATE" fence), called only from `buildChatContext`
+      (`chat-context-builder.ts:327`). `buildChatContext` has no production
+      caller: its only reference is a test mock.
+    - `stream.ts` destructures no `module_context`, although it does render
+      the route and authoring blocks (`:821`, `:871`).
+    - So `ci:ana-surface-context`, which passes while every routable surface
+      publishes screen state, holds 114 surfaces to a contract whose output
+      reaches no model.
+    - Found by the adversarial reviewer of this lane's SEC-C-4 (a) server
+      half, and confirmed by grep at `37f21ed0`.
+    - **Fix:** read `module_context` in `stream.ts` and append
+      `buildSurfaceContextBlock(module_context)` to the volatile suffix beside
+      the route block. It is already fenced, capped and labelled untrusted.
+      Then retire `buildChatContext` or wire it, and correct its docblock
+      ("Both endpoints call buildChatContext()").
+    - The SEC-C-4 (a) client half (`useAnaChat.ts`, `useAnaChat.types.ts`,
+      `RichSectionEditor.tsx`, and `DocumentCanvas`, which the completeness
+      critic found as a fourth host) depends on this wiring. Until it lands,
+      a fenced `selection` field is rendered by no live path.
+15. **→ `…01M8bGFS` (protocol build; every file below changed by it on
+    2026-09-28), 2026-09-28 23:30 — a read-only review of the protocol
+    industry engines, re-checked at `1f5c009b` after the lane's evening
+    fixes.**
+    - Filed:
+      - `docs/evidence/reviews/2026-09-28/editor-family/triage/new-protocol-build.md`:
+        the review at `3c87da01`;
+      - `…/triage/new-protocol-build-recheck.md`: the status at `1f5c009b`,
+        each original probe re-run with `tsx`.
+    - Closed:
+      - PB-3, by `1ccf2f11`;
+      - PB-9, by `759049b5` (`…01KiDof7`);
+      - PB-2's substance: an allocation above alpha is now a gap, and the
+        recorded allocation is what is simulated.
+    - **Open, the lane's to fix:**
+      - **PB-1 (high): unbounded synchronous CPU on the event loop.** Any
+        authenticated user can reach it, a viewer included, through
+        `POST /api/study-design/<engine>`, `GET /:id/<engine>` and the AnA
+        review tools. Interim OC, BOIN and part of enrollment are now capped
+        (`85d7ce56`, `f4833a2d`). Still open:
+        - **Multiplicity.** There is no family limit, and `study-design.ts:107`
+          endpoints has no `.max`: 3,000 endpoints take 20.5 s. It is also a
+          **new regression from `1ccf2f11`**: the recorded-allocation path
+          copies the m×m matrix on every simulation, so 800 endpoints (76 KB)
+          take 30 s.
+        - **MMRM.** The cap is on `/planning` only. The engine has none, so a
+          design saved through `/persist` with 400 visits costs 22 s on every
+          GET and every AnA call.
+        - **Enrollment.** The work budget ignores the fixed cost of each
+          arrival: 100,000 patients at one site (a 176-byte body) take 17 s,
+          where the comment promises 1–2 s.
+        - `industryRead` holds a pooled connection in an open transaction for
+          the whole computation (`AnaToolExecutor.ts:20854`).
+      - **PB-7 (high): the governed `/planning` write keeps no before-image.**
+        The payload is `{studyId, block, cleared}`, and the prior value is
+        compared (`STALE_BLOCK`) but never stored. The same applies to the
+        prior `metadata.design` on `/persist`.
+      - **PB-8 (medium): a finalized protocol stays bound by reference to a
+        design that is still writable.** `readBoundDesign` reads no status
+        and no `updated_at`, and neither `/planning` nor `/persist` checks
+        for a finalized binding.
+      - **PB-4 (medium), case (a):** a pk, pd or biomarker activity with no
+        specimen still leaves the totals unmarked as lower bounds, so the
+        screen prints "within" for a total that is not known.
+      - **PB-5 (medium):** redline, deviation trends and protocol-scoped
+        SPIRIT still have no UI, and `README.md:34-36` still says all sixteen
+        engines are in the pane.
+      - **PB-6 (medium):** the projections pane still has no request token.
+        A slow response renders, and downloads, under a later projection's
+        label.
+      - **PB-2, wording only:** "controlled at alpha" is a weak-control
+        simulation under the global null, and the screen does not say so.
+      - **Lows:**
+        - PB-10: the ratingFrom provenance copy;
+        - PB-11: "no RNG" at `protocol-industry-tool-defs.ts:9-10`;
+        - PB-12: no §0 claim row naming the D-row and where the Rule 2
+          exception is recorded;
+        - PB-13: React key collisions, now reachable because duplicate ids
+          are listed.
+      - **Documentation drift in `tool-authorization.register.json`**
+        (`05286bf0`), from this lane's NEW-P11-B-1a fix, when it lands. In
+        `classify_submission_document`, `site` and `writes` should name the
+        verdict-row rule and the `coauthor_document.updated` event.
+16. **→ `…01KiDof7` (`80cbd718`, 18:00), 2026-09-28 23:40 — trunk's Lint job
+    is red at `ci:org-path-param-guards`.**
+    - `DELETE /gdpr/:orgId/data-subject/:dataSubjectId`
+      (`server/routes/global-compliance.ts`) was retired to a 410 that erases
+      nothing and names the signed path. It no longer calls `enforceOrgScope`,
+      so the gate reports an unguarded org path parameter.
+    - It reads no org data, so this is harmless in effect. But the gate is
+      red for every lane.
+    - Either run `enforceOrgScope(req, res, orgId)` before answering 410,
+      which is cheap and keeps the rule without exceptions, or record the
+      stub as a reviewed exception.
+    - Reproduced by this lane's local Lint job at `d73b215d`. Its other three
+      reds are items 8 and 9 and the D5 lane's item 4.
 
 ### Found by the D5 lane's CI check (`…01P6GWSv`, 2026-09-28) — handed on
 
@@ -862,6 +1118,42 @@ in all of them. Reproduced locally at `6bd237ca9`.
      its actions to, and `create_task` needs the pattern
      `tasking/blueprint-milestones.ts` uses: the insert and its row on one
      transaction, and nothing written when no one can be named.
+6. **→ `…01GJidg5` (`server/routes/authoring-actions.ts`, touched 2026-09-28
+   18:28, inside its window).** `/api/authoring-actions/approve-artifact` and
+   `/lock-artifact` record an approved or locked version with no signature at
+   all. The status route now signs both acts, so these are the one API path
+   around the ceremony (no client calls them). Route each through `verifyReauth`
+   and `commitSignedArtifactAct` (`server/services/artifact-signed-act.ts`),
+   or refuse them. `server/routes/__tests__/lockArtifactCoversApproval.test.ts`
+   pins their current behaviour.
+7. **→ `…01GJidg5` (`cmcRegisters.tsx`, `288411a4e`, 16:21).** Trunk CI 12615:
+   `client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx` ›
+   CmQcTesting fails 2/2 locally at HEAD. *"a review PUTs the disposition and
+   the reviewer"* and *"refuses to let the analyst review their own result"*
+   both wait for `S-2` and find *"No QC testing records yet"*.
+8. **→ `…01KiDof7` (`server/routes/global-compliance.ts`, `80cbd718a`, 18:00).**
+   Trunk CI 12615 fails on this file in two places:
+   - `npm run ci:org-path-param-guards` fails on it.
+   - `tests/artifact-change-invalidates-bundles.contract.test.ts` fails with
+     *"BACKSTOP_ONLY lists files that no longer write those columns; remove
+     them"*, naming this file.
+9. **→ `…01PwLFr8` (`f0147f452` / `7b00c78de`).** Trunk CI 12615 fails two
+   gates on this session's files:
+   - `ci:tenant-entry-points` fails because `server/routes/mdx-admin.ts`
+     changed since its justification.
+   - `ci:check-css-selector-shadowing` fails on
+     `client/src/concept2cure/v2/styles/app-v2.css`: `.c2c-v2 .crumbs .sep` is
+     defined at lines 1480 and 1484.
+10. **→ `…01KiDof7` (`server/services/ana-ri/command-executor.ts`, `dc48d9264`,
+    17:32, inside its window). Found by the review of the artifact approval
+    signature.** AnA `update_artifact_status` (`command-executor.ts:818`) sets
+    an artifact approved or locked with a reason only. It is not in
+    `PART11_ESIGN_COMMANDS` (`part11-governance.ts:88`). It records no
+    version, so the result is not filable. But after a signed approval it can
+    lock the artifact with no re-authentication, no release signature and no
+    snapshot, and the artifact then reads as locked. Make approve and lock
+    e-signature-tier, or refuse them and name the status route, which now
+    signs both (`server/services/artifact-signed-act.ts`).
 
 ## 1. The rules come first
 

@@ -1,0 +1,30 @@
+# Red — artifact-approval-ceremony.pglite.integration.test.ts with HEAD's server/routes/c2c/artifacts.ts and server/services/artifact-approval-act.ts (the latter given only the ARTIFACT_ACT_MEANING table the new module imports), 2026-09-28
+ × approving an artifact is an electronic signature > no re-authentication: refused 401, and the artifact, the signatures and the ledger are untouched 73ms
+   → {"success":true,"data":{"artifactId":"artifact_abc","status":"approved","previousStatus":"review","lockedAt":null,"approvedVersionId":2,"publishedVersionId":null,"publishedAt":null,"enforcedRole":"admin","auditTrail":{"persisted":true,"chained":false},"
+ × approving an artifact is an electronic signature > a wrong password: refused 401, and the artifact, the signatures and the ledger are untouched 18ms
+   → {"success":true,"data":{"artifactId":"artifact_abc","status":"approved","previousStatus":"review","lockedAt":null,"approvedVersionId":2,"publishedVersionId":null,"publishedAt":null,"enforcedRole":"admin","auditTrail":{"persisted":true,"chained":false},"
+ × approving an artifact is an electronic signature > no meaning: refused 400 before the password is checked, nothing written 12ms
+   → expected '{"success":false,"error":{"message":"…' to contain 'approval'
+ × approving an artifact is an electronic signature > free text: refused 400 before the password is checked, nothing written 21ms
+   → {"success":true,"data":{"artifactId":"artifact_abc","status":"approved","previousStatus":"review","lockedAt":null,"approvedVersionId":2,"publishedVersionId":null,"publishedAt":null,"enforcedRole":"admin","auditTrail":{"persisted":true,"chained":false},"
+ × approving an artifact is an electronic signature > another act’s meaning: refused 400 before the password is checked, nothing written 18ms
+   → {"success":true,"data":{"artifactId":"artifact_abc","status":"approved","previousStatus":"review","lockedAt":null,"approvedVersionId":2,"publishedVersionId":null,"publishedAt":null,"enforcedRole":"admin","auditTrail":{"persisted":true,"chained":false},"
+ × approving an artifact is an electronic signature > re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row 22ms
+   → expected [ Array(1) ] to deeply equal [ Array(1) ]
+ × approving an artifact is an electronic signature > enrolled in TOTP: signed with password and a verified code; without the code, refused 13ms
+   → {"success":true,"data":{"artifactId":"artifact_abc","status":"approved","previousStatus":"review","lockedAt":null,"approvedVersionId":2,"publishedVersionId":null,"publishedAt":null,"enforcedRole":"admin","auditTrail":{"persisted":true,"chained":false},"
+ × approving an artifact is an electronic signature > no stored row for the version: the act records it from the content and signs that — never approved unsigned 16ms
+   → expected [] to deeply equal [ ObjectContaining{…} ]
+ × approving an artifact is an electronic signature > a provenance event that cannot be written takes the whole act back 18ms
+   → answered 500 over a committed approval: expected { status: 'approved', …(2) } to match object { status: 'review' }
+ × approving an artifact is an electronic signature > a signature that cannot be written takes the approval back with it 14ms
+   → the approval committed while its signature did not: expected { status: 'approved', …(2) } to match object { status: 'review', …(1) }
+ × locking an approved artifact is an electronic signature > without re-authentication: refused 401, not locked, no snapshot 15ms
+   → {"success":true,"data":{"artifactId":"artifact_abc","status":"locked","previousStatus":"approved","lockedAt":"2026-09-28T23:42:11.453Z","approvedVersionId":2,"publishedVersionId":2,"publishedAt":"2026-09-28T23:42:11.453Z","enforcedRole":"admin","auditTr
+ × locking an approved artifact is an electronic signature > re-authenticated with the meaning release: locked at the version, with its snapshot, signature and ledger row 18ms
+   → expected [ { signature_type: 'publish', …(4) } ] to deeply equal [ ObjectContaining{…} ]
+ ✓ the signed act commits only from the state the signer was shown > approved in between (a second approval racing the first): not signed, nothing written 12ms
+ ✓ the signed act commits only from the state the signer was shown > edited in between (a new version): not signed, nothing written 7ms
+ ✓ the signed act commits only from the state the signer was shown > re-approved in between with no version recorded (the lock would cover nothing): not signed, nothing written 7ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  12 failed | 3 passed (15)
