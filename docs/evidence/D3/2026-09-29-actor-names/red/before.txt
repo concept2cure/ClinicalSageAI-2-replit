@@ -1,0 +1,79 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T01:10:49.011Z","pid":7367,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:10:49.012Z","pid":7367,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:10:49.012Z","pid":7367,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-names.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-09-29T01:10:49.403Z","pid":7367,"hostname":"vm","context":{"userId":951,"tenantId":90301,"resourceId":"wo03_7367_mulzcpgm-actor-names-record"},"msg":"[audit-service] [AUDIT] data_modify actor_names_contract"}
+ × tests/db/actor-names.dbtest.ts > the audit trail after someone leaves the organization (D3) > names the person who acted, not only their id 22ms
+   → expected [ 'user 951' ] to deeply equal [ 'WO03 actor-names-leaver' ]
+ × tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers nothing about an account that never belonged to or acted in A 5ms
+   → function public.actor_name(unknown) does not exist
+ × tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers name and email only — no credential column exists on it 3ms
+   → function public.actor_name(unknown) does not exist
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > the users table itself still refuses the leaver's row to A 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/actor-names.dbtest.ts > the audit trail after someone leaves the organization (D3) > names the person who acted, not only their id
+AssertionError: expected [ 'user 951' ] to deeply equal [ 'WO03 actor-names-leaver' ]
+
+- Expected
++ Received
+
+  [
+-   "WO03 actor-names-leaver",
++   "user 951",
+  ]
+
+ ❯ tests/db/actor-names.dbtest.ts:79:44
+     77|     );
+     78|     expect(history.data.length, 'the audit row was not found').toBeGre…
+     79|     expect(history.data.map(e => e.actor)).toEqual(history.data.map(()…
+       |                                            ^
+     80|     expect(history.data.map(e => e.actorRef)).toEqual(history.data.map…
+     81|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers nothing about an account that never belonged to or acted in A
+error: function public.actor_name(unknown) does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ runQueryScoped server/db/poolInstrumentation.ts:198:21
+    196|     await client.query('BEGIN');
+    197|     await client.query(TENANT_SET_CONFIG_SQL, scopeParams(scope));
+    198|     const result = (await (client.query as any)(...args)) as QueryResu…
+       |                     ^
+    199|     await client.query('COMMIT');
+    200|     return result;
+ ❯ tests/db/actor-names.dbtest.ts:86:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 219, severity: 'ERROR', code: '42883', detail: undefined, hint: 'No function matches the given name and argument types. You might need to add explicit type casts.', position: '15', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_func.c', routine: 'ParseFuncOrColumn' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers name and email only — no credential column exists on it
+error: function public.actor_name(unknown) does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ runQueryScoped server/db/poolInstrumentation.ts:198:21
+    196|     await client.query('BEGIN');
+    197|     await client.query(TENANT_SET_CONFIG_SQL, scopeParams(scope));
+    198|     const result = (await (client.query as any)(...args)) as QueryResu…
+       |                     ^
+    199|     await client.query('COMMIT');
+    200|     return result;
+ ❯ tests/db/actor-names.dbtest.ts:93:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 219, severity: 'ERROR', code: '42883', detail: undefined, hint: 'No function matches the given name and argument types. You might need to add explicit type casts.', position: '15', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_func.c', routine: 'ParseFuncOrColumn' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  01:10:47
+   Duration  2.46s (transform 906ms, setup 81ms, import 1.67s, tests 360ms, environment 0ms)
+

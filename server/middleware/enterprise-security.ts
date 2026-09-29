@@ -26,6 +26,7 @@ import helmet from 'helmet';
 import { randomBytes } from 'crypto';
 import { reportSecurityAlert } from '../services/security-alerts';
 import { requestFullPath } from './request-path';
+import { SIGN_IN_LIMITS } from '../config/platform-limits';
 
 // ============================================================================
 // CONFIGURATION
@@ -94,7 +95,6 @@ const config = {
       global: { windowMs: 60_000, max: 1000 * m }, // 1000/min prod, 10000/min dev
       api: { windowMs: 60_000, max: 200 * m }, // 200/min prod, 2000/min dev
       ai: { windowMs: 60_000, max: 20 * m }, // 20/min prod, 200/min dev
-      auth: { windowMs: 15 * 60_000, max: isDev ? 100 : 5 }, // 5/15min prod, 100/15min dev
       write: { windowMs: 60_000, max: 100 * m }, // 100/min prod, 1000/min dev
       upload: { windowMs: 60_000, max: 20 * m }, // 20/min prod, 200/min dev
       export: { windowMs: 60_000, max: 10 * m }, // 10/min prod, 100/min dev
@@ -440,15 +440,18 @@ export const rateLimiters = {
   global: createLimiter(config.rateLimits.global),
   api: createLimiter(config.rateLimits.api),
   ai: createLimiter(config.rateLimits.ai),
-  // Every /api/auth request, at 5 per 15 minutes in production. With one
+  // Every /api/auth request's FAILURES from one address — the spraying guard
+  // (SIGN_IN_LIMITS.failuresPerIp, server/config/platform-limits.ts). With one
   // trusted hop (server/config/trust-proxy.ts) a CloudFront-routed request's
   // address is the CloudFront edge, so this budget is shared by everyone that
   // edge serves until the load balancer accepts CloudFront alone and two hops
   // reach the user (D1). Counting every request, a few SSO sign-ins (initiate
-  // plus callback), signups or metadata reads would refuse the next person at
-  // that edge for 15 minutes. It counts failures: the attempts it exists to
-  // slow. The per-account lockout and the sign-in route limits stand beside it.
-  auth: createLimiter({ ...config.rateLimits.auth, countFailuresOnly: true }),
+  // plus callback), signups or metadata reads refused the next person at that
+  // edge; so it counts failures. At 5 in production, five typos or five
+  // expired sessions answering 401 at one office refused the office for 15
+  // minutes (D6, 2026-09-29); an account is protected per account instead
+  // (middleware/sign-in-limits.ts, and the lockout in auth-security-service).
+  auth: createLimiter({ ...SIGN_IN_LIMITS.failuresPerIp, countFailuresOnly: true }),
   write: createLimiter(config.rateLimits.write),
   upload: createLimiter(config.rateLimits.upload),
   export: createLimiter(config.rateLimits.export),

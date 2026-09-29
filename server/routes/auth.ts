@@ -98,6 +98,7 @@ import {
   ensureOrganizationDefaultWorkspace,
 } from '../services/c2c/organization-default-workspace';
 import { runWithTenantScope } from '../db/tenantStore';
+import { signInLimits } from '../middleware/sign-in-limits';
 
 const router = Router();
 
@@ -116,17 +117,10 @@ function getRefreshTokenSecret(): string {
 // ─── Rate Limiters ──────────────────────────────────────────────────────────
 // Separate limiters for different risk levels.
 
-/** Login: 10 attempts per 15 minutes per IP */
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: { code: 'RATE_LIMIT', message: 'Too many login attempts. Please try again later.' },
-  },
-});
+// Password and second-factor steps: per ACCOUNT, failures only
+// (middleware/sign-in-limits.ts). They were 10 requests per client address,
+// successes included, so the eleventh colleague behind one office address was
+// refused (D6, 2026-09-29).
 
 /** Signup: 5 per hour per IP */
 const signupLimiter = rateLimit({
@@ -164,18 +158,6 @@ const passwordResetLimiter = rateLimit({
       code: 'RATE_LIMIT',
       message: 'Too many password reset requests. Please try again later.',
     },
-  },
-});
-
-/** MFA verify: 10 per 15 minutes per IP */
-const mfaLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: { code: 'RATE_LIMIT', message: 'Too many MFA attempts. Please try again later.' },
   },
 });
 
@@ -406,7 +388,7 @@ router.get('/session', async (req: Request, res: Response) => {
  * POST /api/auth/login
  * Login with email and password
  */
-router.post('/login', loginLimiter, async (req: Request, res: Response) => {
+router.post('/login', signInLimits.login, async (req: Request, res: Response) => {
   try {
     const { email, password, deviceInfo, rememberDevice } = req.body;
 
@@ -1635,7 +1617,7 @@ router.get('/me', async (req: Request, res: Response) => {
  * Accepts the challenge token (from login response) + TOTP code,
  * and returns the real JWT access/refresh tokens.
  */
-router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
+router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: Response) => {
   try {
     const { challengeId, code, method } = req.body;
 
@@ -1843,7 +1825,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
  * Rate limited per IP, and at most emailOtpService.MAX_RESENDS re-issued codes
  * per challenge (429 MFA_RESEND_LIMIT beyond it; a new sign-in starts again).
  */
-router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
+router.post('/mfa/resend', signInLimits.secondFactor, async (req: Request, res: Response) => {
   try {
     const { challengeId } = req.body;
 

@@ -54,6 +54,11 @@ export const EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS: readonly ExpectedImmutability
   { schema: 'public', table: 'ana_turn_records', trigger: 'trg_ana_turn_records_no_truncate', source: 'migrations/20260926_ana_turn_records.sql' },
   { schema: 'public', table: 'ana_record_blobs', trigger: 'trg_ana_record_blobs_append_only', source: 'migrations/20260926_ana_turn_records.sql' },
   { schema: 'public', table: 'ana_record_blobs', trigger: 'trg_ana_record_blobs_no_truncate', source: 'migrations/20260926_ana_turn_records.sql' },
+  // An artifact's approval and release signatures, and each lock's snapshot (2026-09-29, D5).
+  { schema: 'public', table: 'concept2cure_signatures', trigger: 'trg_concept2cure_signatures_append_only', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
+  { schema: 'public', table: 'concept2cure_signatures', trigger: 'trg_concept2cure_signatures_no_truncate', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
+  { schema: 'public', table: 'concept2cure_submission_snapshots', trigger: 'trg_concept2cure_submission_snapshots_append_only', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
+  { schema: 'public', table: 'concept2cure_submission_snapshots', trigger: 'trg_concept2cure_submission_snapshots_no_truncate', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
 ];
 
 /** Anything with a `.query` — a pg Pool, a PoolClient, a PGlite instance. */

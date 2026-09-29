@@ -1,0 +1,35 @@
+# Red — the updated suites against HEAD's server/services/ai-actions/handlers/promote-artifact.ts (2026-09-29)
+ × promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a approver promoting from review: status unchanged, no approved version, not filable, and the warning says so 2121ms
+   → a promotion approved the artifact with no signature: expected 'approved' to be 'review' // Object.is equality
+ × promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a editor promoting from review: status unchanged, no approved version, not filable, and the warning says so 21ms
+   → a promotion approved the artifact with no signature: expected 'approved' to be 'review' // Object.is equality
+ × promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a regulatory promoting from review: status unchanged, no approved version, not filable, and the warning says so 17ms
+   → a promotion approved the artifact with no signature: expected 'approved' to be 'review' // Object.is equality
+ × promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a super_admin promoting from review: status unchanged, no approved version, not filable, and the warning says so 17ms
+   → a promotion approved the artifact with no signature: expected 'approved' to be 'review' // Object.is equality
+ × promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting a DRAFT nobody reviewed records no approved version, and the warning says so 17ms
+   → expected 'approved' to be 'draft' // Object.is equality
+ ✓ promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting an artifact approved at v1 and edited to v2 does not re-stamp v2 (stays edited-after-approval) 20ms
+ ✓ promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting an artifact the governed act approved at its current version keeps it filable and claims nothing else 16ms
+ ✓ promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > the human-approval gate is unchanged: no reason/confirmation, no approval and no version recorded 16ms
+ × promote-artifact-approved-version.pglite.test.ts > what a promotion records > its audit entry is a promotion, not a signature: no signature was applied 20ms
+   → a signature recorded that no one applied: expected 'signature_apply' not to be 'signature_apply' // Object.is equality
+ × promote-artifact-approved-version.pglite.test.ts > what a promotion records > an audit entry that could not be written is said, not swallowed 20ms
+   → expected 'It cannot be filed yet: its status is…' to match /audit entry for this promotion could …/
+ ✓ artifact-approval-follows-status.pglite.test.ts > 20260923b_artifact_approval_follows_status.sql > is registered in C2C_MIGRATION_FILES above the final pair 2016ms
+ ✓ artifact-approval-follows-status.pglite.test.ts > 20260923b_artifact_approval_follows_status.sql > carries no DROP (RULE 1) 25ms
+ ✓ artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > review → approved through the status route records v1 and is filable 22ms
+ × artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approved → review clears the approval; promote_artifact does not approve it again, and it is NOT filable 37ms
+   → expected 'approved' to be 'review' // Object.is equality
+ ✓ artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > archived by markObjectSuperseded, then restored to approved by AnA, is NOT filable 23ms
+ ✓ artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approve → lock at the same version keeps the approval: still filable 19ms
+ ✓ artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > locked → draft (unlock) clears both the approval and the lock; re-approval records the new version 24ms
+ ✓ artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > the status comparison is case-insensitive 17ms
+ ✓ artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > an INSERT of a non-approved row carries no approval 16ms
+ ✓ artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > clears a stale approval left on a non-approved row before the trigger existed 1768ms
+ ✓ artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > applies twice: one trigger, and an approved row written between the runs keeps its approval 23ms
+ ✓ artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > NOTICE-skips on a database without concept2cure_artifacts (the set-only blank replay) 1647ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approved → review clears the approval; promote_artifact does not approve it again, and it is NOT filable
+"It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v1) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's 
+      Tests  8 failed | 14 passed (22)

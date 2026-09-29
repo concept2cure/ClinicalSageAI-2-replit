@@ -28,6 +28,8 @@ must derive from "which records can ever change", not the other way round.
 | Record family                                   | Class                     | Policy |
 | ----------------------------------------------- | ------------------------- | ------ |
 | Final electronic signature (`electronic_signatures`) | Immutable            | No UPDATE, no DELETE. Correction = insert a superseding row; the old row's `superseded_by` is a **write-once** pointer (NULL → id, never re-pointed, never cleared). In that same statement, and only there, the verification column group (`is_valid`, `verification_status`, `verification_date`) may move to the invalid, revoked state the governed revocation records; the attested columns never change. Enforced at the database (see below; amended 2026-09-25, audit finding DP-03). |
+| Artifact approval / release signature (`concept2cure_signatures`) | Immutable | No UPDATE, no DELETE, no TRUNCATE, for every role, and no cascade from deleting the artifact or its version (the delete is refused with it). No code updates or deletes it; a correction is a new row. Enforced at the database since 2026-09-29 (see below). |
+| Artifact lock snapshot (`concept2cure_submission_snapshots`) | Append-only | No UPDATE, no DELETE, no TRUNCATE. Enforced at the database since 2026-09-29. |
 | Signed object/version binding (`bound_payload_digest`, `version_id`, `document_id` on the signature row) | Immutable | Written at INSERT, never after. The post-insert UPDATE the sign-release route used to perform was removed 2026-07-30. |
 | Signature verification evidence (`signature_hash`, `signature_manifest`, `authentication_*`) | Immutable | Same row, same rule. |
 | Audit event (`device_audit_trail`, `audit_logs`) | Append-only               | No UPDATE, no DELETE, ever. Corrections are new events. `device_audit_trail` is enforced at the database (see below). |
@@ -50,6 +52,15 @@ must derive from "which records can ever change", not the other way round.
      pinned by `server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts`).
    - `device_audit_trail`: trigger refuses UPDATE and DELETE outright.
    - Proven by `tests/schema-contract/esig-audit-immutability.contract.test.ts`.
+   - `concept2cure_signatures` and `concept2cure_submission_snapshots`:
+     triggers refuse UPDATE, DELETE and TRUNCATE outright
+     (`migrations/20260929_concept2cure_signatures_append_only.sql`, pinned by
+     `server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts`).
+     Until 2026-09-29 their only triggers were in `db/migrations/_legacy/`,
+     which no applier runs.
+   - The triggers on `electronic_signatures`, `concept2cure_signatures` and
+     `concept2cure_submission_snapshots` are required at boot by
+     `server/services/audit/audit-immutability-triggers.ts`.
    The database layer is the floor: HTTP-layer gaps can no longer reach the
    records themselves.
 

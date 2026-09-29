@@ -1,0 +1,12 @@
+== signin — BEFORE (upstream sources):
+ × server/middleware/__tests__/sign-in-office-address.test.ts > production, one office address > a hundred colleagues sign in and twenty of them mistype a password first — nobody is refused
+ × server/middleware/__tests__/sign-in-office-address.test.ts > production, one office address > spraying from one address is still stopped, at the per-address failure ceiling
+ × server/middleware/__tests__/sign-in-office-address.test.ts > production, one office address > the production numbers are the ones this change sets
+ × auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+ × auth-sign-in-limits.test.ts > one account is still protected > failed passwords for one address signed in with are refused past the per-account limit — and nobody else is
+ × auth-sign-in-limits.test.ts > one account is still protected > wrong second-factor codes for one account are refused past the per-account limit — the next account is not
+ × auth-sign-in-limits.test.ts > one account is still protected > a successful sign-in spends none of the account’s allowance
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed (7)
+== signin — AFTER (fixed sources):
+      Tests  7 passed (7)

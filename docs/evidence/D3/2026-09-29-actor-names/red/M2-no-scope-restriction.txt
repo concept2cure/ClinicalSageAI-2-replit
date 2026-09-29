@@ -1,0 +1,48 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T01:11:46.082Z","pid":7658,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:11:46.083Z","pid":7658,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:11:46.083Z","pid":7658,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-names.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-09-29T01:11:46.453Z","pid":7658,"hostname":"vm","context":{"userId":966,"tenantId":90301,"resourceId":"wo03_7658_mulzdxht-actor-names-record"},"msg":"[audit-service] [AUDIT] data_modify actor_names_contract"}
+ ✓ tests/db/actor-names.dbtest.ts > the audit trail after someone leaves the organization (D3) > names the person who acted, not only their id 9ms
+ × tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers nothing about an account that never belonged to or acted in A 9ms
+   → A's scope resolved another tenant's user: expected [ { name: 'WO03 B', …(1) } ] to deeply equal []
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers name and email only — no credential column exists on it 2ms
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > the users table itself still refuses the leaver's row to A 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers nothing about an account that never belonged to or acted in A
+AssertionError: A's scope resolved another tenant's user: expected [ { name: 'WO03 B', …(1) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "email": "wo03_7658_mulzdxht-b@example.invalid",
++     "name": "WO03 B",
++   },
++ ]
+
+ ❯ tests/db/actor-names.dbtest.ts:89:62
+     87|       getPool().query('SELECT * FROM public.actor_name($1)', [userB])
+     88|     );
+     89|     expect(rows, "A's scope resolved another tenant's user").toEqual([…
+       |                                                              ^
+     90|   });
+     91|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  01:11:44
+   Duration  2.32s (transform 890ms, setup 74ms, import 1.66s, tests 309ms, environment 0ms)
+
