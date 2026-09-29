@@ -35,6 +35,7 @@ import { resolveOrgId } from '../../types/auth-request.js';
 import { requestPgClient } from '../../db/requestDb';
 import { handleSealVerifiedVersion } from './seal-verified.js';
 import auditService from '../../services/auditService.js';
+import { governedActionTrace, recordGovernedExecution, withAuditTrail } from './governed-execution-audit.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import {
   sendSuccess,
@@ -627,6 +628,7 @@ export function mountUtilityRoutes(router: Router): void {
     //
     // logAction returns AuditWriteResult, so the refusal can be real: read
     // `persisted` and abort on it.
+    const trace = governedActionTrace(runId, toolUseId, pendingForRun, params);
     const signoffAudit = await auditService.logAction({
       tenantId: numericOrgId,
       userId,
@@ -635,8 +637,9 @@ export function mountUtilityRoutes(router: Router): void {
       resourceId: command,
       ipAddress: clientIpOf(req) ?? undefined,
       userAgent: req.headers['user-agent'] as string | undefined,
-      // With the declared §11.50 meaning on the e-signature tier; absent otherwise.
-      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified, ...(signatureMeaning && { signatureMeaning }) },
+      // With the declared §11.50 meaning on the e-signature tier; absent otherwise,
+      // and the trace of what was authorised (governedActionTrace).
+      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified, ...(signatureMeaning && { signatureMeaning }), ...trace },
     });
     if (!signoffAudit.persisted) {
       log.error('Governed action aborted: sign-off audit row was not persisted', {
@@ -696,8 +699,10 @@ export function mountUtilityRoutes(router: Router): void {
             },
           }),
     };
+    const executedRow = { organizationId: numericOrgId, userId, command, trace, startedAt: Date.now() };
     try {
-      const [result] = isTool ? [await runConfirmedTool(command, params, pendingForRun!, numericOrgId, userId)] : await executeCommands([{ command, params } as any], ctx);
+      const [ran] = isTool ? [await runConfirmedTool(command, params, pendingForRun!, numericOrgId, userId)] : await executeCommands([{ command, params } as any], ctx);
+      const result = withAuditTrail(ran, await recordGovernedExecution(executedRow, { result: ran }));
       // The execution stays HERE, in the one place that stamps humanConfirmed.
       // The waiting turn is handed the RESULT, not the right to run the command
       // itself — a second dispatcher would be a second writer of that flag, and
@@ -709,15 +714,17 @@ export function mountUtilityRoutes(router: Router): void {
       }
       return sendSuccess(res, result);
     } catch (error: any) {
+      const failure = error?.message || 'Governed action failed';
+      const failedRow = await recordGovernedExecution(executedRow, { error: failure });
       // A failed execution must still release the run. Otherwise the turn sits
       // at a gate nobody will ever answer again until the pause ceiling expires
       // — the person signed, something broke, and AnA is left silent.
       if (pendingForRun) {
-        await releaseWaitingRun(req, runId, toolUseId, userId, reasonForChange, {
-          error: error?.message || 'Governed action failed',
-        });
+        await releaseWaitingRun(req, runId, toolUseId, userId, reasonForChange, { error: failure });
       }
-      return sendError(res, 500, error?.message || 'Governed action failed', null, 'GOVERNED_ACTION_FAILED');
+      // A failure whose own row was lost says that too.
+      const lost = failedRow.persisted ? null : { auditTrail: failedRow };
+      return sendError(res, 500, failure, lost, 'GOVERNED_ACTION_FAILED');
     }
   });
 
