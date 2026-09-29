@@ -126,6 +126,13 @@ function classifyError(error: unknown): {
       message: raw,
     };
   }
+  // The program's record decides the application number (assembleSubmissionEctd).
+  if (/does not match the program's recorded application number/i.test(raw)) {
+    return { status: 409, code: 'APPLICATION_NUMBER_MISMATCH', message: raw };
+  }
+  if (/is not a usable application number/i.test(raw)) {
+    return { status: 400, code: 'APPLICATION_NUMBER_INVALID', message: raw };
+  }
   // A rehearsal asked of an original sequence: nothing precedes 0000.
   if (/rehearsal binds a follow-up sequence/i.test(raw)) {
     return { status: 400, code: 'REHEARSAL_NOT_APPLICABLE', message: raw };
