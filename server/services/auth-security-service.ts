@@ -317,7 +317,7 @@ export async function resetFailedLogins(userId: number): Promise<void> {
  * own — and because folding it inline pushed that function past the complexity
  * ceiling, which is a fair signal that it was doing two jobs.
  *
- * There are eleven binding bases (BINDING_BASIS) and `computeVersionBindingDigest`
+ * There are twelve binding bases (BINDING_BASIS) and `computeVersionBindingDigest`
  * re-derives exactly ONE of them: the sha256 of a document version's content.
  * The verifier used to re-derive whenever `versionId` was set and pass `null`
  * otherwise, so it compared digests of different things:

@@ -200,7 +200,10 @@ export type AnaStoppedReason =
   | 'budget_exhausted'
   | 'approval_timeout'
   | 'hold_expired'
-  | 'hold_unavailable';
+  | 'hold_unavailable'
+  /** The answer she was writing was cut off: the model's length limit, or a
+   *  stream that stalled mid-answer. */
+  | 'answer_cut_off';
 
 export interface AnaContextUsed {
   uploads: Array<{ fileId: string; fileName: string; mimeType: string; read: 'content' | 'name_only' }>;

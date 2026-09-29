@@ -41,6 +41,9 @@ export interface AnaWorkContext {
 const STOP_LINES: ReadonlyMap<string, string> = new Map<AnaStoppedReason, string>([
   ['max_rounds', 'Stopped at the round limit'],
   ['duplicate_thrash', 'Stopped: repeating a step'],
+  // The answer she was writing was cut off (the length limit, or a stream that
+  // stalled mid-answer; D2, a6d82f624).
+  ['answer_cut_off', 'Stopped: answer cut off'],
   // The run policy's (row 74, S4).
   ['budget_exhausted', 'Stopped at the time limit'],
   ['approval_timeout', 'Stopped: an approval was not answered'],
@@ -127,6 +130,8 @@ export function stoppedNoteText(
         : "AnA reached this turn's round limit before she said she was done.";
     case 'duplicate_thrash':
       return 'AnA stopped because she was repeating the same step. Tell her what to change.';
+    case 'answer_cut_off':
+      return "AnA's answer was cut off before she finished it. It ends where it stopped.";
     case 'budget_exhausted':
       return `AnA reached this turn's time limit (${AUTO_TIME_WORDS}) before she said she was done.`;
     case 'approval_timeout':
@@ -157,6 +162,7 @@ export function stoppedNoteText(
 export function isContinuable(reason: AnaStoppedReason | undefined): boolean {
   switch (reason) {
     case 'max_rounds':
+    case 'answer_cut_off':
     case 'budget_exhausted':
     case 'approval_timeout':
     case 'hold_expired':

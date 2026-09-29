@@ -24,6 +24,13 @@ import {
   getDeviation,
 } from '../services/protocol-deviations/protocol-deviations-service';
 import {
+  DEVIATION_CATEGORIES,
+  DEVIATION_SEVERITIES,
+  CAPA_ACTION_STATUSES,
+} from '../services/protocol-deviations/protocol-deviations-logic';
+import { deviationTrendsForProtocol } from '../services/protocol-development/protocol-industry-service';
+import { requestPgClient } from '../db/requestDb';
+import {
   recordDeviationReported, recordCapaActionAdded, recordDeviationClosed,
 } from '../services/protocol-deviations-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
@@ -93,8 +100,8 @@ async function governed(
 const deviationSchema = z.object({
   protocolDocumentId: z.number().int().positive(),
   description: z.string().min(1).max(8000),
-  category: z.enum(['enrollment', 'consent', 'procedure', 'safety', 'data', 'other']).optional(),
-  severity: z.enum(['minor', 'major', 'critical']).optional(),
+  category: z.enum(DEVIATION_CATEGORIES).optional(),
+  severity: z.enum(DEVIATION_SEVERITIES).optional(),
   affectsSafety: z.boolean().optional(),
   rootCause: z.string().max(4000).optional(),
   deviationNumber: z.string().max(120).optional(),
@@ -122,7 +129,7 @@ router.post('/deviations', async (req, res) => {
 /* A person's assessment: severity, effect on subject safety, and why. The only
    way an unassessed deviation (including every legacy row) becomes closable. */
 const assessmentSchema = z.object({
-  severity: z.enum(['minor', 'major', 'critical']),
+  severity: z.enum(DEVIATION_SEVERITIES),
   affectsSafety: z.boolean(),
   rationale: z.string().trim().min(8, 'Give the rationale for this assessment (at least 8 characters).').max(4000),
   reason,
@@ -147,6 +154,29 @@ router.get('/deviations', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const docIdRaw = typeof req.query.protocolDocumentId === 'string' ? Number(req.query.protocolDocumentId) : undefined;
   try { res.json(await listDeviations(orgId, Number.isInteger(docIdRaw) ? docIdRaw : undefined)); } catch (err) { fail(res, err); }
+});
+
+/**
+ * GET /deviations/trends?protocolDocumentId=&windowMonths= — one protocol's
+ * deviations trended by month, category and severity, with the engine's
+ * signals (trendDeviations; ICH E6(R3) RBQM). Registered before /deviations/:id
+ * so "trends" is never read as an id. The clock is read HERE and handed to the
+ * engine as a date. A protocol with no deviations answers with null shares,
+ * never 0%.
+ */
+router.get('/deviations/trends', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const docId = typeof req.query.protocolDocumentId === 'string' ? Number(req.query.protocolDocumentId) : NaN;
+  if (!Number.isInteger(docId)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'protocolDocumentId is required.' } });
+  const windowRaw = typeof req.query.windowMonths === 'string' ? Number(req.query.windowMonths) : undefined;
+  if (windowRaw !== undefined && !(Number.isInteger(windowRaw) && windowRaw >= 1 && windowRaw <= 36)) {
+    return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'windowMonths must be a whole number between 1 and 36.' } });
+  }
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    res.json(await deviationTrendsForProtocol(requestPgClient(req), orgId, docId, { today, windowMonths: windowRaw }));
+  } catch (err) { fail(res, err); }
 });
 
 router.get('/deviations/:id', async (req, res) => {
@@ -176,7 +206,7 @@ router.post('/deviations/:id/capa', async (req, res) => {
   });
 });
 
-const capaStatusSchema = z.object({ status: z.enum(['open', 'in_progress', 'completed', 'verified']), reason });
+const capaStatusSchema = z.object({ status: z.enum(CAPA_ACTION_STATUSES), reason });
 router.patch('/capa/:id/status', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });

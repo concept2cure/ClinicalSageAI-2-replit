@@ -1,0 +1,54 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-28T17:12:26.480Z","pid":13191,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T17:12:26.481Z","pid":13191,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T17:12:26.481Z","pid":13191,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/platform-role-grants.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > positive control: the console refuses a plain member
+[database] Database connection successful
+
+stdout | tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > positive control: the console refuses a plain member
+[database] Database connection successful { timestamp: '2026-09-28T17:12:26.956Z', poolSize: 1 }
+
+{"level":40,"time":"2026-09-28T17:12:26.982Z","pid":13191,"hostname":"vm","context":{"userId":315,"role":"member","path":"/api/admin/access/grants"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-28T17:12:27.002Z","pid":13191,"hostname":"vm","context":{"userId":315,"role":"member","path":"/api/admin/access/grants"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":50,"time":"2026-09-28T17:12:27.049Z","pid":13191,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"platform_role_grants\"","query":"INSERT INTO platform_role_grants (user_id, role, granted_by, granted_at, reason, revoked_at, revoked_by)\n       VALUES ($1, $2, $3, now(), $4, NULL, NULL)\n       ON CONFLICT (user_id, role) DO UPDATE\n         SET revoked_at = NULL,\n             revoked_by = NULL,\n             granted_by = EXCLUDED.granted_by,\n             granted_at = now(),\n             reason = EXCLUDED.reason\n       RETURNING id, user_id, role, granted_by, granted_at, reason","params":[315,"support",null,"contract: grant through the console"]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-28T17:12:27.053Z","pid":13191,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"platform_role_grants\"","stack":"error: new row violates row-level security policy for table \"platform_role_grants\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at runQueryScoped (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:198:21)\n    at query (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:158:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/access-management.ts:127:20"},"msg":"[admin-access-management] Grant create failed"}
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > positive control: the console refuses a plain member 84ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > cannot write its member a platform role, so the console never admits them 17ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > cannot reinstate, re-role or delete a grant 9ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > a tenant scope reads grants: the platform-admin check runs in the caller's own scope 2ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > the platform scope grants and revokes 6ms
+ × tests/db/platform-role-grants.dbtest.ts > what still works (D3) > a platform operator grants and revokes through the Access Management console 37ms
+   → {"error":"Failed to grant role."}: expected 500 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/platform-role-grants.dbtest.ts > what still works (D3) > a platform operator grants and revokes through the Access Management console
+AssertionError: {"error":"Failed to grant role."}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/platform-role-grants.dbtest.ts:187:74
+    185|         .set(op)
+    186|         .send({ userId: userA, role: 'support', reason: 'contract: gra…
+    187|       expect(granted.status, JSON.stringify(granted.body).slice(0, 300…
+       |                                                                          ^
+    188|       expect(await activeGrants(userA)).toEqual(['support']);
+    189|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  17:12:24
+   Duration  2.77s (transform 1.05s, setup 85ms, import 1.97s, tests 417ms, environment 0ms)
+

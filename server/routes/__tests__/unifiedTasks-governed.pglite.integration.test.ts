@@ -215,11 +215,16 @@ describe('T1 — each write commits with its ledger row, or neither commits', ()
         }),
       }),
     ]);
-    // Both endpoints locked in one read, in task-id order, before the link or
-    // either array is written; every row lock before the ledger row.
+    // Both endpoints locked, the SOURCE first, then the target — predecessor
+    // before successor, the order a completion takes (a link over TASK-X →
+    // TASK-A locks X first although A sorts first: task-id order deadlocked
+    // against a completion, tests/db/task-link-completion-lock-order.dbtest.ts)
+    // — before the link or either array is written; every row lock before the
+    // ledger row.
     expect(h.log).toEqual([
       'BEGIN',
-      'lock:by-task-id',
+      'lock:TASK-X',
+      'lock:TASK-A',
       'insert:link',
       'update:TASK-A',
       'update:TASK-X',

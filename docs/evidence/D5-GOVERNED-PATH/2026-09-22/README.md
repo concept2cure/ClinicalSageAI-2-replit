@@ -650,9 +650,10 @@ builds the table exactly as the migration set does:
   cascade now runs inside `boardWriteWithLineage`'s transaction, and each
   dependent's row is written after the completion's. Evidence:
   `docs/evidence/D5/2026-09-28-ana-cascade-ledger/`.
-- A dependency link racing a completion of the same pair can deadlock.
-  Postgres aborts one side (40P01), which rolls back and is answered as a
-  failure.
+- ~~A dependency link racing a completion of the same pair can deadlock.~~
+  Closed 2026-09-28. A link now locks its source first, the order a completion
+  takes. It was reproduced as a real `40P01` on PostgreSQL and is gone with the
+  fix: `docs/evidence/D5/2026-09-28-link-completion-lock-order/`.
 - The request-scoped transaction is exercised through a mock of `requestDb`.
   The real `LazyRequestDbClient` path (BEGIN and COMMIT on the request's own
   connection) rests on Drizzle's node-postgres driver, which the release guard

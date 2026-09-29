@@ -947,12 +947,36 @@ export function getSurfaceMeta(id: string): UiSurface | { id: string; label: str
   return getSurface(id) ?? { id, label: id, icon: 'grid', notes: '' };
 }
 
+/**
+ * Surface → client-type rail group. A surface NAV_GROUP_OF does not name
+ * belongs to both client categories. The rail listing and the breadcrumb both
+ * read this: the breadcrumb used to default an unnamed surface to
+ * 'biopharma' while the rail defaulted it to 'both', so ~100 surfaces —
+ * every device workbench among them — were crumbed "Biotech & Pharma"
+ * (launch sweep finding 128).
+ */
+export function navGroupOf(id: string): string {
+  return NAV_GROUP_OF[id] ?? 'both';
+}
+
+/**
+ * The breadcrumb's client-category crumb for a surface: its tier when it
+ * belongs to exactly one, "Admin" for an admin surface, and null when it
+ * belongs to both — or when the tier would only repeat the surface's own
+ * name ("Medical Device & IVD › Medical Device & IVD").
+ */
+export function breadcrumbTierOf(surface: { id: string; label: string }): { id: string; label: string } | null {
+  const group = getSurface(surface.id)?.navTier === 'admin' ? 'admin' : navGroupOf(surface.id);
+  const tier = NAV_TIERS_V2.find((t) => t.id === group) ?? null;
+  return tier && tier.label !== surface.label ? tier : null;
+}
+
 /** Rail listing for a client-type tier (kit surfacesByTier). */
 export function surfacesByTier(tier: string): UiSurface[] {
   return UI_SURFACES.filter((s) => {
     if (NAV_HIDDEN.has(s.id)) return false;
     if (tier === 'admin') return s.navTier === 'admin';
-    const g = NAV_GROUP_OF[s.id] ?? 'both';
+    const g = navGroupOf(s.id);
     if (g === tier) return true;
     if (g === 'both' && (tier === 'mdx' || tier === 'biopharma')) return true;
     return false;

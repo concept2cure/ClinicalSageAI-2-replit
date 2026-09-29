@@ -104,6 +104,13 @@ describe('the done frame says why the turn stopped — behavioural', () => {
     expect(settled.rounds).toBe(4);
   });
 
+  it('keeps a cut-off answer — a turn that must not read "Finished"', async () => {
+    const { settled } = await turnEnding({ stoppedReason: 'answer_cut_off', rounds: 1 });
+    expect(settled.stoppedReason).toBe('answer_cut_off');
+    expect(settled.stopped).toBeUndefined();
+    expect(settled.interrupted).toBeUndefined();
+  });
+
   it('ignores a reason it does not know, and a round count that is not a count', async () => {
     // An unknown value stored here would reach stateLineFor's final branch and
     // read "Finished". Ignoring it leaves the turn exactly as today.

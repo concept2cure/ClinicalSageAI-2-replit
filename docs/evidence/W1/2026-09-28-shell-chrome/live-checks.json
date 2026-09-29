@@ -1,0 +1,43 @@
+{
+ "taskModal": {
+  "ctx": "FROM Projects Linked to this portfolio",
+  "modules": [
+   "CMC=CMC",
+   "IND=IND",
+   "MedicalDevice=Medical Device",
+   "eCTD=eCTD",
+   "Vault=Vault",
+   "ProtocolDesign=Protocol Design",
+   "Clinical=Clinical",
+   "Nonclinical=Nonclinical",
+   "Biostatistics=Biostatistics",
+   "Safety=Safety",
+   "Regulatory=Regulatory",
+   "general=General",
+   "Submission=Submission",
+   "Quality=Quality",
+   "Labeling=Labeling",
+   "Market Access=Market Access",
+   "Evidence=Evidence",
+   "Meetings=Meetings",
+   "Intelligence=Intelligence"
+  ],
+  "priorities": [
+   "low=Low",
+   "medium=Medium",
+   "high=High",
+   "critical=Critical"
+  ],
+  "note": [
+   "2 children: Auto-assign: the assignee is chosen when you save, from your organisation\u2019s roster for Regulatory, balanced on current workload. Pick a name above if you want to decide it yourself.",
+   "1 children: Saved to your org board, recorded in the Part 11 audit trail, and the assignee is notified in the app. Email delivery is not wired up yet."
+  ]
+ },
+ "helpLandsOn": "/concept2cure/conversation-thread",
+ "appsCatalog": {
+  "cards": 87,
+  "locked": 0,
+  "notSwitchedOn": 0,
+  "openButtons": 87
+ }
+}

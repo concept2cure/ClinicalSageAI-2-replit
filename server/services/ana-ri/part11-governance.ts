@@ -68,8 +68,8 @@ export const PART11_GOVERNED_COMMANDS: ReadonlySet<string> = new Set<string>([
   // and enforces the status state machine, whatever tier the caller holds.
   // Escalate this only as a deliberate RBAC decision, with the tier changed in
   // the same commit.
-  // The GDPR erasure. It destroys personal data and overwrites regulated
-  // artifact content, and until 2026-09-25 a model response containing it ran
+  // The GDPR erasure. It destroys personal data (regulated artifact content is
+  // retained under GDPR Art. 17(3)(b) since 2026-09-28), and until 2026-09-25 a model response containing it ran
   // it with no person in the loop (security audit 2026-09-24 DP-08/DP-09, plan
   // P0-12). Governed and in the e-sign set below: a person gives the reason for
   // change and re-authenticates, the sign-off is recorded, then the handler's

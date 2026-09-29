@@ -70,7 +70,10 @@ export type RunStoppedReason =
   | 'budget_exhausted'
   | 'approval_timeout'
   | 'hold_expired'
-  | 'hold_unavailable';
+  | 'hold_unavailable'
+  /** The loop ended, but the answer it ended on was cut off — the model's
+   *  length limit, or a stream that stalled mid-answer (finish-reason.ts). */
+  | 'answer_cut_off';
 
 /**
  * Why a TURN's work stopped — the subset of {@link RunStoppedReason} that the

@@ -3157,47 +3157,25 @@ router.post('/samples/:sampleId/chain', async (req, res) => {
   }
 });
 
-// POST /api/stability/samples/:sampleId/chain/upload  (multipart file=attachment)
-router.post(
-  '/samples/:sampleId/chain/upload',
-  receiveSingleFile,
-  validateUploadedFile,
-  async (req, res) => {
-    const sid = String(req.params.sampleId);
-    if (!req.file) return res.status(400).json({ error: 'file missing' });
-    if (!UUID_RE.test(sid)) return res.status(404).json({ error: 'sample not found' });
-    const fs = await import('fs');
-    // The stored name is built only from characters that cannot form a path.
-    // It was the client's filename with whitespace replaced; multer strips
-    // directory parts by default (preservePath: false), so this is the second
-    // line, not the only one, for a name that goes into a filesystem path.
-    const safeName = (req.file.originalname.split(/[\\/]/).pop() || 'attachment')
-      .replace(/[^A-Za-z0-9._-]/g, '_')
-      .replace(/^\.+/, '_')
-      .slice(-120);
-    const path = `/mnt/data/uploads/coc_${sid}_${Date.now()}_${safeName}`;
-    const url = path.replace('/mnt/data', '/uploads');
-    let written = false;
-    try {
-      await withTenantClient(async tx => {
-        // The sample is checked before a byte is written: an unknown sample
-        // left an orphaned, unrecorded file behind a 404.
-        const sample = await ownChild(tx, 'stab_samples', sid, 'sample');
-        fs.writeFileSync(path, req.file!.buffer, { flag: 'wx' });
-        written = true;
-        await tx.query(
-          `insert into stab_chain (sample_id,action,actor,attachment_url) values ($1,'OTHER',$2,$3)`,
-          [sid, requireActor(req), url]
-        );
-        await audit(sample.study_id, 'coc_upload', { sample_id: sid, url, bytes: req.file!.size }, req, tx);
-      });
-      res.json({ ok: true, url });
-    } catch (error) {
-      // The record rolled back; the file it would have pointed to goes too.
-      if (written) fs.rmSync(path, { force: true });
-      return fail(res, error, 'recording chain-of-custody attachment');
-    }
-  }
-);
+// POST /api/stability/samples/:sampleId/chain/upload
+//
+// Refused, 2026-09-28. It wrote the file to /mnt/data/uploads — container disk,
+// gone at the next replacement — and recorded in stab_chain a /uploads/… URL
+// that no route serves, so the chain-of-custody ledger pointed at bytes nobody
+// could ever retrieve. No client calls it. Attachments belong in Vault, the one
+// admission for regulated files (services/vault/vault-ingest.service.ts); a
+// stability sample cannot reach it yet, because a Vault document needs a
+// regulatory program and stab_samples has no link to one — CMC schema work,
+// outside the launch catalog (CLAUDE.md RULE 2). Until that link exists the
+// file is filed in Vault and the chain entry cites it in its notes
+// (POST /samples/:sampleId/chain above). The multipart body is not read.
+router.post('/samples/:sampleId/chain/upload', (_req, res) => {
+  res.status(501).json({
+    error: 'NOT_IMPLEMENTED',
+    message:
+      'Chain-of-custody attachments are not stored here. Nothing was stored. File the document in Vault ' +
+      'and cite it in the chain entry\'s notes.',
+  });
+});
 
 export default router;

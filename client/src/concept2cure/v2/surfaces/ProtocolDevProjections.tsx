@@ -1,5 +1,5 @@
 /**
- * Protocol development — the five projections of the bound study design.
+ * Protocol development — the projections of the bound study design.
  *
  * docs/design/PROTOCOL_DESIGN_CONVERGENCE.md step 2. The design-as-data spine
  * (server/services/study-design) already produces an ICH M11 protocol, a SAP
@@ -23,6 +23,7 @@ import React, { useState } from 'react';
 import * as PG from './ProtocolGov';
 import { apiRequest } from '@/lib/queryClient';
 import { downloadText, safeFileName } from '../download';
+import { INDUSTRY_PROJECTIONS } from './ProtocolDevIndustryProjections';
 
 type Obj = Record<string, unknown>;
 const str = (v: unknown): string => (v == null ? '' : String(v));
@@ -32,8 +33,18 @@ const asRows = (v: unknown): Obj[] => (Array.isArray(v) ? (v as Obj[]) : []);
 interface Entry { key: string; label: string; status: string; text: string; gaps: string[] }
 
 /** A projection, normalized for rendering. Percentages and gaps are the
- *  engine's; nothing here recomputes either. */
-interface View { standard: string; percent: number | null; gaps: string[]; entries: Entry[]; note: string }
+ *  engine's; nothing here recomputes either. `status` is the engine's own
+ *  overall status where it returns one; `figure` is an engine-rendered SVG. */
+export interface ProjectionView {
+  standard: string;
+  percent: number | null;
+  gaps: string[];
+  entries: Entry[];
+  note: string;
+  status?: string;
+  figure?: { svg: string; alt: string };
+}
+type View = ProjectionView;
 
 export interface ProjectionSpec {
   id: string;
@@ -140,7 +151,8 @@ function crfView(doc: Obj): View {
   };
 }
 
-/** The five, in the order the design document names them. */
+/** The five of PROTOCOL_DESIGN_CONVERGENCE.md, then the industry-gap
+ *  projections of PROTOCOL_INDUSTRY_GAPS.md, each in its document's order. */
 export const PROJECTIONS: ProjectionSpec[] = [
   {
     id: 'protocol', label: 'ICH M11 protocol', path: 'protocol',
@@ -167,6 +179,7 @@ export const PROJECTIONS: ProjectionSpec[] = [
     of: 'A projection of the study design object’s Schedule of Activities as a blank CRF set (CDISC CDASH).',
     normalize: (p) => crfView((p.crfShell ?? {}) as Obj),
   },
+  ...INDUSTRY_PROJECTIONS,
 ];
 
 /** The server's refusal, in its own words. */
@@ -212,6 +225,12 @@ function ProjectionBody({ view }: { view: View }) {
         <span className="pd-kv-k">Standard</span>
         <span className="pd-kv-v pg-mono">{view.standard || 'not stated by the engine'}</span>
       </div>
+      {view.status && (
+        <div className="pd-kv">
+          <span className="pd-kv-k">Status reported by the engine</span>
+          <span className="pd-kv-v"><PG.StatusBadge status={view.status} /></span>
+        </div>
+      )}
       {view.percent !== null && (
         <div className="pd-kv">
           <span className="pd-kv-k">Rendered from the design object</span>
@@ -219,6 +238,15 @@ function ProjectionBody({ view }: { view: View }) {
         </div>
       )}
       {view.note && <div className="pde-note">{view.note}</div>}
+      {view.figure && (
+        // An <img> data URI, never injected markup: the engine's SVG cannot run
+        // anything, whatever a design title contains.
+        <img
+          src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(view.figure.svg)}`}
+          alt={view.figure.alt}
+          style={{ display: 'block', maxWidth: '100%', marginTop: 8 }}
+        />
+      )}
       {view.gaps.length > 0 && (
         <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontSize: 12 }} aria-label="What the design object does not carry">
           {view.gaps.map((g) => <li key={g}>{g}</li>)}
@@ -241,7 +269,7 @@ export interface ProjectionsPanelProps {
 }
 
 /**
- * The five projections, one open at a time. Nothing is fetched until the
+ * The projections, one open at a time. Nothing is fetched until the
  * author asks for one, and a refusal is shown as a refusal.
  */
 export function ProjectionsPanel({ studyId, designTitle }: ProjectionsPanelProps) {

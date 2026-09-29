@@ -124,23 +124,32 @@ const READINESS_CLEAR = {
   shadowReviewRunCount: 1,
   shadowReviewMissing: false,
   gate: { cleared: true, blockers: [] },
+  // The server has returned the freeze and on-signing verdicts beside `gate`
+  // since composeDispatchGatesForStep; the Freeze and Dispatch buttons read
+  // them (daae5ad44, f07edd7c8). Without them this fixture modelled a payload
+  // the server no longer sends, and the Freeze button (rightly) never showed.
+  freezeGate: { cleared: true, blockers: [] },
+  dispatchGateOnSigning: { cleared: true, blockers: [] },
   readiness: { errors: 0, warnings: 1, infos: 0, findings: [
     { severity: 'warning', code: 'LEAF_SOURCE_UNRESOLVED', sectionCode: '2.7.3', message: 'Leaf source not materializable yet.' },
   ] },
   leafCount: 1,
 };
 
+const BLOCKED_GATE = {
+  cleared: false,
+  blockers: [
+    '2 open validation errors must be resolved before dispatch.',
+    '1 unacknowledged critical Shadow Review finding must be acknowledged.',
+  ],
+};
 const READINESS_BLOCKED = {
   ...READINESS_CLEAR,
   validationErrors: 2,
   unacknowledgedShadowCriticals: 1,
-  gate: {
-    cleared: false,
-    blockers: [
-      '2 open validation errors must be resolved before dispatch.',
-      '1 unacknowledged critical Shadow Review finding must be acknowledged.',
-    ],
-  },
+  gate: BLOCKED_GATE,
+  freezeGate: BLOCKED_GATE,
+  dispatchGateOnSigning: BLOCKED_GATE,
 };
 
 const SHADOW_RUNS = [

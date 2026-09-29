@@ -107,6 +107,7 @@ import {
   formatTraceForContext,
   policyHoldWarning,
   refusalOf,
+  turnEndingReason,
   turnStopWarning,
   type ToolTraceEntry,
 } from '../../services/ana/tool-trace.js';
@@ -356,6 +357,9 @@ export function mountStreamRoute(router: Router): void {
     // the reason on `done` and into the message metadata, so "stopped at the
     // round limit" can say which limit.
     let loopRounds = 0;
+    // Why the latest model call stopped writing. The last one wrote the answer
+    // the person reads; if it was cut off, the turn did not finish.
+    let lastFinishReason: string | undefined;
     // The run is closed exactly once, by whichever of the disconnect handler and
     // the finally block gets there first.
     let runSettled = false;
@@ -1746,6 +1750,7 @@ export function mountStreamRoute(router: Router): void {
       // chain another step (extract structure → search → compare versions) or
       // produce a grounded answer. Bounded + thrash-resistant; the loop core is
       // unit-tested independently of the gateway and this SSE transport.
+      lastFinishReason = gwResponse.finishReason;
       const streamToolUses = (gwResponse as AnaGatewayResponse).toolUses;
       if (streamToolUses && streamToolUses.length > 0) {
         const toToolCall = (c: {
@@ -2639,6 +2644,7 @@ export function mountStreamRoute(router: Router): void {
             res.write(`data: ${JSON.stringify({ type: 'text', content: roundText })}\n\n`);
           }
           recordCacheUsage(roundResponse);
+          lastFinishReason = roundResponse.finishReason;
           emitServerToolSteps(roundResponse, round);
           recordServerToolEvidence(roundResponse);
           lastServedModel = servedModelOf(roundResponse);
@@ -2826,6 +2832,9 @@ export function mountStreamRoute(router: Router): void {
         // could not be made ended it, where the loop saw an abort.
         loopStoppedReason = turnPolicy.stoppedReason(loopStoppedReason);
       }
+      // The answer she was writing was cut off — the length limit, or a stream
+      // that stalled mid-answer: the turn did not finish, whatever the loop saw.
+      loopStoppedReason = turnEndingReason(loopStoppedReason, lastFinishReason);
 
       // RIM interception moved to the background post-processing block below,
       // so it scans the *cleaned* content (guidance/command blocks stripped) and

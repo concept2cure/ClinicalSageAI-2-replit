@@ -49,8 +49,47 @@ The ten screenshots here are the main surfaces on `48337a429`.
 | The demo seed sent every review request with no reviewer (it read `/api/auth/me` in an envelope the route no longer uses), and stopped before QMS on the out-of-catalog orchestration step. | Seed fixed; orchestration recorded as not executed with its reason. |
 | Two dispatch-readiness test harnesses failed on `concept2cure-v2` (a mock missing an export added upstream). | Mocks take the real pure function. |
 
+## With a second person: the governed steps
+
+A second account was created **through user administration**, the way a customer
+admin adds a colleague: `POST /api/tenant-users` as the admin (Rae Okafor, Head
+of Quality, organisation admin), which returned the password-setup link (no mail
+server on this installation, so the product hands the admin the link to deliver);
+the password was then set through that link's token (`POST
+/api/auth/reset-password`), and she signed in. The pack was re-run with her as
+the second signer (`OQ_SIGNER_EMAIL` / `OQ_SIGNER_PASSWORD`, held in memory only;
+the manifest carries no password).
+
+| Governed step | Result |
+|---|---|
+| Protocol synopsis C2C-101-201 | Frozen v1.0, then **e-signed by Rae Okafor as REVIEWER**, the signature covering freeze v1.0 |
+| SOP-001 Document Control, SOP-002 Change Control | **Approved by her electronic signature → effective** |
+| Read-and-understood training on SOP-001 v1.0 | Acknowledged; the QMS tile now measures **17%** (one acknowledgement across two effective SOPs and the roster) |
+| Audit trail | **196 chained entries, verified intact server-side**; 1 e-sign, 7 review, 10 submission, 18 vault, 21 authoring |
+
+`quality.png`, `audit-trail.png` and `part11-console.png` are this state. The
+Part 11 console verifies the chain the platform writes ("INTACT · 196 entries
+verified") where on an empty organisation it had said "Integrity valid" over
+zero entries.
+
+**Found with signatures in it:**
+
+- Fixed: three "ss11.50" / "ss11.70" citations in the audit-trail detail and in
+  Setup; the copy test now refuses any "ss11.<n>".
+- **Open:** an SOP approval is an electronic signature, but its audit-trail row
+  reads "C2c Work Approve" with no meaning and no link to the signature. The
+  generic governed-action writer (`recordGovernedAction`,
+  `server/routes/c2c/actions.ts`) keeps the payload — meaning and signature
+  included — in `c2c_ana_actions`, linked by `ana_action_id`, and leaves the
+  audit row's values empty, so the ledger has nothing to show. The authoring
+  e-signature's row, written elsewhere, carries its meaning. The fix belongs in
+  that writer or in the ledger read (a join on `ana_action_id`); it is core audit
+  code other sessions are changing, so it is recorded here rather than made in
+  passing.
+- **Open:** audit-trail targets are raw ids (`qms-document:2`,
+  `authoring_document:a7e1ba58-…`) — the third clause of finding 53.
+
 ## Owed
 
-- The same run with a second credentialed signer, so the frozen synopsis is
-  e-signed and the SOPs are approved and effective.
-- On staging with the production image (D1).
+- On staging with the production image (D1), where the second factor is
+  enforced at sign-in and at signing.

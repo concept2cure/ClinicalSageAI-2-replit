@@ -159,7 +159,7 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
       .mockResolvedValueOnce({ rows: [] })                    // COMMIT
       .mockResolvedValueOnce({ rows: [card] })                // card re-select
       .mockResolvedValueOnce({ rows: [deviceRow()] })         // detail re-select (same projection as GET /:id)
-      .mockResolvedValueOnce({ rows: [] });                   // governed readiness: a new program has approved nothing
+      .mockResolvedValueOnce({ rows: [] });                   // governed readiness: a new program has no governed sections yet
     const res = await request(app(2, 1)).post('/api/c2c/projects').send({
       name: '[Demo · MDX] NeuroPanel-Dx 510(k)', productName: 'NeuroPanel-Dx', programType: '510k', productType: 'ivd',
       primaryAgency: 'FDA', indication: 'Differential diagnosis of viral CNS infection',
@@ -167,7 +167,10 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
     });
     expect(res.status).toBe(201);
     expect(res.body.data).toMatchObject({ id: PID, ws: 'MDX' });
-    expect(res.body.program).toEqual({ ...serializeProgramDetail(deviceRow()), readiness: 0 });
+    // Nothing to measure is not "0% ready": a program with no governed sections
+    // has no readiness figure (7196d63d1 — ProjectHome and the card both say
+    // "Readiness not measured"). This expected 0 from before that change.
+    expect(res.body.program).toEqual({ ...serializeProgramDetail(deviceRow()), readiness: null });
     expect(res.body.program).toMatchObject({ device_class: 'II', product_code: 'QNX', predicate_devices: [{ kNumber: 'K223456' }], review_panel: 'Microbiology', product_type: 'ivd' });
 
     // The detail re-select is the SAME SQL the read issues (one projection, one serializer).

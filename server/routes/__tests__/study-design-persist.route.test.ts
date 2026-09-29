@@ -1,5 +1,9 @@
 /**
  * POST /api/study-design/persist — a design starts at a project (PF-14).
+ * DELETE /api/study-design/:studyId — a governed delete, with the caller's reason.
+ *
+ * Both are writes on a router mounted behind authMiddleware only, so each is
+ * gated itself: a viewer is refused before anything is read.
  *
  * The route used to accept a design with no project, and answered 500
  * PERSIST_FAILED for everything the writer refused. Now a design must name the
@@ -42,18 +46,20 @@ const DESIGN = {
   statisticalPlan: {},
 };
 
-function app() {
+function app(role = 'member') {
   const a = express();
   a.use(express.json());
   a.use((req, _res, next) => {
-    Object.assign(req, { userId: 7, tenantId: 1 });
+    Object.assign(req, { userId: 7, tenantId: 1, userRole: role });
     next();
   });
   a.use('/api/study-design', router);
   return a;
 }
-const post = (design: Record<string, unknown>) =>
-  request(app()).post('/api/study-design/persist').send({ design, reason: 'Initial design for the IND' });
+const post = (design: Record<string, unknown>, role = 'member') =>
+  request(app(role)).post('/api/study-design/persist').send({ design, reason: 'Initial design for the IND' });
+const del = (body: Record<string, unknown>, role = 'member') =>
+  request(app(role)).delete('/api/study-design/sd_1').send(body);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -62,6 +68,13 @@ beforeEach(() => {
 });
 
 describe('POST /api/study-design/persist', () => {
+  it('refuses a viewer, before a connection is taken', async () => {
+    const res = await post({ ...DESIGN, programId: PROGRAM }, 'viewer');
+    expect(res.status).toBe(403);
+    expect(h.connect).not.toHaveBeenCalled();
+    expect(h.persist).not.toHaveBeenCalled();
+  });
+
   it('refuses a design that names no project, before a connection is taken', async () => {
     const res = await post(DESIGN);
     expect(res.status).toBe(400);
@@ -88,6 +101,33 @@ describe('POST /api/study-design/persist', () => {
     expect(h.recordGovernedAction).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ payload: expect.objectContaining({ studyId: 'sd_1', programId: PROGRAM }) }),
+    );
+  });
+});
+
+describe('DELETE /api/study-design/:studyId', () => {
+  it('refuses a viewer, before a connection is taken', async () => {
+    const res = await del({ reason: 'Superseded by the amended design' }, 'viewer');
+    expect(res.status).toBe(403);
+    expect(h.connect).not.toHaveBeenCalled();
+  });
+
+  it('refuses a missing or short reason rather than supplying one, before a connection is taken', async () => {
+    for (const body of [{}, { reason: 'dup' }]) {
+      const res = await del(body);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('REASON_REQUIRED');
+    }
+    expect(h.connect).not.toHaveBeenCalled();
+    expect(h.recordGovernedAction).not.toHaveBeenCalled();
+  });
+
+  it('deletes with the caller\'s reason on the governed record', async () => {
+    const res = await del({ reason: 'Superseded by the amended design' });
+    expect(res.status).toBe(200);
+    expect(h.recordGovernedAction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ command: 'delete', target: 'study-design:sd_1', reason: 'Superseded by the amended design' }),
     );
   });
 });

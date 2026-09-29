@@ -7,7 +7,11 @@
  * five states a module can be in were being rendered as two sentences:
  *
  *   1. on                          → open it
- *   2. in the plan, no row written → "Not switched on for this organization"
+ *   2. in the plan, no row written → open it too: the server's 'included',
+ *      which needs no row (decideNavEntitlement; canAccessModule admits it).
+ *      This read "Included in your plan. Not switched on for this
+ *      organization." behind a lock with no Open button, while the rail beside
+ *      it opened the module (launch sweep finding 44, 2026-09-28).
  *   3. an administrator switched it off → "turned off for this workspace"
  *   4. above the org's plan        → the plan that includes it, and View plans
  *   5. wrong industry for the workspace → no plan and no switch fixes it
@@ -180,7 +184,7 @@ describe('Apps catalog — the five entitlement states are five different cards'
     expect(screen.getByTitle('Enable module')).toBeTruthy();
   });
 
-  it('in the plan but never provisioned: says it is not switched on, and blames nobody', async () => {
+  it('in the plan but never provisioned: it opens, like the rail says, and blames nobody', async () => {
     mockCatalog([
       row({
         moduleId: 'labeling', name: 'Labeling',
@@ -191,10 +195,12 @@ describe('Apps catalog — the five entitlement states are five different cards'
     mount();
     await screen.findByText('Labeling');
 
-    expect(
-      screen.getByText('Included in your plan. Not switched on for this organization.'),
-    ).toBeTruthy();
-    /* The defect this pins: 'none' and 'disabled' both arrive as isEnabled
+    // Finding 44: the server calls this 'included' — entitled, no row needed —
+    // and the rail opens it. The card said it was not switched on, drew a lock
+    // and offered no Open.
+    expect(screen.queryByText(/Not switched on/)).toBeNull();
+    expect(screen.getByText('Open')).toBeTruthy();
+    /* The earlier defect this still pins: 'none' and 'disabled' both arrive as isEnabled
        false, and the card used to answer both with "an admin can re-enable
        it" — an administrator's decision invented for a module no administrator
        has ever touched. */
@@ -203,8 +209,11 @@ describe('Apps catalog — the five entitlement states are five different cards'
     // In the plan → the chip states the packaging band, not a lock reason.
     // Twice on screen: the licence band's "Current plan" and this module's chip.
     expect(screen.getAllByText('Professional')).toHaveLength(2);
+    // The switch shows what the organization has: open. Turning it off writes
+    // the 'disabled' row that locks it.
     showAdminControls();
-    expect(screen.getByTitle('Enable module')).toBeTruthy();
+    const sw = screen.getByTitle('Disable module');
+    expect(sw.getAttribute('aria-checked')).toBe('true');
   });
 
   it('switched on: no lock sentence at all, and the card opens', async () => {
