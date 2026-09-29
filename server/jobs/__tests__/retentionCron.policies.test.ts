@@ -122,7 +122,7 @@ describe('runRetentionSweep — per-policy processing', () => {
   it('falls back to archive + soft-delete for a document with no policy, and never hard-deletes it', async () => {
     arrange({ docs: [doc('doc-nopolicy')] });
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, hardDeleted: 0, heldByLegalHold: 0, errors: 0 });
+    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, errors: 0 });
     expect(archived).toEqual(['doc-nopolicy']);
     expect(softDeleted).toEqual(['doc-nopolicy']);
     expect(deleted).toEqual([]);
@@ -133,27 +133,31 @@ describe('runRetentionSweep — per-policy processing', () => {
   it('uses the default (archive + soft-delete) when the named policy is unknown or inactive', async () => {
     arrange({ docs: [doc('doc-ghost', { retentionPolicy: 'no-such-policy' })], policies: [policy('something-else', true, true)] });
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, hardDeleted: 0, heldByLegalHold: 0, errors: 0 });
+    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, errors: 0 });
     expect(deleted).toEqual([]);
     expect(auditEntries()[0].details).toMatchObject({ policyMatched: false, retentionPolicy: 'no-such-policy' });
   });
 
-  it('applies each matched policy branch: hard-delete, soft-delete, and skip-archive', async () => {
+  /* VR-07: the database refuses to delete a recorded version, and whether
+     retention may ever destroy one is founder decision FD3. A policy that asks
+     for destruction leaves the record exactly as it is (no archive, no
+     tombstone, no audit row) and the sweep reports the refusal. It used to
+     issue the DELETE. */
+  it('applies each matched policy branch: a destroy policy is refused and reported, soft-delete and skip-archive apply', async () => {
     arrange({
       docs: [doc('doc-purge', { retentionPolicy: 'purge' }), doc('doc-keep', { retentionPolicy: 'keep-row' }), doc('doc-noarch', { retentionPolicy: 'no-archive' })],
       policies: [policy('purge', true, true), policy('keep-row', true, false), policy('no-archive', false, false)],
     });
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 3, archived: 2, softDeleted: 2, hardDeleted: 1, heldByLegalHold: 0, errors: 0 });
-    expect(archived).toEqual(['doc-purge', 'doc-keep']);
-    expect(deleted).toEqual(['doc-purge']);
+    expect(summary).toEqual({ scanned: 3, archived: 1, softDeleted: 2, destructionRefused: 1, heldByLegalHold: 0, errors: 0 });
+    expect(deleted).toEqual([]);
+    expect(archived).toEqual(['doc-keep']);
     expect(softDeleted).toEqual(['doc-keep', 'doc-noarch']);
     expect(auditEntries().map(e => e.action)).toEqual([
-      'vault.document.retention_hard_delete',
       'vault.document.retention_soft_delete',
       'vault.document.retention_soft_delete',
     ]);
-    expect(auditEntries()[2].details).toMatchObject({ archived: false, policyMatched: true });
+    expect(auditEntries()[1].details).toMatchObject({ archived: false, policyMatched: true });
   });
 });
 
@@ -162,7 +166,7 @@ describe('runRetentionSweep — failure semantics', () => {
     arrange({ docs: [doc('doc-bad'), doc('doc-good')] });
     tx.archiveFailFor = new Set(['doc-bad']);
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, hardDeleted: 0, heldByLegalHold: 0, errors: 1 });
+    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, errors: 1 });
     expect(archived).toEqual(['doc-good']);
     expect(softDeleted).toEqual(['doc-good']);
     expect(auditEntries().map(e => e.resourceId)).toEqual(['doc-good']);

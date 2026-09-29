@@ -1,0 +1,443 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a DOCUMENT-scoped hold prevents the hard delete
+{
+  "timestamp": "2026-09-29T19:58:37.391Z",
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "document"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a PROGRAM-scoped hold covers every document of that program
+{
+  "timestamp": "2026-09-29T19:58:37.399Z",
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "program"
+  }
+}
+{
+  "timestamp": "2026-09-29T19:58:37.399Z",
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "other-doc",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "program"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > is checked before the policy resolves, so no archive is written either
+{
+  "timestamp": "2026-09-29T19:58:37.400Z",
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "program"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a deletion whose audit row cannot be written is rolled back and counted as an error
+{
+  "timestamp": "2026-09-29T19:58:37.411Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "error": "chain unavailable"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a document with no organisation to chain the row under is left in place (nothing is committed unaudited)
+{
+  "timestamp": "2026-09-29T19:58:37.412Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "error": "no organisation for the document: the deletion cannot be audited, so it is not made"
+  }
+}
+
+ × server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a DOCUMENT-scoped hold prevents the hard delete 9ms
+   → expected undefined to be +0 // Object.is equality
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a PROGRAM-scoped hold covers every document of that program 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > is checked before the policy resolves, so no archive is written either 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > deletes when no hold exists — the guard is not a blanket stop 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > deletes when the only hold covers a DIFFERENT program 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > a LIFTED hold does not block — the query already excludes it 0ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > the sweep fails closed when holds cannot be read > aborts having deleted nothing, rather than proceeding as if none existed 2ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > soft delete: BEGIN, the organisation, the tombstone, the chained audit row, COMMIT — and the row names the document 1ms
+ × server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > archive then soft delete, in the same transaction, under the document's own organisation 4ms
+   → expected { scanned: 1, archived: 1, …(4) } to match object { archived: 1, softDeleted: 1, …(2) }
+(3 matching properties omitted from actual)
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a deletion whose audit row cannot be written is rolled back and counted as an error 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a document with no organisation to chain the row under is left in place (nothing is committed unaudited) 1ms
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — failure semantics > a per-document failure rolls that document back, counts one error, and the sweep continues
+{
+  "timestamp": "2026-09-29T19:58:37.429Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "doc-bad",
+    "error": "archive insert failed for doc-bad"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns true on a clean sweep
+{
+  "timestamp": "2026-09-29T19:58:37.434Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns true on a clean sweep
+{
+  "timestamp": "2026-09-29T19:58:37.435Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "hardDeleted": 0,
+    "heldByLegalHold": 0,
+    "errors": 0
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred
+{
+  "timestamp": "2026-09-29T19:58:37.436Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred
+{
+  "timestamp": "2026-09-29T19:58:37.436Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "doc-bad",
+    "error": "archive insert failed for doc-bad"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred
+{
+  "timestamp": "2026-09-29T19:58:37.437Z",
+  "level": "warn",
+  "message": "[retention-sweep] Document retention sweep complete with errors",
+  "context": {
+    "scanned": 2,
+    "archived": 1,
+    "softDeleted": 1,
+    "hardDeleted": 0,
+    "heldByLegalHold": 0,
+    "errors": 1
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > an enumeration-level failure aborts: returns false, raises the security alert, and skips notification
+{
+  "timestamp": "2026-09-29T19:58:37.437Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > an enumeration-level failure aborts: returns false, raises the security alert, and skips notification
+{
+  "timestamp": "2026-09-29T19:58:37.437Z",
+  "level": "error",
+  "message": "[retention-sweep] Document retention sweep failed",
+  "context": {
+    "error": "relation vault.documents does not exist"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-09-29T19:58:37.439Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-09-29T19:58:37.440Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "hardDeleted": 0,
+    "heldByLegalHold": 0,
+    "errors": 0
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-09-29T19:58:37.440Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-09-29T19:58:37.440Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "hardDeleted": 0,
+    "heldByLegalHold": 0,
+    "errors": 0
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > emails every configured recipient with the sweep summary
+{
+  "timestamp": "2026-09-29T19:58:37.441Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > emails every configured recipient with the sweep summary
+{
+  "timestamp": "2026-09-29T19:58:37.441Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "hardDeleted": 0,
+    "heldByLegalHold": 0,
+    "errors": 0
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail
+{
+  "timestamp": "2026-09-29T19:58:37.443Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail
+{
+  "timestamp": "2026-09-29T19:58:37.443Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "hardDeleted": 0,
+    "heldByLegalHold": 0,
+    "errors": 0
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail
+[RETENTION] Failed to send notification: smtp down
+
+ × server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > falls back to archive + soft-delete for a document with no policy, and never hard-deletes it 12ms
+   → expected { scanned: 1, archived: 1, …(4) } to deeply equal { scanned: 1, archived: 1, …(4) }
+ × server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > uses the default (archive + soft-delete) when the named policy is unknown or inactive 2ms
+   → expected { scanned: 1, archived: 1, …(4) } to deeply equal { scanned: 1, archived: 1, …(4) }
+ × server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > applies each matched policy branch: a destroy policy is refused and reported, soft-delete and skip-archive apply 2ms
+   → expected { scanned: 3, archived: 2, …(4) } to deeply equal { scanned: 3, archived: 1, …(4) }
+ × server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — failure semantics > a per-document failure rolls that document back, counts one error, and the sweep continues 3ms
+   → expected { scanned: 2, archived: 1, …(4) } to deeply equal { scanned: 2, archived: 1, …(4) }
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — failure semantics > an enumeration-level failure makes the sweep itself throw, having disposed of nothing 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns true on a clean sweep 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred 1ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > an enumeration-level failure aborts: returns false, raises the security alert, and skips notification 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > emails every configured recipient with the sweep summary 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a DOCUMENT-scoped hold prevents the hard delete
+AssertionError: expected undefined to be +0 // Object.is equality
+
+- Expected:
+0
+
++ Received:
+undefined
+
+ ❯ server/jobs/__tests__/retentionCron.legal-hold.test.ts:165:40
+    163|     expect(summary.heldByLegalHold).toBe(1);
+    164|     // The hold is checked first, so it is counted as a hold, not as a…
+    165|     expect(summary.destructionRefused).toBe(0);
+       |                                        ^
+    166|   });
+    167|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > archive then soft delete, in the same transaction, under the document's own organisation
+AssertionError: expected { scanned: 1, archived: 1, …(4) } to match object { archived: 1, softDeleted: 1, …(2) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "archived": 1,
+-   "destructionRefused": 0,
+    "errors": 0,
+    "softDeleted": 1,
+  }
+
+ ❯ server/jobs/__tests__/retentionCron.legal-hold.test.ts:265:21
+    263|     const summary = await runRetentionSweep();
+    264|
+    265|     expect(summary).toMatchObject({ archived: 1, softDeleted: 1, destr…
+       |                     ^
+    266|     expect(tx.statements).toEqual(['BEGIN', 'INSERT INTO vault.documen…
+    267|     expect(tx.audit.mock.calls[0][1]).toMatchObject({ action: 'vault.d…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > falls back to archive + soft-delete for a document with no policy, and never hard-deletes it
+AssertionError: expected { scanned: 1, archived: 1, …(4) } to deeply equal { scanned: 1, archived: 1, …(4) }
+
+- Expected
++ Received
+
+  {
+    "archived": 1,
+-   "destructionRefused": 0,
+    "errors": 0,
++   "hardDeleted": 0,
+    "heldByLegalHold": 0,
+    "scanned": 1,
+    "softDeleted": 1,
+  }
+
+ ❯ server/jobs/__tests__/retentionCron.policies.test.ts:125:21
+    123|     arrange({ docs: [doc('doc-nopolicy')] });
+    124|     const summary = await runRetentionSweep();
+    125|     expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1,…
+       |                     ^
+    126|     expect(archived).toEqual(['doc-nopolicy']);
+    127|     expect(softDeleted).toEqual(['doc-nopolicy']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > uses the default (archive + soft-delete) when the named policy is unknown or inactive
+AssertionError: expected { scanned: 1, archived: 1, …(4) } to deeply equal { scanned: 1, archived: 1, …(4) }
+
+- Expected
++ Received
+
+  {
+    "archived": 1,
+-   "destructionRefused": 0,
+    "errors": 0,
++   "hardDeleted": 0,
+    "heldByLegalHold": 0,
+    "scanned": 1,
+    "softDeleted": 1,
+  }
+
+ ❯ server/jobs/__tests__/retentionCron.policies.test.ts:136:21
+    134|     arrange({ docs: [doc('doc-ghost', { retentionPolicy: 'no-such-poli…
+    135|     const summary = await runRetentionSweep();
+    136|     expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1,…
+       |                     ^
+    137|     expect(deleted).toEqual([]);
+    138|     expect(auditEntries()[0].details).toMatchObject({ policyMatched: f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > applies each matched policy branch: a destroy policy is refused and reported, soft-delete and skip-archive apply
+AssertionError: expected { scanned: 3, archived: 2, …(4) } to deeply equal { scanned: 3, archived: 1, …(4) }
+
+- Expected
++ Received
+
+  {
+-   "archived": 1,
+-   "destructionRefused": 1,
++   "archived": 2,
+    "errors": 0,
++   "hardDeleted": 1,
+    "heldByLegalHold": 0,
+    "scanned": 3,
+    "softDeleted": 2,
+  }
+
+ ❯ server/jobs/__tests__/retentionCron.policies.test.ts:152:21
+    150|     });
+    151|     const summary = await runRetentionSweep();
+    152|     expect(summary).toEqual({ scanned: 3, archived: 1, softDeleted: 2,…
+       |                     ^
+    153|     expect(deleted).toEqual([]);
+    154|     expect(archived).toEqual(['doc-keep']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — failure semantics > a per-document failure rolls that document back, counts one error, and the sweep continues
+AssertionError: expected { scanned: 2, archived: 1, …(4) } to deeply equal { scanned: 2, archived: 1, …(4) }
+
+- Expected
++ Received
+
+  {
+    "archived": 1,
+-   "destructionRefused": 0,
+    "errors": 1,
++   "hardDeleted": 0,
+    "heldByLegalHold": 0,
+    "scanned": 2,
+    "softDeleted": 1,
+  }
+
+ ❯ server/jobs/__tests__/retentionCron.policies.test.ts:169:21
+    167|     tx.archiveFailFor = new Set(['doc-bad']);
+    168|     const summary = await runRetentionSweep();
+    169|     expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1,…
+       |                     ^
+    170|     expect(archived).toEqual(['doc-good']);
+    171|     expect(softDeleted).toEqual(['doc-good']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 16 passed (22)
+   Start at  19:58:36
+   Duration  884ms (transform 314ms, setup 161ms, import 952ms, tests 63ms, environment 0ms)
+
