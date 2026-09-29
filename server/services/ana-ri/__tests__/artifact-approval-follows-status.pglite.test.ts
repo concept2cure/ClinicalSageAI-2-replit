@@ -40,7 +40,7 @@ vi.mock('../../../db', () => ({
 vi.mock('../../ai-actions/action-registry', () => ({
   registerActionHandler: (x: any) => h.handlers.set(x.actionType, x),
 }));
-vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => undefined) } }));
+vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true, chained: true })) } }));
 vi.mock('../../contradiction-engine-service', () => ({
   contradictionEngineService: {
     checkPromotionBlocked: vi.fn(async () => ({ blocked: false, blockingFindings: [], warningFindings: [] })),
@@ -193,7 +193,10 @@ describe('an approval does not outlive the status that carries it', () => {
     expect(verdict(r)).toEqual({ filable: true });
   });
 
-  it('approved → review clears the approval; promote_artifact back to approved is NOT filable', async () => {
+  // 2026-09-29 (D5): promotion no longer sets the status to 'approved' (an
+  // approval is the status route's electronic signature), so the artifact
+  // stays in review — and is still not filable.
+  it('approved → review clears the approval; promote_artifact does not approve it again, and it is NOT filable', async () => {
     await route.approve();
     await route.toReview();
     const revoked = await row();
@@ -203,9 +206,9 @@ describe('an approval does not outlive the status that carries it', () => {
     const out = await promote();
     expect(out.success).toBe(true);
     const r = await row();
-    expect(r.status).toBe('approved');
+    expect(r.status).toBe('review');
     expect(r.approved_version_id).toBeNull();
-    expect(verdict(r)).toMatchObject({ filable: false, reason: 'no-approved-version' });
+    expect(verdict(r)).toMatchObject({ filable: false });
     expect(out.warnings.join(' ')).toMatch(/recorded only by the review workflow's Approve action .*; this action records none/);
   }, 30_000);
 

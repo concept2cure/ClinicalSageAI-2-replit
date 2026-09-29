@@ -28,7 +28,6 @@
     "server/routes/reg-change.routes.ts": 1,
     "server/routes/safety-narrative.ts": 1,
     "server/routes/se-matrix.ts": 4,
-    "server/services/ai-actions/handlers/promote-artifact.ts": 1,
     "server/services/ana/ana-input-guard.ts": 1,
     "server/services/api-key-service.ts": 1,
     "server/services/authoring/section-generation-service.ts": 1,
