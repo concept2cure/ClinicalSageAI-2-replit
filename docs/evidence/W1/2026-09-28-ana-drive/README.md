@@ -202,8 +202,34 @@ without its beta. The battery gained two checks. It passed 21/21 with every
 round on Opus 5.5 and 21/21 on the default tiering, with nothing refused
 (`narration.txt`).
 
+## An action on another screen gets that screen's answer (sixth pass)
+
+Asked to act on a screen the person is not on, AnA's move takes the person
+there. The action arrives while that screen is still reading its data, so the
+screen holds it and must say when the data has settled. Two screens never
+said, and sixteen said only when the read succeeded. Loading a Biostatistics
+study design from another screen never loaded it, though the design existed
+(`held-design-before.png`). Switching the Inconsistency overlay never
+answered. Each time AnA waited out 10 s and was told "not confirmed".
+
+- **The audit.** Every one of the 96 actions was checked from the source.
+  Each has a handler registered on the right screen, reading the params the
+  registry declares. The ready signal was the only break.
+- **The fix.** Those 18 screens now signal once their read settles, whether
+  it succeeded or failed. The handler then gives its own answer: the action,
+  or the honest refusal it already had for a failed read. The design now
+  loads (`held-design-after.png`), and AnA's turn finishes in 1 s instead
+  of 11.
+- **The guard.** `surfaceReadySignal.test.ts` reads every screen's source and
+  fails if one holds without signalling, or signals only on success. It
+  listed all 18 before the fix.
+
+`held-actions.txt` has the audit, the runs and the tests.
+
 ## Evidence
 
+- `held-actions.txt`, `held-design-before.png`, `held-design-after.png`: an
+  action sent to another screen, before and after.
 - `narration.txt` and four screenshots (`narration-before-default.png`,
   `narration-before-opus.png`, `narration-after-opus.png`,
   `narration-after-default.png`): the demonstration's narration, before and
@@ -214,8 +240,8 @@ round on Opus 5.5 and 21/21 on the default tiering, with nothing refused
   `answer-cut-off-after.png`: a cut-off answer, before and after.
 - `harness/`: the stand-in model, its self-test and the browser battery that
   produced every run below, with how to repeat them. Run from this folder on
-  the current tree, it passed 21/21 on both configurations, with the stand-in
-  refusing nothing.
+  the current tree, it passed 23/23, with the stand-in refusing nothing
+  (21/21 on both configurations before the held-action checks were added).
 - `silent-thinking.txt`, `silent-thinking-before.png`,
   `silent-thinking-after.png`: the silent-thinking cut-off, before and after.
 - `contract-audit.txt`: the rules, their sources, the stand-in failing each
@@ -269,6 +295,11 @@ document to open.
   reasoning panel stays. Its notes between moves appear in that panel, not as
   her words. Asking for "updates" there too would empty the panel. That is a
   choice for the founder.
+- **The Inconsistency board cannot read a program opened from Projects.**
+  The screen sends the program's UUID, and its route accepts only a numeric
+  legacy project id (400). A person sees the board's error state too; AnA
+  now says so rather than "not confirmed". It is outside the launch catalog,
+  so it is left to its owner (`held-actions.txt`).
 - **Staging.** It is owed with D1.
 - **Decision for the founder.** With `ENTITLEMENTS_ENFORCE=on`, Live Drive
   requires the `professional` tier (`ana_live_drive`). A standard-tier

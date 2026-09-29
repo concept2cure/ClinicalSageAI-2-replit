@@ -115,8 +115,8 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!live.loading && !live.error) notifySurfaceActionReady('safety-narrative');
-  }, [live.loading, live.error]);
+    if (!live.loading) notifySurfaceActionReady('safety-narrative');
+  }, [live.loading]);
 
   const sel = cases.find((c) => c.id === selId) || cases[0];
   const result = useMemo(() => (sel ? composeSafetyNarrative(sel) : null), [sel]);
