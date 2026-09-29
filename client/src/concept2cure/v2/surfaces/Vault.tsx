@@ -5,6 +5,7 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { VaultEditDetails } from './VaultEditDetails';
+import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
 import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
 import {
@@ -123,6 +124,8 @@ interface VaultDisplayShape {
   uploadsWindow?: { shown: number; total: number; truncated: boolean };
   /** The capture→classify→file pipeline over the project's data room. */
   dataRoom?: DataRoomBlock;
+  /** Required sections against confirmed filings, from the server (VR-15). */
+  coverage?: VaultCoverageShape;
   /** Branches the server could not serve, with why — rendered, not swallowed:
    *  a vault silently missing "Uploaded files" reads as a vault with no uploads. */
   unavailable?: Array<{ branch: string; reason: string }>;
@@ -739,7 +742,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
 
   const fileDocument = async (
     docId: string,
-    body: { confirm?: boolean; folderId?: string | null; note?: string },
+    body: { confirm?: boolean; folderId?: string | null; ctdSection?: string; note?: string },
   ) => {
     if (!projectId || filing) return;
     setFiling(true);
@@ -810,6 +813,19 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
       .map((c) => ({ id: c.id.replace(/^cab-/, ''), label: c.label }));
   }, [cabinet]);
   const [moveTarget, setMoveTarget] = useState('');
+  /* The uploaded documents a person may file at a missing section (VR-15). */
+  const coverageDocuments = useMemo<CoverageDocument[]>(() => {
+    const out: CoverageDocument[] = [];
+    const walk = (nodes: (VaultDoc | VaultFolder)[]) => {
+      for (const n of nodes) {
+        if (isVaultDoc(n)) {
+          if (n.docId) out.push({ docId: n.docId, title: n.title });
+        } else if ((n as VaultFolder).children) walk((n as VaultFolder).children);
+      }
+    };
+    if (cabinet) walk(cabinet.children);
+    return out;
+  }, [cabinet]);
 
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -1001,6 +1017,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         totalDocuments: vault?.documentCount ?? 0,
         documentCounts: vault?.documentCounts ?? null,
         unfiledUploads: vault?.unfiledCount ?? 0,
+        // Required sections against confirmed filings (VR-15), as the server
+        // counted them, or why there is no figure. Not a readiness figure.
+        vaultCoverage: vault?.coverage ?? null,
         dataRoom: vault?.dataRoom
           ? {
               captured: vault.dataRoom.captured,
@@ -1303,6 +1322,15 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
             unavailableReason={
               vault?.unavailable?.find((u) => u.branch === 'Data room')?.reason ?? null
             }
+          />
+          <VaultCoverage
+            coverage={vault?.coverage}
+            documents={coverageDocuments}
+            onUpload={() => fileInputRef.current?.click()}
+            onFileHere={(docId, target) =>
+              void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
+            }
+            busy={filing}
           />
           {/* The lane is a BROWSE aid — every upload in the programme. While a
               search is running it would sit above the results listing files the
