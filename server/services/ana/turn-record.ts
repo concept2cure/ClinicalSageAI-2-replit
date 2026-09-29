@@ -49,6 +49,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { stableStringify } from '../../../shared/canonical-json.js';
 
 import { writeChainedAuditRow } from '../auditService.js';
 import type { TurnPlanStep } from './turn-plan.js';
@@ -184,27 +185,14 @@ export function sha256Hex(text: string | Buffer): string {
 }
 
 /**
- * Canonical JSON: object keys sorted, no whitespace, `undefined` members
- * dropped, non-finite numbers written as null (as JSON.stringify does). The
- * same value always serialises to the same bytes, which is what makes a hash
- * of it verifiable later.
+ * Canonical JSON: the repo's one serializer for hashing (shared/canonical-json,
+ * held to one copy by ci:canonicalizers). A record's hash is computed over the
+ * exact text stored, and verification re-hashes that stored text — it never
+ * re-serializes — so which serializer wrote a record never changes whether it
+ * verifies. This module briefly carried its own copy; every field a turn
+ * record holds is plain JSON, where the two agree byte for byte.
  */
-export function canonicalJson(value: unknown): string {
-  if (value === null || value === undefined) return 'null';
-  if (typeof value === 'number') return Number.isFinite(value) ? JSON.stringify(value) : 'null';
-  if (typeof value === 'string' || typeof value === 'boolean') return JSON.stringify(value);
-  if (Array.isArray(value)) {
-    return `[${value.map((v) => (v === undefined ? 'null' : canonicalJson(v))).join(',')}]`;
-  }
-  if (typeof value === 'object') {
-    const entries = Object.keys(value as Record<string, unknown>)
-      .filter((k) => (value as Record<string, unknown>)[k] !== undefined)
-      .sort()
-      .map((k) => `${JSON.stringify(k)}:${canonicalJson((value as Record<string, unknown>)[k])}`);
-    return `{${entries.join(',')}}`;
-  }
-  return JSON.stringify(String(value));
-}
+export const canonicalJson = (value: unknown): string => stableStringify(value);
 
 /** The structural slice of a gateway message this module reads. */
 interface GatewayMessageLike {

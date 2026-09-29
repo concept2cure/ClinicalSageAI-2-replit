@@ -149,6 +149,20 @@ describe('private-cloud residency follows the region the client calls (D6)', () 
       expect(buildPlacementRegistry().azure.regions).toEqual(['eu']);
     });
   });
+
+  it('a declared residency is known codes only: an unknown token claims nothing, and is reported', () => {
+    // A cloud region name is not a residency code. Taken verbatim it reached the
+    // ledger's region column, and a long list was cut mid-token (2026-09-26).
+    withEnv({ AI_AZURE_RESIDENCY: 'eastus2,EU,eu' }, () => {
+      expect(buildPlacementRegistry().azure.regions).toEqual(['eu']);
+      expect(placementConfigurationProblems()).toEqual([
+        expect.stringMatching(/AI_AZURE_RESIDENCY.*eastus2.*not a residency code/),
+      ]);
+    });
+    withEnv({ AI_AZURE_RESIDENCY: 'westeurope' }, () => {
+      expect(buildPlacementRegistry().azure.regions).toEqual(['global']);
+    });
+  });
 });
 
 describe('private-cloud zero retention (D6)', () => {
