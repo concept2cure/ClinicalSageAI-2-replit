@@ -392,7 +392,7 @@ function adaptSeRow(r: ServerSeRow): SeRow | null {
     attr,
     subject:   r.subject ?? r.subject_value ?? r.subjectValue ?? '',
     predicate: r.predicate ?? r.predicate_value ?? r.predicateValue ?? '',
-    verdict:   (VERDICT_MAP[(r.verdict ?? 'equivalent').toLowerCase()] ?? 'equivalent') as SeRow['verdict'],
+    verdict:   (r.verdict ? VERDICT_MAP[r.verdict.toLowerCase()] ?? 'unassessed' : 'unassessed') as SeRow['verdict'],
     note:      r.note,
   };
 }

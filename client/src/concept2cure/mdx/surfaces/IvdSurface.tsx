@@ -224,9 +224,13 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
                         </td>
                         <td style={{ color: 'var(--text-300)' }}>{c.intendedPurpose}</td>
                         <td>
-                          <span className={`status-pill ${c.classification === 'D' || c.classification === 'C' ? 'review' : 'complete'}`}>
-                            Class {c.classification}
-                          </span>
+                          {c.classification === null ? (
+                            <span className="status-pill" data-testid="ivd-class-unrecorded">Not classified</span>
+                          ) : (
+                            <span className={`status-pill ${c.classification === 'D' || c.classification === 'C' ? 'review' : 'complete'}`}>
+                              Class {c.classification}
+                            </span>
+                          )}
                         </td>
                         <td style={{ color: 'var(--text-300)' }}>
                           {c.rule ?? '—'}

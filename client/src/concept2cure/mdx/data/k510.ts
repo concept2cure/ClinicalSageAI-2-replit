@@ -35,7 +35,10 @@ export interface SeRow {
   attr: string;
   subject: string;
   predicate: string;
-  verdict: 'same' | 'equivalent' | 'different';
+  /** 'unassessed' when the server gave no verdict, or one this client does not
+   *  recognise. It used to default to 'equivalent' — a finding of substantial
+   *  equivalence, on the attribute a reviewer would challenge, that nobody made. */
+  verdict: 'same' | 'equivalent' | 'different' | 'unassessed';
   note?: string;
 }
 

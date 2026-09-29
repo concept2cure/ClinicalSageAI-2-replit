@@ -180,3 +180,41 @@ describe('CERV2 AI analyze-section fallback — no fabricated clinical statistic
     expect(benefitrisk).toContain(ctx.deviceName);
   });
 });
+
+describe('CERV2 AI analyze-section fallback — no asserted test results', () => {
+  /* The statistics fix above covered PMA clin/risk and CER benefitrisk, and
+     missed the 510(k) `testing` section, which stated four results as fact
+     whenever the gateway returned nothing: biocompatibility "passed … at an
+     ISO 17025 accredited laboratory", IEC 60601-1 "meets all applicable
+     requirements … within specified limits", IEC 62304 "comply", and
+     "meets or exceeds all design input specifications". None carried a
+     placeholder, so the completeness gate had nothing to catch. */
+  const ASSERTED_RESULT = [
+    /\bpassed\b/i,
+    /meets all applicable requirements/i,
+    /within specified limits/i,
+    /\bcompl(y|ies) with IEC 62304/i,
+    /meets or exceeds/i,
+    /ISO 17025 accredited laboratory\./i,
+  ];
+
+  it('510(k) "testing" fallback states no result, is all placeholders, and is flagged incomplete', () => {
+    const content = enhancedMockContent.cerv2_510k.testing(ctx);
+    for (const re of ASSERTED_RESULT) expect(content, `asserted result ${re}`).not.toMatch(re);
+    assertHasCatchablePlaceholder(content);
+    const result = validateSectionServer('cerv2_510k', 'testing', content, ctx);
+    expect(result.severity).toBe('error');
+    expect(result.issues.some(i => /placeholder/i.test(i))).toBe(true);
+  });
+
+  it('no section in any fallback template asserts a passed test or a met requirement', () => {
+    for (const [docType, sections] of Object.entries(enhancedMockContent)) {
+      for (const [sectionId, fn] of Object.entries(sections)) {
+        const content = (fn as (c: typeof ctx) => string)(ctx);
+        for (const re of ASSERTED_RESULT) {
+          expect(content, `${docType}.${sectionId} asserts ${re}`).not.toMatch(re);
+        }
+      }
+    }
+  });
+});

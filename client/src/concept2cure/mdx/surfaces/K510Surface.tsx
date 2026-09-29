@@ -727,6 +727,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                           {r.verdict === 'same' && I.check}
                           {r.verdict === 'equivalent' && I.eq}
                           {r.verdict === 'different' && I.minus}
+                          {r.verdict === 'unassessed' && <span title="No verdict recorded">—</span>}
                         </div>
                         <div className="se-val">{r.predicate}</div>
                         {r.note && <div className="se-note">{r.note}</div>}
