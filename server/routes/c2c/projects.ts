@@ -1491,6 +1491,55 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
   }
 });
 
+// ── GET /api/c2c/projects/:id/conversation-files ─────────────────────────────
+//
+// The caller's own chat files that are in no project's Data Room (PF-07). A
+// file attached with no project open records no source; this is where a
+// project offers it, and POST /:id/adopt brings it in. Only the caller's own
+// uploads: a colleague's chat attachment is theirs to bring in. A file whose
+// bytes are already a source of some project is not listed — adopt is from no
+// project. One past the window, so a full one says so.
+
+const CONVERSATION_FILES_WINDOW = 50;
+
+router.get('/:id/conversation-files', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  const userId = resolveUserId(req);
+  if (!orgId || !userId) return send403(res);
+  const programId = String(req.params.id);
+  if (!UUID_RE.test(programId)) return send404(res);
+  try {
+    const check = await pool.query(
+      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [programId, orgId],
+    );
+    if (check.rows.length === 0) return send404(res);
+    const { rows } = await pool.query(
+      `SELECT f.id, f.original_name, f.mime_type, f.file_size, f.created_at
+         FROM file_uploads f
+        WHERE f.organization_id = $1 AND f.user_id = $2 AND f.checksum_sha256 IS NOT NULL
+          AND NOT EXISTS (
+                SELECT 1 FROM cre_evidence_sources s
+                 WHERE s.organization_id = $1 AND s.checksum = f.checksum_sha256
+                   AND (s.client_program_id IS NOT NULL OR s.client_workspace_id IS NOT NULL))
+        ORDER BY f.created_at DESC
+        LIMIT $3`,
+      [orgId, userId, CONVERSATION_FILES_WINDOW + 1],
+    );
+    const truncated = rows.length > CONVERSATION_FILES_WINDOW;
+    const files = (truncated ? rows.slice(0, CONVERSATION_FILES_WINDOW) : rows).map((f) => ({
+      id: String(f.id),
+      name: f.original_name ?? null,
+      mimeType: f.mime_type ?? null,
+      fileSize: f.file_size == null ? null : Number(f.file_size),
+      uploadedAt: f.created_at ?? null,
+    }));
+    return res.json({ projectId: programId, files, window: { shown: files.length, truncated } });
+  } catch (err: unknown) {
+    return serverError(res, logger, 'listing conversation files', err, { programId });
+  }
+});
+
 // ── GET /api/c2c/projects/:id/vault-structure ────────────────────────────────
 //
 // Workstream A1 — the dynamic, build-type-aware Vault structure. Returns the

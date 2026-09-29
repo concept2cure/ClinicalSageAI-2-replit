@@ -50,7 +50,7 @@
 
 import { pool } from '../../db.js';
 import { writeChainedAuditRow } from '../auditService.js';
-import { resolveVaultView, isFolderInView, folderLabel } from './vault-filing.service.js';
+import { resolveVaultView, isFolderInView, folderLabel, filingVocabularyRefusal } from './vault-filing.service.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
 
@@ -208,6 +208,9 @@ export async function placeVaultDocument(
   if (!UUID_RE.test(documentId)) {
     return invalid('INVALID_DOCUMENT_ID', 'documentId (uuid) is required.');
   }
+  // Held to the vocabulary before anything is read or written (VR-04).
+  const vocabulary = filingVocabularyRefusal(args);
+  if (vocabulary) return invalid(vocabulary.code, vocabulary.message, 422);
   // Confirming is the one act that makes a placement a person's decision, so
   // it is refused to an agent outright rather than recorded under the person.
   if (args.agent && args.confirm) {

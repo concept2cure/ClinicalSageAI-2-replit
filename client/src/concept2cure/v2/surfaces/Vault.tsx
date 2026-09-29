@@ -9,6 +9,7 @@ import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
 import {
   VAULT_INGEST_DOCUMENT_TYPES,
+  vaultDocKindLabel,
   vaultIngestTypeLabel,
   type VaultIngestDocumentType,
 } from '@shared/constants/domain/vault-taxonomy';
@@ -439,7 +440,7 @@ function DataRoomLane({
                 {s.sizeLabel !== '—' ? `${s.sizeLabel} · ` : ''}{s.addedAt} · {s.readState}
               </span>
               {s.stage === 'classified' && s.suggestedFolderLabel ? (
-                <span className="vd-dr-suggest" title={s.evidenceKind ? `Looks like: ${s.evidenceKind}` : undefined}>
+                <span className="vd-dr-suggest" title={s.evidenceKind ? `Looks like: ${vaultDocKindLabel(s.evidenceKind)}` : undefined}>
                   → {s.suggestedFolderLabel}
                 </span>
               ) : null}
@@ -1548,7 +1549,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       {sel.filing.evidenceKind && (
                         <div className="vd-d-filing-row">
                           <span className="k">Looks like</span>
-                          <span className="v">{sel.filing.evidenceKind}</span>
+                          <span className="v">{vaultDocKindLabel(sel.filing.evidenceKind)}</span>
                         </div>
                       )}
                       {sel.filing.ctdSection && (

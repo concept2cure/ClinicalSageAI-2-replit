@@ -73,7 +73,7 @@ import {
   getOrgPlacementResolver,
   mergeOrgPolicyDefaults,
 } from './providers/org-placement';
-import { governServerTools } from './server-tool-policy';
+import { governServerTools, webToolsForModel } from './server-tool-policy';
 import { isTerminalGatewayError } from './gateway-outcome';
 import { assertDeterministicServingAllowed, isDeterministicModeRequested } from './deterministic-mode';
 import { modelCallRefusal, type ModelCallRefusalScope } from './model-call-scope.js';
@@ -172,6 +172,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-opus-4',
     provider: 'anthropic',
     model: 'claude-opus-5-5',
+    // Opus 4.6+ / Sonnet 4.6+: the _20260209 web tools (dynamic filtering).
+    webToolVariant: 'dynamic_filtering',
     maxApiEffort: 'max',
     defaultApiEffort: 'medium',
     thinkingMode: 'adaptive',
@@ -217,6 +219,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-opus-5',
     provider: 'anthropic',
     model: 'claude-opus-5',
+    // Opus 4.6+ / Sonnet 4.6+: the _20260209 web tools (dynamic filtering).
+    webToolVariant: 'dynamic_filtering',
     maxApiEffort: 'max',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
@@ -249,6 +253,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-opus-4-legacy',
     provider: 'anthropic',
     model: 'claude-opus-4-8',
+    // Opus 4.6+ / Sonnet 4.6+: the _20260209 web tools (dynamic filtering).
+    webToolVariant: 'dynamic_filtering',
     maxApiEffort: 'max',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
@@ -276,6 +282,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4',
     provider: 'anthropic',
     model: 'claude-sonnet-5',
+    // Opus 4.6+ / Sonnet 4.6+: the _20260209 web tools (dynamic filtering).
+    webToolVariant: 'dynamic_filtering',
     maxApiEffort: 'max',
     supportsStructuredOutputs: true,
     // Sonnet 5 shares the flagship's reasoning-only surface: adaptive
@@ -312,6 +320,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4-legacy',
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',
+    // Opus 4.6+ / Sonnet 4.6+: the _20260209 web tools (dynamic filtering).
+    webToolVariant: 'dynamic_filtering',
     maxApiEffort: 'max',
     thinkingMode: 'budget',
     supportsSamplingParams: true,
@@ -339,6 +349,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // stale-prior artifact. Haiku keeps the 200K window — unlike the Opus and
     // Sonnet entries above, that figure is correct here.
     model: 'claude-haiku-4-5',
+    // Basic web tools only (web_search_20250305 / web_fetch_20250910).
+    webToolVariant: 'basic',
     // null, not omitted: Haiku 4.5 rejects effort with a 400, and every
     // Fast turn routes here. Declared explicitly so the reason is on the
     // entry rather than implied by an absence.
@@ -1610,7 +1622,7 @@ export class AIGateway {
     provider: 'openai' | 'local';
     texts: string[];
     requestId?: string;
-  }): Promise<void> {
+  }): Promise<EmbeddingAuthorization> {
     const requestId = input.requestId ?? randomUUID();
     const startTime = Date.now();
 
@@ -1689,11 +1701,46 @@ export class AIGateway {
 
     // (b) The last-mile sensitive-dispatch gate, exactly as executeProvider
     // applies it before a chat SDK call, with intended use 'embedding'.
-    await this.assertSensitiveDispatchAllowed(
+    const placementReasonCode = await this.assertSensitiveDispatchAllowed(
       { provider: input.provider } as ModelConfig,
       request,
       requestId,
       startTime,
+    );
+    return { requestId, startTime, request, placementReasonCode };
+  }
+
+  /**
+   * Record an embedding call once the provider has answered: a served row, or
+   * a failure row with the error. authorizeEmbedding decides and records only a
+   * refusal; the call itself is made outside route(), so until 2026-09-29 an
+   * allowed embedding left no ledger row at all (D6). Written through logAudit,
+   * like a chat row: the provenance, placement decision, region and prompt hash
+   * of the authorised request, and never its text. Never throws.
+   */
+  async recordEmbeddingCall(
+    authorization: EmbeddingAuthorization,
+    call: { provider: ProviderName; model: string; inputTokens?: number; error?: string },
+  ): Promise<void> {
+    const inputTokens = call.inputTokens ?? 0;
+    await this.logAudit(
+      authorization.request,
+      {
+        content: '',
+        provider: call.provider,
+        model: call.model,
+        usage: { inputTokens, outputTokens: 0, totalTokens: inputTokens, estimatedCostUsd: 0 },
+        latencyMs: Date.now() - authorization.startTime,
+        requestId: authorization.requestId,
+        cached: false,
+        deterministic: false,
+        ...(call.error ? { finishReason: 'error' } : {}),
+        ...(authorization.placementReasonCode ? { placementReasonCode: authorization.placementReasonCode } : {}),
+      },
+      authorization.request.strategy || this.config.defaultStrategy,
+      !call.error,
+      call.error,
+      [call.provider],
     );
   }
 
@@ -1859,6 +1906,8 @@ export class AIGateway {
     // them; the rest are removed here, for the primary and every fallback, so
     // no door that skipped governedToolsetFor can send one (server-tool-policy.ts).
     const governed = governServerTools(modelConfig.provider, request);
+    // …and in the version this model accepts.
+    governed.request = webToolsForModel(governed.request, modelConfig.webToolVariant);
     if (governed.withheld.length > 0) {
       log.info('[ai-gateway] server tools withheld for this lane', {
         requestId,
@@ -4328,6 +4377,15 @@ function ledgerProvenance(
         }
       : {}),
   };
+}
+
+/** What authorizeEmbedding decided, for the row recordEmbeddingCall writes once the provider answers. */
+export interface EmbeddingAuthorization {
+  requestId: string;
+  startTime: number;
+  /** The governed request: the tenant's floor merged in, the content classified. */
+  request: GatewayRequest;
+  placementReasonCode?: string;
 }
 
 /**

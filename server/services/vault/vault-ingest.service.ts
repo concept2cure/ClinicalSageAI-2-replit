@@ -56,6 +56,7 @@ import { vaultWriteRefusal } from './vault-write-authority.js';
 import { readRecordedVersion, reuploadChanges, reuploadDiffers, type ReuploadChange, type ReuploadDiffer } from './vault-reupload.js';
 import {
   classifyForFiling,
+  filingVocabularyRefusal,
   resolveVaultView,
   isFolderInView,
   folderLabel,
@@ -179,6 +180,11 @@ async function admitVaultDocument(
   // is told so before anything is stored, checked or disclosed.
   const roleRefusal = vaultWriteRefusal();
   if (roleRefusal) return roleRefusal;
+  // A filing the uploader names is held to the vocabulary before any byte is
+  // stored (VR-04). Only a named folder's kind and section are written; without
+  // one the classifier's proposal is, so those are not the caller's to break.
+  const vocabulary = args.folderId ? filingVocabularyRefusal(args) : null;
+  if (vocabulary) return { ok: false, status: 400, ...vocabulary };
 
   // Tenant ownership guard. `vault.documents` now carries organization_id
   // (migrations/20260905_vault_documents_organization_id.sql), and the INSERT
@@ -426,6 +432,7 @@ async function admitVaultDocument(
       mimeType,
       extractedText,
       view: vaultView,
+      documentType: args.documentType,
     });
     placement = {
       folderId: classified.folderId,

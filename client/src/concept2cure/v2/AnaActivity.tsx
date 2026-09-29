@@ -40,6 +40,7 @@ import { getAuthHeaders } from '@/utils/authToken';
 import { serverMessage } from '@/lib/queryClient';
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
+import { downloadBlob, safeFileName } from './download';
 import type { AnaChatMessage, AnaToolCall } from '../components/ana/useAnaChat';
 import type { AnaPlanChange, AnaPlanStep, AnaStoppedReason, AnaTurnRecordStatus } from '../components/ana/useAnaChat.types';
 import { formatElapsed, LENS_PHRASE, PLAN_TOOL } from '../components/ana/anaProgress';
@@ -396,13 +397,13 @@ function RecordDownload({ id }: { id: string }) {
         setState({ busy: false, error: serverMessage(body) ?? 'The record could not be downloaded.' });
         return;
       }
-      const url = URL.createObjectURL(await res.blob());
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ana-turn-${id}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setState({ busy: false, error: null });
+      // The canonical save (../download): attached anchor, deferred revoke —
+      // a synchronous revoke saved zero bytes in Safari and Firefox.
+      const saved = downloadBlob(`ana-turn-${safeFileName(id, 'record')}.json`, await res.blob());
+      setState({
+        busy: false,
+        error: saved ? null : 'The record was prepared, but this browser did not save the file. Try again.',
+      });
     } catch {
       setState({ busy: false, error: 'The record could not be downloaded.' });
     }

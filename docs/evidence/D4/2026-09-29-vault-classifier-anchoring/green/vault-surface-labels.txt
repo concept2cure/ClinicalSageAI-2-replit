@@ -1,0 +1,17 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a full window reads as a floor, says so, and AnA is told 101ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a refused source is shown as needing review, not as classified 54ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a classified source's suggestion names its kind in words, not the stored token (VR-04) 73ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — document types are named in words > names a search hit's document type in words, not the stored wire token 129ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — document types are named in words > the upload type picker offers the shared labels, not the wire tokens with underscores swapped for spaces 37ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — an evidence kind is named in words (VR-04) > the detail pane's 'Looks like' says 'Clinical study report', not 'csr' 81ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — what AnA is told about a selected file > a search hit is not "0% complete": no authoring completion was assessed 84ms
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  20:39:36
+   Duration  2.21s (transform 1.52s, setup 293ms, import 1.91s, tests 573ms, environment 1.18s)
+
