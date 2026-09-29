@@ -38,6 +38,11 @@ export interface FiledLeaf {
    * here and why removing the fallback would re-file every such application.
    */
   leafKey?: string;
+  /** The leaf's XML ID and the backbone that carries it (from the sequence
+   *  root) — what a later sequence's modified-file names. Absent on history
+   *  filed before 2026-09-29 (W5/D7); such a leaf cannot be acted on. */
+  leafId?: string;
+  backbone?: string;
 }
 
 /** One sequence this package actually transmitted. Append-only. */
@@ -69,7 +74,9 @@ export function isFiledLeaf(v: unknown): v is FiledLeaf {
     typeof l.fileName === 'string' && l.fileName.length > 0 &&
     typeof l.href === 'string' &&
     typeof l.md5 === 'string' &&
-    (l.leafKey === undefined || typeof l.leafKey === 'string')
+    (l.leafKey === undefined || typeof l.leafKey === 'string') &&
+    (l.leafId === undefined || typeof l.leafId === 'string') &&
+    (l.backbone === undefined || typeof l.backbone === 'string')
   );
 }
 
@@ -130,6 +137,7 @@ export function foldFiledState(filed: readonly FiledSequence[]): PriorLeaf[] {
         title: leaf.title,
         operation: leaf.operation,
         sequenceNumber: seq.sequence,
+        ...(leaf.leafId && leaf.backbone ? { leafId: leaf.leafId, backbone: leaf.backbone } : {}),
       });
     }
   }

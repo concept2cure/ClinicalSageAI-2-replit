@@ -9034,9 +9034,13 @@ registerToolHandler('compute_lifecycle_operations', async (input, ctx) => {
       md5: p.md5,
       title: p.title,
       sourcePath: p.source_path,
-      // Published path of the prior leaf in its sequence — lets a superseding op
-      // (replace/append/delete) emit the ICH modified-file pointer at it.
+      // Published path of the prior leaf in its sequence: a record only.
       href: p.href,
+      // The ID the prior leaf carries in its sequence's backbone, and that
+      // backbone — what the ICH modified-file of a superseding op names
+      // (`../<seq>/<backbone>#<leaf_id>`). Without both, no pointer is emitted.
+      leafId: p.leaf_id,
+      backbone: p.backbone,
     }));
     let priorSequencePrefix =
       typeof input.prior_sequence_prefix === 'string' ? input.prior_sequence_prefix : undefined;

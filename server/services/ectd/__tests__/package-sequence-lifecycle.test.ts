@@ -17,9 +17,17 @@ import {
   type FiledSequence,
 } from '../package-sequence-lifecycle';
 import { resolveSubmissionTypeCode, submissionTypeTerms } from '../controlled-vocab';
+import { baseLeafId } from '../../submission-gateways/ectd-packager/leaf-id';
 
+// A filed leaf as the packager records it, backbone ID included: that ID is
+// what a later sequence's modified-file names (2026-09-29, W5/D7).
 const leaf = (ctdSection: string, fileName: string, md5: string, extra: Record<string, unknown> = {}) =>
-  ({ ctdSection, fileName, href: `m${ctdSection.charAt(0)}/${ctdSection}/${fileName}`, md5, ...extra }) as any;
+  ({
+    ctdSection, fileName, href: `m${ctdSection.charAt(0)}/${ctdSection}/${fileName}`, md5,
+    leafId: baseLeafId({ ctdSection, fileName }),
+    backbone: ctdSection.startsWith('1') ? 'm1/us/us-regional.xml' : 'index.xml',
+    ...extra,
+  }) as any;
 
 const SEQ_0000: FiledSequence = {
   sequence: '0000', submissionType: 'original', sha256: 'a'.repeat(64), transmittalId: 1,
@@ -297,7 +305,7 @@ describe('planSequence', () => {
     });
     expect(plan.summary).toMatchObject({ replace: 1, new: 0 });
     expect(plan.leaves[0].fileName).toBe('clinical-overview-summary-overview.pdf');
-    expect(plan.leaves[0].modifiedFile).toContain('clinical-overview-overview.pdf');
+    expect(plan.leaves[0].modifiedFile).toBe('../0000/index.xml#leaf-2-5-clinical-overview-overview');
   });
 
   it('a renamed section whose CONTENT is unchanged still files nothing', () => {

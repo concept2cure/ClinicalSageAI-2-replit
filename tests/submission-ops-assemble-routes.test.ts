@@ -168,6 +168,7 @@ import { fingerprintPackageContent, sha256Hex } from '../server/services/ectd/pa
 import { asc } from 'drizzle-orm';
 import { c2cPackageSections } from '../shared/schema';
 import { executeGovernedTransmit, GovernedTransmitRefusal } from '../server/services/submission-gateways/governed-transmit';
+import { baseLeafId } from '../server/services/submission-gateways/ectd-packager/leaf-id';
 
 function makeApp() {
   const app = express();
@@ -224,7 +225,10 @@ const findings = (res: any): Array<{ ruleId: string; severity: string; message: 
 const FILED_0000 = {
   sequence: '0000', submissionType: 'original', sha256: 'a'.repeat(64), transmittalId: 1,
   filedAt: '2026-01-01T00:00:00.000Z',
-  leaves: [{ ctdSection: '1.2', fileName: 'cover-letter-cover.pdf', href: 'm1/us/1-2/cover-letter-cover.pdf', md5: 'prior-md5' }],
+  leaves: [{
+    ctdSection: '1.2', fileName: 'cover-letter-cover.pdf', href: 'm1/us/1-2/cover-letter-cover.pdf', md5: 'prior-md5',
+    leafId: 'leaf-1-2-cover-letter-cover', backbone: 'm1/us/us-regional.xml',
+  }],
 };
 
 const PACKAGER_EVIDENCE = {
@@ -274,6 +278,9 @@ beforeEach(() => {
       ...(l.operation ? { operation: l.operation } : {}),
       ...(l.title ? { title: l.title } : {}),
       ...(l.leafKey ? { leafKey: l.leafKey } : {}),
+      // As the real packager records it: the backbone ID a later modified-file names.
+      leafId: baseLeafId(l),
+      backbone: String(l.ctdSection).startsWith('1') ? 'm1/us/us-regional.xml' : 'index.xml',
     })),
     ...PACKAGER_EVIDENCE,
   }));
@@ -918,7 +925,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(sent).toHaveLength(1);
     expect(sent[0].fileName).not.toBe(originalName);   // the name did move
     expect(sent[0].operation).toBe('replace');         // the document did not
-    expect(sent[0].modifiedFile).toContain(originalName);
+    // It names the leaf 0000 filed under the old name (its backbone ID).
+    expect(sent[0].modifiedFile).toBe(`../0000/index.xml#${baseLeafId({ ctdSection: '2.5', fileName: originalName })}`);
     expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ replace: 1, new: 0 });
   });
 

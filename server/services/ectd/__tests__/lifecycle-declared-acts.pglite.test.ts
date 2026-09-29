@@ -90,9 +90,9 @@ beforeAll(async () => {
        ($1, 1, '0000', $2), ($1, 2, '0000', $3), ($1, 5, '0000', $4)`,
     [
       ORG,
-      JSON.stringify([{ ctdSection: 'm3.2.s.1', fileName: 'drug-substance-general.pdf', href: 'm3/32-s-1/drug-substance-general.pdf', md5: 'a'.repeat(32), operation: 'new' }]),
-      JSON.stringify([{ ctdSection: 'm3.2.s.1', fileName: '3-2-coauthor-documents-101.pdf', href: 'm3/3-2-s-1/3-2-coauthor-documents-101.pdf', md5: 'b'.repeat(32), operation: 'new' }]),
-      JSON.stringify([{ ctdSection: 'm3.2.s.1', fileName: '3-2-coauthor-documents-104.pdf', href: 'm3/3-2-s-1/3-2-coauthor-documents-104.pdf', md5: 'c'.repeat(32), operation: 'new' }]),
+      JSON.stringify([{ ctdSection: 'm3.2.s.1', fileName: 'drug-substance-general.pdf', href: 'm3/32-s-1/drug-substance-general.pdf', md5: 'a'.repeat(32), operation: 'new', leafId: 'leaf-m3-2-s-1-drug-substance-general', backbone: 'index.xml' }]),
+      JSON.stringify([{ ctdSection: 'm3.2.s.1', fileName: '3-2-coauthor-documents-101.pdf', href: 'm3/3-2-s-1/3-2-coauthor-documents-101.pdf', md5: 'b'.repeat(32), operation: 'new', leafId: 'leaf-m3-2-s-1-3-2-coauthor-documents-101', backbone: 'index.xml' }]),
+      JSON.stringify([{ ctdSection: 'm3.2.s.1', fileName: '3-2-coauthor-documents-104.pdf', href: 'm3/3-2-s-1/3-2-coauthor-documents-104.pdf', md5: 'c'.repeat(32), operation: 'new', leafId: 'leaf-m3-2-s-1-3-2-coauthor-documents-104', backbone: 'index.xml' }]),
     ],
   );
 });
@@ -121,7 +121,7 @@ describe('declared lifecycle acts', () => {
       const xml = await indexXmlOf(r.bundle.path);
       expect(xml).toMatch(/operation="append"/);
       expect(xml).not.toMatch(/operation="replace"/);
-      expect(xml).toContain('../0000/m3/3-2-s-1/3-2-coauthor-documents-101.pdf');
+      expect(xml).toContain('modified-file="../0000/index.xml#leaf-m3-2-s-1-3-2-coauthor-documents-101"');
       expect(r.skipped).toEqual([]);
       // The act, its pointer, and the filed sequence it was bound against are
       // on the record the next sequence is diffed against.
@@ -129,7 +129,7 @@ describe('declared lifecycle acts', () => {
       expect(buildLeafManifest(r.bundle.leafManifest ?? [])).toEqual([
         expect.objectContaining({
           operation: 'append',
-          modifiedFile: '../0000/m3/3-2-s-1/3-2-coauthor-documents-101.pdf',
+          modifiedFile: '../0000/index.xml#leaf-m3-2-s-1-3-2-coauthor-documents-101',
         }),
       ]);
     } finally {
@@ -181,7 +181,7 @@ describe('declared withdrawals', () => {
     try {
       const xml = await indexXmlOf(r.bundle.path);
       expect(xml).toMatch(/operation="delete"/);
-      expect(xml).toContain('modified-file="../0000/m3/3-2-s-1/3-2-coauthor-documents-104.pdf"');
+      expect(xml).toContain('modified-file="../0000/index.xml#leaf-m3-2-s-1-3-2-coauthor-documents-104"');
       expect(await zipEntriesOf(r.bundle.path)).not.toContainEqual(expect.stringMatching(/3-2-coauthor-documents-104\.pdf$/));
       expect(r.skipped).toEqual([]);
     } finally {
@@ -203,7 +203,7 @@ describe('declared withdrawals', () => {
         fileName: '3-2-coauthor-documents-104.pdf',
         md5: 'c'.repeat(32),
         operation: 'delete',
-        modifiedFile: '../0000/m3/3-2-s-1/3-2-coauthor-documents-104.pdf',
+        modifiedFile: '../0000/index.xml#leaf-m3-2-s-1-3-2-coauthor-documents-104',
       }),
     ]);
 

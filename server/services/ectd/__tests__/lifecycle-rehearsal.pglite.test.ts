@@ -26,6 +26,7 @@ vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => (
 
 import { assembleSequence, assembleSubmissionEctd } from '../assemble-from-core';
 import { loadLatestPriorManifestBySubmission, loadRehearsalPriorManifestBySubmission } from '../prior-sequence-loader';
+import { baseLeafId } from '../../submission-gateways/ectd-packager/leaf-id';
 
 let harness: IndPgliteDb;
 const ORG = 7;
@@ -43,8 +44,12 @@ const assemble = (sequenceId: number, priorState?: 'filed' | 'rehearsal') =>
     ...(priorState ? { priorState } : {}),
   });
 
-const leaf = (ctdSection: string, fileName: string, md5: string, operation = 'new') =>
-  ({ ctdSection, fileName, href: `m3/3-2-s-1/${fileName}`, md5, operation });
+// A compile's manifest entry as the packager records it, with the backbone ID a
+// later modified-file names; `legacy` is the shape recorded before 2026-09-29.
+const leaf = (ctdSection: string, fileName: string, md5: string, operation = 'new', legacy = false) => ({
+  ctdSection, fileName, href: `m3/3-2-s-1/${fileName}`, md5, operation,
+  ...(legacy ? {} : { leafId: baseLeafId({ ctdSection, fileName }), backbone: 'index.xml' }),
+});
 
 beforeAll(async () => {
   harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
@@ -57,16 +62,22 @@ beforeAll(async () => {
     );
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1, 'unfiled original', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
-      (2, 'rehearsal row later sent', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
+      (2, 'rehearsal row later sent', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
+      (3, 'original recorded before leaf IDs', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
     INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, dispatch_status) VALUES
       (1, 1, 'fda', '0000', ${ORG}, ${USER}, NULL), (2, 1, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (3, 2, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (4, 2, 'fda', '0001', ${ORG}, ${USER}, 'sent');
+      (3, 2, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (4, 2, 'fda', '0001', ${ORG}, ${USER}, 'sent'),
+      (5, 3, 'fda', '0000', ${ORG}, ${USER}, NULL), (6, 3, 'fda', '0001', ${ORG}, ${USER}, NULL);
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
       (200, ${ORG}, 'Drug Substance General', '<p>v2</p>', '3.2', 'approved'),
-      (201, ${ORG}, 'Superseded Specification', '<p>old</p>', '3.2', 'approved');
+      (201, ${ORG}, 'Superseded Specification', '<p>old</p>', '3.2', 'approved'),
+      (202, ${ORG}, 'Drug Substance General', '<p>v2</p>', '3.2', 'approved'),
+      (203, ${ORG}, 'Superseded Specification', '<p>old</p>', '3.2', 'approved');
     INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
       (2, 'm3.2.s.1', 'Drug Substance General', 'replace', 'coauthor_documents', 200, ${ORG}, ${USER}),
-      (2, 'm3.2.s.4', 'Superseded Specification', 'delete', 'coauthor_documents', 201, ${ORG}, ${USER});
+      (2, 'm3.2.s.4', 'Superseded Specification', 'delete', 'coauthor_documents', 201, ${ORG}, ${USER}),
+      (6, 'm3.2.s.1', 'Drug Substance General', 'replace', 'coauthor_documents', 202, ${ORG}, ${USER}),
+      (6, 'm3.2.s.4', 'Superseded Specification', 'delete', 'coauthor_documents', 203, ${ORG}, ${USER});
   `);
   // Submission 1, sequence 0000, never sent: an OLDER compile that still held a
   // leaf later removed, then the latest compile — the one a rehearsal binds to.
@@ -99,6 +110,18 @@ beforeAll(async () => {
       JSON.stringify([leaf('m3.2.s.1', 'rehearsed.pdf', 'e'.repeat(32))]),
     ],
   );
+  // Submission 3: 0000 compiled before the packager recorded backbone IDs.
+  await harness.pglite.query(
+    `INSERT INTO ectd_compilations (organization_id, submission_id, compilation_type, sequence_number, leaf_manifest) VALUES
+       ($1, 3, 'initial', '0000', $2)`,
+    [
+      ORG,
+      JSON.stringify([
+        leaf('m3.2.s.1', '3-2-coauthor-documents-202.pdf', 'a'.repeat(32), 'new', true),
+        leaf('m3.2.s.4', '3-2-coauthor-documents-203.pdf', 'b'.repeat(32), 'new', true),
+      ]),
+    ],
+  );
 });
 
 afterAll(async () => {
@@ -126,8 +149,9 @@ describe('assembling a follow-up sequence as a rehearsal', () => {
     const r = await assemble(2, 'rehearsal');
     try {
       const xml = await indexXmlOf(r.bundle.path);
-      expect(xml).toMatch(/operation="replace"[^>]*modified-file="\.\.\/0000\/m3\/3-2-s-1\/3-2-coauthor-documents-200\.pdf"/);
-      expect(xml).toMatch(/operation="delete"[^>]*modified-file="\.\.\/0000\/m3\/3-2-s-1\/3-2-coauthor-documents-201\.pdf"/);
+      // Each act names the leaf 0000 recorded: its backbone and ID (ICH v3.2.2).
+      expect(xml).toMatch(/operation="replace"[^>]*modified-file="\.\.\/0000\/index\.xml#leaf-m3-2-s-1-3-2-coauthor-documents-200"/);
+      expect(xml).toMatch(/operation="delete"[^>]*modified-file="\.\.\/0000\/index\.xml#leaf-m3-2-s-4-3-2-coauthor-documents-201"/);
       expect(r.skipped).toEqual([]);
       expect(r.priorState).toBe('rehearsal');
       expect(r.unfiledPriorSequences).toEqual(['0000']);
@@ -147,6 +171,21 @@ describe('assembling a follow-up sequence as a rehearsal', () => {
       ]);
       expect(r.priorState).toBe('filed');
       expect(r.unfiledPriorSequences).toEqual([]);
+    } finally {
+      await r.cleanup();
+    }
+  });
+
+  it('a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed', async () => {
+    const r = await assemble(6, 'rehearsal');
+    try {
+      const xml = await indexXmlOf(r.bundle.path);
+      expect(xml).not.toMatch(/operation="(replace|delete)"/);
+      expect(xml).not.toMatch(/modified-file=/);
+      expect(r.skipped).toEqual([
+        expect.objectContaining({ sectionCode: 'm3.2.s.1', reason: expect.stringMatching(/^replace of .*no recorded backbone ID/) }),
+        expect.objectContaining({ sectionCode: 'm3.2.s.4', reason: expect.stringMatching(/^delete of .*no recorded backbone ID/) }),
+      ]);
     } finally {
       await r.cleanup();
     }

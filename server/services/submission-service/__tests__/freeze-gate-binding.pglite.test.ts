@@ -541,7 +541,8 @@ describe('the ordering rule binds on a shared lifecycle key, not a shared sectio
     expect((await statusOf(104)).status).toBe('frozen');
     expect(await leafOps(104)).toEqual([
       { section: 'm1.1', operation: 'new', modifiedFile: null },
-      { section: 'm1.2', operation: 'replace', modifiedFile: expect.stringMatching(/^\.\.\/0001\/.*coauthor-documents-1011\.pdf$/) },
+      // It names 0001's leaf: that sequence's regional backbone, '#', the ID it carries there.
+      { section: 'm1.2', operation: 'replace', modifiedFile: expect.stringMatching(/^\.\.\/0001\/m1\/us\/us-regional\.xml#leaf-m1-2-.*coauthor-documents-1011$/) },
     ]);
   }, 180_000);
 
