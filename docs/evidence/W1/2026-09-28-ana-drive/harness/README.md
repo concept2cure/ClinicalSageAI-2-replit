@@ -2,7 +2,8 @@
 
 The browser battery and the stand-in model that produced `../browser-battery.txt`,
 `../contract-audit.txt`, `../silent-thinking.txt`, `../answer-cut-off.txt`,
-`../batched-moves.txt`, `../narration.txt` and `../held-actions.txt`. Kept beside the evidence
+`../batched-moves.txt`, `../narration.txt`, `../held-actions.txt` and
+`../launch-scope-on.txt`. Kept beside the evidence
 so the runs can be repeated, the way `../../2026-09-24-ana-progress/live/harness/`
 keeps its own. It is evidence tooling, not product: nothing in the app imports
 it.
@@ -112,6 +113,7 @@ it.
 | `HARNESS_OUT` | battery | where screenshots go |
 | `DATABASE_URL` | battery | only for the two scenarios run by name, `takeoverBeforePromotion` and `screenReportChannel` |
 | `BATTERY_EMAIL`, `BATTERY_PASSWORD` | battery | the account; default the GA demo seed's |
+| `LAUNCH_SCOPE` | battery | `on` when the app runs with `LAUNCH_SCOPE_ENFORCE=on` (production's default): the checks that name a screen outside the release (Biostatistics, Inconsistency) assert the honest refusal instead — `../launch-scope-on.txt` |
 
 With `ANA_MODEL_TIERING=off` on the app, every round goes to Opus 5.5, which
 takes AnA's operator turns as mid-conversation system messages. With tiering on
