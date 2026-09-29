@@ -9,6 +9,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { STATED_REASON_INPUT } from './stated-reason-input';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QMS + Labeling + Search + Analytics tools (migration 20260511).
@@ -26,6 +27,7 @@ export const CREATE_QMS_DOCUMENT: AnaTool = {
       doc_type:   { type: 'string', enum: ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'] },
       category:   { type: 'string', description: "e.g. design / production / capa / training." },
       version:    { type: 'string' },
+      reason:     STATED_REASON_INPUT,
     },
     required: ['doc_number', 'title', 'doc_type'],
   },
