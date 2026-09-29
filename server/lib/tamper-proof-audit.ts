@@ -32,8 +32,8 @@ import { isIP } from 'node:net';
  * `audit.tamper_proof_log.ip_address` is INET, and callers routinely supply a
  * SENTINEL STRING rather than an address:
  *
- *   server/routes/authoring.router.ts:520  `req.ip || req.connection?.remoteAddress || 'unknown'`
- *   server/routes/authoring.router.ts:641  `ip: 'legacy-call'` (internal, non-HTTP call)
+ *   server/routes/authoring.router.ts  `req.ip || req.connection?.remoteAddress || 'unknown'`
+ *   (and, until 2026-09-29, the router's legacy wrapper's `ip: 'legacy-call'`)
  *
  * Postgres rejects those with 22P02 `invalid input syntax for type inet`, and
  * because every write here is best-effort behind a catch, the whole Part 11
