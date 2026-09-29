@@ -653,6 +653,11 @@ export function mountUtilityRoutes(router: Router): void {
       userId,
       organizationId: numericOrgId,
       part11Enforce: true,
+      // The model call that proposed the action, from the held ROW, never the
+      // body: agentAuditDetails writes its gateway request id and model into the
+      // Part 11 row (D6). A command posted without its run has no recorded
+      // proposer, and records null rather than a claim.
+      servingModel: pendingForRun?.proposedBy ?? null,
       // ONE OF THE TWO ASSIGNMENTS OF THIS FIELD, BOTH IN THIS ROUTE (the other
       // is runConfirmedTool's, for the tools that write on their own handlers).
       //

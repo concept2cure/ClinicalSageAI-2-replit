@@ -40,9 +40,15 @@ const HANDOFF = {
   subject: 'the document',
 };
 
+/** The open project: a document is created in it (PF-07). */
+const PROGRAM = '0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a';
+const openProject = (p: unknown) => {
+  (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = p;
+};
+
 beforeEach(() => {
   apiRequest.mockReset();
-  delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+  openProject({ id: PROGRAM });
 });
 
 describe('saveToAuthoring', () => {
@@ -162,23 +168,29 @@ describe('saveToAuthoring', () => {
     expect(r.message).toMatch(/Nothing was saved/);
   });
 
-  it('scopes the document to the project when one is in context, and omits it when not', async () => {
-    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: 'prog-7' };
+  it('creates the document in the open project', async () => {
     apiRequest
       .mockResolvedValueOnce(res(200, { document: { id: 1 } }))
       .mockResolvedValueOnce(res(200, { section: { id: 1 } }));
     await saveToAuthoring(HANDOFF);
-    expect(apiRequest.mock.calls[0][2]).toMatchObject({ client_program_id: 'prog-7' });
+    expect(apiRequest.mock.calls[0][2]).toMatchObject({ client_program_id: PROGRAM });
+  });
 
-    // A non-string id is not a program id — sending it would scope the document
-    // to something the editor's filter will never match.
-    apiRequest.mockReset();
-    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: 7 };
-    apiRequest
-      .mockResolvedValueOnce(res(200, { document: { id: 1 } }))
-      .mockResolvedValueOnce(res(200, { section: { id: 1 } }));
-    await saveToAuthoring(HANDOFF);
-    expect(apiRequest.mock.calls[0][2]).not.toHaveProperty('client_program_id');
+  it.each([
+    ['no project is open', undefined],
+    // A numeric workspace id is not a project: the document would land where
+    // no project's list shows it.
+    ['the open id is not a project', { id: 7 }],
+  ])('posts nothing and keeps the work when %s (PF-07)', async (_label, project) => {
+    // A document belongs to a project. It used to be created org-wide here,
+    // where no project ever listed it; now nothing is written and the caller
+    // stays put, exactly as for any other failure.
+    openProject(project);
+    const r = await saveToAuthoring(HANDOFF);
+    expect(r.ok).toBe(false);
+    expect(apiRequest).not.toHaveBeenCalled();
+    expect(r.message).toMatch(/open a project first/);
+    expect(r.message).toMatch(/Nothing was saved; the document is still here/);
   });
 
   it('carries the caller’s module rather than defaulting it', () => {

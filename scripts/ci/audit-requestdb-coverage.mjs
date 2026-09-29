@@ -220,10 +220,19 @@ if (stdoutJson) {
 // ─── Baseline + no-regression ────────────────────────────────────────────────
 if (writeBaseline) {
   fs.mkdirSync(path.dirname(baselinePath), { recursive: true });
+  // Keep the file's written history: its _comment records why the backlog was
+  // rebaselined and when it may shrink, and a rewrite used to delete it.
+  let previousComment;
+  try {
+    previousComment = JSON.parse(fs.readFileSync(baselinePath, 'utf8'))._comment;
+  } catch {
+    previousComment = undefined;
+  }
   const baseline = {
     generatedAt: summary.generatedAt,
     onSharedPool: onSharedPool.slice().sort(),
     classifications,
+    ...(previousComment ? { _comment: previousComment } : {}),
   };
   fs.writeFileSync(baselinePath, JSON.stringify(baseline, null, 2) + '\n');
   console.log(

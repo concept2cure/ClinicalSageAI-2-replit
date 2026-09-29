@@ -14,3 +14,12 @@ AssertionError: expected "vi.fn()" to be called with arguments: [ 99, 3, 4242 ]
 ## client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx with <ProjectRecords> removed from ProjectHome (the reachability case fails)
  × client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > lists the open project’s records, read from that project
       Tests  1 failed | 1 passed (2)
+
+## Follow-up (review of fe7db61a): the outcome log recorded parseInt of the URL; with the old line restored, the new case fails
+ × tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > the outcome log records the resolved project, not parseInt of the URL
+      Tests  1 failed | 5 passed (6)
+
+## Follow-up: strict lookups — with the strict rethrows removed from the resolver and the anchor reader, their strict cases fail
+ × server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > a numeric lookup that could not complete throws in strict mode — "could not tell" is not "not yours"
+ × server/services/c2c/__tests__/program-project-anchor-strict.test.ts > resolveProgramProjectAnchor — strict > a lookup that could not complete throws in strict mode
+      Tests  2 failed | 9 passed (11)

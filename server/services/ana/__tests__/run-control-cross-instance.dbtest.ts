@@ -223,7 +223,8 @@ describe('run control across two instances: delivery (real PostgreSQL, RLS enfor
       a.asRequest(ORG, () => a.rc.consumeInterjections(a.pool, runId)),
       a.asRequest(ORG, () => a.rc.consumeInterjections(a.pool, runId)),
     ]);
-    expect([...first, ...second]).toEqual(['Use the 2024 guidance, not the 2019 draft.']);
+    // Each drained entry is tagged with its kind (run-control.ts consumeInterjections).
+    expect([...first, ...second]).toEqual([{ kind: 'steer', text: 'Use the 2024 guidance, not the 2019 draft.' }]);
   });
 
 });

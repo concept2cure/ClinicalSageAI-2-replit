@@ -62,7 +62,7 @@ export interface CreateContext {
   audit: AuthoringAuditContext;
 }
 
-export type Refusal = { kind: 'refused'; status: 400 | 403 | 404 | 503; error: string };
+export type Refusal = { kind: 'refused'; status: 400 | 403 | 404 | 503; error: string; code?: string };
 
 export interface Binding {
   documentId: string | null;
@@ -447,16 +447,20 @@ export type CreateDocumentOutcome =
     };
 
 /**
- * Why a document cannot be anchored to `clientProgramId`, or null when it can
- * (including when no project is named). A malformed id is a clean 400 rather
- * than a UUID-cast 500. Otherwise the project must be a live one this
+ * Why a document cannot be anchored to `clientProgramId`, or null when it can.
+ * A document belongs to a project (PF-07; founder decision 2026-09-26): one
+ * that names none is refused 400 PROJECT_REQUIRED — it used to be created
+ * org-wide, where no project ever listed it. A malformed id is a clean 400
+ * rather than a UUID-cast 500. Otherwise the project must be a live one this
  * organization owns (LX-20): reads are gated on tenant_id, but the ANCHOR was
  * not, so a document could name another organization's project, a missing one,
  * or a deleted one. 404, not 403: the caller learns nothing about another
  * tenant's project ids.
  */
 async function refuseProgramAnchor(ctx: CreateContext, clientProgramId: unknown): Promise<Refusal | null> {
-  if (clientProgramId === undefined || clientProgramId === null || clientProgramId === '') return null;
+  if (clientProgramId === undefined || clientProgramId === null || clientProgramId === '') {
+    return { kind: 'refused', status: 400, code: 'PROJECT_REQUIRED', error: 'Open a project first: a document belongs to a project.' };
+  }
   if (!UUID_RE.test(String(clientProgramId))) {
     return { kind: 'refused', status: 400, error: 'client_program_id must be a valid UUID' };
   }

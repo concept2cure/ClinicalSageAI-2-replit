@@ -27,6 +27,7 @@ import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest, serverMessage, redactInternals, type ApiRequestError } from '@/lib/queryClient';
 import { unboundNotice } from '../governanceNotice';
 import { downloadBlob, safeFileName } from '../download';
+import { shellProgramId, useShellProject } from '../shellProject';
 
 interface AuthoringTemplate { id: string | number; name?: string | null; title?: string | null; }
 
@@ -56,6 +57,8 @@ const NONE = '(blank document)';
 export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported }: AuthoringCreateExportProps) {
   const exportable = docStatus == null || docStatus === 'FROZEN' || docStatus === 'APPROVED';
   const [dialog, setDialog] = useState<'doc' | 'section' | null>(null);
+  // Re-renders when a surface opens or switches project, so the control follows.
+  const openProject = shellProgramId(useShellProject());
 
   /* The dialog is owned here, and the panels that most need it — the empty
      document tree and the empty canvas — are siblings with no way to reach it.
@@ -63,10 +66,18 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
      states can call it, they raise an event and this listens. Same idiom as
      ../programAction.ts; see ../newDocumentAction.ts for what it fixes. */
   useEffect(() => {
-    const open = () => setDialog('doc');
+    // The same rule as the button (PF-07): with no project open, the form is
+    // not opened only to be refused at submit; the reason is said instead.
+    const open = () => {
+      if (!shellProgramId()) {
+        fireToast('Open a project first — a document belongs to a project.', 'error');
+        return;
+      }
+      setDialog('doc');
+    };
     window.addEventListener(NEW_DOCUMENT_EVENT, open);
     return () => window.removeEventListener(NEW_DOCUMENT_EVENT, open);
-  }, []);
+  }, [fireToast]);
   const [templates, setTemplates] = useState<AuthoringTemplate[]>([]);
   // 'unavailable' = the server said the shared reference catalog failed to
   // read (its fail-soft still lists the org's own templates). A SHORT list
@@ -127,17 +138,20 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
   };
 
   const createDoc = async (v: Record<string, string>) => {
+    // A document belongs to a project (PF-07; founder decision 2026-09-26): it
+    // is created in the open project, and with none open it is not created. It
+    // used to be created org-wide, where no project ever listed it.
+    const clientProgramId = shellProgramId();
+    if (!clientProgramId) {
+      fireToast('Open a project first — a document belongs to a project. Nothing was created.', 'error');
+      return;
+    }
     try {
       const tpl = templates.find((t) => templateLabel(t) === v.template);
-      // Tag the new document to the open project (window.C2C_PROJECT) when one
-      // is set, so it lands in that project's authoring tree. A string id is a
-      // regulatory_programs UUID; absent or non-string → org-wide (unchanged).
-      const proj = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
-      const clientProgramId = proj && typeof proj.id === 'string' ? proj.id : null;
       const res = await apiRequest('POST', '/api/authoring/docs', {
         title: v.title, module: v.module || module,
         ...(tpl ? { template_id: tpl.id } : {}),
-        ...(clientProgramId ? { client_program_id: clientProgramId } : {}),
+        client_program_id: clientProgramId,
       });
       const json = await res.json().catch(() => null);
       if (res.status === 401) { fireToast('Not created — your session isn’t authenticated.', 'error'); return; }
@@ -230,9 +244,16 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
 
   return (
     <>
-      <button className="btn ghost" style={{ height: 30 }} onClick={() => setDialog('doc')}>
+      <button
+        className="btn ghost"
+        style={{ height: 30 }}
+        onClick={() => setDialog('doc')}
+        disabled={!openProject}
+        title={openProject ? undefined : 'Open a project first — a document belongs to a project.'}
+      >
         {I.plus} New document
       </button>
+      {!openProject && <span className="sp-row-s">Open a project first — a document belongs to a project.</span>}
       {docId && (
         <>
           <button className="btn ghost" style={{ height: 30 }} onClick={() => setDialog('section')}>

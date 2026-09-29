@@ -53,9 +53,11 @@ export function missingStoreRemedy(detail: string): string {
 }
 
 /**
- * The ledger INSERT. Kept a static statement, which ci:insert-columns-declared
- * reads, and the one source of the ledger's column list: the readiness probe
- * derives LEDGER_COLUMNS from it and refuses a table missing any of them.
+ * The ledger INSERT, and the one source of the ledger's column list: the
+ * readiness probe derives LEDGER_COLUMNS from it and refuses a table missing
+ * any of them. ci:insert-columns-declared cannot see this statement (its regex
+ * admits only `public.` tables), so the guards are the probe and
+ * __tests__/ledger-migration.test.ts.
  */
 const LEDGER_INSERT_SQL = `INSERT INTO ai.gateway_audit_log (
           request_id, timestamp, provider, model, resolved_model, task_type, strategy,
@@ -301,8 +303,8 @@ export class GatewayAuditLogger {
    * indistinguishable from noise and gets filtered.
    *
    * ── Only STRUCTURAL problems latch ────────────────────────────────────────
-   * "The table does not exist" and "this role has no INSERT" are conditions an
-   * operator must fix; they will not resolve on their own, so re-probing on
+   * "The table does not exist", "this role has no INSERT" and "the table lacks a
+   * column the writer inserts" are conditions an operator must fix; they will not resolve on their own, so re-probing on
    * every AI call only produces noise. Anything else — a dropped connection, a
    * failover, a transient error — must NOT permanently disable auditing for the
    * life of the process. An earlier revision latched on everything, which meant
@@ -314,6 +316,8 @@ export class GatewayAuditLogger {
     const structural =
       problem.includes('does not exist') ||
       problem.includes('lacks INSERT') ||
+      // A migration not yet applied will not apply itself (missingLedgerColumns).
+      problem.includes('lacks column(s)') ||
       problem.includes('no database pool');
 
     if (structural) {

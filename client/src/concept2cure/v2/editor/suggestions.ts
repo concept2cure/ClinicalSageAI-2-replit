@@ -64,6 +64,14 @@ export interface SuggestionAuthor {
   id: string;
   /** Display name as it should read in the redline. */
   name: string;
+  /**
+   * For AnA's drafts: the id of the retained turn record that produced the
+   * text (server/services/ana/turn-record.ts). It rides on the insertion mark
+   * as `data-source-record`, survives saves in the section HTML, and is sent
+   * with the reviewer's accept or reject so the decision record names the turn
+   * that proposed the words. The server verifies it; it is never trusted.
+   */
+  sourceRecord?: string;
 }
 
 /** Minute-bucket timestamp: one continuous typing run = one suggestion. */
@@ -94,6 +102,12 @@ const suggestionAttrs = {
     parseHTML: (el: HTMLElement) => el.getAttribute('data-at'),
     renderHTML: (attrs: Record<string, unknown>) =>
       attrs.at ? { 'data-at': String(attrs.at) } : {},
+  },
+  sourceRecord: {
+    default: null as string | null,
+    parseHTML: (el: HTMLElement) => el.getAttribute('data-source-record'),
+    renderHTML: (attrs: Record<string, unknown>) =>
+      attrs.sourceRecord ? { 'data-source-record': String(attrs.sourceRecord) } : {},
   },
 };
 
@@ -143,7 +157,28 @@ export interface SuggestionRange {
   authorId: string | null;
   authorName: string | null;
   at: string | null;
+  /** The AnA turn record the text came from, when the mark carries one. */
+  sourceRecord: string | null;
   text: string;
+}
+
+/**
+ * Whether a span extends the range before it: adjacent, same kind, same
+ * author — and, for AnA's drafts, the same turn. Two AnA drafts side by side
+ * are two proposals, from two turns, and are decided separately.
+ */
+function continuesRange(
+  prev: SuggestionRange,
+  pos: number,
+  kind: SuggestionRange['kind'],
+  attrs: Record<string, unknown>,
+): boolean {
+  return (
+    prev.to === pos &&
+    prev.kind === kind &&
+    prev.authorId === ((attrs.authorId as string | null) ?? null) &&
+    prev.sourceRecord === ((attrs.sourceRecord as string | null) ?? null)
+  );
 }
 
 /** Walk the doc and group adjacent same-kind, same-author suggestion spans. */
@@ -157,12 +192,7 @@ export function collectSuggestions(doc: PMNode): SuggestionRange[] {
     if (!mark) return;
     const kind = mark.type.name as 'insertion' | 'deletion';
     const prev = out[out.length - 1];
-    if (
-      prev &&
-      prev.to === pos &&
-      prev.kind === kind &&
-      prev.authorId === (mark.attrs.authorId ?? null)
-    ) {
+    if (prev && continuesRange(prev, pos, kind, mark.attrs)) {
       prev.to = pos + node.nodeSize;
       prev.text += node.text ?? '';
       return;
@@ -174,6 +204,7 @@ export function collectSuggestions(doc: PMNode): SuggestionRange[] {
       authorId: (mark.attrs.authorId as string | null) ?? null,
       authorName: (mark.attrs.authorName as string | null) ?? null,
       at: (mark.attrs.at as string | null) ?? null,
+      sourceRecord: (mark.attrs.sourceRecord as string | null) ?? null,
       text: node.text ?? '',
     });
   });
@@ -749,6 +780,8 @@ export interface SuggestionDecision {
   authorId: string | null;
   authorName: string | null;
   at: string | null;
+  /** The AnA turn record the proposed text came from, when known. */
+  sourceRecord: string | null;
 }
 
 /** Build the decision record for one resolved range. */
@@ -764,6 +797,7 @@ export function decisionOf(
     authorId: range.authorId,
     authorName: range.authorName,
     at: range.at,
+    sourceRecord: range.sourceRecord,
   };
 }
 
@@ -898,6 +932,7 @@ export const TrackChanges = Extension.create<
             authorId: author.id,
             authorName: author.name,
             at: minuteBucket(),
+            sourceRecord: author.sourceRecord ?? null,
           });
           // AnA answers in markdown; a Module 3 answer IS a table. Convert the
           // subset we understand into real nodes, and fall back to flat
