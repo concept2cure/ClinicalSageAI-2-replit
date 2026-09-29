@@ -641,6 +641,22 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      belonging nowhere.
    - Not reviewed by this lane. `part11/resolve-signer-identity.ts` already
      reads the membership, and says why.
+   - **Measured 2026-09-29 (`…01PwLFr8`), not changed:** 26 references in 12
+     server files. The live sign-in paths fall back to the membership:
+     `auth.ts` login (`signInMembership`), the session read at `:762`, refresh at
+     `:1429`, `authEnterprise.ts` `:402`, and `resolve-signer-identity.ts`. The two
+     that treat such an account as belonging nowhere are not reached from the
+     client:
+     - `part11ComplianceService.checkAccessControl` filters on
+       `users.default_organization_id`, and has no caller anywhere in
+       `server/` or `client/`;
+     - `GET /api/users/:id` (`users.ts:747`) answers 404 across organizations
+       by the default organization, and nothing in `client/src` calls it.
+     `clients-routes.ts:116` counts a client workspace's "team members" by
+     default organization, which undercounts accounts added through user
+     administration, floored at 1. It is outside the launch catalog. Live, an
+     account added through user administration (the demo's second signer)
+     signs in, refreshes, signs SOPs and e-signs documents.
 3. **→ `…01KZK3jg` (AnA drive, `a75e3845`) and `…01VB8JEG` (`daae5ad4`), 2026-09-28
    — trunk's ESLint warning ratchet is over its baseline, so CI's Lint job is
    red and every job that needs it is skipped.**
