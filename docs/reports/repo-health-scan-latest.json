@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T01:20:08.603Z",
+  "generatedAt": "2026-09-29T01:44:14.209Z",
   "git": {
-    "sha": "2a2a25ba5ad36ef8b3efc9c15636db098d7706d8",
+    "sha": "cb0f67ab84127bdbcfd4b8455031acf14cc5f470",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2398,12 +2398,12 @@
         "lines": 1968
       },
       {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 1949
-      },
-      {
         "file": "server/routes/c2c/projects.ts",
         "lines": 1934
+      },
+      {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 1931
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",

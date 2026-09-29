@@ -12,6 +12,9 @@ const { mockGenerate, mockValidate, mockGovernance } = vi.hoisted(() => ({
     materialized: 7,
     unresolvedLeaves: [],
     skipped: [],
+    // The submission's program; it is anchored to a project (below), so the
+    // export is registry-placed and governed.
+    programId: '5eb50a2e-235a-4605-bd1b-af2d75e8518c',
     stats: {
       totalModules: 5,
       totalFiles: 10,
@@ -39,6 +42,13 @@ vi.mock('../../server/services/submission-gateways/ectd-structural-validator', (
 vi.mock('../../server/services/compute/exportGovernance', () => ({
   registerExportGovernanceQuick: mockGovernance,
 }));
+
+// The program → project anchor the governed export is recorded against
+// (Document Identity Contract C1), and the request-scoped DB it reads through.
+vi.mock('../../server/services/c2c/program-project-anchor', () => ({
+  resolveProgramProjectAnchor: vi.fn(async () => 77),
+}));
+vi.mock('../../server/db/requestDb', () => ({ requestDb: () => ({}) }));
 
 import ectdExportRoutes from '../../server/routes/ectd-export';
 
@@ -162,7 +172,7 @@ describe('eCTD export governance gate', () => {
 describe('eCTD export — a rehearsal says it is one', () => {
   const BASE = {
     buffer: Buffer.from('zip-bytes'), sequenceId: 2, region: 'fda', sha256: 'b'.repeat(64), materialized: 2,
-    unresolvedLeaves: [], skipped: [],
+    unresolvedLeaves: [], skipped: [], programId: '5eb50a2e-235a-4605-bd1b-af2d75e8518c',
     stats: { totalModules: 3, totalFiles: 6, totalGranules: 2, generatedAt: '2026-09-23T00:00:00.000Z' },
   };
   function exportReq(body: Record<string, unknown>) {

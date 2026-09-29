@@ -45,7 +45,7 @@ to one line; edit only your own row to limit merge conflicts.
 | **W1 / D2** — the relations server SQL names that no provisioned database has, measured against *launch reach* (a launch-app or shell action, an AnA tool, or a boot/cron/worker path). Distinct from `…01PwLFr8`'s first-render surface sweep and `…01KiDof7`'s all-SQL guards. Evidence: `docs/evidence/W1/2026-09-24-launch-reach/` | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** 2026-09-24 — every baselined relation classified by launch reach; the two production-reached ones fixed (enterprise onboarding intake `254f502da`, Firecrawl webhook); `ci:runtime-ddl` added (`cbe9844c1`); baseline 42 → 40. Earlier, pre-Rule-2: DEAD surfaces deleted (§7), triage corrected (§8), CMC playbook provisioned (§9) |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, `server/services/chat-uploads/*`, the retrieval-atom blocks of `server/routes/chat/upload.ts`, persona's CLIENT'S FILES section, and the lane's own tables `vault.document_catalog` / `vault.document_read_receipts` (`migrations/20260905_document_catalog.sql`) | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** — re-scoped 2026-09-24 under Rule 2: **row D3** (local half — RLS on the lane's two tables, which have none), evidence `docs/evidence/D3/2026-09-24-vault-catalog/`; green is **blocked** on D1 (D3's named evidence is a staging contract log). Defects in the lane's own code found in the same pass (model-governance classification, Part 11 attribution of AnA filing, unverified key_data figures) are fixed as defects with evidence under the row each touches. Also done 2026-09-24: the three items the vault re-baseline handed this lane, and the Vault's document count (URS-VAULT-004; `docs/evidence/D4/2026-09-24-vault-document-count/`). The Vault read model and surface are `…01KnUGoX`'s; the assessment's search-coverage and data-room-count findings stay with that lane, not taken here. **No toggle is turned on** — that is the founder's decision. |
 | WO-3 — tenant-isolation proof: the `app.current_org_id` distribution (`orgMembership` enrichment, token mint paths) | `…session_01J935DZwfFEardJCv85SJds` | **released** 2026-09-19 — question answered, degraded path pinned; the 230-route migration itself is NOT claimed |
-| IND eCTD demo path — JM's *"WO-09 Biotech IND eCTD Sequence Demo"*, **not** `WO-9-pilot-surface-lock.md` below (two work orders share the number). `server/services/ind-forms/*`, `server/routes/ind-forms.routes.ts`, `IndFormsPanel.tsx`, `AuthoringPlaceIntoFiling.tsx`, `ind-checklist-view-assembler.ts`, `scripts/seed/ga-demo.d/111-*`/`112-*`. Record: `docs/reports/wo9-phase1-ectd-unblock-2026-09-03.md` | `…session_01TtwRHmBMya3QTFCbFsBjoj` | **claimed** — row D7 (W5), evidence `docs/evidence/W5/2026-09-23-ind-ectd/`. Clicks 1–3 in human testing. Clicks 4–6 built 2026-09-23 (compile package + leaf hierarchy; named-rule dispatch readiness; next sequence, lifecycle view, eValidator report import). **Open, JM's decision:** how sequence 0000 becomes the filed prior that 0001's replace/delete bind against. **Blocked:** DTDs/ICH stylesheet (egress refused), ESG credentials, PDF/A toolchain. Record: report §19 |
+| IND eCTD demo path — JM's *"WO-09 Biotech IND eCTD Sequence Demo"*, **not** `WO-9-pilot-surface-lock.md` below (two work orders share the number). `server/services/ind-forms/*`, `server/routes/ind-forms.routes.ts`, `IndFormsPanel.tsx`, `AuthoringPlaceIntoFiling.tsx`, `ind-checklist-view-assembler.ts`, `scripts/seed/ga-demo.d/111-*`/`112-*`. Record: `docs/reports/wo9-phase1-ectd-unblock-2026-09-03.md` | `…session_01TtwRHmBMya3QTFCbFsBjoj` | **claimed** — row D7 (W5), evidence `docs/evidence/W5/2026-09-29-ind-ectd/`. Clicks 1–6 clicked in Chromium 2026-09-29 on a deploy-shaped build (install-fresh + deploy-migrate + one seed); 0000 and a rehearsal 0001 (withdrawal) exported, pointers verified from the ZIPs. Rehearsal binding delivered (JM, 2026-09-23). **Open, JM's decision:** how an approved document is revised so a `replace` can bind. **Blocked:** DTDs/ICH stylesheet (egress refused), ESG credentials, PDF/A toolchain, JM's eValidator run and recording. Record: report §20 |
 | W2 / D1 — Terraform to a booting task: B1 (`DATABASE_URL` is a JSON credential), B2 (illegal RDS name), B3 (task definition lacks the preflight's variables), B5 (health check calls `wget`). `terraform/environments/production/*`, `terraform/modules/{rds,secrets,ecs-fargate}/*`. Brief: `docs/evidence/W2/2026-09-23/README.md`. B4/B6/B7 go to the founder, not defaulted | `…session_013CtPf8pjozina2nVvDYkyB` | **blocked** on the founder, with everything provable offline done and pushed (`docs/evidence/W2/2026-09-23b/README.md`): B1–B3, B5 and eight more; the first-provision path; the GitHub deploy/build roles; the compliance-evidence module; the first-apply runbook (item 5). What D1 still needs is an AWS account, DNS/ACM, secret values and the apply, plus decisions B4, B6+B7, audit trail and storage. Also blocked: the lock file's other platforms (`registry.terraform.io` refused by this session's egress). Lane stays claimed for the apply follow-through |
 | **W2 / D1 — a deploy's migration does not stall the live application behind a lock, or hold one for a full scan.** `scripts/db/migration-set.mjs` (`applyMigrationFiles` and the lock-policy helpers only, not the file list), `scripts/db/deploy-migrate.mjs` step 3, the `cause` on `authoring-subsystem.mjs`'s rethrow, `tests/db/migration-lock-timeout.dbtest.ts`; next, the files that drop and re-add a validated foreign key on every replay (amended in place, Rule 1). Evidence `docs/evidence/W2/2026-09-25-migration-lock-timeout/` | `…session_013CtPf8pjozina2nVvDYkyB` | **claimed** 2026-09-26 — row **D1**. Done, each shown failing first: (1) lock waits: a request behind a replaying deploy waited 7721 ms against an 8 s reader, now 1985 ms (`docs/evidence/W2/2026-09-25-migration-lock-timeout/`); (2) a no-op deploy re-validated 14 constraints under lock (9 CHECKs incl. `c2c_documents`, 5 FKs to `organizations`), now 0, nine files amended in place; (3) the first deploy did not converge (`20260224_binder_evidence_source_types` ran before its table's creator); (4) every install from blank exited 1 since `ba797ca6d` (`public.users` flagged as a child of `organizations`), classified, not cleared — see the D3 item below. Gate `ci:replay-rebuilds-nothing` in the blank-DB job (`docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/`) |
 | W2 / D1 + D6 — B9: the ALB answers CloudFront alone (origin-facing prefix list + origin secret header), so `TRUST_PROXY_HOPS=2` records the user, and the CloudFront→ALB path works: origin certificate check, API 403/404 no longer rewritten to `200 index.html`, `/readyz` `/healthz` `/collab` `/scim/v2` the connector (`/mcp`, OAuth, `/.well-known`) routed to the ALB, deploy smoke test through the public URL and failing closed (audit SMOKE-01). `terraform/modules/{alb,cloudfront}/*`, the `smoke-test` job of `.github/workflows/deploy-aws.yml`. **Lines in the B1–B5 lane's files** (listed here for that lane, which this session had no way to message): `environments/production/main.tf` — the `alb` and `cdn` blocks and `trust_proxy_hops = 2` after `api_target_group_arn` in `ecs`; `variables.tf` — a validation inside `domain_aliases` and `cloudfront_origin_secret` appended at the end; `terraform.tfvars.example` — the secret note and `domain_aliases` | `…session_01GSjEDJLuZsEzPa9PnVg1yF` | **released** 2026-09-24 — done in code, not applied; evidence `docs/evidence/W2/2026-09-24-b9/`. Handed on: HEALTH-01's ALB half (target group `health_check.path`, `modules/alb`) to B5, whose change may edit that attribute; staging's `alb`/`cdn` composition to B8; domain, both certificates, the origin secret and `cloudfront:GetDistribution` on the deploy role to the founder |
@@ -847,8 +847,12 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      loosening the assertion.
    - While this step is red, the Lint job fails. Every job that `needs: lint`
      then skips (Integration, Blank DB, Coverage), for every lane.
-9. **→ `…01PwLFr8` (the D2 launch sweep, `53237f62`), 2026-09-28 16:50 — trunk's
-   Lint job is red at `ci:tenant-entry-points`.** **Status 2026-09-28 23:10:**
+9. ~~**→ `…01PwLFr8` (the D2 launch sweep, `53237f62`), 2026-09-28 16:50 — trunk's
+   Lint job is red at `ci:tenant-entry-points`.**~~ **Done 2026-09-29** (`…01PwLFr8`,
+   `docs/evidence/W1/2026-09-29-trunk-ci-item9/`): the two `.crumbs .sep` rules are
+   one, and the gate was shown red before and green after. `.c2c-v2 .de-input[readonly]`
+   now has a muted stone fill, shown live on *Request a review* (5.25:1). The
+   entry-point half was already done in `8686a321`. **Status 2026-09-28 23:10:**
    - The entry-point half is **done by this lane** (`8686a321`). The baseline
      file is cold. The justification was re-read against `53237f62`, holds,
      and carries a dated note.
@@ -1161,8 +1165,10 @@ in all of them. Reproduced locally at `6bd237ca9`.
    - `tests/artifact-change-invalidates-bundles.contract.test.ts` fails with
      *"BACKSTOP_ONLY lists files that no longer write those columns; remove
      them"*, naming this file.
-9. **→ `…01PwLFr8` (`f0147f452` / `7b00c78de`).** Trunk CI 12615 fails two
-   gates on this session's files:
+9. ~~**→ `…01PwLFr8` (`f0147f452` / `7b00c78de`).** Trunk CI 12615 fails two
+   gates on this session's files:~~ **Done 2026-09-29.** `ci:tenant-entry-points`
+   was fixed in `8686a321`. The CSS shadowing is fixed; see the validation-package
+   section's item 9 and `docs/evidence/W1/2026-09-29-trunk-ci-item9/`.
    - `ci:tenant-entry-points` fails because `server/routes/mdx-admin.ts`
      changed since its justification.
    - `ci:check-css-selector-shadowing` fails on
@@ -1187,6 +1193,49 @@ in all of them. Reproduced locally at `6bd237ca9`.
     Guard the statement on `to_regclass('public.organization_invitations')`
     or move the file after the table's creator. The replay stops here, so no
     file after it is exercised by that contract.
+
+### Found by the D6 owner-grant change (`…01PwLFr8`, 2026-09-29) — handed on
+
+1. **→ W2 / D1, the Terraform lane (`…013CtPf8`, `terraform/stack/*`): a
+   production deployment cannot name its first owner.**
+   - Since `d57bff619` (`docs/evidence/D6/2026-09-28-owner-grant/`) there is no
+     owner address in source. Platform administration and the owner grant come
+     from two places only:
+     - the `PLATFORM_ADMIN_EMAILS` and `MASTER_ADMIN_EMAILS` allowlists
+       (`requirePlatformAdmin.ts`, `master-admin.ts`);
+     - an in-app `super_admin` designation in Master Administration → Access
+       Management.
+   - The designation needs a Business Center administrator to grant it:
+     `BUSINESS_CENTER_EMAILS` or a business role (`requireBusinessAdmin.ts`).
+   - `terraform/stack/main.tf` `boot_environment` passes **none of the three**.
+     So a stack Terraform provisions boots with no platform administrator, no
+     owner and no Business Center administrator, and nobody can grant one in the
+     app.
+   - Setting them by hand on the task definition lasts until the next apply.
+   - Suggested fix: add a variable `platform_owner_emails` (a list of strings,
+     default `[]`, each validated lowercase), joined with commas into
+     `PLATFORM_ADMIN_EMAILS` and `MASTER_ADMIN_EMAILS`. Add
+     `business_center_emails` into `BUSINESS_CENTER_EMAILS` the same way.
+     Assert them in `tests/boot_contract.tftest.hcl`.
+   - Whether the deploy preflight should *require* a non-empty owner list is
+     the founder's decision (fail-closed to boot vs. fail-closed to
+     administer).
+   - Not done here: the provider registry is unreachable from this session, so
+     `terraform validate` and `terraform test` cannot run. The files are that
+     lane's.
+   - **Latent, for whoever owns `requireBusinessAdmin.ts` (not exploitable
+     today, measured 2026-09-29):**
+     - `isBusinessAdmin` admits a `req.userRole` of `owner`, `business_admin`
+       or `super_admin`. `req.userRole` is the **tenant membership** role
+       (`organization_users.role`, `auth.ts:262`), while the Business Center
+       is platform-wide.
+     - No writer produces those values today. SCIM and `tenant-users.ts`
+       enumerate `admin|manager|member|viewer`, and sign-up, setup, SSO and the
+       default-org seed write `admin` or `member`. But the column has no
+       CHECK.
+     - So the first writer that accepts `owner` for a tenant opens every
+       client's financials to that tenant. Read platform standing from
+       `platform_role_grants` and the allowlist only.
 
 ## 1. The rules come first
 
