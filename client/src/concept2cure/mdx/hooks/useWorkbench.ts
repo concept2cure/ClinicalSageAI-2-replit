@@ -309,15 +309,20 @@ export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidat
 
   const validationPrograms = useMemo<ValidationProgram[] | null>(() => {
     if (!rules) return null;
-    /* Each program gets a row, with err/warn/ok counts derived from the
-       cross-program blockers list filtered to this program's code. */
+    /* Per-program counts are NOT derivable, so none are stated.
+       This filtered blockers with `r.prog === p.code.split(' ')[0]`. A
+       program's code is "Class II · 510(k)", so the left side was "Class";
+       the right side read `programCode`, which c2c_blockers does not have (it
+       references projects, not regulatory_programs). Nothing ever matched,
+       so every program showed 0 errors, 0 warnings, and the summary said
+       "All programs filing-ready" — including while critical blockers were
+       open. With no key joining a blocker to a program, the honest per-program
+       count is unknown; the portfolio totals below are real. */
     return programs.map((p) => {
-      const forProg = rules.filter((r) => r.prog === p.code.split(' ')[0]);
-      const errs  = forProg.filter((r) => r.severity === 'err').length;
-      const warns = forProg.filter((r) => r.severity === 'warn').length;
-      const ok    = forProg.filter((r) => r.severity === 'ok').length;
-      const status: ValidationProgram['status'] =
-        errs > 0 ? 'blocked' : p.status === 'complete' ? 'complete' : 'active';
+      const errs = null;
+      const warns = null;
+      const ok = null;
+      const status: ValidationProgram['status'] = p.status === 'complete' ? 'complete' : 'active';
       return {
         id:        p.id,
         code:      p.code.split(' ')[0],
@@ -336,12 +341,13 @@ export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidat
     if (!rules || !validationPrograms) return null;
     const totalErr  = rules.filter((r) => r.severity === 'err').length;
     const totalWarn = rules.filter((r) => r.severity === 'warn').length;
-    const blockedProgs = validationPrograms.filter((vp) => vp.status === 'blocked').length;
     const avgReady = validationPrograms.length
       ? Math.round(validationPrograms.reduce((s, p) => s + p.readiness, 0) / validationPrograms.length)
       : 0;
     return [
-      { label: 'Programs blocked', metric: String(blockedProgs), meta: blockedProgs ? 'Filing gated' : 'All programs filing-ready', tone: blockedProgs ? 'err' : 'ok' },
+      /* Was "Programs blocked · All programs filing-ready", computed from the
+         per-program counts above that could never be non-zero. */
+      { label: 'Programs blocked', metric: '—', meta: 'Blockers are recorded per project, not linked to programs' },
       { label: 'Open errors',      metric: String(totalErr),     meta: totalErr ? 'High/critical severity' : 'No critical issues', tone: totalErr ? 'err' : 'ok' },
       { label: 'Open warnings',    metric: String(totalWarn),    meta: totalWarn ? 'Review before transmit' : 'No warnings', tone: totalWarn ? 'warn' : 'ok' },
       { label: 'Avg readiness',    metric: String(avgReady), unit: '%', meta: 'Across portfolio', tone: avgReady >= 70 ? 'ok' : avgReady >= 40 ? 'warn' : 'err' },

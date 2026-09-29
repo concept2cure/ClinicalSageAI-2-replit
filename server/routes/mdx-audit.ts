@@ -32,6 +32,8 @@ function getOrgId(req: Request): number | null {
 const listQuery = z.object({
   action:   z.string().max(60).optional(),
   resource: z.string().max(60).optional(),
+  /** One record's own trail — exact match on audit_logs.record_id. */
+  record:   z.string().max(120).optional(),
   actor:    z.string().max(120).optional(),
   program:  z.string().max(120).optional(),
   from:     z.string().optional(),
@@ -76,7 +78,7 @@ router.get('/audit', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const parsed = listQuery.safeParse(req.query);
   if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
-  const { action, resource, actor, program, from, to, limit = 200 } = parsed.data;
+  const { action, resource, record, actor, program, from, to, limit = 200 } = parsed.data;
 
   // Tenant scope lives in the SQL literal below (not this array) so the
   // tenant-isolation CI gate can verify it statically.
@@ -84,6 +86,7 @@ router.get('/audit', async (req: Request, res: Response) => {
   const args: unknown[] = [orgId];
   if (action)   { args.push(action);   filters.push(`al.action = $${args.length}`); }
   if (resource) { args.push(resource); filters.push(`al.table_name = $${args.length}`); }
+  if (record)   { args.push(record);   filters.push(`al.record_id = $${args.length}`); }
   if (actor)    { args.push(actor);    filters.push(`al.user_id::text = $${args.length}`); }
   // Phase 9 connection-pass §3: cross-program surfaces accept an optional
   // program filter. Audit events anchor to a program when the record id or

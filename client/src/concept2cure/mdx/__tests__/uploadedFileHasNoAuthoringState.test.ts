@@ -129,11 +129,16 @@ describe('completion is null for a document nobody assessed', () => {
     expect(completionOf('uploaded')).toBeNull();
   });
 
-  it('keeps the authored scale intact', () => {
+  /* This pinned review → 88 and draft → 64 as "the authored scale". They were
+     never a scale: a vault row carries a status, not sections, so 88 and 64
+     were the same kind of invented figure this describe block exists to
+     remove — two-thirds written, nearly done — just for other statuses. The
+     only completion a status can state is the one locked/final implies. */
+  it('states completion only where the status itself implies it', () => {
     expect(completionOf('locked')).toBe(100);
     expect(completionOf('final')).toBe(100);
-    expect(completionOf('review')).toBe(88);
-    expect(completionOf('draft')).toBe(64);
+    expect(completionOf('review')).toBeNull();
+    expect(completionOf('draft')).toBeNull();
   });
 
   it("maps 'uploaded' through to the panel as its own status, not 'ready' or 'draft'", () => {
