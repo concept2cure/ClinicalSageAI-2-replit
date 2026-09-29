@@ -102,7 +102,7 @@ const change = (to: 'draft' | 'review' | 'approved' | 'locked') =>
 // remedy, forever). The message must name the governed act that records the
 // version and say this command records none.
 const NAMES_GOVERNED_APPROVE = /An approved version is recorded only by the review workflow's Approve action \(the status route's review → approved, .*authoring-actions approve-artifact\); this command records none/;
-const NAMES_GOVERNED_LOCK = /A locked version is recorded only by the review workflow's Lock action \(the status route's approved → locked, or authoring-actions lock-artifact\); this command records none/;
+const NAMES_GOVERNED_LOCK = /A locked version is recorded only by the review workflow's Lock action \(the status route's approved → locked, an electronic signature with the meaning 'release', or authoring-actions lock-artifact\); this command records none/;
 const FALSE_REMEDIES = [
   '(approved → review, then review → approved), which records',
   'then lock it (approved → locked), which records',
@@ -182,7 +182,7 @@ describe('update_artifact_status: a lock must cover the approval, and records no
     expect(res.message).toMatch(/edited after approval/i);
     expectTruthfulRemedy(res.message, NAMES_GOVERNED_APPROVE);
     expect(res.message).toMatch(
-      /Lock it after that through the review workflow's Lock action \(the status route's approved → locked, or authoring-actions lock-artifact\), which records the version locked; this command records none\./
+      /Lock it after that through the review workflow's Lock action \(the status route's approved → locked, an electronic signature with the meaning 'release', or authoring-actions lock-artifact\), which records the version locked; this command records none\./
     );
     const after = await row();
     expect(after).toEqual(before);
