@@ -53,7 +53,9 @@ vi.mock('../../../middleware/uploadSafety.js', () => ({
 const { writeChainedAuditRow } = vi.hoisted(() => ({ writeChainedAuditRow: vi.fn() }));
 vi.mock('../../auditService.js', () => ({ writeChainedAuditRow }));
 const { isFolderInView } = vi.hoisted(() => ({ isFolderInView: vi.fn() }));
-vi.mock('../vault-filing.service.js', () => ({
+vi.mock('../vault-filing.service.js', async (importOriginal) => ({
+  // The real vocabulary check (VR-04); the classifier and view are this suite's to fix.
+  filingVocabularyRefusal: (await importOriginal<typeof import('../vault-filing.service.js')>()).filingVocabularyRefusal,
   classifyForFiling: () => ({
     folderId: null, evidenceKind: null, ctdSection: null,
     status: 'unfiled', confidence: null, rationale: null, placedBy: null,

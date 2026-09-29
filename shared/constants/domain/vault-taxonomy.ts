@@ -155,27 +155,38 @@ export type VaultDocKind =
 interface VaultDocKindEntry extends DomainEntry<VaultDocKind> {
   /** Views where this kind is a first-class filter ('all' = every view). */
   views: VaultViewId[] | 'all';
+  /** The kind named for ONE document ('Clinical study report'); `label` is the filter heading. */
+  one: string;
 }
 
 export const VAULT_DOC_KINDS: VaultDocKindEntry[] = [
-  { value: 'protocol',     label: 'Protocols',            views: ['pharma', 'biotech', 'service'], description: 'Study protocols and amendments (ICH E6).' },
-  { value: 'csr',          label: 'Clinical study reports', views: ['pharma', 'biotech', 'service'], description: 'ICH E3 clinical study reports.' },
-  { value: 'report',       label: 'Test reports',         views: 'all', description: 'Test, study, and validation reports.' },
-  { value: 'nonclinical',  label: 'Nonclinical',          views: ['pharma', 'biotech'], description: 'Pharmacology/toxicology documentation (CTD Module 4).' },
-  { value: 'cmc',          label: 'CMC',                  views: ['pharma', 'biotech'], description: 'Chemistry, manufacturing and controls (CTD Module 3).' },
-  { value: 'batch_record', label: 'Batch records',        views: ['pharma', 'biotech'], description: 'Executed batch records and certificates of analysis.' },
-  { value: 'spec',         label: 'Specifications',       views: ['pharma', 'biotech', 'device', 'ivd'], description: 'Specifications and analytical methods.' },
-  { value: 'cert',         label: 'Certificates',         views: 'all', description: 'Certificates, charters, and signed statements.' },
-  { value: 'label',        label: 'Labeling',             views: 'all', description: 'Labeling, IFU, package inserts, artwork.' },
-  { value: 'code',         label: 'Software / SBOM',      views: ['device', 'ivd'], description: 'Software artifacts, SBOMs, engineering packages.' },
-  { value: 'supplier',     label: 'Supplier docs',        views: ['device', 'ivd', 'pharma', 'biotech'], description: 'Supplier certificates and quality agreements.' },
-  { value: 'resp',         label: 'Agency correspondence', views: 'all', description: 'Agency queries, responses, and decision letters.' },
-  { value: 'submission',   label: 'Submissions',          views: 'all', description: 'Assembled submission packages and sequences.' },
-  { value: 'clinical',     label: 'Clinical docs',        views: ['pharma', 'biotech', 'device', 'ivd', 'service'], description: 'DSMB charters, investigator brochures, consent, TMF content.' },
-  { value: 'qms',          label: 'Quality system',       views: ['device', 'ivd', 'pharma', 'biotech'], description: 'SOPs, management reviews, quality-system records.' },
-  { value: 'capa',         label: 'CAPA',                 views: ['device', 'ivd', 'pharma', 'biotech'], description: 'CAPA, deviation, and nonconformance records.' },
-  { value: 'template',     label: 'Templates',            views: 'all', description: 'Approved boilerplate and blank forms.' },
+  { value: 'protocol',     label: 'Protocols', one: 'Protocol',            views: ['pharma', 'biotech', 'service'], description: 'Study protocols and amendments (ICH E6).' },
+  { value: 'csr',          label: 'Clinical study reports', one: 'Clinical study report', views: ['pharma', 'biotech', 'service'], description: 'ICH E3 clinical study reports.' },
+  { value: 'report',       label: 'Test reports', one: 'Report',         views: 'all', description: 'Test, study, and validation reports.' },
+  { value: 'nonclinical',  label: 'Nonclinical', one: 'Nonclinical study document',          views: ['pharma', 'biotech'], description: 'Pharmacology/toxicology documentation (CTD Module 4).' },
+  { value: 'cmc',          label: 'CMC', one: 'CMC document',                  views: ['pharma', 'biotech'], description: 'Chemistry, manufacturing and controls (CTD Module 3).' },
+  { value: 'batch_record', label: 'Batch records', one: 'Batch record',        views: ['pharma', 'biotech'], description: 'Executed batch records and certificates of analysis.' },
+  { value: 'spec',         label: 'Specifications', one: 'Specification',       views: ['pharma', 'biotech', 'device', 'ivd'], description: 'Specifications and analytical methods.' },
+  { value: 'cert',         label: 'Certificates', one: 'Certificate',         views: 'all', description: 'Certificates, charters, and signed statements.' },
+  { value: 'label',        label: 'Labeling', one: 'Labeling',             views: 'all', description: 'Labeling, IFU, package inserts, artwork.' },
+  { value: 'code',         label: 'Software / SBOM', one: 'Software artifact',      views: ['device', 'ivd'], description: 'Software artifacts, SBOMs, engineering packages.' },
+  { value: 'supplier',     label: 'Supplier docs', one: 'Supplier document',        views: ['device', 'ivd', 'pharma', 'biotech'], description: 'Supplier certificates and quality agreements.' },
+  { value: 'resp',         label: 'Agency correspondence', one: 'Agency correspondence', views: 'all', description: 'Agency queries, responses, and decision letters.' },
+  { value: 'submission',   label: 'Submissions', one: 'Submission',          views: 'all', description: 'Assembled submission packages and sequences.' },
+  { value: 'clinical',     label: 'Clinical docs', one: 'Clinical document',        views: ['pharma', 'biotech', 'device', 'ivd', 'service'], description: 'DSMB charters, investigator brochures, consent, TMF content.' },
+  { value: 'qms',          label: 'Quality system', one: 'Quality-system record',       views: ['device', 'ivd', 'pharma', 'biotech'], description: 'SOPs, management reviews, quality-system records.' },
+  { value: 'capa',         label: 'CAPA', one: 'CAPA record',                 views: ['device', 'ivd', 'pharma', 'biotech'], description: 'CAPA, deviation, and nonconformance records.' },
+  { value: 'template',     label: 'Templates', one: 'Template',            views: 'all', description: 'Approved boilerplate and blank forms.' },
 ];
+
+/**
+ * The reader-facing name of one document's evidence kind (VR-04). The stored
+ * value is a token ('csr'); the Vault used to render it as is. An unrecognised
+ * value is returned as itself, for the reason vaultIngestTypeLabel gives.
+ */
+export function vaultDocKindLabel(kind: string): string {
+  return VAULT_DOC_KINDS.find(k => k.value === kind)?.one ?? kind;
+}
 
 // ─── Filing types (frameworks) ───────────────────────────────────────────────
 

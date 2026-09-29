@@ -1,0 +1,176 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T20:29:30.210Z","pid":2648,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T20:29:30.211Z","pid":2648,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T20:29:30.211Z","pid":2648,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing
+[database] Database connection successful { timestamp: '2026-09-29T20:29:30.277Z', poolSize: 1 }
+
+stdout | tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing
+[database] Database connection successful
+
+stderr | tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ × tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing 1606ms
+   → expected { ok: true, view: 'pharma', …(3) } to match object { ok: false, status: 422, …(1) }
+(15 matching properties omitted from actual)
+ × tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a bare module, which is a container with 422, and writes nothing 12ms
+   → expected { ok: true, view: 'pharma', …(3) } to match object { ok: false, status: 422, …(1) }
+(15 matching properties omitted from actual)
+ × tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses an evidence kind outside the list with 422, and writes nothing 14ms
+   → expected { ok: true, view: 'pharma', …(3) } to match object { ok: false, status: 422, …(1) }
+(15 matching properties omitted from actual)
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > files a decision inside the vocabulary, as before 9ms
+{"level":40,"time":"2026-09-29T20:29:30.743Z","pid":2648,"hostname":"vm","context":{"filename":"stability-summary.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses a CTD section that is not one with 400, before any byte is stored
+Warning: Indexing all PDF objects
+
+(node:2648) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-09-29T20:29:30.970Z","pid":2648,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-29T20:29:30.998Z","pid":2648,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses a CTD section that is not one with 400, before any byte is stored
+{
+  "timestamp": "2026-09-29T20:29:31.069Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "0d1d7228-0485-4d5a-97dd-6d5b5e1ceaf6",
+    "code": "DBTEST-VOCAB-INVALID_CTD_SECTION",
+    "type": "MODULE_3",
+    "size": 104,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-09-29T20:29:31.073Z","pid":2648,"hostname":"vm","context":{"filename":"stability-summary.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-29T20:29:31.076Z","pid":2648,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-29T20:29:31.077Z","pid":2648,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses an evidence kind outside the list with 400, before any byte is stored
+{
+  "timestamp": "2026-09-29T20:29:31.088Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "43ee24c4-6829-4cf1-9da8-9c84c28a2bee",
+    "code": "DBTEST-VOCAB-INVALID_EVIDENCE_KIND",
+    "type": "MODULE_3",
+    "size": 106,
+    "hasText": false
+  }
+}
+
+ × tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses a CTD section that is not one with 400, before any byte is stored 534ms
+   → expected { ok: true, document: { …(15) }, …(1) } to match object { ok: false, status: 400, …(1) }
+(26 matching properties omitted from actual)
+ × tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses an evidence kind outside the list with 400, before any byte is stored 18ms
+   → expected { ok: true, document: { …(15) }, …(1) } to match object { ok: false, status: 400, …(1) }
+(26 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing
+ FAIL  tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a bare module, which is a container with 422, and writes nothing
+AssertionError: expected { ok: true, view: 'pharma', …(3) } to match object { ok: false, status: 422, …(1) }
+(15 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "INVALID_CTD_SECTION",
+-   "ok": false,
+-   "status": 422,
++   "ok": true,
+  }
+
+ ❯ tests/db/vault-filing-vocabulary.dbtest.ts:139:17
+    137|     const before = await docRow();
+    138|     const out = await place(args);
+    139|     expect(out).toMatchObject({ ok: false, status: 422, code });
+       |                 ^
+    140|     expect(await docRow()).toEqual(before);
+    141|     expect(await filingAudits()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses an evidence kind outside the list with 422, and writes nothing
+AssertionError: expected { ok: true, view: 'pharma', …(3) } to match object { ok: false, status: 422, …(1) }
+(15 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "INVALID_EVIDENCE_KIND",
+-   "ok": false,
+-   "status": 422,
++   "ok": true,
+  }
+
+ ❯ tests/db/vault-filing-vocabulary.dbtest.ts:139:17
+    137|     const before = await docRow();
+    138|     const out = await place(args);
+    139|     expect(out).toMatchObject({ ok: false, status: 422, code });
+       |                 ^
+    140|     expect(await docRow()).toEqual(before);
+    141|     expect(await filingAudits()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses a CTD section that is not one with 400, before any byte is stored
+AssertionError: expected { ok: true, document: { …(15) }, …(1) } to match object { ok: false, status: 400, …(1) }
+(26 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "INVALID_CTD_SECTION",
+-   "ok": false,
+-   "status": 400,
++   "ok": true,
+  }
+
+ ❯ tests/db/vault-filing-vocabulary.dbtest.ts:158:17
+    156|     const before = await storedVersionIds();
+    157|     const out = await ingest(`${CODE}-${code}`, extra);
+    158|     expect(out).toMatchObject({ ok: false, status: 400, code });
+       |                 ^
+    159|     expect((await owner.query('SELECT 1 FROM vault.documents WHERE doc…
+    160|     expect([...(await storedVersionIds())].filter((id) => !before.has(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses an evidence kind outside the list with 400, before any byte is stored
+AssertionError: expected { ok: true, document: { …(15) }, …(1) } to match object { ok: false, status: 400, …(1) }
+(26 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "INVALID_EVIDENCE_KIND",
+-   "ok": false,
+-   "status": 400,
++   "ok": true,
+  }
+
+ ❯ tests/db/vault-filing-vocabulary.dbtest.ts:158:17
+    156|     const before = await storedVersionIds();
+    157|     const out = await ingest(`${CODE}-${code}`, extra);
+    158|     expect(out).toMatchObject({ ok: false, status: 400, code });
+       |                 ^
+    159|     expect((await owner.query('SELECT 1 FROM vault.documents WHERE doc…
+    160|     expect([...(await storedVersionIds())].filter((id) => !before.has(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  20:29:28
+   Duration  2.68s (transform 1.12s, setup 72ms, import 31ms, tests 2.26s, environment 0ms)
+
