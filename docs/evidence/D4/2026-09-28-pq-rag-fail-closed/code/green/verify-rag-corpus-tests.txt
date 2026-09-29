@@ -1,0 +1,33 @@
+# node --test tests/ops/verify-rag-corpus.test.mjs   (final tree)
+ok 1 - no flag → the default report (orgUuid null)
+ok 2 - --org-uuid <uuid> and --org-uuid=<uuid> are both read
+ok 3 - --org-uuid with no value, or a value that is not a uuid, is a usage error — never the default report
+ok 4 - control — embedded chunks for the organization → exit 0
+ok 5 - a non-empty corpus is reported as NON-EMPTY, and says plainly that completeness is NOT checked
+ok 6 - the headline says which store a PQ rag run WILL read, not that one reads it today
+ok 7 - documents and chunks but nothing embedded → EMPTY, exit 1: the pipeline reads only embedded chunks
+ok 8 - a documented-but-unembedded document is named as not retrievable, without failing a non-empty corpus
+ok 9 - an organization uuid that matches no organization → exit 1, and it says so rather than "empty"
+ok 10 - the store is missing → exit 1, named as missing
+ok 11 - a read error → exit 1, reported as unreadable, never as an empty corpus
+ok 12 - CT.gov rows in csr_* beside an empty eval corpus → still exit 1, and csr_* is labelled NOT read by the RAG pipeline
+ok 13 - csr_* that could not be counted is said, not shown as zero, and does not decide the exit code
+ok 14 - counts only the named organization's embedded chunks — not another tenant's, not an orphan's
+ok 15 - an organization with no documents → counted as zero, and the verdict is EMPTY
+ok 16 - an organization uuid nobody has → orgId null (not a zero count)
+ok 17 - the store absent → named as missing
+ok 18 - a query that fails is returned as an error, not as counts
+ok 19 - the read sets the same tenant GUC the pipeline's withTenantContext sets (no RLS claim: not tested here)
+ok 20 - csr_reports / csr_details are counted when present, and absent tables are null
+ok 21 - the vault arm retrieves by exactly the predicates the preflight counts by
+ok 22 - the pin fails when the vault arm gains a restriction the preflight does not count by
+ok 23 - the pin fails when a predicate leaves the vault arm, even though the same text survives in the rag_chunks arms
+ok 24 - CLI — a malformed --org-uuid exits 2 before touching a database
+ok 25 - CLI — no flag and no database URL: the pre-existing message and exit 1, unchanged
+ok 26 - CLI e2e — CT.gov rows and another tenant's chunks, but an empty evaluation org → exit 1, EMPTY, csr_* NOT read
+ok 27 - CLI e2e — the evaluation org holds an embedded chunk → exit 0
+ok 28 - CLI e2e — an organization uuid nobody has → exit 1
+ok 29 - CLI e2e — without the flag, the default report still exits 0 over the same database
+# tests 29
+# pass 29
+# fail 0

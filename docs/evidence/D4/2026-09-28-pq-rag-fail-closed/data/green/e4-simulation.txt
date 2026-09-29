@@ -1,0 +1,11 @@
+# E4 simulation (perfect retriever over expectedSourceIds, mirroring run-eval.ts's expected.length > 0 gate). Script:
+#   import { readFileSync } from 'node:fs';
+#   import { hitAtK, mean } from '/home/user/ClinicalSageAI-2-replit/server/eval/rag/rag-metrics';
+#   const items = JSON.parse(readFileSync('/home/user/ClinicalSageAI-2-replit/server/eval/rag/gold-dataset.json','utf8')).items;
+#   // Perfect retriever: returns every expected id first. Mirrors run-eval.ts's expected.length > 0 gate.
+#   const hitRates: number[] = [];
+#   for (const it of items) { const exp = it.expectedSourceIds ?? []; if (exp.length > 0) hitRates.push(hitAtK(exp, exp, 5)); }
+#   console.log(JSON.stringify({ items: items.length, withKeys: items.filter((i: any) => (i.expectedSourceKeys ?? []).length).length, scoredForHitRate: hitRates.length, hitRate: mean(hitRates) }));
+# npx tsx e4-sim.ts
+{"items":20,"withKeys":18,"scoredForHitRate":0,"hitRate":0}
+exit=0
