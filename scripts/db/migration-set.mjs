@@ -2197,6 +2197,22 @@ export const C2C_MIGRATION_FILES = [
      20260905b pattern, idempotent. */
   'migrations/20260911_vault_evidence_citations.sql',
 
+  /* vault.documents record guard, added 2026-09-26 (VR-06, row D5). A row
+     trigger refuses any change to a recorded version's identity, hash, uploader
+     or lineage, and to a write-once field once it holds a value; a statement
+     trigger refuses TRUNCATE. Nothing below the application stopped the
+     runtime role rewriting a recorded version's content_hash.
+
+     Placed after every file in this set that writes vault.documents
+     (20260821_vault_documents_canonical_shape, 20260905_vault_documents_
+     organization_id), and those write only `WHERE x IS NULL`, which the
+     write-once rule admits; so a replay passes the guard. CREATE OR REPLACE for
+     the functions, each trigger created only when absent: replayable, no DROP.
+     Proven by tests/db/vault-record-immutability.dbtest.ts (red before this
+     file, green after). The code that may still UPDATE the table is named in
+     scripts/ci/check-vault-document-writers.mjs. */
+  'migrations/20260926_vault_documents_record_immutability.sql',
+
   /* c2c_template_specs + its doc_types column, added 2026-09-17 (WO-15
      finding 5). Self-contained: this file creates the base table IF NOT EXISTS
      (byte-identical to 20260531_template_specs.sql modulo comments — verified)

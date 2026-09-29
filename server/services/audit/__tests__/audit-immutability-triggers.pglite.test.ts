@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS electronic_signatures (
 );
 CREATE TABLE IF NOT EXISTS concept2cure_signatures (id SERIAL PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS concept2cure_submission_snapshots (id SERIAL PRIMARY KEY);
+CREATE SCHEMA IF NOT EXISTS vault;
+CREATE TABLE IF NOT EXISTS vault.documents (id SERIAL PRIMARY KEY, content_hash TEXT);
 `;
 
 const TRIGGER_MIGRATIONS = Array.from(new Set(EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS.map((t) => t.source)));
@@ -51,6 +53,7 @@ const catalog = () => pglite as unknown as TriggerCatalogClient;
 
 async function provision(): Promise<void> {
   await pglite.exec('DROP SCHEMA IF EXISTS audit CASCADE;');
+  await pglite.exec('DROP SCHEMA IF EXISTS vault CASCADE;');
   await pglite.exec(
     'DROP TABLE IF EXISTS audit_logs, audit_events, electronic_signatures, concept2cure_signatures, concept2cure_submission_snapshots CASCADE;',
   );
@@ -102,6 +105,13 @@ describe('assertAuditImmutabilityTriggers against PGlite', () => {
     // And the reverse: the check is about the current state, not a memory.
     await pglite.exec('ALTER TABLE audit.tamper_proof_log ENABLE TRIGGER trg_prevent_audit_mutation;');
     expect((await assertAuditImmutabilityTriggers(catalog())).ok).toBe(true);
+  }, 60_000);
+
+  it('names a disabled Vault record guard (VR-06): a recorded version is rewritable again', async () => {
+    await pglite.exec('ALTER TABLE vault.documents DISABLE TRIGGER vault_documents_record_guard;');
+    const report = await assertAuditImmutabilityTriggers(catalog());
+    expect(report.ok).toBe(false);
+    expect(report.disabled).toEqual(['vault.documents.vault_documents_record_guard']);
   }, 60_000);
 
   it('reports an absent store (fresh install before deploy-migrate) as missing its triggers', async () => {
