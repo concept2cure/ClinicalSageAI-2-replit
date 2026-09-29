@@ -9,18 +9,12 @@ import { must } from '../lib.mjs';
 import { AUTHORING_DOCS, STUDY, T, findDemoByTitle } from './biotech-content.mjs';
 import { NOT_EXECUTED_NO_SIGNER, asArray, uuidRe } from './biotech-shared.mjs';
 
-/** Create the document, falling back to an unbound one when the program's governed document is already aliased. */
-async function createDoc({ api, run }, program, spec) {
-  let r = await api('POST', '/api/authoring/docs', { title: T(spec.name), module: spec.module, client_program_id: program.id });
-  if (r.status === 409 && r.json?.error === 'DOCUMENT_ALIAS_CONFLICT') {
-    // One governed c2c_document per program, and the first program-bound
-    // authoring document already aliases it (authoring.router.ts
-    // resolveGovernedDocument → DocumentAliasConflictError). A second bound
-    // document is refused, so this one is created org-wide (unbound) and the
-    // refusal is recorded as a finding — not hidden.
-    run.note(`Authoring: POST /api/authoring/docs with client_program_id for "${spec.name}" was refused 409 DOCUMENT_ALIAS_CONFLICT (${r.json?.message}); the product binds exactly one authoring document to a program's governed filing document, so this document was created unbound (no client_program_id).`);
-    r = await api('POST', '/api/authoring/docs', { title: T(spec.name), module: spec.module });
-  }
+/** Create the document in the program. A document belongs to a project (PF-07): it is never created org-wide. */
+async function createDoc({ api }, program, spec) {
+  // A second document in a program is created in it, unbound, with the reason
+  // stated (authoring-documents.ts resolveBinding) — the 409 this pack used to
+  // retry org-wide no longer arises, and an org-wide create is now refused.
+  const r = await api('POST', '/api/authoring/docs', { title: T(spec.name), module: spec.module, client_program_id: program.id });
   const j = must(r, [200, 201], `create authoring doc ${spec.key}`);
   const d = j.document ?? j.data ?? j;
   const id = d?.id ?? d?.docId ?? j.docId ?? j.doc_id;

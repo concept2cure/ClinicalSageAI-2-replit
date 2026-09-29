@@ -242,6 +242,21 @@ export function rowsToStudyDesign(studyRow: any): StudyDesign | null {
 }
 
 /**
+ * The project was deleted between the ownership check and the write: the
+ * same-organization key (cdisc_prm_studies_program_same_org_fk, PF-04) refuses
+ * the row. That is the check's own answer arriving late, not a server fault, so
+ * it is the same refusal — never a 500 carrying the constraint's name.
+ */
+function refuseVanishedProgram(err: unknown): never {
+  const e = err as { code?: string; constraint?: string; message?: string } | null;
+  const key = 'cdisc_prm_studies_program_same_org_fk';
+  if (e?.code === '23503' && (e.constraint === key || String(e.message ?? '').includes(key))) {
+    throw new StudyDesignPersistRefusal('PROJECT_NOT_FOUND', 'Project not found');
+  }
+  throw err;
+}
+
+/**
  * Persist a design and its arms/endpoints onto the PRM tables, inside the caller's
  * transaction. Upserts the study by `study_id` and replaces its arms/endpoints.
  * Returns the resolved `studyId`. The caller is responsible for BEGIN/COMMIT and for
@@ -302,7 +317,7 @@ export async function persistStudyDesignTx(
       s.studyDesign, s.blindingSchema, j(s.randomization), s.populationDescription,
       s.plannedSubjects, s.protocolStatus, j(s.metadata), String(ctx.userId),
     ],
-  );
+  ).catch(refuseVanishedProgram);
   if (upserted.rows.length === 0) {
     const { rows: held } = await client.query(`SELECT tenant_id FROM cdisc_prm_studies WHERE study_id = $1`, [s.studyId]);
     throw Number(held[0]?.tenant_id) === ctx.tenantId

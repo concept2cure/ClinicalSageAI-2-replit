@@ -1442,7 +1442,11 @@ router.post('/docs', async (req: Request, res: Response) => {
     // createDocument, shared with POST /docs/from-draft and the AnA tool.
     const outcome = await createDocument(createContext(req, tenantId, createdBy), req.body ?? {});
     if (outcome.kind === 'refused') {
-      return res.status(outcome.status).json({ success: false, error: outcome.error });
+      // `code` (e.g. PROJECT_REQUIRED) is what a client branches on; `error`
+      // stays the human-readable message existing callers read.
+      return res
+        .status(outcome.status)
+        .json({ success: false, error: outcome.error, ...(outcome.code ? { code: outcome.code } : {}) });
     }
 
     res.status(201).json({

@@ -226,6 +226,10 @@ const MIGRATIONS = [
   'migrations/20260509_submission_gateways.sql',
   'migrations/20260629_submission_transmittals_mdn_raw.sql',
   'migrations/20260629_submission_transmittals_active_lock.sql',
+  // Last: the same-organization project keys (PF-04) over every store above
+  // that names a project. After 20260727_prm_program_link, whose unchecked
+  // backfill must never run with the key present.
+  'migrations/20260926b_program_same_org_keys.sql',
 ] as const;
 /** pgvector's column, as TEXT: see the header. */
 const TEST_ONLY_SQL = 'ALTER TABLE coauthor_documents ADD COLUMN IF NOT EXISTS embedding TEXT;';

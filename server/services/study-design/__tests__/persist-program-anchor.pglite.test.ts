@@ -84,6 +84,9 @@ beforeAll(async () => {
   await db.exec(readFileSync(join(ROOT, 'migrations/20260524_program_workbench_schema.sql'), 'utf8'));
   await db.exec(extractTableDdl('migrations/0000_sweet_joseph.sql', ['cdisc_prm_studies', 'cdisc_prm_study_arms', 'cdisc_prm_endpoints']));
   await db.exec(readFileSync(join(ROOT, 'db/migrations/20260727_prm_program_link.sql'), 'utf8'));
+  // The same-organization key (PF-04), after the link file whose unchecked
+  // backfill must never run with it present.
+  await db.exec(readFileSync(join(ROOT, 'migrations/20260926b_program_same_org_keys.sql'), 'utf8'));
   for (const [id, org, code] of [[P1, ORG_1, 'P-1'], [P2, ORG_1, 'P-2'], [P_FOREIGN, ORG_2, 'F-1']] as const) {
     await db.query(
       `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_type, primary_agency, product_name)
@@ -120,6 +123,30 @@ describe('persistStudyDesignTx — a design belongs to one project of its organi
     expect(err).toBeInstanceOf(StudyDesignPersistRefusal);
     expect(err.code).toBe('PROGRAM_MISMATCH');
     expect(await studyRow('sd_1')).toMatchObject({ program_id: P1, protocol_title: 'Revised title' });
+  });
+
+  it('a project deleted between the check and the write is the same refusal, not a server fault (PF-04)', async () => {
+    const P_GONE = '44444444-4444-4444-8444-444444444444';
+    await db.query(
+      `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_type, primary_agency, product_name)
+       VALUES ($1, 1, 'Program G', 'G-1', 'ind', 'drug', 'FDA', 'X')`,
+      [P_GONE],
+    );
+    // The race, made deterministic: the program goes as soon as the ownership
+    // check has answered yes, so only the database's key can refuse the row.
+    const racing = {
+      query: async (text: string, params?: unknown[]) => {
+        const r = await db.query(text, params as unknown[]);
+        if (/FROM regulatory_programs/.test(text)) await db.query(`DELETE FROM regulatory_programs WHERE id = $1`, [P_GONE]);
+        return r;
+      },
+    };
+    await db.exec('BEGIN');
+    const err = await persistStudyDesignTx(racing, design({ id: 'sd_race', programId: P_GONE }), { tenantId: ORG_1, userId: 7 }).catch((e) => e);
+    await db.exec('ROLLBACK');
+    expect(err).toBeInstanceOf(StudyDesignPersistRefusal);
+    expect(err.code).toBe('PROJECT_NOT_FOUND');
+    expect(await studyRow('sd_race')).toBeUndefined();
   });
 
   it('never overwrites another organization’s design that has the same study id', async () => {
