@@ -718,50 +718,12 @@ const createContext = (req: Request, tenantId: number, actorId: string) => ({
   audit: auditContextFromRequest(req),
 });
 
-// Legacy wrapper for backward compatibility
-const createAuditEvent = async (
-  docId: string | string[] | undefined,
-  eventType: string,
-  actor: string,
-  metadata: any,
-  tenantId: number,
-  // Threaded through to createAuditTrail so this legacy wrapper can enlist in a
-  // lifecycle transaction (see POST /docs/:docId/sign). Defaults to the pool.
-  executor: Queryable = pool,
-  auditOpts: CreateAuditTrailOptions = {}
-) => {
-  // Synthesize the request shape createAuditTrail reads from. `user` is the
-  // important part: getTenantId sources the tenant from the VERIFIED JWT
-  // (req.user.organizationId) rather than the x-tenant-id header it used to
-  // trust, so a headers-only stand-in made getTenantId throw "Tenant context
-  // required" — inside createAuditTrail's catch, which meant every audit event
-  // routed through this helper was silently dropped. The caller has already
-  // resolved the tenant from the real request; pass it through explicitly.
-  // Named for what it is: a real request CONTEXT assembled from real values
-  // (the caller's resolved tenant and actor), not a mock. It was `mockReq`,
-  // which was both inaccurate — nothing here is fabricated — and the single
-  // genuine hit of ci:no-mock-in-prod-routes once that guard was repaired to
-  // match identifier forms in code rather than the bare word in comments.
-  const auditRequestContext = {
-    user: { organizationId: tenantId, email: actor },
-    headers: { 'x-user-email': actor, 'x-tenant-id': tenantId },
-    ip: 'legacy-call',
-    connection: { remoteAddress: 'legacy-call' },
-  } as any;
-
-  await createAuditTrail(
-    auditRequestContext,
-    docId,
-    null,
-    eventType,
-    null,
-    null,
-    'Legacy audit event',
-    metadata,
-    executor,
-    auditOpts
-  );
-};
+/* A legacy wrapper, createAuditEvent, stood here (removed 2026-09-29, D5). It
+   rebuilt a request from an email and a tenant, so every row it wrote had no
+   actor id — the ledger showed the review, export, submission, signature and
+   reorder it recorded as made by "System" — and the invented reason "Legacy
+   audit event". Its six callers now call createAuditTrail with the real
+   request; the signature's stated reason is its row's reason. */
 
 /**
  * Run `work` on one pooled client between BEGIN and COMMIT; ROLLBACK on any
@@ -2757,7 +2719,7 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
         message: 'Comment updated successfully',
       });
     } catch (error) {
-      await client.query('ROLLBACK');
+      await client.query('ROLLBACK').catch(() => undefined);
       throw error;
     } finally {
       client.release();
@@ -3198,13 +3160,12 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
     }
 
     // Create audit event
-    await createAuditEvent(
-      id,
-      'document_reviewed',
-      reviewerName,
-      { review_status, review_comments },
-      tenantId
-    );
+    // The reviewer's comments are the stated reason the route requires for a
+    // rejection or a change request (and accepts for an approval).
+    await createAuditTrail(req, id, null, 'document_reviewed', null, null, reviewComments ?? null, {
+      review_status,
+      review_comments,
+    });
 
     res.json({
       success: true,
@@ -4982,13 +4943,10 @@ router.delete('/export-history/:id', async (req: Request, res: Response) => {
     ]);
 
     // Log the deletion
-    await createAuditEvent(
-      entry.document_id,
-      'EXPORT_HISTORY_DELETED',
-      userEmail,
-      { export_id: id, deleted_by: userEmail },
-      tenantId
-    );
+    await createAuditTrail(req, entry.document_id, null, 'EXPORT_HISTORY_DELETED', null, null, null, {
+      export_id: id,
+      deleted_by: userEmail,
+    });
 
     res.json({ success: true, message: 'Export history entry deleted successfully' });
   } catch (error) {
@@ -5547,13 +5505,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     }
 
     // Create audit event
-    await createAuditEvent(
-      docId,
-      'EXPORT',
-      exportedBy as string,
-      { format, exportId, options },
-      tenantId
-    );
+    await createAuditTrail(req, docId, null, 'EXPORT', null, null, null, { format, exportId, options });
 
     /* The rendering — the §11.50(b) manifest, figures, cross-references,
        citations and captions resolved once, and the XML / DOCX / PDF branches —
@@ -5738,13 +5690,7 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
     );
 
     // Create audit event
-    await createAuditEvent(
-      docId,
-      'SUBMIT',
-      submittedBy as string,
-      { workflowId, steps: workflow_steps },
-      tenantId
-    );
+    await createAuditTrail(req, docId, null, 'SUBMIT', null, null, null, { workflowId, steps: workflow_steps });
 
     // Connect this governed transition to the ONE canonical document spine:
     // commit the assembled document into concept2cure_artifacts (version + Part 11
@@ -6101,14 +6047,18 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
       });
 
       // Create audit event
-      await createAuditEvent(
+      // The signer's stated reason is the row's reason. This handler writes
+      // its own richer chained row below.
+      await createAuditTrail(
+        req,
         docId,
+        null,
         'SIGN',
-        signerEmail as string,
+        null,
+        null,
+        typeof reason === 'string' && reason.trim() ? reason.trim() : null,
         { signatureId, meaning, reason, contentHash },
-        tenantId,
         client,
-        // This handler writes its own richer chained row below.
         { chainedRowWrittenByCaller: true }
       );
 
@@ -6638,8 +6588,11 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
        and the hash-chained audit event below recorded a decision the record
        itself was no longer able to accept. */
     const lock = await checkDocumentWritable(pool, String(artifactId), tenantId);
-    if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
-      return res.status(403).json({ error: 'DOCUMENT_FROZEN', message: lock.reason });
+    if (!lock.writable) {
+      /* DOCUMENT_NOT_FOUND refuses too (D5, 2026-09-29): only FROZEN did, so a
+         decision on a document id this tenant does not have was upserted,
+         written to the trail and chained, and read back as a decision on it. */
+      return res.status(lock.code === 'DOCUMENT_FROZEN' ? 403 : 404).json({ error: lock.code, message: lock.reason });
     }
     if (!(await decisionSectionIsOfDocument(String(artifactId), req.body?.sectionId, tenantId))) {
       return res.status(400).json(SECTION_NOT_IN_DOCUMENT);
@@ -6711,8 +6664,11 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
     // click by which an entire AI draft is adopted — the case with the most
     // to lose from writing past a sealed document.
     const lock = await checkDocumentWritable(pool, String(artifactId), tenantId);
-    if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
-      return res.status(403).json({ error: 'DOCUMENT_FROZEN', message: lock.reason });
+    if (!lock.writable) {
+      /* DOCUMENT_NOT_FOUND refuses too (D5, 2026-09-29): only FROZEN did, so a
+         decision on a document id this tenant does not have was upserted,
+         written to the trail and chained, and read back as a decision on it. */
+      return res.status(lock.code === 'DOCUMENT_FROZEN' ? 403 : 404).json({ error: lock.code, message: lock.reason });
     }
     if (!(await decisionSectionIsOfDocument(String(artifactId), req.body?.sectionId, tenantId))) {
       return res.status(400).json(SECTION_NOT_IN_DOCUMENT);
@@ -6854,7 +6810,7 @@ router.post('/docs/:docId/sections/reorder', async (req: Request, res: Response)
           [i, ids[i], docId, tenantId]
         );
       }
-      await createAuditEvent(docId, 'REORDER_SECTIONS', actor, { order: ids }, tenantId, client);
+      await createAuditTrail(req, docId, null, 'REORDER_SECTIONS', null, null, null, { order: ids }, client);
       await client.query('COMMIT');
     } catch (e) {
       await client.query('ROLLBACK').catch(() => {});
