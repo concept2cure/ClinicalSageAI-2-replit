@@ -111,6 +111,12 @@ import {
 import { lookupIcd10 } from '../integrations/icd10-client.js';
 import { composeSafetyNarrative } from './safety-narrative.js';
 import { screenPromotionalLanguage } from './promotional-screening.js';
+import {
+  critiqueDraft,
+  critiqueDocument,
+  verifyRevision,
+  buildRevisionBrief,
+} from './writing-precision-gate.js';
 import { narrateStatisticalResult, type AnalysisType, type EffectMeasure } from './statistical-narrator.js';
 import { composeValueDossierGuidance, listValueDossierCatalog } from './value-dossier.js';
 import { adviseRegulatoryPathway, listRegulatoryPathways } from './regulatory-pathway.js';
@@ -3887,6 +3893,93 @@ registerToolHandler('medical_writing_review', async (input) => {
   const draftText = typeof input.draft_text === 'string' ? input.draft_text : undefined;
   const review = reviewMedicalWriting(documentType, draftText);
   return JSON.stringify({ source: 'AnA Medical-Writing QC', ...review });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Writing Precision Gate (PR #1003 port) — composes the checkers above
+// (grounding, readability, abbreviations, promotional screening, structure) plus
+// in-document terminology consistency into one deterministic score + verdict +
+// revision brief. The model revises; the gate decides. No DB, no org context.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function precisionAudience(v: unknown): ReadabilityAudience | undefined {
+  return typeof v === 'string' && ['patient', 'clinician', 'regulator', 'general'].includes(v)
+    ? (v as ReadabilityAudience)
+    : undefined;
+}
+
+registerToolHandler('critique_draft', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'text (the draft to critique) is required' });
+  }
+  const report = critiqueDraft({
+    text,
+    audience: precisionAudience(input.audience),
+    documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
+  });
+  return JSON.stringify({
+    status: 'computed',
+    engine: 'deterministic',
+    score: report.score,
+    verdict: report.verdict,
+    metrics: report.metrics,
+    findings: report.findings,
+    revisionBrief: buildRevisionBrief(report),
+    instruction:
+      report.verdict === 'pass'
+        ? 'The draft passes the deterministic precision gate. You may still improve prose, but no machine-checkable defect remains.'
+        : 'Revise the draft against the revisionBrief (most severe first), preserving every value that is already correct and cited, then re-run critique_draft until the verdict is pass.',
+  });
+});
+
+registerToolHandler('verify_revision', async (input) => {
+  const originalText = typeof input.originalText === 'string' ? input.originalText : '';
+  const revisedText = typeof input.revisedText === 'string' ? input.revisedText : '';
+  if (!originalText.trim() || !revisedText.trim()) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'originalText and revisedText are both required' });
+  }
+  const audience = precisionAudience(input.audience);
+  const documentType = typeof input.documentType === 'string' ? input.documentType : undefined;
+  const result = verifyRevision(
+    { text: originalText, audience, documentType },
+    { text: revisedText, audience, documentType },
+  );
+  return JSON.stringify({
+    status: 'computed',
+    engine: 'deterministic',
+    result,
+    instruction: result.passesNow
+      ? 'The revision passes the precision gate. Confirm the improvement and proceed.'
+      : result.improved
+        ? 'The revision improved but has not fully passed; re-critique and continue revising the remaining findings.'
+        : 'The revision did not improve (or introduced regressions). Re-read the original critique and try again.',
+  });
+});
+
+registerToolHandler('critique_document', async (input) => {
+  const sections = Array.isArray(input.sections) ? input.sections : [];
+  const clean = sections
+    .filter((s): s is { title: string; text: string } =>
+      !!s && typeof (s as any).title === 'string' && typeof (s as any).text === 'string')
+    .map((s) => ({ title: s.title, text: s.text }));
+  if (clean.length === 0) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'sections[] with {title, text} is required' });
+  }
+  const result = critiqueDocument(clean, {
+    audience: precisionAudience(input.audience),
+    documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
+  });
+  return JSON.stringify({
+    status: 'computed',
+    engine: 'deterministic',
+    documentScore: result.documentScore,
+    verdict: result.verdict,
+    crossSectionFindings: result.crossSectionFindings,
+    sections: result.sections.map((s) => ({ title: s.title, score: s.score, verdict: s.verdict, findings: s.report.findings })),
+    instruction:
+      'Report the document score and, first, any cross-section findings (a value stated inconsistently across sections is a reviewer blocker). Then list per-section findings for the sections that need revision.',
+  });
 });
 
 // Describe Capabilities — AnA's deterministic self-knowledge: registered tools

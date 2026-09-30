@@ -41,6 +41,10 @@ const { svc, audit } = vi.hoisted(() => ({
     })),
     upsertMapping: vi.fn(async (..._a: any[]) => ({ id: 'm-1' })),
     createDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-1', code: 'PMCF-1' })),
+    authorPostMarketDocument: vi.fn(async (..._a: any[]) => ({
+      document: { id: 'd-1', documentType: 'pmcf_plan', code: 'PMCF-PLAN', version: 1, status: 'draft' },
+      validation: { passesGate: true, criticalCount: 0, warningCount: 0, findings: [] },
+    })),
     updateDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-1', updated: true })),
     validateDocument: vi.fn((..._a: any[]) => ({ valid: true, findings: [] })),
     supersedeDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-2' })),
@@ -123,6 +127,11 @@ vi.mock('../../../routes/c2c/actions', () => ({
 }));
 vi.mock('../../gspr-postmarket/gspr.service', () => ({
   upsertMapping: (...a: any[]) => (svc.upsertMapping as any)(...a),
+}));
+// post_market.document.create authors through the canonical engine (PR #1315 port).
+vi.mock('../../gspr-postmarket/post-market-authoring', () => ({
+  authorPostMarketDocument: (...a: any[]) => (svc.authorPostMarketDocument as any)(...a),
+  AUTHORABLE_DOCUMENT_TYPES: ['pms_plan', 'pms_report', 'pmcf_plan', 'pmcf_evaluation', 'psur', 'sscp'],
 }));
 vi.mock('../../gspr-postmarket/post-market.service', () => ({
   approveDocument: (...a: any[]) => (svc.approveDocument as any)(...a),
@@ -246,8 +255,8 @@ const PROBES: Probe[] = [
       postMarketDocumentCreate(CTX, {
         ...yes,
         programId: PROGRAM,
-        documentType: 'PMCF',
-        code: 'PMCF-1',
+        documentType: 'pmcf_plan',
+        deviceName: 'Acme Stent',
         title: 'Q3 PMCF',
       }),
   },

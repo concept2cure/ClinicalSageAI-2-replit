@@ -193,6 +193,27 @@ export async function sealVerifiedVersion(
       }
     }
 
+    // PR #973 port: seal-verified.ts admits `artifactPk` WITHOUT an external
+    // id. That used to fall through to the fallback INSERT below — sealing a
+    // DUPLICATE artifact rather than the one the caller named. Resolve the PK
+    // to its external id, org-scoped. A PK that does not resolve in THIS org is
+    // dropped (never sealed against: that would bind a signature to another
+    // tenant's row) and the guarded fallback below runs, exactly as an
+    // unresolved external id does above.
+    if (artifactPk && !artifactExternalId) {
+      const foundByPk = await client.query(
+        `SELECT artifact_id FROM concept2cure_artifacts
+          WHERE id = $1 AND organization_id = $2
+          LIMIT 1`,
+        [artifactPk, input.organizationId],
+      );
+      if (foundByPk.rows.length > 0) {
+        artifactExternalId = foundByPk.rows[0].artifact_id as string;
+      } else {
+        artifactPk = undefined;
+      }
+    }
+
     if (!artifactPk || !artifactExternalId) {
       // TODO(build-1): When Build 1 persists the artifact, this fallback insert
       // is removed and `artifactPk`/`artifactExternalId` are required inputs.
@@ -341,7 +362,12 @@ export async function sealVerifiedVersion(
         input.organizationId,
         signaturePurpose,
         signaturePurpose,
-        manifestation.reasonForChange,
+        // §11.50(a)(3): the MEANING of the signature (AUTHOR | REVIEWER |
+        // APPROVER). This column used to receive the free-text reason-for-
+        // change (PR #973), so every reader of signature_meaning — the audit
+        // ledger, the DOCX ledger — showed a reason as the meaning. The reason
+        // stays in the manifest below.
+        manifestation.meaning,
         input.userId,
         signer.name,
         signer.email,
