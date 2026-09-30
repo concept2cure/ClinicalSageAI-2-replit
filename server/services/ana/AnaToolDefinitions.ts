@@ -650,7 +650,7 @@ export const LOOKUP_FDA_GUIDANCE: AnaTool = {
 export const CHECK_REGULATORY_COMPLIANCE: AnaTool = {
   name: 'check_regulatory_compliance',
   description:
-    'Check a document section against specific regulatory requirements. Returns compliance status, gaps, and recommended remediation for each requirement.',
+    'Keyword scan of a document section: reports which expected topics the text MENTIONS for fda_510k or eu_mdr. It does not determine compliance — mentioning a topic is not meeting the requirement — and it returns not_assessed for frameworks it has no scan for (fda_pma, ich_e6, ich_e8, ich_e9, 21cfr_part11). Never present its output as a compliance verdict.',
   input_schema: {
     type: 'object',
     properties: {

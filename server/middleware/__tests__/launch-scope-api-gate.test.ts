@@ -177,6 +177,22 @@ describe('the real registry, launch scope on', () => {
     }
   });
 
+  /* Found 2026-09-29: Projects and Project home each claimed all of /api/programs.
+     Every route under it is device 510(k) predicate intelligence (21, 12 of them
+     writes), the substantial-equivalence render, or an RTM over tables nothing
+     writes to. No launch screen calls any of them. */
+  it('refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects', async () => {
+    for (const p of [
+      '/api/programs/7/predicate-intel/defense-packet/build',
+      '/api/programs/7/predicate-intel/render/job-1/download',
+      '/api/programs/7/se-matrix/render',
+      '/api/programs/7/rtm/csv',
+    ]) {
+      expect(await refused(p), p).toBe(true);
+    }
+    expect(await refused('/api/projects')).toBe(false);
+  });
+
   it('refuses a surface outside the catalog, and leaves the public API and webhooks alone', async () => {
     expect(await refused('/api/pharmacovigilance/cases')).toBe(true);
     expect(await refused('/api/v1/documents')).toBe(false);

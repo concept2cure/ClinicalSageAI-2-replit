@@ -136,7 +136,7 @@ export function vaultKpisForFiles(files: VaultFile[]): VaultKpi[] {
   const mb = files.reduce((s, f) => s + (parseFloat(f.size) || 0), 0);
   return [
     { label: 'Artifacts in vault', metric: String(files.length), meta: `${esig} e-signed · ${review} awaiting review` },
-    { label: 'Locked + signed',    metric: String(sealed), meta: 'SHA-256 sealed for active submissions', tone: 'ok' },
+    { label: 'Locked or final',    metric: String(sealed), meta: 'By recorded status' },
     /* Retention review is NOT derivable from VaultFile: the shape carries no
        record date and no retention clock — `updated` is a humanized string
        like "6 hours ago". This asserted `metric: '3'`, a hardcoded literal
@@ -146,7 +146,7 @@ export function vaultKpisForFiles(files: VaultFile[]): VaultKpi[] {
        for one that is genuinely zero; the warn tone goes with the 3, because
        there is no longer a count to be alarmed about. */
     { label: 'Retention review',   metric: '—', meta: 'Not assessed — no retention date is recorded on these artifacts' },
-    { label: 'Vault size',         metric: mb.toFixed(1), unit: 'MB', meta: '7-year+ retention across all folders' },
+    { label: 'Vault size',         metric: mb.toFixed(1), unit: 'MB', meta: 'Across all folders' },
   ];
 }
 
@@ -164,27 +164,20 @@ export function vaultFrameworksForView(
 
 export const VAULT_DOC_FRAMEWORKS = vaultFrameworksForView('device');
 
-export const VAULT_FILES: VaultFile[] = [
-  { id: 'f1',  name: 'TR-OR801-009 · Pull-out force, axial',     kind: 'report',   type: 'pdf',  size: '4.2 MB',  prog: 'OR-801', folder: 'eng',     ver: 'v3.2',  versions: 3, status: 'final',  updated: '30 min ago',  author: 'S. Marchetti',  linked: 4, esig: true,  hash: 'a91e…4f02', retention: '15 years',          distribution: 'org-internal' },
-  { id: 'f2',  name: 'Biocompat -11 systemic toxicity · final',  kind: 'report',   type: 'pdf',  size: '2.8 MB',  prog: 'OR-801', folder: 'eng',     ver: 'v2.0',  versions: 2, status: 'review', updated: '2h ago',     author: 'L. Tran',       linked: 3, esig: false, hash: 'b742…19cc', retention: '15 years',          distribution: 'supplier-shared', blocker: true },
-  { id: 'f3',  name: 'ENG-OR801 rev D · drawing package',        kind: 'code',     type: 'zip',  size: '18.4 MB', prog: 'OR-801', folder: 'eng',     ver: 'rev D', versions: 5, status: 'final',  updated: 'yesterday',  author: 'Eng team',      linked: 7, esig: true,  hash: 'c0d8…7791', retention: 'product life + 10y', distribution: 'org-internal' },
-  { id: 'f4',  name: 'Proposed labeling · Instructions for use', kind: 'label',    type: 'docx', size: '3.1 MB',  prog: 'OR-801', folder: 'udi',     ver: 'v1.4',  versions: 4, status: 'review', updated: '3h ago',     author: 'S. Marchetti',  linked: 2, esig: false, hash: 'd111…22aa', retention: 'product life + 10y', distribution: 'public' },
-  { id: 'f5',  name: 'FDA 510(k) cover letter — OR-801',         kind: 'cert',     type: 'docx', size: '0.4 MB',  prog: 'OR-801', folder: 'k510',    ver: 'v0.3',  versions: 3, status: 'draft',  updated: '5h ago',     author: 'S. Marchetti',  linked: 1, esig: false, hash: 'e9b1…5140', retention: '15 years',          distribution: 'org-internal' },
-  { id: 'f6',  name: 'Supplier cert · Ti-6Al-4V ELI lot 22K',    kind: 'supplier', type: 'pdf',  size: '0.9 MB',  prog: 'OR-801', folder: 'eng',     ver: 'v1.0',  versions: 1, status: 'final',  updated: '1d ago',     author: 'Supplier',      linked: 2, esig: true,  hash: 'f212…0094', retention: '15 years',          distribution: 'supplier-shared' },
-  { id: 'f7',  name: 'FDA response · pre-submission Q319-2024',  kind: 'resp',     type: 'pdf',  size: '1.2 MB',  prog: 'OR-801', folder: 'corresp', ver: 'v1.0',  versions: 1, status: 'locked', updated: '2w ago',     author: 'FDA',           linked: 0, esig: true,  hash: '77ac…b102', retention: '25 years',          distribution: 'org-internal' },
-  { id: 'f8',  name: 'SBOM · PM-660 patient monitor firmware 2.1', kind: 'code',   type: 'json', size: '0.2 MB',  prog: 'PM-660', folder: 'eng',     ver: 'v2.1',  versions: 6, status: 'review', updated: '1h ago',     author: 'A. Müller',     linked: 1, esig: false, hash: '18aa…6671', retention: '15 years',          distribution: 'org-internal' },
-  { id: 'f9',  name: 'DSMB charter · CV-330 pivotal',            kind: 'cert',     type: 'docx', size: '0.7 MB',  prog: 'CV-330', folder: 'pma',     ver: 'v1.2',  versions: 2, status: 'review', updated: '4h ago',     author: 'CRO',           linked: 3, esig: false, hash: '3cc1…2278', retention: '25 years',          distribution: 'cro-shared' },
-  { id: 'f10', name: 'FAERS export · IV-415 · Q1-2026',          kind: 'report',   type: 'csv',  size: '0.3 MB',  prog: 'IV-415', folder: 'pv',      ver: 'v1.0',  versions: 1, status: 'final',  updated: '6h ago',     author: 'A. Müller',     linked: 2, esig: false, hash: '4fa0…9091', retention: '15 years',          distribution: 'org-internal' },
-  { id: 'f11', name: 'Analytical sensitivity · DX-102 · 14 analytes', kind: 'report', type: 'xlsx', size: '1.1 MB', prog: 'DX-102', folder: 'k510', ver: 'v0.4',  versions: 4, status: 'draft',  updated: '8h ago',     author: 'P. Shah',       linked: 1, esig: false, hash: '8e22…1b33', retention: '15 years',          distribution: 'org-internal' },
-  { id: 'f12', name: 'Gamma sterilization validation summary',   kind: 'report',   type: 'pdf',  size: '3.4 MB',  prog: 'OR-801', folder: 'eng',     ver: 'v2.0',  versions: 2, status: 'final',  updated: '1w ago',     author: 'Contract lab',  linked: 2, esig: true,  hash: 'c199…0e44', retention: '15 years',          distribution: 'org-internal' },
-  { id: 'f13', name: 'MDR 3500A template · blank',               kind: 'template', type: 'docx', size: '128 kB',  prog: 'Shared', folder: 'shared',  ver: 'v1.0',  versions: 1, status: 'locked', updated: '2026-03-15', author: 'J. Chen',       linked: 12, esig: false, hash: '8c3f…2233', retention: '7 years',           distribution: 'org-internal' },
-  { id: 'f14', name: 'IFU EU translation baseline · DE',         kind: 'template', type: 'docx', size: '84 kB',   prog: 'Shared', folder: 'shared',  ver: 'v2.1',  versions: 2, status: 'locked', updated: '2026-02-22', author: 'A. Müller',     linked: 8,  esig: false, hash: 'a8e1…2d11', retention: '7 years',           distribution: 'org-internal' },
-];
+/*
+ * VAULT_FILES, VAULT_FOLDERS and VAULT_VERSIONS — removed.
+ *
+ * Fourteen example artifacts — test reports, a labeling IFU, a 510(k) cover
+ * letter, "FDA response · pre-submission Q319-2024" — fourteen of them marked
+ * `esig: true` with an invented content hash, plus a Part 11 version history
+ * for them. The vault is the surface subtitled "21 CFR Part 11 audit trail ·
+ * SHA-256 chained"; an example document, hash, signature or version there is
+ * the opposite of the record the surface exists to hold. VaultSurface reads
+ * GET /api/mdx/vault or says it could not.
+ *
+ * The KPI copy lost two claims of the same kind: "Locked + signed · SHA-256
+ * sealed for active submissions" counted rows by status and asserted a seal
+ * nothing checked, and "7-year+ retention" stated a policy no artifact
+ * records.
+ */
 
-export const VAULT_FOLDERS: VaultFolder[] = vaultFoldersForFiles(VAULT_FILES);
-
-export const VAULT_VERSIONS: VaultVersion[] = [
-  { v: 'v3.2', when: '30 min ago',  author: 'S. Marchetti',      note: 'Replaced cover page per reviewer · corrected n=30 → n=30 per diameter', status: 'final' },
-  { v: 'v3.1', when: '6 hours ago', author: 'Claude · Opus 4.5', note: 'AI-drafted revision — TOC regeneration',                                  status: 'superseded' },
-  { v: 'v3.0', when: 'yesterday',   author: 'S. Marchetti',      note: 'Incorporated peer review feedback from L. Tran',                          status: 'superseded' },
-];

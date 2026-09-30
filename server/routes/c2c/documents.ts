@@ -405,6 +405,53 @@ router.get('/:id/sections/:key', async (req: Request, res: Response) => {
   }
 });
 
+// ── GET /api/c2c/documents/:id/sections/:key/versions ────────────────────────
+//
+// The section's own Part-11 history: the c2c_document_section_versions rows the
+// snapshot trigger writes on every content change, each with its author and
+// reason. This is what the dossier drawer's Activity tab shows. It used to show
+// events the BROWSER wrote into an in-memory list — attributed to "You · Reg
+// Lead", with a Math.random id — before and regardless of whether this route's
+// PATCH succeeded. A record no server witnessed is not an audit trail.
+router.get('/:id/sections/:key/versions', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
+  const { id, key } = req.params;
+  try {
+    const docCheck = await pool.query(
+      `SELECT 1 FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
+      [id, orgId],
+    );
+    if (docCheck.rows.length === 0) return send404(res);
+    const { rows } = await pool.query(
+      `SELECT v.id, v.version, v.author_id, v.author_kind, v.reason, v.occurred_at,
+              COALESCE(u.name, u.email) AS author_name
+         FROM c2c_document_section_versions v
+         JOIN c2c_document_sections s ON s.id = v.section_id
+         JOIN c2c_documents d ON d.id = s.document_id AND d.org_id = $3
+         LEFT JOIN users u ON u.id = v.author_id
+        WHERE s.document_id = $1 AND s.section_key = $2
+        ORDER BY v.version DESC
+        LIMIT 200`,
+      [id, key, orgId],
+    );
+    return res.json({
+      data: rows.map((r) => ({
+        id: String(r.id),
+        version: r.version,
+        authorId: r.author_id,
+        authorName: r.author_name ?? null,
+        authorKind: r.author_kind,
+        reason: r.reason,
+        occurredAt: r.occurred_at instanceof Date ? r.occurred_at.toISOString() : r.occurred_at,
+      })),
+    });
+  } catch (err: unknown) {
+    console.error('[c2c/documents] GET /:id/sections/:key/versions', err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
 // ── PATCH /api/c2c/documents/:id/sections/:key ───────────────────────────────
 //
 // Updates section content. The Part-11 version snapshot trigger

@@ -21,6 +21,7 @@ import {
 } from '../../data/pathwayTabs';
 import { useVaultUpload } from '../../../v2/useVaultUpload';
 import { EmptyState, ErrorState } from '../../../v2/dataConnect';
+import { useSectionVersions } from '../../hooks/useSectionVersions';
 import { DossierStore, useSection } from '../../store/dossierStore';
 import { DataGate } from '../../components/DataGate';
 import { FilesTreePane } from './FilesTreePane';
@@ -774,10 +775,10 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
 
   const { body, meta, attachments, folder } = useSection(pathway, safeTarget.id, safeTarget.label);
 
-  const activity = React.useMemo(
-    () => DossierStore.activityForSection(pathway, safeTarget.id),
-    [pathway, safeTarget.id, body, attachments.length],
-  );
+  /* The section's history from the server's version rows — not events this
+     browser wrote itself. See hooks/useSectionVersions. */
+  const versions = useSectionVersions(documentId, open && target ? safeTarget.id : null);
+  const activity = versions.events ?? [];
 
   React.useEffect(() => { if (open) setTab('document'); }, [open, safeTarget.id]);
 
@@ -789,8 +790,10 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
        governed write. The status line reports the *server's* outcome,
        so a failed PATCH reads as "not saved" even though the in-memory
        copy updated. */
-    DossierStore.writeSectionBody(pathway, safeTarget.id, safeTarget.label, next, { who: 'You', role: 'Reg Lead' });
-    void sectionSave.save(String(safeTarget.id), next);
+    DossierStore.writeSectionBody(pathway, safeTarget.id, safeTarget.label, next);
+    /* Re-read the history once the governed write settles, so a saved edit
+       appears as the server recorded it — and a failed one does not appear. */
+    void Promise.resolve(sectionSave.save(String(safeTarget.id), next)).finally(() => versions.refresh());
   };
 
   /* THE ATTACHMENT PATH, and what it used to be.
@@ -867,7 +870,18 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
               switch must remount it on the new body rather than syncing. */}
           {tab === 'document' && <DDDocumentTab key={String(safeTarget.id)} body={body} onCommit={onCommitBody} saveState={sectionSave.state} />}
           {tab === 'attachments' && <DDAttachmentsTab attachments={attachments} onAttach={onAttach} />}
-          {tab === 'activity' && <DDActivityTab events={activity} />}
+          {tab === 'activity' && (
+            <DDActivityTab
+              events={activity}
+              state={
+                !documentId ? 'no-document'
+                  : versions.error ? 'error'
+                  : versions.events === null ? 'loading'
+                  : 'ready'
+              }
+              onRetry={versions.refresh}
+            />
+          )}
         </div>
 
         <div className="dd-foot">
@@ -1057,9 +1071,35 @@ function DDAttachmentsTab({ attachments, onAttach }: { attachments: DossierAttac
   );
 }
 
-function DDActivityTab({ events }: { events: AuditEvent[] }) {
+function DDActivityTab({
+  events,
+  state,
+  onRetry,
+}: {
+  events: AuditEvent[];
+  state: 'no-document' | 'loading' | 'error' | 'ready';
+  onRetry: () => void;
+}) {
+  if (state === 'no-document') {
+    return (
+      <div className="dd-act-empty" data-testid="dd-act-no-document">
+        This section is not yet saved to a document, so it has no recorded history.
+      </div>
+    );
+  }
+  if (state === 'error') {
+    return (
+      <div className="dd-act-empty" data-testid="dd-act-error">
+        The history for this section could not be loaded.{' '}
+        <button type="button" className="dd-act-retry" onClick={onRetry}>Try again</button>
+      </div>
+    );
+  }
+  if (state === 'loading') {
+    return <div className="dd-act-empty" aria-busy="true">Loading section history…</div>;
+  }
   if (!events.length) {
-    return <div className="dd-act-empty">No activity yet on this section. Edits, attachments, and signatures will appear here.</div>;
+    return <div className="dd-act-empty" data-testid="dd-act-empty">No recorded changes to this section yet.</div>;
   }
   return (
     <div className="dd-act-list">
@@ -1077,7 +1117,6 @@ function DDActivityTab({ events }: { events: AuditEvent[] }) {
               </div>
               <div className="dd-act-sub">{fmtTime(e.when)}{e.role && <> · {e.role}</>}</div>
             </div>
-            {e.live && <span className="dd-act-tag">new</span>}
           </div>
         );
       })}

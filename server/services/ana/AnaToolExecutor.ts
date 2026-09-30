@@ -1548,48 +1548,44 @@ registerToolHandler('assemble_briefing_book', async (input, ctx) => {
   try {
     const briefing = await import('./briefing-book-core.js');
 
-    // 1. Resolve the meeting. A live meeting_id would join the product's
-    //    strategy.meetings[]; absent that we use the labelled fixture.
-    // INTEGRATION: join the live RegAgencyMeeting row by meeting_id + org scope
-    //   (client/src/concept2cure/types/workspace.ts → product.strategy.meetings).
+    // 1. The meeting is built from what the caller supplies, and nothing else.
+    //    This used to substitute a fixture EOP2 meeting and its invented
+    //    clinical background on every call (see briefing-book-core). There is
+    //    no live RegAgencyMeeting loader yet, so a meeting_id is carried as an
+    //    identifier only and the book says so rather than borrowing content.
     const meetingId = typeof input.meeting_id === 'string' ? input.meeting_id.trim() : '';
-    const overrideQuestions = Array.isArray(input.key_questions)
-      ? (input.key_questions as unknown[]).filter((q): q is string => typeof q === 'string')
-      : undefined;
-
-    let meeting: import('./briefing-book-core.js').RegAgencyMeetingInput;
-    let context: import('./briefing-book-core.js').BriefingBookContext;
-    let dataSource: import('./briefing-book-core.js').BriefingBookDataSource;
-
-    if (meetingId) {
-      // INTEGRATION: load the live meeting here. Until that join exists, an
-      // explicit id with no loader still degrades honestly to fixture-sourced.
-      meeting = { ...briefing.FIXTURE_EOP2_MEETING, id: meetingId };
-      context = { ...briefing.FIXTURE_EOP2_CONTEXT };
-      dataSource = 'fixture';
-    } else {
-      meeting = { ...briefing.FIXTURE_EOP2_MEETING };
-      context = { ...briefing.FIXTURE_EOP2_CONTEXT };
-      dataSource = 'fixture';
+    const strs = (v: unknown): string[] | undefined =>
+      Array.isArray(v) ? (v as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim() !== '') : undefined;
+    const keyQuestions = strs(input.key_questions);
+    const meetingType = typeof input.meeting_type === 'string' ? input.meeting_type : '';
+    if (!meetingType || !keyQuestions || keyQuestions.length === 0) {
+      return JSON.stringify({
+        error:
+          'assemble_briefing_book needs the meeting type and the sponsor\'s own questions for the Agency. ' +
+          'A briefing book is built only from what the sponsor supplies; no sample meeting or clinical history is substituted.',
+        missing: [!meetingType && 'meeting_type', (!keyQuestions || keyQuestions.length === 0) && 'key_questions'].filter(Boolean),
+      });
     }
 
-    const meetingType =
-      typeof input.meeting_type === 'string' ? input.meeting_type : undefined;
-    if (meetingType) meeting.type = meetingType as typeof meeting.type;
-    if (overrideQuestions && overrideQuestions.length) meeting.keyQuestions = overrideQuestions;
-    if (typeof input.product_name === 'string') context.productName = input.product_name;
-    if (typeof input.indication === 'string') context.indication = input.indication;
-    if (typeof input.sponsor === 'string') context.sponsor = input.sponsor;
+    const meeting: import('./briefing-book-core.js').RegAgencyMeetingInput = {
+      id: meetingId || 'unsaved-meeting',
+      type: meetingType as import('./briefing-book-core.js').RegAgencyMeetingInput['type'],
+      keyQuestions,
+      ...(typeof input.division === 'string' && input.division.trim() ? { division: input.division.trim() } : {}),
+      ...(typeof input.meeting_date === 'string' && input.meeting_date.trim() ? { date: input.meeting_date.trim() } : {}),
+    };
+    const context: import('./briefing-book-core.js').BriefingBookContext = {
+      ...(typeof input.product_name === 'string' ? { productName: input.product_name } : {}),
+      ...(typeof input.indication === 'string' ? { indication: input.indication } : {}),
+      ...(typeof input.sponsor === 'string' ? { sponsor: input.sponsor } : {}),
+      ...(strs(input.background) ? { background: strs(input.background) } : {}),
+      ...(strs(input.objectives) ? { objectives: strs(input.objectives) } : {}),
+      ...(strs(input.supporting_data) ? { supportingData: strs(input.supporting_data) } : {}),
+    };
+    const dataSource: import('./briefing-book-core.js').BriefingBookDataSource = 'supplied';
 
     // 2. Assemble the markdown + required_strings.
     const assembled = briefing.assembleBriefingBook(meeting, context);
-    // The fixture's "Questions for the Agency" are a fictional sponsor's. With a
-    // real product name and no key_questions supplied, they read as this
-    // product's questions in the content the authoring tool promotes, while the
-    // fixture disclosure lived only on the sibling premortem/message fields.
-    if (dataSource === 'fixture' && (!overrideQuestions || overrideQuestions.length === 0)) {
-      assembled.content = `> SAMPLE DATA — the questions for the Agency below are a fixture; the sponsor has not supplied its own key questions. Replace them before this book is reviewed.\n\n${assembled.content}`;
-    }
 
     // 3. Pre-mortem — anticipated FDA pushback per sponsor question.
     const runPremortem = input.run_premortem !== false;
@@ -4510,51 +4506,53 @@ registerToolHandler('lookup_ich_guideline', async (input) => {
 });
 
 // Check Regulatory Compliance
+/* check_regulatory_compliance — a KEYWORD SCAN, reported as one.
+ *
+ * This returned `overallStatus: 'compliant'` from two kinds of evidence, both
+ * wrong:
+ *   - for fda_510k / eu_mdr, whether a word appeared ("device", "predicate",
+ *     "gspr"), each paired with a CFR paragraph as though the requirement it
+ *     cites had been met;
+ *   - for ich_e6, ich_e8, ich_e9 and 21cfr_part11 — four of the seven
+ *     frameworks in this tool's own enum — NO checks at all, and
+ *     `[].every(...)` is true, so every section was "compliant" with each.
+ * fda_pma also matched `includes('fda')` and got 510(k) citations.
+ *
+ * Rule 2 (CLAUDE.md): verdicts come from deterministic engines, and a scan for
+ * words is not a compliance engine. The result now says what was checked —
+ * which topics are mentioned — and never states compliance. A framework with no
+ * scan is `not_assessed`. */
 registerToolHandler('check_regulatory_compliance', async (input) => {
-  const sectionContent = input.section_content as string;
-  const framework = input.regulatory_framework as string;
-  const sectionLength = sectionContent.length;
+  const sectionContent = String(input.section_content ?? '');
+  const framework = String(input.regulatory_framework ?? '');
+  const text = sectionContent.toLowerCase();
+  const mentions = (...terms: string[]) => terms.some((t) => text.includes(t));
 
-  // Basic structural compliance checks
-  const checks = [];
-
-  if (framework.includes('510k') || framework.includes('fda')) {
-    checks.push({
-      requirement: 'Device Description',
-      status: sectionContent.toLowerCase().includes('device') ? 'present' : 'missing',
-      regulation: '21 CFR 807.87(e)',
-    });
-    checks.push({
-      requirement: 'Intended Use Statement',
-      status: sectionContent.toLowerCase().includes('intended use') || sectionContent.toLowerCase().includes('indications for use') ? 'present' : 'missing',
-      regulation: '21 CFR 807.87(f)',
-    });
-    checks.push({
-      requirement: 'Predicate Device Comparison',
-      status: sectionContent.toLowerCase().includes('predicate') || sectionContent.toLowerCase().includes('substantial equivalence') ? 'present' : 'missing',
-      regulation: '21 CFR 807.87(g)',
-    });
-  }
-
-  if (framework.includes('eu_mdr')) {
-    checks.push({
-      requirement: 'GSPR Mapping',
-      status: sectionContent.toLowerCase().includes('gspr') || sectionContent.toLowerCase().includes('general safety') ? 'present' : 'missing',
-      regulation: 'EU MDR Annex I',
-    });
-    checks.push({
-      requirement: 'Clinical Evaluation Reference',
-      status: sectionContent.toLowerCase().includes('clinical evaluation') ? 'present' : 'missing',
-      regulation: 'EU MDR Article 61',
-    });
+  const topics: Array<{ topic: string; mentioned: boolean; relevantTo: string }> = [];
+  if (framework === 'fda_510k') {
+    topics.push(
+      { topic: 'Device description', mentioned: mentions('device description'), relevantTo: '21 CFR 807.87 (510(k) contents)' },
+      { topic: 'Intended use / indications for use', mentioned: mentions('intended use', 'indications for use'), relevantTo: '21 CFR 807.87 (510(k) contents)' },
+      { topic: 'Predicate comparison / substantial equivalence', mentioned: mentions('predicate', 'substantial equivalence'), relevantTo: '21 CFR 807.87 (510(k) contents)' },
+    );
+  } else if (framework === 'eu_mdr') {
+    topics.push(
+      { topic: 'GSPR mapping', mentioned: mentions('gspr', 'general safety and performance'), relevantTo: 'EU MDR Annex I' },
+      { topic: 'Clinical evaluation', mentioned: mentions('clinical evaluation'), relevantTo: 'EU MDR Article 61' },
+    );
   }
 
   return JSON.stringify({
     framework,
-    sectionLengthChars: sectionLength,
-    complianceChecks: checks,
-    overallStatus: checks.every(c => c.status === 'present') ? 'compliant' : 'gaps_found',
-    gapsCount: checks.filter(c => c.status === 'missing').length,
+    method: 'keyword_scan',
+    sectionLengthChars: sectionContent.length,
+    topics,
+    overallStatus: topics.length === 0 ? 'not_assessed' : 'keyword_scan_only',
+    notMentionedCount: topics.filter((t) => !t.mentioned).length,
+    note:
+      topics.length === 0
+        ? `No scan exists for ${framework || 'this framework'}; nothing about this section's compliance was assessed.`
+        : 'This reports which topics the text mentions. Mentioning a topic is not meeting the requirement, and this is not a compliance determination.',
   });
 });
 
