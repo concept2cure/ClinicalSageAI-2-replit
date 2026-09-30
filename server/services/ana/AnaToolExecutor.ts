@@ -4407,67 +4407,42 @@ registerToolHandler('search_medicare_coverage', async (input) => {
 
 // Lookup FDA Guidance
 registerToolHandler('lookup_fda_guidance', async (input) => {
-  const topic = input.topic as string;
-  const regulationType = input.regulation_type as string || 'any';
-
-  // FDA guidance database lookup via openFDA or internal knowledge
-  const guidanceMap: Record<string, any> = {
-    '510(k)': {
-      title: 'The 510(k) Program: Evaluating Substantial Equivalence in Premarket Notifications',
-      documentNumber: 'FDA-2013-D-0718',
-      url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents',
-      keyRequirements: [
-        'Identify predicate device(s)',
-        'Compare intended use and technological characteristics',
-        'Demonstrate substantial equivalence',
-        'Include performance data if different technology',
-      ],
-    },
-    'biocompatibility': {
-      title: 'Use of International Standard ISO 10993-1, Biological evaluation of medical devices',
-      documentNumber: 'FDA-2013-D-0350',
-      regulations: ['21 CFR 820.30(g)', 'ISO 10993-1:2018'],
-      keyRequirements: [
-        'Material characterization',
-        'Biological evaluation plan',
-        'Risk-based approach to testing',
-        'Chemical characterization per ISO 10993-18',
-      ],
-    },
-    'software': {
-      title: 'Content of Premarket Submissions for Device Software Functions',
-      documentNumber: 'FDA-2018-D-3241',
-      regulations: ['21 CFR 820', 'IEC 62304'],
-      keyRequirements: [
-        'Software level of concern determination',
-        'Software requirements specification',
-        'Architecture design chart',
-        'Software testing (verification & validation)',
-      ],
-    },
-  };
-
-  // Find best match
-  const topicLower = topic.toLowerCase();
-  let bestMatch = null;
-  for (const [key, value] of Object.entries(guidanceMap)) {
-    if (topicLower.includes(key.toLowerCase())) {
-      bestMatch = { keyword: key, ...value };
-      break;
-    }
-  }
-
-  if (bestMatch) {
-    return JSON.stringify({ source: 'FDA Guidance Database', match: bestMatch });
-  }
-
+  /* No FDA guidance index is connected (plan open decision 11), so this names
+     no guidance, docket number or requirement. It used to answer from a
+     three-entry map ("510(k)", "biocompatibility", "software") whose docket
+     numbers nothing verified and whose requirements were typed from memory —
+     "software level of concern", which the 2023 device-software guidance
+     replaced, and 21 CFR 820.30(g), which the QMSR superseded — and returned a
+     fixed list of CFR parts for anything else. What it can stand behind is the
+     dated US facts in the verified currency registry, each with its source. */
+  const topic = typeof input.topic === 'string' ? input.topic.trim() : '';
+  if (!topic) return JSON.stringify({ error: 'lookup_fda_guidance requires a topic.' });
+  const { findFacts, verificationAgeDays, isVerificationStale } = await import(
+    '../regulatory-currency/currency-registry.js'
+  );
+  const asOf = new Date().toISOString().slice(0, 10);
+  const facts = findFacts({ topic, jurisdiction: 'US', asOf }).map((f) => ({
+    id: f.id,
+    topic: f.topic,
+    status: f.status,
+    effectiveDate: f.effectiveDate,
+    note: f.note,
+    sourceUrl: f.sourceUrl,
+    lastVerified: f.lastVerified,
+    verificationAgeDays: verificationAgeDays(f, asOf),
+    verificationStale: isVerificationStale(f, asOf),
+  }));
   return JSON.stringify({
-    source: 'FDA Guidance Database',
     topic,
-    note: `No exact match found. Search FDA guidance at https://www.fda.gov/regulatory-information/search-fda-guidance-documents for: "${topic}"`,
-    relatedRegulations: regulationType === '21cfr'
-      ? ['21 CFR Part 807 (510k)', '21 CFR Part 814 (PMA)', '21 CFR Part 820 (QSR)', '21 CFR Part 11 (Electronic Records)']
-      : undefined,
+    status: facts.length > 0 ? 'registry_facts' : 'not_indexed',
+    guidanceIndex: 'not_connected',
+    asOf,
+    facts,
+    note:
+      'No FDA guidance index is connected, so this cannot name an FDA guidance, its docket number or its ' +
+      'requirements. Any facts listed are dated entries from the verified regulatory currency registry. Name an ' +
+      'FDA guidance only from a document the user supplied, or say it needs confirming at ' +
+      'https://www.fda.gov/regulatory-information/search-fda-guidance-documents.',
   });
 });
 
