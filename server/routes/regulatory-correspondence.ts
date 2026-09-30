@@ -1,8 +1,11 @@
 import { Router, type Request, type Response } from 'express';
 import crypto from 'node:crypto';
-import { getPool } from '../db';
+import { getPool, transaction } from '../db';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import * as schema from '@shared/schema';
 import type {
   Correspondence,
+  CorrespondenceIssue,
   ResponsePackage,
   Submission,
   SubmissionLifecycleState,
@@ -101,7 +104,8 @@ function requirePersistentStore(
 }
 
 async function addTimelineEventDB(
-  pool: NonNullable<ReturnType<typeof getDbClientOrNull>>,
+  /* The pool, or the intake's transaction client: both have `.query`. */
+  pool: Pick<NonNullable<ReturnType<typeof getDbClientOrNull>>, 'query'>,
   payload: {
     orgId: number;
     projectId: number;
@@ -129,6 +133,58 @@ async function addTimelineEventDB(
       JSON.stringify(payload.metadata || {}),
     ]
   );
+}
+
+/* Row parameters for the intake's two inserts. Kept out of the handler so the
+   transaction body reads as the sequence of writes it is (2026-09-30, row D2). */
+function correspondenceRowParams(
+  record: Correspondence,
+  orgId: number,
+  attachmentRefs: unknown[],
+): unknown[] {
+  return [
+    record.id,
+    orgId,
+    record.projectId,
+    record.submissionId,
+    record.direction,
+    record.sourceChannel,
+    record.communicationType,
+    record.subject,
+    record.sender || null,
+    JSON.stringify(record.recipients || []),
+    record.receivedAt || null,
+    record.dueDate || null,
+    record.urgency,
+    record.responseRequired,
+    record.status,
+    record.sourceMessageId || null,
+    record.sourceThreadId || null,
+    record.sourceMailboxId || null,
+    JSON.stringify(record.parserMetadata || {}),
+    JSON.stringify(attachmentRefs),
+    record.parsedText || null,
+    record.summary || null,
+  ];
+}
+
+function correspondenceIssueRowParams(issue: CorrespondenceIssue): unknown[] {
+  return [
+    issue.id,
+    issue.correspondenceId,
+    issue.category,
+    issue.subcategory || null,
+    issue.severity,
+    issue.blocker,
+    issue.responseRequired,
+    issue.sourceExcerpt || null,
+    issue.confidence,
+    issue.humanReviewStatus,
+    JSON.stringify(issue.mappedCtdSections || []),
+    JSON.stringify(issue.mappedArtifactIds || []),
+    issue.resolutionStatus,
+    JSON.stringify(issue.structuredExtraction || {}),
+  ];
 }
 
 async function persistCorrespondenceLearning(payload: {
@@ -591,102 +647,76 @@ router.post('/correspondence/intake', async (req, res) => {
       modelAssistedReasoningUsed: extraction.metadata.modelAssistedReasoningUsed,
     };
 
-    await pool!.query(
-      `INSERT INTO c2c_correspondence
-      (id, organization_id, project_id, submission_id, direction, source_channel, communication_type, subject, sender, recipients, received_at, due_date, urgency, response_required, status, source_message_id, source_thread_id, source_mailbox_id, parser_metadata, attachment_refs, parsed_text, summary)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20::jsonb,$21,$22)`,
-      [
-        record.id,
-        orgId,
-        record.projectId,
-        record.submissionId,
-        record.direction,
-        record.sourceChannel,
-        record.communicationType,
-        record.subject,
-        record.sender || null,
-        JSON.stringify(record.recipients || []),
-        record.receivedAt || null,
-        record.dueDate || null,
-        record.urgency,
-        record.responseRequired,
-        record.status,
-        record.sourceMessageId || null,
-        record.sourceThreadId || null,
-        record.sourceMailboxId || null,
-        JSON.stringify(record.parserMetadata || {}),
-        JSON.stringify(attachmentRefs),
-        record.parsedText || null,
-        record.summary || null,
-      ]
-    );
-
+    /* ONE transaction for everything the letter produces (2026-09-30, row D2):
+       the letter, each issue, each issue's blocker and work item, and the
+       timeline event commit together or not at all. Each used to be its own
+       statement, so a failure on a later issue left the letter holding the
+       earlier issues alone — and the user's retry recorded it a second time.
+       The pool applies the tenant scope inside the transaction's BEGIN, so RLS
+       holds for every statement; drizzle is bound to the same client so the
+       operating layer's writes are inside it too. The audit row below stays
+       after COMMIT: it records an intake that happened. */
     const downstreamActions: Array<Record<string, unknown>> = [];
-    for (const issue of extracted) {
-      await pool!.query(
-        /* `subcategory` and `structured_extraction` are written because the
-           response-package compiler reads them and nothing persisted either:
-           the parser's section candidates, evidence needs, owner function and
-           confidence trace lived in the intake response and were gone by the
-           time a package was compiled, which is why every package fell back to
-           the generic 'Issue evidence attachment'. */
-        `INSERT INTO c2c_correspondence_issues
-          (id, correspondence_id, category, subcategory, severity, blocker, response_required, source_excerpt, confidence, human_review_status, mapped_ctd_sections, mapped_artifact_ids, resolution_status, structured_extraction)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14::jsonb)`,
-        [
-          issue.id,
-          issue.correspondenceId,
-          issue.category,
-          issue.subcategory || null,
-          issue.severity,
-          issue.blocker,
-          issue.responseRequired,
-          issue.sourceExcerpt || null,
-          issue.confidence,
-          issue.humanReviewStatus,
-          JSON.stringify(issue.mappedCtdSections || []),
-          JSON.stringify(issue.mappedArtifactIds || []),
-          issue.resolutionStatus,
-          JSON.stringify(issue.structuredExtraction || {}),
-        ]
+    await transaction(async (client) => {
+      const txDb = drizzle(client, { schema });
+      await client.query(
+        `INSERT INTO c2c_correspondence
+        (id, organization_id, project_id, submission_id, direction, source_channel, communication_type, subject, sender, recipients, received_at, due_date, urgency, response_required, status, source_message_id, source_thread_id, source_mailbox_id, parser_metadata, attachment_refs, parsed_text, summary)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20::jsonb,$21,$22)`,
+        correspondenceRowParams(record, orgId, attachmentRefs)
       );
 
-      const impact = await computeCorrespondenceIssueImpact({
+      for (const issue of extracted) {
+        await client.query(
+          /* `subcategory` and `structured_extraction` are written because the
+             response-package compiler reads them and nothing persisted either:
+             the parser's section candidates, evidence needs, owner function and
+             confidence trace lived in the intake response and were gone by the
+             time a package was compiled, which is why every package fell back to
+             the generic 'Issue evidence attachment'. */
+          `INSERT INTO c2c_correspondence_issues
+            (id, correspondence_id, category, subcategory, severity, blocker, response_required, source_excerpt, confidence, human_review_status, mapped_ctd_sections, mapped_artifact_ids, resolution_status, structured_extraction)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14::jsonb)`,
+          correspondenceIssueRowParams(issue)
+        );
+
+        const impact = await computeCorrespondenceIssueImpact({
+          orgId,
+          projectId: record.projectId,
+          submissionId: record.submissionId,
+          correspondenceId: id,
+          issue,
+        }, txDb);
+        const canonicalTasks = await createCanonicalTasksForIssue({
+          orgId,
+          projectId: record.projectId,
+          issue,
+          ownerUserId: userId,
+          // ownerName is nullable downstream, so an unresolved owner is recorded
+          // as unowned rather than as a person called `user-41`.
+          ownerName: (req as any).user?.name ?? (req as any).user?.email ?? null,
+          linkedSectionKeys: impact.linkedSections.map(s => s.sectionKey),
+        }, txDb);
+
+        downstreamActions.push({
+          issueId: issue.id,
+          linkedPackageDbId: impact.linkedPackageDbId,
+          linkedSections: impact.linkedSections,
+          blockerOpened: impact.blockerOpened,
+          readinessPenalty: impact.readinessPenalty,
+          recommendedResponsePackageType: impact.recommendedResponsePackageType,
+          canonicalTasks,
+        });
+      }
+
+      await addTimelineEventDB(client, {
         orgId,
         projectId: record.projectId,
         submissionId: record.submissionId,
         correspondenceId: id,
-        issue,
+        eventType: 'correspondence_ingested',
+        summary: record.subject,
       });
-      const canonicalTasks = await createCanonicalTasksForIssue({
-        orgId,
-        projectId: record.projectId,
-        issue,
-        ownerUserId: userId,
-        // ownerName is nullable downstream, so an unresolved owner is recorded
-        // as unowned rather than as a person called `user-41`.
-        ownerName: (req as any).user?.name ?? (req as any).user?.email ?? null,
-        linkedSectionKeys: impact.linkedSections.map(s => s.sectionKey),
-      });
-
-      downstreamActions.push({
-        issueId: issue.id,
-        linkedPackageDbId: impact.linkedPackageDbId,
-        linkedSections: impact.linkedSections,
-        blockerOpened: impact.blockerOpened,
-        readinessPenalty: impact.readinessPenalty,
-        recommendedResponsePackageType: impact.recommendedResponsePackageType,
-        canonicalTasks,
-      });
-    }
-
-    await addTimelineEventDB(pool!, {
-      orgId,
-      projectId: record.projectId,
-      submissionId: record.submissionId,
-      correspondenceId: id,
-      eventType: 'correspondence_ingested',
-      summary: record.subject,
     });
 
     /* Central audit trail. The timeline event above is the per-correspondence

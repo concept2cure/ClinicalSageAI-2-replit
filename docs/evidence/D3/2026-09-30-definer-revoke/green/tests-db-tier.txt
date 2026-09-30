@@ -1,0 +1,3 @@
+# The whole tests/db tier on c2c_d3c after the grant recipe revoked the 48 (app_service, RLS_ENFORCE=on). No "permission denied for function" anywhere.
+ Test Files  84 passed (84)
+      Tests  843 passed (843)
