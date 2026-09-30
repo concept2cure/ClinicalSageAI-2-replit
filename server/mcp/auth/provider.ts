@@ -20,7 +20,13 @@ import type { OAuthServerProvider, AuthorizationParams } from '@modelcontextprot
 import type { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/server/auth/clients.js';
 import type { OAuthClientInformationFull, OAuthTokens } from '@modelcontextprotocol/sdk/shared/auth.js';
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
-import { InvalidGrantError, InvalidScopeError, InvalidTargetError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import {
+  InvalidGrantError,
+  InvalidScopeError,
+  InvalidTargetError,
+  ServerError,
+} from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import { ACCOUNT_INACTIVE_MESSAGE, isAccountActiveBeforeTenant } from '../../services/account-standing';
 import { ALL_MCP_SCOPES, type McpConfig } from '../config';
 import * as store from './store';
 import { mintAccessToken, signPendingAuthorization, verifyPlatformBearer } from './platform-token';
@@ -106,10 +112,7 @@ export class ConceptToCureOAuthProvider implements OAuthServerProvider {
     const redeemed = await store.redeemAuthorizationCode(authorizationCode);
     if (!redeemed) throw new InvalidGrantError('Authorization code has already been used');
 
-    const membership = await store.findMembership(stored.userId, stored.organizationId);
-    if (!membership || membership.membershipId !== stored.membershipId) {
-      throw new InvalidGrantError('The authorising membership no longer exists');
-    }
+    const membership = await this.liveGrantorMembership(stored);
     return this.issueTokens(client.client_id, membership, stored.scopes, boundResource, null);
   }
 
@@ -130,12 +133,42 @@ export class ConceptToCureOAuthProvider implements OAuthServerProvider {
     if (scopes && scopes.some((s) => !granted.has(s))) {
       throw new InvalidScopeError('A refresh cannot request scopes beyond the original grant');
     }
-    const membership = await store.findMembership(stored.userId, stored.organizationId);
-    if (!membership || membership.membershipId !== stored.membershipId) {
-      throw new InvalidGrantError('The authorising membership no longer exists');
-    }
+    // Before the rotation, so a refusal leaves the grant as it was: a suspension
+    // is reversible, and refusing one must not quietly destroy the grant.
+    const membership = await this.liveGrantorMembership(stored);
     await store.revokeRefreshToken(refreshToken);
     return this.issueTokens(client.client_id, membership, effective, boundResource, store.sha256Hex(refreshToken));
+  }
+
+  /**
+   * The membership a grant was made under, provided the account that made it is
+   * still in use (VSR-001 F-28/F-29; account-standing.ts) and the membership is
+   * the same one.
+   *
+   * Both /token exchanges run this. Until 2026-09-25 they re-checked the
+   * membership only, so an account suspended or deprovisioned after it
+   * authorised a client kept that client: the refresh token minted access for
+   * its 30-day life, rotating forward each time, and a code issued before the
+   * suspension still redeemed (mcp-account-standing.dbtest.ts). An account that
+   * cannot be read is a ServerError, never a pass.
+   */
+  private async liveGrantorMembership(grant: {
+    userId: number;
+    organizationId: number;
+    membershipId: number;
+  }): Promise<store.Membership> {
+    let active: boolean;
+    try {
+      active = await isAccountActiveBeforeTenant(grant.userId);
+    } catch {
+      throw new ServerError('The account could not be checked. Try again.');
+    }
+    if (!active) throw new InvalidGrantError(ACCOUNT_INACTIVE_MESSAGE);
+    const membership = await store.findMembership(grant.userId, grant.organizationId);
+    if (!membership || membership.membershipId !== grant.membershipId) {
+      throw new InvalidGrantError('The authorising membership no longer exists');
+    }
+    return membership;
   }
 
   private async issueTokens(

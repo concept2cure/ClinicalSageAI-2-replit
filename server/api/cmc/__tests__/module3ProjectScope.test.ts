@@ -1,8 +1,9 @@
 /**
  * Module 3 acts only in a project of the caller's organization (PF-15).
  *
- * Every /api/cmc/module3-os route that names a project took :projectId from the
- * URL and wrote and read under it unchecked. One router.param guard now asks
+ * Every /api/cmc Module 3 route that names a project (the operating system,
+ * build state and convergence routers) took :projectId from the URL and wrote
+ * and read under it unchecked. One guard, module3-project-guard.ts, now asks
  * projectBelongsToTenant first. Its SQL is proven in
  * services/cmc/__tests__/project-membership.pglite.test.ts; here it is mocked
  * so that 'foreign-proj' is another organization's project, and the routes are
@@ -30,6 +31,8 @@ vi.mock('../../../routes/c2c/actions', () => ({
 }));
 
 import router from '../module3OperatingSystemRoutes';
+import buildStateRouter from '../module3BuildStateRoutes';
+import convergenceRouter from '../module3ConvergenceRoutes';
 
 function appFor(org: number | null): express.Express {
   const a = express();
@@ -39,6 +42,8 @@ function appFor(org: number | null): express.Express {
     next();
   });
   a.use('/api/cmc/module3-os', router);
+  a.use('/api/cmc/module3-build', buildStateRouter);
+  a.use('/api/cmc/module3-convergence', convergenceRouter);
   return a;
 }
 
@@ -49,7 +54,7 @@ beforeEach(() => {
   mockProjectOwned.mockImplementation(async (p: { projectId: string }) => p.projectId !== 'foreign-proj');
 });
 
-describe("module3-os — another organization's project", () => {
+describe("Module 3 routers — another organization's project", () => {
   it.each([
     ['post', '/source-objects/foreign-proj', { sourceType: 'batch_record', sourceKey: 'k', sourcePayload: { a: 1 } }],
     ['post', '/compile/foreign-proj', {}],
@@ -68,6 +73,20 @@ describe("module3-os — another organization's project", () => {
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('PROJECT_NOT_FOUND');
     expect(mockProjectOwned).toHaveBeenCalledWith({ organizationId: 1, projectId: 'foreign-proj' });
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['get', '/api/cmc/module3-build/build-state/foreign-proj', undefined],
+    ['get', '/api/cmc/module3-build/uploaded-sources/foreign-proj', undefined],
+    ['post', '/api/cmc/module3-convergence/classify-artifact/foreign-proj', { artifactId: 'a-1', sourceType: 'batch' }],
+    ['post', '/api/cmc/module3-convergence/build-section/foreign-proj/3.2.P.5', {}],
+    ['get', '/api/cmc/module3-convergence/source-lineage/foreign-proj/3.2.P.5', undefined],
+  ] as const)('%s %s is not found — never an empty build state — and nothing is read or written', async (method, path, body) => {
+    const r = request(appFor(1))[method](path);
+    const res = await (body ? r.send(body) : r);
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('PROJECT_NOT_FOUND');
     expect(mockQuery).not.toHaveBeenCalled();
   });
 

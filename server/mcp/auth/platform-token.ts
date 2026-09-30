@@ -2,10 +2,20 @@
  * Bearer verification and minting for the connector.
  *
  * ONE verifier. `verifyPlatformBearer` is the connector's only way to accept a
- * token and it delegates to `verifyJwtWithRotation` — the function the REST
- * API's authenticateToken uses — plus the same `requireAccessTokenReason`
- * token-class rule and a live organization_users membership re-check. A token
- * the API would reject, the connector rejects for the same reason.
+ * token (the /mcp bearer check and the consent POST both call it). It verifies
+ * through `verifyLiveToken`, the check every first-party authenticator makes —
+ * signature and expiry, the revocation list, the account's standing, and a
+ * password change since the token was issued — then the same
+ * `requireAccessTokenReason` token-class rule and a live organization_users
+ * membership re-check. A token the API would reject, the connector rejects for
+ * the same reason.
+ *
+ * Until 2026-09-25 it called verifyJwtWithRotation directly, so it read neither
+ * the revocation list nor the account's standing: a session its holder had
+ * signed out, or one held by an account since suspended or deprovisioned,
+ * opened /mcp and could authorise a new client at the consent page for the rest
+ * of its life (review 2026-09-22 finding #6; audit IAM-02, P0-2 part c;
+ * mcp-account-standing.dbtest.ts).
  *
  * Two token populations pass through it:
  *   1. First-party platform access tokens (POST /api/auth/login, /dev-login,
@@ -19,8 +29,9 @@
 
 import jwt from 'jsonwebtoken';
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
-import { InvalidTokenError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import { InvalidTokenError, ServerError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
 import { verifyJwtWithRotation, activeJwtSecret } from '../../utils/jwtVerify';
+import { verifyLiveToken } from '../../services/token-revocation';
 import { requireAccessTokenReason } from '../../middleware/tokenType';
 import { CONNECTOR_TOKEN_USE, openConnectorSession } from '../../services/session-inactivity';
 import { ALL_MCP_SCOPES, type McpConfig } from '../config';
@@ -64,15 +75,39 @@ function toPositiveInt(v: unknown): number | null {
   return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
-function decodeAccessClaims(token: string): PlatformClaims {
+const JWT_ERRORS = new Set(['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError']);
+
+/**
+ * The claims of a live access token, or the refusal the SDK maps to a status:
+ * InvalidTokenError → 401 (the client must authorise again), ServerError → 500.
+ *
+ * A revocation list or an account that cannot be read is a ServerError, never
+ * a pass and never "your token is bad": the token may be fine, and a client
+ * told otherwise would send its user back through consent for an outage.
+ */
+async function decodeAccessClaims(token: string): Promise<PlatformClaims> {
+  // In the order authenticateToken checks: the signature, the token class, and
+  // only then the reads, so a token of the wrong class is refused for its class
+  // and costs no round trip.
   let claims: PlatformClaims;
   try {
     claims = verifyJwtWithRotation<PlatformClaims>(token);
   } catch {
     throw new InvalidTokenError('Invalid or expired token');
   }
-  const nonAccess = requireAccessTokenReason(claims);
+  // The connector is the resource server for its own delegated tokens, and for
+  // no other kind (middleware/tokenType.ts).
+  const nonAccess = requireAccessTokenReason(claims, { delegatedUse: MCP_TOKEN_USE });
   if (nonAccess) throw new InvalidTokenError('Token is not valid for this operation');
+  try {
+    await verifyLiveToken(token);
+  } catch (err) {
+    const name = (err as { name?: unknown } | null)?.name;
+    // By name, as server/routes/users.ts does: the class may load twice.
+    if (name === 'SessionEndedError') throw new InvalidTokenError((err as Error).message);
+    if (typeof name === 'string' && JWT_ERRORS.has(name)) throw new InvalidTokenError('Invalid or expired token');
+    throw new ServerError('The session could not be checked. Try again.');
+  }
   return claims;
 }
 
@@ -104,7 +139,7 @@ function resolveScopes(claims: PlatformClaims, tokenUse: McpPrincipal['tokenUse'
 }
 
 export async function verifyPlatformBearer(token: string, config: McpConfig): Promise<AuthInfo> {
-  const claims = decodeAccessClaims(token);
+  const claims = await decodeAccessClaims(token);
   const { userId, organizationId } = resolveSubject(claims);
   checkAudience(claims, config);
 
@@ -154,6 +189,8 @@ export interface MintAccessTokenInput {
  * the token is a session opened through openConnectorSession — registered in
  * the account's connector pool at the organisation's limit, idle at its own
  * TTL, over at the platform lifetime; that function explains the policy.
+ * `token_use` is what every other authenticator refuses it by
+ * (middleware/tokenType.ts): it opens the connector and nothing else.
  * `activeJwtSecret()` rather than the config snapshot, for the reason that
  * function documents: minting and verifying must read the same secret at the
  * same moment.
