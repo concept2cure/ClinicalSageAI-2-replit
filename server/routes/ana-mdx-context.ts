@@ -18,9 +18,12 @@ import { authenticateToken } from '../middleware/auth';
 import { pool } from '../db';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { buildMdxContextBlock } from '../services/ana-ri/mdx-context-resolver';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
 router.use(authenticateToken);
+const log = createScopedLogger('ana-mdx-context');
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
@@ -91,10 +94,7 @@ router.get('/mdx-context-snapshot', async (req: Request, res: Response) => {
       access: { auditTrail },
     });
   } catch (err) {
-    res.status(500).json({
-      error: 'Failed to build MDX context snapshot',
-      detail: err instanceof Error ? err.message : 'unknown',
-    });
+    return serverError(res, log, 'building the MDX context snapshot', err);
   }
 });
 

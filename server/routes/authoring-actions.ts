@@ -16,8 +16,11 @@ import {
    the shared `recordAuditRow`, which reports the outcome instead of discarding
    it. See server/services/audit/audit-write-outcome.ts. */
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('authoring-actions');
 
 function requireTenantId(req: Request, res: Response): number | null {
   const rawTenantId = (req as any).tenantId ?? (req as any).organizationId;
@@ -1015,7 +1018,7 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
       if (isGovernedContractInvalidError(err) && err.governed) {
         return sendGovernedContractInvalid(res, err.governed);
       }
-      return res.status(500).json({ approved: false, reason: 'error', message: err?.message || 'Failed to approve' });
+      return serverError(res, log, 'approving the artifact', err);
     }
   } catch (err: any) {
     console.error('[authoring-actions] approve-artifact error:', err?.message);
@@ -1223,7 +1226,7 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
       if (isGovernedContractInvalidError(err) && err.governed) {
         return sendGovernedContractInvalid(res, err.governed);
       }
-      return res.status(500).json({ locked: false, reason: 'error', message: err?.message || 'Failed to lock' });
+      return serverError(res, log, 'locking the artifact', err);
     }
   } catch (err: any) {
     console.error('[authoring-actions] lock-artifact error:', err?.message);
