@@ -257,13 +257,12 @@ Provide specific, actionable recommendations with regulatory citations where app
     });
     if (isTerminalGatewayError(error)) return sendGatewayRefusal(res, error);
     
-    // Provide user-friendly error message
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-    
+    // logAIRequest above has logged the failure. The body says what failed in
+    // the user's terms and never carries the error text (2026-09-30).
     res.status(500).json({
       success: false,
       error: 'AI assistance service encountered an error',
-      message: errorMessage,
+      message: 'The request could not be completed. The problem has been logged.',
       recommendation: getFallbackSuggestion(req.body.task || 'regulatory_review', req.body.content || ''),
       task: req.body.task,
       documentType: req.body.documentType,

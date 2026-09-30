@@ -16,6 +16,7 @@
 
 import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger.js';
+import { serverError } from '../lib/api-response';
 
 const logger = createScopedLogger('orchestration');
 
@@ -148,9 +149,7 @@ router.post('/execute', async (req: Request, res: Response) => {
 
     res.json(execution);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Workflow execution failed';
-    logger.error('Execute error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'running the workflow', err);
   }
 });
 
@@ -185,8 +184,7 @@ router.get('/executions/:id', (req: Request, res: Response) => {
     }
     res.json(execution);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to fetch execution';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading the workflow run', err);
   }
 });
 
@@ -204,8 +202,7 @@ router.get('/project/:id', (req: Request, res: Response) => {
     const workflows = getProjectWorkflows(orgId, projectId);
     res.json({ workflows });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to fetch workflows';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'listing workflows', err);
   }
 });
 
@@ -238,8 +235,7 @@ router.post('/cancel/:id', (req: Request, res: Response) => {
     }
     res.json({ success: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Cancel failed';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'cancelling the workflow run', err);
   }
 });
 
@@ -264,9 +260,7 @@ router.get('/projects/:projectId/readiness', async (req: Request, res: Response)
     const assessment = computeReadinessAssessment(payload);
     res.json(assessment);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Readiness assessment failed';
-    logger.error('GET readiness error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'assessing readiness', err);
   }
 });
 
@@ -291,9 +285,7 @@ router.post('/readiness', async (req: Request, res: Response) => {
     const assessment = computeReadinessAssessment(payload);
     res.json(assessment);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Readiness assessment failed';
-    logger.error('Readiness error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'assessing readiness', err);
   }
 });
 
@@ -318,9 +310,7 @@ router.post('/recommendations', async (req: Request, res: Response) => {
     const recSet = generateRecommendations(payload, body);
     res.json(recSet);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Recommendation generation failed';
-    logger.error('Recommendations error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'generating recommendations', err);
   }
 });
 
@@ -339,9 +329,7 @@ router.post('/continuity', async (req: Request, res: Response) => {
     const snapshot = await generateContinuitySnapshot(orgId, projectId);
     res.json(snapshot);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Continuity snapshot failed';
-    logger.error('Continuity error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'building the continuity snapshot', err);
   }
 });
 
@@ -362,8 +350,7 @@ router.get('/continuity/:projectId', (req: Request, res: Response) => {
     }
     res.json(snapshot);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to fetch continuity data';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading continuity data', err);
   }
 });
 
@@ -394,9 +381,7 @@ router.get('/readiness/freshness/:projectId', async (req: Request, res: Response
       assembledAt: payload.assembledAt,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Freshness query failed';
-    logger.error('Readiness freshness error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading readiness freshness', err);
   }
 });
 
@@ -492,9 +477,7 @@ router.get('/pre-submission-gate/history/:projectId', async (req: Request, res: 
       history,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Gate history query failed';
-    logger.error('Gate history error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading gate history', err);
   }
 });
 
@@ -630,9 +613,7 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
 
     res.json(response);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Pre-submission gate failed';
-    logger.error('Pre-submission gate error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'running the pre-submission gate', err);
   }
 });
 

@@ -16,6 +16,7 @@
 
 import { randomBytes } from 'crypto';
 import type { Request, Response } from 'express';
+import { InvalidTokenError, ServerError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
 import { SCOPE_DESCRIPTIONS, type McpConfig, type McpScope } from '../config';
 import { readPendingAuthorization, verifyPlatformBearer, principalOf } from './platform-token';
 import * as store from './store';
@@ -132,10 +133,21 @@ export function consentHandler(config: McpConfig) {
       return;
     }
     const accessToken = typeof body.access_token === 'string' ? body.access_token : '';
+    // The refusal says which it was. An account out of use is told so (signing in
+    // again cannot help it), and a check that could not run is not reported as a
+    // bad sign-in.
     let principal;
     try {
       principal = principalOf(await verifyPlatformBearer(accessToken, config));
-    } catch {
+    } catch (err) {
+      if (err instanceof ServerError) {
+        res.status(503).json({ error: 'temporarily_unavailable', error_description: 'The session could not be checked. Try again.' });
+        return;
+      }
+      if (err instanceof InvalidTokenError) {
+        res.status(401).json({ error: 'invalid_token', error_description: err.message });
+        return;
+      }
       principal = null;
     }
     if (!principal) {
