@@ -3275,11 +3275,26 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
   if (orgId == null) {
     return JSON.stringify({ source: 'AnA RBM', error: 'Organization context required.' });
   }
-  const { recomputeSiteRisk } = await import('../rbm/site-risk-engine.js');
+  const { recomputeSiteRisk, SITE_READ_MESSAGE } = await import('../rbm/site-risk-engine.js');
   const { getPool } = await import('../../db.js');
+  // recomputeSiteRisk reports WHY it produced nothing (#1128): the study is not
+  // this org's, Site Intelligence is unavailable, or the read failed. Handed an
+  // empty array instead, the model would tell the user the study has no site
+  // data — a clean bill of health it has no evidence for. Return the reason.
+  const recompute = async (): Promise<any[] | string> => {
+    const out = await recomputeSiteRisk(orgId, programId);
+    if (!out.ok) {
+      return JSON.stringify({
+        source: 'AnA RBM Site Risk', error: SITE_READ_MESSAGE[out.reason], reason: out.reason,
+      });
+    }
+    return out.snapshots;
+  };
   let sites: any[];
   if (input.persist === true) {
-    sites = await recomputeSiteRisk(orgId, programId);
+    const r = await recompute();
+    if (typeof r === 'string') return r;
+    sites = r;
   } else {
     const { rows } = await getPool().query(
       `SELECT site_number, site_name, composite_risk, monitoring_tier, drivers FROM rbm_site_risk_scores
@@ -3287,7 +3302,11 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
       [orgId, programId],
     );
     sites = rows;
-    if (sites.length === 0) sites = await recomputeSiteRisk(orgId, programId);
+    if (sites.length === 0) {
+      const r = await recompute();
+      if (typeof r === 'string') return r;
+      sites = r;
+    }
   }
   const tiers = { reduced: 0, standard: 0, enhanced: 0 } as Record<string, number>;
   for (const s of sites) tiers[s.monitoringTier ?? s.monitoring_tier] = (tiers[s.monitoringTier ?? s.monitoring_tier] ?? 0) + 1;
@@ -3297,7 +3316,11 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
     siteCount: sites.length,
     tierCounts: tiers,
     sites,
-    note: sites.length === 0 ? 'No Site Intelligence data found for this program.' : undefined,
+    // Only reachable on a SUCCESSFUL read that found nothing, so it now means
+    // what it says instead of standing in for every failure mode.
+    note: sites.length === 0
+      ? 'Site Intelligence was read successfully and holds no sites for this program.'
+      : undefined,
   });
 });
 
@@ -3673,7 +3696,9 @@ registerToolHandler('create_monitoring_action', async (input, ctx) => {
     signalId: rbmNum(input.signalId) ?? null,
     owner: rbmNum(input.owner) ?? null,
   });
-  if (!out.created) return rbmErr('Monitoring plan not found in this tenant.');
+  // An approved plan's actions are frozen under its signature (#1166): say so,
+  // rather than reporting a plan that exists as "not found".
+  if (!out.created) return rbmErr(out.reason === 'plan_not_draft' ? out.message : 'Monitoring plan not found in this tenant.');
   return JSON.stringify({ source: 'AnA RBM · create_monitoring_action', ...out });
 });
 
