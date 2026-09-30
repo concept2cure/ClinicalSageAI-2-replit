@@ -48,6 +48,7 @@ import { requirePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import Stripe from 'stripe';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { serverError } from '../lib/api-response';
 
 const logger = createScopedLogger('billing-dashboard');
 
@@ -148,9 +149,7 @@ router.get('/usage', authenticateToken, async (req: Request, res: Response) => {
       endDate: end,
     });
   } catch (error) {
-    logger.error('Usage error', { err: error instanceof Error ? error.message : String(error) });
-    const message = error instanceof Error ? error.message : 'Failed to fetch usage data';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading usage data', error);
   }
 });
 
@@ -226,9 +225,7 @@ router.get('/usage/summary', authenticateToken, async (req: Request, res: Respon
       periodStart,
     });
   } catch (error) {
-    logger.error('Usage summary error', { err: error instanceof Error ? error.message : String(error) });
-    const message = error instanceof Error ? error.message : 'Failed to fetch usage summary';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading the usage summary', error);
   }
 });
 
@@ -292,9 +289,7 @@ router.get('/invoices', authenticateToken, async (req: Request, res: Response) =
       total: stripeInvoices.data.length,
     });
   } catch (error) {
-    logger.error('Invoices error', { err: error instanceof Error ? error.message : String(error) });
-    const message = error instanceof Error ? error.message : 'Failed to fetch invoices';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading invoices', error);
   }
 });
 
@@ -355,9 +350,7 @@ router.get('/budgets', authenticateToken, async (req: Request, res: Response) =>
         : null,
     });
   } catch (error) {
-    logger.error('Budgets error', { err: error instanceof Error ? error.message : String(error) });
-    const message = error instanceof Error ? error.message : 'Failed to fetch budget settings';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading budget settings', error);
   }
 });
 
@@ -423,9 +416,7 @@ router.post('/budgets', authenticateToken, async (req: Request, res: Response) =
       alerts: row.alert_thresholds || [],
     });
   } catch (error) {
-    logger.error('Update budget error', { err: error instanceof Error ? error.message : String(error) });
-    const message = error instanceof Error ? error.message : 'Failed to update budget settings';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'updating budget settings', error);
   }
 });
 
@@ -474,9 +465,7 @@ router.get('/alerts/history', authenticateToken, async (req: Request, res: Respo
       hasMore: offset + limit < total,
     });
   } catch (error) {
-    logger.error('Alerts history error', { err: error instanceof Error ? error.message : String(error) });
-    const message = error instanceof Error ? error.message : 'Failed to fetch alert history';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading alert history', error);
   }
 });
 
@@ -518,9 +507,7 @@ router.post('/alerts/:id/acknowledge', authenticateToken, async (req: Request, r
       acknowledgedAt: r.acknowledged_at,
     });
   } catch (error) {
-    logger.error('Acknowledge alert error', { err: error instanceof Error ? error.message : String(error) });
-    const message = error instanceof Error ? error.message : 'Failed to acknowledge alert';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'acknowledging the alert', error);
   }
 });
 
@@ -607,9 +594,7 @@ router.get('/rate-limits', authenticateToken, async (req: Request, res: Response
       limits,
     });
   } catch (error) {
-    logger.error('Rate limits error', { err: error instanceof Error ? error.message : String(error) });
-    const message = error instanceof Error ? error.message : 'Failed to fetch rate limits';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading rate limits', error);
   }
 });
 
@@ -682,9 +667,7 @@ router.get('/activity', authenticateToken, async (req: Request, res: Response) =
 
     res.json({ activity });
   } catch (error) {
-    logger.error('Activity error', { err: error instanceof Error ? error.message : String(error) });
-    const message = error instanceof Error ? error.message : 'Failed to fetch billing activity';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading billing activity', error);
   }
 });
 

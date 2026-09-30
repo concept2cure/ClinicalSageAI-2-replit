@@ -502,9 +502,7 @@ Generate the section content with proper regulatory structure and cross-referenc
       },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('Document generation error:', message);
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'generating the document', err);
   }
 });
 
