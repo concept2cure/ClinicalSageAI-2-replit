@@ -88,25 +88,31 @@ export interface WorkflowTemplate {
   dependencies: [string, string][];
 }
 
-/* ── Module type palette (projectTasks.moduleColor) ── */
+/* ── Module type palette (projectTasks.moduleColor) ──
+   Each value is a design token (`--module-*`, design-system/colors_and_type.css),
+   with a light and a dark value and each held to AA as chip text by
+   check-token-contrast. Until 2026-09-28 (design-system G2) these were raw hex
+   with no dark pair, eight of them below AA. MODULE_COLOR_UNKNOWN is the colour
+   of a module this map does not name. */
+export const MODULE_COLOR_UNKNOWN = 'var(--text-300)';
 export const TB_MOD: Record<string, string> = {
-  CMC: '#7c6f5b',
-  IND: '#2a6f97',
+  CMC: 'var(--module-cmc)',
+  IND: 'var(--module-ind)',
   // Both spellings: the server enum / demo seed use the space-less keys
   // (MedicalDevice, ProtocolDesign) while older rows may carry the spaced
   // labels — a live row must never fall through to grey (assessment D7).
-  'Medical Device': '#5a8f69',
-  MedicalDevice: '#5a8f69',
-  eCTD: '#8a5a9c',
-  Vault: '#9c7a3c',
-  'Protocol Design': '#9c5a5a',
-  ProtocolDesign: '#9c5a5a',
-  Clinical: '#2a6f97',
-  Nonclinical: '#6b8f5a',
-  Biostatistics: '#5a6f9c',
-  Safety: '#a8553c',
-  Regulatory: '#7c6f5b',
-  general: '#7c6f5b',
+  'Medical Device': 'var(--module-device)',
+  MedicalDevice: 'var(--module-device)',
+  eCTD: 'var(--module-ectd)',
+  Vault: 'var(--module-vault)',
+  'Protocol Design': 'var(--module-protocol)',
+  ProtocolDesign: 'var(--module-protocol)',
+  Clinical: 'var(--module-ind)',
+  Nonclinical: 'var(--module-nonclinical)',
+  Biostatistics: 'var(--module-biostatistics)',
+  Safety: 'var(--module-safety)',
+  Regulatory: 'var(--module-cmc)',
+  general: 'var(--module-cmc)',
 };
 
 /* ── Board columns ──

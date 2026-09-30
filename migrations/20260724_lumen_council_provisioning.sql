@@ -13,6 +13,22 @@
 -- Model note: the per-agent model_provider/model_name columns are informational
 -- lineage — actual routing goes through the governed AI gateway (Claude-first,
 -- task-based), which records model, prompt hash, and fallback chain per call.
+--
+-- ── 2026-09-29: a tenant key on the three tables that hold tenant text (D6) ──
+-- Amended in place, per CLAUDE.md Rule 1 (this file re-runs on every deploy;
+-- the change is additive). council_sessions, agent_executions and
+-- data_verifications hold a tenant's draft text, its claims and the verdicts
+-- on them, and had no tenant column, so no RLS policy could attach and no
+-- tenant could be exported or purged. Each gains organization_id INTEGER (in
+-- CREATE TABLE, and by ADD COLUMN IF NOT EXISTS for tables that exist), an FK
+-- to organizations where that table exists, an index, and NOT NULL only when no row lacks
+-- one (the pattern of db/migrations/20260821_regulatory_twin_simulations_tenant_scope.sql:
+-- rows written before this change cannot be attributed and are left NULL,
+-- which the policy matches to no tenant). The policy itself is the canonical
+-- sweep's (db/migrations/20260801_tenant_isolation_sweep.sql), which names these
+-- three lumen tables explicitly. The service writes the tenant
+-- (server/services/multi-agent-council.ts). Evidence:
+-- docs/evidence/D6/2026-09-29-council-tenant/.
 
 CREATE SCHEMA IF NOT EXISTS lumen;
 
@@ -32,6 +48,7 @@ CREATE TABLE IF NOT EXISTS lumen.agent_registry (
 
 CREATE TABLE IF NOT EXISTS lumen.council_sessions (
   id UUID PRIMARY KEY,
+  organization_id INTEGER,
   program_id TEXT,
   section_path TEXT NOT NULL,
   requirements JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -53,6 +70,7 @@ CREATE TABLE IF NOT EXISTS lumen.council_sessions (
 
 CREATE TABLE IF NOT EXISTS lumen.agent_executions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id INTEGER,
   session_id UUID NOT NULL,
   agent_id UUID,
   agent_role TEXT NOT NULL,
@@ -78,6 +96,7 @@ CREATE INDEX IF NOT EXISTS idx_lumen_agent_executions_session
 
 CREATE TABLE IF NOT EXISTS lumen.data_verifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id INTEGER,
   execution_id UUID NOT NULL,
   session_id UUID NOT NULL,
   claim_text TEXT NOT NULL,
@@ -91,6 +110,35 @@ CREATE TABLE IF NOT EXISTS lumen.data_verifications (
 );
 CREATE INDEX IF NOT EXISTS idx_lumen_data_verifications_session
   ON lumen.data_verifications (session_id);
+
+-- 2026-09-29: the tenant key, on tables that already exist (see the header).
+DO $$
+DECLARE
+  t TEXT;
+  orphaned BIGINT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['council_sessions', 'agent_executions', 'data_verifications'] LOOP
+    EXECUTE format('ALTER TABLE lumen.%I ADD COLUMN IF NOT EXISTS organization_id INTEGER', t);
+    -- The FK only where organizations exists: on the C2C apply path this file
+    -- can run before it does, and a later re-run (every deploy) adds it then.
+    IF to_regclass('public.organizations') IS NOT NULL AND NOT EXISTS (
+      SELECT 1 FROM pg_constraint c
+        JOIN pg_class r ON r.oid = c.conrelid
+        JOIN pg_namespace n ON n.oid = r.relnamespace
+       WHERE n.nspname = 'lumen' AND r.relname = t AND c.conname = 'fk_lumen_' || t || '_org'
+    ) THEN
+      EXECUTE format('ALTER TABLE lumen.%I ADD CONSTRAINT %I FOREIGN KEY (organization_id) REFERENCES organizations(id)',
+                     t, 'fk_lumen_' || t || '_org');
+    END IF;
+    EXECUTE format('CREATE INDEX IF NOT EXISTS %I ON lumen.%I (organization_id)', 'idx_lumen_' || t || '_org', t);
+    EXECUTE format('SELECT count(*) FROM lumen.%I WHERE organization_id IS NULL', t) INTO orphaned;
+    IF orphaned = 0 THEN
+      EXECUTE format('ALTER TABLE lumen.%I ALTER COLUMN organization_id SET NOT NULL', t);
+    ELSE
+      RAISE NOTICE '[lumen-council-tenant] lumen.% has % row(s) with no tenant; organization_id is left NULLABLE, and those rows match no tenant policy', t, orphaned;
+    END IF;
+  END LOOP;
+END $$;
 
 -- lumen.data_atoms is deliberately NOT defined here.
 --

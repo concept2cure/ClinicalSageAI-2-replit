@@ -10,6 +10,7 @@ import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fix
 import { useChatUpload, readyAttachmentLabel } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
 import { ProjectRecords } from './ProjectRecords';
+import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import '../styles/project-home-v2.css';
@@ -177,14 +178,20 @@ function Anchored<T>(props: {
   return <>{props.render(state.data)}</>;
 }
 
-/* ════ Lifecycle (canonical stage catalog — not data) ════ */
+/* ════ Lifecycle (canonical stage catalog — not data) ════
+   The tracker is navigation over the stage catalog, not a progress meter.
+   Every stage before the open tab used to be marked `done` — filled node,
+   filled connector — from the tab's POSITION alone. `stage` defaults to
+   'author', so Plan and Evidence rendered as completed on every project,
+   including with no project loaded at all, and opening Submit "completed"
+   Review. Nothing this surface reads records per-stage completion, so the one
+   state stated is the one that is true: which stage is open. */
 
 function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string) => void }) {
-  const curIdx = PJ_LIFECYCLE.findIndex(s => s.id === stage);
   return (
     <div className="pj-lc" role="tablist" aria-label="Project lifecycle">
-      {PJ_LIFECYCLE.map((s, i) => {
-        const status = i < curIdx ? 'done' : (i === curIdx ? 'active' : 'upcoming');
+      {PJ_LIFECYCLE.map((s) => {
+        const status = s.id === stage ? 'active' : undefined;
         return (
           <button key={s.id} className="pj-lc-stage" data-status={status} aria-selected={stage === s.id || undefined}
             onClick={() => setStage(s.id)} title={s.blurb}>
@@ -571,6 +578,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           )
         }
       />
+
+      {/* The caller's chat files with no project yet (PF-07): one audited adopt
+          brings a file into this Data Room, and the list reloads. */}
+      {pid && <ConversationFilesAdopt pid={pid} onAdopted={() => setReloadKey((k) => k + 1)} />}
 
       <div className="cm-pushbar" style={{ marginTop: 12 }}>
         <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('source-tracer')}>
@@ -1210,8 +1221,11 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   // Header identity: sel is the live selection handoff; prog enriches it with
   // real regulatory_programs columns. Every value is null-safe — a chip is only
   // rendered when its column is present (never fabricated).
-  const title = sel?.title || prog?.name || 'Project';
-  const productName = sel?.product || prog?.product_name || String(title).split(' ')[0];
+  // No placeholder name. This fell back to the word 'Project', which the
+  // header then rendered as the project's name — "PROJECT Project" above an
+  // H1 "Project" — with no project selected at all.
+  const title = sel?.title || prog?.name || null;
+  const productName = sel?.product || prog?.product_name || (title ? title.split(' ')[0] : 'this project');
   const desc = prog?.description ?? null;
   const clientType = sel?.ws ?? null;
   const submissionType = sel?.code || prog?.code || prog?.program_type || null;
@@ -1290,7 +1304,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
     const drafts = draftsState.data?.drafts;
     return {
       summary:
-        `Project home for "${title}"${submissionType ? ` (${submissionType})` : ''}: ` +
+        `Project home for ${title ? `"${title}"` : 'an untitled project'}${submissionType ? ` (${submissionType})` : ''}: ` +
         [status && `status ${status}`, phase && `phase ${phase}`, priority && `priority ${priority}`,
          region && `primary agency ${region}`, indication && `indication ${indication}`,
          completion != null && `${completion}% complete`].filter(Boolean).join(', ') +
@@ -1379,13 +1393,17 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
     <div className="page-inner pj">
       <button className="pj-back" onClick={() => onNav('projects')}>{I.left} All projects</button>
 
-      <div className="pj-crumb">
-        <span className="pj-crumb-i" data-cur><span className="pj-crumb-k">Project</span>{title}</span>
-      </div>
+      {title && (
+        <div className="pj-crumb">
+          <span className="pj-crumb-i" data-cur><span className="pj-crumb-k">Project</span>{title}</span>
+        </div>
+      )}
 
       <div className="pj-top">
         <div className="pj-top-l">
-          <h1 className="pj-title">{title}</h1>
+          {/* The surface's own name when there is no project name to show —
+              a label for the screen, not a name posing as a project's. */}
+          <h1 className="pj-title">{title ?? 'Project home'}</h1>
           {progState.loading && <div role="status" className="pj-desc" style={{ color: 'var(--text-400)' }}>Loading project…</div>}
           {desc && <div className="pj-desc">{desc}</div>}
           <div className="pj-tags">
@@ -1442,13 +1460,21 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             this is where the control belongs. */}
       </div>
 
-      <StageTracker stage={stage} setStage={setStage} />
-      <div className="pj-stageband">
-        <div className="pj-stageband-l">
-          <span className="pj-stageband-stage">{(PJ_LIFECYCLE.find(s => s.id === stage) ?? { label: '' }).label}</span>
-          <span className="pj-stageband-blurb">{(PJ_LIFECYCLE.find(s => s.id === stage) ?? { blurb: '' }).blurb}</span>
-        </div>
-      </div>
+      {/* A lifecycle belongs to a project. With none selected the tabs
+          switched nothing — the body below is "No project selected" whichever
+          is open — and AnA's set-stage already refuses in this state, so the
+          human's controls do not offer what hers cannot. */}
+      {!noProject && (
+        <>
+          <StageTracker stage={stage} setStage={setStage} />
+          <div className="pj-stageband">
+            <div className="pj-stageband-l">
+              <span className="pj-stageband-stage">{(PJ_LIFECYCLE.find(s => s.id === stage) ?? { label: '' }).label}</span>
+              <span className="pj-stageband-blurb">{(PJ_LIFECYCLE.find(s => s.id === stage) ?? { blurb: '' }).blurb}</span>
+            </div>
+          </div>
+        </>
+      )}
 
       {noProject ? (
         <EmptyState

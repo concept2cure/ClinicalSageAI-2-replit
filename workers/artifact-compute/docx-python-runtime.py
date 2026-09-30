@@ -170,10 +170,15 @@ def _render_content(doc: Document, content: str, images: dict | None = None) -> 
 def _render_image(doc: Document, line: str, images: dict | None) -> None:
     """Render an image from markdown ![alt](src) syntax.
 
-    Supports three source types:
+    Supports two source types:
     1. Key lookup: ![alt](chart_1) — looks up 'chart_1' in images dict (base64)
     2. Data URI:   ![alt](data:image/png;base64,...) — inline base64
-    3. File path:  ![alt](/path/to/file.png) — reads from disk
+
+    There is no third. A file path used to be read from disk: the content is
+    the model's, so `![x](/app/uploads/org-2/figure.png)` embedded another
+    organization's image — or any image file on the host — in a document the
+    caller could download (INJ-PATH-002). An image this worker should embed is
+    passed in the images dict, as bytes the caller already holds.
 
     Images are embedded inline using python-docx add_picture with
     proper width constraints (max 6 inches to fit page margins).
@@ -201,11 +206,6 @@ def _render_image(doc: Document, line: str, images: dict | None) -> None:
                 img_stream = io.BytesIO(base64.b64decode(raw))
             elif isinstance(raw, bytes):
                 img_stream = io.BytesIO(raw)
-
-        # File path
-        elif os.path.isfile(src):
-            with open(src, "rb") as f:
-                img_stream = io.BytesIO(f.read())
 
         if img_stream:
             doc.add_picture(img_stream, width=Inches(5.5))

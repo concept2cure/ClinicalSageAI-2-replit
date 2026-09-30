@@ -18,6 +18,8 @@
  *
  * Pure and deterministic. `estimateFWER` provides a seeded Monte Carlo check of
  * error control under the global null — the GA acceptance bar for this work.
+ * Its caller names the rejection rule simulated, and the name is hashed into
+ * the provenance (2026-09-28: before, two rules' rates shared one inputsSha256).
  */
 
 import { createRng, seedFromObject } from './rng';
@@ -262,7 +264,27 @@ export interface FWEREstimate {
   seed: number;
   alpha: number;
   m: number;
+  /**
+   * The caller's identifier of the rejection rule simulated, hashed into
+   * `provenance.inputsSha256` with m, alpha, nSim and seed. null when the
+   * caller did not identify the rule: the provenance then cannot tell this
+   * rate from another rule's with the same m, alpha, nSim and seed, and its
+   * note says so.
+   */
+  rule: string | null;
   provenance: StatsProvenance;
+}
+
+const FWER_NOTE = 'Monte Carlo FWER under the global null with independent Uniform(0,1) p-values.';
+
+/** The rule identifier, refused unless it is a non-empty string; undefined when omitted. */
+function fwerRule(rule: unknown): string | undefined {
+  if (rule === undefined) return undefined;
+  if (typeof rule !== 'string' || rule.trim() === '') {
+    const got = typeof rule === 'string' ? JSON.stringify(rule) : rule === null ? 'null' : typeof rule;
+    throw new TypeError(`estimateFWER: rule must be a non-empty string identifying the rejection rule, or omitted; got ${got}`);
+  }
+  return rule;
 }
 
 /**
@@ -271,15 +293,27 @@ export interface FWEREstimate {
  * is a family-wise error. p-values are drawn independently Uniform(0,1) (the
  * null distribution of a valid p-value). Seeded and reproducible.
  *
- * `reject` is the procedure applied to a vector of m p-values.
+ * `reject` is the procedure applied to a vector of m p-values. The engine
+ * cannot see which procedure a closure is, so `rule` names it: an identifier
+ * of the exact rejection rule (procedure and whatever configuration fixes it —
+ * weights, transition matrix, level) that is hashed into the provenance, so
+ * rates for different rules never share an `inputsSha256`. It is optional for
+ * backward compatibility only: omitted, the hash is the historical one over
+ * {m, alpha, nSim, seed} and the result reports `rule: null`.
  */
+// The positional signature is the published API; `rule` is appended as an
+// optional sixth parameter so every existing call keeps compiling and hashing
+// as before.
+// eslint-disable-next-line max-params
 export function estimateFWER(
   reject: (pValues: number[]) => boolean[],
   m: number,
   alpha: number,
   nSim: number,
   seed: number,
+  rule?: string,
 ): FWEREstimate {
+  const ruleId = fwerRule(rule);
   const rng = createRng(seed);
   let errors = 0;
   const p = new Array<number>(m);
@@ -288,18 +322,21 @@ export function estimateFWER(
     const rejected = reject(p);
     if (rejected.some(r => r)) errors++;
   }
-  const inputs = { m, alpha, nSim, seed };
+  const inputs = ruleId === undefined ? { m, alpha, nSim, seed } : { m, alpha, nSim, seed, rule: ruleId };
   return {
     fwer: errors / nSim,
     nSim,
     seed,
     alpha,
     m,
+    rule: ruleId ?? null,
     provenance: buildProvenance({
       method: 'multiplicity:estimateFWER',
       seed,
       inputs,
-      note: 'Monte Carlo FWER under the global null with independent Uniform(0,1) p-values.',
+      note: ruleId === undefined
+        ? `${FWER_NOTE} The rejection rule was not identified: this record does not distinguish it from another rule with the same m, alpha, nSim and seed.`
+        : `${FWER_NOTE} Rejection rule: ${ruleId}.`,
     }),
   };
 }

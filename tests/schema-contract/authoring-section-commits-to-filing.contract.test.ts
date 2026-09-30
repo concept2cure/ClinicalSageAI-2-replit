@@ -73,7 +73,29 @@ const PREREQ = `
     organization_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
     role TEXT NOT NULL DEFAULT 'member'
   );
-  CREATE TABLE regulatory_programs (id uuid PRIMARY KEY);
+  -- PF-07 (founder decision 2026-09-26): an Authoring document belongs to a
+  -- project, and createDocument refuses a create with no client_program_id
+  -- (400 PROJECT_REQUIRED) or one that is not a live project of the caller's
+  -- organization (404, LX-20: programInOrganization reads organization_id and
+  -- deleted_at). So this table carries both, and every document in this file
+  -- is created IN PROJECT.
+  --
+  -- program_type / primary_agency exist so the create-time binding resolver
+  -- (resolveGovernedDocument) runs its real query rather than failing soft on
+  -- a missing column. They are left NULL on purpose: a project with no program
+  -- type derives no document class, so NO document is auto-bound at create.
+  -- The binding this file is about is set explicitly below, exactly as it was
+  -- when documents were org-wide, and every other document stays unbound —
+  -- which is the product's own shape for a second document in a project whose
+  -- filing already has its one editing copy (resolveBinding, "ONE FILING, ONE
+  -- EDITING COPY").
+  CREATE TABLE regulatory_programs (
+    id uuid PRIMARY KEY,
+    organization_id INTEGER NOT NULL,
+    program_type text,
+    primary_agency text,
+    deleted_at timestamptz
+  );
   CREATE TABLE audit_logs (
     id text PRIMARY KEY, tenant_id integer, user_id integer, action text,
     table_name text, record_id text, actor_id text, target text,
@@ -88,7 +110,7 @@ const PREREQ = `
   INSERT INTO organizations (id, name) VALUES (1, 'contract-org');
   INSERT INTO users (id, name, email) VALUES ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}');
   INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, ${MEMBERSHIP_ID}, 'member');
-  INSERT INTO regulatory_programs (id) VALUES ('${PROJECT}');
+  INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROJECT}', 1);
 `;
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
@@ -120,6 +142,10 @@ beforeAll(async () => {
     prereqSql: PREREQ,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // authoring_documents.client_program_id — the column the project anchor
+      // is written to (PF-07: every document is created in a project). Guarded
+      // on the loop tables above, so it follows them.
+      'migrations/20260727_authoring_document_program_scope.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       // ALTERs doc_revisions above with the ledger columns the router now writes
       // (content/chain hashes, origin, input manifest) and installs the
@@ -179,9 +205,10 @@ beforeAll(async () => {
   );
 
   // An authored document BOUND to it, with three sections: two that correspond
-  // to rule-pack keys and one that does not.
+  // to rule-pack keys and one that does not. Created in the filing's own
+  // project (PF-07: a document belongs to a project).
   const created = await as(request(app).post('/api/authoring/docs')).send({
-    title: 'IND — working copy', module: 'M2',
+    title: 'IND — working copy', module: 'M2', client_program_id: PROJECT,
   });
   expect(created.status).toBe(201);
   authoringDocId = created.body.document.id;
@@ -389,7 +416,7 @@ describe('a section save reaches the hash-chained ledger', () => {
        double-counting the three acts that matter most corrupts the census a
        reviewer takes from it. */
     const doc = await as(request(app).post('/api/authoring/docs')).send({
-      title: 'Doc to freeze', module: 'M2',
+      title: 'Doc to freeze', module: 'M2', client_program_id: PROJECT,
     });
     const freezeDocId = doc.body.document.id;
 
@@ -626,8 +653,12 @@ describe('a section code is locked to the filing on a bound document', () => {
   }, T);
 
   it('allows a code change on an UNBOUND document — there is no filing to break', async () => {
+    /* PF-07: the document now names its project, as every document must. It is
+       still UNBOUND — no c2c_document_id — because PROJECT derives no document
+       class (see PREREQ) and this case never binds it, so "no filing to break"
+       holds exactly as it did when the document was org-wide. */
     const doc = await as(request(app).post('/api/authoring/docs')).send({
-      title: 'Unbound note', module: 'M2',
+      title: 'Unbound note', module: 'M2', client_program_id: PROJECT,
     });
     const sec = await as(request(app).post('/api/authoring/sections')).send({
       doc_id: doc.body.document.id, code: '1.1', title: 'x', content: '', order_index: 1,
@@ -656,7 +687,7 @@ describe('a freeze refuses a document that is still asking questions', () => {
   /** A fresh document with one section, so each case starts clean. */
   async function freshDoc(content: string) {
     const doc = await as(request(app).post('/api/authoring/docs')).send({
-      title: 'Freeze gate', module: 'M2',
+      title: 'Freeze gate', module: 'M2', client_program_id: PROJECT,
     });
     const id = doc.body.document.id;
     const sec = await as(request(app).post('/api/authoring/sections')).send({
@@ -774,8 +805,15 @@ describe('what it deliberately does NOT do', () => {
   }, T);
 
   it('an unbound document saves, and says the text did not reach a filing', async () => {
+    /* This used to be an ORG-WIDE note. PF-07 retired org-wide documents: a
+       document belongs to a project, so the note is created in PROJECT — the
+       same project as the filing — and left unbound (no c2c_document_id; see
+       PREREQ for why nothing auto-binds). The intent is unchanged and, if
+       anything, sharper: a document that is not the filing's editing copy does
+       not write into the filing even when it shares the filing's project AND
+       the section code (2.5). */
     const other = await as(request(app).post('/api/authoring/docs')).send({
-      title: 'Org-wide note', module: 'M2',
+      title: 'Unbound project note', module: 'M2', client_program_id: PROJECT,
     });
     const s = await as(request(app).post('/api/authoring/sections')).send({
       doc_id: other.body.document.id, code: '2.5', title: '2.5', content: '', order_index: 1,

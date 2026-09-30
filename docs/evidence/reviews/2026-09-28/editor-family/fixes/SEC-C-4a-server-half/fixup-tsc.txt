@@ -1,0 +1,2 @@
+# isolated strict typecheck of the two lane files
+tsc exit: 0

@@ -180,7 +180,6 @@ export function deriveVaultFolders(files: VaultFile[]): VaultFolder[] {
 export function deriveVaultKpis(files: VaultFile[]): VaultKpi[] {
   const locked = files.filter((f) => f.status === 'locked' || f.status === 'final');
   const review = files.filter((f) => f.status === 'review');
-  const signed = files.filter((f) => f.esig);
   /* COUNTED, not inferred by subtraction. This was
      `files.length - locked.length - review.length`, which makes "Drafts" mean
      "everything I could not classify" — so every uploaded PDF was reported as a
@@ -188,7 +187,11 @@ export function deriveVaultKpis(files: VaultFile[]): VaultKpi[] {
   const drafts = files.filter((f) => f.status === 'draft');
   const uploads = files.filter((f) => f.status === 'uploaded');
   return [
-    { label: 'Artifacts in vault', metric: String(files.length), meta: `${signed.length} e-signed` },
+    /* Was `${signed.length} e-signed`, counting `metadata.eSig`. No product
+       code writes that flag and the list route exposes no signer, time or
+       meaning with it, so it cannot support a claim that anything was signed.
+       Signatures are counted from signature records, or not stated. */
+    { label: 'Artifacts in vault', metric: String(files.length), meta: 'All folders' },
     { label: 'Locked + final', metric: String(locked.length), meta: 'Content hash sealed', tone: 'ok' },
     { label: 'In review', metric: String(review.length), meta: 'Awaiting approval', tone: review.length ? 'warn' : 'ok' },
     { label: 'Drafts', metric: String(drafts.length), meta: 'Working copies' },

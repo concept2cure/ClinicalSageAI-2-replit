@@ -183,6 +183,8 @@ const MIGRATIONS = [
   'migrations/20260527_mutation_primitives.sql',
   'migrations/20260609_audit_hmac_seal.sql',
   'migrations/20260921_audit_logs_chain_seq.sql',
+  // public.actor_name (D3, 2026-09-29): project reads name people through it.
+  'migrations/20260929_actor_names.sql',
   // The project: the program, its filing scaffold, its PM-spine anchor.
   'migrations/20260524_program_workbench_schema.sql',
   'migrations/20260907_regulatory_programs_application_number.sql',
@@ -224,6 +226,10 @@ const MIGRATIONS = [
   'migrations/20260509_submission_gateways.sql',
   'migrations/20260629_submission_transmittals_mdn_raw.sql',
   'migrations/20260629_submission_transmittals_active_lock.sql',
+  // Last: the same-organization project keys (PF-04) over every store above
+  // that names a project. After 20260727_prm_program_link, whose unchecked
+  // backfill must never run with the key present.
+  'migrations/20260926b_program_same_org_keys.sql',
 ] as const;
 /** pgvector's column, as TEXT: see the header. */
 const TEST_ONLY_SQL = 'ALTER TABLE coauthor_documents ADD COLUMN IF NOT EXISTS embedding TEXT;';

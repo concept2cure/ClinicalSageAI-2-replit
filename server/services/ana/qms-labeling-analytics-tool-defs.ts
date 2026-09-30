@@ -9,6 +9,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { STATED_REASON_INPUT } from './stated-reason-input';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QMS + Labeling + Search + Analytics tools (migration 20260511).
@@ -26,6 +27,7 @@ export const CREATE_QMS_DOCUMENT: AnaTool = {
       doc_type:   { type: 'string', enum: ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'] },
       category:   { type: 'string', description: "e.g. design / production / capa / training." },
       version:    { type: 'string' },
+      reason:     STATED_REASON_INPUT,
     },
     required: ['doc_number', 'title', 'doc_type'],
   },
@@ -77,7 +79,9 @@ export const REVISE_QMS_DOCUMENT: AnaTool = {
 export const RETIRE_QMS_DOCUMENT: AnaTool = {
   name: 'retire_qms_document',
   description:
-    "Retire a controlled QMS document — the terminal lifecycle state. Requires a reason for change of at least 8 characters, recorded in the audit trail; ask the user for it if they did not give one. Use when the user wants to retire / withdraw a procedure that is no longer in use.",
+    // 2026-09-28 (Q-0928-1 / SEC-0928-1): this offered retirement as an act AnA
+    // performs; the handler now refuses, as approve_qms_document's does.
+    "AnA cannot sign. Retiring a QMS controlled document ends its effective status and is an electronic signature (21 CFR 11.50): it needs the person's password and second factor, which a chat turn cannot collect. This tool writes nothing; it tells the user to retire on the document in the Quality register. Use it only to explain that.",
   input_schema: {
     type: 'object',
     properties: {

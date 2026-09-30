@@ -1419,3 +1419,134 @@ lines listed. `gen_evidence.py` in the same directory reproduces all of them.
 
 Prepared by the document-fidelity Claude session (drafting and execution only;
 cannot sign). No result was edited after execution.
+
+## 18. Addendum 2026-09-27/28 — the package at head, its identities created through user administration (W3 session)
+
+### 18.1 What was executed
+
+IQ-001 and all six OQ protocols ran on a fresh installation
+(`c2c_oq_w3_20260927`, provisioned from empty; the migration set 316 of 316;
+readiness contract 8 of 8), in the posture of §16. This was the first
+execution since `bfdb0a08` (2026-09-23c), across the 1,550 commits of the
+P0/P1 security tranches.
+
+It also does the local half of D4's owed "real second account" (§16.10):
+- **Created through user administration.** Every identity except the run
+  identity was added by the run identity with `POST /api/tenant-users`. Each
+  set its own password through the activation link the product handed the
+  admin, and enrolled its own authenticator through the production sign-in.
+- **The one exception.** Only the platform role of OQ-PROJ-18's
+  administrator was granted as the database owner, because no product path
+  grants the first platform role.
+- **A reused link is refused.** A second use of an activation link was
+  refused 400 `AUTH_006`.
+
+Evidence: `docs/evidence/W3/2026-09-27/`.
+
+| Execution | Commit | IQ | OQ |
+|---|---|---|---|
+| First attempt | `d224ecff` (head plus this lane's claim) | 12 / 0 / 3 | 97 pass, 4 fail, 2 deviation of 103 |
+| Second attempt | `af305e8a` (after F-41, F-42 and the protocol changes) | 12 / 0 / 3 | 91 pass, 3 fail, 2 deviation, 7 not executed of 103 |
+| Final | `89ee3a81` | 12 / 0 / 3 | **101 pass, 0 fail, 2 deviation of 103** |
+
+### 18.2 Findings
+
+| Id | What | Shown failing first | State |
+|---|---|---|---|
+| **F-41** (§11.10(e), §11.300) | **A colleague added through user administration had its sign-in and credential events written outside its organisation.** `POST /api/tenant-users` creates an account with no default organisation; its organisation is its membership. `auth.ts` took the audit tenant from the default alone. So the following went to the platform's chain (tenant 0) and never reached the organisation's ledger: the reset request, the password set through the activation link, the refused or expired link, every sign-in refusal (locked, wrong password, address unconfirmed, account out of use), and the signed-in password change. The seeded identities of every earlier execution had a default organisation, so no step saw it. | OQ-PROJ-18 at `d224ecff`: the newest ledger entry for the suspended colleague was its last successful sign-in, not the refusal. Unit: 10 fail, 11 pass before the fix; 21 pass after. Seven mutants, each caught by its own case | **Fixed** `f339a445`, `81eb7491`. An event names the organisation the account's sign-in lands in, by the login's own rule, extracted once (`server/services/sign-in-organisation.ts`) |
+| **F-42** (§11.10(e), ALCOA "attributable") | **The organisation's ledger named the account that acted by display name alone.** A display name is not an identity. In this execution, user 1 (the run identity, named by `npm run up`) and user 2 (the demo account) were both "JM Smith", and 22 of the first attempt's 36 ledger entries read "JM Smith". The entry for the program the run created could not say which of them created it. The activity feed carried `actor_id`; the ledger did not. | OQ-PROJ-06b's new check, applied to the first attempt's recorded ledger response, fails ("names its actor "JM Smith" by display name alone"). Unit: the ledger route test, 2 fail and 8 pass before, 10 pass after, five mutants caught; the ledger surface test fails on HEAD's surface ("Unable to find … user:11"), 14 of 14 after | **Fixed** `af305e8a`. Every entry carries `actorRef` (`user:<id>`, the form targets use; null for the system), and the admin ledger shows and searches it |
+
+### 18.3 The package kept up with the product
+
+The other three first-attempt failures were the package lagging behind
+correct changes:
+
+| Step | Cause | Change |
+|---|---|---|
+| OQ-PROJ-19 (added 2026-09-26) | It opens a session of its own, which took OQ-001 to eleven password sign-ins from one client IP. The limit is ten in fifteen minutes (`loginLimiter`). | The harness waits for the window the server names (`Retry-After`), once, and says so in the transcript. It never goes around the limiter (OQ-001 v0.9 §1) |
+| OQ-SUBC-04 | Since LX-22, OQ-SUBC-03 gives the submission its own program. The step placed OQ-SUBC-00's document, and PF-11 (`39dfd9b7`) refuses another project's document with 409 `CROSS_PROJECT`. | The step ingests its document into the submission's program; the refusal is now an expected result (OQ-004 v0.4; URS-SUBC-004, URS-004 v0.2) |
+| OQ-SUBC-08 | Since P1-21 (`3d09bf2a`) a sign must state its meaning, so the request stopped at 400 before the second-factor check it exists to show. | The sign states `approval`, as the Submission Center's modal proposes for a freeze (OQ-004 v0.4) |
+
+The second attempt's three failures were the run itself, not the product as
+production runs it (`second-attempt/README.md`):
+
+| Step | Cause | Change |
+|---|---|---|
+| OQ-SUBC-08, OQ-QMS-05 (+7 not executed) | The second signer's session was signed in when the run started. Its first use came after OQ-PROJ-19's wait, and since P1-1 a session left idle for fifteen minutes has ended. The harness raised instead of signing in again. | An ended shared session is treated as none. The signer signs in when first needed, which also keeps OQ-001 within its ten sign-ins (`89ee3a81`) |
+| OQ-PROJ-19 | Answered `SESSION_ENDED`, not `SESSION_IDLE`. In its non-production warn mode, the auth boundary authenticates the idle request first, which revokes the token, and passes it on. Reproduced both ways on a fresh server. | The local server enforces its boundary (`AUTH_BOUNDARY_MODE=enforce`), as production does (OQ-001 v0.9 §1) |
+
+Also changed:
+- OQ-PROJ-06b requires the creation entry to name the run identity's
+  account (F-42; URS-PROJ-004, URS-001 v0.6).
+- A runner error's stack is recorded with repository-relative paths.
+- CI's Lint job, run locally before each push as §16.7 says, caught one
+  more thing: F-41's helpers took `auth.ts` over the repo-health scan's
+  100,000-byte threshold, and they moved to their own module (`81eb7491`).
+- CI's Blank DB Provisioning job was red on every run of this lane's pushes,
+  on its live-schema ratchet, from before this lane's first code change. The
+  guard read a CTE that names its columns
+  (`WITH expected(schema_name, …) AS (…)`, `audit-immutability-triggers.ts`)
+  as a table no database has. Its parser now binds that form. The failing test
+  came first, and four mutants are each caught
+  (`docs/evidence/TRUNK-TESTS/2026-09-28/blank-db-live-schema/`).
+
+### 18.4 Observations for other rows (not dispositioned by this package)
+
+1. **D6 — the sign-in limiter counts per client IP.** `loginLimiter` allows
+   ten password sign-ins per client IP in fifteen minutes, whoever signs in.
+   An office whose users reach the product through one outbound address
+   shares those ten: an eleventh colleague arriving within fifteen minutes is
+   refused 429. The validation run is that case, and meets it. A limit per
+   account, with a higher ceiling per IP, would protect the same accounts
+   without it.
+2. **D6 / D3 — an account added through user administration has no default
+   organisation.** `atomicCreateUser` leaves `users.default_organization_id`
+   NULL. F-41 fixes the auth events. Some 30 other references in 10 server
+   files read the default; each either falls back to the membership or
+   treats such an account as belonging nowhere. This package did not review
+   them.
+3. **The development posture seeds an administrator into organisation 1**
+   (`seed-default-org.ts`). A local execution therefore has an admin account
+   nobody provisioned for the run. Production seeds it only when
+   `SEED_DEMO_USER` is explicitly on, and the staging execution should confirm
+   it is absent.
+4. **D6 — the auth boundary's warn mode has a side effect.** Outside
+   production the boundary authenticates each `/api` request, captures a
+   refusal, logs it and passes the request on. For an idle session,
+   `authenticateToken` revokes the token as it refuses, so the next
+   authenticator answers `SESSION_ENDED`. Every non-production server
+   therefore tells an idle session it has ended, not that it was left idle.
+   In production, the first request after the idle window is told
+   `SESSION_IDLE`. Every later request of that session is told
+   `SESSION_ENDED`, because the first answer revoked the token. A revocation
+   records its reason (`revoked_tokens.reason`, `idle`), so the check could
+   answer by it.
+5. **The password-reset limiter answers before the token is read.** The
+   third reuse of an activation link was refused 429, not `AUTH_006`. This is
+   correct as a limiter; it is noted so the next reader does not take the 429
+   for the reuse refusal.
+
+### 18.5 What this changes in the records above
+
+- D4's latest local run is 2026-09-27 at `89ee3a81`.
+- §16.10's "a real second account created through user administration" is
+  done locally. It stays owed on staging, with a real mail server.
+- OQ-001 is v0.9, OQ-004 v0.4, URS-001 v0.6 and URS-004 v0.2. TM-001 is
+  built from `2026-09-27`.
+
+### 18.6 What the package still owes before signature
+
+- the production image (`NODE_ENV=production`: the dev-login refusal on that
+  branch, the HMAC-sealed chain, enforcing CSP and HSTS), on staging;
+- there, a second account created through user administration with a real
+  mail server;
+- a witness;
+- a PQ-passed provider (OQ-AUTH-16, URS-AUTH-012);
+- a live release signature;
+- the contractor's review;
+- signatures.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).
+No result was edited after execution, except the one absolute path removed
+from the first attempt's OQ-001 record (`first-attempt/README.md`). The runners
+wrote every record, and the matrix builder regenerated TM-001.

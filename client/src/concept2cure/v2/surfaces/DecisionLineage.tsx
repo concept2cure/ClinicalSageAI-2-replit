@@ -98,8 +98,8 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
     },
   });
   useEffect(() => {
-    if (!loading && !error) notifySurfaceActionReady('decision-lineage');
-  }, [loading, error]);
+    if (!loading) notifySurfaceActionReady('decision-lineage');
+  }, [loading]);
 
   // Export runner state — which format is in flight, and the last error (shown
   // inline by the export controls). The surface has no toast; keep it contained.

@@ -101,6 +101,29 @@ const isCvList: ShapeGuard<CvList> = (v): v is CvList =>
 /** Code-list ids arrive camelCase. A row that lost its id renders blank instead of throwing. */
 const humanize = (id: unknown) => String(id ?? '').replace(/([A-Z])/g, ' $1');
 
+/** A camelCase key as a sentence-case label: "applicationType" → "Application type".
+ *  The fallback for a key no label map names — never the key with each word
+ *  capitalised, which is how "fdaRegionalIg" became "Fda Regional Ig". */
+const sentenceLabel = (id: unknown) => {
+  const s = humanize(id).trim().toLowerCase();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
+/** Names for the specification keys of GET /api/ectd/qualification/spec-versions
+ *  (server/services/ectd/qualification/qualify.ts SPEC_VERSIONS). The table
+ *  split these keys on capitals and title-cased them: "Fda Regional Ig",
+ *  "Controlled Vocab". */
+const SPEC_LABELS: Record<string, string> = {
+  ichBackbone: 'ICH backbone',
+  fdaRegionalDtd: 'FDA regional DTD',
+  validationCriteria: 'Validation criteria',
+  fileFormats: 'File formats',
+  transmission: 'Transmission',
+  message: 'Message',
+  fdaRegionalIg: 'FDA regional IG',
+  controlledVocab: 'Controlled vocabulary',
+};
+
 /** Only strings can be lowercased; a row with a null code must not kill the filter. */
 const lower = (s: unknown) => (typeof s === 'string' ? s.toLowerCase() : '');
 
@@ -325,11 +348,13 @@ export function PublishingCenter(_props: SurfaceViewProps) {
           ) : loadState === 'error' ? (
             <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load spec versions" hint="The specification-version register didn’t respond, or answered in a shape this panel can’t read — this panel cannot tell which. Retry; if it persists, check the service." retry={() => setReloadKey((n) => n + 1)} /></div>
           ) : specRows.length === 0 ? (
-            <div style={{ padding: 16 }}><EmptyState icon={I.book} title="No spec versions" /></div>
+            /* 2026-09-28 (A-0928-2): was a bare title, which reads the same as
+               a failure that lost its copy. Say this is the register's answer. */
+            <div style={{ padding: 16 }}><EmptyState icon={I.book} title="No spec versions" hint={`The specification-version register answered and lists no versions qualified for ${version}. This is what the service returned, not a failed read.`} /></div>
           ) : (
             <table className="reg-tbl"><thead><tr><th>Specification</th><th>Version qualified against</th></tr></thead>
               <tbody>{specRows.map(([k, v]) => (
-                <tr key={k}><td style={{ fontWeight: 600, textTransform: 'capitalize' }}>{k.replace(/([A-Z])/g, ' $1')}</td><td>{v}</td></tr>
+                <tr key={k}><td style={{ fontWeight: 600 }}>{SPEC_LABELS[k] ?? sentenceLabel(k)}</td><td>{v}</td></tr>
               ))}</tbody></table>
           )}
         </div>
@@ -359,11 +384,12 @@ export function PublishingCenter(_props: SurfaceViewProps) {
                 </p>
                 <table className="reg-tbl"><thead><tr><th>Coded-attribute list</th><th style={{ textAlign: 'right' }}>Codes</th></tr></thead>
                   <tbody>{listing.v3.map((l) => (
-                    <tr key={l.id}><td style={{ fontWeight: 600 }}>{humanize(l.id)}</td><td style={{ textAlign: 'right' }}>{l.codeCount}</td></tr>
+                    <tr key={l.id}><td style={{ fontWeight: 600 }}>{sentenceLabel(l.id)}</td><td style={{ textAlign: 'right' }}>{l.codeCount}</td></tr>
                   ))}</tbody></table>
               </>
             ) : (
-              <EmptyState icon={I.book} title="No v3.2.2 coded-attribute lists were returned" />
+              /* 2026-09-28 (A-0928-2): bare title; now says whose answer this is. */
+              <EmptyState icon={I.book} title="No v3.2.2 coded-attribute lists were returned" hint="The controlled-vocabulary service answered with no v3.2.2 lists. This is what the service returned, not a failed read." />
             )
           ) : (
             <>

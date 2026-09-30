@@ -41,9 +41,10 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       await fs.writeFile(newDocPath, newDocBytes);
 
       // --- Prior sequence (0000) manifest, as it would have been stored.
+      // Recorded as the packager records it: each leaf's backbone ID.
       const priorManifest = buildLeafManifest([
-        { ctdSection: '3.2.S.1', href: 'm3/3-2-s-1/general.pdf', md5: 'PRIOR_GENERAL_V1' },
-        { ctdSection: '3.2.S.2', href: 'm3/3-2-s-2/old-manufacture.pdf', md5: 'PRIOR_OLD' },
+        { ctdSection: '3.2.S.1', href: 'm3/3-2-s-1/general.pdf', md5: 'PRIOR_GENERAL_V1', leafId: 'leaf-3-2-S-1-general', backbone: 'index.xml' },
+        { ctdSection: '3.2.S.2', href: 'm3/3-2-s-2/old-manufacture.pdf', md5: 'PRIOR_OLD', leafId: 'leaf-3-2-S-2-old-manufacture', backbone: 'index.xml' },
       ]);
       const prior = manifestToPriorLeaves(priorManifest);
 
@@ -91,12 +92,12 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       const modOf = (el: string) => /modified-file="([^"]*)"/.exec(el)?.[1] ?? '';
 
       // REPLACE: ships the NEW file (xlink:href is THIS sequence's own path, not
-      // "../"), and modified-file points BACK at the prior sequence's copy.
+      // "../"), and modified-file names the prior sequence's leaf (backbone + ID).
       const replaceLeaf = leafFor('general.pdf');
       expect(replaceLeaf).toMatch(/operation="replace"/);
       expect(hrefOf(replaceLeaf)).not.toMatch(/^\.\.\//); // current-sequence path
       expect(hrefOf(replaceLeaf)).toMatch(/general\.pdf$/);
-      expect(modOf(replaceLeaf)).toBe('../0000/m3/3-2-s-1/general.pdf');
+      expect(modOf(replaceLeaf)).toBe('../0000/index.xml#leaf-3-2-S-1-general');
 
       // NEW: a first-time leaf carries NO modified-file and ships at its own path.
       const newLeaf = leafFor('stability.pdf');
@@ -104,12 +105,13 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       expect(newLeaf).not.toMatch(/modified-file=/);
       expect(hrefOf(newLeaf)).not.toMatch(/^\.\.\//);
 
-      // DELETE: no new bytes — both xlink:href AND modified-file point at the
-      // prior sequence's withdrawn file.
-      const deleteLeaf = leafFor('old-manufacture.pdf');
+      // DELETE: no new bytes — no xlink:href and no checksum; its modified-file
+      // names the prior sequence's withdrawn leaf. (The leaf carries its ID,
+      // which is built from the file name, so leafFor still finds it.)
+      const deleteLeaf = leafFor('old-manufacture');
       expect(deleteLeaf).toMatch(/operation="delete"/);
-      expect(modOf(deleteLeaf)).toBe('../0000/m3/3-2-s-2/old-manufacture.pdf');
-      expect(hrefOf(deleteLeaf)).toBe('../0000/m3/3-2-s-2/old-manufacture.pdf');
+      expect(modOf(deleteLeaf)).toBe('../0000/index.xml#leaf-3-2-S-2-old-manufacture');
+      expect(deleteLeaf).not.toMatch(/xlink:href=|checksum=/);
 
       // The new + replaced leaves ship real bytes; the deleted one ships NONE.
       expect(names.some((n) => n.endsWith('general.pdf'))).toBe(true);
@@ -125,7 +127,7 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
     }
   });
 
-  it('every modified-file RESOLVES to a file the prior sequence actually shipped — Module 1 included', async () => {
+  it('every modified-file RESOLVES to a leaf the prior sequence actually filed — Module 1 included', async () => {
     /* The pointer and the xlink:href sit on the same element and resolve against
        the same base: the document they are written into. index.xml is at the
        sequence root, so a root-relative pointer is right there — which is why
@@ -165,9 +167,8 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       // one in Module 2.
       const coverV2 = await write('cover-v2.pdf', 'cover v2');
       const overviewV2 = await write('overview-v2.pdf', 'overview v2');
-      const prior = manifestToPriorLeaves(buildLeafManifest(seq0.leafManifest!.map((m) => ({
-        ctdSection: m.ctdSection, href: m.href, md5: m.md5, fileName: m.fileName, title: m.title,
-      }))));
+      // The manifest exactly as the compile route persists it.
+      const prior = manifestToPriorLeaves(buildLeafManifest(seq0.leafManifest!));
       const life = computeLifecycleOperations(prior, [
         { ctdSection: '1.2', fileName: 'cover.pdf', md5: md5(coverV2.bytes), title: 'Cover Letter', sourcePath: coverV2.p },
         { ctdSection: '2.5', fileName: 'overview.pdf', md5: md5(overviewV2.bytes), title: 'Clinical Overview', sourcePath: overviewV2.p },
@@ -185,16 +186,23 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       const backbones = Object.keys(zip1.files).filter((n) => n === 'index.xml' || n.endsWith('us-regional.xml'));
       expect(backbones).toContain('index.xml');
       expect(backbones.some((b) => b.endsWith('us-regional.xml'))).toBe(true);
+      // A pointer is <prior backbone>#<leaf ID> (ICH eCTD v3.2.2): its path must
+      // land on a backbone 0000 contains, and the ID must be on a leaf there.
       let checked = 0;
       for (const backbone of backbones) {
         const xml = await zip1.file(backbone)!.async('string');
         for (const m of xml.matchAll(/modified-file="([^"]+)"/g)) {
+          const [file, id] = m[1].split('#');
           // The sequences are sibling folders, so resolve inside a notional
           // parent: 0001/<backbone dir>/<pointer> must land in 0000/.
           const from = path.posix.join('0001', path.posix.dirname(backbone));
-          const landed = path.posix.normalize(path.posix.join(from, m[1]));
+          const landed = path.posix.normalize(path.posix.join(from, file));
           expect(landed.startsWith('0000/'), `${backbone} → ${m[1]} resolved to ${landed}`).toBe(true);
-          expect(filesIn0000.has(landed.slice('0000/'.length)), `${backbone} → ${m[1]} resolved to ${landed}, which sequence 0000 does not contain`).toBe(true);
+          const target = landed.slice('0000/'.length);
+          expect(filesIn0000.has(target), `${backbone} → ${m[1]} resolved to ${landed}, which sequence 0000 does not contain`).toBe(true);
+          const targetXml = await zip0.file(target)!.async('string');
+          expect(id, `${backbone} → ${m[1]} names no leaf ID`).toBeTruthy();
+          expect(targetXml, `${backbone} → ${m[1]}: no leaf in 0000/${target} carries ID ${id}`).toMatch(new RegExp(`<leaf\\b[^>]*\\bID="${id}"`));
           checked += 1;
         }
       }
@@ -313,7 +321,7 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       const leaves: EctdLeaf[] = [
         {
           ctdSection: '3.2.S.2', operation: 'delete', sourcePath: '', fileName: 'old.pdf',
-          title: 'Old', md5: 'abc', modifiedFile: '../0000/m3/3-2-s-2/old.pdf',
+          title: 'Old', md5: 'abc', modifiedFile: '../0000/index.xml#leaf-3-2-S-2-old',
         },
       ];
       const bundle = await packageEctdSubmission({
@@ -324,7 +332,7 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       });
       const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
       const index = await zip.file('index.xml')!.async('string');
-      expect(index).toMatch(/<leaf operation="delete" modified-file="\.\.\/0000\/m3\/3-2-s-2\/old\.pdf"/);
+      expect(index).toMatch(/<leaf operation="delete" modified-file="\.\.\/0000\/index\.xml#leaf-3-2-S-2-old" xlink:type="simple"/);
       // No bytes shipped for a backbone-only delete.
       expect(Object.keys(zip.files).some((n) => n.endsWith('old.pdf'))).toBe(false);
     } finally {

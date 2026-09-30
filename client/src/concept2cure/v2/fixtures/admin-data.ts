@@ -43,6 +43,8 @@ export interface AuditEntry {
   id: string;
   when: string;
   actor: string;
+  /** The account that acted, `user:<id>`; null for the system (VSR-001 F-42). */
+  actorRef?: string | null;
   event: string;
   target: string;
   kind: string;
@@ -52,6 +54,10 @@ export interface AuditEntry {
   ip: string;
   reason: string | null;
   meaning: string | null;
+  /** The record's own reference when `target` names it for a reader (server: audit-trail-ledger). */
+  targetRef?: string | null;
+  /** The signature record this entry is, `<table>:<id>` (§11.70 link), or null. */
+  signatureRef?: string | null;
 }
 
 export interface AuditKind {

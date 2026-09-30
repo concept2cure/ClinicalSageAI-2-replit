@@ -175,6 +175,17 @@ async function ensureOrchestration(ctx, program, rec) {
   const found = await previousExecution(ctx, rec);
   if (found) return found;
   const { api, tally } = ctx;
+  /* The orchestration engine takes the integer projects.id, and a program
+     created through Projects is keyed by a uuid on the program spine. That is
+     why the Orchestration board is outside the launch catalog
+     (shared/constants/launch-scope.ts, VSR-001 §14.3): the route answers 400
+     "projectId must be a positive integer" for every program this pack makes,
+     and the step failed the pack before QMS was seeded. Recorded as not
+     executed, with the reason, never as done. */
+  if (!Number.isInteger(Number(program.id)) || Number(program.id) <= 0) {
+    rec.orchestration = { notExecuted: 'the orchestration engine reads the integer project spine; this program is keyed by a uuid — Orchestration is not in the launch catalog' };
+    return `not executed — ${rec.orchestration.notExecuted}`;
+  }
   const e = must(await api('POST', '/api/orchestration/execute', { templateId: 'submission_readiness_review', projectId: program.id, module: 'ind' }), [200, 201, 202], 'orchestration execute');
   const id = executionIdOf(e);
   if (!id) throw new Error(`orchestration execute returned no execution id: ${JSON.stringify(e).slice(0, 200)}`);

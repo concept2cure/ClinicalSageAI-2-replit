@@ -1,0 +1,98 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-28T18:14:27.855Z","pid":9228,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T18:14:27.857Z","pid":9228,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T18:14:27.857Z","pid":9228,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/invitation-acceptance.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+[database] Database connection successful
+
+stdout | tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+[database] Database connection successful { timestamp: '2026-09-28T18:14:28.394Z', poolSize: 1 }
+
+stdout | tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+[database] Database connection successful { timestamp: '2026-09-28T18:14:28.461Z', poolSize: 2 }
+
+ × tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization 145ms
+   → the invitee was shown no invitation: expected [] to deeply equal [ ObjectContaining{…} ]
+ × tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > accepts it: the membership is written, and the token for B is then admitted 22ms
+   → {"success":false,"error":"NOT_FOUND","message":"Invitation not found"}: expected 404 to be 200 // Object.is equality
+ × tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > declines it: no membership, the invitation kept as declined 23ms
+   → {"error":"Invitation not found"}: expected 404 to be 200 // Object.is equality
+ ✓ tests/db/invitation-acceptance.dbtest.ts > nobody else can see or answer it (D3) > another member of A cannot see, accept or decline an invitation that is not theirs 34ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > nobody else can see or answer it (D3) > A's scope reads no invitation to someone who is not A's member 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+AssertionError: the invitee was shown no invitation: expected [] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   ObjectContaining {
+-     "id": 12,
+-     "organizationId": 90302,
+-     "status": "pending",
+-   },
+- ]
++ []
+
+ ❯ tests/db/invitation-acceptance.dbtest.ts:105:63
+    103|       const res = await request(app).get('/api/tenant-users/invitation…
+    104|       expect(res.status).toBe(200);
+    105|       expect(res.body, 'the invitee was shown no invitation').toEqual([
+       |                                                               ^
+    106|         expect.objectContaining({ id, organizationId: ORG_B, status: '…
+    107|       ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > accepts it: the membership is written, and the token for B is then admitted
+AssertionError: {"success":false,"error":"NOT_FOUND","message":"Invitation not found"}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/invitation-acceptance.dbtest.ts:119:66
+    117|         .post(`/api/tenant-users/invitations/${id}/accept`)
+    118|         .set(asUserA());
+    119|       expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(…
+       |                                                                  ^
+    120|       expect(await membershipInB(userA)).toBe('viewer');
+    121|       expect(await invitationStatus(id)).toBe('accepted');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > declines it: no membership, the invitation kept as declined
+AssertionError: {"error":"Invitation not found"}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/invitation-acceptance.dbtest.ts:137:66
+    135|         .post(`/api/tenant-users/invitations/${id}/decline`)
+    136|         .set(asUserA());
+    137|       expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(…
+       |                                                                  ^
+    138|       expect(await invitationStatus(id)).toBe('declined');
+    139|       expect(await membershipInB(userA)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  18:14:26
+   Duration  2.65s (transform 1.04s, setup 70ms, import 1.82s, tests 508ms, environment 0ms)
+

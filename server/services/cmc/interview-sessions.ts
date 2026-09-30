@@ -34,6 +34,7 @@
  */
 
 import type { FlowCategory, FlowState } from '../../../shared/types/intelligence-questions.js';
+import { projectBelongsToTenant } from './project-membership';
 
 export type InterviewSessionStatus = 'active' | 'complete' | 'committing' | 'committed' | 'abandoned';
 
@@ -74,7 +75,8 @@ export type InterviewSessionErrorCode =
   | 'SESSION_NOT_WRITABLE'
   | 'SESSION_STATE_INVALID'
   | 'COMMIT_REFS_REQUIRED'
-  | 'SESSION_NOT_COMMITTABLE';
+  | 'SESSION_NOT_COMMITTABLE'
+  | 'PROJECT_NOT_IN_TENANT';
 
 export class InterviewSessionError extends Error {
   constructor(public readonly code: InterviewSessionErrorCode, message: string) {
@@ -194,6 +196,18 @@ export async function createInterviewSession(
   const projectId = typeof params.projectId === 'string' && params.projectId.trim() ? params.projectId.trim() : null;
 
   const db = await resolveQueryable(q);
+  /* A session is bound only to a live program or project of its own
+     organization (PF-15). The id comes from the shell or from the model's
+     tool input; it was stored as given, and the commit trusted a bound
+     session, so an interview started under another organization's project,
+     or a deleted one, filed its records there. A lookup that cannot complete
+     throws: nothing is created on "could not tell". */
+  if (projectId && !(await projectBelongsToTenant({ organizationId, projectId }, db))) {
+    throw new InterviewSessionError(
+      'PROJECT_NOT_IN_TENANT',
+      `Project ${projectId} is not a program or project of this organization, so the interview cannot be started under it.`,
+    );
+  }
   const { rows } = await db.query(
     `INSERT INTO cmc_interview_sessions
        (organization_id, project_id, user_id, flow_id, flow_category, state, status)

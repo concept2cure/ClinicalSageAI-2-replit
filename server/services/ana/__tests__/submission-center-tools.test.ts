@@ -10,7 +10,19 @@
  * against a seeded DB fixture.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// 2026-09-28: the registry wrapper now asks organization_users for the caller's
+// role before any confirm-class tool runs; these guards model an editor ('member').
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+beforeEach(() => {
+  resolveSignerOrgRole.mockClear();
+});
+
 import { getToolHandler, type ToolContext } from '../AnaToolExecutor.js';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
@@ -90,20 +102,34 @@ describe('compute_lifecycle_operations (pure)', () => {
     expect(out.summary).toMatchObject({ new: 1, replace: 1 });
   });
 
-  it('forwards prior href + prior_sequence_prefix so a replace emits modified-file', async () => {
+  it('forwards the prior leaf ID + backbone and prior_sequence_prefix so a replace names the leaf it supersedes', async () => {
     const handler = getToolHandler('compute_lifecycle_operations')!;
     const out = JSON.parse(
       await handler({
         prior_sequence_prefix: '../0000/',
-        prior_leaves: [
-          { ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'a', href: 'm3/32-body-data/32s-drug-sub/general.pdf' },
-        ],
+        prior_leaves: [{
+          ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'a', href: 'm3/32-body-data/32s-drug-sub/general.pdf',
+          leaf_id: 'leaf-3-2-S-1-general', backbone: 'index.xml',
+        }],
         desired_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'b' }],
       })
     );
     expect(out.ok).toBe(true);
     const replaced = out.leaves.find((l: any) => l.operation === 'replace');
-    expect(replaced.modifiedFile).toBe('../0000/m3/32-body-data/32s-drug-sub/general.pdf');
+    expect(replaced.modifiedFile).toBe('../0000/index.xml#leaf-3-2-S-1-general');
+  });
+
+  it('never names a prior leaf by its file path: listed with only an href, a replace carries no pointer', async () => {
+    const handler = getToolHandler('compute_lifecycle_operations')!;
+    const out = JSON.parse(
+      await handler({
+        prior_sequence_prefix: '../0000/',
+        prior_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'a', href: 'm3/32-body-data/32s-drug-sub/general.pdf' }],
+        desired_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'b' }],
+      })
+    );
+    const replaced = out.leaves.find((l: any) => l.operation === 'replace');
+    expect(replaced.modifiedFile).toBeUndefined();
   });
 
   it('refuses to auto-load a prior sequence without tenant context (org from ToolContext only)', async () => {
@@ -273,7 +299,12 @@ describe('submission AI tasks — tenant + input guards', () => {
     const out = JSON.parse(
       await handler({ sequence_id: 1, section_code: '2.7.3', title: 'Summary' }, { humanConfirmed: true } as ToolContext),
     );
-    expect(out.error).toMatch(/tenant context/);
+    // 2026-09-28: a confirm-class call with no identified member is refused by the
+    // registry wrapper (writeRoleRefusal) before the handler's tenant guard, and
+    // before any role lookup.
+    expect(out.error).toMatch(/needs an identified member of the organization/);
+    expect(out.error).toMatch(/Nothing was changed/);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
   it('place_into_sequence validates required inputs before touching the core', async () => {
     const handler = getToolHandler('place_into_sequence')!;
@@ -566,7 +597,12 @@ describe('ingestion tools — tenant + input guards', () => {
   it('classify_submission_document refuses without org/user context', async () => {
     const handler = getToolHandler('classify_submission_document')!;
     const out = JSON.parse(await handler({ document_id: 1 }, { humanConfirmed: true } as ToolContext));
-    expect(out.error).toMatch(/tenant context/);
+    // 2026-09-28: a confirm-class call with no identified member is refused by the
+    // registry wrapper (writeRoleRefusal) before the handler's tenant guard, and
+    // before any role lookup.
+    expect(out.error).toMatch(/needs an identified member of the organization/);
+    expect(out.error).toMatch(/Nothing was changed/);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('classify_submission_document requires a numeric document_id', async () => {
@@ -578,7 +614,12 @@ describe('ingestion tools — tenant + input guards', () => {
   it('extract_submission_document refuses without org/user context', async () => {
     const handler = getToolHandler('extract_submission_document')!;
     const out = JSON.parse(await handler({ document_id: 1, section_code: '2.7', submission_id: 1 }, { humanConfirmed: true } as ToolContext));
-    expect(out.error).toMatch(/tenant context/);
+    // 2026-09-28: a confirm-class call with no identified member is refused by the
+    // registry wrapper (writeRoleRefusal) before the handler's tenant guard, and
+    // before any role lookup.
+    expect(out.error).toMatch(/needs an identified member of the organization/);
+    expect(out.error).toMatch(/Nothing was changed/);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('extract_submission_document validates required inputs', async () => {

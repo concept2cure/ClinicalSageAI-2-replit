@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-001 |
-| Version | 0.5 |
+| Version | 0.6 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-001 (`tests/validation/oq/projects/run.mjs`) |
@@ -19,6 +19,7 @@
 | 0.3 | 2026-09-23 | W3 | URS-PROJ-011 added. Logout answered "Tokens invalidated." while the token went on opening the API, the session check and the collaboration socket for the rest of its lifetime. No requirement asked that signing out end anything, so no OQ step could see it (VSR-001 §13.9, F-21). |
 | 0.5 | 2026-09-26 | D6 | URS-PROJ-013 added. A 24-hour token opened the API whether or not anyone was at the keyboard, and the rolling refresh renewed it for ever; the tenant's `sessionTimeoutMinutes` was stored and never read (security audit 2026-09-24, IAM-06; plan P1-1). |
 | 0.4 | 2026-09-23 | W3 | URS-PROJ-012 added. An account taken out of use (suspended by an administrator, or deprovisioned by the organisation's identity provider) signed in, signed, and kept every session it held: nothing read `users.status` but the release signature, and no requirement asked that it be read (VSR-001 §16, F-28, F-29). |
+| 0.6 | 2026-09-28 | W3 | URS-PROJ-004: a ledger entry names the account that acted by reference, not only by display name. The ledger named its actor by name alone, and in the 2026-09-27 execution the run identity and the demo account were both "JM Smith" (VSR-001 F-42). OQ-PROJ-06b (OQ-001 v0.9) verifies it. |
 
 ## 1. Intended use
 
@@ -33,7 +34,7 @@ Column key — *Part 11*: §11.10(d) access control · §11.10(e) audit trail ·
 | URS-PROJ-001 | Only an authenticated user of an organisation can read or create programs; an anonymous request is refused with 401/403 and no data. Interactive login is via `/concept2cure/login`; in a development install a Demo Access control may substitute the password factor and must be absent when `NODE_ENV=production`. | §11.10(d) | high | `server/bootstrap/register-inline-routes.ts:846` (authMiddleware), `server/auth/dev-auth-policy.ts`, `client/src/concept2cure/auth/ZenLogin.tsx:189` |
 | URS-PROJ-002 | Program creation validates its inputs: `name` and `programType` are required, `programType` must be in the controlled vocabulary, and the product class is derived from the filing type and may not be contradicted by the client; invalid input is refused with 400 naming the field. | none | medium | `server/routes/c2c/projects.ts:465-520` |
 | URS-PROJ-003 | A created program is persisted under the creating organisation with a UUID id, is listed for that organisation and readable by id, and the intake reports what else it created (scaffolded document, canonical submission). | none | high | `server/routes/c2c/projects.ts:384, 813-817, 849` |
-| URS-PROJ-004 | Program creation is attributable: the activity feed shows who created it and when, the write is entered in the hash-chained audit log, and the organisation's audit ledger surface shows governed writes. | §11.10(e) | high | `server/routes/c2c/projects.ts:1165`, `server/services/audit/chain.ts:182`, `server/routes/audit-trail-ledger.routes.ts:160` |
+| URS-PROJ-004 | Program creation is attributable: the activity feed shows who created it and when, the write is entered in the hash-chained audit log, and the organisation's audit ledger surface shows governed writes, each naming the account that acted by reference as well as by name: two accounts may share a display name. | §11.10(e) | high | `server/routes/c2c/projects.ts:1165`, `server/services/audit/chain.ts:182`, `server/routes/audit-trail-ledger.routes.ts:160` |
 | URS-PROJ-005 | The Projects and Project Home surfaces render the organisation's programs and the open program without runtime errors. | none | medium | `client/src/concept2cure/v2/surfaces/Projects.tsx`, `ProjectHome.tsx`, `shellProject.ts` |
 | URS-PROJ-006 | A task can be created with a title, module and priority; it is persisted for the organisation, listed on the task board and its creation is written to the governed ledger. | §11.10(e) | medium | `server/routes/taskManagement.routes.ts:79, 172`, `server/routes/taskBoard.routes.ts` |
 | URS-PROJ-007 | The Program Journey read model and the Filings Catalog surface answer honestly for a new organisation (empty state or explained unavailability; never fixture data, never a silent 500). | none | low | `server/routes/program-journey.routes.ts:51`, `client/src/concept2cure/v2/surfaces/FilingsCatalog.tsx` |

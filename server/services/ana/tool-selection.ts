@@ -11,7 +11,8 @@
  *     is ALWAYS included. It is the catch-all: anything the relevance filter
  *     drops is still reachable by discovering + invoking it through the bridge.
  *   - A small core of always-relevant tools (search, guidance, generic authoring)
- *     is always included.
+ *     is always included. The self-drive tools are NOT part of it: a caller
+ *     that can surface a screen move pins SELF_DRIVE_TOOLS itself.
  *   - Below the cap, the full surface passes through unchanged — filtering only
  *     engages once the surface is genuinely large.
  *
@@ -35,25 +36,38 @@ export const ALWAYS_ON_TOOLS: ReadonlySet<string> = new Set([
   'generate_document',
   'generate_citation',
   'fetch_template_and_fill',
-  // AnA's hands. Taking someone to a screen, operating it and running a
-  // product demonstration are core to every conversation, and the relevance
-  // cap used to decide them by wording: over 762 tools, "go to biostatistics",
-  // "open settings" and "show me around" scored none of these, so AnA had no
-  // way to move and answered in prose. The platform bridge does not cover them
-  // (it dispatches only to the ana-ri command registry), so a trimmed
-  // navigate_to was unreachable, not merely deprioritised. Without Live Drive
-  // they still only offer chips, which is the governed default.
+  // Her declared plan (turn-plan.ts). A request's wording says nothing about
+  // whether it has several steps, so relevance scoring would drop it on
+  // exactly the long turns where a person most needs to see the plan.
+  'update_plan',
+]);
+
+/**
+ * AnA's hands: taking someone to a screen, operating it, and running a
+ * product demonstration.
+ *
+ * The relevance cap used to decide these by wording: over 762 tools, "go to
+ * biostatistics", "open settings" and "show me around" scored none of them, so
+ * AnA had no way to move and answered in prose. The platform bridge does not
+ * cover them (it dispatches only to the ana-ri command registry), so a trimmed
+ * navigate_to was unreachable, not merely deprioritised. Without Live Drive
+ * they still only offer chips, which is the governed default.
+ *
+ * Pinned by the callers that can surface a move, and deliberately NOT in
+ * ALWAYS_ON_TOOLS. That set applies to every selectToolsForTurn caller, and
+ * two of them — voice (ana-realtime) and background deep investigations —
+ * can neither move a screen nor render a chip. Forced onto those, the tools
+ * spent six definitions a turn on moves nobody could see, and invited the
+ * model to promise a screen change the surface had no way to make.
+ */
+export const SELF_DRIVE_TOOLS: readonly string[] = [
   'list_app_screens',
   'navigate_to',
   'list_screen_actions',
   'act_on_screen',
   'list_demo_scripts',
   'start_product_demo',
-  // Her declared plan (turn-plan.ts). A request's wording says nothing about
-  // whether it has several steps, so relevance scoring would drop it on
-  // exactly the long turns where a person most needs to see the plan.
-  'update_plan',
-]);
+];
 
 const STOPWORDS: ReadonlySet<string> = new Set([
   'the', 'and', 'for', 'with', 'this', 'that', 'are', 'was', 'our', 'you', 'your',

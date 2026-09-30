@@ -79,6 +79,10 @@ import {
 import { serverError } from '../../lib/api-response.js';
 import { createSource, findSourceByChecksum } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 
+// People are named through public.actor_name, not a join on users: since users
+// took row-level security (D3, 2026-09-28) a tenant scope reads only current
+// members, so the join dropped the name of anyone who had left
+// (docs/evidence/D3/2026-09-29-actor-names/).
 const router = Router();
 
 /**
@@ -503,7 +507,7 @@ async function readProgramDetail(id: string, orgId: number): Promise<Record<stri
   const measured = await readinessByProject([id], orgId);
   return {
     ...serializeProgramDetail(rows[0] as Record<string, unknown>),
-    readiness: measured ? (measured.get(id) ?? 0) : null,
+    readiness: measured?.get(id) ?? null,
   };
 }
 
@@ -552,7 +556,7 @@ router.get('/', async (req: Request, res: Response) => {
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.organization_id = $1 AND p.deleted_at IS NULL
           AND ($4::boolean OR p.status <> 'archived')
         ORDER BY p.updated_at DESC
@@ -570,9 +574,15 @@ router.get('/', async (req: Request, res: Response) => {
       (page as Array<{ id: string }>).map((p) => p.id),
       orgId,
     );
-    for (const p of page as Array<{ id: string; readiness: number }>) {
-      const r = real?.get(p.id);
-      if (r != null) p.readiness = r;
+    /* A measurement that failed, or a program with no governed sections to
+       measure, is no figure: null, which the card renders as "not measured".
+       Both used to fall back to the stored progress_percent 0 — a failed read
+       rendered as a measured "0% ready", which the note above admits was "not
+       a good answer". A share over no sections is undefined, as a mean over
+       no programs is. (A program with its dossier spine and nothing approved
+       is a real, measured 0 and still reads 0%.) */
+    for (const p of page as Array<{ id: string; readiness: number | null }>) {
+      p.readiness = real?.get(p.id) ?? null;
     }
 
     return res.json({
@@ -938,7 +948,7 @@ router.post('/', async (req: Request, res: Response) => {
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.id = $1 AND p.organization_id = $2`,
       [newId, orgId],
     );
@@ -1116,7 +1126,7 @@ router.get('/:id/team', async (req: Request, res: Response) => {
     const { rows } = await pool.query(
       `SELECT p.lead_user_id, p.team_members, u.name, u.email
          FROM regulatory_programs p
-         LEFT JOIN users u ON u.id = p.lead_user_id
+         LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
         WHERE p.id = $1 AND p.organization_id = $2
         LIMIT 1`,
       [req.params.id, orgId],
@@ -1308,7 +1318,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
          COALESCE(u.name, u.email) AS actor_name,
          al.occurred_at, al.ip_address
        FROM audit_logs al
-       LEFT JOIN users u ON u.id = COALESCE(al.actor_id, al.user_id)
+       LEFT JOIN LATERAL public.actor_name(COALESCE(al.actor_id, al.user_id)) u ON TRUE
        WHERE al.tenant_id = $2
          AND (al.record_id = $1
               OR al.target = 'regulatory_program:' || $1
@@ -1478,6 +1488,55 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
     return serverError(res, logger, 'adopting the file into the project', err, { programId });
   } finally {
     client.release();
+  }
+});
+
+// ── GET /api/c2c/projects/:id/conversation-files ─────────────────────────────
+//
+// The caller's own chat files that are in no project's Data Room (PF-07). A
+// file attached with no project open records no source; this is where a
+// project offers it, and POST /:id/adopt brings it in. Only the caller's own
+// uploads: a colleague's chat attachment is theirs to bring in. A file whose
+// bytes are already a source of some project is not listed — adopt is from no
+// project. One past the window, so a full one says so.
+
+const CONVERSATION_FILES_WINDOW = 50;
+
+router.get('/:id/conversation-files', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  const userId = resolveUserId(req);
+  if (!orgId || !userId) return send403(res);
+  const programId = String(req.params.id);
+  if (!UUID_RE.test(programId)) return send404(res);
+  try {
+    const check = await pool.query(
+      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [programId, orgId],
+    );
+    if (check.rows.length === 0) return send404(res);
+    const { rows } = await pool.query(
+      `SELECT f.id, f.original_name, f.mime_type, f.file_size, f.created_at
+         FROM file_uploads f
+        WHERE f.organization_id = $1 AND f.user_id = $2 AND f.checksum_sha256 IS NOT NULL
+          AND NOT EXISTS (
+                SELECT 1 FROM cre_evidence_sources s
+                 WHERE s.organization_id = $1 AND s.checksum = f.checksum_sha256
+                   AND (s.client_program_id IS NOT NULL OR s.client_workspace_id IS NOT NULL))
+        ORDER BY f.created_at DESC
+        LIMIT $3`,
+      [orgId, userId, CONVERSATION_FILES_WINDOW + 1],
+    );
+    const truncated = rows.length > CONVERSATION_FILES_WINDOW;
+    const files = (truncated ? rows.slice(0, CONVERSATION_FILES_WINDOW) : rows).map((f) => ({
+      id: String(f.id),
+      name: f.original_name ?? null,
+      mimeType: f.mime_type ?? null,
+      fileSize: f.file_size == null ? null : Number(f.file_size),
+      uploadedAt: f.created_at ?? null,
+    }));
+    return res.json({ projectId: programId, files, window: { shown: files.length, truncated } });
+  } catch (err: unknown) {
+    return serverError(res, logger, 'listing conversation files', err, { programId });
   }
 });
 

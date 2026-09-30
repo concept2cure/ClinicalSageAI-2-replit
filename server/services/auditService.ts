@@ -46,6 +46,13 @@ interface AuditLogEntry {
   details?: Record<string, any>;
   ipAddress?: string;
   userAgent?: string;
+  /**
+   * The person's stated reason for the act (§11.10(e) "reason for change").
+   * writeChainedAuditRow writes it to audit_logs.reason — the column the
+   * inspector's ledger shows — when one was given. It is hash-protected only
+   * through `details`, so a caller that wants it chained carries it there too.
+   */
+  reason?: string | null;
   /** Alias accepted by callers that use "organizationId" instead of tenantId */
   organizationId?: string | number;
   /**
@@ -284,12 +291,16 @@ export async function writeChainedAuditRow(
     occurred_at: occurredAt,
     tenant_id: tenantId,
   });
+  // The reason column only when a reason was given: the column is added by
+  // migrations/20260527_mutation_primitives.sql, and a caller with nothing to
+  // say writes exactly the row it always wrote.
+  const reason = typeof entry.reason === 'string' && entry.reason.trim() ? entry.reason : null;
   await client.query(
     `INSERT INTO audit_logs
        (id, tenant_id, user_id, action, table_name, record_id,
         actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,
-        old_values, new_values, ip_address, user_agent)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16)`,
+        old_values, new_values, ip_address, user_agent${reason ? ', reason' : ''})
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16${reason ? ',$17' : ''})`,
     [
       randomUUID(),
       tenantId,
@@ -307,6 +318,7 @@ export async function writeChainedAuditRow(
       newValues == null ? null : JSON.stringify(newValues),
       entry.ipAddress ?? null,
       entry.userAgent ?? null,
+      ...(reason ? [reason] : []),
     ],
   );
 }

@@ -15,6 +15,10 @@ import {
   assessReportability,
   evaluateCapaClosure,
   isAssessed,
+  inVocabulary,
+  DEVIATION_CATEGORIES,
+  DEVIATION_SEVERITIES,
+  CAPA_ACTION_STATUSES,
   type DeviationCategory,
   type DeviationSeverity,
   type CapaActionStatus,
@@ -32,9 +36,6 @@ export class ProtocolDeviationsError extends Error {
   }
 }
 
-const CATEGORIES = ['enrollment', 'consent', 'procedure', 'safety', 'data', 'other'];
-const SEVERITIES = ['minor', 'major', 'critical'];
-const CAPA_STATUSES = ['open', 'in_progress', 'completed', 'verified'];
 
 // ─── Deviations ──────────────────────────────────────────────────────────────
 
@@ -70,8 +71,8 @@ export async function createDeviationTx(
   const category = input.category ?? null;
   const severity = input.severity ?? null;
   const affectsSafety = typeof input.affectsSafety === 'boolean' ? input.affectsSafety : null;
-  if (category !== null && !CATEGORIES.includes(category)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid category "${category}".`);
-  if (severity !== null && !SEVERITIES.includes(severity)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid severity "${severity}".`);
+  if (category !== null && !inVocabulary(DEVIATION_CATEGORIES, category)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid category "${category}".`);
+  if (severity !== null && !inVocabulary(DEVIATION_SEVERITIES, severity)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid severity "${severity}".`);
 
   const doc = await client.query(
     `SELECT id FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
@@ -132,7 +133,7 @@ export async function assessDeviationTx(
   devId: number,
   input: DeviationAssessmentInput,
 ): Promise<DeviationWriteResult> {
-  if (!SEVERITIES.includes(input.severity)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid severity "${input.severity}".`);
+  if (!inVocabulary(DEVIATION_SEVERITIES, input.severity)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid severity "${input.severity}".`);
   if (typeof input.affectsSafety !== 'boolean') throw new ProtocolDeviationsError('BAD_INPUT', 'State whether the deviation affected subject safety.');
   const rationale = (input.rationale ?? '').trim();
   if (rationale.length < 8) throw new ProtocolDeviationsError('BAD_INPUT', 'Give the rationale for this assessment (at least 8 characters).');
@@ -187,7 +188,7 @@ export async function setCapaStatusTx(
   capaId: number,
   status: CapaActionStatus,
 ): Promise<void> {
-  if (!CAPA_STATUSES.includes(status)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid CAPA status "${status}".`);
+  if (!inVocabulary(CAPA_ACTION_STATUSES, status)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid CAPA status "${status}".`);
   const c = await client.query(
     `SELECT id FROM protocol_capa_actions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
     [capaId, orgId],

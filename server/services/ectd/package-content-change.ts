@@ -182,7 +182,11 @@ export async function recordFiledSequence(
     submissionType: string;
     sha256: string;
     transmittalId?: number | null;
-    leaves: Array<{ ctdSection: string; fileName: string; href: string; md5: string; operation?: string; title?: string }>;
+    // leafId + backbone: what a later sequence's modified-file names (W5/D7, 2026-09-29).
+    leaves: Array<{
+      ctdSection: string; fileName: string; href: string; md5: string; operation?: string; title?: string;
+      leafKey?: string; modifiedFile?: string; leafId?: string; backbone?: string;
+    }>;
   },
 ): Promise<boolean> {
   try {

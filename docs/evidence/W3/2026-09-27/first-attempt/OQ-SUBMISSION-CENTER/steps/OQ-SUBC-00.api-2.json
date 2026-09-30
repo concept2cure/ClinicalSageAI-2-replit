@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/vault/ingest",
+    "anonymous": false,
+    "identity": null,
+    "body": "[multipart/form-data]"
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 628,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "document": {
+        "id": "52c7b6c4-adeb-4ff6-aedc-97809294d50d",
+        "programId": "76017627-f984-43a3-beed-388dcfa25475",
+        "documentCode": "OQ-004 Cover letter 20260927235346.pdf",
+        "documentTitle": "OQ-004 Cover letter 20260927235346",
+        "documentType": "CORRESPONDENCE",
+        "version": "1.0",
+        "fileName": "OQ-004-Cover-letter-20260927235346.pdf",
+        "fileSize": 615,
+        "mimeType": "application/pdf",
+        "contentHash": "3c6a1230e443dec28de80320d9c12246b6ad277c89c1ebc12e840779bdf08428",
+        "processingStatus": "PENDING",
+        "hasExtractedText": true,
+        "wordCount": 9,
+        "createdAt": "2026-09-27T23:53:47.266Z",
+        "updatedAt": "2026-09-27T23:53:47.266Z"
+      },
+      "filing": {
+        "view": "biotech",
+        "folderId": "module-1",
+        "evidenceKind": "report",
+        "ctdSection": "1.1",
+        "placementStatus": "suggested",
+        "confidence": "high",
+        "rationale": "CTD pattern \"Cover Letter\" → Module 1 (1.1).",
+        "folderLabel": "Module 1 · Administrative",
+        "needsReview": false
+      }
+    }
+  }
+}

@@ -9,7 +9,12 @@ import {
 } from '@shared/constants/domain/product-types';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import {
+  listedChoices,
+  notifySurfaceActionReady,
+  useSurfaceActionHandlers,
+  type DirectiveProgram,
+} from '../surfaceActions';
 import { usePublishSurfaceContext } from '../surfaceContext';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
@@ -923,7 +928,9 @@ interface ProjPortfolioEntry {
   ws: string;
   code: string;
   stage: string;
-  readiness: number;
+  /** Share of the program's governed sections approved; null when there is
+   *  nothing to measure or the measurement failed. */
+  readiness: number | null;
   status: string;
   lead: string;
   blocker: string | null;
@@ -980,9 +987,16 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      "0%", a portfolio-mean readiness computed over no programs. A director
      reading the header learned they run nothing and have nothing blocked. */
   const kv = (v: string) => (live.loading || live.error ? '—' : v);
+  /* A mean over no programmes has no value. `kv` covers a read that has not
+     settled; this covers one that settled with zero rows, where the `|| 1`
+     divisor still produced a confident "0%". */
+  const measured = projects.filter((p): p is ProjPortfolioEntry & { readiness: number } => p.readiness != null);
+  const meanReadiness = measured.length
+    ? Math.round(measured.reduce((s, p) => s + p.readiness, 0) / measured.length) + '%'
+    : '—';
   const health = [
     { l: 'Active programs', n: kv(countFloor(projects.length, truncated)), m: 'across MDX, Biotech, Pharma', t: '' },
-    { l: 'Average readiness', n: kv(Math.round(projects.reduce((s, p) => s + p.readiness, 0) / (projects.length || 1)) + '%'), m: 'portfolio mean', t: '' },
+    { l: 'Average readiness', n: kv(meanReadiness), m: 'portfolio mean', t: '' },
     { l: 'Blocked', n: kv(String(projects.filter(p => p.status === 'blocked').length)), m: 'need attention', t: 'err' },
     { l: 'Filing < 60 days', n: kv(String(projects.filter(p => /days/.test(p.due)).length)), m: 'near-term submissions', t: 'warn' },
   ];
@@ -1078,7 +1092,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   }, [wizardOpen, live.loading, live.error, projects, list, ws, status, q, needle, view, health, truncated]);
   usePublishSurfaceContext('projects', anaContext);
 
-  const openProj = (pr: ProjPortfolioEntry) => {
+  const openProj = (
+    pr: Pick<ProjPortfolioEntry, 'id' | 'title' | 'code'> & Partial<Pick<ProjPortfolioEntry, 'ws' | 'status'>>,
+  ) => {
     try {
       publishShellProject({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status });
       if (window.C2C?.setSurface) window.C2C.setSurface('project-home', pr.title);
@@ -1093,21 +1109,48 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   /* One guard for all three: while the wizard owns the canvas, a person may be
      mid-form — AnA operating the portfolio underneath (or navigating away)
      would discard their work. Honest refusal instead. */
+  /* The program the server found. act_on_screen resolves the reference across
+     every program the person has and hands over the one it matched; this page
+     lists only the 50 most recent, so a program past it was refused here as
+     unknown although it exists. It arrives beside the params, never in them —
+     the model writes params. Needs no page, so it does not wait for one. */
+  const openResolvedProgram = (program: DirectiveProgram, named: string | undefined) => {
+    const found = projects.find((p) => p.id === program.id) ?? {
+      id: program.id,
+      title: program.name || named || '',
+      code: program.code || '—',
+    };
+    openProj(found);
+    return { ok: true as const, detail: `Opened ${found.code} — ${found.title}` };
+  };
   const wizardGuard = () =>
     wizardOpen ? { ok: false as const, reason: 'The new-project wizard is open — close it first.' } : null;
   useSurfaceActionHandlers('projects', {
-    'projects.open-program': (params) => {
+    'projects.open-program': (params, { program }) => {
       const guarded = wizardGuard();
       if (guarded) return guarded;
+      if (program) return openResolvedProgram(program, params.program);
       const wanted = (params.program ?? '').trim().toLowerCase();
-      if (!wanted) return { ok: false, reason: 'No program named.' };
       // Not-ready, not failed: the bus holds the directive and re-attempts on
       // this surface's ready signal below — the navigate→act gap.
       if (live.loading)
         return { ok: false, reason: 'The portfolio is still loading.', retry: true };
       if (live.error) return { ok: false, reason: 'The portfolio could not be read.' };
+      const programName = (p: (typeof projects)[number]) => `${p.code} — ${p.title}`;
+      const listed = () => listedChoices(projects.map(programName), 'Programs listed');
+      if (!wanted) return { ok: false, reason: `No program named.${listed()}` };
+      /* Exact first, on the keys the server resolves a reference by
+         (drive-context.ts resolveProgramRef): the id, the trimmed code, the
+         title. The id was not one of them here. AnA is handed each program's
+         id beside its name, act_on_screen resolves the reference before the
+         directive is sent, and it sends on a reference the server matched —
+         so a program open-by-id that the server had found was refused here as
+         "No program named …" while it sat on this very page. */
       const exact = projects.find(
-        (p) => p.code.toLowerCase() === wanted || p.title.toLowerCase() === wanted,
+        (p) =>
+          p.id.toLowerCase() === wanted ||
+          p.code.trim().toLowerCase() === wanted ||
+          p.title.toLowerCase() === wanted,
       );
       const contains = exact
         ? []
@@ -1120,8 +1163,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           ok: false,
           reason:
             contains.length > 1
-              ? `"${params.program}" matches ${contains.length} programs — name one exactly.`
-              : `No program named "${params.program}" in this portfolio.`,
+              ? `"${params.program}" matches ${contains.length} programs — name one exactly.${listedChoices(
+                  contains.map(programName),
+                  'Matches',
+                )}`
+              : `No program named "${params.program}" in this portfolio.${listed()}`,
         };
       }
       openProj(match);
@@ -1265,10 +1311,10 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
               <div className="pj-card-t">{p.title}</div>
               <div className="pj-card-m">{p.code} · {p.stage} · Lead {p.lead}</div>
               <div className="ph-bar-track" style={{ margin: '12px 0 6px' }}>
-                <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: p.readiness + '%' }} />
+                <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: (p.readiness ?? 0) + '%' }} />
               </div>
               <div className="pj-card-r">
-                <span>{p.readiness}% ready</span><span>{p.due}</span>
+                <span>{p.readiness == null ? 'Readiness not measured' : `${p.readiness}% ready`}</span><span>{p.due}</span>
               </div>
               <div className="pj-card-f">
                 <span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span>
@@ -1299,7 +1345,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
               <div>
                 <div style={{ fontSize: 11.5 }}>{p.stage}</div>
                 <div className="ph-bar-track" style={{ marginTop: 5 }}>
-                  <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: p.readiness + '%' }} />
+                  <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: (p.readiness ?? 0) + '%' }} />
                 </div>
               </div>
               <div style={{ fontSize: 11, color: p.blocker ? 'var(--warning)' : 'var(--text-400)' }}>{p.blocker ? '1 blocker' : '—'}</div>

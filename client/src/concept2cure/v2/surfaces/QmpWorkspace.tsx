@@ -44,8 +44,14 @@ interface Dashboard {
   qmp: { id: number; name: string; version: string; status: string };
   sections: { totalSections: number; sectionsByGateLevel: { hard: number; soft: number; info: number }; activeSections: number; inactiveSections: number; sectionsAllowingOverride: number };
   factors: { totalFactors: number; factorsByRiskLevel: { high: number; medium: number; low: number }; activeFactors: number; inactiveFactors: number; requiredFactors: number };
-  overallCompleteness: number;
-  riskProfile: { highRiskPercentage: number; mediumRiskPercentage: number; lowRiskPercentage: number };
+  /** Null when no CTQ factor is in scope: not assessed, never 0%. */
+  overallCompleteness: number | null;
+  riskProfile: { highRiskPercentage: number | null; mediumRiskPercentage: number | null; lowRiskPercentage: number | null };
+}
+
+/** A share as the surface shows it: a whole percent, or a dash when there is none. */
+function pct(share: number | null): string {
+  return share === null ? '—' : `${Math.round(share)}%`;
 }
 
 interface RawResult<T> { ok: boolean; status: number; body: T | null; message: string | null; code: string | null }
@@ -134,7 +140,9 @@ const TRANSITION = {
 type PlanTransition = keyof typeof TRANSITION;
 
 type PlanDialog = { kind: 'create' } | { kind: 'status'; plan: Plan; to: PlanTransition } | { kind: 'delete'; plan: Plan };
-type ListState = 'loading' | 'ready' | 'error';
+/* `refused` is a 401/403: "you don't have access", which neither "the register
+   didn't respond" nor a retry is true of. */
+type ListState = 'loading' | 'ready' | 'refused' | 'error';
 type DashState = 'idle' | 'loading' | 'ready' | 'error';
 type FireToast = ReturnType<typeof useToast>[1];
 
@@ -148,17 +156,25 @@ function useQmpRegister() {
 
   const loadPlans = useCallback(async () => {
     setListState('loading');
-    const { ok, body } = await rawJson<Plan[]>('GET', '/api/quality/plans');
-    if (!ok) { setListState('error'); return; }
-    const list = Array.isArray(body) ? body : [];
+    const { ok, status, body } = await rawJson<Plan[]>('GET', '/api/quality/plans');
+    if (!ok) { setListState(status === 401 || status === 403 ? 'refused' : 'error'); return; }
+    /* A 2xx that is not the plan list is a read we could not make, not an
+       empty register — `[]` here used to render "No quality plans yet". */
+    if (!Array.isArray(body)) { setListState('error'); return; }
+    const list = body;
     setPlans(list); setListState('ready');
     setActive((cur) => (cur && list.some((p) => p.id === cur) ? cur : list[0]?.id ?? null));
   }, []);
   useEffect(() => { void loadPlans(); }, [loadPlans]);
 
+  // Only the latest request may land: a slower answer for the plan selected
+  // before must never be shown as this plan's.
+  const dashRequest = useRef(0);
   const loadDashboard = useCallback(async (id: number) => {
-    setDashState('loading');
+    const request = ++dashRequest.current;
+    setDash(null); setDashState('loading');
     const { ok, body } = await rawJson<Dashboard>('GET', `/api/quality/dashboard/${id}`);
+    if (request !== dashRequest.current) return;
     // Require the full dashboard shape before rendering — a partial/empty body
     // (e.g. a freshly created plan with no sections yet) must not crash the view.
     if (!ok || !body || !body.sections?.sectionsByGateLevel || !body.factors?.factorsByRiskLevel || !body.riskProfile) {
@@ -264,13 +280,19 @@ function qmpAnaContext({ listState, plans, activePlan, dashState, dash }: {
   return {
     summary: listState === 'loading'
       ? 'Quality management plans, still loading.'
+      : listState === 'refused'
+        ? 'Quality management plans could not be read — this account does not have access. Not empty.'
       : listState === 'error'
         ? 'Quality management plans could not be loaded — unavailable, not empty.'
         : plans.length === 0
           ? 'Quality management: no quality plans defined yet for this organization.'
           : `Quality management: ${plans.length} plan(s)` +
             (activePlan ? `, "${activePlan.name}" (v${activePlan.version ?? '—'}, ${activePlan.status ?? 'no status'}) selected` : '') +
-            (dash ? `; ${dash.overallCompleteness}% complete across ${dash.sections.totalSections} section(s).` : '.'),
+            (dash && dashState === 'ready'
+              ? dash.overallCompleteness === null
+                ? `; completeness not assessed — no risk factor is linked to its ${dash.sections.totalSections} gated section(s).`
+                : `; ${pct(dash.overallCompleteness)} complete across ${dash.sections.totalSections} section(s).`
+              : '.'),
     facts: {
       plansState: listState,
       planCount: plans.length,
@@ -279,7 +301,7 @@ function qmpAnaContext({ listState, plans, activePlan, dashState, dash }: {
         ? { selectedPlanId: activePlan.id, selectedPlanName: activePlan.name, selectedPlanVersion: activePlan.version, selectedPlanStatus: activePlan.status }
         : {}),
       dashboardState: dashState,
-      ...(dash
+      ...(dash && dashState === 'ready'
         ? {
             overallCompletenessPct: dash.overallCompleteness,
             totalSections: dash.sections.totalSections,
@@ -302,23 +324,30 @@ function qmpAnaContext({ listState, plans, activePlan, dashState, dash }: {
 }
 
 /** The plan register: one row per plan, with the governed moves its status allows. */
-function PlanRegisterCard({ plans, listState, active, ask, onSelect, onOpen }: {
+function PlanRegisterCard({ plans, listState, active, ask, onSelect, onOpen, onRetry }: {
   plans: Plan[]; listState: ListState; active: number | null; ask: SurfaceViewProps['onAsk'];
-  onSelect: (id: number) => void; onOpen: (d: PlanDialog) => void;
+  onSelect: (id: number) => void; onOpen: (d: PlanDialog) => void; onRetry: () => void;
 }) {
+  /* "Explain this plan" is offered only when there is a plan on screen to
+     explain, and names it. It used to be the header's primary button on an
+     empty register, asking AnA about "this quality-management plan" when none
+     existed — while the one action that state needs, New plan, was a text link.
+     With no plans, the empty state carries New plan as its action. */
+  const selected = listState === 'ready' ? plans.find((p) => p.id === active) ?? null : null;
   return (
     <div className="pj-card">
       <div className="pj-card-h">
         <span className="t">Quality management plans</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {ask && <button className="reg-cta" onClick={() => ask('Explain what this quality-management plan enforces: what a hard, soft and info gate each block, which risk factors are required, and what changes for documents already in flight if I activate it. Say which figures are unavailable rather than assuming zero.')}>{I.sparkles} Explain this plan</button>}
+          {ask && selected && <button className="reg-cta" onClick={() => ask(`Explain what the quality-management plan “${selected.name}” (v${selected.version ?? '—'}, ${selected.status ?? 'no status'}) enforces: what a hard, soft and info gate each block, which risk factors are required, and what changes for documents already in flight if I activate it. Say which figures are unavailable rather than assuming zero.`)}>{I.sparkles} Explain this plan</button>}
           <button className="nda-open" onClick={() => onOpen({ kind: 'create' })}>{I.plus} New plan</button>
         </span>
       </div>
       <div className="pj-card-b" style={{ padding: 0 }}>
         {listState === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading quality plans…" /></div>
-          : listState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load quality plans" hint="The quality-plan register didn’t respond. Sign in to your tenant and retry." /></div>
-          : plans.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No quality plans yet" hint="Create a quality-management plan to define the gate levels and risk factors your documents are validated against." /></div>
+          : listState === 'refused' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.lock} title="You don’t have access to quality plans" hint="Ask an administrator of your organization to grant you access." /></div>
+          : listState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load quality plans" hint="The quality-plan register didn’t respond. This is not an empty register." retry={onRetry} /></div>
+          : plans.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No quality plans yet" hint="Create a quality-management plan to define the gate levels and risk factors your documents are validated against." action={{ label: 'New plan', onAct: () => onOpen({ kind: 'create' }) }} /></div>
           : <table className="reg-tbl"><thead><tr><th>Plan</th><th>Version</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
             <tbody>{plans.map((p) => (
               <tr key={p.id} data-active={active === p.id || undefined}>
@@ -351,7 +380,9 @@ function PlanRegisterCard({ plans, listState, active, ask, onSelect, onOpen }: {
 function PlanDashboardCard({ dash, dashState }: { dash: Dashboard | null; dashState: DashState }) {
   return (
     <div className="pj-card">
-      <div className="pj-card-h"><span className="t">Plan dashboard</span>{dash && <span className={'rd-chip tone-' + (dash.overallCompleteness >= 80 ? 'ok' : 'warn')}>{dash.overallCompleteness}% complete</span>}</div>
+      <div className="pj-card-h"><span className="t">Plan dashboard</span>{dash && dashState === 'ready' && (dash.overallCompleteness === null
+        ? <span className="rd-chip tone-idle">Not assessed</span>
+        : <span className={'rd-chip tone-' + (Math.round(dash.overallCompleteness) >= 80 ? 'ok' : 'warn')}>{pct(dash.overallCompleteness)} complete</span>)}</div>
       <div className="pj-card-b">
         {dashState === 'loading' ? <EmptyState icon={I.layers} title="Loading dashboard…" />
           : dashState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the plan dashboard" hint="The plan dashboard didn’t respond." />
@@ -374,7 +405,11 @@ function PlanDashboardCard({ dash, dashState }: { dash: Dashboard | null; dashSt
               </div>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Risk profile</div>
-                <div style={{ fontSize: 13 }}>High {dash.riskProfile.highRiskPercentage}% · Medium {dash.riskProfile.mediumRiskPercentage}% · Low {dash.riskProfile.lowRiskPercentage}%</div>
+                <div style={{ fontSize: 13 }}>
+                  {dash.riskProfile.highRiskPercentage === null
+                    ? 'Not assessed — no risk factor is linked to this plan’s gating rules.'
+                    : <>High {pct(dash.riskProfile.highRiskPercentage)} · Medium {pct(dash.riskProfile.mediumRiskPercentage)} · Low {pct(dash.riskProfile.lowRiskPercentage)}</>}
+                </div>
               </div>
             </div>
           )}
@@ -399,7 +434,7 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
      decides what every other document is validated against. */
   const ask = onAsk;
   const register = useQmpRegister();
-  const { plans, listState, active, setActive, dash, dashState } = register;
+  const { plans, listState, active, setActive, dash, dashState, loadPlans } = register;
   const [dialog, setDialog] = useState<PlanDialog | null>(null);
   const [toast, fireToast] = useToast();
   const submit = useGovernedPlanWrites(register, fireToast, setDialog);
@@ -413,7 +448,7 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="cm-body">
-      <PlanRegisterCard plans={plans} listState={listState} active={active} ask={ask} onSelect={setActive} onOpen={setDialog} />
+      <PlanRegisterCard plans={plans} listState={listState} active={active} ask={ask} onSelect={setActive} onOpen={setDialog} onRetry={() => void loadPlans()} />
       {active != null && <PlanDashboardCard dash={dash} dashState={dashState} />}
       <PlanDialogForm dialog={dialog} onCancel={() => setDialog(null)} submit={submit} />
       <C2CToast msg={toast} />

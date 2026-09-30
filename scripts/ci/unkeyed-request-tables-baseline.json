@@ -1,7 +1,7 @@
 {
   "$comment": "Tables a per-request server path reads that carry NO tenant column, so no RLS sweep in this repository can policy them. Each entry needs a reason whose first word is one of: global | derived | exempt | unreviewed. \"unreviewed\" is a DEFECT awaiting triage, not a category — three cross-tenant disclosures on 2026-09-10 were all tables that would have sat here as \"unreviewed\". Shrink this file; never grow it. See docs/work-orders/WO-13-grdhe-tenant-scoping.md.",
   "generatedAt": "2026-09-19T02:40:04.942Z",
-  "total": 113,
+  "total": 112,
   "entries": {
     "adversarial.regulatory_adversarial_precedents": "unreviewed — no one has classified this table yet",
     "ai_claim_citations": "unreviewed — no one has classified this table yet",
@@ -22,7 +22,6 @@
     "c2c_milestone_sections": "unreviewed — no one has classified this table yet",
     "c2c_project_pinned_evidence": "unreviewed — no one has classified this table yet",
     "c2c_rule_packs": "unreviewed — no one has classified this table yet",
-    "capa": "unreviewed — no one has classified this table yet",
     "capa_records": "unreviewed — no one has classified this table yet",
     "chat_messages": "unreviewed — no one has classified this table yet",
     "citation_chains": "unreviewed — no one has classified this table yet",

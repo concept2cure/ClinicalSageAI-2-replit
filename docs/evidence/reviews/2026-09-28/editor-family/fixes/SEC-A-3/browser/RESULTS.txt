@@ -1,0 +1,59 @@
+# What Chromium's built-in PDF viewer needs — measured, not assumed (SEC-A-3, lane FD)
+# Chromium Chromium 141.0.7390.37 , headless, pages from file:// (no server, no network).
+# Harness: mkpdf.mjs (valid 1-page PDF), mkpage.mjs / mkpage_csp.mjs (parent page: blob URL of the bytes, framed), cdp.mjs (CDP over --remote-debugging-pipe:
+#   lists targets; in the PDF viewer's extension frame reads <pdf-viewer> and its page count), run.sh (screenshot + dump-dom).
+# Viewer loaded = a chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai frame with hasViewer:true and pageCount 1.
+# Blocked = the iframe's document is chrome-error://chromewebdata/ (screenshot: grey page with the sad-document icon).
+
+=== pdf_nosandbox  (variant: pdf_nosandbox sandbox=NONE content=pdf type=application/pdf)
+target type=iframe url=blob:null/f0a58b4c-62b6-421e-96fa-c29c3e50fbf4
+target type=iframe url=chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/index.html
+target type=iframe url=blob:null/f0a58b4c-62b6-421e-96fa-c29c3e50fbf4
+pdf-viewer frame: {"title":"f0a58b4c-62b6-421e-96fa-c29c3e50fbf4","hasViewer":true,"errorDialogShown":false,"pageCount":1,"docLength":1}
+frame url=file://<scratch> mime=text/html sandboxFlags? crossOriginIsolated=NotIsolated
+
+=== pdf_sandbox_empty  (variant: pdf_sandbox_empty sandbox=EMPTY content=pdf type=application/pdf)
+frame url=file://<scratch> mime=text/html sandboxFlags? crossOriginIsolated=NotIsolated
+  frame url=chrome-error://chromewebdata/ mime=text/html sandboxFlags? crossOriginIsolated=NotIsolatedFeatureDisabled
+
+=== pdf_sandbox_so  (variant: pdf_sandbox_so sandbox=allow-same-origin content=pdf type=application/pdf)
+frame url=file://<scratch> mime=text/html sandboxFlags? crossOriginIsolated=NotIsolated
+  frame url=chrome-error://chromewebdata/ mime=text/html sandboxFlags? crossOriginIsolated=NotIsolatedFeatureDisabled
+
+=== pdf_sandbox_scripts_so  (variant: pdf_sandbox_scripts_so sandbox=allow-scripts allow-same-origin content=pdf type=application/pdf)
+frame url=file://<scratch> mime=text/html sandboxFlags? crossOriginIsolated=NotIsolated
+  frame url=chrome-error://chromewebdata/ mime=text/html sandboxFlags? crossOriginIsolated=NotIsolatedFeatureDisabled
+
+=== pdf_sandbox_max  (variant: pdf_sandbox_max sandbox=allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads allow-top-navigation allow-presentation allow-pointer-lock allow-orientation-lock content=pdf type=application/pdf)
+frame url=file://<scratch> mime=text/html sandboxFlags? crossOriginIsolated=NotIsolated
+  frame url=chrome-error://chromewebdata/ mime=text/html sandboxFlags? crossOriginIsolated=NotIsolatedFeatureDisabled
+
+=== pdf_csp  (variant: pdf_csp [csp attribute, no sandbox] csp=script-src 'none' content=pdf type=application/pdf)
+target type=iframe url=blob:null/52b19e78-8fbe-43aa-a78e-1c7d85539735
+target type=iframe url=chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/index.html
+pdf-viewer frame: {"title":"chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/index.html","hasViewer":false,"errorDialogShown":false,"pageCount":null,"docLength":null}
+frame url=file://<scratch> mime=text/html sandboxFlags? crossOriginIsolated=NotIsolated
+
+=== pdf_csp_obj  (variant: pdf_csp_obj [csp attribute, no sandbox] csp=script-src 'none'; object-src 'none' content=pdf type=application/pdf)
+target type=iframe url=blob:null/927a7dcb-7c22-4de2-9718-b5378ca85f68
+target type=iframe url=chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/index.html
+pdf-viewer frame: {"title":"chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/index.html","hasViewer":false,"errorDialogShown":false,"pageCount":null,"docLength":null}
+frame url=file://<scratch> mime=text/html sandboxFlags? crossOriginIsolated=NotIsolated
+
+=== html_as_pdf_nosandbox  (variant: html_as_pdf_nosandbox sandbox=NONE content=html type=application/pdf)
+target type=iframe url=blob:null/4be9450e-8ef5-4ddf-a654-f1ba41efb8c9
+target type=iframe url=chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/index.html
+target type=iframe url=blob:null/4be9450e-8ef5-4ddf-a654-f1ba41efb8c9
+pdf-viewer frame: {"title":"","hasViewer":true,"errorDialogShown":false,"pageCount":0,"docLength":0}
+frame url=file://<scratch> mime=text/html sandboxFlags? crossOriginIsolated=NotIsolated
+
+=== script execution (screenshots html_nosandbox.png / html_sandbox_so.png / html_csp.png)
+html_nosandbox   text/html blob, no sandbox:        frame turned red, heading 'SCRIPT RAN, PARENT BLOCKED: SecurityError' (script ran; parent blocked only because file:// origins are opaque — same-origin https would reach the parent)
+html_sandbox_so  text/html blob, allow-same-origin: 'HTML DOCUMENT LOADED', white — script did not run
+html_csp         text/html blob, csp=script-src 'none': 'HTML DOCUMENT LOADED', white — script did not run
+
+# Conclusions
+1. No sandbox value lets Chromium show a PDF: '', allow-same-origin, allow-scripts allow-same-origin, and every allow-* token together all give chrome-error://chromewebdata.
+2. The csp attribute (CSP Embedded Enforcement) keeps the extension frame but stops the viewer's own script: no <pdf-viewer> element, nothing rendered.
+3. Unsandboxed + application/pdf: the viewer loads the PDF (pageCount 1). HTML bytes typed application/pdf go to the viewer too (pageCount 0) — never to the HTML parser.
+=> The strictest configuration that still shows a PDF in Chromium is an unsandboxed frame; the control is the input: %PDF bytes, typed application/pdf.

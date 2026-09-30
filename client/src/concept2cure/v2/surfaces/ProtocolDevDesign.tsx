@@ -28,6 +28,7 @@ import { PaneHead, KV } from './ProtocolDevShared';
 import { apiRequest } from '@/lib/queryClient';
 import { C2CForm, type C2CFormFieldOption } from '../C2CForm';
 import { ProjectionsPanel } from './ProtocolDevProjections';
+import { PlanningInputsPanel } from './ProtocolDevPlanningInputs';
 
 type Obj = Record<string, unknown>;
 const MIN_REASON = 8;
@@ -59,6 +60,21 @@ async function send(method: 'GET' | 'POST', path: string, body?: Obj): Promise<O
 
 interface DesignRow { studyId: string; title: string; phase: string; indication: string; status: string }
 
+/**
+ * The list, or not. A 200 that carries no `designs` array — {}, an envelope,
+ * an error on a 200, or an HTML page `send` could not parse — used to become
+ * [], and the drawer told the author this organisation has no persisted study
+ * design. That is a failed read, and every row must carry the id the bind
+ * posts. An empty array still passes: that is the honest empty state
+ * (periodic review 2026-09-28, editor family, HS-C-3).
+ */
+function isDesignList(value: unknown): value is DesignRow[] {
+  return Array.isArray(value) && value.every((row) => {
+    const id = (row as { studyId?: unknown } | null)?.studyId;
+    return typeof id === 'string' && id.trim() !== '';
+  });
+}
+
 /** This tenant's persisted designs, for the bind drawer's picker. */
 function useTenantDesigns(active: boolean) {
   const [rows, setRows] = useState<DesignRow[] | null>(null);
@@ -69,7 +85,9 @@ function useTenantDesigns(active: boolean) {
     void (async () => {
       try {
         const j = await send('GET', '/api/study-design');
-        if (live) setRows((Array.isArray(j.designs) ? j.designs : []) as DesignRow[]);
+        if (!live) return;
+        if (isDesignList(j.designs)) setRows(j.designs);
+        else setError('The server answered without a list of designs.');
       } catch (e) {
         if (live) setError(e instanceof Error ? e.message : String(e));
       }
@@ -292,6 +310,7 @@ export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast }: S
         <>
           <DesignIdentity sd={sd} />
           <DesignGates sd={sd} />
+          <PlanningInputsPanel studyId={sd.studyId} canWrite={canWrite} onError={onError} onToast={onToast} />
           <ProjectionsPanel studyId={sd.studyId} designTitle={sd.title} />
         </>
       )}

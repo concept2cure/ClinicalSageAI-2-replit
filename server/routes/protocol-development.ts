@@ -49,22 +49,28 @@ import {
   signerIpAddress,
   signProtocolAct,
 } from '../services/protocol-development/protocol-signature';
-import { requireEditorAccess } from '../middleware/orgMembership';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
 import {
   readDerivation,
   applyDerivationTx,
   DerivationError,
 } from '../services/protocol-development/design-derivation-service';
+import { redlineForProtocol, spiritForProtocol } from '../services/protocol-development/protocol-industry-service';
 
-// A viewer cannot sign (requireEditorAccess, 21 CFR 11.10(g)), and the password
-// behind a signature cannot be guessed without limit here any more than at
-// /api/esignature/verify-password (11.300(d)).
+// A viewer cannot sign (the router's writing-role gate below, 21 CFR 11.10(g)),
+// and the password behind a signature cannot be guessed without limit here any
+// more than at /api/esignature/verify-password (11.300(d)).
 const signingAttempts = signingAttemptLimiter('protocol-sign', {
   error: { code: 'TOO_MANY_ATTEMPTS', message: 'Too many signing attempts. Wait a few minutes and try again. Nothing was signed.' },
 });
 
 const router = Router();
+// A viewer reads a protocol and changes nothing on it (11.10(d), (g)).
+// 2026-09-28: gated by P11-C-1; the coverage-gap sweep's GP-P-1 is the same
+// finding and is closed here. The mount (register-inline-routes.ts) carries
+// authMiddleware only, so this line is the router's whole write authority.
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -322,6 +328,30 @@ router.get('/documents/:id/design-derivation', async (req, res) => {
   }
 });
 
+/* SPIRIT 2013 and the version redline (docs/design/PROTOCOL_INDUSTRY_GAPS.md).
+   Both read-only: no audit row, nothing written. SPIRIT reads the bound design
+   AND this protocol's sections, so document-evidenced rows are judged rather
+   than reported not_assessable; a protocol with no design bound answers 409
+   with the reason, never an empty checklist. The redline compares two recorded
+   versions, or a recorded version against the working copy (?to=current). */
+router.get('/documents/:id/spirit', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try { return res.json(await spiritForProtocol(requestPgClient(req), orgId, id)); } catch (err) { return fail(res, err); }
+});
+
+router.get('/documents/:id/redline', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const from = typeof req.query.from === 'string' ? req.query.from : '';
+  const to = typeof req.query.to === 'string' ? req.query.to : '';
+  try { return res.json(await redlineForProtocol(requestPgClient(req), orgId, id, from, to)); } catch (err) { return fail(res, err); }
+});
+
 const applyDerivationSchema = z
   .object({ acceptedPaths: z.array(z.string().min(1).max(120)).min(1).max(20), reason })
   .strict();
@@ -493,7 +523,7 @@ router.post('/documents/:id/versions', async (req, res) => {
 // declares the protocol complete, or another person approves it. It runs the
 // full ceremony in protocol-signature.ts, never the plain governed() helper.
 const finalizeSchema = z.object({ reason, meaning: z.unknown().optional(), reauth: z.unknown().optional() });
-router.post('/documents/:id/finalize', requireEditorAccess, signingAttempts, async (req, res) => {
+router.post('/documents/:id/finalize', signingAttempts, async (req, res) => {
   const userId = resolveUserId(req);
   const orgId = resolveOrgId(req);
   if (!userId || !orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });

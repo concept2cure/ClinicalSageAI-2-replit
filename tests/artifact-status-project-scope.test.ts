@@ -99,11 +99,13 @@ vi.mock('../server/routes/c2c/project-access', () => ({
 /* The one translation rule (its own suite proves it): the integer id of a
    project of this organization, or a program UUID through its anchor. */
 vi.mock('../server/services/cmc/resolve-cmc-artifact-project', () => ({
-  resolveCmcArtifactProject: vi.fn(async (_org: number, raw: string) =>
-    raw === '3' || raw === PROGRAM
+  resolveCmcArtifactProject: vi.fn(async (_org: number, raw: string) => {
+    // '13': a lookup that could not complete (the route asks strictly).
+    if (raw === '13') throw new Error('connection reset');
+    return raw === '3' || raw === PROGRAM
       ? { state: 'linked', artifactProjectId: 3, via: raw === '3' ? 'numeric' : 'program-anchor' }
-      : { state: raw === UNANCHORED ? 'unanchored' : 'unaddressable', artifactProjectId: null, detail: 'no' },
-  ),
+      : { state: raw === UNANCHORED ? 'unanchored' : 'unaddressable', artifactProjectId: null, detail: 'no' };
+  }),
 }));
 vi.mock('../server/services/concept2cure/governedDocumentContractService', () => ({
   resolveGovernedContext: () => ({
@@ -139,6 +141,8 @@ vi.mock('../server/db/drizzle-queryable', () => ({ queryableFromDrizzle: () => (
 import artifactRouter from '../server/routes/c2c/artifacts';
 import { pool } from '../server/db';
 import { contradictionEngineService } from '../server/services/contradiction-engine-service';
+import { interceptFeedback } from '../server/services/intelligence/rim-interceptors.js';
+import { resolveCmcArtifactProject } from '../server/services/cmc/resolve-cmc-artifact-project';
 
 function makeApp() {
   const app = express();
@@ -204,9 +208,31 @@ describe('PUT …/status: the artifact of the project the URL names', () => {
     expect(statusWrite('review')).toBeUndefined();
   });
 
+  it('a project lookup that could not complete is a 500, never a "not found" — and it is asked strictly', async () => {
+    st.queue = [[ARTIFACT]];
+    const res = await put('13', 'review');
+    expect(res.status).toBe(500);
+    expect(statusWrite('review')).toBeUndefined();
+    expect(resolveCmcArtifactProject).toHaveBeenCalledWith(99, '13', { strict: true });
+  });
+
+  it('the outcome log records the resolved project, not parseInt of the URL', async () => {
+    // parseInt('0b9f…') is 0 and parseInt('5e1d…') is 5: a program UUID's
+    // leading digits name some other project, possibly another tenant's.
+    // review → draft is a regression, logged as 'rejected'. The queue carries
+    // the lookup, the update's returned row, and the writes after it.
+    const back = { ...ARTIFACT, status: 'review' };
+    st.queue = [[back], [{ ...back, status: 'draft' }], [], [], [], []];
+    const res = await put(PROGRAM, 'draft', { reason: 'Needs another pass' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(interceptFeedback).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: 99, projectId: 3, feedbackType: 'rejected' }),
+    );
+  });
+
   it('the promotion gate reads the resolved project, not the URL text', async () => {
     st.queue = [[{ ...ARTIFACT, status: 'approved', approvedVersionId: 2 }]];
-    await put(PROGRAM, 'locked', { attestation: { meaning: 'Released', attestationText: 'I release this' } });
+    await put(PROGRAM, 'locked', { attestation: { meaning: 'release', attestationText: 'I release this' } });
     expect(contradictionEngineService.checkPromotionBlocked).toHaveBeenCalledWith(99, 3, 4242);
   });
 });

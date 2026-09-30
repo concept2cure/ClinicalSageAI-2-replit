@@ -1,0 +1,55 @@
+# mutants run 2026-09-28T04:54:42.976319Z at 84ce8fa3 (working tree)
+
+## M1: signed read from the disposition only (the report's version; status ignored)
+file: client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx
+--- replaced:
+const signed = disposition !== '' || str(r.status) === 'completed';
++++ with:
+const signed = disposition !== '';
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx
+result: CAUGHT (Tests  1 failed | 4 passed (5))
+  × client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a completed review, disposition column empty: shows the signed state and opens nothing 141ms
+
+## M2: signed read from the status only (disposition ignored)
+file: client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx
+--- replaced:
+const signed = disposition !== '' || str(r.status) === 'completed';
++++ with:
+const signed = str(r.status) === 'completed';
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx
+result: CAUGHT (Tests  1 failed | 4 passed (5))
+  × client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded, status not yet moved: shows the signed state and opens nothing 103ms
+
+## M3: the control ignores the signed state (the pre-fix button, offered again)
+file: client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx
+--- replaced:
+      {signed ? (
+        <button type="button" className="pg-btn outline" aria-label={'Disposition signed for ' + who} disabled
++++ with:
+      {false ? (
+        <button type="button" className="pg-btn outline" aria-label={'Disposition signed for ' + who} disabled
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx
+result: CAUGHT (Tests  3 failed | 2 passed (5))
+  × client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded: shows the signed state and opens nothing 347ms
+  × client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a completed review, disposition column empty: shows the signed state and opens nothing 83ms
+  × client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded, status not yet moved: shows the signed state and opens nothing 62ms
+
+## M4: the signed control stays clickable
+file: client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx
+--- replaced:
+aria-label={'Disposition signed for ' + who} disabled
+
++++ with:
+aria-label={'Disposition signed for ' + who} onClick={onSign}
+
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx
+result: CAUGHT (Tests  3 failed | 2 passed (5))
+  × client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded: shows the signed state and opens nothing 343ms
+  × client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a completed review, disposition column empty: shows the signed state and opens nothing 44ms
+  × client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded, status not yet moved: shows the signed state and opens nothing 55ms
+
+# summary
+M1 CAUGHT: signed read from the disposition only (the report's version; status ignored)
+M2 CAUGHT: signed read from the status only (disposition ignored)
+M3 CAUGHT: the control ignores the signed state (the pre-fix button, offered again)
+M4 CAUGHT: the signed control stays clickable

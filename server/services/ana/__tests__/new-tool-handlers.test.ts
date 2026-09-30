@@ -17,7 +17,17 @@
  * a seeded fixture (TODO).
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// 2026-09-28: confirmed writes now need an editor role (registry wrapper,
+// writeRoleRefusal); the confirmed calls here model a person who may edit, so
+// the membership lookup answers 'member'. The pg stub has no organization_users row.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { getToolHandler, type ToolContext } from '../AnaToolExecutor.js';
 import FDAFormGenerator from '../../FDAFormGenerator';
 
@@ -68,14 +78,14 @@ describe('AnA new tool handlers — input validation (no DB needed)', () => {
 
   it('assess_claim_evidence_integrity rejects missing package_id', async () => {
     const handler = getToolHandler('assess_claim_evidence_integrity')!;
-    const result = JSON.parse(await handler({}, { organizationId: 1, humanConfirmed: true }));
+    const result = JSON.parse(await handler({}, { organizationId: 1, userId: 1, humanConfirmed: true }));
     expect(result.error).toMatch(/package_id/);
   });
 
   it('simulate_reviewer_challenges rejects missing assessment_id', async () => {
     const handler = getToolHandler('simulate_reviewer_challenges')!;
     const result = JSON.parse(
-      await handler({ package_id: 42 }, { organizationId: 1, humanConfirmed: true })
+      await handler({ package_id: 42 }, { organizationId: 1, userId: 1, humanConfirmed: true })
     );
     expect(result.error).toMatch(/assessment_id/);
   });
@@ -89,7 +99,7 @@ describe('AnA new tool handlers — input validation (no DB needed)', () => {
           changed_artifact_id: 7,
           change_description: 'added 12-month safety follow-up',
         },
-        { organizationId: 1, humanConfirmed: true }
+        { organizationId: 1, userId: 1, humanConfirmed: true }
       )
     );
     expect(result.error).toMatch(/change_type/);
@@ -188,21 +198,30 @@ describe('AnA new tool handlers — tenant context enforcement', () => {
   // they hit org-scoped DB queries. The LLM cannot pass tenant identifiers
   // as inputs by design — they come from request-scoped ToolContext only.
 
+  // 2026-09-28: these three are confirm-class writes, so a call with no identified
+  // member (no userId / organizationId) is refused by the registry wrapper
+  // (writeRoleRefusal) before the handler's own organizationId check, and the
+  // membership lookup is never asked.
   it('assess_claim_evidence_integrity refuses without organizationId', async () => {
+    resolveSignerOrgRole.mockClear();
     const handler = getToolHandler('assess_claim_evidence_integrity')!;
     const result = JSON.parse(await handler({ package_id: 42 }, { humanConfirmed: true } as ToolContext));
-    expect(result.error).toMatch(/organizationId/);
+    expect(result.error).toMatch(/needs an identified member of the organization\. Nothing was changed\./);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('simulate_reviewer_challenges refuses without organizationId', async () => {
+    resolveSignerOrgRole.mockClear();
     const handler = getToolHandler('simulate_reviewer_challenges')!;
     const result = JSON.parse(
       await handler({ package_id: 42, assessment_id: 7 }, { humanConfirmed: true } as ToolContext)
     );
-    expect(result.error).toMatch(/organizationId/);
+    expect(result.error).toMatch(/needs an identified member of the organization\. Nothing was changed\./);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('predict_change_impact refuses without organizationId', async () => {
+    resolveSignerOrgRole.mockClear();
     const handler = getToolHandler('predict_change_impact')!;
     const result = JSON.parse(
       await handler(
@@ -215,7 +234,8 @@ describe('AnA new tool handlers — tenant context enforcement', () => {
         { humanConfirmed: true } as ToolContext
       )
     );
-    expect(result.error).toMatch(/organizationId/);
+    expect(result.error).toMatch(/needs an identified member of the organization\. Nothing was changed\./);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('fetch_template_and_fill refuses without organizationId', async () => {

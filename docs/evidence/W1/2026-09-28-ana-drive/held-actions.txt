@@ -1,0 +1,115 @@
+D2 — an action AnA sends to another screen gets that screen's answer
+2026-09-29, concept2cure-v2, local stand-in model (harness/), headless Chromium
+
+── How an action on another screen runs ─────────────────────────────────────
+act_on_screen names a screen and an action. When the person is on another
+screen, the client's action bus stashes the action and navigates there
+(applySurfaceAction, client/src/concept2cure/v2/surfaceActions.ts). The screen
+mounts and registers its handlers, and the bus tries the action at once. That
+is while the screen's first read is still in flight, so a handler that needs
+the data answers `retry: true` and the bus holds the action.
+
+Only two things re-try a held action: the screen registering, which has
+already happened, and the screen calling notifySurfaceActionReady. An action
+still held after 20 s (PENDING_ACTION_TTL_MS) is reported "did not become
+ready in time". The server stops waiting for the screen at 10 s
+(MOVE_SETTLE_MAX_MS) and tells AnA the move is not confirmed.
+
+── The audit (every action, from the source) ────────────────────────────────
+Checked with the TypeScript parser, no model involved:
+  - 96 actions declared in shared/navigation/surface-actions.ts; every one has
+    a handler (88 as literal keys, 8 built from template keys in
+    pdev/surfaces/Workstream.tsx).
+  - Every handler reads exactly the params the registry declares (94 by the
+    parser; the Usage and Billing tabs share one named handler, which reads
+    `tab`, as declared). The bus passes declared params only, so a mismatch
+    would be silent; there is none.
+  - Every registration's screen id is the one its actions resolve to, through
+    the client's own alias resolver. There are no mismatches.
+  - The ready signal is where it breaks. 32 of the 53 handler registrations
+    can hold an action:
+    - 2 never signal:
+        client/src/concept2cure/v2/surfaces/Biostatistics.tsx ('biostatistics')
+        client/src/concept2cure/v2/surfaces/Inconsistency.tsx ('inconsistency')
+    - 16 signal only when the read succeeded (`if (!x.loading && !x.error)`,
+      and on the program journey `&& !empty`):
+        AgencyMeetings, BiopharmaJourney, BiopharmaProject, ChangeAssessment,
+        CrlLibrary, CroPortfolio, DecisionLineage, DocJourney, HaqManager,
+        LabelingPi, Orchestration, PrecedentEngine, Pyramid, SafetyNarrative,
+        ShadowReview, SourceTracer.
+      Each of their handlers refuses honestly when the read fails ("The
+      sponsor roster did not load, so there are no sponsors to select from."),
+      but a held action was never re-tried, so it never got that answer.
+    - PublishingCenter already signals on ready or error; it is the pattern.
+
+── Before (unchanged screens) ───────────────────────────────────────────────
+The battery's heldAction scenario opens BX-301, then from another screen asks
+AnA to switch the Inconsistency overlay to EMA, then to load a Biostatistics
+study design. It has one local-only data change: a study design for BX-301
+("Phase 2 dose finding", cdisc_prm_studies, harness/README.md).
+FAIL  held action: an overlay switch sent from another screen gets the screen's own answer  — Act result: action_ready. Screen: not confirmed: "Switch the regulator overlay" on the inconsistency screen. Do not say it happened. If you mention one, say it was asked for and is not confirmed yet. (overlay unchanged; answered in 16249 ms)
+FAIL  held action: a study design named from another screen is loaded  — Act result: action_ready. Screen: not confirmed: "Load a persisted study design" on the biostatistics screen. Do not say it happened. If you mention one, say it was asked for and is not confirmed yet. (selected: none; answered in 16275 ms)
+PASS  no uncaught page errors
+1/3 passed
+  The design exists and its list loads. It was still never loaded
+  (held-design-before.png: listed, not selected; "Reading the results… 10s").
+
+── The fix ──────────────────────────────────────────────────────────────────
+  - Biostatistics and Inconsistency signal once their read has settled,
+    whether it succeeded or failed. Each mirrors the condition its handler
+    holds on.
+  - The 16 signal once loading has settled, and the handler gives its own
+    answer: the action on a good read, the honest refusal on a failed or
+    empty one. PrecedentEngine keeps its `applied` condition; its handler
+    refuses on its own when no search has been run.
+  - Nothing else changed. No handler, and not the bus.
+
+── Tests, each first seen failing ───────────────────────────────────────────
+client/src/concept2cure/v2/__tests__/surfaceReadySignal.test.ts reads every
+screen's source with the TypeScript parser. It asserts that a screen that can
+hold an action signals for it, and that no signal waits for the read to
+succeed. On the unchanged screens it listed the 2 silent screens and the 16
+gated signals above, exactly.
+client/src/concept2cure/v2/__tests__/heldScreenActions.test.tsx mounts the
+real screens. It sends each action from elsewhere, holds the read in flight,
+then answers it:
+  Inconsistency: the board arrives and the overlay switch lands (EMA on);
+  Biostatistics: the list arrives and the named design is loaded;
+  CRO portfolio: the read fails and the action is refused with the screen's
+    own reason.
+With the 18 screen changes set aside (git stash):
+ ✓ reads the screens it guards (a parser that found none would pass vacuously)
+ × every screen that can hold an action signals when its data settles
+ × no ready signal waits for the read to succeed
+ ✓ the pattern that catches it > flags the gates it exists to catch, and not the ones that pass
+ × Inconsistency: an overlay switch lands when the board arrives 5064ms
+ × Biostatistics: a design named while the list loads is loaded when it arrives 5200ms
+ × CRO portfolio: a sponsor named while the roster loads is refused with the reason when the read fails 5015ms
+      Tests  5 failed | 2 passed (7)
+Restored: 7 passed. The two that pass either way are the guard's own
+checks: that it found screens to read, and that its pattern flags the gates
+it should and passes the ones it should not.
+
+── After (this tree) ────────────────────────────────────────────────────────
+PASS  held action: an overlay switch sent from another screen gets the screen's own answer  — Act result: action_ready. Screen: "Switch the regulator overlay" on the inconsistency screen did not happen: The inconsistency board could not be read, so no overlay can be scored against it. (overlay unchanged; answered in 6734 ms)
+PASS  held action: a study design named from another screen is loaded  — Act result: action_ready. Screen: no report (selected: Phase 2 dose finding; answered in 6748 ms)
+PASS  no uncaught page errors
+3/3 passed
+  held-design-after.png: the design selected; "Finished in 1s".
+  The whole battery: 23/23 passed, nothing refused by the stand-in.
+  Client sweep (npx vitest run client/src/concept2cure): 4740 passed. The 2
+  failures are cmcSuiteWrites.test.tsx, the same two as on the base (see
+  tests.txt).
+
+── Found, not fixed here ────────────────────────────────────────────────────
+The Inconsistency board cannot read any program opened from the Projects
+screen. The screen sends the open program's id, a UUID (BX-301 is
+0db36813-b1f7-4b5a-a2a1-4c96fb927100). GET
+/api/governed-intelligence-inconsistency/projects/:projectId/inconsistency
+accepts only a numeric id from the legacy `projects` table and answers 400
+"A valid numeric projectId is required". So the board shows its error state
+for a person too, and AnA now says so rather than "not confirmed". The server
+already maps a program to its project through projects.regulatory_program_id
+(programFilingContext, server/services/biostatistics-bridge/bridge-service.ts).
+BX-301 in the demo seed has no such project row. The board is governed
+intelligence, outside the launch catalog; this is left to its owner.

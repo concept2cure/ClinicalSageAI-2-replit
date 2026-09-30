@@ -37,6 +37,7 @@ import { ANA_MACHINE_AUTHOR_ID } from '../authoring/revision-ledger.js';
 // annotation the local is inferred from `p: any`, which makes every field
 // REQUIRED and so rejects PriorLeaf's optional ones.
 import type { PriorLeaf } from '../ectd/lifecycle-operator.js';
+import type { ProgramRef, ProgramResolution } from '../ana-ri/drive-context.js';
 import fdaMaudeClient from '../../fda_maude_client.js';
 import { searchTrials } from '../integrations/clinicaltrials-client.js';
 import { recordArtifactProvenance } from '../provenance/artifact-provenance';
@@ -182,12 +183,28 @@ import {
   type ToolResultEntry,
   type FailedToolCall,
   type LoopCheckpoint,
+  type AgenticLoopResult,
+  type LoopStopDirective,
 } from './agentic-loop.js';
+import {
+  dispatchLoopCall,
+  notifyObserver,
+  resolveToolConcurrency,
+  type AgenticToolEvent,
+  type LoopDispatchOptions,
+} from './agentic-tool-dispatch.js';
+import { modelCallRefusal } from '../ai-gateway/model-call-scope.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
-import { assertWithinDocumentWorkspace } from './document-workspace.js';
+import {
+  anaScratchDir,
+  assertWithinDocumentWorkspace,
+  resolveWithinDocumentWorkspace,
+  workspaceFileName,
+  workspacePathOrRefusal,
+} from './document-workspace.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -215,6 +232,25 @@ export interface ToolContext {
    * Never read from tool input: that is the model's channel.
    */
   humanConfirmed?: boolean;
+  /**
+   * How far below the person's own turn this call runs: absent or 0 for AnA's
+   * turn, 1 for a sub-agent she started (row 74). At 1 or deeper the wrapper
+   * refuses every tool the register does not class `read` (rule 0 in
+   * preHandlerRefusal). Set only by the code that starts a sub-agent — never
+   * read from tool input, which is the model's channel. Nothing sets it yet.
+   */
+  agentDepth?: number;
+  /**
+   * 'refuse': this call runs where a model may not be called (a sub-agent's
+   * tool; see ai-gateway/model-call-scope.ts, which enforces it at the
+   * gateway). A tool that would otherwise spend a model call on an optional
+   * step takes its model-free path instead. Set only by the code that runs the
+   * sub-agent; never read from input. executeAgenticLoop keeps this and its
+   * own `toolModelCalls` together: either one set gives both the refusal
+   * scope and this flag, so a tool is never told one thing while the gateway
+   * enforces another.
+   */
+  modelCalls?: 'refuse';
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
@@ -273,9 +309,21 @@ export interface ToolContext {
    * has opened on the person's screen so far. The request's `projectRef` is
    * what was open when the turn began; after she opens a program mid-turn,
    * the next project screen must not ask again which one.
+   *
+   * `pendingProgram` is an open still being resolved. The stream runs one
+   * round's tool calls concurrently, so "open BX-301" and "take me to its
+   * Vault" asked in the same round used to race: the navigation read
+   * `program` before the open's database read came back, and asked which
+   * program — or showed the one open before. See `beginProgramOpen`.
    */
-  turnState?: { program: { id: string; name?: string; code?: string } | null } | null;
+  turnState?: {
+    program: TurnProgram | null;
+    pendingProgram?: Promise<TurnProgram | null> | null;
+  } | null;
 }
+
+/** A program AnA has opened on the person's screen this turn, as a directive carries it. */
+export type TurnProgram = { id: string; name?: string; code?: string };
 
 type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
 
@@ -298,6 +346,172 @@ function getRequiredInputKeys(tool: string): string[] {
 }
 
 /**
+ * The reason for change a governed AnA write records.
+ *
+ * recordGovernedAction writes it to audit_logs.reason, and the inspector's
+ * ledger shows it as the reason for the change. It is the person's, relayed by
+ * the model in `input.reason`: at least GOVERNED_REASON_MIN characters,
+ * trimmed — the rule every other path that writes these rows already applies
+ * (the REST routes these tools share a service with, e.g. protocol-reviews.ts
+ * and financial-disclosures.ts `reasonSchema`; /api/c2c/actions REASON_REQUIRED;
+ * governed-qms-write.ts governedQmsReason).
+ *
+ * Eighty-eight tools here used to substitute a stock sentence when the model
+ * sent none — fcoiReason(input, 'Review comment added via AnA'), qmsReason,
+ * and governedPdev's fallbackReason — so the ledger showed a reason nobody
+ * gave. A missing reason is now a refusal, answered after the tool's own input
+ * checks and before any write: no connection, no domain transaction, no ledger
+ * row. It is not recorded as a "no reason stated" marker instead, because no
+ * other path that writes these rows accepts a change without a reason, and a
+ * weaker rule on the chat surface is the gap this closes.
+ */
+const GOVERNED_REASON_MIN = 8;
+
+/** The person's stated reason, trimmed, or null when none of at least GOVERNED_REASON_MIN characters was given. */
+function statedReason(input: Record<string, unknown>): string | null {
+  const r = typeof input.reason === 'string' ? input.reason.trim() : '';
+  return r.length >= GOVERNED_REASON_MIN ? r : null;
+}
+
+/** The answer to a governed write sent without the person's reason. Nothing was written. */
+function reasonNotStated(tool: string): string {
+  return JSON.stringify({
+    ok: false,
+    code: 'REASON_REQUIRED',
+    reasonRequired: true,
+    tool,
+    error:
+      `${tool} was not run: it is a governed change, and the audit trail records the person's reason for it, ` +
+      `but no reason of at least ${GOVERNED_REASON_MIN} characters was given. Nothing was recorded or changed. ` +
+      `Ask the person why they are making this change, then call ${tool} again with their answer in "reason". ` +
+      'Do not write a reason they did not give.',
+  });
+}
+
+/**
+ * Every tool whose handler records a governed action (recordGovernedAction ->
+ * audit_logs.reason): the person is asked for their reason before they are
+ * asked to confirm. governed-reason-not-invented.test.ts holds this list to the
+ * source: a handler that records a governed action and is missing here fails it.
+ */
+export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
+  'add_amendment_change',
+  'add_biological_agent',
+  'add_capa_action',
+  'add_committee_agenda_item',
+  'add_coverage_item',
+  'add_disclosure_interest',
+  'add_effort_line',
+  'add_eligibility_criterion',
+  'add_grant_budget_line',
+  'add_irb_site',
+  'add_other_support_entry',
+  'add_personnel_training',
+  'add_protocol_budget_item',
+  'add_protocol_milestone',
+  'add_protocol_objective',
+  'add_protocol_review_comment',
+  'add_protocol_risk',
+  'add_soa_assessment',
+  'apply_protocol_design_derivation',
+  'assign_committee_member',
+  'assign_protocol_reviewer',
+  'bind_protocol_to_study_design',
+  'cast_committee_vote',
+  'classify_coverage_item',
+  'classify_tmf_artifact',
+  'clone_protocol_template',
+  'convene_committee_meeting',
+  'create_biosketch',
+  'create_clinical_investigator',
+  'create_coi_disclosure',
+  'create_consent_form',
+  'create_coverage_analysis',
+  'create_dms_plan',
+  'create_effort_certification',
+  'create_export_control_review',
+  'create_financial_disclosure',
+  'create_grant_proposal',
+  'create_ha_interaction',
+  'create_iacuc_protocol',
+  'create_ibc_registration',
+  'create_inspection',
+  'create_invention_disclosure',
+  'create_irb_submission',
+  'create_lifecycle_obligation',
+  'create_nonclinical_study',
+  'create_other_support',
+  'create_protocol_amendment',
+  'create_protocol_document',
+  'create_protocol_template',
+  'create_qms_document',
+  'create_regulatory_commitment',
+  'create_research_agreement',
+  'create_rim_product',
+  'create_tmf',
+  'fulfill_regulatory_commitment',
+  'import_citi_records',
+  'log_cs_transaction',
+  'log_inspection_finding',
+  'open_grant_closeout',
+  'record_cost_share_contribution',
+  'record_grant_award',
+  'record_grant_expenditure',
+  'record_grant_opportunity',
+  'record_subaward',
+  'register_animal_cohort',
+  'register_controlled_substance',
+  'register_dea',
+  'report_protocol_deviation',
+  'request_no_cost_extension',
+  'revise_qms_document',
+  'save_document_as_template',
+  'save_document_to_vault',
+  'screen_subaward',
+  'seed_tmf',
+  'set_coverage_qualifying_determination',
+  'set_funding_profile',
+  'set_grant_milestone_status',
+  'set_protocol_budget_params',
+  'set_protocol_milestone_status',
+  'set_registration_status',
+  'set_soa_cell',
+  'submit_invention_disclosure',
+  'triage_compliance_attention',
+  'update_biosketch_section',
+  'update_consent_element',
+  'update_dms_plan_element',
+  'update_export_control_review',
+  'update_grant_closeout',
+  'update_invention_disclosure',
+  'update_protocol_section',
+  'update_research_agreement',
+  'update_tmf_artifact_status',
+  'update_vault_document',
+]);
+
+/** A governed write without the person's reason; the registration wrapper answers it with reasonNotStated. */
+class ReasonNotStatedError extends Error {
+  constructor() {
+    super('No reason was stated for a governed write. Nothing was recorded or changed.');
+    this.name = 'ReasonNotStatedError';
+  }
+}
+
+/**
+ * The person's stated reason, read where a handler resolves its inputs —
+ * after its own input checks, before it opens a connection. Without one it
+ * throws ReasonNotStatedError, which registerToolHandler's wrapper turns into
+ * the refusal (reasonNotStated): the handler never reaches a write, and needs
+ * no branch of its own for it.
+ */
+function gatedReason(input: Record<string, unknown>): string {
+  const reason = statedReason(input);
+  if (!reason) throw new ReasonNotStatedError();
+  return reason;
+}
+
+/**
  * Register a handler for a named tool. Every handler is wrapped with execution
  * telemetry (AnA's self-awareness of what is actually working) and a
  * report-only input-contract check — every dispatch path resolves handlers
@@ -310,11 +524,19 @@ function getRequiredInputKeys(tool: string): string[] {
  * directly. A refusal is a tool result the model reads and relays, not a throw,
  * so the turn continues honestly.
  *
+ *   0. Below the person's own turn (a sub-agent, ctx.agentDepth >= 1), only a
+ *      tool the register classes `read` runs; anything else is refused as
+ *      SUB_AGENT_READ_ONLY. First, so a child never gets as far as rule 3's
+ *      proposal: it has nobody to put one to (row 74). Inert at depth 0.
  *   1. Governed content is written only by an approved model.
  *   2. A person's own act — an approval, a vote, an attestation — is refused
  *      whoever asks and whatever they confirmed (tool-authorization.ts
  *      `refuse`). She is told where the person does it. Where the handler is
  *      itself the refusal (refusedBy 'handler'), it answers.
+ *   2a. A tool that records a governed action (REASON_REQUIRED_TOOLS) is not
+ *      proposed for confirmation without the person's stated reason: they are
+ *      asked why first, so a confirmation is never spent on a write the
+ *      handler would then refuse (gatedReason).
  *   3. A tool that changes records runs only on a person's yes (P0-12, P1-34):
  *      every tool the register classes `confirm`, and every tool it does not
  *      know. The stream holds the turn and asks before it gets here; a path
@@ -327,6 +549,16 @@ function preHandlerRefusal(
   input: Record<string, any>,
   ctx: ToolContext | undefined,
 ): { code: string; result: string } | null {
+  if ((ctx?.agentDepth ?? 0) >= 1 && toolAuthorizationOf(name, input).class !== 'read') {
+    return {
+      code: 'SUB_AGENT_READ_ONLY',
+      result: JSON.stringify({
+        error: 'SUB_AGENT_READ_ONLY',
+        tool: name,
+        message: 'A sub-agent can only read; nothing was run.',
+      }),
+    };
+  }
   if (isGovernedContentWriteTool(name) && !isServedModelApprovedForHighRisk(ctx?.servingModel)) {
     return {
       code: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
@@ -338,6 +570,9 @@ function preHandlerRefusal(
     return { code: 'NOT_AN_ANA_ACTION', result: JSON.stringify(buildToolRefusal(name, auth.why)) };
   }
   if (auth.class === 'confirm' && ctx?.humanConfirmed !== true) {
+    if (REASON_REQUIRED_TOOLS.has(name) && !statedReason(input ?? {})) {
+      return { code: 'REASON_REQUIRED', result: reasonNotStated(name) };
+    }
     return {
       code: 'HUMAN_CONFIRMATION_REQUIRED',
       result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {})),
@@ -346,10 +581,46 @@ function preHandlerRefusal(
   return null;
 }
 
+/** The refusal for a caller without an editor role in the organization, or null when they have one.
+ *  The decision itself is server/services/part11/editor-role.ts, shared with the MCP connector. */
+async function editorRoleRefusal(tool: string, act: string, ctx: ToolContext): Promise<string | null> {
+  const { editorRoleDecision, editorRoleRefusalText } = await import('../part11/editor-role');
+  const decision = await editorRoleDecision(Number(ctx.userId), Number(ctx.organizationId));
+  return decision.allowed ? null : JSON.stringify({ error: editorRoleRefusalText(tool, act, decision) });
+}
+
+/**
+ * 4. A confirmed write runs only for someone who may edit in the organization
+ *    (weekly launch-catalog review 2026-09-28). Rule 3 asks for a person's yes;
+ *    nothing asked whose. /api/ana-ri is mounted behind authenticateToken only,
+ *    and most confirm-class handlers wrote with no role check, so a `viewer`
+ *    could confirm a controlled-document create, a vault write or a protocol
+ *    change from chat that the HTTP routes refuse them (requireEditorAccess).
+ *    The role is read from organization_users for the verified principal —
+ *    never from the input — against the same GOVERNED_WRITE_ROLES. Platform
+ *    commands keep their own RBAC (class `command`); reads and a person's own
+ *    settings (`self`) are not asked.
+ */
+async function writeRoleRefusal(
+  name: string,
+  input: Record<string, any>,
+  ctx: ToolContext | undefined,
+): Promise<{ code: string; result: string } | null> {
+  if (toolAuthorizationOf(name, input).class !== 'confirm') return null;
+  if (!ctx?.userId || !ctx?.organizationId) {
+    return {
+      code: 'WRITE_ROLE_UNVERIFIED',
+      result: JSON.stringify({ error: `${name} changes a record and needs an identified member of the organization. Nothing was changed.` }),
+    };
+  }
+  const refusal = await editorRoleRefusal(name, 'this change', ctx);
+  return refusal ? { code: 'WRITE_ROLE_REQUIRED', result: refusal } : null;
+}
+
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
     const orgId = ctx?.organizationId ?? undefined;
-    const refusal = preHandlerRefusal(name, input, ctx);
+    const refusal = preHandlerRefusal(name, input, ctx) ?? (await writeRoleRefusal(name, input, ctx));
     if (refusal) {
       recordToolOutcome(name, 'failure', 0, refusal.code, orgId);
       return refusal.result;
@@ -368,6 +639,10 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
       recordToolOutcome(name, outcome, Date.now() - start, note, orgId, resultYield);
       return result;
     } catch (e) {
+      if (e instanceof ReasonNotStatedError) {
+        recordToolOutcome(name, 'failure', Date.now() - start, 'REASON_REQUIRED', orgId);
+        return reasonNotStated(name);
+      }
       recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e), orgId);
       throw e;
     }
@@ -556,7 +831,16 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
       intent: 'project_scoped',
       organizationUuid,
       artifactScope: { projectId, organizationUuid },
-      useReranking: true,
+      /* Where a model may not be called (a sub-agent's tool, row 74), ask
+         for what can actually run: 'basic' instead of the intent's
+         'advanced' (HyDE + multi-query, model calls before a row is read),
+         and no LLM-as-judge rerank — the choice search_document_passages
+         already makes for in-agent retrieval (vault/document-passage-search.ts).
+         The gateway would refuse those calls anyway; asking for them would
+         only degrade silently. */
+      ...(ctx?.modelCalls === 'refuse' || modelCallRefusal() !== null
+        ? { strategy: 'basic' as const, useReranking: false }
+        : { useReranking: true }),
       limit: maxResults,
     });
     const docs = (result?.documents ?? []).slice(0, maxResults);
@@ -1264,48 +1548,44 @@ registerToolHandler('assemble_briefing_book', async (input, ctx) => {
   try {
     const briefing = await import('./briefing-book-core.js');
 
-    // 1. Resolve the meeting. A live meeting_id would join the product's
-    //    strategy.meetings[]; absent that we use the labelled fixture.
-    // INTEGRATION: join the live RegAgencyMeeting row by meeting_id + org scope
-    //   (client/src/concept2cure/types/workspace.ts → product.strategy.meetings).
+    // 1. The meeting is built from what the caller supplies, and nothing else.
+    //    This used to substitute a fixture EOP2 meeting and its invented
+    //    clinical background on every call (see briefing-book-core). There is
+    //    no live RegAgencyMeeting loader yet, so a meeting_id is carried as an
+    //    identifier only and the book says so rather than borrowing content.
     const meetingId = typeof input.meeting_id === 'string' ? input.meeting_id.trim() : '';
-    const overrideQuestions = Array.isArray(input.key_questions)
-      ? (input.key_questions as unknown[]).filter((q): q is string => typeof q === 'string')
-      : undefined;
-
-    let meeting: import('./briefing-book-core.js').RegAgencyMeetingInput;
-    let context: import('./briefing-book-core.js').BriefingBookContext;
-    let dataSource: import('./briefing-book-core.js').BriefingBookDataSource;
-
-    if (meetingId) {
-      // INTEGRATION: load the live meeting here. Until that join exists, an
-      // explicit id with no loader still degrades honestly to fixture-sourced.
-      meeting = { ...briefing.FIXTURE_EOP2_MEETING, id: meetingId };
-      context = { ...briefing.FIXTURE_EOP2_CONTEXT };
-      dataSource = 'fixture';
-    } else {
-      meeting = { ...briefing.FIXTURE_EOP2_MEETING };
-      context = { ...briefing.FIXTURE_EOP2_CONTEXT };
-      dataSource = 'fixture';
+    const strs = (v: unknown): string[] | undefined =>
+      Array.isArray(v) ? (v as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim() !== '') : undefined;
+    const keyQuestions = strs(input.key_questions);
+    const meetingType = typeof input.meeting_type === 'string' ? input.meeting_type : '';
+    if (!meetingType || !keyQuestions || keyQuestions.length === 0) {
+      return JSON.stringify({
+        error:
+          'assemble_briefing_book needs the meeting type and the sponsor\'s own questions for the Agency. ' +
+          'A briefing book is built only from what the sponsor supplies; no sample meeting or clinical history is substituted.',
+        missing: [!meetingType && 'meeting_type', (!keyQuestions || keyQuestions.length === 0) && 'key_questions'].filter(Boolean),
+      });
     }
 
-    const meetingType =
-      typeof input.meeting_type === 'string' ? input.meeting_type : undefined;
-    if (meetingType) meeting.type = meetingType as typeof meeting.type;
-    if (overrideQuestions && overrideQuestions.length) meeting.keyQuestions = overrideQuestions;
-    if (typeof input.product_name === 'string') context.productName = input.product_name;
-    if (typeof input.indication === 'string') context.indication = input.indication;
-    if (typeof input.sponsor === 'string') context.sponsor = input.sponsor;
+    const meeting: import('./briefing-book-core.js').RegAgencyMeetingInput = {
+      id: meetingId || 'unsaved-meeting',
+      type: meetingType as import('./briefing-book-core.js').RegAgencyMeetingInput['type'],
+      keyQuestions,
+      ...(typeof input.division === 'string' && input.division.trim() ? { division: input.division.trim() } : {}),
+      ...(typeof input.meeting_date === 'string' && input.meeting_date.trim() ? { date: input.meeting_date.trim() } : {}),
+    };
+    const context: import('./briefing-book-core.js').BriefingBookContext = {
+      ...(typeof input.product_name === 'string' ? { productName: input.product_name } : {}),
+      ...(typeof input.indication === 'string' ? { indication: input.indication } : {}),
+      ...(typeof input.sponsor === 'string' ? { sponsor: input.sponsor } : {}),
+      ...(strs(input.background) ? { background: strs(input.background) } : {}),
+      ...(strs(input.objectives) ? { objectives: strs(input.objectives) } : {}),
+      ...(strs(input.supporting_data) ? { supportingData: strs(input.supporting_data) } : {}),
+    };
+    const dataSource: import('./briefing-book-core.js').BriefingBookDataSource = 'supplied';
 
     // 2. Assemble the markdown + required_strings.
     const assembled = briefing.assembleBriefingBook(meeting, context);
-    // The fixture's "Questions for the Agency" are a fictional sponsor's. With a
-    // real product name and no key_questions supplied, they read as this
-    // product's questions in the content the authoring tool promotes, while the
-    // fixture disclosure lived only on the sibling premortem/message fields.
-    if (dataSource === 'fixture' && (!overrideQuestions || overrideQuestions.length === 0)) {
-      assembled.content = `> SAMPLE DATA — the questions for the Agency below are a fixture; the sponsor has not supplied its own key questions. Replace them before this book is reviewed.\n\n${assembled.content}`;
-    }
 
     // 3. Pre-mortem — anticipated FDA pushback per sponsor question.
     const runPremortem = input.run_premortem !== false;
@@ -4226,51 +4506,53 @@ registerToolHandler('lookup_ich_guideline', async (input) => {
 });
 
 // Check Regulatory Compliance
+/* check_regulatory_compliance — a KEYWORD SCAN, reported as one.
+ *
+ * This returned `overallStatus: 'compliant'` from two kinds of evidence, both
+ * wrong:
+ *   - for fda_510k / eu_mdr, whether a word appeared ("device", "predicate",
+ *     "gspr"), each paired with a CFR paragraph as though the requirement it
+ *     cites had been met;
+ *   - for ich_e6, ich_e8, ich_e9 and 21cfr_part11 — four of the seven
+ *     frameworks in this tool's own enum — NO checks at all, and
+ *     `[].every(...)` is true, so every section was "compliant" with each.
+ * fda_pma also matched `includes('fda')` and got 510(k) citations.
+ *
+ * Rule 2 (CLAUDE.md): verdicts come from deterministic engines, and a scan for
+ * words is not a compliance engine. The result now says what was checked —
+ * which topics are mentioned — and never states compliance. A framework with no
+ * scan is `not_assessed`. */
 registerToolHandler('check_regulatory_compliance', async (input) => {
-  const sectionContent = input.section_content as string;
-  const framework = input.regulatory_framework as string;
-  const sectionLength = sectionContent.length;
+  const sectionContent = String(input.section_content ?? '');
+  const framework = String(input.regulatory_framework ?? '');
+  const text = sectionContent.toLowerCase();
+  const mentions = (...terms: string[]) => terms.some((t) => text.includes(t));
 
-  // Basic structural compliance checks
-  const checks = [];
-
-  if (framework.includes('510k') || framework.includes('fda')) {
-    checks.push({
-      requirement: 'Device Description',
-      status: sectionContent.toLowerCase().includes('device') ? 'present' : 'missing',
-      regulation: '21 CFR 807.87(e)',
-    });
-    checks.push({
-      requirement: 'Intended Use Statement',
-      status: sectionContent.toLowerCase().includes('intended use') || sectionContent.toLowerCase().includes('indications for use') ? 'present' : 'missing',
-      regulation: '21 CFR 807.87(f)',
-    });
-    checks.push({
-      requirement: 'Predicate Device Comparison',
-      status: sectionContent.toLowerCase().includes('predicate') || sectionContent.toLowerCase().includes('substantial equivalence') ? 'present' : 'missing',
-      regulation: '21 CFR 807.87(g)',
-    });
-  }
-
-  if (framework.includes('eu_mdr')) {
-    checks.push({
-      requirement: 'GSPR Mapping',
-      status: sectionContent.toLowerCase().includes('gspr') || sectionContent.toLowerCase().includes('general safety') ? 'present' : 'missing',
-      regulation: 'EU MDR Annex I',
-    });
-    checks.push({
-      requirement: 'Clinical Evaluation Reference',
-      status: sectionContent.toLowerCase().includes('clinical evaluation') ? 'present' : 'missing',
-      regulation: 'EU MDR Article 61',
-    });
+  const topics: Array<{ topic: string; mentioned: boolean; relevantTo: string }> = [];
+  if (framework === 'fda_510k') {
+    topics.push(
+      { topic: 'Device description', mentioned: mentions('device description'), relevantTo: '21 CFR 807.87 (510(k) contents)' },
+      { topic: 'Intended use / indications for use', mentioned: mentions('intended use', 'indications for use'), relevantTo: '21 CFR 807.87 (510(k) contents)' },
+      { topic: 'Predicate comparison / substantial equivalence', mentioned: mentions('predicate', 'substantial equivalence'), relevantTo: '21 CFR 807.87 (510(k) contents)' },
+    );
+  } else if (framework === 'eu_mdr') {
+    topics.push(
+      { topic: 'GSPR mapping', mentioned: mentions('gspr', 'general safety and performance'), relevantTo: 'EU MDR Annex I' },
+      { topic: 'Clinical evaluation', mentioned: mentions('clinical evaluation'), relevantTo: 'EU MDR Article 61' },
+    );
   }
 
   return JSON.stringify({
     framework,
-    sectionLengthChars: sectionLength,
-    complianceChecks: checks,
-    overallStatus: checks.every(c => c.status === 'present') ? 'compliant' : 'gaps_found',
-    gapsCount: checks.filter(c => c.status === 'missing').length,
+    method: 'keyword_scan',
+    sectionLengthChars: sectionContent.length,
+    topics,
+    overallStatus: topics.length === 0 ? 'not_assessed' : 'keyword_scan_only',
+    notMentionedCount: topics.filter((t) => !t.mentioned).length,
+    note:
+      topics.length === 0
+        ? `No scan exists for ${framework || 'this framework'}; nothing about this section's compliance was assessed.`
+        : 'This reports which topics the text mentions. Mentioning a topic is not meeting the requirement, and this is not a compliance determination.',
   });
 });
 
@@ -5729,6 +6011,14 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
       draftCtdSection: ctdSection,
       excludeArtifactId,
     });
+    // The documents could not be read: nothing was compared, so there is no
+    // verdict to give. Its empty report says 'clean' (row 74, S3).
+    if (report.unavailable) {
+      return JSON.stringify({
+        error: 'The project documents could not be read, so nothing was compared.',
+        unavailable: true,
+      });
+    }
 
     // Summarize for AnA — keep the response compact. Full divergences
     // stay in the structured report; the summary gives AnA enough to
@@ -6446,7 +6736,12 @@ registerToolHandler('open_device_capa', async (input: Record<string, unknown>, c
 // Document Generation Tools (Master Document Builder)
 // ─────────────────────────────────────────────────────────────────────────────
 
-registerToolHandler('generate_document', async (input: Record<string, unknown>) => {
+registerToolHandler('generate_document', async (input: Record<string, unknown>, ctx) => {
+  // INJ-PATH-002: this handler took no ToolContext, so it could not know whose
+  // workspace it wrote to or whose template it read.
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'generate_document requires tenant context (organizationId).' });
+  }
   const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
   const builder = getMasterDocumentBuilder();
 
@@ -6459,11 +6754,14 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>) 
 
   // Template mode: copy + unpack + string replace + XML inject
   if (templatePath && input.replacements) {
+    const template = workspacePathOrRefusal(templatePath, 'template_path', ctx.organizationId);
+    if (!template.ok) return template.refusal;
     const result = await builder.buildFromTemplate({
-      templatePath,
+      templatePath: template.path,
       replacements: input.replacements as Record<string, string>,
       outputFormat: outputFormat as 'docx' | 'pdf',
       documentTitle: title,
+      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
     });
     return JSON.stringify({
       success: true,
@@ -6484,6 +6782,7 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>) 
       agencies,
       outputFormat: outputFormat as 'docx' | 'pdf' | 'xml',
       documentTitle: title,
+      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
     });
     return JSON.stringify({
       success: true,
@@ -6516,11 +6815,21 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>) 
   });
 });
 
-registerToolHandler('build_from_template', async (input: Record<string, unknown>) => {
+registerToolHandler('build_from_template', async (input: Record<string, unknown>, ctx) => {
+  // INJ-PATH-002: registered with no ToolContext, it read whatever path the
+  // model named — another tenant's upload, repacked into a fresh docx.
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'build_from_template requires tenant context (organizationId).' });
+  }
   const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
   const builder = getMasterDocumentBuilder();
 
-  const templatePath = input.template_path as string;
+  let templatePath: string;
+  try {
+    templatePath = assertWithinDocumentWorkspace(input.template_path, 'template_path', ctx.organizationId);
+  } catch (err) {
+    return JSON.stringify({ error: err instanceof Error ? err.message : String(err) });
+  }
   const replacements = input.replacements as Record<string, string> || {};
   const xmlInjections = input.xml_injections as Array<{ position: string; xml: string; placeholder?: string }> || [];
   const outputFormat = (input.output_format as string) || 'docx';
@@ -6537,6 +6846,7 @@ registerToolHandler('build_from_template', async (input: Record<string, unknown>
     })),
     outputFormat: outputFormat as 'docx' | 'pdf',
     documentTitle,
+    outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
   });
 
   return JSON.stringify({
@@ -6852,14 +7162,32 @@ registerToolHandler('fetch_template_and_fill', async (input, ctx) => {
       });
     }
 
+    // The row is this tenant's, but the path on it is only as trustworthy as
+    // whoever set it: the template update route used to take it from the
+    // request body. Confined like any model-supplied path (INJ-PATH-002);
+    // templates now live under the tenant's own uploads prefix. One uploaded
+    // before that (`/uploads/templates/…`, shared by every tenant) is refused
+    // and has to be uploaded again.
+    const templateFile = resolveWithinDocumentWorkspace(
+      String(template.fileUrl).replace(/^\/+/, ''),
+      ctx.organizationId,
+    );
+    if (!templateFile) {
+      return JSON.stringify({
+        error:
+          `Template ${templateId}'s file is not stored in this organization's workspace, so it was not read. ` +
+          'Upload the template file again from the template library, then fill it.',
+      });
+    }
     const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
     const builder = getMasterDocumentBuilder();
     const outputFormat: 'docx' | 'pdf' = input.output_format === 'pdf' ? 'pdf' : 'docx';
     const result = await builder.buildFromTemplate({
-      templatePath: template.fileUrl,
+      templatePath: templateFile,
       replacements: fillData,
       outputFormat,
       documentTitle: template.name,
+      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
     });
 
     return JSON.stringify({
@@ -6929,7 +7257,6 @@ registerToolHandler('author_docx_native', async (input, ctx) => {
     const { runIsolatedCompute } = await import('../compute/workerClient.js');
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    const { randomUUID } = await import('crypto');
 
     /* runIsolatedCompute spawns the python-docx subprocess in an ephemeral
        tempdir, parses output JSON, returns the .docx as a Buffer. The
@@ -6961,7 +7288,7 @@ registerToolHandler('author_docx_native', async (input, ctx) => {
        have a stable path. The compute worker itself uses an ephemeral
        tempdir that gets cleaned; we move our copy into the builder
        tempdir so it persists for the session. */
-    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    const outDir = anaScratchDir(ctx.organizationId, 'docbuilder');
     await fs.mkdir(outDir, { recursive: true });
     const docxPath = path.join(outDir, docx.fileName);
     await fs.writeFile(docxPath, docx.buffer);
@@ -7050,11 +7377,11 @@ registerToolHandler('convert_docx_to_pdf', async (input, ctx) => {
   let safeInputDocxPath: string;
   let safeOutputPdfPath: string | undefined;
   try {
-    safeInputDocxPath = assertWithinDocumentWorkspace(inputDocxPath, 'input_docx_path');
+    safeInputDocxPath = assertWithinDocumentWorkspace(inputDocxPath, 'input_docx_path', ctx.organizationId);
     safeOutputPdfPath =
       outputPdfPath === undefined
         ? undefined
-        : assertWithinDocumentWorkspace(outputPdfPath, 'output_pdf_path');
+        : assertWithinDocumentWorkspace(outputPdfPath, 'output_pdf_path', ctx.organizationId);
   } catch (err) {
     return JSON.stringify({ error: err instanceof Error ? err.message : String(err) });
   }
@@ -7115,6 +7442,33 @@ function truncateForModel(s: string, cap = SCRIPT_OUTPUT_CAP): string {
   return `${s.slice(0, cap)}\n…[truncated ${s.length - cap} chars]`;
 }
 
+/**
+ * Save the files a code-execution tool produced into this tenant's own scratch
+ * area, under safe names, and describe them for the model. One place for
+ * run_python_script and run_in_container, which wrote the same way to a
+ * shared tmp/ directory every tenant could name (INJ-PATH-002).
+ */
+async function persistToolOutputs(
+  outputFiles: Record<string, string> | undefined,
+  organizationId: number,
+  kind: 'ana-scripts' | 'ana-container',
+): Promise<Array<{ name: string; path: string; bytes: number }>> {
+  const entries = Object.entries(outputFiles ?? {});
+  if (entries.length === 0) return [];
+  const { promises: fs } = await import('fs');
+  const path = await import('path');
+  const outDir = anaScratchDir(organizationId, kind);
+  await fs.mkdir(outDir, { recursive: true });
+  const saved: Array<{ name: string; path: string; bytes: number }> = [];
+  for (const [name, b64] of entries) {
+    const dest = path.join(outDir, workspaceFileName(name, 'output'));
+    const buf = Buffer.from(b64, 'base64');
+    await fs.writeFile(dest, buf);
+    saved.push({ name, path: dest, bytes: buf.length });
+  }
+  return saved;
+}
+
 registerToolHandler('run_python_script', async (input, ctx) => {
   const code = typeof input.code === 'string' ? input.code : '';
   if (!code.trim()) {
@@ -7124,62 +7478,56 @@ registerToolHandler('run_python_script', async (input, ctx) => {
     return JSON.stringify({ error: 'run_python_script requires tenant context (organizationId).' });
   }
 
+  /* The script is the model's, and the model reads documents other people
+     wrote. It used to run as `python3` on the application host, as the server's
+     own user, with CPU and memory limits and a scrubbed environment — and the
+     whole filesystem: every organization's uploads, and the server process's
+     environment under /proc. The runtime's comment said production ran it in a
+     container; nothing did (INJ-PATH-002). It now runs only in the hardened
+     container run_in_container uses (no network unless opted in, read-only
+     root, all capabilities dropped, non-root, only its own work mount), and
+     where that is not enabled it does not run at all. */
+  const { getContainerExecConfig, runInContainer } = await import('../compute/containerExec.js');
+  if (!getContainerExecConfig().enabled) {
+    return JSON.stringify({
+      ok: false,
+      available: false,
+      error:
+        'run_python_script is not available in this deployment: scripts run only in the isolated container, ' +
+        'and container execution is not enabled here. Nothing was run. Use the structured tools for this ' +
+        '(surgical_docx_xml_edit, the statistics and document tools) or tell the user what the script would do.',
+    });
+  }
+
   const inputFiles =
     input.input_files && typeof input.input_files === 'object'
       ? (input.input_files as Record<string, string>)
-      : undefined;
-  const cpuSeconds = typeof input.cpu_seconds === 'number' ? input.cpu_seconds : undefined;
+      : {};
   const timeoutMs = typeof input.timeout_ms === 'number' ? input.timeout_ms : undefined;
 
   try {
-    const { runPythonScriptIsolated } = await import('../compute/scriptWorker.js');
-    const { promises: fs } = await import('fs');
-    const path = await import('path');
-    const { randomUUID } = await import('crypto');
-
-    const result = await runPythonScriptIsolated({
-      code,
-      inputFiles,
-      cpuSeconds,
+    const result = await runInContainer({
+      script: 'exec python3 /work/__script.py',
+      inputFiles: { ...inputFiles, '__script.py': Buffer.from(code, 'utf8').toString('base64') },
       timeoutMs,
     });
-
-    // Persist produced files so downstream tools / the user have stable paths.
-    const outputFilePaths: Array<{ name: string; path: string; bytes: number } | { name: string; tooLarge: true }> = [];
-    const entries = Object.entries(result.outputFiles ?? {});
-    if (entries.length > 0) {
-      const outDir = path.resolve(process.cwd(), 'tmp', 'ana-scripts', randomUUID().slice(0, 8));
-      await fs.mkdir(outDir, { recursive: true });
-      for (const [name, b64] of entries) {
-        if (b64 == null) {
-          outputFilePaths.push({ name, tooLarge: true });
-          continue;
-        }
-        const safe = path.basename(name);
-        const dest = path.join(outDir, safe);
-        const buf = Buffer.from(b64, 'base64');
-        await fs.writeFile(dest, buf);
-        outputFilePaths.push({ name, path: dest, bytes: buf.length });
-      }
-    }
+    const outputFilePaths = await persistToolOutputs(result.outputFiles, ctx.organizationId, 'ana-scripts');
 
     return JSON.stringify({
       ok: result.ok,
-      engine: 'python-script (isolated, no-network)',
+      engine: `python-script (container, network ${result.network})`,
       stdout: truncateForModel(result.stdout),
       stderr: truncateForModel(result.stderr),
-      error: result.error ? truncateForModel(result.error) : null,
+      error: result.timedOut ? 'The script was stopped at its time limit.' : null,
       outputFiles: outputFilePaths,
       network: result.network,
       message: result.ok
         ? `Script ran successfully${outputFilePaths.length ? ` and produced ${outputFilePaths.length} file(s)` : ''}.`
-        : 'Script raised an error — see error/stderr.',
+        : 'Script exited with an error — see stderr.',
     });
   } catch (err) {
     return JSON.stringify({
-      error: `run_python_script failed: ${
-        err instanceof Error ? err.message : String(err)
-      }. Verify python3 is available on the host (see services/Dockerfile).`,
+      error: `run_python_script failed: ${err instanceof Error ? err.message : String(err)}`,
     });
   }
 });
@@ -7203,6 +7551,10 @@ registerToolHandler('insert_document_content', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'insert_document_content requires tenant context (organizationId).' });
   }
+  // INJ-PATH-002: the path is the model's. Open only the real path of a file
+  // in this tenant's own workspace, never the string it wrote.
+  const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
+  if (!docx.ok) return docx.refusal;
 
   const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
 
@@ -7224,13 +7576,12 @@ registerToolHandler('insert_document_content', async (input, ctx) => {
     const { runDocxInsertIsolated } = await import('../compute/scriptWorker.js');
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    const { randomUUID } = await import('crypto');
 
-    const sourceBuf = await fs.readFile(inputDocxPath);
-    const baseName = path.basename(inputDocxPath, path.extname(inputDocxPath));
+    const sourceBuf = await fs.readFile(docx.path);
+    const baseName = path.basename(docx.path, path.extname(docx.path));
     const result = await runDocxInsertIsolated(sourceBuf, insertions, `${baseName}.edited.docx`);
 
-    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    const outDir = anaScratchDir(ctx.organizationId, 'docbuilder');
     await fs.mkdir(outDir, { recursive: true });
     const docxPath = path.join(outDir, result.fileName);
     await fs.writeFile(docxPath, result.buffer);
@@ -7292,6 +7643,10 @@ registerToolHandler('surgical_docx_xml_edit', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'surgical_docx_xml_edit requires tenant context (organizationId).' });
   }
+  // INJ-PATH-002: the path is the model's. Open only the real path of a file
+  // in this tenant's own workspace, never the string it wrote.
+  const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
+  if (!docx.ok) return docx.refusal;
 
   const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
   const operations = (input.operations as Array<Record<string, unknown>>).map(o => ({
@@ -7309,13 +7664,12 @@ registerToolHandler('surgical_docx_xml_edit', async (input, ctx) => {
     const { runDocxXmlSurgeryIsolated } = await import('../compute/scriptWorker.js');
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    const { randomUUID } = await import('crypto');
 
-    const sourceBuf = await fs.readFile(inputDocxPath);
-    const baseName = path.basename(inputDocxPath, path.extname(inputDocxPath));
+    const sourceBuf = await fs.readFile(docx.path);
+    const baseName = path.basename(docx.path, path.extname(docx.path));
     const result = await runDocxXmlSurgeryIsolated(sourceBuf, operations, `${baseName}.xml-edited.docx`);
 
-    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    const outDir = anaScratchDir(ctx.organizationId, 'docbuilder');
     await fs.mkdir(outDir, { recursive: true });
     const docxPath = path.join(outDir, result.fileName);
     await fs.writeFile(docxPath, result.buffer);
@@ -7387,6 +7741,10 @@ registerToolHandler('insert_clause_template', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'insert_clause_template requires tenant context (organizationId).' });
   }
+  // INJ-PATH-002: the path is the model's. Open only the real path of a file
+  // in this tenant's own workspace, never the string it wrote.
+  const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
+  if (!docx.ok) return docx.refusal;
 
   const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
   const fields = (input.fields && typeof input.fields === 'object'
@@ -7432,13 +7790,12 @@ registerToolHandler('insert_clause_template', async (input, ctx) => {
     const { runDocxInsertIsolated } = await import('../compute/scriptWorker.js');
     const { promises: fs } = await import('fs');
     const path = await import('path');
-    const { randomUUID } = await import('crypto');
 
-    const sourceBuf = await fs.readFile(inputDocxPath);
-    const baseName = path.basename(inputDocxPath, path.extname(inputDocxPath));
+    const sourceBuf = await fs.readFile(docx.path);
+    const baseName = path.basename(docx.path, path.extname(docx.path));
     const result = await runDocxInsertIsolated(sourceBuf, rendered.insertions, `${baseName}.clause.docx`);
 
-    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    const outDir = anaScratchDir(ctx.organizationId, 'docbuilder');
     await fs.mkdir(outDir, { recursive: true });
     const docxPath = path.join(outDir, result.fileName);
     await fs.writeFile(docxPath, result.buffer);
@@ -7496,12 +7853,16 @@ registerToolHandler('validate_docx', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'validate_docx requires tenant context (organizationId).' });
   }
+  // INJ-PATH-002: the path is the model's. Open only the real path of a file
+  // in this tenant's own workspace, never the string it wrote.
+  const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
+  if (!docx.ok) return docx.refusal;
 
   try {
     const { runDocxValidateIsolated } = await import('../compute/scriptWorker.js');
     const { promises: fs } = await import('fs');
 
-    const buf = await fs.readFile(inputDocxPath);
+    const buf = await fs.readFile(docx.path);
     const report = await runDocxValidateIsolated(buf);
 
     return JSON.stringify({
@@ -7535,6 +7896,10 @@ registerToolHandler('verify_docx_against_source', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'verify_docx_against_source requires tenant context (organizationId).' });
   }
+  // INJ-PATH-002: the path is the model's. Open only the real path of a file
+  // in this tenant's own workspace, never the string it wrote.
+  const docx = workspacePathOrRefusal(inputDocxPath, 'input_docx_path', ctx.organizationId);
+  if (!docx.ok) return docx.refusal;
 
   const expectedText = typeof input.expected_text === 'string' ? input.expected_text : '';
   const requiredStrings = Array.isArray(input.required_strings)
@@ -7552,9 +7917,9 @@ registerToolHandler('verify_docx_against_source', async (input, ctx) => {
     const path = await import('path');
     const { extractDocumentText } = await import('../ocr/index.js');
 
-    const buf = await fs.readFile(inputDocxPath);
+    const buf = await fs.readFile(docx.path);
     const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    const extracted = await extractDocumentText(buf, DOCX_MIME, path.basename(inputDocxPath));
+    const extracted = await extractDocumentText(buf, DOCX_MIME, path.basename(docx.path));
     const docText = extracted.text ?? '';
 
     // (1) Required-string verbatim check (exact substring match).
@@ -7650,27 +8015,13 @@ registerToolHandler('run_in_container', async (input, ctx) => {
         ok: false,
         enabled: false,
         message:
-          'The container-execution capability is not enabled in this deployment. Use run_python_script (sandboxed Python) or surgical_docx_xml_edit instead, or ask an administrator to enable ANA_ENABLE_CONTAINER_EXEC.',
+          'The container-execution capability is not enabled in this deployment, so nothing was run. Use surgical_docx_xml_edit or the structured tools instead, or ask an administrator to enable ANA_ENABLE_CONTAINER_EXEC.',
       });
     }
 
     const result = await runInContainer({ script, inputFiles, timeoutMs });
 
-    const { promises: fs } = await import('fs');
-    const path = await import('path');
-    const { randomUUID } = await import('crypto');
-    const outputFilePaths: Array<{ name: string; path: string; bytes: number }> = [];
-    const entries = Object.entries(result.outputFiles ?? {});
-    if (entries.length > 0) {
-      const outDir = path.resolve(process.cwd(), 'tmp', 'ana-container', randomUUID().slice(0, 8));
-      await fs.mkdir(outDir, { recursive: true });
-      for (const [name, b64] of entries) {
-        const dest = path.join(outDir, path.basename(name));
-        const buf = Buffer.from(b64, 'base64');
-        await fs.writeFile(dest, buf);
-        outputFilePaths.push({ name, path: dest, bytes: buf.length });
-      }
-    }
+    const outputFilePaths = await persistToolOutputs(result.outputFiles, ctx.organizationId, 'ana-container');
 
     return JSON.stringify({
       ok: result.ok,
@@ -7829,7 +8180,7 @@ async function mergeProgramMetadata(
      trims any keys the caller explicitly passed as null (delete semantics). */
   const { rows } = await pool.query<{ id: string; metadata: Record<string, unknown> }>(
     `UPDATE regulatory_programs
-        SET metadata   = jsonb_strip_nulls(COALESCE(metadata, '{}'::jsonb) || $3::jsonb),
+        SET metadata   = jsonb_strip_nulls(COALESCE(metadata::jsonb, '{}'::jsonb) || $3::jsonb),
             updated_at = NOW()
       WHERE id = $1 AND organization_id = $2
       RETURNING id, metadata`,
@@ -8594,6 +8945,38 @@ registerToolHandler('register_ldt', async (input, ctx) => {
 // EUDAMED / PMDA Gateway. Wraps server/services/submission-gateways/.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * package_ectd_for_region's paths, confined (INJ-PATH-002). Every source_path
+ * is the model's, and the packager reads each one and ships its bytes, so an
+ * unconfined path put another tenant's document — or a host file — into this
+ * tenant's eCTD zip; and output_dir was written to wherever it named. Both are
+ * confined to this tenant's own workspace, and the packager gets the real
+ * paths, never the strings. A delete carries no bytes, so its source_path goes
+ * through as given for the packager to refuse by name.
+ */
+function confinePackagerPaths(
+  leaves: Array<Record<string, unknown>>,
+  outputDirInput: unknown,
+  organizationId: number,
+): { ok: true; sourcePaths: string[]; outputDir: string } | { ok: false; refusal: string } {
+  const sourcePaths: string[] = [];
+  for (const leaf of leaves) {
+    if (String(leaf.operation) === 'delete') {
+      sourcePaths.push(typeof leaf.source_path === 'string' ? leaf.source_path : '');
+      continue;
+    }
+    const src = workspacePathOrRefusal(leaf.source_path, `leaves[].source_path (${String(leaf.file_name)})`, organizationId);
+    if (!src.ok) return src;
+    sourcePaths.push(src.path);
+  }
+  if (typeof outputDirInput === 'string' && outputDirInput.trim()) {
+    const out = workspacePathOrRefusal(outputDirInput, 'output_dir', organizationId);
+    if (!out.ok) return out;
+    return { ok: true, sourcePaths, outputDir: out.path };
+  }
+  return { ok: true, sourcePaths, outputDir: anaScratchDir(organizationId, 'submissions') };
+}
+
 registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
@@ -8619,13 +9002,11 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
         `the file it ships (${missingSource.map((l) => String(l.file_name)).join(', ')}). Only a delete omits it.`,
     });
   }
+  const paths = confinePackagerPaths(leaves, input.output_dir, ctx.organizationId);
+  if (!paths.ok) return paths.refusal;
+  const { sourcePaths, outputDir } = paths;
   try {
     const { packageEctdSubmission } = await import('../submission-gateways/index.js');
-    const path = await import('path');
-    const outputDir =
-      typeof input.output_dir === 'string'
-        ? input.output_dir
-        : path.resolve(process.cwd(), 'tmp', 'submissions', String(ctx.organizationId));
     const bundle = await packageEctdSubmission({
       region: region as any,
       applicationId: String(input.application_id),
@@ -8645,10 +9026,10 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
       // packager refuses a delete that carries one, by name, instead of this
       // mapping silently ignoring what the caller asked to ship. modified_file
       // names the filed leaf a delete (or replace / append) acts on.
-      leaves: leaves.map((l) => ({
+      leaves: leaves.map((l, i) => ({
         ctdSection: String(l.ctd_section),
         operation:  (String(l.operation) as 'new' | 'append' | 'replace' | 'delete'),
-        sourcePath: typeof l.source_path === 'string' ? l.source_path : '',
+        sourcePath: sourcePaths[i],
         fileName:   String(l.file_name),
         title:      String(l.title),
         ...(typeof l.modified_file === 'string' && l.modified_file.trim()
@@ -8925,9 +9306,13 @@ registerToolHandler('compute_lifecycle_operations', async (input, ctx) => {
       md5: p.md5,
       title: p.title,
       sourcePath: p.source_path,
-      // Published path of the prior leaf in its sequence — lets a superseding op
-      // (replace/append/delete) emit the ICH modified-file pointer at it.
+      // Published path of the prior leaf in its sequence: a record only.
       href: p.href,
+      // The ID the prior leaf carries in its sequence's backbone, and that
+      // backbone — what the ICH modified-file of a superseding op names
+      // (`../<seq>/<backbone>#<leaf_id>`). Without both, no pointer is emitted.
+      leafId: p.leaf_id,
+      backbone: p.backbone,
     }));
     let priorSequencePrefix =
       typeof input.prior_sequence_prefix === 'string' ? input.prior_sequence_prefix : undefined;
@@ -10015,12 +10400,6 @@ registerToolHandler('create_clinical_study', async (input, ctx) => {
 // is intentionally NOT an AnA tool — it requires re-auth in the disclosure panel.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FCOI_REASON_MIN = 8;
-function fcoiReason(input: Record<string, unknown>, fallback: string): string {
-  const r = typeof input.reason === 'string' ? input.reason.trim() : '';
-  return r.length >= FCOI_REASON_MIN ? r : fallback;
-}
-
 registerToolHandler('create_clinical_investigator', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_clinical_investigator requires tenant + user context.' });
   const fullName = typeof input.full_name === 'string' ? input.full_name.trim() : '';
@@ -10031,6 +10410,7 @@ registerToolHandler('create_clinical_investigator', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createInvestigatorTx } = await import('../financial-disclosures/fcoi-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -10042,7 +10422,7 @@ registerToolHandler('create_clinical_investigator', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `clinical-investigator:${id}`, reason: fcoiReason(input, 'Investigator registered via AnA'),
+      target: `clinical-investigator:${id}`, reason,
       payload: { fullName, role }, domain: 'fcoi', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -10064,6 +10444,7 @@ registerToolHandler('create_financial_disclosure', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createDisclosureTx } = await import('../financial-disclosures/fcoi-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -10077,7 +10458,7 @@ registerToolHandler('create_financial_disclosure', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `financial-disclosure:${id}`, reason: fcoiReason(input, 'Disclosure opened via AnA'),
+      target: `financial-disclosure:${id}`, reason,
       payload: { investigatorId, formType }, domain: 'fcoi', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -10101,6 +10482,7 @@ registerToolHandler('add_disclosure_interest', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addInterestTx } = await import('../financial-disclosures/fcoi-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -10112,7 +10494,7 @@ registerToolHandler('add_disclosure_interest', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `financial-disclosure:${disclosureId}`, reason: fcoiReason(input, 'Interest added via AnA'),
+      target: `financial-disclosure:${disclosureId}`, reason,
       payload: { addedInterestId: id, interestType }, domain: 'fcoi', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -10168,6 +10550,7 @@ registerToolHandler('create_ha_interaction', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createInteractionTx } = await import('../ha-interactions/ha-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -10179,7 +10562,7 @@ registerToolHandler('create_ha_interaction', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `ha-interaction:${id}`, reason: fcoiReason(input, 'HA interaction opened via AnA'),
+      target: `ha-interaction:${id}`, reason,
       payload: { interactionType, agency }, domain: 'ha', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -10202,6 +10585,7 @@ registerToolHandler('create_regulatory_commitment', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createCommitmentTx } = await import('../ha-interactions/ha-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -10215,7 +10599,7 @@ registerToolHandler('create_regulatory_commitment', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `regulatory-commitment:${id}`, reason: fcoiReason(input, 'Commitment recorded via AnA'),
+      target: `regulatory-commitment:${id}`, reason,
       payload: { commitmentType, provenanceLinkIds }, domain: 'ha', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -10266,6 +10650,7 @@ registerToolHandler('create_iacuc_protocol', async (input, ctx) => {
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createProtocolTx } = await import('../iacuc/iacuc-service.js');
   const { recommendReviewType } = await import('../iacuc/iacuc-logic.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -10280,7 +10665,7 @@ registerToolHandler('create_iacuc_protocol', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `iacuc-protocol:${id}`, reason: fcoiReason(input, 'IACUC protocol opened via AnA'),
+      target: `iacuc-protocol:${id}`, reason,
       payload: { painCategory }, domain: 'iacuc', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -10306,6 +10691,7 @@ registerToolHandler('register_animal_cohort', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addCohortTx } = await import('../iacuc/iacuc-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -10317,7 +10703,7 @@ registerToolHandler('register_animal_cohort', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `iacuc-protocol:${protocolId}`, reason: fcoiReason(input, 'Animal cohort registered via AnA'),
+      target: `iacuc-protocol:${protocolId}`, reason,
       payload: { cohortId: id, species }, domain: 'iacuc', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -10373,6 +10759,7 @@ registerToolHandler('create_irb_submission', async (input, ctx) => {
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createSubmissionTx } = await import('../irb/irb-service.js');
   const { recommendReviewType } = await import('../irb/irb-logic.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -10388,7 +10775,7 @@ registerToolHandler('create_irb_submission', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `irb-submission:${id}`, reason: fcoiReason(input, 'IRB submission opened via AnA'),
+      target: `irb-submission:${id}`, reason,
       payload: { riskLevel }, domain: 'irb', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -10410,6 +10797,7 @@ registerToolHandler('add_irb_site', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addSiteTx } = await import('../irb/irb-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -10421,7 +10809,7 @@ registerToolHandler('add_irb_site', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `irb-submission:${submissionId}`, reason: fcoiReason(input, 'IRB site added via AnA'),
+      target: `irb-submission:${submissionId}`, reason,
       payload: { siteId: id, siteName }, domain: 'irb', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -10477,6 +10865,7 @@ registerToolHandler('create_ibc_registration', async (input, ctx) => {
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createRegistrationTx } = await import('../ibc/ibc-service.js');
   const { requiresConvenedReview } = await import('../ibc/ibc-logic.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -10491,7 +10880,7 @@ registerToolHandler('create_ibc_registration', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `ibc-registration:${id}`, reason: fcoiReason(input, 'IBC registration opened via AnA'),
+      target: `ibc-registration:${id}`, reason,
       payload: { biosafetyLevel }, domain: 'ibc', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -10519,6 +10908,7 @@ registerToolHandler('add_biological_agent', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addAgentTx } = await import('../ibc/ibc-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -10526,7 +10916,7 @@ registerToolHandler('add_biological_agent', async (input, ctx) => {
     const { id, requiredBsl } = await addAgentTx(client, ctx.organizationId, ctx.userId, registrationId, { agentName, agentType: agentType as any, riskGroup: riskGroup as any });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `ibc-registration:${registrationId}`, reason: fcoiReason(input, 'Biological agent added via AnA'),
+      target: `ibc-registration:${registrationId}`, reason,
       payload: { agentId: id, riskGroup, requiredBsl }, domain: 'ibc', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -10583,6 +10973,7 @@ registerToolHandler('create_nonclinical_study', async (input, ctx) => {
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createStudyTx } = await import('../nonclinical/nonclinical-service.js');
   const { requiredSendDomains } = await import('../nonclinical/nonclinical-logic.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -10598,7 +10989,7 @@ registerToolHandler('create_nonclinical_study', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `nonclinical-study:${id}`, reason: fcoiReason(input, 'Nonclinical study opened via AnA'),
+      target: `nonclinical-study:${id}`, reason,
       payload: { studyType, ctdSection, provenanceLinkIds }, domain: 'nonclinical', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -10646,7 +11037,7 @@ registerToolHandler('add_protocol_budget_item', async (input, ctx) => {
   const unitCost = typeof input.unit_cost === 'number' ? input.unit_cost : NaN;
   if (!Number.isInteger(documentId) || !description || !Number.isFinite(unitCost)) return JSON.stringify({ error: 'document_id, description, and unit_cost are required.' });
   const { addBudgetItemTx } = await import('../protocol-budget/protocol-budget-service.js');
-  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'Protocol budget item added via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'add_protocol_budget_item', input, async (client) => {
     const { id } = await addBudgetItemTx(client, ctx.organizationId!, ctx.userId!, documentId, { description, unitCost, category: typeof input.category === 'string' ? input.category : undefined, quantityPerSubject: typeof input.quantity_per_subject === 'number' ? input.quantity_per_subject : undefined, payer: typeof input.payer === 'string' ? input.payer : undefined });
     return { itemId: id };
   });
@@ -10657,7 +11048,7 @@ registerToolHandler('set_protocol_budget_params', async (input, ctx) => {
   const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
   if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
   const { setBudgetParamsTx } = await import('../protocol-budget/protocol-budget-service.js');
-  return governedPdev(ctx, 'update', `protocol-document:${documentId}`, 'Protocol budget params set via AnA', input, async (client) => {
+  return governedPdev(ctx, 'update', `protocol-document:${documentId}`, 'set_protocol_budget_params', input, async (client) => {
     const { id } = await setBudgetParamsTx(client, ctx.organizationId!, ctx.userId!, documentId, { targetEnrollment: typeof input.target_enrollment === 'number' ? input.target_enrollment : undefined, sponsorPaymentPerSubject: typeof input.sponsor_payment_per_subject === 'number' ? input.sponsor_payment_per_subject : null, indirectRatePct: typeof input.indirect_rate_pct === 'number' ? input.indirect_rate_pct : null });
     return { paramsId: id };
   });
@@ -10685,7 +11076,7 @@ registerToolHandler('add_soa_assessment', async (input, ctx) => {
   const name = typeof input.name === 'string' ? input.name.trim() : '';
   if (!Number.isInteger(documentId) || !name) return JSON.stringify({ error: 'document_id and name are required.' });
   const { addAssessmentTx } = await import('../protocol-soa/protocol-soa-service.js');
-  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'SoA assessment added via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'add_soa_assessment', input, async (client) => {
     const { id } = await addAssessmentTx(client, ctx.organizationId!, ctx.userId!, documentId, { name, category: typeof input.category === 'string' ? input.category : undefined });
     return { assessmentId: id };
   });
@@ -10697,7 +11088,7 @@ registerToolHandler('set_soa_cell', async (input, ctx) => {
   const visitId = typeof input.visit_id === 'number' ? input.visit_id : NaN;
   if (!Number.isInteger(assessmentId) || !Number.isInteger(visitId)) return JSON.stringify({ error: 'assessment_id and visit_id are required.' });
   const { setCellTx } = await import('../protocol-soa/protocol-soa-service.js');
-  return governedPdev(ctx, 'update', `protocol-soa-assessment:${assessmentId}`, 'SoA cell set via AnA', input, async (client) => {
+  return governedPdev(ctx, 'update', `protocol-soa-assessment:${assessmentId}`, 'set_soa_cell', input, async (client) => {
     const { id } = await setCellTx(client, ctx.organizationId!, ctx.userId!, { assessmentId, visitId, required: typeof input.required === 'boolean' ? input.required : undefined, notes: typeof input.notes === 'string' ? input.notes : null });
     return { cellId: id, assessmentId, visitId };
   });
@@ -10727,7 +11118,7 @@ registerToolHandler('create_protocol_template', async (input, ctx) => {
   const protocolKind = typeof input.protocol_kind === 'string' ? input.protocol_kind : '';
   if (!name || !['iacuc', 'irb', 'clinical', 'ibc'].includes(protocolKind)) return JSON.stringify({ error: 'name and a valid protocol_kind are required.' });
   const { createTemplateTx } = await import('../protocol-templates/protocol-templates-service.js');
-  return governedPdev(ctx, 'create', 'protocol-template', 'Protocol template created via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', 'protocol-template', 'create_protocol_template', input, async (client) => {
     const { id } = await createTemplateTx(client, ctx.organizationId!, ctx.userId!, { name, protocolKind, designType: typeof input.design_type === 'string' ? input.design_type : null, description: typeof input.description === 'string' ? input.description : null });
     return { templateId: id };
   });
@@ -10739,7 +11130,7 @@ registerToolHandler('clone_protocol_template', async (input, ctx) => {
   const title = typeof input.title === 'string' ? input.title.trim() : '';
   if (!Number.isInteger(templateId) || !title) return JSON.stringify({ error: 'template_id and title are required.' });
   const { cloneTemplateToDocumentTx } = await import('../protocol-templates/protocol-templates-service.js');
-  return governedPdev(ctx, 'create', `protocol-template:${templateId}`, 'Protocol document cloned from template via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', `protocol-template:${templateId}`, 'clone_protocol_template', input, async (client) => {
     const { documentId, sectionsSeeded } = await cloneTemplateToDocumentTx(client, ctx.organizationId!, ctx.userId!, templateId, { title, protocolNumber: typeof input.protocol_number === 'string' ? input.protocol_number : null });
     return { documentId, sectionsSeeded };
   });
@@ -10751,7 +11142,7 @@ registerToolHandler('save_document_as_template', async (input, ctx) => {
   const name = typeof input.name === 'string' ? input.name.trim() : '';
   if (!Number.isInteger(documentId) || !name) return JSON.stringify({ error: 'document_id and name are required.' });
   const { saveDocumentAsTemplateTx } = await import('../protocol-templates/protocol-templates-service.js');
-  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'Document saved as template via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'save_document_as_template', input, async (client) => {
     const { templateId, sectionsCopied } = await saveDocumentAsTemplateTx(client, ctx.organizationId!, ctx.userId!, documentId, { name, description: typeof input.description === 'string' ? input.description : null });
     return { templateId, sectionsCopied };
   });
@@ -10773,7 +11164,7 @@ registerToolHandler('add_protocol_milestone', async (input, ctx) => {
   const name = typeof input.name === 'string' ? input.name.trim() : '';
   if (!Number.isInteger(documentId) || !name) return JSON.stringify({ error: 'document_id and name are required.' });
   const { addMilestoneTx } = await import('../protocol-milestones/protocol-milestones-service.js');
-  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'Protocol milestone added via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'add_protocol_milestone', input, async (client) => {
     const { id } = await addMilestoneTx(client, ctx.organizationId!, ctx.userId!, documentId, { name, milestoneType: typeof input.milestone_type === 'string' ? input.milestone_type : undefined, targetDate: typeof input.target_date === 'string' ? input.target_date : null, notes: typeof input.notes === 'string' ? input.notes : null });
     return { milestoneId: id };
   });
@@ -10785,7 +11176,7 @@ registerToolHandler('set_protocol_milestone_status', async (input, ctx) => {
   const status = typeof input.status === 'string' ? input.status : '';
   if (!Number.isInteger(milestoneId) || !['planned', 'in_progress', 'met', 'missed', 'cancelled'].includes(status)) return JSON.stringify({ error: 'milestone_id and a valid status are required.' });
   const { setMilestoneStatusTx } = await import('../protocol-milestones/protocol-milestones-service.js');
-  return governedPdev(ctx, 'transition', `protocol-milestone:${milestoneId}`, 'Milestone status set via AnA', input, async (client) => {
+  return governedPdev(ctx, 'transition', `protocol-milestone:${milestoneId}`, 'set_protocol_milestone_status', input, async (client) => {
     await setMilestoneStatusTx(client, ctx.organizationId!, milestoneId, status, typeof input.actual_date === 'string' ? input.actual_date : null);
     return { milestoneId, status };
   });
@@ -10851,7 +11242,8 @@ function refuseSignatureInChat(tool: string, act: string, where: string): string
   });
 }
 
-async function governedPdev(ctx: any, command: string, target: string, fallbackReason: string, input: Record<string, unknown>, run: (client: any) => Promise<Record<string, unknown>>): Promise<string> {
+async function governedPdev(ctx: any, command: string, target: string, tool: string, input: Record<string, unknown>, run: (client: any) => Promise<Record<string, unknown>>): Promise<string> {
+  const reason = gatedReason(input);
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const client = await getPool().connect();
@@ -10859,7 +11251,7 @@ async function governedPdev(ctx: any, command: string, target: string, fallbackR
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId!);
     const body = await run(client);
-    await recordGovernedAction(client, { orgId: ctx.organizationId!, userId: ctx.userId!, command, target, reason: fcoiReason(input, fallbackReason), payload: body, domain: 'protocol_development', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId!, userId: ctx.userId!, command, target, reason, payload: body, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, ...body });
   } catch (err) {
@@ -10876,7 +11268,7 @@ registerToolHandler('create_protocol_amendment', async (input, ctx) => {
   const title = typeof input.title === 'string' ? input.title.trim() : '';
   if (!Number.isInteger(protocolDocumentId) || !title) return JSON.stringify({ error: 'protocol_document_id and title are required.' });
   const { createAmendmentTx } = await import('../protocol-amendments/protocol-amendments-service.js');
-  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'Protocol amendment opened via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'create_protocol_amendment', input, async (client) => {
     const { id } = await createAmendmentTx(client, ctx.organizationId!, ctx.userId!, {
       protocolDocumentId, title,
       amendmentNumber: typeof input.amendment_number === 'string' ? input.amendment_number : null,
@@ -10895,7 +11287,7 @@ registerToolHandler('add_amendment_change', async (input, ctx) => {
   const changeDescription = typeof input.change_description === 'string' ? input.change_description.trim() : '';
   if (!Number.isInteger(amendmentId) || !changeDescription) return JSON.stringify({ error: 'amendment_id and change_description are required.' });
   const { addChangeTx } = await import('../protocol-amendments/protocol-amendments-service.js');
-  return governedPdev(ctx, 'update', `protocol-amendment:${amendmentId}`, 'Amendment change added via AnA', input, async (client) => {
+  return governedPdev(ctx, 'update', `protocol-amendment:${amendmentId}`, 'add_amendment_change', input, async (client) => {
     const { id } = await addChangeTx(client, ctx.organizationId!, ctx.userId!, amendmentId, {
       changeDescription,
       sectionRef: typeof input.section_ref === 'string' ? input.section_ref : null,
@@ -10924,7 +11316,7 @@ registerToolHandler('report_protocol_deviation', async (input, ctx) => {
   const description = typeof input.description === 'string' ? input.description.trim() : '';
   if (!Number.isInteger(protocolDocumentId) || !description) return JSON.stringify({ error: 'protocol_document_id and description are required.' });
   const { createDeviationTx } = await import('../protocol-deviations/protocol-deviations-service.js');
-  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'Protocol deviation reported via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'report_protocol_deviation', input, async (client) => {
     const r = await createDeviationTx(client, ctx.organizationId!, ctx.userId!, {
       protocolDocumentId, description,
       category: typeof input.category === 'string' ? (input.category as any) : undefined,
@@ -10942,7 +11334,7 @@ registerToolHandler('add_capa_action', async (input, ctx) => {
   const action = typeof input.action === 'string' ? input.action.trim() : '';
   if (!Number.isInteger(deviationId) || !action) return JSON.stringify({ error: 'deviation_id and action are required.' });
   const { addCapaActionTx } = await import('../protocol-deviations/protocol-deviations-service.js');
-  return governedPdev(ctx, 'update', `protocol-deviation:${deviationId}`, 'CAPA action added via AnA', input, async (client) => {
+  return governedPdev(ctx, 'update', `protocol-deviation:${deviationId}`, 'add_capa_action', input, async (client) => {
     const { id } = await addCapaActionTx(client, ctx.organizationId!, ctx.userId!, deviationId, {
       action, owner: typeof input.owner === 'string' ? input.owner : null, dueDate: typeof input.due_date === 'string' ? input.due_date : null,
     });
@@ -10971,7 +11363,7 @@ registerToolHandler('assign_protocol_reviewer', async (input, ctx) => {
   const reviewerName = typeof input.reviewer_name === 'string' ? input.reviewer_name.trim() : '';
   if (!Number.isInteger(protocolDocumentId) || !reviewerName) return JSON.stringify({ error: 'protocol_document_id and reviewer_name are required.' });
   const { assignReviewerTx } = await import('../protocol-reviews/protocol-reviews-service.js');
-  return governedPdev(ctx, 'assign', `protocol-document:${protocolDocumentId}`, 'Reviewer assigned via AnA', input, async (client) => {
+  return governedPdev(ctx, 'assign', `protocol-document:${protocolDocumentId}`, 'assign_protocol_reviewer', input, async (client) => {
     const { id, role } = await assignReviewerTx(client, ctx.organizationId!, ctx.userId!, protocolDocumentId, {
       reviewerName, reviewerUserId: typeof input.reviewer_user_id === 'number' ? input.reviewer_user_id : null,
       role: typeof input.role === 'string' ? input.role : undefined, dueDate: typeof input.due_date === 'string' ? input.due_date : null,
@@ -10987,7 +11379,7 @@ registerToolHandler('add_protocol_review_comment', async (input, ctx) => {
   if (!Number.isInteger(protocolDocumentId) || !comment) return JSON.stringify({ error: 'protocol_document_id and comment are required.' });
   const { addCommentTx } = await import('../protocol-reviews/protocol-reviews-service.js');
   // 'create', as the HTTP route records it: a comment is review, not an edit of the protocol.
-  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'Review comment added via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'add_protocol_review_comment', input, async (client) => {
     const { id, severity } = await addCommentTx(client, ctx.organizationId!, ctx.userId!, protocolDocumentId, {
       comment, assignmentId: typeof input.assignment_id === 'number' ? input.assignment_id : null,
       sectionRef: typeof input.section_ref === 'string' ? input.section_ref : null, severity: typeof input.severity === 'string' ? input.severity : null,
@@ -11013,7 +11405,7 @@ registerToolHandler('create_consent_form', async (input, ctx) => {
   const title = typeof input.title === 'string' ? input.title.trim() : '';
   if (!title) return JSON.stringify({ error: 'title is required.' });
   const { createConsentFormTx } = await import('../protocol-consent/protocol-consent-service.js');
-  return governedPdev(ctx, 'create', 'consent-form', 'Consent form created via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', 'consent-form', 'create_consent_form', input, async (client) => {
     const { id, elementsSeeded } = await createConsentFormTx(client, ctx.organizationId!, ctx.userId!, {
       title, protocolDocumentId: typeof input.protocol_document_id === 'number' ? input.protocol_document_id : null,
       version: typeof input.version === 'string' ? input.version : null, language: typeof input.language === 'string' ? input.language : null,
@@ -11028,7 +11420,7 @@ registerToolHandler('update_consent_element', async (input, ctx) => {
   const elementId = typeof input.element_id === 'number' ? input.element_id : NaN;
   if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
   const { updateElementTx } = await import('../protocol-consent/protocol-consent-service.js');
-  return governedPdev(ctx, 'update', `consent-element:${elementId}`, 'Consent element updated via AnA', input, async (client) => {
+  return governedPdev(ctx, 'update', `consent-element:${elementId}`, 'update_consent_element', input, async (client) => {
     const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
     const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
     const gate = await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, present: typeof input.present === 'boolean' ? input.present : undefined, sources }, ctx.userId!);
@@ -11058,7 +11450,7 @@ registerToolHandler('create_dms_plan', async (input, ctx) => {
   const title = typeof input.title === 'string' ? input.title.trim() : '';
   if (!title) return JSON.stringify({ error: 'title is required.' });
   const { createPlanTx } = await import('../dmsp/dmsp-service.js');
-  return governedPdev(ctx, 'create', 'dms-plan', 'DMS plan created via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', 'dms-plan', 'create_dms_plan', input, async (client) => {
     const { id, elementsSeeded } = await createPlanTx(client, ctx.organizationId!, ctx.userId!, {
       title,
       grantProposalId: typeof input.grant_proposal_id === 'number' ? input.grant_proposal_id : null,
@@ -11073,7 +11465,7 @@ registerToolHandler('update_dms_plan_element', async (input, ctx) => {
   const elementId = typeof input.element_id === 'number' ? input.element_id : NaN;
   if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
   const { updateElementTx } = await import('../dmsp/dmsp-service.js');
-  return governedPdev(ctx, 'update', `dms-plan-element:${elementId}`, 'DMS plan element updated via AnA', input, async (client) => {
+  return governedPdev(ctx, 'update', `dms-plan-element:${elementId}`, 'update_dms_plan_element', input, async (client) => {
     const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
     const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
     const gate = await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined, sources }, ctx.userId!);
@@ -11105,7 +11497,7 @@ registerToolHandler('create_other_support', async (input, ctx) => {
   const personName = typeof input.person_name === 'string' ? input.person_name.trim() : '';
   if (!personName) return JSON.stringify({ error: 'person_name is required.' });
   const { createDocumentTx } = await import('../other-support/other-support-service.js');
-  return governedPdev(ctx, 'create', 'other-support', 'Other Support document created via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', 'other-support', 'create_other_support', input, async (client) => {
     const { id } = await createDocumentTx(client, ctx.organizationId!, ctx.userId!, {
       personName,
       personnelId: typeof input.personnel_id === 'number' ? input.personnel_id : null,
@@ -11124,7 +11516,7 @@ registerToolHandler('add_other_support_entry', async (input, ctx) => {
   const fundingSource = typeof input.funding_source === 'string' ? input.funding_source.trim() : '';
   if (!Number.isInteger(documentId) || !projectTitle || !fundingSource) return JSON.stringify({ error: 'document_id, project_title and funding_source are required.' });
   const { addEntryTx } = await import('../other-support/other-support-service.js');
-  return governedPdev(ctx, 'create', `other-support:${documentId}`, 'Other Support entry added via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', `other-support:${documentId}`, 'add_other_support_entry', input, async (client) => {
     const { id } = await addEntryTx(client, ctx.organizationId!, ctx.userId!, documentId, {
       supportType: typeof input.support_type === 'string' ? input.support_type : undefined,
       projectTitle, fundingSource,
@@ -11166,7 +11558,7 @@ registerToolHandler('create_biosketch', async (input, ctx) => {
   const personName = typeof input.person_name === 'string' ? input.person_name.trim() : '';
   if (!personName) return JSON.stringify({ error: 'person_name is required.' });
   const { createBiosketchTx } = await import('../biosketch/biosketch-service.js');
-  return governedPdev(ctx, 'create', 'biosketch', 'Biosketch created via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', 'biosketch', 'create_biosketch', input, async (client) => {
     const { id, sectionsSeeded } = await createBiosketchTx(client, ctx.organizationId!, ctx.userId!, {
       personName,
       personnelId: typeof input.personnel_id === 'number' ? input.personnel_id : null,
@@ -11182,7 +11574,7 @@ registerToolHandler('update_biosketch_section', async (input, ctx) => {
   const sectionId = typeof input.section_id === 'number' ? input.section_id : NaN;
   if (!Number.isInteger(sectionId)) return JSON.stringify({ error: 'section_id is required.' });
   const { updateSectionTx } = await import('../biosketch/biosketch-service.js');
-  return governedPdev(ctx, 'update', `biosketch-section:${sectionId}`, 'Biosketch section updated via AnA', input, async (client) => {
+  return governedPdev(ctx, 'update', `biosketch-section:${sectionId}`, 'update_biosketch_section', input, async (client) => {
     const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
     const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
     const gate = await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined, sources }, ctx.userId!);
@@ -11214,7 +11606,7 @@ registerToolHandler('create_invention_disclosure', async (input, ctx) => {
   const title = typeof input.title === 'string' ? input.title.trim() : '';
   if (!title) return JSON.stringify({ error: 'title is required.' });
   const { createDisclosureTx } = await import('../invention-disclosure/invention-disclosure-service.js');
-  return governedPdev(ctx, 'create', 'invention-disclosure', 'Invention disclosure created via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', 'invention-disclosure', 'create_invention_disclosure', input, async (client) => {
     const { id } = await createDisclosureTx(client, ctx.organizationId!, ctx.userId!, {
       title,
       inventors: typeof input.inventors === 'string' ? input.inventors : null,
@@ -11233,7 +11625,7 @@ registerToolHandler('update_invention_disclosure', async (input, ctx) => {
   const id = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
   if (!Number.isInteger(id)) return JSON.stringify({ error: 'disclosure_id is required.' });
   const { updateDisclosureTx } = await import('../invention-disclosure/invention-disclosure-service.js');
-  return governedPdev(ctx, 'update', `invention-disclosure:${id}`, 'Invention disclosure updated via AnA', input, async (client) => {
+  return governedPdev(ctx, 'update', `invention-disclosure:${id}`, 'update_invention_disclosure', input, async (client) => {
     await updateDisclosureTx(client, ctx.organizationId!, ctx.userId!, id, {
       status: typeof input.status === 'string' ? input.status : undefined,
       inventors: typeof input.inventors === 'string' ? input.inventors : null,
@@ -11266,7 +11658,7 @@ registerToolHandler('submit_invention_disclosure', async (input, ctx) => {
   const id = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
   if (!Number.isInteger(id)) return JSON.stringify({ error: 'disclosure_id is required.' });
   const { submitDisclosureTx } = await import('../invention-disclosure/invention-disclosure-service.js');
-  return governedPdev(ctx, 'submit', `invention-disclosure:${id}`, 'Invention disclosure submitted via AnA', input, async (client) => {
+  return governedPdev(ctx, 'submit', `invention-disclosure:${id}`, 'submit_invention_disclosure', input, async (client) => {
     const result = await submitDisclosureTx(client, ctx.organizationId!, ctx.userId!, id);
     return { disclosureId: id, submitted: result.submitted };
   });
@@ -11282,7 +11674,7 @@ registerToolHandler('create_export_control_review', async (input, ctx) => {
   const projectTitle = typeof input.project_title === 'string' ? input.project_title.trim() : '';
   if (!projectTitle) return JSON.stringify({ error: 'project_title is required.' });
   const { createReviewTx } = await import('../export-control/export-control-service.js');
-  return governedPdev(ctx, 'create', 'export-control', 'Export-control review created via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', 'export-control', 'create_export_control_review', input, async (client) => {
     const { id } = await createReviewTx(client, ctx.organizationId!, ctx.userId!, {
       projectTitle,
       description: typeof input.description === 'string' ? input.description : null,
@@ -11304,7 +11696,7 @@ registerToolHandler('update_export_control_review', async (input, ctx) => {
   const id = typeof input.review_id === 'number' ? input.review_id : NaN;
   if (!Number.isInteger(id)) return JSON.stringify({ error: 'review_id is required.' });
   const { updateReviewTx } = await import('../export-control/export-control-service.js');
-  return governedPdev(ctx, 'update', `export-control:${id}`, 'Export-control review updated via AnA', input, async (client) => {
+  return governedPdev(ctx, 'update', `export-control:${id}`, 'update_export_control_review', input, async (client) => {
     await updateReviewTx(client, ctx.organizationId!, id, {
       projectTitle: typeof input.project_title === 'string' ? input.project_title : undefined,
       description: typeof input.description === 'string' ? input.description : null,
@@ -11345,7 +11737,7 @@ registerToolHandler('create_research_agreement', async (input, ctx) => {
   const otherParty = typeof input.other_party === 'string' ? input.other_party.trim() : '';
   if (!title || !otherParty) return JSON.stringify({ error: 'title and other_party are required.' });
   const { createAgreementTx } = await import('../research-agreements/research-agreements-service.js');
-  return governedPdev(ctx, 'create', 'research-agreement', 'Research agreement created via AnA', input, async (client) => {
+  return governedPdev(ctx, 'create', 'research-agreement', 'create_research_agreement', input, async (client) => {
     const { id } = await createAgreementTx(client, ctx.organizationId!, ctx.userId!, {
       title, otherParty,
       ourParty: typeof input.our_party === 'string' ? input.our_party : null,
@@ -11372,7 +11764,7 @@ registerToolHandler('update_research_agreement', async (input, ctx) => {
   const id = typeof input.agreement_id === 'number' ? input.agreement_id : NaN;
   if (!Number.isInteger(id)) return JSON.stringify({ error: 'agreement_id is required.' });
   const { updateAgreementTx } = await import('../research-agreements/research-agreements-service.js');
-  return governedPdev(ctx, 'update', `research-agreement:${id}`, 'Research agreement updated via AnA', input, async (client) => {
+  return governedPdev(ctx, 'update', `research-agreement:${id}`, 'update_research_agreement', input, async (client) => {
     await updateAgreementTx(client, ctx.organizationId!, id, {
       title: typeof input.title === 'string' ? input.title : undefined,
       otherParty: typeof input.other_party === 'string' ? input.other_party : undefined,
@@ -11420,6 +11812,7 @@ registerToolHandler('add_protocol_risk', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addRiskTx } = await import('../protocol-risks/protocol-risks-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -11432,7 +11825,7 @@ registerToolHandler('add_protocol_risk', async (input, ctx) => {
       mitigation: typeof input.mitigation === 'string' ? input.mitigation : null,
       owner: typeof input.owner === 'string' ? input.owner : null,
     });
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol risk added via AnA'), payload: { riskId: id, level }, domain: 'protocol_development', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `protocol-document:${documentId}`, reason, payload: { riskId: id, level }, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, riskId: id, level, message: `Added ${level} risk to protocol ${documentId}.` });
   } catch (err) {
@@ -11469,6 +11862,7 @@ registerToolHandler('create_protocol_document', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createProtocolDocumentTx } = await import('../protocol-development/protocol-development-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -11482,7 +11876,7 @@ registerToolHandler('create_protocol_document', async (input, ctx) => {
       linkedProtocolId: typeof input.linked_protocol_id === 'number' ? input.linked_protocol_id : null,
       synopsis: typeof input.synopsis === 'string' ? input.synopsis : null,
     });
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `protocol-document:${id}`, reason: fcoiReason(input, 'Protocol document created via AnA'), payload: { kind: protocolKind }, domain: 'protocol_development', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `protocol-document:${id}`, reason, payload: { kind: protocolKind }, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, id, sectionsSeeded, message: `Created ${protocolKind.toUpperCase()} protocol "${title}" (id ${id}) seeded with ${sectionsSeeded} templated sections.` });
   } catch (err) {
@@ -11500,6 +11894,7 @@ registerToolHandler('update_protocol_section', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { updateSectionTx } = await import('../protocol-development/protocol-development-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -11508,7 +11903,7 @@ registerToolHandler('update_protocol_section', async (input, ctx) => {
     const { sources, dropped } = await resolveDraftSources(ctx.organizationId, input.sources, client);
     const gate = await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined, sources }, ctx.userId);
     const lineage = describeDraftLineage(gate, sources, dropped);
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-section:${sectionId}`, reason: fcoiReason(input, 'Protocol section edited via AnA'), payload: { status: input.status }, domain: 'protocol_development', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-section:${sectionId}`, reason, payload: { status: input.status }, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, sectionId, lineage, message: `Updated protocol section ${sectionId}.` });
   } catch (err) {
@@ -11527,12 +11922,13 @@ registerToolHandler('add_protocol_objective', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addObjectiveTx } = await import('../protocol-development/protocol-development-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const { id } = await addObjectiveTx(client, ctx.organizationId, ctx.userId, documentId, { objectiveType: typeof input.objective_type === 'string' ? input.objective_type : undefined, objective, endpoint: typeof input.endpoint === 'string' ? input.endpoint : null, timepoint: typeof input.timepoint === 'string' ? input.timepoint : null });
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol objective added via AnA'), payload: { objectiveId: id }, domain: 'protocol_development', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason, payload: { objectiveId: id }, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, objectiveId: id, message: `Added objective to protocol ${documentId}.` });
   } catch (err) {
@@ -11552,12 +11948,13 @@ registerToolHandler('add_eligibility_criterion', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addEligibilityCriterionTx } = await import('../protocol-development/protocol-development-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const { id } = await addEligibilityCriterionTx(client, ctx.organizationId, ctx.userId, documentId, { kind, criterion });
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Eligibility criterion added via AnA'), payload: { criterionId: id, kind }, domain: 'protocol_development', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason, payload: { criterionId: id, kind }, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, criterionId: id, message: `Added ${kind} criterion to protocol ${documentId}.` });
   } catch (err) {
@@ -11637,12 +12034,13 @@ registerToolHandler('import_citi_records', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { importCitiRecordsTx } = await import('../citi/citi-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const { ids } = await importCitiRecordsTx(client, ctx.organizationId, ctx.userId, personnelId, mapped);
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `research-personnel:${personnelId}`, reason: fcoiReason(input, 'CITI training records imported via AnA'), payload: { imported: ids.length }, domain: 'research_compliance', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `research-personnel:${personnelId}`, reason, payload: { imported: ids.length }, domain: 'research_compliance', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, personnelId, imported: ids.length, trainingIds: ids, message: `Imported ${ids.length} CITI training record(s) for personnel ${personnelId}.` });
   } catch (err) {
@@ -11703,6 +12101,7 @@ registerToolHandler('set_funding_profile', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { upsertFundingProfileTx } = await import('../grants/grant-finder-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -11715,7 +12114,7 @@ registerToolHandler('set_funding_profile', async (input, ctx) => {
       minAward: typeof input.min_award === 'number' ? input.min_award : null,
       maxAward: typeof input.max_award === 'number' ? input.max_award : null,
     });
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `grant-funding-profile:${id}`, reason: fcoiReason(input, 'Funding profile set via AnA'), payload: {}, domain: 'grants', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `grant-funding-profile:${id}`, reason, payload: {}, domain: 'grants', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, id, message: 'Funding profile saved. Use find_grant_opportunities to discover ranked matches.' });
   } catch (err) {
@@ -11763,6 +12162,7 @@ registerToolHandler('assign_committee_member', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addCommitteeMemberTx } = await import('../committees/committee-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -11776,7 +12176,7 @@ registerToolHandler('assign_committee_member', async (input, ctx) => {
       scientist: typeof input.scientist === 'boolean' ? input.scientist : undefined,
       affiliated: typeof input.affiliated === 'boolean' ? input.affiliated : undefined,
     });
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'assign', target: `committee:${committeeType}`, reason: fcoiReason(input, 'Committee member assigned via AnA'), payload: { memberId: id }, domain: 'committee', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'assign', target: `committee:${committeeType}`, reason, payload: { memberId: id }, domain: 'committee', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, id, message: `Added ${memberName} to the ${committeeType.toUpperCase()} committee (member id ${id}).` });
   } catch (err) {
@@ -11795,12 +12195,13 @@ registerToolHandler('convene_committee_meeting', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { conveneMeetingTx } = await import('../committees/committee-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const quorum = await conveneMeetingTx(client, ctx.organizationId, meetingId, present);
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `committee-meeting:${meetingId}`, reason: fcoiReason(input, 'Committee meeting convened via AnA'), payload: { quorumMet: quorum.quorumMet }, domain: 'committee', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `committee-meeting:${meetingId}`, reason, payload: { quorumMet: quorum.quorumMet }, domain: 'committee', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, meetingId, quorumMet: quorum.quorumMet, quorumRequired: quorum.quorumRequired, membersConvened: quorum.membersConvened, issues: quorum.issues, message: quorum.quorumMet ? 'Quorum met — voting may proceed.' : `Quorum NOT met: ${quorum.issues.join(' ')}` });
   } catch (err) {
@@ -11823,12 +12224,13 @@ registerToolHandler('add_committee_agenda_item', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addAgendaItemTx } = await import('../committees/committee-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const { id } = await addAgendaItemTx(client, ctx.organizationId, ctx.userId, meetingId, { protocolKind: protocolKind as any, protocolId, title, reviewType: typeof input.review_type === 'string' ? input.review_type : null });
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `committee-meeting:${meetingId}`, reason: fcoiReason(input, 'Agenda item added via AnA'), payload: { agendaItemId: id }, domain: 'committee', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `committee-meeting:${meetingId}`, reason, payload: { agendaItemId: id }, domain: 'committee', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, agendaItemId: id, message: `Added "${title}" to meeting ${meetingId} agenda (item ${id}).` });
   } catch (err) {
@@ -11850,12 +12252,13 @@ registerToolHandler('cast_committee_vote', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { castVoteTx } = await import('../committees/committee-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     await castVoteTx(client, ctx.organizationId, ctx.userId, agendaItemId, memberId, vote as any, typeof input.comment === 'string' ? input.comment : null);
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'review', target: `committee-agenda:${agendaItemId}`, reason: fcoiReason(input, 'Committee vote cast via AnA'), payload: { memberId, vote }, domain: 'committee', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'review', target: `committee-agenda:${agendaItemId}`, reason, payload: { memberId, vote }, domain: 'committee', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, agendaItemId, memberId, vote, message: `Recorded ${vote} vote from member ${memberId} on item ${agendaItemId}.` });
   } catch (err) {
@@ -11900,6 +12303,7 @@ registerToolHandler('create_coverage_analysis', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createAnalysisTx } = await import('../coverage-analysis/coverage-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -11913,7 +12317,7 @@ registerToolHandler('create_coverage_analysis', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `coverage-analysis:${id}`, reason: fcoiReason(input, 'Medicare coverage analysis opened via AnA'),
+      target: `coverage-analysis:${id}`, reason,
       payload: { title, provenanceLinkId }, domain: 'coverage', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -11936,6 +12340,7 @@ registerToolHandler('set_coverage_qualifying_determination', async (input, ctx) 
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { setQualifyingDeterminationTx } = await import('../coverage-analysis/coverage-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -11949,7 +12354,7 @@ registerToolHandler('set_coverage_qualifying_determination', async (input, ctx) 
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `coverage-analysis:${analysisId}`, reason: fcoiReason(input, 'Qualifying-trial determination set via AnA'),
+      target: `coverage-analysis:${analysisId}`, reason,
       payload: { determination: result.determination }, domain: 'coverage', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -11970,6 +12375,7 @@ registerToolHandler('add_coverage_item', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addItemTx } = await import('../coverage-analysis/coverage-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -11984,7 +12390,7 @@ registerToolHandler('add_coverage_item', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `coverage-analysis:${analysisId}`, reason: fcoiReason(input, 'Coverage item added via AnA'),
+      target: `coverage-analysis:${analysisId}`, reason,
       payload: { itemId: id }, domain: 'coverage', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12006,6 +12412,7 @@ registerToolHandler('classify_coverage_item', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { classifyItemTx } = await import('../coverage-analysis/coverage-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12019,7 +12426,7 @@ registerToolHandler('classify_coverage_item', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `coverage-item:${itemId}`, reason: fcoiReason(input, 'Coverage item classified via AnA'),
+      target: `coverage-item:${itemId}`, reason,
       payload: { classification: result.classification, billingDesignation: result.billingDesignation }, domain: 'coverage', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12067,6 +12474,7 @@ registerToolHandler('create_grant_proposal', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createProposalTx } = await import('../grants/grants-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12080,7 +12488,7 @@ registerToolHandler('create_grant_proposal', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `grant-proposal:${id}`, reason: fcoiReason(input, 'Grant proposal opened via AnA'),
+      target: `grant-proposal:${id}`, reason,
       payload: { title }, domain: 'grants', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12103,6 +12511,7 @@ registerToolHandler('record_grant_award', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createAwardTx } = await import('../grants/grants-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12117,7 +12526,7 @@ registerToolHandler('record_grant_award', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `grant-award:${id}`, reason: fcoiReason(input, 'Grant award recorded via AnA'),
+      target: `grant-award:${id}`, reason,
       payload: { fundingAgency, provenanceLinkId }, domain: 'grants', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12159,6 +12568,7 @@ registerToolHandler('set_grant_milestone_status', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { setMilestoneStatusTx } = await import('../grants/grants-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12166,7 +12576,7 @@ registerToolHandler('set_grant_milestone_status', async (input, ctx) => {
     await setMilestoneStatusTx(client, ctx.organizationId, milestoneId, status, typeof input.completed_date === 'string' ? input.completed_date : null);
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `grant-milestone:${milestoneId}`, reason: fcoiReason(input, 'Milestone status set via AnA'),
+      target: `grant-milestone:${milestoneId}`, reason,
       payload: { status }, domain: 'grants', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12186,6 +12596,7 @@ registerToolHandler('open_grant_closeout', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { openCloseoutTx } = await import('../grants/grants-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12193,7 +12604,7 @@ registerToolHandler('open_grant_closeout', async (input, ctx) => {
     const { id, closeoutDueDate } = await openCloseoutTx(client, ctx.organizationId, ctx.userId, awardId);
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Grant closeout opened via AnA'),
+      target: `grant-award:${awardId}`, reason,
       payload: { closeoutId: id, closeoutDueDate }, domain: 'grants', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12214,6 +12625,7 @@ registerToolHandler('update_grant_closeout', async (input, ctx) => {
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { updateCloseoutTx } = await import('../grants/grants-service.js');
   const bool = (v: unknown) => (typeof v === 'boolean' ? v : undefined);
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12228,7 +12640,7 @@ registerToolHandler('update_grant_closeout', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Grant closeout updated via AnA'),
+      target: `grant-award:${awardId}`, reason,
       payload: { closeout: 'updated' }, domain: 'grants', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12253,6 +12665,7 @@ registerToolHandler('record_subaward', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createSubawardTx } = await import('../grants/grants-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12268,7 +12681,7 @@ registerToolHandler('record_subaward', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Subaward recorded via AnA'),
+      target: `grant-award:${awardId}`, reason,
       payload: { subawardId: id, subrecipientName }, domain: 'grants', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12292,6 +12705,7 @@ registerToolHandler('screen_subaward', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { screenSubawardTx } = await import('../grants/grants-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12303,7 +12717,7 @@ registerToolHandler('screen_subaward', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `grant-subaward:${subawardId}`, reason: fcoiReason(input, 'Subaward screening recorded via AnA'),
+      target: `grant-subaward:${subawardId}`, reason,
       payload: { screenStatus }, domain: 'grants', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12331,6 +12745,7 @@ registerToolHandler('add_grant_budget_line', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addBudgetLineTx } = await import('../grants/grants-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12342,7 +12757,7 @@ registerToolHandler('add_grant_budget_line', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Budget line added via AnA'),
+      target: `grant-award:${awardId}`, reason,
       payload: { budgetLineId: id, category }, domain: 'grants', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12367,6 +12782,7 @@ registerToolHandler('record_grant_expenditure', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { recordExpenditureTx } = await import('../grants/grants-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12378,7 +12794,7 @@ registerToolHandler('record_grant_expenditure', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Expenditure recorded via AnA'),
+      target: `grant-award:${awardId}`, reason,
       payload: { expenditureId: id, category, amount }, domain: 'grants', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12419,6 +12835,7 @@ registerToolHandler('record_cost_share_contribution', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { recordCostShareContributionTx } = await import('../grants/grants-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12430,7 +12847,7 @@ registerToolHandler('record_cost_share_contribution', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Cost-share contribution recorded via AnA'),
+      target: `grant-award:${awardId}`, reason,
       payload: { contributionId: id, source, amount }, domain: 'grants', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12469,6 +12886,7 @@ registerToolHandler('request_no_cost_extension', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { requestNceTx } = await import('../grants/grants-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12476,7 +12894,7 @@ registerToolHandler('request_no_cost_extension', async (input, ctx) => {
     const { id, requiresSponsorApproval, months } = await requestNceTx(client, ctx.organizationId, ctx.userId, awardId, { newEndDate, reason: typeof input.reason === 'string' ? input.reason : null });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'No-cost extension requested via AnA'),
+      target: `grant-award:${awardId}`, reason,
       payload: { nceId: id, months, requiresSponsorApproval }, domain: 'grants', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12508,6 +12926,7 @@ registerToolHandler('record_grant_opportunity', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createOpportunityTx } = await import('../grants/grants-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12522,7 +12941,7 @@ registerToolHandler('record_grant_opportunity', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `grant-opportunity:${id}`, reason: fcoiReason(input, 'Funding opportunity recorded via AnA'),
+      target: `grant-opportunity:${id}`, reason,
       payload: { opportunityNumber, fundingAgency }, domain: 'grants', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12574,6 +12993,7 @@ registerToolHandler('triage_compliance_attention', async (input, ctx) => {
   const { triageComplianceAttention } = await import('../research-compliance/compliance-triage.js');
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const reason = gatedReason(input);
   try {
     const r = await triageComplianceAttention(ctx.organizationId, ctx.projectId ?? null);
     // Record one governed action over the batch (best-effort tasks already created).
@@ -12583,7 +13003,7 @@ registerToolHandler('triage_compliance_attention', async (input, ctx) => {
       await setTenantContextTx(client, ctx.organizationId);
       await recordGovernedAction(client, {
         orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-        target: `compliance-triage:${ctx.organizationId}`, reason: fcoiReason(input, 'Compliance attention triaged to tasks via AnA'),
+        target: `compliance-triage:${ctx.organizationId}`, reason,
         payload: { criticalItems: r.criticalItems, created: r.created.length, alreadyTracked: r.alreadyTracked.length }, domain: 'research_compliance', surface: 'ana',
       });
       await client.query('COMMIT');
@@ -12606,6 +13026,7 @@ registerToolHandler('fulfill_regulatory_commitment', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { fulfillCommitmentTx } = await import('../ha-interactions/ha-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12614,7 +13035,7 @@ registerToolHandler('fulfill_regulatory_commitment', async (input, ctx) => {
     await fulfillCommitmentTx(client, ctx.organizationId, commitmentId, fulfilledDate);
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'resolve',
-      target: `regulatory-commitment:${commitmentId}`, reason: fcoiReason(input, 'Commitment fulfilled via AnA'),
+      target: `regulatory-commitment:${commitmentId}`, reason,
       payload: { fulfilledDate }, domain: 'ha', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12680,6 +13101,7 @@ registerToolHandler('register_controlled_substance', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createSubstanceTx } = await import('../controlled-substances/cs-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12691,7 +13113,7 @@ registerToolHandler('register_controlled_substance', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `controlled-substance:${id}`, reason: fcoiReason(input, 'Controlled substance registered via AnA'),
+      target: `controlled-substance:${id}`, reason,
       payload: { substanceName, deaSchedule }, domain: 'controlled_substances', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12716,6 +13138,7 @@ registerToolHandler('create_rim_product', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createProductTx } = await import('../rim/rim-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12728,7 +13151,7 @@ registerToolHandler('create_rim_product', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `rim-product:${id}`, reason: fcoiReason(input, 'RIM product opened via AnA'),
+      target: `rim-product:${id}`, reason,
       payload: { productName }, domain: 'rim', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12752,6 +13175,7 @@ registerToolHandler('set_registration_status', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { upsertRegistrationTx } = await import('../rim/rim-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12765,7 +13189,7 @@ registerToolHandler('set_registration_status', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `rim-product:${productId}`, reason: fcoiReason(input, 'Registration status set via AnA'),
+      target: `rim-product:${productId}`, reason,
       payload: { registrationId: id, country, status: marketStatus }, domain: 'rim', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12812,6 +13236,7 @@ registerToolHandler('create_inspection', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createInspectionTx } = await import('../inspection/inspection-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12822,7 +13247,7 @@ registerToolHandler('create_inspection', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `inspection:${id}`, reason: fcoiReason(input, 'Inspection opened via AnA'),
+      target: `inspection:${id}`, reason,
       payload: { inspectionType, agency }, domain: 'inspection', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12847,6 +13272,7 @@ registerToolHandler('log_inspection_finding', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addFindingTx } = await import('../inspection/inspection-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12854,7 +13280,7 @@ registerToolHandler('log_inspection_finding', async (input, ctx) => {
     const { id } = await addFindingTx(client, ctx.organizationId, ctx.userId, inspectionId, { observationNumber, description, classification: classification as any });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `inspection:${inspectionId}`, reason: fcoiReason(input, 'Inspection finding logged via AnA'),
+      target: `inspection:${inspectionId}`, reason,
       payload: { findingId: id, classification }, domain: 'inspection', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12901,6 +13327,7 @@ registerToolHandler('register_dea', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createRegistrationTx } = await import('../controlled-substances/cs-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12911,7 +13338,7 @@ registerToolHandler('register_dea', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `dea-registration:${id}`, reason: fcoiReason(input, 'DEA registration recorded via AnA'),
+      target: `dea-registration:${id}`, reason,
       payload: { deaNumber }, domain: 'controlled_substances', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12935,6 +13362,7 @@ registerToolHandler('log_cs_transaction', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { recordTransactionTx } = await import('../controlled-substances/cs-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -12947,7 +13375,7 @@ registerToolHandler('log_cs_transaction', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `controlled-substance:${substanceId}`, reason: fcoiReason(input, 'CS transaction logged via AnA'),
+      target: `controlled-substance:${substanceId}`, reason,
       payload: { transactionId: id, type: transactionType, balanceAfter }, domain: 'controlled_substances', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -12993,6 +13421,7 @@ registerToolHandler('create_lifecycle_obligation', async (input, ctx) => {
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createObligationTx } = await import('../lifecycle-obligations/lifecycle-service.js');
   const { classificationPathway } = await import('../lifecycle-obligations/lifecycle-logic.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -13009,7 +13438,7 @@ registerToolHandler('create_lifecycle_obligation', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `lifecycle-obligation:${id}`, reason: fcoiReason(input, 'Lifecycle obligation opened via AnA'),
+      target: `lifecycle-obligation:${id}`, reason,
       payload: { obligationType, occurrencesCreated }, domain: 'lifecycle', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -13052,6 +13481,7 @@ registerToolHandler('create_tmf', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createTmfTx } = await import('../etmf/etmf-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -13059,7 +13489,7 @@ registerToolHandler('create_tmf', async (input, ctx) => {
     const { id } = await createTmfTx(client, ctx.organizationId, ctx.userId, { title, studyId: typeof input.study_id === 'number' ? input.study_id : null });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `tmf-file:${id}`, reason: fcoiReason(input, 'TMF opened via AnA'),
+      target: `tmf-file:${id}`, reason,
       payload: { title }, domain: 'etmf', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -13080,6 +13510,7 @@ registerToolHandler('classify_tmf_artifact', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addArtifactTx } = await import('../etmf/etmf-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -13092,7 +13523,7 @@ registerToolHandler('classify_tmf_artifact', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `tmf-file:${tmfFileId}`, reason: fcoiReason(input, 'TMF artifact filed via AnA'),
+      target: `tmf-file:${tmfFileId}`, reason,
       payload: { artifactId: id, zone, classification }, domain: 'etmf', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -13165,6 +13596,7 @@ registerToolHandler('add_personnel_training', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addTrainingTx } = await import('../research-compliance/roster-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -13176,7 +13608,7 @@ registerToolHandler('add_personnel_training', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `research-personnel:${personnelId}`, reason: fcoiReason(input, 'Training recorded via AnA'),
+      target: `research-personnel:${personnelId}`, reason,
       payload: { trainingId: id, trainingType }, domain: 'research_compliance', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -13217,6 +13649,7 @@ registerToolHandler('create_effort_certification', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createCertificationTx } = await import('../effort-certification/effort-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -13224,7 +13657,7 @@ registerToolHandler('create_effort_certification', async (input, ctx) => {
     const { id } = await createCertificationTx(client, ctx.organizationId, ctx.userId, { personnelId, periodStart, periodEnd });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `effort-certification:${id}`, reason: fcoiReason(input, 'Effort statement opened via AnA'),
+      target: `effort-certification:${id}`, reason,
       payload: { personnelId, periodStart, periodEnd }, domain: 'effort_certification', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -13249,6 +13682,7 @@ registerToolHandler('add_effort_line', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { addLineTx } = await import('../effort-certification/effort-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -13259,7 +13693,7 @@ registerToolHandler('add_effort_line', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `effort-certification:${certId}`, reason: fcoiReason(input, 'Effort line added via AnA'),
+      target: `effort-certification:${certId}`, reason,
       payload: { lineId: id, activityLabel, committedPct, actualPct }, domain: 'effort_certification', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -13284,6 +13718,7 @@ registerToolHandler('create_coi_disclosure', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createDisclosureTx } = await import('../research-security/coi-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -13296,7 +13731,7 @@ registerToolHandler('create_coi_disclosure', async (input, ctx) => {
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `coi-disclosure:${id}`, reason: fcoiReason(input, 'COI disclosure filed via AnA'),
+      target: `coi-disclosure:${id}`, reason,
       payload: { personnelId, disclosureType, foreignFlag }, domain: 'research_security', surface: 'ana',
     });
     await client.query('COMMIT');
@@ -13589,12 +14024,6 @@ registerToolHandler('verify_memory_atom', async (input, ctx) => {
 // the hash-committed payload under `kind`.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Reason-for-change for a governed QMS action: caller-supplied, else a fallback. */
-const QMS_REASON_MIN = 8;
-function qmsReason(input: Record<string, unknown>, fallback: string): string {
-  const r = typeof input.reason === 'string' ? input.reason.trim() : '';
-  return r.length >= QMS_REASON_MIN ? r : fallback;
-}
 
 registerToolHandler('create_qms_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'create_qms_document requires tenant context.' });
@@ -13608,6 +14037,7 @@ registerToolHandler('create_qms_document', async (input, ctx) => {
   }
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -13628,7 +14058,7 @@ registerToolHandler('create_qms_document', async (input, ctx) => {
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
       target: `qms-document:${rows[0].id}`,
-      reason: qmsReason(input, `Controlled document ${docNumber} created via AnA`),
+      reason,
       payload: { kind: 'create', docNumber, title, docType, to: 'draft' },
       domain: 'mdx', surface: 'ana',
     });
@@ -13666,13 +14096,24 @@ registerToolHandler('approve_qms_document', async () =>
   ),
 );
 
+/* 2026-09-28 (Q-0928-2, weekly launch-catalog review). POST
+   /api/mdx/qms/documents/:id/revise runs requireEditorAccess; this handler ran
+   no role check at all, and /api/ana-ri is mounted behind authenticateToken
+   only, so any authenticated member — a viewer included — could withdraw an
+   effective SOP back to draft from chat. Its reason floor was also 3 characters
+   where every other QMS tool asks GOVERNED_REASON_MIN. The role is now read from
+   organization_users for the verified principal (ctx.userId, ctx.organizationId)
+   through resolveSignerOrgRole, and checked against GOVERNED_WRITE_ROLES — the
+   set requireEditorAccess uses — before anything is opened. Never from input. */
 registerToolHandler('revise_qms_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'revise_qms_document requires tenant context.' });
+  if (!ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires user context — a controlled revision cannot be opened without an identified actor (21 CFR Part 11).' });
+  const refusal = await editorRoleRefusal('revise_qms_document', 'opening a controlled revision', ctx);
+  if (refusal) return refusal;
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
   const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  if (reason.length < 3) return JSON.stringify({ error: 'A reason for change is required to open a controlled revision (21 CFR Part 11) — ask the user for it.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires user context — a controlled revision cannot be opened without an identified actor (21 CFR Part 11).' });
+  if (reason.length < GOVERNED_REASON_MIN) return JSON.stringify({ error: `A reason for change is required to open a controlled revision (21 CFR Part 11), at least ${GOVERNED_REASON_MIN} characters — ask the user for it.` });
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const client = await getPool().connect();
@@ -13720,51 +14161,21 @@ registerToolHandler('revise_qms_document', async (input, ctx) => {
   }
 });
 
-registerToolHandler('retire_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'retire_qms_document requires tenant context.' });
-  const id = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
-  // §11.10(e): retirement is terminal and its reason is recorded in the
-  // hash-chained ledger — required here, never replaced by a placeholder.
-  if (reason.length < QMS_REASON_MIN) return JSON.stringify({ error: `A reason for change of at least ${QMS_REASON_MIN} characters is required to retire a controlled document — it is recorded in the audit trail.` });
-  if (!ctx.userId) return JSON.stringify({ error: 'retire_qms_document requires user context — a retirement cannot be recorded without an identified actor (21 CFR Part 11).' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { rows } = await client.query(
-      `UPDATE qms_documents
-          SET status = 'retired',
-              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
-                'retired', jsonb_build_object('reason', $3::text, 'at', NOW(), 'by', $4::int)),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status <> 'retired'
-        RETURNING id, doc_number, status`,
-      [id, ctx.organizationId, reason, ctx.userId],
-    );
-    if (rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: 'Document not found, or already retired.' });
-    }
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${id}`,
-      reason,
-      payload: { kind: 'retire', to: 'retired' },
-      domain: 'mdx', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, ...rows[0], message: `Retired document ${rows[0].doc_number}.` });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({ error: `retire_qms_document failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
-  }
-});
+/* 2026-09-28 (Q-0928-1 / SEC-0928-1, DP-32 Part B). Retiring a controlled
+   document is an electronic signature: POST /api/mdx/qms/documents/:id/retire
+   runs verifyApprovalSigner (password + second factor, signing authority) and
+   retireQmsDocumentSigned, which writes one electronic_signatures row with the
+   status change and its ledger pair. This handler checked only a tenant, a
+   reason of 8+ characters and a user id, then set the document retired and
+   recorded a 'transition' — a session alone could end an effective SOP's use
+   for everyone trained on it. Refused exactly like approve_qms_document. */
+registerToolHandler('retire_qms_document', async () =>
+  refuseSignatureInChat(
+    'retire_qms_document',
+    'Retiring a controlled document',
+    "the Quality register: the document's Retire action asks for your password and second factor",
+  ),
+);
 
 registerToolHandler('ack_training', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'ack_training requires tenant context.' });
@@ -14304,8 +14715,17 @@ registerToolHandler('global_search', async (input, ctx) => {
 
 registerToolHandler('start_legacy_import', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'start_legacy_import requires tenant context.' });
-  const sourcePath = typeof input.source_path === 'string' ? input.source_path : '';
-  if (!sourcePath) return JSON.stringify({ error: 'source_path (string) is required.' });
+  if (!(typeof input.source_path === 'string' && input.source_path)) {
+    return JSON.stringify({ error: 'source_path (string) is required.' });
+  }
+  // INJ-PATH-002: the detector reads, hashes and lists every entry of the
+  // archive at this path, and the listing is stored in THIS tenant's import
+  // job. Unconfined, `uploads/org-2/…` put another tenant's eCTD inventory —
+  // names, sizes, hashes, sponsor, application id — into the caller's rows.
+  // The job row keeps the real path, so nothing later re-reads the string.
+  const source = workspacePathOrRefusal(input.source_path, 'source_path', ctx.organizationId);
+  if (!source.ok) return source.refusal;
+  const sourcePath = source.path;
   try {
     const { getPool } = await import('../../db.js');
     const { detectArchive } = await import('../legacy-importer/detector.js');
@@ -14764,6 +15184,7 @@ registerToolHandler('assemble_ectd_module_from_artifacts', async (input, ctx) =>
       sections,
       outputFormat,
       documentTitle: `eCTD Module ${moduleNumber}`,
+      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
     });
     return JSON.stringify({
       module_number: moduleNumber,
@@ -15250,6 +15671,73 @@ export interface AgenticOptions {
    * reach back into this function's message list anyway.
    */
   operatorTurns?: GatewayMessage[];
+  /*
+   * The options below exist for the sub-agent runner (row 74). No caller set
+   * them before it; absent, the adapter behaves exactly as it always did.
+   * See agentic-tool-dispatch.ts for the three dispatch options.
+   */
+  /** Only these tools may run; any other call is answered TOOL_NOT_OFFERED and nothing runs. */
+  allowedToolNames?: ReadonlySet<string>;
+  /** Each tool call's start and end, fired inside the worker that runs it. */
+  onToolEvent?: (event: AgenticToolEvent) => void;
+  /** Every gateway response the loop receives, with its round (0 for the first call). */
+  onModelResponse?: (response: AnaGatewayResponse, round: number) => void;
+  /** The caller's budget, asked after each round (agentic-loop.ts AgenticLoopOptions.stopWhen). */
+  stopWhen?: (round: number) => LoopStopDirective;
+  /** Tool calls run at once within a round (default 4). */
+  toolConcurrency?: number;
+  /** 'refuse': every tool dispatch runs where a model may not be called (ai-gateway/model-call-scope.ts). */
+  toolModelCalls?: 'refuse';
+}
+
+/**
+ * What executeAgenticLoop returns: the final gateway response, and how the
+ * loop ended. The non-SSE doors get the same fact the stream has — whether
+ * she stopped because she was done, or because a ceiling, a thrash, a budget
+ * or a stop cut her off. `stoppedReason` reads `cancelled` whenever the run's
+ * signal was aborted, because an aborted round returns no tool calls and would
+ * otherwise read as her having finished.
+ */
+export type AgenticLoopResponse = AnaGatewayResponse & { loop: AgenticLoopResult };
+
+/**
+ * The sub-agent options (see AgenticOptions) in the shapes the adapter hands
+ * on. With none set: no allowlist, no hooks, no scope, 4 lanes, no stopWhen —
+ * the adapter as it always was.
+ */
+function subAgentLoopOptions(request: GatewayRequest, options: AgenticOptions | undefined) {
+  const o = options ?? {};
+  // One fact, two readers: the gateway (the scope) and the tool (ctx.modelCalls).
+  const refuse = o.toolModelCalls === 'refuse' || o.toolContext?.modelCalls === 'refuse';
+  const dispatch: LoopDispatchOptions = {
+    allowedToolNames: o.allowedToolNames,
+    onToolEvent: o.onToolEvent,
+    toolModelCalls: refuse ? 'refuse' : undefined,
+    runId: request.runId,
+    parentRunId: request.parentRunId,
+  };
+  const onModelResponse = o.onModelResponse;
+  return {
+    dispatch,
+    toolConcurrency: resolveToolConcurrency(o.toolConcurrency),
+    /** Added to each dispatched ToolContext: nothing unless model calls are refused. */
+    toolCtx: refuse ? { modelCalls: 'refuse' as const } : {},
+    onModelResponse: (response: AnaGatewayResponse, round: number): void => {
+      if (onModelResponse) notifyObserver('onModelResponse', () => onModelResponse(response, round));
+    },
+    loop: o.stopWhen ? { stopWhen: o.stopWhen } : {},
+  };
+}
+
+/** The loop outcome of a turn whose first answer asked for no tool. */
+const NO_TOOL_ROUNDS: AgenticLoopResult = { rounds: 0, toolCallCount: 0, stoppedReason: 'no_more_tools', extendedRounds: 0 };
+
+function withLoopOutcome(
+  response: AnaGatewayResponse,
+  loop: AgenticLoopResult,
+  signal: AbortSignal | undefined,
+): AgenticLoopResponse {
+  return { ...response, loop: { ...loop, ...(signal?.aborted ? { stoppedReason: 'cancelled' as const } : {}) } };
 }
 
 /**
@@ -15292,7 +15780,7 @@ function withScopeOrganizationUuid(ctx: ToolContext | undefined): ToolContext | 
 export async function executeAgenticLoop(
   request: GatewayRequest,
   options?: AgenticOptions
-): Promise<AnaGatewayResponse> {
+): Promise<AgenticLoopResponse> {
   const gateway = getGateway();
   // Default to the effort-scaled Balanced ceiling (6) rather than a flat 5, so a
   // caller that doesn't pin maxRounds still gets the modernized agentic depth.
@@ -15318,11 +15806,13 @@ export async function executeAgenticLoop(
   // streaming route has passed it since stop started landing mid-step; this is
   // the same fix for the non-SSE callers.
   // tenant-binding: forwards the caller's GatewayRequest; every caller binds organizationId (send-message.ts, deep-investigation.ts, ana-realtime.ts, ana-intelligence.ts)
+  const subAgent = subAgentLoopOptions(request, options);
   let finalResponse = (await gateway.route({ ...request, signal })) as AnaGatewayResponse;
+  subAgent.onModelResponse(finalResponse, 0);
 
   // Fast path: the model answered without asking for any tool.
   if (!finalResponse.toolUses || finalResponse.toolUses.length === 0) {
-    return finalResponse;
+    return withLoopOutcome(finalResponse, NO_TOOL_ROUNDS, signal);
   }
 
   // Conversation grows across rounds: each round appends the assistant's
@@ -15332,7 +15822,7 @@ export async function executeAgenticLoop(
   // Run one round's tool calls in parallel (network-bound tools like PubMed /
   // ClinicalTrials no longer block each other), firing the per-tool hook in the
   // original call order so callers' telemetry/event streams stay deterministic.
-  const executeTools = async (calls: ToolCall[]): Promise<ToolResultEntry[]> => {
+  const executeTools = async (calls: ToolCall[], round: number): Promise<ToolResultEntry[]> => {
     // Barge-in: don't spend work running this round's tools once cancelled.
     //
     // This used to `return []` — ZERO entries for a round that had N calls.
@@ -15348,28 +15838,32 @@ export async function executeAgenticLoop(
     if (signal?.aborted) return cancelledRoundEntries(calls);
     const ran = await mapWithConcurrency(
       calls,
-      async (call): Promise<{ call: ToolCall; result: string; errorMessage?: string }> => {
-        const handler = toolHandlers.get(call.name);
-        if (!handler) {
-          return {
+      (call): Promise<{ call: ToolCall; result: string; errorMessage?: string }> =>
+        dispatchLoopCall(call, round, subAgent.dispatch, async () => {
+          const handler = toolHandlers.get(call.name);
+          if (!handler) {
+            return {
+              call,
+              result: JSON.stringify({
+                error: `No handler registered for tool: ${call.name}`,
+                // Narrowed to what this loop offers when it offers a subset.
+                availableTools: Array.from(toolHandlers.keys()).filter(
+                  n => !subAgent.dispatch.allowedToolNames || subAgent.dispatch.allowedToolNames.has(n),
+                ),
+              }),
+              errorMessage: 'no handler registered',
+            };
+          }
+          // The calls in this round came from finalResponse; the governed-write
+          // gate in registerToolHandler reads which model that was.
+          return runOneTool(
+            handler,
             call,
-            result: JSON.stringify({
-              error: `No handler registered for tool: ${call.name}`,
-              availableTools: Array.from(toolHandlers.keys()),
-            }),
-            errorMessage: 'no handler registered',
-          };
-        }
-        // The calls in this round came from finalResponse; the governed-write
-        // gate in registerToolHandler reads which model that was.
-        return runOneTool(
-          handler,
-          call,
-          { ...(toolContext ?? {}), servingModel: servedModelOf(finalResponse) },
-          signal,
-        );
-      },
-      4,
+            { ...(toolContext ?? {}), servingModel: servedModelOf(finalResponse), ...subAgent.toolCtx },
+            signal,
+          );
+        }),
+      subAgent.toolConcurrency,
     );
 
     const entries: ToolResultEntry[] = [];
@@ -15392,7 +15886,7 @@ export async function executeAgenticLoop(
   const callModel = async (
     results: ToolResultEntry[],
     priorText: string,
-    _round: number,
+    round: number,
     includeTools: boolean,
   ): Promise<ModelTurn> => {
     // Barge-in: when cancelled, stop before issuing the next round. Returning no
@@ -15430,17 +15924,18 @@ export async function executeAgenticLoop(
 
     // tenant-binding: roundRequest is built from the caller's request, which carries its organizationId
     finalResponse = (await gateway.route(roundRequest)) as AnaGatewayResponse;
+    subAgent.onModelResponse(finalResponse, round);
     const nextUses = finalResponse.toolUses ?? [];
     return { text: finalResponse.content || '', toolCalls: nextUses.map(toToolCall) };
   };
 
-  await runAgenticToolLoop(
+  const loop = await runAgenticToolLoop(
     { text: finalResponse.content || '', toolCalls: finalResponse.toolUses.map(toToolCall) },
     { executeTools, callModel, ...(options?.checkpoint ? { checkpoint: options.checkpoint } : {}) },
-    { maxRounds, progressExtension },
+    { maxRounds, progressExtension, ...subAgent.loop },
   );
 
-  return finalResponse;
+  return withLoopOutcome(finalResponse, loop, signal);
 }
 
 /**
@@ -16971,10 +17466,106 @@ registerToolHandler('list_app_screens', async (input: Record<string, unknown>, c
   }
 });
 
+// ── The program AnA has opened this turn ─────────────────────────────────────
+// A move that opens a program (act_on_screen projects.open-program, navigate_to
+// with a `program`) only learns WHICH program once its database read returns.
+// The stream runs a round's calls concurrently (mapWithConcurrency), so a
+// project screen asked for in the same round must wait for that answer instead
+// of reading what was open before it — which asked "which program?" a moment
+// after AnA had opened one, or showed the previous one.
+//
+// Both helpers are synchronous and must run before the handler's first await.
+// The executor starts a round's calls in order, each running synchronously up
+// to its first await, so what a call publishes by then is visible to every
+// call asked AFTER it in the round, and to none asked before it.
+
+/** The program open once every move started before this point has landed. */
+/**
+ * Whether the request came with a program open on the person's screen. The
+ * stream route sends it as `projectRef` (a uuid under the v2 shell); the chat
+ * route sets only `projectId` — so reading one field alone told a chat turn
+ * with a program open that none was.
+ */
+function hasOpenProgram(ctx?: ToolContext): boolean {
+  return Boolean((typeof ctx?.projectRef === 'string' && ctx.projectRef.trim()) || ctx?.projectId);
+}
+
+function programOpenedBefore(ctx?: ToolContext): Promise<TurnProgram | null> {
+  const ts = ctx?.turnState;
+  if (!ts) return Promise.resolve(null);
+  return ts.pendingProgram ?? Promise.resolve(ts.program);
+}
+
+/**
+ * Announce that this move is opening a program. The returned function settles
+ * it with what the move opened (null: nothing it could name) and resolves once
+ * the turn's program reflects that. Callers also call it with null in a
+ * `finally` — a no-op after the first call — so an early return or a throw
+ * never leaves a later move waiting. Opens land in the order they were asked,
+ * so two in one round leave the second open, as the person's screen will.
+ */
+function beginProgramOpen(ctx?: ToolContext): (opened: TurnProgram | null) => Promise<unknown> {
+  const ts = ctx?.turnState;
+  if (!ts) return async () => undefined;
+  const before = programOpenedBefore(ctx);
+  let settle!: (opened: TurnProgram | null) => void;
+  const own = new Promise<TurnProgram | null>(resolve => {
+    settle = resolve;
+  });
+  const pending: Promise<TurnProgram | null> = own.then(async opened => {
+    const prior = await before;
+    if (opened) ts.program = opened;
+    if (ts.pendingProgram === pending) ts.pendingProgram = null;
+    return opened ?? prior;
+  });
+  ts.pendingProgram = pending;
+  return opened => {
+    settle(opened);
+    return pending;
+  };
+}
+
+function turnProgramOf(p: ProgramRef): TurnProgram {
+  return { id: p.id, name: p.name, ...(p.code ? { code: p.code } : {}) };
+}
+
+/**
+ * The tool result for a program reference that did not name exactly one of
+ * the person's programs. Both moves that open a program refuse through here,
+ * so the model is told the same thing whichever one it used.
+ */
+async function unresolvedProgramResult(
+  ref: string,
+  found: Exclude<ProgramResolution, { status: 'found' }>
+): Promise<string> {
+  const { programChoices } = await import('../ana-ri/drive-context.js');
+  if (found.status === 'ambiguous') {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: found.truncated
+        ? `"${ref}" matches more than ${found.matches.length} programs — name one exactly. These are the ${found.matches.length} most recently updated.`
+        : `"${ref}" matches more than one program — name one exactly.`,
+      programs: programChoices(found.matches),
+    });
+  }
+  if (found.status === 'not_found') {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: `No program matching "${ref}" in this workspace.`,
+      programs: programChoices(found.candidates),
+    });
+  }
+  return JSON.stringify({
+    status: 'error',
+    error: 'The program list could not be read, so the program could not be opened.',
+  });
+}
+
 // AnA self-navigation — validate a target against the governed registry and
 // produce the navigation directive the chat client applies. Refuses unknown
 // targets / invalid params rather than emitting a broken jump.
 registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  let settleOpen: ((opened: TurnProgram | null) => Promise<unknown>) | null = null;
   try {
     const target = typeof input.target === 'string' ? input.target.trim() : '';
     if (!target) {
@@ -16990,6 +17581,11 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
         : typeof paramProgram === 'string' && paramProgram.trim()
           ? paramProgram.trim()
           : '';
+    // Before the first await (see beginProgramOpen): a move that names a
+    // program is opening it; one that does not shows whatever the moves asked
+    // before it leave open.
+    settleOpen = programRef ? beginProgramOpen(ctx) : null;
+    const openedBefore = programRef ? null : programOpenedBefore(ctx);
     const locked = ctx?.lockedScreens?.get(target);
     if (locked) {
       return JSON.stringify({
@@ -17015,35 +17611,17 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
       const drive = await import('../ana-ri/drive-context.js');
       if (programRef) {
         const found = await drive.resolveProgramRef(ctx?.organizationId ?? null, programRef);
-        if (found.status === 'found') {
-          directive.program = {
-            id: found.program.id,
-            name: found.program.name,
-            ...(found.program.code ? { code: found.program.code } : {}),
-          };
-          if (ctx?.turnState) ctx.turnState.program = directive.program as { id: string; name?: string; code?: string };
-        } else if (found.status === 'ambiguous') {
-          return JSON.stringify({
-            status: 'needs_parameters',
-            message: `"${programRef}" matches more than one program — name one exactly.`,
-            programs: drive.programChoices(found.matches),
-          });
-        } else if (found.status === 'not_found') {
-          return JSON.stringify({
-            status: 'needs_parameters',
-            message: `No program matching "${programRef}" in this workspace.`,
-            programs: drive.programChoices(found.candidates),
-          });
-        } else {
-          return JSON.stringify({
-            status: 'error',
-            error: 'The program list could not be read, so the program could not be opened.',
-          });
-        }
-      } else if (ctx?.turnState?.program) {
-        // AnA opened a program earlier this turn — the screen follows it.
-        directive.program = ctx.turnState.program;
-      } else if (!ctx?.projectRef) {
+        if (found.status !== 'found') return await unresolvedProgramResult(programRef, found);
+        const opened = turnProgramOf(found.program);
+        directive.program = opened;
+        await settleOpen?.(opened);
+      } else {
+        // A program AnA opened earlier this turn — in an earlier round, or
+        // earlier in this one and still resolving — is the one the screen shows.
+        const opened = await openedBefore;
+        if (opened) directive.program = opened;
+      }
+      if (!directive.program && !hasOpenProgram(ctx)) {
         const listed = await drive.listProgramCandidates(ctx?.organizationId ?? null, 25);
         return JSON.stringify({
           status: 'needs_project',
@@ -17079,6 +17657,8 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
     });
   } catch (err: any) {
     return JSON.stringify({ error: `navigate_to failed: ${err?.message || 'unknown error'}` });
+  } finally {
+    void settleOpen?.(null);
   }
 });
 
@@ -17117,6 +17697,7 @@ registerToolHandler('list_screen_actions', async (input: Record<string, unknown>
 // Refuses unknown actions, governed verbs, and invalid params rather than
 // emitting a broken (or forbidden) operation.
 registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  let settleOpen: ((opened: TurnProgram | null) => Promise<unknown>) | null = null;
   try {
     const action = typeof input.action === 'string' ? input.action.trim() : '';
     if (!action) {
@@ -17129,6 +17710,12 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       input.params && typeof input.params === 'object'
         ? (input.params as Record<string, unknown>)
         : {};
+    // Before the first await (see beginProgramOpen), so a project screen asked
+    // for in this same round waits for the program this opens.
+    settleOpen = action === 'projects.open-program' ? beginProgramOpen(ctx) : null;
+    // Likewise read before the first await: a program opened earlier in this
+    // turn, or earlier in this round, is the one a project screen will show.
+    const openedBefore = action === 'projects.open-program' ? null : programOpenedBefore(ctx);
     const { resolveSurfaceAction, findSurfaceAction } = await import('../../../shared/navigation/surface-actions.js');
     const known = findSurfaceAction(action);
     const lockedReason = known ? ctx?.lockedScreens?.get(known.surfaceId) : undefined;
@@ -17140,19 +17727,52 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       });
     }
     const res = resolveSurfaceAction(action, params);
-    // Opening a program changes which program the next project screen shows.
-    if (res.ok && res.directive.actionId === 'projects.open-program' && ctx?.turnState) {
+    // Opening a program changes which program the next project screen shows,
+    // so the server resolves the reference too — over every program the
+    // person has, where the Projects screen matches against the one page of
+    // the portfolio it loaded. A reference that names several programs is
+    // refused here: on that page it can look unique, and the screen would
+    // open one of them, a guess, while the turn recorded no program at all.
+    // A miss still goes to the screen, which reports it with its own list (its
+    // page is a subset of what was searched, so it misses too), and so does a
+    // failed read, which leaves the screen's own read to decide.
+    if (res.ok && res.directive.actionId === 'projects.open-program') {
       const ref = String(res.directive.params?.program ?? '').trim();
       if (ref) {
         const { resolveProgramRef } = await import('../ana-ri/drive-context.js');
-        const found = await resolveProgramRef(ctx.organizationId ?? null, ref);
+        const found = await resolveProgramRef(ctx?.organizationId ?? null, ref);
         if (found.status === 'found') {
-          ctx.turnState.program = {
-            id: found.program.id,
-            name: found.program.name,
-            ...(found.program.code ? { code: found.program.code } : {}),
-          };
-        }
+          await settleOpen?.(turnProgramOf(found.program));
+          // The screen can only match what its page lists, so a program past
+          // the first 50 was refused there as unknown although it was found
+          // here. Hand the screen the program found, beside the registry's
+          // fields as navigate_to does — never as a param: params are what
+          // the model writes, and the registry keeps only declared ones.
+          res.directive.program = turnProgramOf(found.program);
+        } else if (found.status === 'ambiguous') return await unresolvedProgramResult(ref, found);
+      }
+    }
+    /* An operation on a screen that shows ONE program needs a program open —
+       navigate_to already refuses to move onto that screen without one. This
+       did not: "search the vault for stability" with no program open was sent,
+       the Vault drew "Open a project to see its vault", the search went
+       nowhere, and AnA — told the operation was being performed — said she
+       had searched. Ask first, with their programs, as navigate_to does. */
+    if (res.ok && openedBefore && !hasOpenProgram(ctx)) {
+      const { findNavigationTarget } = await import('../../../shared/navigation/index.js');
+      const screen = findNavigationTarget(res.directive.surfaceId);
+      if (screen?.scope === 'project' && !(await openedBefore)) {
+        const drive = await import('../ana-ri/drive-context.js');
+        const listed = await drive.listProgramCandidates(ctx?.organizationId ?? null, 25);
+        return JSON.stringify({
+          status: 'needs_project',
+          message: listed.ok
+            ? listed.programs.length > 0
+              ? `"${res.directive.label}" works on the ${screen.label} screen, which shows one program, and none is open. Open one first with navigate_to {"target":"${screen.id}","program":"<one of these>"} (ask the person which if it is not clear from the conversation), then repeat this action.`
+              : `"${res.directive.label}" works on the ${screen.label} screen, which shows one program, and this workspace has none yet. Offer to create one with them from Projects.`
+            : 'The program list could not be read, so no program could be opened for this action.',
+          ...(listed.ok ? { programs: drive.programChoices(listed.programs) } : {}),
+        });
       }
     }
     if (!res.ok) {
@@ -17173,11 +17793,17 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       // The instruction must match what actually happens on screen, exactly as
       // navigate_to's does.
       instruction: ctx?.liveDrive
-        ? `Live Drive is on: this operation is being performed on the person's screen now (on the "${res.directive.surfaceId}" screen — AnA's move queue takes them there first if needed). Say what you did in a few words and continue. If a screen report says it did not happen, tell them and take another route.`
+        ? `Live Drive is on: this operation is being performed on the person's screen now (on the "${res.directive.surfaceId}" screen — AnA's move queue takes them there first if needed). Say what you did in a few words and continue. If a screen report says it did not happen, tell them and take another route. When the report lists what the screen shows ("Documents listed: …"), you may retry once with one of those exact names — never a name you made up.${
+            res.directive.actionId === 'projects.open-program'
+              ? ` The Projects screen lists only the most recent programs; if it cannot find this one, open it with navigate_to {"target":"project-home","program":"<the program>"}, which opens any of their programs directly.`
+              : ''
+          }`
         : `An action directive was produced and is OFFERED to the user as a chip they activate — the screen does not change on its own. Say what the action will do when they tap it, not that you have done it.`,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `act_on_screen failed: ${err?.message || 'unknown error'}` });
+  } finally {
+    void settleOpen?.(null);
   }
 });
 
@@ -17287,7 +17913,7 @@ registerToolHandler('start_product_demo', async (input: Record<string, unknown>,
       script,
       ...(listed.ok ? { programs: programChoices(listed.programs) } : {}),
       instruction: driven
-        ? `Run the demonstration now, all the way through, one stop per step: for each step, say its talking point in one or two sentences of your own (adapted to their real data — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). Make ONE move per round so each screen lands before the next. Pick ONE program from \`programs\` at the start (the first is fine) and use it throughout: pass its name as \`program\` to projects.open-program, and as navigate_to's \`program\` for project screens. If \`programs\` is empty, narrate from the portfolio and offer to set one up together. If a screen report says a move did not happen, say so briefly and continue with the next stop. Answer any question they ask mid-demo, then resume. If the turn ends before the script does, say which stop you reached.`
+        ? `Run the demonstration now, all the way through, one stop per step: for each step, say its talking point in one or two sentences of your own (adapted to their real data — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). Make ONE move per round so each screen lands before the next. Pick ONE program from \`programs\` at the start (the first is fine) and use it throughout: pass its name as \`program\` to projects.open-program, and as navigate_to's \`program\` for project screens. If \`programs\` is empty, narrate from the portfolio and offer to set one up together. Stops that say "pick … on screen" need a real name you cannot see yet: make the act with the likeliest name from the conversation or their data, but do not name a document or submission to the person until the screen confirms it — when the screen report comes back listing what is on screen ("Documents listed: …", "Submissions listed: …"), retry that stop once with one of those exact names. If a screen report says a move did not happen for any other reason, say so briefly and continue with the next stop. Answer any question they ask mid-demo, then resume. If the turn ends before the script does, say which stop you reached.`
         : `Live Drive is NOT on for this turn, so the moves below can only be OFFERED as chips, not performed — do not narrate the stops as if you had made them. This answer carries a "Start demonstration: ${script.title}" chip: tell the user that pressing it starts the demonstration with you driving (Live Drive switches on visibly and they can take over at any time), and offer to proceed chip-by-chip instead if they prefer. Give a one-paragraph preview of what the demonstration covers (${script.steps.length} stops, about ${script.minutes} minutes) and stop there.`,
     });
   } catch (err: any) {
@@ -19678,19 +20304,13 @@ registerToolHandler('get_tmf_view', async (input, ctx) => {
 // locked content; every query is org-scoped.
 // ─────────────────────────────────────────────────────────────────────────────
 
-function viewReason(input: Record<string, unknown>): string | null {
-  const r = typeof input.reason === 'string' ? input.reason.trim() : '';
-  return r.length >= 8 ? r : null;
-}
-
 registerToolHandler('save_document_to_vault', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'save_document_to_vault requires tenant + user context.' });
   const title = typeof input.title === 'string' ? input.title.trim() : '';
   const content = typeof input.content === 'string' ? input.content : '';
-  const reason = viewReason(input);
+  const reason = gatedReason(input);
   if (!title) return JSON.stringify({ error: 'title (string) is required.' });
   if (!content) return JSON.stringify({ error: 'content (string) is required.' });
-  if (!reason) return JSON.stringify({ error: 'reason (min 8 characters) is required — governed action.' });
   /* concept2cure_artifacts.project_id is integer NOT NULL — the INSERT below
      omitted it, so this tool failed on EVERY real call while its contract test
      (mocked pool) stayed green. The explicit "AnA, file this" path must file
@@ -19813,10 +20433,9 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'update_vault_document requires tenant + user context.' });
   const artifactId = typeof input.artifact_id === 'string' ? input.artifact_id.trim() : '';
   const content = typeof input.content === 'string' ? input.content : '';
-  const reason = viewReason(input);
+  const reason = gatedReason(input);
   if (!artifactId) return JSON.stringify({ error: 'artifact_id (string) is required.' });
   if (!content) return JSON.stringify({ error: 'content (string) is required.' });
-  if (!reason) return JSON.stringify({ error: 'reason (min 8 characters) is required — governed action.' });
   try {
     const { getPool } = await import('../../db.js');
     const { createHash } = await import('crypto');
@@ -19955,9 +20574,8 @@ registerToolHandler('compare_vault_versions', async (input, ctx) => {
 registerToolHandler('seed_tmf', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'seed_tmf requires tenant + user context.' });
   const tmfFileId = Number(input.tmf_file_id);
-  const reason = viewReason(input);
+  const reason = gatedReason(input);
   if (!Number.isInteger(tmfFileId)) return JSON.stringify({ error: 'tmf_file_id (integer) is required.' });
-  if (!reason) return JSON.stringify({ error: 'reason (min 8 characters) is required — governed action.' });
   const scope = input.scope === 'essential' ? 'essential' as const : 'all' as const;
   try {
     const { getPool } = await import('../../db.js');
@@ -19995,9 +20613,8 @@ registerToolHandler('update_tmf_artifact_status', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'update_tmf_artifact_status requires tenant + user context.' });
   const artifactId = Number(input.tmf_artifact_id);
   const status = typeof input.status === 'string' ? input.status : '';
-  const reason = viewReason(input);
+  const reason = gatedReason(input);
   if (!Number.isInteger(artifactId)) return JSON.stringify({ error: 'tmf_artifact_id (integer) is required.' });
-  if (!reason) return JSON.stringify({ error: 'reason (min 8 characters) is required — governed action.' });
   try {
     const { getPool } = await import('../../db.js');
     const { setArtifactStatusTx } = await import('../etmf/etmf-service.js');
@@ -20404,12 +21021,13 @@ registerToolHandler('bind_protocol_to_study_design', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { bindStudyDesignTx } = await import('../protocol-development/protocol-development-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const bound = await bindStudyDesignTx(client, ctx.organizationId, documentId, studyDesignId, ctx.userId);
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol bound to study design via AnA'), payload: { studyDesignId: bound.studyDesignId }, domain: 'protocol_development', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason, payload: { studyDesignId: bound.studyDesignId }, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, documentId, studyDesignId: bound.studyDesignId, designTitle: bound.title, message: `Bound protocol ${documentId} to study design ${bound.studyDesignId}. The derivation, the design gates and the projections can now run against it.` });
   } catch (err) {
@@ -20459,12 +21077,13 @@ registerToolHandler('apply_protocol_design_derivation', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { applyDerivationTx } = await import('../protocol-development/design-derivation-service.js');
+  const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const result = await applyDerivationTx(client, ctx.organizationId, documentId, acceptedPaths, ctx.userId);
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `study-design:${result.studyDesignId}`, reason: fcoiReason(input, 'Protocol derivation applied to study design via AnA'), payload: { documentId, requested: acceptedPaths, applied: result.applied, rejected: result.rejected.length }, domain: 'protocol_development', surface: 'ana' });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `study-design:${result.studyDesignId}`, reason, payload: { documentId, requested: acceptedPaths, applied: result.applied, rejected: result.rejected.length }, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({
       ok: true,
@@ -20535,5 +21154,205 @@ registerToolHandler('review_protocol_design_gates', async (input, ctx) => {
     });
   } catch (err) {
     return pdevToolError('review_protocol_design_gates', err);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol industry-gap engines (docs/design/PROTOCOL_INDUSTRY_GAPS.md Tier 1).
+//
+// Sixteen READ-ONLY tools, each a thin call into protocol-industry-service.ts —
+// the same function the /api/study-design and /api/protocol-development routes
+// call, so AnA and the screen report one engine's output from one read. Every
+// engine is pure; the service reads the rows and throws a ProtocolDevError with
+// a sentence when it cannot (no design bound, version not recorded), which
+// pdevToolError passes through as the error. Nothing is written, so there is no
+// reason-for-change and no governed-action row.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Run a read inside a transaction that carries the RLS tenant variable, so the
+ * service's queries get the database-level boundary as well as their explicit
+ * organization_id filters — the same shape review_protocol_design_derivation
+ * uses. SELECTs only; COMMIT ends a transaction that wrote nothing.
+ */
+async function industryRead<T>(orgId: number, run: (q: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> }) => Promise<T>): Promise<T> {
+  const { getPool } = await import('../../db.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, orgId);
+    const out = await run(client);
+    await client.query('COMMIT');
+    return out;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** document_id as an integer, or NaN. */
+function industryDocId(input: Record<string, unknown>): number {
+  return typeof input.document_id === 'number' && Number.isInteger(input.document_id) ? input.document_id : NaN;
+}
+
+type IndustryDesignEngine =
+  | 'trial-schema' | 'ctq' | 'usdm' | 'dct-profile' | 'who-ictrp'
+  | 'dose-escalation' | 'enrollment' | 'interim-oc' | 'mmrm' | 'external-control' | 'multiplicity' | 'biospecimens'
+  | 'master-protocol';
+
+/** The thirteen design-only tools share one shape: bound design → engine → verbatim note. */
+function registerIndustryDesignTool(tool: string, engine: IndustryDesignEngine, note: string): void {
+  registerToolHandler(tool, async (input, ctx) => {
+    if (!ctx?.organizationId) return JSON.stringify({ error: `${tool} requires tenant context.` });
+    const documentId = industryDocId(input);
+    if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+    try {
+      const { designEngineForProtocol } = await import('../protocol-development/protocol-industry-service.js');
+      const orgId = ctx.organizationId;
+      const result = await industryRead(orgId, (q) => designEngineForProtocol(q, orgId, documentId, engine));
+      return JSON.stringify({ ok: true, ...result, note });
+    } catch (err) {
+      return pdevToolError(tool, err);
+    }
+  });
+}
+
+registerIndustryDesignTool(
+  'review_trial_schema',
+  'trial-schema',
+  'Projected by projectTrialSchema (ICH M11 §1.2). Report status and every gap verbatim. Do not describe epochs, days or windows the model does not contain; an arm labelled "(no intervention recorded)" is reported that way. The svg field is the schematic as rendered — do not redraw it.',
+);
+registerIndustryDesignTool(
+  'derive_ctq_factors',
+  'ctq',
+  'Derived by deriveCtqFactors (ICH E6(R3) critical-to-quality factors). Every likelihood and impact is a DEFAULT SEED (ratingSource "default_seed"; ratingFrom names the RBM catalogue row or category table), not an assessment. Report factors with their derivedFrom provenance and notAssessed verbatim; nothing was written to the RBM risk assessment.',
+);
+registerIndustryDesignTool(
+  'export_usdm_projection',
+  'usdm',
+  'Projected by projectUsdm. CONFORMANCE IS UNVERIFIED: report conformance.status and its reason verbatim and never call this export valid, conformant or USDM-compliant. Report unmappedDesignFields and unfilledUsdmEntities in full.',
+);
+registerIndustryDesignTool(
+  'review_dct_profile',
+  'dct-profile',
+  'Profiled by profileDecentralization. An activity with no stated location is "unstated" — not site, not decentralised — and is excluded from the off-site share. A null share is "not assessed", never 0%. Report findings and notAssessed verbatim.',
+);
+registerIndustryDesignTool(
+  'review_who_ictrp_record',
+  'who-ictrp',
+  'Projected by projectWhoIctrp (WHO TRDS, 24 items). Report every item in order with its status and gap verbatim. Items the design does not carry are missing — "not carried by the study design; supplied at registration" — never supply one. Nothing was registered.',
+);
+
+registerIndustryDesignTool(
+  'review_dose_escalation_design',
+  'dose-escalation',
+  'Projected by projectDoseEscalation over the BOIN engine. Report status, gaps, boundaries and the decision table verbatim. A parameter whose source is "engine default" was not chosen by the sponsor — say so. missing means an escalation-phase design states no rules: a protocol gap, not a clean result.',
+);
+
+registerIndustryDesignTool(
+  'review_enrollment_forecast',
+  'enrollment',
+  'Projected by projectEnrollment over the Poisson–Gamma accrual engine. Report every figure with its time unit, verbatim. Rates are sponsor inputs: missing means no accrual plan is recorded — never assume a rate. A site with no rate variability or activation time recorded is a gap, never zero. The median and interval are reported only when every simulation reached the target: null times with probReached above 0 mean the times are not reported (never quote one); probReached 0 means the target is not reached. Say whether the seed was recorded or derived (forecast.seedSource).',
+);
+
+registerIndustryDesignTool(
+  'review_interim_operating_characteristics',
+  'interim-oc',
+  'Computed by projectInterimOperatingCharacteristics over the exact group-sequential engine. The characteristics are of the RECORDED boundaries when recorded; report every discrepancy with the spending function verbatim and never substitute the solved value. Report gaps verbatim. typeIError is ONE-SIDED and non-binding (futility ignored); typeIErrorIfFutilityBinding is reported separately and is never the type I error. A type I error above the design\'s alpha is a gap — report it. A null power or expected sample size is explained by a gap (alpha, power or planned N not recorded or invalid); power assumes no group-sequential inflation, as its note says.',
+);
+
+registerIndustryDesignTool(
+  'review_mmrm_sizing',
+  'mmrm',
+  'Sized by projectMmrmSizing over the MMRM planning engine. Report every figure and gap verbatim. The assumptions are the sponsor\'s: where one is missing nothing is sized — name the missing assumption, never supply one or assume complete data. The allocation is the design\'s (sizing.allocationRatio, allocationSource), never an assumed 1:1; nPerArm is the first arm\'s n and nSecondArm the second\'s. A non-inferiority, equivalence or unrecorded frame is not sized — report the gap.',
+);
+
+registerIndustryDesignTool(
+  'review_external_control_plan',
+  'external-control',
+  'Reviewed by projectExternalControlPlan over the external-control engine. Report each pre-specification element and the borrowing strength verbatim. No posterior or treatment effect exists at protocol stage — never quote one. A fixed power-prior discount, or a fixed commensurate τ², is not a prior-data conflict plan; elements the design cannot yet record are reported as such.',
+);
+
+registerIndustryDesignTool(
+  'review_multiplicity_control',
+  'multiplicity',
+  'Checked by checkMultiplicity over the multiplicity engine. Report every rate, verdict, note and gap verbatim. The simulation assumes independent p-values — never present it as proof under the trial\'s dependence. A procedure the engine cannot check is a gap; never substitute another.',
+);
+
+registerIndustryDesignTool(
+  'review_biospecimen_profile',
+  'biospecimens',
+  'Profiled by profileBiospecimens from the recorded specimen volumes. Report every figure and gap verbatim; totals with a missing volume are lower bounds. The OHRP figures are expedited-review reference points, not safety limits — never call the protocol unsafe for exceeding them, and never assume a volume.',
+);
+
+registerIndustryDesignTool(
+  'review_master_protocol',
+  'master-protocol',
+  'Checked by checkMasterProtocol. Report each element as stated or not stated and each integrity defect verbatim. A structural check only: it computes no statistic and does not judge adequacy — never call the design sound or compliant on its strength.',
+);
+
+registerToolHandler('review_spirit_conformance', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_spirit_conformance requires tenant context.' });
+  const documentId = industryDocId(input);
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  try {
+    const { spiritForProtocol } = await import('../protocol-development/protocol-industry-service.js');
+    const orgId = ctx.organizationId;
+    const result = await industryRead(orgId, (q) => spiritForProtocol(q, orgId, documentId));
+    return JSON.stringify({
+      ok: true,
+      ...result,
+      note: 'Assessed by assessSpiritConformance over the bound design and this protocol\'s sections. Report each row\'s status, evidence and gap and the summary counts verbatim. not_assessable is neither missing nor met. Compute no percentage and never say the protocol "meets SPIRIT". SPIRIT 2013 is superseded by SPIRIT 2025: report supersededBy and never present 2013 conformance as the current standard.',
+    });
+  } catch (err) {
+    return pdevToolError('review_spirit_conformance', err);
+  }
+});
+
+registerToolHandler('review_deviation_trends', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_deviation_trends requires tenant context.' });
+  const documentId = industryDocId(input);
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const windowMonths = typeof input.window_months === 'number' && Number.isInteger(input.window_months) ? input.window_months : undefined;
+  if (windowMonths !== undefined && (windowMonths < 1 || windowMonths > 36)) {
+    return JSON.stringify({ error: 'window_months must be a whole number between 1 and 36.' });
+  }
+  try {
+    const { deviationTrendsForProtocol } = await import('../protocol-development/protocol-industry-service.js');
+    // The clock is read HERE, at the boundary; the engine is handed the date.
+    const today = new Date().toISOString().slice(0, 10);
+    const orgId = ctx.organizationId;
+    const result = await industryRead(orgId, (q) => deviationTrendsForProtocol(q, orgId, documentId, { today, windowMonths }));
+    return JSON.stringify({
+      ok: true,
+      ...result,
+      note: 'Trended by trendDeviations. Report every count, share and signal verbatim. A null share means nothing to measure — "no deviations recorded", never "0%". A per-site view is not available (protocol_deviations carries no site linkage). notAssessed lists signals that could not be evaluated; that is not the absence of a problem. byMonth[].legacyDefaults counts values set aside as possible defaults of the replaced writer — report them with the shares they were kept out of. The reportable share means a prompt IRB report is indicated (rates.reportableShareMeaning), never that the others need no report.',
+    });
+  } catch (err) {
+    return pdevToolError('review_deviation_trends', err);
+  }
+});
+
+registerToolHandler('review_protocol_redline', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_redline requires tenant context.' });
+  const documentId = industryDocId(input);
+  const from = typeof input.from_version === 'string' ? input.from_version : '';
+  const to = typeof input.to_version === 'string' ? input.to_version : '';
+  if (!Number.isInteger(documentId) || !from.trim() || !to.trim()) {
+    return JSON.stringify({ error: 'document_id, from_version and to_version are required.' });
+  }
+  try {
+    const { redlineForProtocol } = await import('../protocol-development/protocol-industry-service.js');
+    const orgId = ctx.organizationId;
+    const result = await industryRead(orgId, (q) => redlineForProtocol(q, orgId, documentId, from, to));
+    return JSON.stringify({
+      ok: true,
+      ...result,
+      note: 'Compared by redlineVersions. Report the summary and each section\'s change verbatim; quote the diff ops rather than paraphrasing. Report every section note: it explains an absent diff or absent counts (line cap or edit budget), or that the section\'s position rests on row order. A non-empty summary.positionsFromRowOrder means a moved or reordered verdict may reflect row order rather than an edit — say so beside those verdicts. A null line total is unknown, never 0. This compares the protocol DOCUMENT; the study design\'s changes come from the amendment substantiality engine.',
+    });
+  } catch (err) {
+    return pdevToolError('review_protocol_redline', err);
   }
 });

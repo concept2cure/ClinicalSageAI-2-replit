@@ -25,6 +25,7 @@ import {
   type StudyDesign,
   type Endpoint,
   ESTIMAND_REQUIRED_ROLES,
+  confirmatoryEndpoints,
 } from './study-design-types';
 
 export type FindingSeverity = 'critical' | 'major' | 'minor' | 'info';
@@ -442,8 +443,7 @@ export function powerRedFlags(design: StudyDesign): DesignFinding[] {
  * family-wise type-I error is uncontrolled. Per spec §17 this is Critical.
  */
 export function multiplicityGate(design: StudyDesign): DesignFinding[] {
-  const endpoints = design.endpoints ?? [];
-  const confirmatory = endpoints.filter(e => e.role === 'primary' || e.role === 'key_secondary');
+  const confirmatory = confirmatoryEndpoints(design);
   const hasHierarchy = confirmatory.length > 1;
   const method = design.statisticalPlan?.multiplicity?.method;
 

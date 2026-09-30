@@ -8,6 +8,11 @@ import { getTenantScope, runWithTenantScope } from '../../db/tenantStore';
  * docs/evidence/D3/2026-09-26-memberships/), so an administrator of two
  * organizations acting on the one they are not signed into wrote nothing and
  * was told "User not found". The scope carries their verified role there.
+ *
+ * Also used for an invitee answering an invitation to another organization:
+ * once the invitation is confirmed as theirs (invitations_for_member, D3
+ * 2026-09-28; docs/evidence/D3/2026-09-28-invitation-acceptance/), the accept
+ * or decline is written in the inviting organization's scope, as `member`.
  */
 export function inVerifiedOrgScope<T>(
   req: { method?: string; baseUrl?: string; path?: string },

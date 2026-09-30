@@ -1,0 +1,125 @@
+# mutants run 2026-09-28T04:53:33.156042Z at 5e3bea4e (working tree)
+
+## M1: service: a conflicting typed name is no longer refused
+file: server/services/protocol-reviews/protocol-reviews-service.ts
+--- replaced:
+  if (typed && nameKey(typed) !== nameKey(name)) {
++++ with:
+  if (false && typed && nameKey(typed) !== nameKey(name)) {
+$ npx vitest run --config vitest.config.ts server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+result: CAUGHT (Tests  2 failed | 6 passed (8))
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > a different name typed beside the account is refused, and nothing is recorded 21ms
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > an account with no name on record is listed under its email, the name a signature from it would print 12ms
+
+## M2: service: store the typed name when given (resolved name only for a blank)
+file: server/services/protocol-reviews/protocol-reviews-service.ts
+--- replaced:
+  return name;
+}
++++ with:
+  return typed || name;
+}
+$ npx vitest run --config vitest.config.ts server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+result: CAUGHT (Tests  1 failed | 7 passed (8))
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > the same name, typed with other capitals or spacing, is stored as the account spells it 14ms
+
+## M3: service: a blank name is refused even with an account (the old required check)
+file: server/services/protocol-reviews/protocol-reviews-service.ts
+--- replaced:
+  if (input.reviewerUserId == null && !typed) throw
++++ with:
+  if (!typed) throw
+$ npx vitest run --config vitest.config.ts server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+result: CAUGHT (Tests  3 failed | 5 passed (8))
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > a blank name means the account’s name 10ms
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > an account with no name on record is listed under its email, the name a signature from it would print 5ms
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > an account with neither a name nor an email cannot be listed, and says so 8ms
+
+## M4: service: names compared without collapsing whitespace
+file: server/services/protocol-reviews/protocol-reviews-service.ts
+--- replaced:
+s.trim().replace(/\s+/g, ' ').toLowerCase()
++++ with:
+s.trim().toLowerCase()
+$ npx vitest run --config vitest.config.ts server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+result: CAUGHT (Tests  1 failed | 7 passed (8))
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > the same name, typed with other capitals or spacing, is stored as the account spells it 8ms
+
+## M5: service: names compared case-sensitively
+file: server/services/protocol-reviews/protocol-reviews-service.ts
+--- replaced:
+s.trim().replace(/\s+/g, ' ').toLowerCase()
++++ with:
+s.trim().replace(/\s+/g, ' ')
+$ npx vitest run --config vitest.config.ts server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+result: CAUGHT (Tests  1 failed | 7 passed (8))
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > the same name, typed with other capitals or spacing, is stored as the account spells it 11ms
+
+## M6: service: the no-identity refusal is not mapped (raw SignerNotAttributableError escapes)
+file: server/services/protocol-reviews/protocol-reviews-service.ts
+--- replaced:
+    if (!(err instanceof SignerNotAttributableError)) throw err;
+
++++ with:
+    throw err;
+
+$ npx vitest run --config vitest.config.ts server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+result: CAUGHT (Tests  1 failed | 7 passed (8))
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > an account with neither a name nor an email cannot be listed, and says so 9ms
+
+## M7: service: the account name is not resolved at all (typed name stored as before)
+file: server/services/protocol-reviews/protocol-reviews-service.ts
+--- replaced:
+    reviewerName = await accountReviewerName(client, orgId, input.reviewerUserId, typed);
+
++++ with:
+
+$ npx vitest run --config vitest.config.ts server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+result: CAUGHT (Tests  5 failed | 3 passed (8))
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > a different name typed beside the account is refused, and nothing is recorded 15ms
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > the same name, typed with other capitals or spacing, is stored as the account spells it 8ms
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > a blank name means the account’s name 4ms
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > an account with no name on record is listed under its email, the name a signature from it would print 5ms
+  × server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts > a review assigned to an account is listed under that account’s name (SEC-C-7) > an account with neither a name nor an email cannot be listed, and says so 3ms
+
+## M8: signing dialog: the stored label is printed as the target for an account-bound review
+file: client/src/concept2cure/v2/surfaces/ProtocolDevSigning.tsx
+--- replaced:
+target: onBehalf ? `${signing.reviewer || 'Reviewer'} · ${protocol}` : protocol,
++++ with:
+target: `${signing.reviewer || 'Reviewer'} · ${protocol}`,
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx
+result: CAUGHT (Tests  1 failed | 2 passed (3))
+  × client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a review bound to an account, names the signer only, never a stored label 204ms
+
+## M9: request drawer: the account-name note removed from the account select
+file: client/src/concept2cure/v2/surfaces/ProtocolDevForms.tsx
+--- replaced:
+, and the review is listed under the account’s own name.';
++++ with:
+.';
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx
+result: CAUGHT (Tests  1 failed | 2 passed (3))
+  × client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the request-a-review drawer > says a chosen account is listed under its own name, before anything is typed 109ms
+
+## M10: request drawer: the name field placeholder reverted
+file: client/src/concept2cure/v2/surfaces/ProtocolDevForms.tsx
+--- replaced:
+placeholder: 'Only for a reviewer with no account here; leave blank for an account'
++++ with:
+placeholder: 'Defaults to the account’s name; required when there is no account'
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx
+result: CAUGHT (Tests  1 failed | 2 passed (3))
+  × client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the request-a-review drawer > says a chosen account is listed under its own name, before anything is typed 125ms
+
+# summary
+M1 CAUGHT: service: a conflicting typed name is no longer refused
+M2 CAUGHT: service: store the typed name when given (resolved name only for a blank)
+M3 CAUGHT: service: a blank name is refused even with an account (the old required check)
+M4 CAUGHT: service: names compared without collapsing whitespace
+M5 CAUGHT: service: names compared case-sensitively
+M6 CAUGHT: service: the no-identity refusal is not mapped (raw SignerNotAttributableError escapes)
+M7 CAUGHT: service: the account name is not resolved at all (typed name stored as before)
+M8 CAUGHT: signing dialog: the stored label is printed as the target for an account-bound review
+M9 CAUGHT: request drawer: the account-name note removed from the account select
+M10 CAUGHT: request drawer: the name field placeholder reverted

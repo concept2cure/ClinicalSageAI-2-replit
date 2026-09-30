@@ -179,7 +179,7 @@ async function revertIngest(args: RevertIngestArgs): Promise<void> {
     // ownership by this tenant was proven by ingestVaultDocument moments ago,
     // and the predicate pins the row to that program.
     await client.query(
-      `UPDATE vault.documents SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND program_id = $2`,
+      `UPDATE vault.documents SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL`,
       [vaultDocumentId, programId],
     );
     await writeChainedAuditRow(client, {
@@ -311,7 +311,9 @@ async function placeAdmittedDocument(p: {
       organizationId: tenantId,
       userId,
       folderId: target,
-      ctdSection: doc.module ? String(doc.module) : null,
+      // The draft's module ('M2') is the folder, not a CTD section: it was
+      // stored as ctd_section until the vocabulary check refused it (VR-04).
+      ctdSection: null,
       note: args.folderId?.trim()
         ? 'Filed from the authoring editor into the folder the author chose.'
         : `Filed from the authoring editor by its CTD module (${doc.module} → ${folderLabel(await resolveVaultView(programId, tenantId), target)}).`,

@@ -162,7 +162,10 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'folder',
     group: 'workspace',
     uiKit: 'home',
-    apiPrefixes: ['/api/projects', '/api/programs'],
+    // 2026-09-29: '/api/programs' removed: every route under it is the device
+    // 510(k) app's predicate intelligence, SE render or RTM, and Projects calls
+    // none of them (docs/evidence/D2-API-SCOPE/2026-09-29-programs-claim/).
+    apiPrefixes: ['/api/projects'],
     anaToolFamilies: ['plan_submission'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -195,7 +198,13 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'evidence',
     uiKit: null,
     // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx ArtifactsCenter reads and exports the gallery.
-    apiPrefixes: ['/api/biotech-artifacts', '/api/atoms', '/api/corpus', '/api/artifacts-center'],
+    // 2026-09-29: '/api/biotech-artifacts' removed. It generates ICSRs, PSURs,
+    // CIOMS forms, expedited safety reports, clinical-operations reports and
+    // eCTD cover letters from the request body and records none of them (no
+    // vault document, version or audit row). No screen calls it, and PV and
+    // clinical operations are outside the release. A regulated document is
+    // produced only through a path that records it (Authoring → Vault).
+    apiPrefixes: ['/api/atoms', '/api/corpus', '/api/artifacts-center'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -214,7 +223,10 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'workspace',
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): ProjectHome reads and generates the schedule of events.
-    apiPrefixes: ['/api/projects', '/api/programs', '/api/rim', '/api/concept2cure/projects'],
+    // 2026-09-29: '/api/rim' removed: ProjectHome does not call it; it is the
+    // hidden Registrations app's API.
+    // 2026-09-29: '/api/programs' removed for the same reason as on Projects.
+    apiPrefixes: ['/api/projects', '/api/concept2cure/projects'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -322,7 +334,11 @@ export const UI_SURFACES: UiSurface[] = [
     // exactly that reason. The surface reads /api/submissions,
     // /api/region-profiles, /api/510k/estar/* and /api/c2c/projects.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): the Submission Center signs governed actions.
-    apiPrefixes: ['/api/submissions', '/api/region-profiles', '/api/510k/estar', '/api/c2c/projects', '/api/c2c/actions/sign'],
+    // 2026-09-29: '/api/510k/estar' narrowed to the two sub-paths
+    // SubmissionCenter.tsx calls (the eSTAR tracker and the assembly verdict).
+    // The rest of eSTAR (build, official fields, registration, filing
+    // readiness) is the hidden device 510(k) kit.
+    apiPrefixes: ['/api/submissions', '/api/region-profiles', '/api/510k/estar/submissions', '/api/510k/estar/assemble', '/api/c2c/projects', '/api/c2c/actions/sign'],
     anaToolFamilies: ['plan_submission', 'validate_submission'],
     sharedContract: '@shared/types/submission-ui',
     discoveryCatalog: 'SUBMISSION_WORKSPACES (shared/types/submission-ui.ts)',
@@ -431,7 +447,9 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'fileCheck',
     group: 'device',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms'],
+    // 2026-09-29: '/api/programs' added: /api/programs/:id/predicate-intel,
+    // se-matrix and rtm are this app's (they were claimed by Projects).
+    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms', '/api/programs'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/predicate-intelligence',
     discoveryCatalog: null,
@@ -559,7 +577,10 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'submission',
     uiKit: null,
     // Launch-scope API (2026-09-25, ci:launch-scope-api): DossierMap reads the map.
-    apiPrefixes: ['/api/rim', '/api/global-ri', '/api/dossier-map'],
+    // 2026-09-29: '/api/rim' and '/api/global-ri' removed. DossierMap calls
+    // neither; they are the hidden Registrations and Global RI apps, and the
+    // claim made both answer as launch in production.
+    apiPrefixes: ['/api/dossier-map'],
     anaToolFamilies: ['global_ri_dossier'],
     sharedContract: null,
     discoveryCatalog: null,

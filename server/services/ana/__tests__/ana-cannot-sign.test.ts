@@ -53,6 +53,10 @@ const SIGNING_TOOLS: Array<[string, Record<string, unknown>]> = [
   // signing-authority check, no author ≠ approver check, no signature row
   // (new-code audit 2026-09-24, finding 1; the signed route is VSR-001 F-3).
   ['approve_qms_document', { document_id: 3, reason: 'Ready for release' }],
+  // 2026-09-28 (Q-0928-1 / SEC-0928-1): retired a controlled document from chat
+  // with a reason and nothing else, while POST /api/mdx/qms/documents/:id/retire
+  // runs verifyApprovalSigner + retireQmsDocumentSigned.
+  ['retire_qms_document', { document_id: 3, reason: 'Superseded by SOP-401.' }],
 ];
 
 beforeEach(() => {
@@ -101,6 +105,21 @@ describe('the register lets a handler refuse only where the handler is pinned', 
     expect(recordGovernedAction).not.toHaveBeenCalled();
     expect(out.ok === false || typeof out.error === 'string').toBe(true);
     expect(JSON.stringify(out)).toMatch(/password|second factor|re-authentication/i);
+  });
+
+  it('retire_qms_document refuses as a signature and points to the Retire action', async () => {
+    const out = JSON.parse(await getToolHandler('retire_qms_document')!(
+      { document_id: 3, reason: 'Superseded by SOP-401.' },
+      { organizationId: 7, userId: 42, humanConfirmed: true } as never,
+    ));
+    expect(connect).not.toHaveBeenCalled();
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(out.ok).toBe(false);
+    expect(out.signatureRequired).toBe(true);
+    expect(out.message).toMatch(/electronic signature/i);
+    expect(out.message).toMatch(/nothing was (recorded|changed)/i);
+    expect(out.message).toMatch(/Retire/);
+    expect(out.message).toMatch(/second factor/i);
   });
 
   it('every handler-refused tool in the register is pinned here or named', async () => {

@@ -7,7 +7,17 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+// 2026-09-28: a confirm-class call now also needs an editor role, read from
+// organization_users (AnaToolExecutor writeRoleRefusal). The database is mocked
+// here, so the confirming person is modelled as a 'member'. The role gate itself
+// is tested in confirmed-write-role-gate.test.ts.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 import { C2C_MIGRATION_FILES } from '../../../../scripts/db/migration-set.mjs';
 
 import {
@@ -116,6 +126,8 @@ describe('tool definitions', () => {
 });
 
 describe('start handler validation (no DB touched)', () => {
+  // 2026-09-28: a person in an organization confirms the start; the role read is mocked above.
+  const CONFIRMING_MEMBER = { organizationId: 1, userId: 1, humanConfirmed: true };
   const originalFlag = process.env.ANA_ENABLE_DEEP_INVESTIGATIONS;
   afterEach(() => {
     if (originalFlag === undefined) delete process.env.ANA_ENABLE_DEEP_INVESTIGATIONS;
@@ -124,7 +136,7 @@ describe('start handler validation (no DB touched)', () => {
 
   it('rejects a missing/too-short question', async () => {
     const handler = getToolHandler('start_deep_investigation')!;
-    const result = JSON.parse(await handler({ question: 'why?' }, { humanConfirmed: true }));
+    const result = JSON.parse(await handler({ question: 'why?' }, CONFIRMING_MEMBER));
     expect(result.error).toContain('self-contained research question');
   });
 
@@ -132,7 +144,7 @@ describe('start handler validation (no DB touched)', () => {
     process.env.ANA_ENABLE_DEEP_INVESTIGATIONS = 'false';
     const handler = getToolHandler('start_deep_investigation')!;
     const result = JSON.parse(
-      await handler({ question: 'a perfectly reasonable long research question' }, { humanConfirmed: true }),
+      await handler({ question: 'a perfectly reasonable long research question' }, CONFIRMING_MEMBER),
     );
     expect(result.status).toBe('disabled');
   });

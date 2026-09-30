@@ -18,19 +18,13 @@
 import { useFetchJson } from './useFetchJson';
 import { type DataState } from '../lib/dataState';
 import { isRecord, shapeMismatch, toRowsState } from '../lib/payloadShape';
-import type {
-  PV_CAPAS,
-  PV_METRICS,
-  PV_PMS_PLAN,
-  PV_SIGNALS,
-  PV_TRENDS,
-} from '../data/postmarket';
+import type { PvCapaRow, PvMetricRow, PvPmsRow, PvSignalRow, PvTrendRow } from '../data/postmarket';
 
-export type MetricsRow = (typeof PV_METRICS)[number];
-export type SignalRow = (typeof PV_SIGNALS)[number];
-export type CapaRow = (typeof PV_CAPAS)[number];
-export type PmsRow = (typeof PV_PMS_PLAN)[number];
-export type TrendRow = (typeof PV_TRENDS)[number];
+export type MetricsRow = PvMetricRow;
+export type SignalRow = PvSignalRow;
+export type CapaRow = PvCapaRow;
+export type PmsRow = PvPmsRow;
+export type TrendRow = PvTrendRow;
 
 interface PostmarketPayload {
   data: {

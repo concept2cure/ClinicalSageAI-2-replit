@@ -154,3 +154,13 @@ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run \
 - Register IAM-18 (1), plan P1-17, evidence index and board rows: updated by the control tower in the same commit.
 - Adversarial check (`security-auditor`, 2026-09-26): **holds with residuals**, nothing to fix; the client copy residual
   above is the one it named, and it is closed here.
+
+## After the merge with trunk (2026-09-30)
+
+On 2026-09-29 `4cebf1b4` (another lane) made `ci:server-error-leaks` follow a local alias of the caught error's text.
+That surfaced 29 existing sites in 8 more files, so trunk's baseline stood at 146 sites / 83 files when this tranche was
+merged. Trunk's baseline was taken whole and the gate run on the merged tree: `OK — 121 … 25 site(s) fixed since the
+baseline` (`green/gate-fixed-after-merge.txt`); `--write-baseline` then wrote 121 sites / 68 files
+(`green/write-baseline-after-merge.txt`, `green/gate-after-merge.txt`). Compared key by key with trunk's baseline, the
+only change is the 15 files of this tranche leaving it; no count increased or decreased elsewhere.
+

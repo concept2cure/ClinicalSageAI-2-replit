@@ -253,7 +253,7 @@ describe('GET /api/mdx/gateways/transmittals', () => {
     });
     const res = await request(makeApp()).get('/api/mdx/gateways/transmittals');
     expect(res.status).toBe(200);
-    expect(captured).toMatch(/LEFT JOIN users u ON u\.id = t\.submitted_by/);
+    expect(captured).toMatch(/LEFT JOIN LATERAL public\.actor_name\(t\.submitted_by\) u ON TRUE/);
     expect(captured).toMatch(/submitted_by_name/);
     expect(res.body.data[0].submitted_by_name).toBe('Dr Ada Lovelace');
   });

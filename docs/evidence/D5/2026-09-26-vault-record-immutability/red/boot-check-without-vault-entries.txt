@@ -1,0 +1,38 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports ok after the real trigger migrations have been applied 4496ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > stays ok when the migrations replay (they re-run on every deploy, CLAUDE.md Rule 1) 97ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a dropped trigger 55ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled trigger — the catalog row exists, the protection does not 63ms
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled Vault record guard (VR-06): a recorded version is rewritable again 60ms
+   → trigger "vault_documents_record_guard" for table "documents" does not exist
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports an absent store (fresh install before deploy-migrate) as missing its triggers 56ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > does not count a same-named trigger on another table 49ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled Vault record guard (VR-06): a recorded version is rewritable again
+error: trigger "vault_documents_record_guard" for table "documents" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 142, severity: 'ERROR', code: '42704', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'trigger.c', routine: 'EnableDisableTrigger', query: 'ALTER TABLE vault.documents DISABLE TRIGGER vault_documents_record_guard;', params: undefined, queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  19:10:29
+   Duration  5.80s (transform 164ms, setup 103ms, import 488ms, tests 4.89s, environment 0ms)
+

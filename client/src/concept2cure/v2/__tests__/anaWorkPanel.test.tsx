@@ -165,6 +165,111 @@ describe('AnaWorkPanel — the work is visible while it happens', () => {
 
 });
 
+describe('AnaWorkPanel — a turn the loop cut short', () => {
+  /* A turn the loop cut short. The server says why on `done` (stoppedReason);
+     until it did, a turn the round cap stopped read "Finished in", because
+     nothing else on it was different from a turn she chose to end. */
+  const settledPhases = [
+    { phase: 'orchestrating', label: 'Planning response…', status: 'done', startedAt: T0, endedAt: T0 + 800 },
+    { phase: 'running_tools', label: 'Running 2 steps…', status: 'done', startedAt: T0 + 800, endedAt: T0 + 72_000 },
+  ] as AnaChatMessage['progress'];
+
+  it('says a turn stopped at the round limit stopped there — never "Finished"', () => {
+    const capped = liveTurn({
+      streaming: false,
+      completedAt: T0 + 72_000,
+      progress: settledPhases,
+      stoppedReason: 'max_rounds',
+      rounds: 12,
+    });
+    render(<AnaWorkPanel messages={capped} streaming={false} />);
+    expect(screen.getByText('Stopped at the round limit · 1m 12s')).toBeTruthy();
+    expect(screen.queryByText(/Finished/)).toBeNull();
+  });
+
+  it('says a turn whose answer was cut off stopped — never "Finished"', () => {
+    const cut = liveTurn({
+      streaming: false,
+      completedAt: T0 + 72_000,
+      progress: settledPhases,
+      stoppedReason: 'answer_cut_off',
+      rounds: 1,
+    });
+    render(<AnaWorkPanel messages={cut} streaming={false} />);
+    expect(screen.getByText('Stopped: answer cut off · 1m 12s')).toBeTruthy();
+    expect(screen.queryByText(/Finished/)).toBeNull();
+  });
+
+  it('says a turn stopped for repeating a step stopped there', () => {
+    const thrash = liveTurn({
+      streaming: false,
+      completedAt: T0 + 72_000,
+      progress: settledPhases,
+      stoppedReason: 'duplicate_thrash',
+      rounds: 3,
+    });
+    render(<AnaWorkPanel messages={thrash} streaming={false} />);
+    // Said as the CAUSE of the stop. "Stopped repeating a step" reads as
+    // "she quit repeating and carried on" — good news, on the one line meant
+    // to warn that the turn was cut off.
+    expect(screen.getByText('Stopped: repeating a step · 1m 12s')).toBeTruthy();
+    expect(screen.queryByText(/^Stopped repeating/)).toBeNull();
+    expect(screen.queryByText(/Finished/)).toBeNull();
+  });
+
+  it('a server-side stop whose stream then dropped did not finish — the stop does not outrank the lost connection', () => {
+    // `done` carried cancelled, then the stream ended before post_done: the
+    // hook marks the turn interrupted and cuts its progress short. That turn
+    // did not finish, and says so, as every other interrupted turn does.
+    const cut = liveTurn({
+      streaming: false,
+      completedAt: T0 + 30_000,
+      progress: settledPhases,
+      stoppedReason: 'cancelled',
+      interrupted: true,
+    });
+    render(<AnaWorkPanel messages={cut} streaming={false} />);
+    expect(screen.getByText('Did not finish · 30s')).toBeTruthy();
+    expect(screen.queryByText(/^Stopped/)).toBeNull();
+  });
+
+  it("the person's own Stop still reads as a stop, even when the stream then dropped", () => {
+    // `stopped` is this client's own Stop and keeps its place ahead of the
+    // interrupted check (unchanged).
+    const own = liveTurn({ streaming: false, completedAt: T0 + 30_000, progress: settledPhases, stopped: true, interrupted: true });
+    render(<AnaWorkPanel messages={own} streaming={false} />);
+    expect(screen.getByText('Stopped after 30s')).toBeTruthy();
+  });
+
+  it('says a run that was stopped at a round boundary was stopped, even when the stream closed cleanly', () => {
+    // The Stop control cancels server-side first; when the server's done and
+    // post_done arrive before the local abort, `stopped` is never set, and
+    // only the loop's own reason says the turn did not finish.
+    const cancelled = liveTurn({ streaming: false, completedAt: T0 + 30_000, progress: settledPhases, stoppedReason: 'cancelled' });
+    render(<AnaWorkPanel messages={cancelled} streaming={false} />);
+    expect(screen.getByText('Stopped after 30s')).toBeTruthy();
+    expect(screen.queryByText(/Finished/)).toBeNull();
+  });
+
+  it('says it for a reopened turn too, which has no clock to show', () => {
+    // A reloaded thread restores the stop from the message metadata but no
+    // send or end time, so the line carries no clock — and no dangling "·".
+    const reopened: AnaChatMessage[] = [
+      { id: 'u1', role: 'user', text: 'Compare every endpoint' },
+      { id: 'a1', role: 'assistant', text: 'Partial comparison.', stoppedReason: 'max_rounds', rounds: 12 },
+    ];
+    render(<AnaWorkPanel messages={reopened} streaming={false} />);
+    expect(screen.getByText('Stopped at the round limit')).toBeTruthy();
+    expect(screen.queryByText(/Finished/)).toBeNull();
+  });
+
+  it('still says "Finished" for a turn she ended herself', () => {
+    const done = liveTurn({ streaming: false, completedAt: T0 + 72_000, progress: settledPhases, stoppedReason: 'no_more_tools', rounds: 2 });
+    render(<AnaWorkPanel messages={done} streaming={false} />);
+    expect(screen.getByText('Finished in 1m 12s')).toBeTruthy();
+  });
+});
+
 describe('AnaWorkPanel — her plan', () => {
   it('shows her declared plan on the rail, the current step marked, and counts nothing she did not declare', () => {
     render(

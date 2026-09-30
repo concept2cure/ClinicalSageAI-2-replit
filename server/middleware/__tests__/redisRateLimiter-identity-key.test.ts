@@ -88,8 +88,15 @@ describe('redisRateLimiter — credential key for authenticated traffic (F-5)', 
       expect(rule.maxRequestsAuthenticated).toBeGreaterThan(rule.maxRequests);
       expect(rule.maxRequestsPerIpAuthenticated).toBeGreaterThan(rule.maxRequestsAuthenticated as number);
     }
-    // Auth stays IP-only by nature: a login carries no bearer credential.
-    expect((RATE_LIMITS.auth as { maxRequestsAuthenticated?: number }).maxRequestsAuthenticated).toBeUndefined();
+    // Auth (D6, 2026-09-29): a sign-in carries no credential and is keyed by
+    // its address at maxRequests. The session calls under /api/auth (me,
+    // refresh, logout) carry one, and fell back to that one ceiling with no
+    // per-address guard, so rotating unverified credentials on sign-in
+    // requests bought a fresh allowance each time. Each credential now has its
+    // own ceiling, and the guard bounds rotation per address.
+    const auth = RATE_LIMITS.auth as { maxRequests: number; maxRequestsAuthenticated?: number; maxRequestsPerIpAuthenticated?: number };
+    expect(auth.maxRequestsAuthenticated).toBeGreaterThan(0);
+    expect(auth.maxRequestsPerIpAuthenticated).toBeGreaterThan(auth.maxRequests);
   });
 
   it('no credential: the per-IP bucket trips at exactly the per-IP ceiling', async () => {

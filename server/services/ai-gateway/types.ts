@@ -345,6 +345,17 @@ export interface GatewayMessage {
   inlineSystem?: boolean;
 
   /**
+   * What an `inlineSystem` message is called when a model without inline
+   * system support gets it folded into the preceding user turn — the bracketed
+   * label in `[<label>]: …`. Unset means "User interjection", which is true
+   * only of words a person typed (a steer). Anything the application authored
+   * or observed must say so: a screen report or a mode switch folded as a
+   * "User interjection" tells the model the person wrote it, and she answers
+   * the person for something they never said.
+   */
+  foldLabel?: string;
+
+  /**
    * Mark this message with a prompt-cache breakpoint (Claude only).
    * When `promptCache.enabled` is set on the request, system messages
    * with `cacheControl: true` will carry `cache_control` markers in the
@@ -705,6 +716,15 @@ export interface ModelConfig {
   supportsSamplingParams: boolean;
 
   /**
+   * Which version of Anthropic's web tools this model accepts. The
+   * `_20260209` variants (dynamic filtering) are accepted by Opus 4.6+ and
+   * Sonnet 4.6+ only; older models, Haiku 4.5 among them, take the basic
+   * `web_search_20250305` / `web_fetch_20250910`. Absent means basic, the one
+   * every model accepts (server-tool-policy.ts webToolsForModel).
+   */
+  webToolVariant?: 'dynamic_filtering' | 'basic';
+
+  /**
    * Whether this model constrains its output to a JSON schema via
    * `output_config.format`. Supported on Opus 5, Opus 4.8, Sonnet 5 and
    * Haiku 4.5 — notably NOT on Sonnet 4.6, which sits directly below Sonnet 5
@@ -723,6 +743,15 @@ export interface ModelConfig {
    * entry is one we do not use for it.
    */
   supportsInlineSystem?: boolean;
+
+  /**
+   * Whether this model returns the notes it writes between tool calls as
+   * progress-update `thinking` blocks rather than `text` (Opus 5.5, Fable 5.1,
+   * Mythos 5.1, Fable 5). Under the default display those blocks are empty, so
+   * the gateway asks for display "updates" and returns the notes as text (see
+   * progress-updates.ts). Omitted means false: the model writes them as text.
+   */
+  progressUpdatesInThinking?: boolean;
 
   /**
    * The highest `output_config.effort` this entry accepts, or `null` for none.

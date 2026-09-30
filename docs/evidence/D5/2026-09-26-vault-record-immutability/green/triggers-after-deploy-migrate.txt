@@ -1,0 +1,2 @@
+vault_documents_record_guard|O
+vault_documents_truncate_guard|O

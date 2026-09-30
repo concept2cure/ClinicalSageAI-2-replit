@@ -654,7 +654,7 @@ export async function applyRewrite(
               content_hash = $3,
               version = $4,
               status = 'draft',
-              metadata = COALESCE(metadata, '{}'::jsonb) || $5::jsonb,
+              metadata = COALESCE(metadata::jsonb, '{}'::jsonb) || $5::jsonb,
               updated_at = NOW()
         WHERE id = $1`,
       [

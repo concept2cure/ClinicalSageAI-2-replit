@@ -1,0 +1,49 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T01:14:10.180Z","pid":10074,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:14:10.181Z","pid":10074,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:14:10.181Z","pid":10074,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-names.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-09-29T01:14:10.528Z","pid":10074,"hostname":"vm","context":{"userId":971,"tenantId":90301,"resourceId":"wo03_10074_mulzh0o3-actor-names-record"},"msg":"[audit-service] [AUDIT] data_modify actor_names_contract"}
+ ✓ tests/db/actor-names.dbtest.ts > the audit trail after someone leaves the organization (D3) > names the person who acted, not only their id 9ms
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers nothing about an account that never belonged to or acted in A 2ms
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers name and email only — no credential column exists on it 3ms
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > the users table itself still refuses the leaver's row to A 2ms
+{"level":30,"time":"2026-09-29T01:14:11.723Z","pid":10092,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:14:11.725Z","pid":10092,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:14:11.725Z","pid":10092,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/users-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > reads none of B's user rows, by id, by email, or by scanning 8ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > cannot rewrite B's password hash, MFA secret or reset token, nor delete B's user 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > reads its own organization's members, the caller included 3ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > updates its own member's profile 6ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > INSERT … RETURNING of a non-member is refused, so tenant-users takes the id first 5ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > user_id_for_email answers an existing account’s id, and nothing else 3ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > pre-auth: the sign-in lookup by email finds any tenant’s user, and writes it 5ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > system: SCIM and platform administration read and write every tenant’s users 5ms
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-29T01:14:12.144Z', poolSize: 1 }
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-29T01:14:12.226Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-29T01:14:12.262Z","pid":10092,"hostname":"vm","context":{"userId":977,"tenantId":90301,"resourceId":"979"},"msg":"[audit-service] [AUDIT] user_invited user"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account 285ms
+{"level":30,"time":"2026-09-29T01:14:12.448Z","pid":10092,"hostname":"vm","context":{"userId":977,"tenantId":90302,"resourceId":"980"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-09-29T01:14:12.455Z","pid":10092,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:485:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of failing or duplicating it 20ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into 161ms
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  01:14:08
+   Duration  4.20s (transform 1.09s, setup 102ms, import 2.65s, tests 1.03s, environment 0ms)
+

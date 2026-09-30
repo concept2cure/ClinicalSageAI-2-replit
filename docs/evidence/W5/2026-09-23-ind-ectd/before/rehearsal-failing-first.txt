@@ -1,0 +1,214 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal
+{
+  "timestamp": "2026-09-23T16:44:31.463Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 2,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > folds the latest recorded compile of each earlier sequence, filed or not, and names the unfiled 5ms
+   → loadRehearsalPriorManifestBySubmission is not a function
+ × server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > the filed prior state never reads a rehearsal compile, even of a sequence that was sent 9ms
+   → expected [ 'filed.pdf', 'rehearsed.pdf' ] to deeply equal [ 'filed.pdf' ]
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts
+{
+  "timestamp": "2026-09-23T16:44:31.495Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 2,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > an original sequence has nothing to rehearse against, and says so
+{
+  "timestamp": "2026-09-23T16:44:31.509Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 0,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal 90ms
+   → expected '<?xml version="1.0" encoding="UTF-8"?…' to match /operation="replace"[^>]*modified…/0000\
+ × server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts 27ms
+   → expected undefined to be 'filed' // Object.is equality
+ × server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > an original sequence has nothing to rehearse against, and says so 14ms
+   → promise resolved "{ bundle: { …(9) }, skipped: [], …(7) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > folds the latest recorded compile of each earlier sequence, filed or not, and names the unfiled
+TypeError: loadRehearsalPriorManifestBySubmission is not a function
+ ❯ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts:110:25
+    108| describe('the rehearsal prior state', () => {
+    109|   it('folds the latest recorded compile of each earlier sequence, file…
+    110|     const prior = await loadRehearsalPriorManifestBySubmission(pool(),…
+       |                         ^
+    111|     expect(prior.priorSequenceNumber).toBe('0000');
+    112|     expect(prior.unfiledSequences).toEqual(['0000']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > the filed prior state never reads a rehearsal compile, even of a sequence that was sent
+AssertionError: expected [ 'filed.pdf', 'rehearsed.pdf' ] to deeply equal [ 'filed.pdf' ]
+
+- Expected
++ Received
+
+  [
+    "filed.pdf",
++   "rehearsed.pdf",
+  ]
+
+ ❯ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts:119:49
+    117|   it('the filed prior state never reads a rehearsal compile, even of a…
+    118|     const prior = await loadLatestPriorManifestBySubmission(pool(), { …
+    119|     expect(prior.leaves.map((l) => l.fileName)).toEqual(['filed.pdf']);
+       |                                                 ^
+    120|     expect(prior.priorSequenceNumber).toBe('0000');
+    121|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8"?…' to match /operation="replace"[^>]*modified…/0000\
+
+- Expected:
+/operation="replace"[^>]*modified-file="\.\.\/0000\/m3\/3-2-s-1\/3-2-coauthor-documents-200\.pdf"/
+
++ Received:
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<?xml-stylesheet type=\"text/xsl\" href=\"util/style/ectd-2-0.xsl\"?>
+<!DOCTYPE ectd:ectd SYSTEM \"util/dtd/ich-ectd-3-2.dtd\">
+<ectd:ectd xmlns:ectd=\"http://www.ich.org/ectd\"
+           xmlns:xlink=\"http://www.w3.org/1999/xlink\"
+           dtd-version=\"3.2\">
+  <m1-administrative-information-and-prescribing-information>
+    <leaf operation=\"new\" checksum=\"033ebcb7f39512e861d9f6e04f5e96b3\" checksum-type=\"md5\" xlink:href=\"m1/us/us-regional.xml\" xlink:type=\"simple\" ID=\"leaf-m1-regional-backbone\">
+      <title>Module 1 regional backbone (us-regional.xml)</title>
+    </leaf>
+  </m1-administrative-information-and-prescribing-information>
+
+</ectd:ectd>"
+
+ ❯ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts:129:19
+    127|     try {
+    128|       const xml = await indexXmlOf(r.bundle.path);
+    129|       expect(xml).toMatch(/operation="replace"[^>]*modified-file="\.\.…
+       |                   ^
+    130|       expect(xml).toMatch(/operation="delete"[^>]*modified-file="\.\.\…
+    131|       expect(r.skipped).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts
+AssertionError: expected undefined to be 'filed' // Object.is equality
+
+- Expected:
+"filed"
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts:148:28
+    146|         'declared delete: no filed prior sequence is on record to act …
+    147|       ]);
+    148|       expect(r.priorState).toBe('filed');
+       |                            ^
+    149|       expect(r.unfiledPriorSequences).toEqual([]);
+    150|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > an original sequence has nothing to rehearse against, and says so
+AssertionError: promise resolved "{ bundle: { …(9) }, skipped: [], …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "bundle": {
++     "displayName": " · FDA Investigational New Drug Application #0000",
++     "dtdStatus": {
++       "missing": [
++         "ich-ectd-3-2.dtd",
++         "us-regional-v3-3.dtd",
++       ],
++       "missingStylesheets": [
++         "ectd-2-0.xsl",
++         "us-regional.xsl",
++       ],
++       "present": [],
++       "required": [
++         "ich-ectd-3-2.dtd",
++         "us-regional-v3-3.dtd",
++       ],
++       "selfContained": false,
++     },
++     "format": "ectd",
++     "leafManifest": [],
++     "path": "/home/user/ClinicalSageAI-2-replit/uploads/submission-bundles/staging/ectd-assemble-1-jMVpfa/IND-123456-0000-fda.zip",
++     "regionalBackbone": {
++       "file": "m1/us/us-regional.xml",
++       "region": "fda",
++       "regionConformant": true,
++     },
++     "sha256": "4feabcac957fe98af8898bd8cc00c2d9946192908669a8bf589dcc3a431864bc",
++     "sizeBytes": 1571,
++     "submissionGrade": {
++       "agencyFormsAsIssued": [],
++       "allPdfA": true,
++       "notConverted": [],
++       "pdfLeaves": 0,
++       "pdfaConverted": 0,
++       "total": 0,
++     },
++   },
++   "cleanup": [Function cleanup],
++   "governanceManifestPath": "/home/user/ClinicalSageAI-2-replit/uploads/submission-bundles/staging/ectd-assemble-1-jMVpfa/package-governance.sha256.json",
++   "materialized": 0,
++   "priorSequence": null,
++   "skipped": [],
++   "unfinalized": 0,
++   "unfinalizedSections": [],
++   "unresolvedLeaves": [],
+  }
+
+ ❯ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts:156:42
+    154|
+    155|   it('an original sequence has nothing to rehearse against, and says s…
+    156|     await expect(assemble(1, 'rehearsal')).rejects.toThrow(/rehearsal …
+       |                                          ^
+    157|   });
+    158| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  16:44:23
+   Duration  7.63s (transform 1.19s, setup 73ms, import 2.14s, tests 5.16s, environment 0ms)
+

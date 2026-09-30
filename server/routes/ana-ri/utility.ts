@@ -26,8 +26,7 @@ import {
 } from '../../services/ana-ri/part11-governance.js';
 import { isProposeOnlyCommand } from '../../services/ana-ri/command-rbac.js';
 import { TOOL_REGISTER, toolAuthorizationOf } from '../../services/ana/tool-authorization.js';
-import { reverifySigner } from '../../services/part11/reverify-signer.js';
-import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
+import { verifyGovernedESignature } from './governed-esignature.js';
 import {
   readPendingApproval,
   recordApprovalDecision,
@@ -36,6 +35,7 @@ import { resolveOrgId } from '../../types/auth-request.js';
 import { requestPgClient } from '../../db/requestDb';
 import { handleSealVerifiedVersion } from './seal-verified.js';
 import auditService from '../../services/auditService.js';
+import { governedActionTrace, recordGovernedExecution, withAuditTrail } from './governed-execution-audit.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import {
   sendSuccess,
@@ -570,8 +570,6 @@ export function mountUtilityRoutes(router: Router): void {
       return sendError(res, authorised.status, authorised.error, null, authorised.code);
     }
     const { pendingForRun, runId, toolUseId, command, params } = authorised;
-    const password = typeof body.password === 'string' ? body.password : '';
-    const mfaToken = typeof body.mfaToken === 'string' ? body.mfaToken : undefined;
 
     // A person's no to an action AnA is holding a turn on. Checked before any
     // tier rule: declining asks for nothing, whatever the tier.
@@ -609,20 +607,13 @@ export function mountUtilityRoutes(router: Router): void {
     // e-signature; the rest require only the reason-for-change. §11.200:
     // re-verify the signer server-side for the e-sign tier (never a client flag).
     const eSignRequired = tier === 'esignature';
-    let secondFactorVerified = false;
-    // The instant the server actually verified the signer, captured here rather
-    // than synthesised downstream. Handlers that hand the human gate to an
-    // external gateway (FDA ESG transmit) pass this through as the
-    // transmission's `reauthVerifiedAt`, so it must be a real observation.
-    let signatureVerifiedAt: Date | undefined;
-    if (eSignRequired) {
-      const verification = await reverifySigner(userId, { password, mfaToken }, signerReverificationDeps());
-      if (!verification.ok) {
-        return sendError(res, verification.status, verification.error, { code: verification.code }, 'SIGNATURE_REJECTED');
-      }
-      secondFactorVerified = verification.secondFactorVerified;
-      signatureVerifiedAt = new Date();
-    }
+
+    // The signer's declared §11.50 meaning, then re-verification (§11.200), in
+    // that order and before the audit row — see governed-esignature.ts.
+    const esign = eSignRequired ? await verifyGovernedESignature(userId, body) : undefined;
+    if (esign && !esign.ok) return sendError(res, esign.status, esign.error, esign.details, esign.code);
+    const signatureMeaning = esign?.meaning;
+    const secondFactorVerified = esign?.secondFactorVerified ?? false;
 
     // §11.10(e): record the sign-off to the audit trail before executing.
     // No governed mutation without a durable audit record.
@@ -637,6 +628,7 @@ export function mountUtilityRoutes(router: Router): void {
     //
     // logAction returns AuditWriteResult, so the refusal can be real: read
     // `persisted` and abort on it.
+    const trace = governedActionTrace(runId, toolUseId, pendingForRun, params);
     const signoffAudit = await auditService.logAction({
       tenantId: numericOrgId,
       userId,
@@ -645,7 +637,9 @@ export function mountUtilityRoutes(router: Router): void {
       resourceId: command,
       ipAddress: clientIpOf(req) ?? undefined,
       userAgent: req.headers['user-agent'] as string | undefined,
-      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified },
+      // With the declared §11.50 meaning on the e-signature tier; absent otherwise,
+      // and the trace of what was authorised (governedActionTrace).
+      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified, ...(signatureMeaning && { signatureMeaning }), ...trace },
     });
     if (!signoffAudit.persisted) {
       log.error('Governed action aborted: sign-off audit row was not persisted', {
@@ -662,6 +656,11 @@ export function mountUtilityRoutes(router: Router): void {
       userId,
       organizationId: numericOrgId,
       part11Enforce: true,
+      // The model call that proposed the action, from the held ROW, never the
+      // body: agentAuditDetails writes its gateway request id and model into the
+      // Part 11 row (D6). A command posted without its run has no recorded
+      // proposer, and records null rather than a claim.
+      servingModel: pendingForRun?.proposedBy ?? null,
       // ONE OF THE TWO ASSIGNMENTS OF THIS FIELD, BOTH IN THIS ROUTE (the other
       // is runConfirmedTool's, for the tools that write on their own handlers).
       //
@@ -688,13 +687,22 @@ export function mountUtilityRoutes(router: Router): void {
               // For the reason-only tier there is no e-signature; the gate does not
               // require one for these commands (validateSignoff requireSignature=false).
               signatureVerified: eSignRequired,
-              signaturePurpose: 'approval' as const,
-              verifiedAt: signatureVerifiedAt,
+              // The e-signature tier carries the meaning the signer declared
+              // (resolved above; the route refuses without one). The reason
+              // tier is unchanged: it keeps the value it always carried, which
+              // no handler reads for that tier — there is no signature there to
+              // mean anything.
+              signaturePurpose: signatureMeaning ?? 'approval',
+              verifiedAt: esign?.verifiedAt,
+              authenticationMethod: esign?.authenticationMethod,
+              secondFactorVerified: esign?.secondFactorVerified,
             },
           }),
     };
+    const executedRow = { organizationId: numericOrgId, userId, command, trace, startedAt: Date.now() };
     try {
-      const [result] = isTool ? [await runConfirmedTool(command, params, pendingForRun!, numericOrgId, userId)] : await executeCommands([{ command, params } as any], ctx);
+      const [ran] = isTool ? [await runConfirmedTool(command, params, pendingForRun!, numericOrgId, userId)] : await executeCommands([{ command, params } as any], ctx);
+      const result = withAuditTrail(ran, await recordGovernedExecution(executedRow, { result: ran }));
       // The execution stays HERE, in the one place that stamps humanConfirmed.
       // The waiting turn is handed the RESULT, not the right to run the command
       // itself — a second dispatcher would be a second writer of that flag, and
@@ -706,15 +714,17 @@ export function mountUtilityRoutes(router: Router): void {
       }
       return sendSuccess(res, result);
     } catch (error: any) {
+      const failure = error?.message || 'Governed action failed';
+      const failedRow = await recordGovernedExecution(executedRow, { error: failure });
       // A failed execution must still release the run. Otherwise the turn sits
       // at a gate nobody will ever answer again until the pause ceiling expires
       // — the person signed, something broke, and AnA is left silent.
       if (pendingForRun) {
-        await releaseWaitingRun(req, runId, toolUseId, userId, reasonForChange, {
-          error: error?.message || 'Governed action failed',
-        });
+        await releaseWaitingRun(req, runId, toolUseId, userId, reasonForChange, { error: failure });
       }
-      return sendError(res, 500, error?.message || 'Governed action failed', null, 'GOVERNED_ACTION_FAILED');
+      // A failure whose own row was lost says that too.
+      const lost = failedRow.persisted ? null : { auditTrail: failedRow };
+      return sendError(res, 500, failure, lost, 'GOVERNED_ACTION_FAILED');
     }
   });
 

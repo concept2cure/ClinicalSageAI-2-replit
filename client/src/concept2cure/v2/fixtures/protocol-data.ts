@@ -62,8 +62,24 @@ export interface PdevDeviation {
 export interface ReviewComment {
   id: string; sec: string; sev: string; text: string; resolved: boolean;
 }
+/** One signed act as its electronic_signatures row records it (the server's
+ *  PdevSignature, protocol-signature-manifestation.ts): the printed name
+ *  captured at signing, the UTC time, the declared meaning token and the reason. */
+export interface PdevSignature {
+  signerName: string; signedAt: string; meaning: string; reason: string;
+  /** Set when the decision of a reviewer with no account was recorded for them. */
+  recordedOnBehalfOf: string | null;
+}
+/** `none`: the store holds no signature for the act. `unavailable`: the store
+ *  could not be read, which is never to be shown as unsigned. */
+export type PdevSignatureFacet =
+  | { state: 'signed' | 'revoked'; signature: PdevSignature }
+  | { state: 'none' }
+  | { state: 'unavailable' };
 export interface PdevReview {
   id: string; reviewer: string; role: string; status: string; comments: ReviewComment[];
+  /** The disposition's signature, from the signature row. */
+  signature: PdevSignatureFacet;
 }
 export interface ConsentElement { id: string; el: string; present: boolean; }
 
@@ -107,6 +123,9 @@ export interface PdevDoc {
   reviews: PdevReview[];
   consent: ConsentElement[];
   completenessFindings: SevText[];
+  /** Who finalized it, from the signature row; `none` on a finalized protocol
+   *  is a finalization with no signature on record. */
+  finalization: PdevSignatureFacet;
   /** The bound study design and the design gates' findings, or null. */
   studyDesign: PdevStudyDesign | null;
   /**

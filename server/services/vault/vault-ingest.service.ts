@@ -53,9 +53,10 @@ import {
   type StoredUpload,
 } from './vault-ingest-discard.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
-import { readRecordedVersion, reuploadChanges, type ReuploadChange } from './vault-reupload.js';
+import { readRecordedVersion, reuploadChanges, reuploadDiffers, type ReuploadChange, type ReuploadDiffer } from './vault-reupload.js';
 import {
   classifyForFiling,
+  filingVocabularyRefusal,
   resolveVaultView,
   isFolderInView,
   folderLabel,
@@ -133,7 +134,7 @@ export type VaultIngestResult =
       };
       filing: VaultIngestFiling;
       /** Present when these bytes were already recorded here (vault-reupload.ts). */
-      reupload?: { unchanged: boolean; changes: ReuploadChange[] };
+      reupload?: { unchanged: boolean; changes: ReuploadChange[]; differs: ReuploadDiffer[] };
     }
   | { ok: false; status: number; code: string; message: string };
 
@@ -179,6 +180,11 @@ async function admitVaultDocument(
   // is told so before anything is stored, checked or disclosed.
   const roleRefusal = vaultWriteRefusal();
   if (roleRefusal) return roleRefusal;
+  // A filing the uploader names is held to the vocabulary before any byte is
+  // stored (VR-04). Only a named folder's kind and section are written; without
+  // one the classifier's proposal is, so those are not the caller's to break.
+  const vocabulary = args.folderId ? filingVocabularyRefusal(args) : null;
+  if (vocabulary) return { ok: false, status: 400, ...vocabulary };
 
   // Tenant ownership guard. `vault.documents` now carries organization_id
   // (migrations/20260905_vault_documents_organization_id.sql), and the INSERT
@@ -426,6 +432,7 @@ async function admitVaultDocument(
       mimeType,
       extractedText,
       view: vaultView,
+      documentType: args.documentType,
     });
     placement = {
       folderId: classified.folderId,
@@ -489,8 +496,9 @@ async function admitVaultDocument(
         $28, $29
       )
       ON CONFLICT (program_id, document_code, version) DO UPDATE SET
-        document_title = EXCLUDED.document_title,
-        document_type = EXCLUDED.document_type,
+        -- Title, type, classification and filing are not in this list: a
+        -- re-upload never changes them. They change through Edit details and
+        -- Confirm / Move, each with its own audit row (vault-reupload.ts).
         -- The same bytes are already stored and recorded: the record keeps the
         -- copy it names. Only a record with no storage handle (it predates the
         -- provider) takes the retry's, as one unit. file_size and mime_type
@@ -502,7 +510,6 @@ async function admitVaultDocument(
         storage_version_id = COALESCE(vault.documents.storage_version_id, EXCLUDED.storage_version_id),
         file_name = COALESCE(vault.documents.file_name, EXCLUDED.file_name),
         content_hash = EXCLUDED.content_hash,
-        classification = EXCLUDED.classification,
         -- Write-once: a retry never nulls or replaces a recorded policy or lineage.
         retention_policy = COALESCE(vault.documents.retention_policy, EXCLUDED.retention_policy),
         -- A clock that has started is not restarted by a re-upload.
@@ -512,25 +519,6 @@ async function admitVaultDocument(
         extracted_text = EXCLUDED.extracted_text,
         page_count = EXCLUDED.page_count,
         word_count = EXCLUDED.word_count,
-        -- A re-upload of the same (program, code, version) re-proposes ONLY
-        -- when nobody has confirmed a placement: a person's filing decision
-        -- is never overwritten by a machine suggestion.
-        folder_id = CASE WHEN vault.documents.placement_status = 'confirmed'
-                         THEN vault.documents.folder_id ELSE EXCLUDED.folder_id END,
-        evidence_kind = CASE WHEN vault.documents.placement_status = 'confirmed'
-                             THEN vault.documents.evidence_kind ELSE EXCLUDED.evidence_kind END,
-        ctd_section = CASE WHEN vault.documents.placement_status = 'confirmed'
-                           THEN vault.documents.ctd_section ELSE EXCLUDED.ctd_section END,
-        placement_status = CASE WHEN vault.documents.placement_status = 'confirmed'
-                                THEN 'confirmed' ELSE EXCLUDED.placement_status END,
-        placement_confidence = CASE WHEN vault.documents.placement_status = 'confirmed'
-                                    THEN vault.documents.placement_confidence ELSE EXCLUDED.placement_confidence END,
-        placement_rationale = CASE WHEN vault.documents.placement_status = 'confirmed'
-                                   THEN vault.documents.placement_rationale ELSE EXCLUDED.placement_rationale END,
-        placed_by = CASE WHEN vault.documents.placement_status = 'confirmed'
-                         THEN vault.documents.placed_by ELSE EXCLUDED.placed_by END,
-        placed_at = CASE WHEN vault.documents.placement_status = 'confirmed'
-                         THEN vault.documents.placed_at ELSE EXCLUDED.placed_at END,
         processing_status = 'PENDING',
         -- Repairs a row that predates the tenant key without ever moving one:
         -- the ownership guard above proved this program belongs to $27.
@@ -566,7 +554,7 @@ async function admitVaultDocument(
         fileSize,
         mimeType,
         contentHash,
-        args.classification ?? recorded?.classification ?? 'INTERNAL',
+        args.classification ?? 'INTERNAL',
         args.retentionPolicy ?? null,
         args.parentDocumentId ?? null,
         args.supersedesId ?? null,
@@ -636,6 +624,7 @@ async function admitVaultDocument(
     /* A same-bytes retry (vault-reupload.ts) records what it changed, before
        and after, as its own event; one that changed nothing records nothing. */
     const changes = recorded ? reuploadChanges(recorded, doc) : [];
+    const differs = recorded ? reuploadDiffers(recorded, args) : [];
     const filed = {
       view: vaultView, folderId: doc.folder_id ?? null, evidenceKind: doc.evidence_kind ?? null,
       ctdSection: doc.ctd_section ?? null, placementStatus: doc.placement_status,
@@ -722,7 +711,7 @@ async function admitVaultDocument(
         folderLabel: folderLabel(vaultView, doc.folder_id ?? null),
         needsReview: doc.placement_status === 'unfiled',
       },
-      ...(recorded ? { reupload: { unchanged: changes.length === 0, changes } } : {}),
+      ...(recorded ? { reupload: { unchanged: changes.length === 0, changes, differs } } : {}),
     };
   } catch (err: any) {
     /* Roll back BOTH halves. A failure in the audit write now aborts the

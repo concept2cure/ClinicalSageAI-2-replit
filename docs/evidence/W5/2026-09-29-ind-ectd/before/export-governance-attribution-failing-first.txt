@@ -1,0 +1,33 @@
+# Failing-first: who a governed eCTD export is recorded against — 2026-09-29, W5/D7, WO-9 Click 6
+# Found by clicking 'Download package (.zip)' on a clean demo build (install-fresh + deploy-migrate + one seed):
+#   POST /api/ectd/export/6 -> 500
+#   [exportGovernance] Failed to register governed export: insert or update on table "concept2cure_artifacts"
+#   violates foreign key constraint "concept2cure_artifacts_project_id_projects_id_fk"
+# The route passed projectId: submissionId (6); projects has no row 6. On the earlier demo DB a project
+# happened to share submission 3's id, so the governed record was filed under an unrelated project.
+# Command: npx vitest run tests/unit/ectd-export-routes.test.ts
+
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 1: no options → ZIP-level validation only (backward compat) 44ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 2: options.region=FDA + non-regional leaves → MISSING_REGIONAL_FDA finding 17ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 3: priorSequenceNumbers=["0000","0002"] + sequenceNumber="0003" → SEQUENCE_GAP for 0001 7ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 4: valid leaf array → leaf-only ValidationResult 6ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 5: authenticated principal WITHOUT organizationId → 403 (route uses requireTenant) 5ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 6: invalid region string ("XX") → 400 from zod enum guard 5ms
+ ✓ tests/unit/ectd-export-routes.test.ts > GET /api/ectd/export/by-run/:runId/signed > returns the §11.50 manifestation of the release signature (review P11-4) 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the canonical export > returns the package bytes as a zip when it validates 10ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the canonical export > refuses a package that fails structural validation, and returns no zip 9ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the canonical export > refuses an incomplete package when requireComplete is set 7ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the assembly's audit rows > a download whose rows were lost says so in its headers, and still returns the package 5ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the assembly's audit rows > a download whose rows were written says so, with no code 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the assembly's audit rows > a refused (invalid) package carries the outcome in its JSON body 4ms
+ × tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the project a governed export is recorded against > records it against the project that anchors the submission's program — not a project that shares the submission's id 13ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, ObjectContaining{…} ]
+ × tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the project a governed export is recorded against > a program with no project anchor is delivered audited-unplaced, and says so 6ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the project a governed export is recorded against > a submission with no program is delivered audited-unplaced — nothing is attributed by an id that happens to match 5ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the project a governed export is recorded against > an unplaced export whose audit row did not persist is refused, and no package is returned 4ms
+   → expected 200 to be greater than or equal to 500
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 13 passed (17)

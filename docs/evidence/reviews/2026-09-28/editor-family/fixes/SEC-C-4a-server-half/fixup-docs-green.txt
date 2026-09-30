@@ -1,0 +1,36 @@
+# fixup-docs-green: after the fix-up, the lane's documentation states the present state
+## stale past-tense / already-fixed wording (expect no matches)
+  none
+## module header, dated present-state note
+18: * As of 2026-09-28 the loop is open again on the production path. The only
+19- * caller of this module is `buildChatContext`, which nothing in production
+20- * calls, and `/api/ana-ri/stream`, where the chat client posts, never reads
+21- * `module_context`. So this block is built and tested here but reaches no
+22- * model until the stream route renders it (found in periodic review
+23- * 2026-09-28, editor family, while fixing SEC-C-4 (a)).
+## selection JSDoc
+101-  /**
+102-   * The text the user selected, for one turn only. Editor actions such as
+103-   * "Ask for a source" are meant to send it here instead of splicing it into
+104-   * the chat message, where text stored in a document reaches the model as
+105-   * the user's own words (periodic review 2026-09-28, editor family,
+106-   * SEC-C-4 (a)). Here it is one quoted line inside the fence, labelled as
+107-   * data. Only a string is a selection.
+108-   *
+109:   * This is the server half only, and nothing uses it yet. As of 2026-09-28
+110-   * the editor still splices the selection into the message, no client sends
+111-   * this field, and no production route renders this block (see the header).
+112-   * SEC-C-4 (a) stays open until the client sends the field and the stream
+113-   * route renders it.
+114-   */
+## test docblock
+218- * The editor's "Ask for a source" splices the user's selected text into the
+219- * chat message, so text stored in a document reaches the model as the user's
+220- * own words (periodic review 2026-09-28, editor family, SEC-C-4 (a)). The
+221- * selection is given its own field here, server side, `module_context.selection`,
+222- * rendered as one quoted line inside the fence. These pin that it stays there.
+223- *
+224: * This is the server half only. As of 2026-09-28 the client does not send the
+225- * field and the stream route does not render this block, so the finding stays
+226- * open. A green run here does not close it.
+227- */

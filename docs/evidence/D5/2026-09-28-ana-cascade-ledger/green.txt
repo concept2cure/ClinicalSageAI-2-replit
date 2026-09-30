@@ -1,0 +1,7 @@
+# the new suite and the two AnA task suites moved onto the shared pool fixture, against the change
+ Test Files  3 passed (3)
+      Tests  19 passed (19)
+
+# every AnA executor and tasking suite, plus the HTTP cascade suite and the rail-actions client suite
+ Test Files  67 passed (67)
+      Tests  825 passed (825)

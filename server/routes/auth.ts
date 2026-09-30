@@ -30,6 +30,7 @@ import {
 } from '../services/session-inactivity';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
+import { auditOrganizationOf, membershipsOf, signInMembership } from '../services/sign-in-organisation';
 import { PASSWORD_HASH_COST, padUnknownEmailTiming } from '../services/login-timing-pad';
 import {
   ACCOUNT_INACTIVE_MESSAGE,
@@ -97,6 +98,7 @@ import {
   ensureOrganizationDefaultWorkspace,
 } from '../services/c2c/organization-default-workspace';
 import { runWithTenantScope } from '../db/tenantStore';
+import { signInLimits } from '../middleware/sign-in-limits';
 
 const router = Router();
 
@@ -115,17 +117,10 @@ function getRefreshTokenSecret(): string {
 // ─── Rate Limiters ──────────────────────────────────────────────────────────
 // Separate limiters for different risk levels.
 
-/** Login: 10 attempts per 15 minutes per IP */
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: { code: 'RATE_LIMIT', message: 'Too many login attempts. Please try again later.' },
-  },
-});
+// Password and second-factor steps: per ACCOUNT, failures only
+// (middleware/sign-in-limits.ts). They were 10 requests per client address,
+// successes included, so the eleventh colleague behind one office address was
+// refused (D6, 2026-09-29).
 
 /** Signup: 5 per hour per IP */
 const signupLimiter = rateLimit({
@@ -163,18 +158,6 @@ const passwordResetLimiter = rateLimit({
       code: 'RATE_LIMIT',
       message: 'Too many password reset requests. Please try again later.',
     },
-  },
-});
-
-/** MFA verify: 10 per 15 minutes per IP */
-const mfaLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: { code: 'RATE_LIMIT', message: 'Too many MFA attempts. Please try again later.' },
   },
 });
 
@@ -405,7 +388,7 @@ router.get('/session', async (req: Request, res: Response) => {
  * POST /api/auth/login
  * Login with email and password
  */
-router.post('/login', loginLimiter, async (req: Request, res: Response) => {
+router.post('/login', signInLimits.login, async (req: Request, res: Response) => {
   try {
     const { email, password, deviceInfo, rememberDevice } = req.body;
 
@@ -453,7 +436,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: 'account_locked',
@@ -488,7 +471,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: failResult?.locked ? 'wrong_password_threshold_exceeded' : 'wrong_password',
@@ -510,7 +493,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: 'email_unverified',
@@ -531,7 +514,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: 'account_inactive',
@@ -552,18 +535,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // challenge-issued here and session-created there.
 
     const defaultOrganizationId = userData.defaultOrganizationId || null;
-    let organizationId = defaultOrganizationId;
-    let jwtRole = 'user';
 
     // Resolve all memberships and pick default org membership if available.
-    const memberships = await db
-      .select({
-        organizationId: organizationUsers.organizationId,
-        role: organizationUsers.role,
-      })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, userData.id))
-      .limit(25);
+    const memberships = await membershipsOf(userData.id);
 
     if (memberships.length === 0) {
       return res.status(403).json({
@@ -572,13 +546,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    if (!organizationId) {
-      organizationId = memberships[0]?.organizationId || null;
-    }
-    const selectedMembership =
-      memberships.find(m => m.organizationId === organizationId) || memberships[0];
-    organizationId = selectedMembership?.organizationId || null;
-    jwtRole = selectedMembership?.role || 'user';
+    const selectedMembership = signInMembership(memberships, defaultOrganizationId);
+    const organizationId = selectedMembership?.organizationId || null;
+    const jwtRole = selectedMembership?.role || 'user';
 
     if (!organizationId) {
       return res.status(403).json({
@@ -1234,7 +1204,7 @@ router.post('/verify-email', verificationLimiter, async (req: Request, res: Resp
     await recordAuthEvent({
       action: 'email_verified',
       userId: account.id,
-      tenantId: account.defaultOrganizationId,
+      tenantId: await auditOrganizationOf(account),
       email: subject.email,
       outcome: 'success',
       reason: 'link',
@@ -1647,7 +1617,7 @@ router.get('/me', async (req: Request, res: Response) => {
  * Accepts the challenge token (from login response) + TOTP code,
  * and returns the real JWT access/refresh tokens.
  */
-router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
+router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: Response) => {
   try {
     const { challengeId, code, method } = req.body;
 
@@ -1855,7 +1825,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
  * Rate limited per IP, and at most emailOtpService.MAX_RESENDS re-issued codes
  * per challenge (429 MFA_RESEND_LIMIT beyond it; a new sign-in starts again).
  */
-router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
+router.post('/mfa/resend', signInLimits.secondFactor, async (req: Request, res: Response) => {
   try {
     const { challengeId } = req.body;
 
@@ -2247,7 +2217,7 @@ async function handleForgotPassword(req: Request, res: Response) {
     };
 
     const user = await db
-      .select({ id: users.id, email: users.email })
+      .select({ id: users.id, email: users.email, defaultOrganizationId: users.defaultOrganizationId })
       .from(users)
       .where(eq(users.email, email.toLowerCase()))
       .limit(1);
@@ -2296,6 +2266,7 @@ async function handleForgotPassword(req: Request, res: Response) {
     await recordAuthEvent({
       action: 'user_password_reset_requested',
       userId: user[0].id,
+      tenantId: await auditOrganizationOf(user[0]),
       email: user[0].email,
       outcome: 'success',
       ipAddress: req.ip,
@@ -2344,6 +2315,7 @@ async function handleResetPassword(req: Request, res: Response) {
         name: users.name,
         resetToken: users.resetToken,
         resetTokenExpiresAt: users.resetTokenExpiresAt,
+        defaultOrganizationId: users.defaultOrganizationId,
       })
       .from(users)
       .where(eq(users.resetToken, tokenHash))
@@ -2369,6 +2341,8 @@ async function handleResetPassword(req: Request, res: Response) {
     }
 
     const userData = user[0];
+    // Every event below names the account, so its organisation's ledger shows it (F-41).
+    const auditOrganizationId = await auditOrganizationOf(userData);
 
     // Check expiry
     if (!userData.resetTokenExpiresAt || new Date() > userData.resetTokenExpiresAt) {
@@ -2381,6 +2355,7 @@ async function handleResetPassword(req: Request, res: Response) {
       await recordAuthEvent({
         action: 'user_password_reset_failed',
         userId: userData.id,
+        tenantId: auditOrganizationId,
         outcome: 'failure',
         reason: 'reset token had expired',
         ipAddress: req.ip,
@@ -2438,6 +2413,7 @@ async function handleResetPassword(req: Request, res: Response) {
       await recordAuthEvent({
         action: 'user_password_reset_failed',
         userId: userData.id,
+        tenantId: auditOrganizationId,
         outcome: 'failure',
         reason: 'reset token was used or expired before this request completed',
         ipAddress: req.ip,
@@ -2462,6 +2438,7 @@ async function handleResetPassword(req: Request, res: Response) {
     await recordAuthEvent({
       action: 'user_password_changed',
       userId: userData.id,
+      tenantId: auditOrganizationId,
       outcome: 'success',
       reason: 'password reset via emailed token',
       ipAddress: req.ip,
@@ -2627,7 +2604,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
     await recordAuthEvent({
       action: 'user_password_changed',
       userId: userData.id,
-      tenantId: userData.defaultOrganizationId,
+      tenantId: await auditOrganizationOf(userData),
       email: userData.email,
       outcome: 'success',
       reason: 'changed by the account holder',

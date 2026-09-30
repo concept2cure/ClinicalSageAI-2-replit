@@ -19,6 +19,8 @@ const MEANING_LABEL: Record<string, string> = {
   APPROVER: 'Approval',
   APPROVAL: 'Approval',
   APPROVED: 'Approval',
+  // A disposition recorded for a reviewer with no account (protocol reviews).
+  RESPONSIBILITY: 'Responsibility',
 };
 
 export function signatureMeaningLabel(m: string | null | undefined): string {

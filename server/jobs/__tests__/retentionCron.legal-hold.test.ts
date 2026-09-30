@@ -119,6 +119,10 @@ const expiredDoc = (over: Record<string, unknown> = {}) => ({
 const HARD_DELETE_POLICY = [
   { policyName: 'purge', archiveBeforeDelete: false, hardDelete: true },
 ];
+/** A disposition the sweep still performs: since VR-07 a destroy policy is refused and reported. */
+const SOFT_DELETE_POLICY = [
+  { policyName: 'purge', archiveBeforeDelete: false, hardDelete: false },
+];
 
 /**
  * The sweep reads, in order: expired documents, policies, holds.
@@ -157,7 +161,8 @@ describe('a hold stops disposition', () => {
     expect(deleted).toHaveLength(0);
     expect(softDeleted).toHaveLength(0);
     expect(summary.heldByLegalHold).toBe(1);
-    expect(summary.hardDeleted).toBe(0);
+    // The hold is checked first, so it is counted as a hold, not as a refusal.
+    expect(summary.destructionRefused).toBe(0);
   });
 
   it('a PROGRAM-scoped hold covers every document of that program', async () => {
@@ -192,29 +197,29 @@ describe('a hold stops disposition', () => {
 describe('a hold that does not apply does not block', () => {
   it('deletes when no hold exists — the guard is not a blanket stop', async () => {
     // Guards against "fixing" the defect by never deleting anything.
-    arrange({ docs: [expiredDoc()], policies: HARD_DELETE_POLICY, holds: [] });
+    arrange({ docs: [expiredDoc()], policies: SOFT_DELETE_POLICY, holds: [] });
 
     const summary = await runRetentionSweep();
 
-    expect(summary.hardDeleted).toBe(1);
+    expect(summary.softDeleted).toBe(1);
     expect(summary.heldByLegalHold).toBe(0);
   });
 
   it('deletes when the only hold covers a DIFFERENT program', async () => {
     arrange({
       docs: [expiredDoc()],
-      policies: HARD_DELETE_POLICY,
+      policies: SOFT_DELETE_POLICY,
       holds: [{ programId: '99999999-9999-9999-9999-999999999999', documentId: null }],
     });
 
-    expect((await runRetentionSweep()).hardDeleted).toBe(1);
+    expect((await runRetentionSweep()).softDeleted).toBe(1);
   });
 
   it('a LIFTED hold does not block — the query already excludes it', async () => {
     // loadActiveHolds filters `lifted_at IS NULL`, so a lifted hold never
     // reaches the sweep. Modelled as the empty result that filter produces.
-    arrange({ docs: [expiredDoc()], policies: HARD_DELETE_POLICY, holds: [] });
-    expect((await runRetentionSweep()).hardDeleted).toBe(1);
+    arrange({ docs: [expiredDoc()], policies: SOFT_DELETE_POLICY, holds: [] });
+    expect((await runRetentionSweep()).softDeleted).toBe(1);
   });
 });
 
@@ -234,16 +239,16 @@ describe('the sweep fails closed when holds cannot be read', () => {
 });
 
 describe('a disposition is one transaction with its chained audit row (P1-22)', () => {
-  it('hard delete: BEGIN, the organisation, the delete, the chained audit row, COMMIT — and the row names the document', async () => {
-    arrange({ docs: [expiredDoc()], policies: HARD_DELETE_POLICY, holds: [] });
+  it('soft delete: BEGIN, the organisation, the tombstone, the chained audit row, COMMIT — and the row names the document', async () => {
+    arrange({ docs: [expiredDoc()], policies: SOFT_DELETE_POLICY, holds: [] });
 
     const summary = await runRetentionSweep();
 
-    expect(summary.hardDeleted).toBe(1);
-    expect(deleted).toEqual([DOC]);
-    expect(tx.statements).toEqual(['BEGIN', 'SELECT organization_id FROM', 'DELETE FROM vault.documents', 'AUDIT', 'COMMIT']);
+    expect(summary.softDeleted).toBe(1);
+    expect(softDeleted).toEqual([DOC]);
+    expect(tx.statements).toEqual(['BEGIN', 'SELECT organization_id FROM', 'UPDATE vault.documents SET', 'AUDIT', 'COMMIT']);
     const [, entry, tenant, resource] = tx.audit.mock.calls[0];
-    expect(entry).toMatchObject({ action: 'vault.document.retention_hard_delete', resourceType: 'vault_document', resourceId: DOC });
+    expect(entry).toMatchObject({ action: 'vault.document.retention_soft_delete', resourceType: 'vault_document', resourceId: DOC });
     expect(tenant).toBe(7);
     expect(resource).toBe(DOC);
   });
@@ -257,7 +262,7 @@ describe('a disposition is one transaction with its chained audit row (P1-22)', 
 
     const summary = await runRetentionSweep();
 
-    expect(summary).toMatchObject({ archived: 1, softDeleted: 1, hardDeleted: 0, errors: 0 });
+    expect(summary).toMatchObject({ archived: 1, softDeleted: 1, destructionRefused: 0, errors: 0 });
     expect(tx.statements).toEqual(['BEGIN', 'INSERT INTO vault.document_archives', 'UPDATE vault.documents SET', 'AUDIT', 'COMMIT']);
     expect(tx.audit.mock.calls[0][1]).toMatchObject({ action: 'vault.document.retention_soft_delete' });
     expect(tx.audit.mock.calls[0][2]).toBe(9);
@@ -265,22 +270,22 @@ describe('a disposition is one transaction with its chained audit row (P1-22)', 
 
   it('a deletion whose audit row cannot be written is rolled back and counted as an error', async () => {
     tx.auditThrows = true;
-    arrange({ docs: [expiredDoc()], policies: HARD_DELETE_POLICY, holds: [] });
+    arrange({ docs: [expiredDoc()], policies: SOFT_DELETE_POLICY, holds: [] });
 
     const summary = await runRetentionSweep();
 
-    expect(summary.hardDeleted).toBe(0);
+    expect(summary.softDeleted).toBe(0);
     expect(summary.errors).toBe(1);
-    expect(tx.statements).toEqual(['BEGIN', 'SELECT organization_id FROM', 'DELETE FROM vault.documents', 'ROLLBACK']);
+    expect(tx.statements).toEqual(['BEGIN', 'SELECT organization_id FROM', 'UPDATE vault.documents SET', 'ROLLBACK']);
   });
 
   it('a document with no organisation to chain the row under is left in place (nothing is committed unaudited)', async () => {
     tx.programOrg = null;
-    arrange({ docs: [expiredDoc()], policies: HARD_DELETE_POLICY, holds: [] });
+    arrange({ docs: [expiredDoc()], policies: SOFT_DELETE_POLICY, holds: [] });
 
     const summary = await runRetentionSweep();
 
-    expect(summary.hardDeleted).toBe(0);
+    expect(summary.softDeleted).toBe(0);
     expect(summary.errors).toBe(1);
     expect(tx.statements).toEqual(['BEGIN', 'SELECT organization_id FROM', 'ROLLBACK']);
     expect(tx.audit).not.toHaveBeenCalled();

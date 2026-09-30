@@ -18,7 +18,7 @@
  *     the session 'complete', and dry_run shows the plan without writing.
  */
 import { runWithTenantScope } from '../../../db/tenantStore';
-import { describe, it, expect, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 
 import { mockPool } from '../../../../tests/setup';
 
@@ -40,6 +40,15 @@ const registerCreates = {
   registerBodyRefusal: vi.fn((_register: string, _body: unknown): string | null => null),
 };
 vi.mock('../../cmc/register-writes', () => registerCreates);
+
+/* 2026-09-28: commit_intelligence_flow is confirm-class, so it now passes the
+   registry's editor-role gate (writeRoleRefusal) first; CTX models the confirmed
+   member who ran the interview, so the principal's role is an editor one. */
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 
 
 /* The runtime instruments the pool on import (server/db/poolInstrumentation
@@ -77,11 +86,17 @@ function sessionRow(state: unknown, overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Script the shared pool: record statements, answer by SQL shape. */
-function scriptPool(answer: (text: string, params: unknown[]) => unknown[] | null) {
+/** Script the shared pool: record statements, answer by SQL shape.
+ *  The tenant check on the session's project (PF-15) admits CTX's project
+ *  unless a case says the tenant does not hold it. */
+function scriptPool(answer: (text: string, params: unknown[]) => unknown[] | null, opts: { projectInTenant?: boolean } = {}) {
   const statements: Statement[] = [];
   rawQuery.mockImplementation(async (text: string, params: unknown[] = []) => {
     statements.push({ text, params });
+    if (/SELECT 1 AS present/.test(text)) {
+      const rows = opts.projectInTenant === false ? [] : [{ present: 1 }];
+      return { rows, rowCount: rows.length };
+    }
     const rows = answer(text, params) ?? [];
     return { rows, rowCount: rows.length };
   });
@@ -147,6 +162,18 @@ describe('start_intelligence_flow', () => {
     expect(insert.params[2]).toBe(7);
     expect(insert.params[4]).toBe('cmc_specification');
     expect(JSON.parse(String(insert.params[5])).currentNodeId).toBe('substance_identification');
+  });
+
+  it('refuses a project the organization does not hold — the interview is not started and nothing is written (PF-15)', async () => {
+    const statements = scriptPool(
+      (text, params) => (/INSERT INTO cmc_interview_sessions/.test(text) ? [sessionRow(JSON.parse(String(params[5])))] : null),
+      { projectInTenant: false },
+    );
+    const out = await call('start_intelligence_flow', { document_type: 'cmc' }, CTX);
+    expect(out.error).toMatch(/not a program or project of this organization/);
+    expect(out.session_id).toBeUndefined();
+    expect(statements.find(s => /SELECT 1 AS present/.test(s.text))?.params).toEqual(['91', ORG]);
+    expect(statements.filter(s => /INSERT INTO cmc_interview_sessions/.test(s.text))).toEqual([]);
   });
 
   it('without an organization it runs stateless, persists nothing, and says so', async () => {
