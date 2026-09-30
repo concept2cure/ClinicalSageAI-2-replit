@@ -121,7 +121,7 @@ describe('foreignRecordRefusal — record ids other than programs', () => {
     const query = vi.fn(async () => none);
     const out = await foreignRecordRefusal('simulate_reviewer_challenges', { package_id: 1, assessment_id: 5 }, 7, query);
     expect(out?.code).toBe('RECORD_NOT_IN_ORGANIZATION');
-    expect(query.mock.calls[0][0]).toMatch(/JOIN c2c_submission_packages p ON p\.id = a\.package_id[\s\S]*p\.org_id = \$2/);
+    expect((query.mock.calls as unknown as Array<[string]>)[0][0]).toMatch(/JOIN c2c_submission_packages p ON p\.id = a\.package_id[\s\S]*p\.org_id = \$2/);
   });
 
   it('ignores an absent id and a tool with no scopes', async () => {
