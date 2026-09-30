@@ -816,9 +816,19 @@ The founder chose the plan's recommended option in each case:
 - **PF-11**, placement half, and LX-11: `39dfd9b7`. A cross-project placement is refused 409 `CROSS_PROJECT`, and the ledger names the document, its pin and both projects. Citations, pins, comments and the protocol→design binding are still open.
 - **PF-02**: the upload route landed as `25ee228e`, and `/docs/from-draft` in `824f699c`. The AnA tool's legacy branch (precondition P2 of PF-04) goes with PF-04.
 - **PF-14**: `2564895a`. A study design is anchored to a live project of its organization, and never moved or overwritten across organizations.
-- **PF-17**: the server half landed as `65412ea5` (`GET /:id/records`, and the activity feed shows the project's governed actions). The ProjectHome panel and the artifact status route follow PF-04.
+- **PF-17**: done.
+  - The server half landed as `65412ea5` (`GET /:id/records`, and the activity feed shows the project's governed actions).
+  - The ProjectHome panel and the artifact status route: `fe7db61a`, with `be236610` (a failed project lookup is a 500).
+  - Every artifact route acts only on its own project's artifact, and a v2 project reaches them all: `a1d99e1b` (`server/routes/c2c/artifact-project-scope.ts`).
 - **PF-13**: `6f752472`. A project holding sealed, filed or transmitted records is archived, never deleted.
-- **PF-07** (founder decision: project required):
-  - the Data Room half landed as `824f699c`: no source without a project, one audited adopt, identity per project;
-  - the Authoring half (no document without a project, on the server and both client create paths) is the next commit.
-- **PF-04**: the same-organization keys on five stores, with a pre-flight for legacy rows. Its test is written and green, and it lands after PF-07's Authoring half. `vault.documents` and `submission_transmittals` are deliberately left out (see the migration header), and handed to D6 and PF-12.
+- **PF-07** (founder decision: project required): done.
+  - The Data Room half landed as `824f699c`: no source without a project, one audited adopt, identity per project.
+  - The Authoring half: `86ab0d2e`. No document without a project, on the server and both client create paths.
+  - The user's half: `27d87155`. The Data Room offers the caller's conversation files, and "Add to this project" is the audited adopt.
+  - Handed to W1 (`…01T2wooC`): the chat message shown for an upload made with no project open.
+- **PF-04**: done, `f8c32f28` (precondition P2: `b4b218bd`). The same-organization keys cover five stores, with a pre-flight for legacy rows, proven on real PostgreSQL 16 (`docs/evidence/D3/2026-09-26-program-same-org-keys/`). `vault.documents` and `submission_transmittals` are deliberately left out (see the migration header), and handed to D6 and PF-12.
+- **PF-15**: the CMC and eSTAR halves are done. LX-26 (the device filing path) waits on its founder decision.
+  - `652e0947`: the Module 3 routes and `POST /api/cmc-changes` write only under a project of the caller's organization.
+  - `369cc698`: one membership check for CMC, `project-membership.ts` `projectBelongsToTenant`, which no longer admits a deleted program.
+  - `0f69a1d3` (MISSED-2): an interview session is bound only to a project of its organization, checked at start and on every commit.
+  - `c432e27a`: a tracked eSTAR filing names a project of its organization.

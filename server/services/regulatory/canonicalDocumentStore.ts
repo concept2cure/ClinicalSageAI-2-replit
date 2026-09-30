@@ -101,10 +101,13 @@ function sealEvent(prior: DocumentAuditEvent[], event: DocumentAuditEvent): Docu
 
 export interface CreateCanonicalDocumentInput {
   organizationId: number;
+  /** The authenticated creator; the separation-of-duties check reads it (VR-12). */
+  createdBy: number;
   title: string;
   documentType: string;
   projectId?: string;
   hasContent?: boolean;
+  /** The server's reading of the source's content hash, never a request value (VR-12). */
   contentHash?: string;
   sources?: ProjectionInput['sources'];
 }
@@ -138,6 +141,7 @@ export async function createCanonicalDocument(
   await db.insert(canonicalDocuments).values({
     canonicalId,
     organizationId: input.organizationId,
+    createdBy: input.createdBy,
     projectId: input.projectId,
     title: input.title,
     documentType: input.documentType,
@@ -213,6 +217,7 @@ export async function loadProjectionInput(
     >,
     hasContent: row.hasContent,
     contentHash: row.contentHash,
+    createdBy: row.createdBy ?? null,
     reviewSignature: (row.reviewSignature ?? undefined) as ProjectionInput['reviewSignature'],
     approvalSignature: (row.approvalSignature ?? undefined) as ProjectionInput['approvalSignature'],
     placement: (row.placement ?? undefined) as ProjectionInput['placement'],
