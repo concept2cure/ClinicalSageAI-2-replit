@@ -73,20 +73,37 @@ function chainStatus(row: AuditRow): ChainStatus {
   return row.hmac_seal ? 'sealed' : 'chained';
 }
 
-router.get('/audit', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = listQuery.safeParse(req.query);
-  if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
-  const { action, resource, record, actor, program, from, to, limit = 200 } = parsed.data;
+/** What the audit read filters on; the tenant is always the caller's. */
+export interface AuditEventFilters {
+  action?: string;
+  resource?: string;
+  /** One record's own trail: audit_logs.record_id equal to any of these. */
+  record?: string | string[];
+  actor?: string;
+  program?: string;
+  from?: string;
+  to?: string;
+  limit: number;
+}
 
+/**
+ * The audit read behind GET /api/mdx/audit and a Vault artifact's own trail
+ * (GET /api/mdx/vault/:artifactId/audit): events, filter registries, KPIs and
+ * an honest integrity summary, from the real audit_logs table, tenant-scoped.
+ * Throws on a failed read; the caller answers it (42P01 → 503).
+ */
+export async function readAuditEvents(orgId: number, f: AuditEventFilters) {
+  const { action, resource, record, actor, program, from, to, limit } = f;
   // Tenant scope lives in the SQL literal below (not this array) so the
   // tenant-isolation CI gate can verify it statically.
   const filters: string[] = [];
   const args: unknown[] = [orgId];
   if (action)   { args.push(action);   filters.push(`al.action = $${args.length}`); }
   if (resource) { args.push(resource); filters.push(`al.table_name = $${args.length}`); }
-  if (record)   { args.push(record);   filters.push(`al.record_id = $${args.length}`); }
+  // One record: an exact match, never a substring. Several ids for one record
+  // (an artifact's numeric and external forms) are matched as a set.
+  if (typeof record === 'string') { args.push(record); filters.push(`al.record_id = $${args.length}`); }
+  else if (record?.length) { args.push(record); filters.push(`al.record_id = ANY($${args.length}::text[])`); }
   if (actor)    { args.push(actor);    filters.push(`al.user_id::text = $${args.length}`); }
   // Phase 9 connection-pass §3: cross-program surfaces accept an optional
   // program filter. Audit events anchor to a program when the record id or
@@ -100,89 +117,100 @@ router.get('/audit', async (req: Request, res: Response) => {
   args.push(limit);
   const extraFilters = filters.length ? ` AND ${filters.join(' AND ')}` : '';
 
-  try {
-    const { rows } = await pool.query<AuditRow>(
-      `SELECT al.id, al.user_id, al.action, al.table_name, al.record_id,
-              al.new_values, al.created_at, al.sha256_chain, al.hmac_seal,
-              COALESCE(u.name, u.email) AS actor_name
-         FROM audit_logs al
-         LEFT JOIN LATERAL public.actor_name(al.user_id) u ON TRUE
-        WHERE al.tenant_id = $1${extraFilters}
-        ORDER BY al.created_at DESC
-        LIMIT $${args.length}`,
-      args,
-    );
+  const { rows } = await pool.query<AuditRow>(
+    `SELECT al.id, al.user_id, al.action, al.table_name, al.record_id,
+            al.new_values, al.created_at, al.sha256_chain, al.hmac_seal,
+            COALESCE(u.name, u.email) AS actor_name
+       FROM audit_logs al
+       LEFT JOIN LATERAL public.actor_name(al.user_id) u ON TRUE
+      WHERE al.tenant_id = $1${extraFilters}
+      ORDER BY al.created_at DESC
+      LIMIT $${args.length}`,
+    args,
+  );
 
-    const events = rows.map((r) => {
-      const nv = r.new_values ?? {};
-      return {
-        id: `A-${r.id}`,
-        when: r.created_at ? new Date(r.created_at).toISOString() : '',
-        actor: r.user_id != null ? `u-${r.user_id}` : 'system',
-        actorName: r.actor_name ?? (r.user_id != null ? `User ${r.user_id}` : 'system'),
-        role: String((nv as Record<string, unknown>).role ?? ''),
-        action: r.action ?? '',
-        resource: r.table_name ?? '',
-        target: r.record_id ?? '',
-        resourceId: r.record_id ?? '',
-        reason: String((nv as Record<string, unknown>).reason ?? ''),
-        /* The row's own chain link — real column, full hex, never truncated. */
-        sha: r.sha256_chain ?? '',
-        /* Deliberately empty, and `prevAvailable` says so. `audit_logs` is a
-           SINGLE GLOBAL chain across every tenant (chain.ts:59 takes the latest
-           row with no tenant predicate), so this row's chain predecessor
-           frequently belongs to a DIFFERENT organization. A tenant-scoped
-           reader therefore cannot show the predecessor without leaking another
-           tenant's audit hash, and the tenant-local previous row is NOT the
-           chain predecessor — presenting it as one would be a fabricated
-           linkage. See docs/AUDIT_SUBSTRATE_DECISION_2026-08.md: this is the
-           property that decides which substrate becomes the reference. */
-        prev: '',
-        prevAvailable: false,
-        chain: chainStatus(r),
-      };
-    });
-
-    /* Honest integrity summary for the surface badge. The pane previously
-       asserted "Tamper-evident · SHA-256" over whatever it was given; it can
-       only say that truthfully when every row in the window is chained. */
-    const unchained = events.filter((e) => e.chain === 'unchained').length;
-    const integrity = {
-      total:      events.length,
-      sealed:     events.filter((e) => e.chain === 'sealed').length,
-      chained:    events.filter((e) => e.chain === 'chained').length,
-      unchained,
-      /* One chain for all tenants — not per-organization. */
-      chainScope: 'global' as const,
-      /* The chain cannot be walked from a tenant-scoped read; verification is
-         `chain.ts` / the daily verifier, which runs unscoped. */
-      verifiableHere: false,
-      note:
-        unchained > 0
-          ? `${unchained} of ${events.length} events in this window carry no chain link and are not tamper-evident.`
-          : null,
+  const events = rows.map((r) => {
+    const nv = r.new_values ?? {};
+    return {
+      id: `A-${r.id}`,
+      when: r.created_at ? new Date(r.created_at).toISOString() : '',
+      actor: r.user_id != null ? `u-${r.user_id}` : 'system',
+      actorName: r.actor_name ?? (r.user_id != null ? `User ${r.user_id}` : 'system'),
+      role: String((nv as Record<string, unknown>).role ?? ''),
+      action: r.action ?? '',
+      resource: r.table_name ?? '',
+      target: r.record_id ?? '',
+      resourceId: r.record_id ?? '',
+      reason: String((nv as Record<string, unknown>).reason ?? ''),
+      /* The row's own chain link — real column, full hex, never truncated. */
+      sha: r.sha256_chain ?? '',
+      /* Deliberately empty, and `prevAvailable` says so. `audit_logs` is a
+         SINGLE GLOBAL chain across every tenant (chain.ts:59 takes the latest
+         row with no tenant predicate), so this row's chain predecessor
+         frequently belongs to a DIFFERENT organization. A tenant-scoped
+         reader therefore cannot show the predecessor without leaking another
+         tenant's audit hash, and the tenant-local previous row is NOT the
+         chain predecessor — presenting it as one would be a fabricated
+         linkage. See docs/AUDIT_SUBSTRATE_DECISION_2026-08.md: this is the
+         property that decides which substrate becomes the reference. */
+      prev: '',
+      prevAvailable: false,
+      chain: chainStatus(r),
     };
+  });
 
-    // Derive filter registries + KPIs from the live rows (no fixtures).
-    const actionSet = new Map<string, number>();
-    const resourceSet = new Map<string, number>();
-    for (const e of events) {
-      if (e.action) actionSet.set(e.action, (actionSet.get(e.action) ?? 0) + 1);
-      if (e.resource) resourceSet.set(e.resource, (resourceSet.get(e.resource) ?? 0) + 1);
-    }
-    const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-    const actions = [...actionSet.keys()].map((id) => ({ id, label: cap(id) }));
-    const resources = [...resourceSet.keys()].map((id) => ({ id, label: cap(id) }));
+  /* Honest integrity summary for the surface badge. The pane previously
+     asserted "Tamper-evident · SHA-256" over whatever it was given; it can
+     only say that truthfully when every row in the window is chained. */
+  const unchained = events.filter((e) => e.chain === 'unchained').length;
+  const integrity = {
+    total:      events.length,
+    sealed:     events.filter((e) => e.chain === 'sealed').length,
+    chained:    events.filter((e) => e.chain === 'chained').length,
+    unchained,
+    /* One chain for all tenants — not per-organization. */
+    chainScope: 'global' as const,
+    /* The chain cannot be walked from a tenant-scoped read; verification is
+       `chain.ts` / the daily verifier, which runs unscoped. */
+    verifiableHere: false,
+    note:
+      unchained > 0
+        ? `${unchained} of ${events.length} events in this window carry no chain link and are not tamper-evident.`
+        : null,
+  };
 
-    const today = events.filter((e) => e.when && e.when.slice(0, 10) === new Date().toISOString().slice(0, 10));
-    const signings = today.filter((e) => e.action === 'sign').length;
-    const kpis = [
-      { label: 'Events today', metric: String(today.length), meta: `${events.length} in window` },
-      { label: 'Signings today', metric: String(signings), meta: 'Part 11 e-signature events' },
-      { label: 'Distinct actors', metric: String(new Set(events.map((e) => e.actor)).size), meta: 'In current window' },
-    ];
+  // Derive filter registries + KPIs from the live rows (no fixtures).
+  const actionSet = new Map<string, number>();
+  const resourceSet = new Map<string, number>();
+  for (const e of events) {
+    if (e.action) actionSet.set(e.action, (actionSet.get(e.action) ?? 0) + 1);
+    if (e.resource) resourceSet.set(e.resource, (resourceSet.get(e.resource) ?? 0) + 1);
+  }
+  const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+  const actions = [...actionSet.keys()].map((id) => ({ id, label: cap(id) }));
+  const resources = [...resourceSet.keys()].map((id) => ({ id, label: cap(id) }));
 
-    return ok(res, { events, actions, resources, kpis, integrity }, { count: events.length });
+  const today = events.filter((e) => e.when && e.when.slice(0, 10) === new Date().toISOString().slice(0, 10));
+  const signings = today.filter((e) => e.action === 'sign').length;
+  const kpis = [
+    { label: 'Events today', metric: String(today.length), meta: `${events.length} in window` },
+    { label: 'Signings today', metric: String(signings), meta: 'Part 11 e-signature events' },
+    { label: 'Distinct actors', metric: String(new Set(events.map((e) => e.actor)).size), meta: 'In current window' },
+  ];
+
+  return { events, actions, resources, kpis, integrity };
+}
+
+router.get('/audit', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const parsed = listQuery.safeParse(req.query);
+  if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
+  const { limit = 200, ...rest } = parsed.data;
+
+  try {
+    const payload = await readAuditEvents(orgId, { ...rest, limit });
+    return ok(res, payload, { count: payload.events.length });
   } catch (err: unknown) {
     const code = (err as { code?: string }).code;
     if (code === '42P01') {
