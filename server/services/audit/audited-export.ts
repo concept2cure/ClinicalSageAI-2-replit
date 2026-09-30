@@ -21,6 +21,7 @@
 import type { Response } from 'express';
 
 import { writeChainedAuditRow } from '../auditService.js';
+import type { ChainBreak } from './chain.js';
 import { verifyTenantChainOnAdminScope } from './tenant-chain-verdict.js';
 
 type ConnectablePool = {
@@ -29,11 +30,31 @@ type ConnectablePool = {
 
 export type TenantChainVerdict = { ok: boolean | null; rowsChecked?: number; brokenAt?: unknown; reason?: string };
 
+/** What an export may say about where another organization's row is involved. */
+const ANOTHER_ORGANIZATION = 'another organization';
+
+/**
+ * A chain break as this organization may read it. The walk loads other
+ * organizations' legacy rows as context, so the break it reports can name one
+ * of their rows — the broken row, or the row its hash commits to — by id and
+ * organization number. That is theirs, not the exporter's (DP-44, 2026-09-29):
+ * a row of this organization is named, one of another is only said to be.
+ */
+export function breakForTenant(orgId: number, b: ChainBreak): Record<string, unknown> {
+  const own = b.tenantId === orgId;
+  const to = b.commitsTo;
+  return {
+    segment: b.segment,
+    ...(own ? { id: b.id, expected: b.expected, stored: b.stored } : { row: ANOTHER_ORGANIZATION }),
+    commitsTo: to == null || to === 'genesis' ? to : to.tenantId === orgId ? { id: to.id } : ANOTHER_ORGANIZATION,
+  };
+}
+
 /** The tenant's whole audit chain, walked now; `ok: null` when the walk could not run. */
 export async function walkTenantChain(orgId: number): Promise<TenantChainVerdict> {
   try {
     const walk = await verifyTenantChainOnAdminScope(orgId);
-    return { ok: walk.ok, rowsChecked: walk.rowsChecked, ...(walk.brokenAt ? { brokenAt: walk.brokenAt } : {}) };
+    return { ok: walk.ok, rowsChecked: walk.rowsChecked, ...(walk.brokenAt ? { brokenAt: breakForTenant(orgId, walk.brokenAt) } : {}) };
   } catch (err) {
     console.error('[audited-export] tenant chain walk failed:', (err as Error)?.message);
     return { ok: null, reason: 'The audit chain could not be walked at export time.' };

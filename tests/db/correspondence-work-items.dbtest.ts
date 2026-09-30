@@ -182,6 +182,7 @@ afterAll(async () => {
   if (serverPool) await serverPool.end().catch(() => {});
   if (owner) {
     await owner.query(`GRANT INSERT ON c2c_correspondence_issues TO ${runtimeRole}`).catch(() => {});
+    await owner.query(`GRANT INSERT ON c2c_project_work_items TO ${runtimeRole}`).catch(() => {});
     await cleanup().catch((e) => console.warn('[dbcwi] cleanup left rows:', e?.message));
     for (let attempt = 1; ; attempt++) {
       try {
@@ -247,6 +248,48 @@ describe('the key still deduplicates what it was added to deduplicate', () => {
         [`${TAG}-dup-${RUN}`, ORG, projectId, first.source_ref],
       ),
     ).rejects.toMatchObject({ code: '23505' });
+  });
+});
+
+describe('an intake that cannot be stored whole leaves nothing behind', () => {
+  it('a failure on a later issue rolls back the letter and every earlier write', async () => {
+    // The intake writes the letter, then for each issue its row, any blocker and
+    // its work item, then the timeline event. Until 2026-09-30 each was its own
+    // statement: a failure on issue 2 left the letter holding issue 1 alone, and
+    // the user's retry recorded the letter a second time.
+    const subject = `${TAG} partial-write probe ${RUN}`;
+    await owner.query(`REVOKE INSERT ON c2c_project_work_items FROM ${runtimeRole}`);
+    try {
+      const res = await intake(subject, MULTI_ISSUE_LETTER);
+      expect(res.status).toBe(500);
+    } finally {
+      await owner.query(`GRANT INSERT ON c2c_project_work_items TO ${runtimeRole}`);
+    }
+    const left = await owner.query(
+      `SELECT
+         (SELECT count(*) FROM c2c_correspondence WHERE organization_id = $1 AND subject = $2)::int AS letters,
+         (SELECT count(*) FROM c2c_correspondence_issues i JOIN c2c_correspondence c ON c.id = i.correspondence_id
+           WHERE c.organization_id = $1 AND c.subject = $2)::int AS issues,
+         (SELECT count(*) FROM c2c_communication_timeline_events WHERE organization_id = $1 AND summary = $2)::int AS events`,
+      [ORG, subject],
+    );
+    expect(left.rows[0]).toEqual({ letters: 0, issues: 0, events: 0 });
+  });
+
+  it('the same letter, sent again once the store is writable, is recorded once and whole', async () => {
+    const subject = `${TAG} partial-write probe ${RUN}`;
+    const res = await intake(subject, MULTI_ISSUE_LETTER);
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const letters = await owner.query(
+      `SELECT id FROM c2c_correspondence WHERE organization_id = $1 AND subject = $2`,
+      [ORG, subject],
+    );
+    expect(letters.rows).toHaveLength(1);
+    const issues = await owner.query(
+      `SELECT count(*)::int AS n FROM c2c_correspondence_issues WHERE correspondence_id = $1`,
+      [letters.rows[0].id],
+    );
+    expect(issues.rows[0].n).toBe((res.body.issues as unknown[]).length);
   });
 });
 

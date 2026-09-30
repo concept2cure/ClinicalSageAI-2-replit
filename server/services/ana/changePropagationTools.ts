@@ -19,6 +19,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { STATED_REASON_INPUT } from './stated-reason-input';
 
 const GROUNDED_NOTE =
   'DETERMINISTIC: report the returned values, counts, and citations verbatim — do not recompute or estimate. These come straight from the governed fact store.';
@@ -70,10 +71,7 @@ export const APPLY_FACT_CHANGE: AnaTool = {
       valueNum: { type: 'number', description: 'New numeric value (counts/measures/dates).' },
       valueText: { type: 'string', description: 'New text value (categorical/text). Provide valueNum OR valueText.' },
       unit: { type: 'string', description: 'Optional new unit.' },
-      reason: {
-        type: 'string',
-        description: 'Reason for change — REQUIRED. Recorded on the audit trail and the resolution plan. Ask the user for it if not supplied.',
-      },
+      reason: STATED_REASON_INPUT,
       tolerance: { type: 'number', description: 'Optional relative tolerance for measure comparisons.' },
     },
     required: ['factId', 'reason'],
@@ -108,7 +106,7 @@ export const ESTABLISH_GOVERNED_FACT: AnaTool = {
       valueText: { type: 'string', description: "Text value (e.g. a predicate K-number 'K123456', a categorical). Provide valueNum OR valueText." },
       unit: { type: 'string', description: 'Optional unit (%, mg, copies/mL, months).' },
       comparator: { type: 'string', description: "Optional comparator ('=', '>=', '<='). Default '='." },
-      reason: { type: 'string', description: 'Optional note recorded on the audit trail.' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['programId', 'entity', 'field'],
   },

@@ -156,6 +156,10 @@ beforeAll(async () => {
       // authoring_documents.client_program_id — the column the project anchor
       // is written to. Guarded on the loop tables above, so it follows them.
       'migrations/20260727_authoring_document_program_scope.sql',
+      // Object permissions: the doc_permissions shape and the seed trigger that
+      // grants a document's creator OWNER. The audit read decides access
+      // through it (DP-42), as every write already did in production.
+      'db/migrations/20260727_authoring_object_permissions.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       // ALTERs doc_revisions above with the ledger columns the router now writes
       // (content/chain hashes, origin, input manifest) and installs the

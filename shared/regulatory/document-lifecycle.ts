@@ -109,6 +109,16 @@ export interface ApprovalSignature {
   signedAt: string;
   /** The meaning of the signature (e.g. 'approved', 'reviewed', 'authored'). */
   meaning: 'authored' | 'reviewed' | 'approved';
+  /**
+   * The content hash this signature covers, as the server read it when signing
+   * (VR-12). '' when the document has no content the server can read: its
+   * record then binds the governed-action ledger, not content. Absent on a
+   * sign-off recorded before VR-12, which was bound to nothing and so covers
+   * nothing.
+   */
+  boundContentHash?: string;
+  /** What the electronic_signatures row's digest is a digest OF (BINDING_BASIS). */
+  bindingBasis?: string;
 }
 
 // ─── Document state ───────────────────────────────────────────────────────────
@@ -126,6 +136,11 @@ export interface RegulatedDocumentState {
   version: number;
   /** True once content exists (gate for leaving `authoring`). */
   hasContent: boolean;
+  /**
+   * The current content hash, as the server reads it ('' when it can read
+   * none). A review sign-off satisfies the approval gate only for this content.
+   */
+  contentHash?: string;
   /** Review sign-off recorded (gate for `approved`). */
   reviewSignature?: ApprovalSignature;
   /** Approval sign-off recorded (gate for leaving `approved`). */
@@ -186,8 +201,9 @@ export function canAdvanceDocument(state: RegulatedDocumentState, to: DocumentSt
   if (to === 'in_review' && !state.hasContent) blockedBy.push('CONTENT_REQUIRED');
 
   if (to === 'approved') {
-    // Reaching approved from in_review requires a review sign-off.
-    if (from === 'in_review' && !state.reviewSignature) blockedBy.push('REVIEW_SIGNOFF_REQUIRED');
+    // Reaching approved from in_review requires a review sign-off over the
+    // content as it is now (VR-12).
+    if (from === 'in_review' && !reviewCoversContent(state)) blockedBy.push('REVIEW_SIGNOFF_REQUIRED');
   }
 
   if (to === 'placed') {
@@ -207,6 +223,16 @@ export function canAdvanceDocument(state: RegulatedDocumentState, to: DocumentSt
     return { ...base, allowed: false, blockedBy, reason: `Blocked by: ${blockedBy.join(', ')}` };
   }
   return { ...base, allowed: true, blockedBy: [], reason: `${from} → ${to} permitted` };
+}
+
+/**
+ * Whether the recorded review sign-off covers the document's current content:
+ * it was bound to exactly this content hash. A sign-off over other content, or
+ * one recorded before sign-offs were bound, covers nothing.
+ */
+export function reviewCoversContent(state: Pick<RegulatedDocumentState, 'reviewSignature' | 'contentHash'>): boolean {
+  const bound = state.reviewSignature?.boundContentHash;
+  return typeof bound === 'string' && bound === (state.contentHash ?? '');
 }
 
 /** A placement is complete when it carries a registry id, module, and section. */

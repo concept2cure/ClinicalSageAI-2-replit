@@ -27,6 +27,8 @@ vi.mock('../server/services/intelligence/project-intelligence-service', () => ({
 
 vi.mock('../server/db', () => ({
   getPool: () => ({ query: (...args: any[]) => mockQuery(...args) }),
+  // The intake runs its writes in one transaction on one client (row D2).
+  transaction: async (cb: (client: unknown) => unknown) => cb({ query: (...args: any[]) => mockQuery(...args) }),
   db: {
     insert: () => ({ values: (...args: any[]) => mockDbInsertValues(...args) }),
     // Routes added since this test was written reach for db.select.from(...);
@@ -74,7 +76,10 @@ describe('Communication center runtime integration', () => {
     process.env.ENABLE_REG_CORRESPONDENCE_HEURISTIC_MODE = 'true';
     delete process.env.REG_CORRESPONDENCE_ISSUE_PARSER_MODE;
 
-    mockQuery.mockImplementation(async (sqlText: string, params?: any[]) => {
+    mockQuery.mockImplementation(async (query: string | { text: string }, params?: any[]) => {
+      // A pg client takes a string or a { text, values } config; drizzle, which
+      // the intake's transaction binds to the client, sends the second form.
+      const sqlText = typeof query === 'string' ? query : query?.text ?? '';
       if (sqlText.includes('to_regclass')) return { rows: [{ tbl: 'c2c_submissions' }] };
       if (sqlText.includes('FROM c2c_submissions') && sqlText.includes('WHERE id = $1')) {
         return { rows: [{ id: params?.[0], project_id: 17 }] };

@@ -132,6 +132,8 @@ describe("AnA's governed-fact tools pass the outcome on", () => {
     h.logAction.mockResolvedValueOnce(lost);
     const res = await tool('establish_governed_fact', {
       programId: 'prog-1', entity: 'study', field: 'enrollment', valueNum: 186, unit: 'subjects',
+      // 2026-09-29: a governed value is established only with the person's stated reason.
+      reason: 'Enrollment target set in protocol v3.',
     });
     expect(res.status).toBe('established');
     expect(res.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
