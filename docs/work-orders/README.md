@@ -1120,6 +1120,15 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
       reds are items 8 and 9 and the D5 lane's item 4.
     - **Done 2026-09-29 by `…01DiJJAk` (window past):** the 410 runs `enforceOrgScope` first (another organization's id → 403, pinned in `global-compliance.gdpr-rights.test.ts`, red without it); `ci:org-path-param-guards` 43/43.
 
+### Trunk CI Test, 2026-09-30 (run 12690 at `9639c5f4`), checked by `…01DiJJAk` — fixed
+
+Six Test-job failures, none in a Vault or catalog suite (the VR-04/07/15 suites are green). The owners' 24 h windows had passed, and each was a test the code had correctly outgrown. Only the tests changed:
+- `tests/mdx-imports-routes.test.ts`: it posted `/tmp/*.zip`, the host read INJ-PATH-002 (`930fe7b4c`) closed. The test now posts under `uploads/org-99/`, and five cases (host path, another tenant, `org-999`, `..` climb, the vault) must 400 with nothing written or read.
+- `tests/routes/export-governance-fail-closed.test.ts`: it looked for the literal `if (!governanceResult)`, which `954c2588f` refactored into `recordGovernedEctdExport`. It now runs the handler: 500 `EXPORT_GOVERNANCE_REQUIRED` with nothing sent, plus a positive control.
+- `tests/routes/concept2cure-export-governance.test.ts`: D5 (`a05ba7eb0`) records an export before delivering it, and the mock request had no principal. The test now asserts the `EXPORT_GENERATED` row carries the SHA-256 of the bytes, and that it is written before `res.send`.
+- `tests/golden-journeys/haq-correction.journey.test.ts`: `domain_track` comes from the CTD placement since `91e45bcbe`, and merge `651306ca8` kept the stale flat expectation. The test now expects 2.7.3 → clinical and unplaced → regulatory.
+**→ Needs a decision (owner of `bundle-executor.ts`):** `bundle-executor.ts:256` moves a plan `unresolved → resolved_pending_review`, which `shared/types/resolution.ts:521` refuses. The error is logged and swallowed, so after a successful `POST /bundles/:id/execute` the plan stays `unresolved`. The executor should either step the plan forward or refuse to run.
+
 ### Trunk CI Lint, 2026-09-29 21:30 UTC (run 12674 at `7e10d93d`), checked by `…01DiJJAk` — handed on
 
 Green now: `ci:org-path-param-guards` and the requestDb baseline (`b3c56f8b5`), and the new Vault writers gate. `ci:tenant-entry-points` flagged `retentionCron.ts` because this lane's VR-07 changed it. The justification was re-read and still holds, so only that entry's digest was refreshed, with a dated note. Each item below is inside its owner's 24 h window, so none was edited here.
