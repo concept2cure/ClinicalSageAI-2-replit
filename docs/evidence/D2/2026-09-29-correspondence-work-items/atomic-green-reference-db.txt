@@ -1,11 +1,11 @@
 
  RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
 
-{"level":30,"time":"2026-09-30T23:19:53.162Z","pid":1392,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
-{"level":30,"time":"2026-09-30T23:19:53.163Z","pid":1392,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
-{"level":40,"time":"2026-09-30T23:19:53.163Z","pid":1392,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-09-30T23:27:13.063Z","pid":4438,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-30T23:27:13.064Z","pid":4438,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-30T23:27:13.064Z","pid":4438,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
 stdout | tests/db/correspondence-work-items.dbtest.ts
-[database] Database connection successful { timestamp: '2026-09-30T23:19:53.455Z', poolSize: 1 }
+[database] Database connection successful { timestamp: '2026-09-30T23:27:13.281Z', poolSize: 1 }
 
 stdout | tests/db/correspondence-work-items.dbtest.ts
 [database] Database connection successful
@@ -13,21 +13,21 @@ stdout | tests/db/correspondence-work-items.dbtest.ts
 stderr | tests/db/correspondence-work-items.dbtest.ts
 [SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
 
-{"level":30,"time":"2026-09-30T23:19:54.003Z","pid":1392,"hostname":"vm","context":{"userId":19,"tenantId":91860,"resourceId":"4274b559-2f7d-473b-b9e3-f8b60276914c"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
-{"level":30,"time":"2026-09-30T23:19:54.062Z","pid":1392,"hostname":"vm","context":{"userId":19,"tenantId":91860,"resourceId":"1fc031a1-2438-425c-86e9-8e6bfa66ecb3"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
- ✓ tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > a letter raising several issues is recorded whole: 201, one work item for each 156ms
- ✓ tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > the organisation's next letter is recorded too 42ms
+{"level":30,"time":"2026-09-30T23:27:13.750Z","pid":4438,"hostname":"vm","context":{"userId":20,"tenantId":91860,"resourceId":"a4f80965-0754-4e93-a687-df667b79eac9"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
+{"level":30,"time":"2026-09-30T23:27:13.798Z","pid":4438,"hostname":"vm","context":{"userId":20,"tenantId":91860,"resourceId":"7497d8b9-cf49-4107-9275-c20979b2927c"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
+{"level":50,"time":"2026-09-30T23:27:13.848Z","pid":4438,"hostname":"vm","context":{"correspondenceId":"78a29d05-5aee-4b67-be33-4525588eea0d","projectId":10,"submissionId":"d57fd4fd-9c18-4e85-8f7c-161c06fcdf87","err":"permission denied for table c2c_project_work_items","correlationId":null,"code":"42501"},"msg":"[regulatory-correspondence] ingesting agency correspondence failed"}
+ ✓ tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > a letter raising several issues is recorded whole: 201, one work item for each 138ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > the organisation's next letter is recorded too 39ms
  ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > two work items for the same integer-keyed source in one organisation are refused 5ms
- ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > the same correspondence issue cannot be written twice 9ms
-{"level":50,"time":"2026-09-30T23:19:54.117Z","pid":1392,"hostname":"vm","context":{"correspondenceId":"93827153-ee9c-4af1-8445-d2e597e2d66f","projectId":9,"submissionId":"8d8abc51-6a60-4ef9-a6c3-7272548c9bef","err":"permission denied for table c2c_project_work_items","correlationId":null,"code":"42501"},"msg":"[regulatory-correspondence] ingesting agency correspondence failed"}
-{"level":30,"time":"2026-09-30T23:19:54.152Z","pid":1392,"hostname":"vm","context":{"userId":19,"tenantId":91860,"resourceId":"844eae35-704c-47df-bf47-cd8220a99294"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
-{"level":50,"time":"2026-09-30T23:19:54.184Z","pid":1392,"hostname":"vm","context":{"correspondenceId":"8acc2e23-3b21-4369-83f2-764fc5bdbe6f","projectId":9,"submissionId":"8d8abc51-6a60-4ef9-a6c3-7272548c9bef","err":"permission denied for table c2c_correspondence_issues","correlationId":null,"code":"42501"},"msg":"[regulatory-correspondence] ingesting agency correspondence failed"}
- ✓ tests/db/correspondence-work-items.dbtest.ts > an intake that cannot be stored whole leaves nothing behind > a failure on a later issue rolls back the letter and every earlier write 37ms
- ✓ tests/db/correspondence-work-items.dbtest.ts > an intake that cannot be stored whole leaves nothing behind > the same letter, sent again once the store is writable, is recorded once and whole 39ms
- ✓ tests/db/correspondence-work-items.dbtest.ts > a failed intake says so without shipping the database error > answers 500 with no PostgreSQL text in the body 26ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > the same correspondence issue cannot be written twice 6ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > an intake that cannot be stored whole leaves nothing behind > a failure on a later issue rolls back the letter and every earlier write 34ms
+{"level":30,"time":"2026-09-30T23:27:13.882Z","pid":4438,"hostname":"vm","context":{"userId":20,"tenantId":91860,"resourceId":"8fd8ebfa-3116-48fb-8b0f-ee7c114fc3f7"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
+{"level":50,"time":"2026-09-30T23:27:13.910Z","pid":4438,"hostname":"vm","context":{"correspondenceId":"fc22d7e4-1b73-463b-9def-ee3ecfbf754b","projectId":10,"submissionId":"d57fd4fd-9c18-4e85-8f7c-161c06fcdf87","err":"permission denied for table c2c_correspondence_issues","correlationId":null,"code":"42501"},"msg":"[regulatory-correspondence] ingesting agency correspondence failed"}
+ ✓ tests/db/correspondence-work-items.dbtest.ts > an intake that cannot be stored whole leaves nothing behind > the same letter, sent again once the store is writable, is recorded once and whole 36ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > a failed intake says so without shipping the database error > answers 500 with no PostgreSQL text in the body 23ms
 
  Test Files  1 passed (1)
       Tests  7 passed (7)
-   Start at  23:19:50
-   Duration  3.76s (transform 1.32s, setup 76ms, import 218ms, tests 3.17s, environment 0ms)
+   Start at  23:27:10
+   Duration  3.60s (transform 1.17s, setup 71ms, import 199ms, tests 3.04s, environment 0ms)
 

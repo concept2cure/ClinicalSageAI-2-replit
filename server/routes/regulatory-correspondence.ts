@@ -5,6 +5,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from '@shared/schema';
 import type {
   Correspondence,
+  CorrespondenceIssue,
   ResponsePackage,
   Submission,
   SubmissionLifecycleState,
@@ -132,6 +133,58 @@ async function addTimelineEventDB(
       JSON.stringify(payload.metadata || {}),
     ]
   );
+}
+
+/* Row parameters for the intake's two inserts. Kept out of the handler so the
+   transaction body reads as the sequence of writes it is (2026-09-30, row D2). */
+function correspondenceRowParams(
+  record: Correspondence,
+  orgId: number,
+  attachmentRefs: unknown[],
+): unknown[] {
+  return [
+    record.id,
+    orgId,
+    record.projectId,
+    record.submissionId,
+    record.direction,
+    record.sourceChannel,
+    record.communicationType,
+    record.subject,
+    record.sender || null,
+    JSON.stringify(record.recipients || []),
+    record.receivedAt || null,
+    record.dueDate || null,
+    record.urgency,
+    record.responseRequired,
+    record.status,
+    record.sourceMessageId || null,
+    record.sourceThreadId || null,
+    record.sourceMailboxId || null,
+    JSON.stringify(record.parserMetadata || {}),
+    JSON.stringify(attachmentRefs),
+    record.parsedText || null,
+    record.summary || null,
+  ];
+}
+
+function correspondenceIssueRowParams(issue: CorrespondenceIssue): unknown[] {
+  return [
+    issue.id,
+    issue.correspondenceId,
+    issue.category,
+    issue.subcategory || null,
+    issue.severity,
+    issue.blocker,
+    issue.responseRequired,
+    issue.sourceExcerpt || null,
+    issue.confidence,
+    issue.humanReviewStatus,
+    JSON.stringify(issue.mappedCtdSections || []),
+    JSON.stringify(issue.mappedArtifactIds || []),
+    issue.resolutionStatus,
+    JSON.stringify(issue.structuredExtraction || {}),
+  ];
 }
 
 async function persistCorrespondenceLearning(payload: {
@@ -610,30 +663,7 @@ router.post('/correspondence/intake', async (req, res) => {
         `INSERT INTO c2c_correspondence
         (id, organization_id, project_id, submission_id, direction, source_channel, communication_type, subject, sender, recipients, received_at, due_date, urgency, response_required, status, source_message_id, source_thread_id, source_mailbox_id, parser_metadata, attachment_refs, parsed_text, summary)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20::jsonb,$21,$22)`,
-        [
-          record.id,
-          orgId,
-          record.projectId,
-          record.submissionId,
-          record.direction,
-          record.sourceChannel,
-          record.communicationType,
-          record.subject,
-          record.sender || null,
-          JSON.stringify(record.recipients || []),
-          record.receivedAt || null,
-          record.dueDate || null,
-          record.urgency,
-          record.responseRequired,
-          record.status,
-          record.sourceMessageId || null,
-          record.sourceThreadId || null,
-          record.sourceMailboxId || null,
-          JSON.stringify(record.parserMetadata || {}),
-          JSON.stringify(attachmentRefs),
-          record.parsedText || null,
-          record.summary || null,
-        ]
+        correspondenceRowParams(record, orgId, attachmentRefs)
       );
 
       for (const issue of extracted) {
@@ -647,22 +677,7 @@ router.post('/correspondence/intake', async (req, res) => {
           `INSERT INTO c2c_correspondence_issues
             (id, correspondence_id, category, subcategory, severity, blocker, response_required, source_excerpt, confidence, human_review_status, mapped_ctd_sections, mapped_artifact_ids, resolution_status, structured_extraction)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14::jsonb)`,
-          [
-            issue.id,
-            issue.correspondenceId,
-            issue.category,
-            issue.subcategory || null,
-            issue.severity,
-            issue.blocker,
-            issue.responseRequired,
-            issue.sourceExcerpt || null,
-            issue.confidence,
-            issue.humanReviewStatus,
-            JSON.stringify(issue.mappedCtdSections || []),
-            JSON.stringify(issue.mappedArtifactIds || []),
-            issue.resolutionStatus,
-            JSON.stringify(issue.structuredExtraction || {}),
-          ]
+          correspondenceIssueRowParams(issue)
         );
 
         const impact = await computeCorrespondenceIssueImpact({
