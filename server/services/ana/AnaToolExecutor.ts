@@ -195,6 +195,8 @@ import {
 } from './agentic-tool-dispatch.js';
 import { modelCallRefusal } from '../ai-gateway/model-call-scope.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
+import { HIDDEN_APP_TOOLS, anaCapabilityInLaunchScope } from './ana-launch-scope';
+import { launchScopeEnforced } from '../entitlements/launch-scope';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
@@ -524,6 +526,14 @@ function gatedReason(input: Record<string, unknown>): string {
  * directly. A refusal is a tool result the model reads and relays, not a throw,
  * so the turn continues honestly.
  *
+ *   L. A tool that serves only apps outside the release (ana-launch-scope.ts)
+ *      is refused as LAUNCH_SCOPE while launch scope is enforced (production).
+ *      governedToolsetFor already withholds it from what AnA is offered, but
+ *      every path resolves a handler by name, offered or not: the stream's
+ *      [INTELLIGENCE_ANSWER] fast path calls answer_intelligence_question
+ *      directly, and the loop and stream run any registered name the model
+ *      emits (2026-09-30, ana-launch-scope-execution.test.ts). First, so a
+ *      hidden write is never put to a person to confirm.
  *   0. Below the person's own turn (a sub-agent, ctx.agentDepth >= 1), only a
  *      tool the register classes `read` runs; anything else is refused as
  *      SUB_AGENT_READ_ONLY. First, so a child never gets as far as rule 3's
@@ -549,6 +559,16 @@ function preHandlerRefusal(
   input: Record<string, any>,
   ctx: ToolContext | undefined,
 ): { code: string; result: string } | null {
+  if (launchScopeEnforced() && !anaCapabilityInLaunchScope(name, HIDDEN_APP_TOOLS)) {
+    return {
+      code: 'LAUNCH_SCOPE',
+      result: JSON.stringify({
+        error: 'LAUNCH_SCOPE',
+        tool: name,
+        message: `${name} belongs to a part of the product that is not in this release. Nothing was run.`,
+      }),
+    };
+  }
   if ((ctx?.agentDepth ?? 0) >= 1 && toolAuthorizationOf(name, input).class !== 'read') {
     return {
       code: 'SUB_AGENT_READ_ONLY',
