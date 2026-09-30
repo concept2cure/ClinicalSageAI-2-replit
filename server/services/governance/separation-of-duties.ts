@@ -182,6 +182,30 @@ async function documentAuthors(db: AuthorshipReader, documentId: string, orgId: 
 }
 
 /**
+ * A lifecycle document's authors (VR-12): whoever created the canonical record
+ * and, for a document made from a Vault version, whoever uploaded that version.
+ * Both are write-once (the canonical append-only guard; the Vault record guard).
+ */
+async function canonicalDocumentAuthors(db: AuthorshipReader, canonicalId: string, orgId: number): Promise<TargetAuthorship> {
+  const set = new AuthorSet();
+  const doc = await db.query(
+    `SELECT created_by, source_refs->'vault_documents'->>'nativeId' AS vault_id
+       FROM canonical_documents WHERE canonical_id = $1 AND organization_id = $2 LIMIT 1`,
+    [canonicalId, orgId],
+  );
+  set.add(doc.rows, 'created_by', 'lifecycle record creator');
+  const vaultId = doc.rows[0]?.vault_id;
+  if (typeof vaultId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(vaultId)) {
+    const version = await db.query(
+      `SELECT created_by FROM vault.documents WHERE id = $1::uuid AND organization_id = $2 LIMIT 1`,
+      [vaultId, orgId],
+    );
+    set.add(version.rows, 'created_by', 'Vault uploader');
+  }
+  return set.result();
+}
+
+/**
  * A protocol's authors: everyone who wrote its content. That is its creator, the
  * creator of every live content row (sections, objectives, eligibility, visits,
  * schedule-of-assessments rows and cells, team, version snapshots), and everyone
@@ -275,6 +299,8 @@ export async function resolveTargetAuthors(target: string, orgId: number, db: Au
       return single(db, `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'program creator');
     case 'protocol-document':
       return protocolDocumentAuthors(db, rest, orgId);
+    case 'canonical_document':
+      return canonicalDocumentAuthors(db, rest, orgId);
     case 'protocol-review-assignment': {
       // A reviewer signs over the protocol, so independence is from its authors.
       if (!/^\d+$/.test(rest)) return new AuthorSet().result();

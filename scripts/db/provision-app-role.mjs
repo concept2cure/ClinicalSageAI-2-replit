@@ -63,6 +63,7 @@
  */
 
 import { createHash, createHmac, pbkdf2Sync, randomBytes } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
 /** A single, unqualified PostgreSQL identifier: no quoting metacharacters. */
 const ROLE_NAME_RE = /^[a-z_][a-z0-9_]*$/;
@@ -292,11 +293,69 @@ async function assertRuntimeRoleAttributes(db, role) {
 }
 
 /**
+ * The SECURITY DEFINER functions the runtime role may execute, by signature
+ * (`schema.name(identity arguments)`), from ./security-definer-allowlist.json.
+ *
+ * A definer function runs as its owner, past every tenant policy, so each one
+ * the runtime role can execute is a way around RLS. Only a reviewed one — its
+ * entry says why it cannot cross a tenant, or what its caller must guarantee —
+ * stays executable. Kept beside this script because the production image
+ * ships scripts/db (D3, docs/evidence/D3/2026-09-30-definer-revoke/).
+ */
+export function loadDefinerAllowlist() {
+  const doc = JSON.parse(readFileSync(new URL('./security-definer-allowlist.json', import.meta.url), 'utf8'));
+  return new Set(
+    Object.entries(doc.functions)
+      .filter(([, v]) => v.status === 'reviewed' || v.status === 'reviewed-risk')
+      .map(([sig]) => sig),
+  );
+}
+
+/**
+ * REVOKE EXECUTE, from PUBLIC and the runtime role, on every SECURITY DEFINER
+ * function not on the reviewed allowlist. The last step of the grant recipe,
+ * which runs after the migration set on every deploy: the recipe itself
+ * GRANTs EXECUTE on every function in every schema, and a function is
+ * PUBLIC-executable when created, so a revoke anywhere earlier would not hold.
+ * An unreviewed definer function therefore fails closed ("permission denied
+ * for function") for the runtime role rather than reading past RLS for it.
+ * Functions the owner calls — policy helpers, trigger functions, other definer
+ * functions — are unaffected: those run with their owner's privileges.
+ *
+ * Runs inside the caller's transaction. `roleIdent` must come from quote_ident.
+ *
+ * @returns {Promise<string[]>} the signatures revoked.
+ */
+export async function revokeUnreviewedDefinerExecute(
+  db,
+  roleIdent,
+  { allowlist = loadDefinerAllowlist(), log = () => {} } = {},
+) {
+  const { rows } = await db.query(
+    `SELECT p.oid::regprocedure::text AS ref,
+            n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS sig
+       FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE p.prosecdef AND p.prokind = 'f' AND ${SYSTEM_SCHEMA_FILTER}
+      ORDER BY 2`,
+  );
+  const revoked = [];
+  for (const { ref, sig } of rows) {
+    if (allowlist.has(sig)) continue;
+    await db.query(`REVOKE EXECUTE ON FUNCTION ${ref} FROM PUBLIC, ${roleIdent}`);
+    revoked.push(sig);
+  }
+  log(`  ✓ EXECUTE revoked on ${revoked.length} unreviewed SECURITY DEFINER function(s)`);
+  return revoked;
+}
+
+/**
  * THE grant recipe. Grants the runtime role, on every application schema
  * present: USAGE; the per-schema table privileges; USAGE, SELECT on sequences;
  * EXECUTE on functions; and the same as DEFAULT PRIVILEGES for objects the
- * connecting role (the owner) creates later. Grants only — it never REVOKEs,
- * so the owner's own privileges on relations it happens to own are untouched.
+ * connecting role (the owner) creates later. Grants only, with one exception
+ * at the end: EXECUTE on an unreviewed SECURITY DEFINER function is revoked
+ * (revokeUnreviewedDefinerExecute). The owner's own privileges on relations it
+ * happens to own are untouched.
  *
  * Runs inside the caller's transaction. `roleIdent` must come from quote_ident.
  *
@@ -347,6 +406,10 @@ async function grantRuntimeRolePrivileges(db, roleIdent, { log = () => {} } = {}
     );
     grantedSchemas.push(`${schema}(${privList})`);
   }
+
+  // Last, so nothing above re-grants it: an unreviewed definer function is not
+  // the runtime role's to execute (see revokeUnreviewedDefinerExecute).
+  await revokeUnreviewedDefinerExecute(db, roleIdent, { log });
 
   log(`  ✓ grants applied on: ${grantedSchemas.join('; ') || '(no known schemas present)'}`);
   log(`  ✓ default privileges set — future owner-created tables auto-grant to ${roleIdent}`);
