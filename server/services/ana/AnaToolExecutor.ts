@@ -201,6 +201,14 @@ import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
 import {
+  GOVERNED_REASON_MIN,
+  ReasonNotStatedError,
+  gatedReason,
+  reasonFieldOf,
+  statedReason,
+  type StatedReasonField,
+} from './stated-reason-input.js';
+import {
   anaScratchDir,
   assertWithinDocumentWorkspace,
   resolveWithinDocumentWorkspace,
@@ -352,7 +360,8 @@ function getRequiredInputKeys(tool: string): string[] {
  *
  * recordGovernedAction writes it to audit_logs.reason, and the inspector's
  * ledger shows it as the reason for the change. It is the person's, relayed by
- * the model in `input.reason`: at least GOVERNED_REASON_MIN characters,
+ * the model in `input.reason` (`input.reason_for_change` for the tools
+ * reasonFieldOf names): at least GOVERNED_REASON_MIN characters,
  * trimmed — the rule every other path that writes these rows already applies
  * (the REST routes these tools share a service with, e.g. protocol-reviews.ts
  * and financial-disclosures.ts `reasonSchema`; /api/c2c/actions REASON_REQUIRED;
@@ -366,17 +375,15 @@ function getRequiredInputKeys(tool: string): string[] {
  * row. It is not recorded as a "no reason stated" marker instead, because no
  * other path that writes these rows accepts a change without a reason, and a
  * weaker rule on the chat surface is the gap this closes.
+ *
+ * The minimum, the reading (statedReason, gatedReason) and ReasonNotStatedError
+ * live in stated-reason-input.ts, shared with the handlers registered from
+ * other modules (document-spine.ts commit_document_revision), so the wrapper
+ * below recognises the refusal whichever module threw it.
  */
-const GOVERNED_REASON_MIN = 8;
-
-/** The person's stated reason, trimmed, or null when none of at least GOVERNED_REASON_MIN characters was given. */
-function statedReason(input: Record<string, unknown>): string | null {
-  const r = typeof input.reason === 'string' ? input.reason.trim() : '';
-  return r.length >= GOVERNED_REASON_MIN ? r : null;
-}
 
 /** The answer to a governed write sent without the person's reason. Nothing was written. */
-function reasonNotStated(tool: string): string {
+function reasonNotStated(tool: string, field: StatedReasonField = reasonFieldOf(tool)): string {
   return JSON.stringify({
     ok: false,
     code: 'REASON_REQUIRED',
@@ -385,16 +392,20 @@ function reasonNotStated(tool: string): string {
     error:
       `${tool} was not run: it is a governed change, and the audit trail records the person's reason for it, ` +
       `but no reason of at least ${GOVERNED_REASON_MIN} characters was given. Nothing was recorded or changed. ` +
-      `Ask the person why they are making this change, then call ${tool} again with their answer in "reason". ` +
+      `Ask the person why they are making this change, then call ${tool} again with their answer in "${field}". ` +
       'Do not write a reason they did not give.',
   });
 }
 
 /**
- * Every tool whose handler records a governed action (recordGovernedAction ->
- * audit_logs.reason): the person is asked for their reason before they are
- * asked to confirm. governed-reason-not-invented.test.ts holds this list to the
- * source: a handler that records a governed action and is missing here fails it.
+ * Every tool whose handler records a reason for change on a ledger row — a
+ * governed action (recordGovernedAction -> audit_logs.reason), an audit row
+ * (recordAuditRow), or through a service that records the reason it is handed
+ * (commit_document_revision's document spine, the governed-fact orchestrator,
+ * the change-control register): the person is asked for their reason before
+ * they are asked to confirm. governed-reason-not-invented.test.ts holds this
+ * list to the source of every module that registers a handler: a handler whose
+ * path carries a reason to a write and is missing here fails it.
  */
 export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'add_amendment_change',
@@ -415,6 +426,7 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'add_protocol_review_comment',
   'add_protocol_risk',
   'add_soa_assessment',
+  'apply_fact_change',
   'apply_protocol_design_derivation',
   'assign_committee_member',
   'assign_protocol_reviewer',
@@ -423,6 +435,7 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'classify_coverage_item',
   'classify_tmf_artifact',
   'clone_protocol_template',
+  'commit_document_revision',
   'convene_committee_meeting',
   'create_biosketch',
   'create_clinical_investigator',
@@ -451,11 +464,14 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'create_research_agreement',
   'create_rim_product',
   'create_tmf',
+  'establish_governed_fact',
   'fulfill_regulatory_commitment',
   'import_citi_records',
   'log_cs_transaction',
   'log_inspection_finding',
   'open_grant_closeout',
+  'qms_change_create',
+  'qms_change_transition',
   'record_cost_share_contribution',
   'record_grant_award',
   'record_grant_expenditure',
@@ -491,27 +507,6 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'update_tmf_artifact_status',
   'update_vault_document',
 ]);
-
-/** A governed write without the person's reason; the registration wrapper answers it with reasonNotStated. */
-class ReasonNotStatedError extends Error {
-  constructor() {
-    super('No reason was stated for a governed write. Nothing was recorded or changed.');
-    this.name = 'ReasonNotStatedError';
-  }
-}
-
-/**
- * The person's stated reason, read where a handler resolves its inputs —
- * after its own input checks, before it opens a connection. Without one it
- * throws ReasonNotStatedError, which registerToolHandler's wrapper turns into
- * the refusal (reasonNotStated): the handler never reaches a write, and needs
- * no branch of its own for it.
- */
-function gatedReason(input: Record<string, unknown>): string {
-  const reason = statedReason(input);
-  if (!reason) throw new ReasonNotStatedError();
-  return reason;
-}
 
 /**
  * Register a handler for a named tool. Every handler is wrapped with execution
@@ -590,7 +585,7 @@ function preHandlerRefusal(
     return { code: 'NOT_AN_ANA_ACTION', result: JSON.stringify(buildToolRefusal(name, auth.why)) };
   }
   if (auth.class === 'confirm' && ctx?.humanConfirmed !== true) {
-    if (REASON_REQUIRED_TOOLS.has(name) && !statedReason(input ?? {})) {
+    if (REASON_REQUIRED_TOOLS.has(name) && !statedReason(input ?? {}, reasonFieldOf(name))) {
       return { code: 'REASON_REQUIRED', result: reasonNotStated(name) };
     }
     return {
@@ -661,7 +656,7 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
     } catch (e) {
       if (e instanceof ReasonNotStatedError) {
         recordToolOutcome(name, 'failure', Date.now() - start, 'REASON_REQUIRED', orgId);
-        return reasonNotStated(name);
+        return reasonNotStated(name, e.field);
       }
       recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e), orgId);
       throw e;
@@ -6183,6 +6178,8 @@ registerToolHandler('establish_governed_fact', async (input: Record<string, unkn
   if (!programId || !entity || !field) {
     return JSON.stringify({ status: 'needs_parameters', message: 'programId, entity, and field are required' });
   }
+  // Recorded on the §11.10(e) row as the reason the value was established.
+  const reason = gatedReason(input);
   try {
     const { establishGovernedFact } = await import('../living-record/fact-change-orchestrator.js');
     const result = await establishGovernedFact({
@@ -6192,7 +6189,7 @@ registerToolHandler('establish_governed_fact', async (input: Record<string, unkn
       field,
       value: proposedValueFromInput(input),
       comparator: typeof input.comparator === 'string' ? input.comparator : undefined,
-      reason: typeof input.reason === 'string' ? input.reason : undefined,
+      reason,
       actor: ctx?.userId ?? null,
     });
     if (!result.ok) return JSON.stringify({ status: result.code, message: result.message });
@@ -6293,13 +6290,8 @@ registerToolHandler('apply_fact_change', async (input: Record<string, unknown>, 
     return JSON.stringify({ error: 'apply_fact_change requires organization context' });
   }
   const factId = String(input.factId ?? '');
-  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
-  if (!factId || !reason) {
-    return JSON.stringify({
-      status: 'needs_parameters',
-      message: 'factId and a reason-for-change are required. Ask the user for the reason if not supplied.',
-    });
-  }
+  if (!factId) return JSON.stringify({ status: 'needs_parameters', message: 'factId is required' });
+  const reason = gatedReason(input);
   try {
     const { applyFactChange } = await import('../living-record/fact-change-orchestrator.js');
     const result = await applyFactChange({
@@ -12911,7 +12903,7 @@ registerToolHandler('request_no_cost_extension', async (input, ctx) => {
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
-    const { id, requiresSponsorApproval, months } = await requestNceTx(client, ctx.organizationId, ctx.userId, awardId, { newEndDate, reason: typeof input.reason === 'string' ? input.reason : null });
+    const { id, requiresSponsorApproval, months } = await requestNceTx(client, ctx.organizationId, ctx.userId, awardId, { newEndDate, reason });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
       target: `grant-award:${awardId}`, reason,
@@ -14131,9 +14123,8 @@ registerToolHandler('revise_qms_document', async (input, ctx) => {
   const refusal = await editorRoleRefusal('revise_qms_document', 'opening a controlled revision', ctx);
   if (refusal) return refusal;
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
-  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  if (reason.length < GOVERNED_REASON_MIN) return JSON.stringify({ error: `A reason for change is required to open a controlled revision (21 CFR Part 11), at least ${GOVERNED_REASON_MIN} characters — ask the user for it.` });
+  const reason = gatedReason(input);
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const client = await getPool().connect();
@@ -14247,6 +14238,7 @@ registerToolHandler('qms_change_create', async (input, ctx) => {
   const changeNumber = typeof input.change_number === 'string' ? input.change_number.trim() : '';
   const title = typeof input.title === 'string' ? input.title.trim() : '';
   if (!changeNumber || !title) return JSON.stringify({ error: 'change_number and title are required.' });
+  const reason = gatedReason(input);
   try {
     const { createChange } = await import('../qms/changeControl.service.js');
     const row = await createChange(ctx.organizationId, {
@@ -14255,7 +14247,7 @@ registerToolHandler('qms_change_create', async (input, ctx) => {
       changeType: typeof input.change_type === 'string' ? input.change_type : undefined,
       classification: typeof input.classification === 'string' ? input.classification : undefined,
       riskLevel: typeof input.risk_level === 'string' ? input.risk_level : null,
-      reason: typeof input.reason === 'string' ? input.reason : null,
+      reason,
       impactAssessment: typeof input.impact_assessment === 'string' ? input.impact_assessment : null,
       implementationPlan: typeof input.implementation_plan === 'string' ? input.implementation_plan : null,
       targetImplementationDate: typeof input.target_implementation_date === 'string' ? input.target_implementation_date : null,
@@ -14265,7 +14257,7 @@ registerToolHandler('qms_change_create', async (input, ctx) => {
     const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
     const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
-      action: 'mdx.qms.change.create', resourceType: 'qms_change_control', resourceId: row.id,
+      action: 'mdx.qms.change.create', resourceType: 'qms_change_control', resourceId: row.id, reason,
       details: { changeNumber: row.change_number, classification: row.classification, via: 'ana' },
     });
     return JSON.stringify({
@@ -14282,10 +14274,9 @@ registerToolHandler('qms_change_transition', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'qms_change_transition requires tenant context.' });
   const id = typeof input.change_id === 'number' ? input.change_id : NaN;
   const to = typeof input.to === 'string' ? input.to : '';
-  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   if (!Number.isFinite(id)) return JSON.stringify({ error: 'change_id (number) is required.' });
   if (!to) return JSON.stringify({ error: 'to (target lifecycle state) is required.' });
-  if (reason.length < 3) return JSON.stringify({ error: 'A reason for change is required for this governed (21 CFR Part 11) transition — ask the user for it.' });
+  const reason = gatedReason(input);
   try {
     const svc = await import('../qms/changeControl.service.js');
     const row = await svc.transitionChange(ctx.organizationId, id, to as Parameters<typeof svc.transitionChange>[2], {
@@ -14296,8 +14287,8 @@ registerToolHandler('qms_change_transition', async (input, ctx) => {
     const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
     const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
-      action: 'mdx.qms.change.transition', resourceType: 'qms_change_control', resourceId: id,
-      details: { to, reason, via: 'ana' },
+      action: 'mdx.qms.change.transition', resourceType: 'qms_change_control', resourceId: id, reason,
+      details: { to, via: 'ana' },
     });
     return JSON.stringify({
       ok: true, governed: true, ...row, auditTrail,

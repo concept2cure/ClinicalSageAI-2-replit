@@ -315,9 +315,10 @@ describe('2 — "Accept all" records every change', () => {
       expect(r.changeType).toBe(changes[i].changeType);
       expect(r.text).toBe(changes[i].text);
       expect(r.textSha256).toBe(sha256(changes[i].text));
-      // The machine author's canonical name, not the one the client sent.
+      // The machine author's canonical name, not the one the client sent —
+      // but not verified: these changes name no turn record (DP-43).
       expect(r.proposedBy).toBe('AnA (AI draft)');
-      expect(r.proposedByVerified).toBe(true);
+      expect(r.proposedByVerified).toBe(false);
     });
 
     expect(chain).toHaveLength(1);
