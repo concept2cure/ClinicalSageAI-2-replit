@@ -1127,6 +1127,14 @@ Six Test-job failures, none in a Vault or catalog suite (the VR-04/07/15 suites 
 - `tests/routes/export-governance-fail-closed.test.ts`: it looked for the literal `if (!governanceResult)`, which `954c2588f` refactored into `recordGovernedEctdExport`. It now runs the handler: 500 `EXPORT_GOVERNANCE_REQUIRED` with nothing sent, plus a positive control.
 - `tests/routes/concept2cure-export-governance.test.ts`: D5 (`a05ba7eb0`) records an export before delivering it, and the mock request had no principal. The test now asserts the `EXPORT_GENERATED` row carries the SHA-256 of the bytes, and that it is written before `res.send`.
 - `tests/golden-journeys/haq-correction.journey.test.ts`: `domain_track` comes from the CTD placement since `91e45bcbe`, and merge `651306ca8` kept the stale flat expectation. The test now expects 2.7.3 → clinical and unplaced → regulatory.
+**Lint reds from the 09-29 hand-off, fixed the same day because every window had passed:**
+1. `ci:audit-logs-fixture`: the gate now reads the conditional column (`${reason ? ', reason' : ''}`) and ignores SQL comments. Four fixtures gained `reason`, or the shared `AUDIT_LOGS_PGLITE_DDL` in place of a stand-in.
+2. `ci:unkeyed-request-tables`: the baseline was rewritten from 112 to 109 entries (the three `lumen.*` tables are keyed now), and the selftest is green.
+3. `requestdb-coverage`: `artifact-project-scope.ts` reads on the caller's handle, so the shared-pool use stays counted under `artifacts.ts`. The count is back to 228.
+4. `ci:tenant-entry-points`: the `mdx-admin.ts` justification was re-read after `c0056614d` (the actor-name joins only). Only that entry's digest was refreshed, with a dated note.
+5. `ci:launch-scope-api`: the MDX Vault drawer (`7f10d147d`) read `/api/mdx/audit`, which production refuses, and read it unfiltered with nothing selected. It now reads `GET /api/mdx/vault/:artifactId/audit`, under the Vault's own prefix. That route checks the artifact is the organization's, then reads only the trail recorded against its ids, through the same reader (`readAuditEvents`, extracted from `mdx-audit.ts`).
+
+The proof tier is green locally: 111 files, 1208 tests.
 **→ Needs a decision (owner of `bundle-executor.ts`):** `bundle-executor.ts:256` moves a plan `unresolved → resolved_pending_review`, which `shared/types/resolution.ts:521` refuses. The error is logged and swallowed, so after a successful `POST /bundles/:id/execute` the plan stays `unresolved`. The executor should either step the plan forward or refuse to run.
 
 ### Trunk CI Lint, 2026-09-29 21:30 UTC (run 12674 at `7e10d93d`), checked by `…01DiJJAk` — handed on

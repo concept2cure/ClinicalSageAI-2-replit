@@ -36,8 +36,8 @@
       "digest": "f0d2d3958e177b94"
     },
     "server/routes/mdx-admin.ts": {
-      "reason": "FALSE POSITIVE (matches on the word 'SCIM' in prose). Mounted at /api/mdx, behind the auth boundary, so the lifecycle guard already covers it. Re-read 2026-09-28 after 53237f62 (facet failure states, the second-factor row): still one GET /admin mounted at /api/mdx inside the authenticated /api chain, scoped to the session's organizationId; the pattern still matches only the scim_tenants facet read and prose, not SCIM authentication. Justification holds; digest refreshed (…01TTTQ1h, trunk CI hand-on item 9).",
-      "digest": "bea4aa998e85408d"
+      "reason": "FALSE POSITIVE (matches on the word 'SCIM' in prose). Mounted at /api/mdx, behind the auth boundary, so the lifecycle guard already covers it. Re-read 2026-09-28 after 53237f62 (facet failure states, the second-factor row): still one GET /admin mounted at /api/mdx inside the authenticated /api chain, scoped to the session's organizationId; the pattern still matches only the scim_tenants facet read and prose, not SCIM authentication. Justification holds; digest refreshed (…01TTTQ1h, trunk CI hand-on item 9). Re-read 2026-09-30 after c0056614d (actor names through public.actor_name in the api-keys and audit-band reads): still the one GET /admin, organizationId-scoped, no SCIM or API-key authentication; justification holds, this entry's digest refreshed only (…01DiJJAk).",
+      "digest": "49b8871e3d762e3a"
     }
   }
 }
