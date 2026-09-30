@@ -16,6 +16,8 @@ import { authMiddleware } from '../auth';
 const router = Router();
 
 import { createScopedLogger } from '../utils/logger.js';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { ProjectDeletionRefused, projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
 import { mapWithConcurrency } from '../services/ana/agentic-loop';
 const log = createScopedLogger('clients-routes');
 
@@ -876,6 +878,16 @@ router.delete('/:id', async (req, res) => {
         throw new Error('Client workspace not found');
       }
 
+      /* The workspace's projects are deleted below, and their artifacts
+         cascade with them. A program's anchor row, or a project holding
+         documents past draft, is never deleted this way (PF-08; PF-13 founder
+         decision 2026-09-26). Thrown, so the transaction rolls back whole. */
+      const refused = projectDeletionRefusal(
+        await projectDeletionHolds(queryableFromDrizzle(tx), { workspaceId: clientId }),
+        'workspace',
+      );
+      if (refused) throw new ProjectDeletionRefused(refused);
+
       // Delete project modules associated with projects of this client
       const deletedProjectModules = await tx
         .delete(projectModules)
@@ -926,6 +938,9 @@ router.delete('/:id', async (req, res) => {
       deletedProjectModules: result.deletedProjectModules,
     });
   } catch (error: any) {
+    if (error instanceof ProjectDeletionRefused) {
+      return res.status(error.refusal.status).json({ success: false, ...error.refusal.body });
+    }
     log.error(`Error deleting client ${req.params.id}:`, error);
 
     if (error.message === 'Client workspace not found') {

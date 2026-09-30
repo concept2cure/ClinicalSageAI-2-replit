@@ -391,6 +391,44 @@ export async function hopRetention(w: World): Promise<void> {
     expect(Object.keys(res.body.holds)).toEqual(expect.arrayContaining(['filed', 'transmitted']));
     expect(p.deleted_at).toBeNull();
   });
+  /* PF-08: the legacy project delete is a HARD delete, and the program's
+     documents hang from its anchor row by ON DELETE CASCADE. The program's own
+     delete is refused above; this route did not ask. */
+  await hop.check('anchor-row-not-hard-deleted', "the legacy project delete cannot remove the program's anchor row: refused 409, and the row and every document under it survive", async (observe) => {
+    const [anchor] = await q<{ id: number }>('SELECT id FROM projects WHERE regulatory_program_id = $1', [k.programId]);
+    // An approved document of the program, keyed to its anchor row as the artifact registry keys them.
+    await q(
+      `INSERT INTO concept2cure_artifacts (artifact_id, project_id, organization_id, type, category, title, content, status)
+       VALUES ('pf08-approved', $1, $2, 'document', 'regulatory', 'Approved protocol', 'x', 'approved')`,
+      [anchor.id, ORG_A],
+    );
+    const count = async () => (await q<{ n: number }>('SELECT count(*)::int AS n FROM concept2cure_artifacts WHERE project_id = $1', [anchor.id]))[0].n;
+    const before = await count();
+    const res = await as3(request(w.app).delete(`/api/projects/${anchor.id}`));
+    const kept = await q('SELECT 1 FROM projects WHERE id = $1', [anchor.id]);
+    const after = await count();
+    observe({ status: res.status, error: res.body?.error, anchorKept: kept.length, documentsBefore: before, documentsAfter: after });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('PROJECT_IS_PROGRAM_ANCHOR');
+    expect(res.body.programIds).toEqual([k.programId]);
+    expect(kept).toHaveLength(1);
+    expect(before).toBeGreaterThan(0);
+    expect(after).toBe(before);
+  });
+  await hop.check('legacy-draft-project-deleted', 'a legacy project holding only drafts is still deleted by the same route', async (observe) => {
+    const [ws] = await q<{ client_workspace_id: number }>('SELECT client_workspace_id FROM projects WHERE regulatory_program_id = $1', [k.programId]);
+    const [p] = await q<{ id: number }>(
+      `INSERT INTO projects (organization_id, client_workspace_id, name, type, status) VALUES ($1, $2, 'Scratch', 'ind', 'planning') RETURNING id`,
+      [ORG_A, ws.client_workspace_id],
+    );
+    const res = await as3(request(w.app).delete(`/api/projects/${p.id}`));
+    const gone = await q('SELECT 1 FROM projects WHERE id = $1', [p.id]);
+    const audit = await q(`SELECT 1 FROM audit_events WHERE event_type = 'project_delete' AND entity_id = $1`, [String(p.id)]);
+    observe({ status: res.status, remaining: gone.length, audited: audit.length });
+    expect(res.status).toBe(200);
+    expect(gone).toHaveLength(0);
+    expect(audit).toHaveLength(1);
+  });
   await hop.check('filed-project-archived', 'the same project can be archived, and its records still read from it', async (observe) => {
     const archived = await as3(request(w.app).post(`/api/c2c/projects/${k.programId}/archive`)).send({});
     const records = await as3(request(w.app).get(`/api/c2c/projects/${k.programId}/records`));

@@ -6,6 +6,8 @@ import { and, eq } from 'drizzle-orm';
 import { getRequestActor, getTenantContext } from '../utils/tenantContext';
 import { emitRuleEvent } from '../services/rules-engine';
 import { createScopedLogger } from '../utils/logger.js';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
 
 const log = createScopedLogger('projects-management');
 
@@ -357,8 +359,22 @@ router.delete('/:projectId', async (req, res) => {
       return res.status(403).json({ error: 'Access denied to this project' });
     }
 
-    // Delete the project
-    await db.delete(projects).where(eq(projects.id, projectId));
+    /* A program's anchor row, and a project holding documents past draft, is
+       never hard-deleted here (PF-08; PF-13 founder decision 2026-09-26): the
+       delete cascades them away. The check reads, and locks, what this delete
+       would destroy, in the same transaction as the delete. */
+    const refusal = await db.transaction(async (tx) => {
+      const refused = projectDeletionRefusal(
+        await projectDeletionHolds(queryableFromDrizzle(tx), { projectIds: [projectId] }),
+        'project',
+      );
+      if (refused) return refused;
+      await tx.delete(projects).where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)));
+      return null;
+    });
+    if (refusal) {
+      return res.status(refusal.status).json(refusal.body);
+    }
 
     try {
       const now = new Date();
