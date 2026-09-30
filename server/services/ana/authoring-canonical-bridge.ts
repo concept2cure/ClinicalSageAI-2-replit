@@ -39,7 +39,9 @@ export interface AuthoringBridgeRequest {
   projectId?: number | null;
   /** Numeric users.id for Part 11 attribution. Non-numeric ⇒ skip. */
   userId?: number | null;
-  reason: string;
+  /** The person's stated reason for the change. None ⇒ skip: the canonical
+   *  record takes a person's reason, never one written for them. */
+  reason: string | null;
   triggerReview?: boolean;
   ctdSection?: string | null;
   aiModelUsed?: string | null;
@@ -109,6 +111,9 @@ export async function bridgeAuthoringToCanonical(
   const userId = req.userId;
   if (!Number.isInteger(userId as number)) {
     return { bridged: false, reason: 'actor is not a numeric users.id — governed action cannot be attributed' };
+  }
+  if (!req.reason || !req.reason.trim()) {
+    return { bridged: false, reason: 'no reason for change was stated — the canonical revision records the person\'s reason, never one written for them' };
   }
   try {
     const snap = await deps.loadDocumentSnapshot(req.docId, req.organizationId);

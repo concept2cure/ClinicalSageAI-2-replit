@@ -549,8 +549,10 @@ async function readJson<T = any>(
     const res = await apiRequest('GET', path);
     const body = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body };
-  } catch {
-    return { ok: false, status: 0, body: null };
+  } catch (err) {
+    // apiRequest throws on a non-2xx other than 401; the status still says
+    // what the answer was (a 403 is a refusal, not a failed read).
+    return { ok: false, status: err instanceof ApiRequestError ? err.status : 0, body: null };
   }
 }
 
@@ -922,7 +924,9 @@ export function DocumentWorkbench({
      purpose: a failed read of the compliance record must never render as "no
      governed acts have occurred". */
   const [auditEvents, setAuditEvents] = useState<AuthAuditEvent[]>([]);
-  const [auditState, setAuditState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  // 'forbidden': the server answered that this person may not read this
+  // document's record (403) — not a failed read, and not an empty trail.
+  const [auditState, setAuditState] = useState<'idle' | 'loading' | 'ready' | 'error' | 'forbidden'>('idle');
   /* The record export — busy while the server records the export on the chain
      and builds the package; `error` is the reason it did not arrive, kept on
      the rail until the next attempt. Scoped to the document it was asked for,
@@ -1813,10 +1817,15 @@ export function DocumentWorkbench({
     // wrong document is worse than a late one.
     auditDocRef.current = docId;
     setAuditState('loading');
-    const { ok, body } = await readJson<{ events?: AuthAuditEvent[] }>(
+    const { ok, status, body } = await readJson<{ events?: AuthAuditEvent[] }>(
       `/api/authoring/docs/${encodeURIComponent(docId)}/audit?limit=100`
     );
     if (auditDocRef.current !== docId) return;
+    if (status === 403) {
+      setAuditState('forbidden');
+      setAuditEvents([]);
+      return;
+    }
     if (!ok || !body) {
       setAuditState('error');
       setAuditEvents([]);
@@ -4721,6 +4730,12 @@ export function DocumentWorkbench({
               icon={I.activity}
               title="No document selected"
               hint="Select a document to review its audit trail."
+            />
+          ) : auditState === 'forbidden' ? (
+            <EmptyState
+              icon={I.lock}
+              title="No access to this document’s record"
+              hint="Reading it needs access to the document, or an audit role in the organization. Ask the document’s owner or your quality lead."
             />
           ) : auditState === 'error' ? (
             <EmptyState

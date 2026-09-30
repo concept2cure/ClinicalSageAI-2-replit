@@ -316,7 +316,7 @@ describe('(ii) the package verifies offline', () => {
       expect(pkg.chain[e.id].sha256Chain).toMatch(/^[0-9a-f]{64}$/);
       expect(pkg.chain[e.id].chainSeq).not.toBeNull();
     }
-    expect(pkg.summary).toEqual({ events: 2, intact: 2, broken: 0, notChained: 0 });
+    expect(pkg.summary).toEqual({ events: 2, intact: 2, broken: 0, notChained: 0, truncated: false });
 
     // The payload hash each entry carries is the one on the chain row itself.
     for (const e of pkg.events) {
@@ -358,7 +358,7 @@ describe('(ii) the same steps catch a rewrite', () => {
     expect((pkg.events[0].metadata as { quote: string }).quote).toBe('Summary of a different study');
     expect(verifyOffline(pkg)).toEqual([{ id: t.id, chained: true, failures: ['metadata'] }]);
     expect(pkg.verdicts[t.id]).toEqual({ chained: true, intact: false, mismatches: ['metadata'], chainPayloadIntact: true });
-    expect(pkg.summary).toEqual({ events: 1, intact: 0, broken: 1, notChained: 0 });
+    expect(pkg.summary).toEqual({ events: 1, intact: 0, broken: 1, notChained: 0, truncated: false });
   }, T);
 });
 
