@@ -16,6 +16,7 @@
 
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
+import { foreignProgramRefusal, foreignRecordRefusal } from './tool-record-scope.js';
 import { buildHumanConfirmationRequiredResult } from '../ana-ri/part11-governance.js';
 import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
@@ -620,7 +621,12 @@ async function writeRoleRefusal(
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
     const orgId = ctx?.organizationId ?? undefined;
-    const refusal = preHandlerRefusal(name, input, ctx) ?? (await writeRoleRefusal(name, input, ctx));
+    const refusal =
+      preHandlerRefusal(name, input, ctx) ??
+      (await writeRoleRefusal(name, input, ctx)) ??
+      // A program or record the model names must be the caller's (tool-record-scope.ts).
+      (await foreignProgramRefusal(input, ctx?.organizationId)) ??
+      (await foreignRecordRefusal(name, input, ctx?.organizationId));
     if (refusal) {
       recordToolOutcome(name, 'failure', 0, refusal.code, orgId);
       return refusal.result;

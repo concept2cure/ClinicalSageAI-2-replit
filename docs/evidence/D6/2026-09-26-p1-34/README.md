@@ -154,7 +154,7 @@ said in its test:
 
 Security, highest first. None is widened into this change; each needs its own.
 
-1. **Arbitrary server file reads from model-supplied paths:** `build_from_template`
+1. **Arbitrary server file reads from model-supplied paths** — *closed 2026-09-29 (INJ-PATH-002), `docs/evidence/D6/2026-09-26-inj-path-002/`*: `build_from_template`
    / `generate_document` (`template_path`, `masterDocumentBuilder.ts:177`),
    `surgical_docx_xml_edit`, `insert_document_content`, `insert_clause_template`,
    `validate_docx`, `verify_docx_against_source`, `start_legacy_import`
@@ -163,7 +163,7 @@ Security, highest first. None is widened into this change; each needs its own.
    `generate_document` XML mode (title into the path). `convert_docx_to_pdf` is
    confined to `tmp/` and `uploads/` but not per tenant and not through
    `realpath`.
-2. **Cross-tenant reads/writes:** `assess_site_risk` reads `site_intel.sites` by
+2. **Cross-tenant reads/writes** — *closed 2026-09-30 in the registry wrapper, `docs/evidence/D6/2026-09-30-tool-foreign-ids/`*: `assess_site_risk` reads `site_intel.sites` by
    program with no organisation filter and copies the scores into the caller's
    tenant; `establish_governed_fact` resolves facts by program only;
    `setBudgetParamsTx` upserts on `protocol_document_id` with no organisation
