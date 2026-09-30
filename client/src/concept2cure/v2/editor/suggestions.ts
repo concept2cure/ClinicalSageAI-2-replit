@@ -50,7 +50,7 @@
  *     verbatim as paragraph text rather than being reinterpreted or dropped.
  */
 
-import { Extension, Mark } from '@tiptap/core';
+import { Extension, Mark, type CommandProps } from '@tiptap/core';
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import type { Transaction } from '@tiptap/pm/state';
 import { ReplaceStep, Transform } from '@tiptap/pm/transform';
@@ -649,6 +649,18 @@ declare module '@tiptap/core' {
        * paragraphs, and every node carries the pending `insertion` mark.
        */
       insertSuggestedContent: (text: string, author: SuggestionAuthor) => ReturnType;
+      /**
+       * Replace the whole document as it is — its settled text settled, its
+       * pending suggestions still attributed to whoever proposed them — without
+       * recording the replacement as the current author's edit. For content
+       * that is not being written now: a stored section seeding a live
+       * document, or an unsaved draft restored from this browser. Through
+       * plain setContent the tracking plugin marked the whole document as one
+       * pending insertion by the current author and, insertion marks
+       * excluding each other, took the authorship of any AnA suggestion in it
+       * (2026-09-29, D5).
+       */
+      setContentUntracked: (content: string) => ReturnType;
     };
   }
 }
@@ -831,6 +843,15 @@ export function notifyResolved(
   }
 }
 
+/** Commands.setContentUntracked: the meta tells the tracking plugin this
+ *  transaction is not an edit; setContent runs on the same transaction. */
+const setContentUntracked =
+  (content: string) =>
+  ({ tr, commands }: CommandProps): boolean => {
+    tr.setMeta(SUGGESTION_ACTION_META, true);
+    return commands.setContent(content);
+  };
+
 export const TrackChanges = Extension.create<
   {
     author: SuggestionAuthor;
@@ -876,6 +897,7 @@ export const TrackChanges = Extension.create<
           this.storage.author = author;
           return true;
         },
+      setContentUntracked,
       resolveSuggestion:
         (range: SuggestionRange, action: 'accept' | 'reject') =>
         ({ state, tr, dispatch }) => {

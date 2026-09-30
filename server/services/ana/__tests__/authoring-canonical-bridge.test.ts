@@ -35,7 +35,8 @@ const base = {
   organizationId: 1,
   projectId: 10,
   userId: 5,
-  reason: 'Submitted for review by user@x',
+  // The submitter's own words (the route's optional stated reason).
+  reason: 'Ready for QA: SAP v2.0 wording applied throughout.',
   triggerReview: true,
 };
 
@@ -55,6 +56,16 @@ describe('authoring-canonical-bridge', () => {
     expect(req.userId).toBe(5);
     expect(req.content).toContain('Overview');
     expect(req.triggerReview).toBe(true);
+    // The person's reason, as stated — nothing composed around it.
+    expect(req.reasonForChange).toBe('Ready for QA: SAP v2.0 wording applied throughout.');
+  });
+
+  it.each([null, '', '   '])('skips (no write) when no reason for change was stated (%j) — none is written for them', async (reason) => {
+    const commit = vi.fn(deps().commit);
+    const outcome = await bridgeAuthoringToCanonical({ ...base, reason }, deps({ commit }));
+    expect(outcome.bridged).toBe(false);
+    expect(outcome.reason).toMatch(/no reason for change was stated/);
+    expect(commit).not.toHaveBeenCalled();
   });
 
   it('falls back to the document module for placement when no ctd_section given', async () => {
