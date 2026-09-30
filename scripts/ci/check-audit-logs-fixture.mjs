@@ -51,7 +51,15 @@ function writerColumns() {
   if (at < 0) throw new Error('writeChainedAuditRow not found in ' + path.relative(ROOT, WRITER));
   const m = /INSERT INTO audit_logs\s*\(([\s\S]*?)\)\s*\n?\s*VALUES/i.exec(src.slice(at));
   if (!m) throw new Error('could not read the INSERT column list from writeChainedAuditRow');
-  return m[1]
+  // A column the writer adds only sometimes is a template expression,
+  // `${reason ? ', reason' : ''}` (7863cf830). It is still a column the writer
+  // writes, so a fixture must accept it: inline the quoted text of each branch.
+  // Read literally, the expression was reported as one column no fixture could
+  // ever declare, and the gate failed on every fixture.
+  const list = m[1].replace(/\$\{([^}]*)\}/g, (_all, expr) =>
+    [...expr.matchAll(/'([^']*)'|"([^"]*)"/g)].map((q) => q[1] ?? q[2]).join(' '),
+  );
+  return list
     .split(',')
     .map((c) => c.trim().replace(/\s+/g, ' '))
     .filter(Boolean)
@@ -63,7 +71,9 @@ function declaredColumns(body) {
   const cols = [];
   let depth = 0;
   let cur = '';
-  for (const ch of body) {
+  // SQL line comments first: a comment carrying "(a, b)" or a leading "--"
+  // would otherwise open a paren level or be read as a column name.
+  for (const ch of body.replace(/--[^\n]*/g, '')) {
     if (ch === '(') depth++;
     else if (ch === ')') depth--;
     if (ch === ',' && depth === 0) {
