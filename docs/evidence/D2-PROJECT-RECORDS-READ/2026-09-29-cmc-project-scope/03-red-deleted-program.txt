@@ -1,0 +1,17 @@
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > a live program of the organization (11111111-1111-4111-8111-111111111111) → true 6ms
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > a legacy numeric project of the organization (41) → true 2ms
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > the same numeric id with surrounding space ( 41 ) → true 1ms
+ × server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > a program the organization deleted (22222222-2222-4222-8222-222222222222) → false 8ms
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > another organization's program (33333333-3333-4333-8333-333333333333) → false 1ms
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > another organization's numeric project (42) → false 2ms
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > a numeric id naming no project (9999) → false 1ms
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > zero (0) → false 1ms
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > a malformed id (proj-1) → false 1ms
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > a numeric id past the safe range (90071992547409930) → false 1ms
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > an empty id () → false 0ms
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > the answer is per organization: the other organization owns its own ids 4ms
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > with no organization, nothing is looked up and the answer is no 0ms
+ ✓ server/services/cmc/__tests__/project-membership.pglite.test.ts > projectBelongsToTenant > a lookup that cannot complete throws — "could not tell" is not "not yours" 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)

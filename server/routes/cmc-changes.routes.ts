@@ -27,6 +27,7 @@ import {
 import auditService from '../services/auditService';
 import { writeThroughChangeControl } from '../services/cmc-write-through';
 import { observeWriteThroughFailure } from '../services/cmc/link-to-module3';
+import { projectBelongsToTenant } from '../services/cmc/project-membership';
 
 const router = Router();
 
@@ -77,6 +78,14 @@ router.post('/', async (req: Request, res: Response) => {
   const userId = getUserId(req);
   const b = (req.body ?? {}) as Record<string, unknown>;
   try {
+    /* A stated CMC project must be one of this organization's (PF-15): the
+       write-through below files the change's Module 3 source under it, and it
+       was taken from the body unchecked. Refused before anything is written —
+       the change, its audit row and the source alike. */
+    const cmcProjectId = b.cmcProjectId != null ? String(b.cmcProjectId).trim() : '';
+    if (cmcProjectId && !(await projectBelongsToTenant({ organizationId: orgId, projectId: cmcProjectId }))) {
+      return res.status(404).json({ error: { code: 'PROJECT_NOT_FOUND', message: 'Project not found.' } });
+    }
     const change = await createCmcChange(orgId, {
       title: String(b.title ?? ''),
       dosageFormFamily: String(b.dosageFormFamily ?? ''),
@@ -114,7 +123,6 @@ router.post('/', async (req: Request, res: Response) => {
        itself is never rolled back — it is real recorded data whether or not
        the dossier layer accepted it this second. */
     let module3WriteThrough: 'recorded' | 'failed' | 'skipped_no_project' = 'skipped_no_project';
-    const cmcProjectId = b.cmcProjectId != null ? String(b.cmcProjectId).trim() : '';
     if (cmcProjectId) {
       const wt = await writeThroughChangeControl(
         orgId,

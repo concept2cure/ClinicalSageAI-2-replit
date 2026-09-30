@@ -716,6 +716,15 @@ export interface ModelConfig {
   supportsSamplingParams: boolean;
 
   /**
+   * Which version of Anthropic's web tools this model accepts. The
+   * `_20260209` variants (dynamic filtering) are accepted by Opus 4.6+ and
+   * Sonnet 4.6+ only; older models, Haiku 4.5 among them, take the basic
+   * `web_search_20250305` / `web_fetch_20250910`. Absent means basic, the one
+   * every model accepts (server-tool-policy.ts webToolsForModel).
+   */
+  webToolVariant?: 'dynamic_filtering' | 'basic';
+
+  /**
    * Whether this model constrains its output to a JSON schema via
    * `output_config.format`. Supported on Opus 5, Opus 4.8, Sonnet 5 and
    * Haiku 4.5 — notably NOT on Sonnet 4.6, which sits directly below Sonnet 5

@@ -65,6 +65,8 @@ import {
   folderLabel,
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
+import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vault-coverage.js';
+import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
@@ -189,6 +191,12 @@ interface VaultDisplayShape {
     uploads: number | null;
   };
   tree: VaultFolder[];
+  /**
+   * What the Vault holds against the program's required sections (VR-15):
+   * counts of confirmed filings from the one resolver, with where the list
+   * came from, or why there is no figure. Not a readiness figure.
+   */
+  coverage?: VaultCoverage;
   /** Honest signal: the c2c document store is not provisioned in this env. */
   pendingStore?: boolean;
   /** Uploaded documents awaiting a person's filing decision. Counted over the
@@ -224,6 +232,8 @@ interface ProjectRow {
   id: string;
   name: string | null;
   product_type: string | null;
+  program_type?: string | null;
+  primary_agency?: string | null;
 }
 
 interface DocRow {
@@ -512,6 +522,32 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
   return leaf;
 }
 
+/**
+ * A filed folder's leaves, in a stable order, each with its index number
+ * (VR-15). In a CTD view the number is the normalized section, since a dotted
+ * folder ordinal there would read as a CTD code ('3.1' for a Module 3
+ * document); a leaf with no section is '—' until it has one. Outside a CTD
+ * view the number is the folder's ordinal and the leaf's position. Ordered by
+ * section (CTD order), then title, then id, so the same documents number the
+ * same on every read.
+ */
+function indexedLeaves(view: VaultViewId, ordinal: number, rows: UploadRow[]): VaultDoc[] {
+  const ctd = view === 'pharma' || view === 'biotech';
+  const code = (r: UploadRow) => normalizeCtdCode(r.ctd_section);
+  const title = (r: UploadRow) => r.document_title || r.file_name || '';
+  const sorted = [...rows].sort((a, b) => {
+    const ca = code(a);
+    const cb = code(b);
+    if (ca !== cb) {
+      if (ca === null) return 1;
+      if (cb === null) return -1;
+      return compareSectionCode(ca, cb);
+    }
+    return title(a).localeCompare(title(b)) || String(a.id).localeCompare(String(b.id));
+  });
+  return sorted.map((r, i) => ({ ...uploadLeaf(view, r), num: ctd ? (code(r) ?? '—') : `${ordinal}.${i + 1}` }));
+}
+
 /** A folder id's label and the view it belongs to, for a folder the current
  *  view does not have. Names the raw id only when no view knows it. */
 function whereFiled(folderId: string): string {
@@ -554,16 +590,17 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
     id: 'cab-unfiled',
     code: '',
     label: 'Unfiled · needs review',
-    children: unfiled.map(u => uploadLeaf(view, u)),
+    // Not in the index: a section here is the classifier's suggestion, not a place.
+    children: unfiled.map(u => ({ ...uploadLeaf(view, u), num: '—' })),
   });
-  for (const folder of foldersForView(view)) {
+  foldersForView(view).forEach((folder, i) => {
     children.push({
       id: `cab-${folder.id}`,
       code: '',
       label: folder.label,
-      children: (byFolder.get(folder.id) ?? []).map(u => uploadLeaf(view, u)),
+      children: indexedLeaves(view, i + 1, byFolder.get(folder.id) ?? []),
     });
-  }
+  });
   if (otherView.length > 0) {
     children.push({
       id: 'cab-other-view',
@@ -571,6 +608,7 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
       label: 'Filed under another view · needs review',
       children: otherView.map(u => ({
         ...uploadLeaf(view, u),
+        num: '—',
         flag: `Filed to ${whereFiled(u.folder_id!)}, which is not a folder in this program's current view. Move it to a folder here, or check the program's product type.`,
       })),
     });
@@ -978,7 +1016,7 @@ export default function createProjectVaultRoutes(): Router {
     try {
       // 1) Project (org-scoped) → name + product modality.
       const projRes = await pool.query(
-        `SELECT id, name, product_type
+        `SELECT id, name, product_type, program_type, primary_agency
            FROM regulatory_programs
           WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
           LIMIT 1`,
@@ -1281,6 +1319,15 @@ export default function createProjectVaultRoutes(): Router {
         cmcArtifacts,
         uploads: uploadsWindow ? uploadsWindow.total : null,
       };
+      // 8) Vault coverage (VR-15): never throws; a store it cannot read is
+      //    reported as unavailable, not as zero.
+      const coverage = await readVaultCoverage(pool, {
+        view,
+        programType: project.program_type,
+        primaryAgency: project.primary_agency,
+        programId: id,
+        organizationId: orgId,
+      });
       const data: VaultDisplayShape = {
         program: project.name || 'Vault',
         spine: vaultViewLabel(view),
@@ -1289,6 +1336,7 @@ export default function createProjectVaultRoutes(): Router {
           documentCounts.authored + (documentCounts.cmcArtifacts ?? 0) + (documentCounts.uploads ?? 0),
         documentCounts,
         tree,
+        coverage,
         unfiledCount,
         ...(uploadsWindow ? { uploadsWindow } : {}),
         ...(dataRoom ? { dataRoom } : {}),

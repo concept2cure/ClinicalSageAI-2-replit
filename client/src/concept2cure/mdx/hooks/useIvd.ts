@@ -67,7 +67,7 @@ export function adaptClassification(c: ServerClassification): IvdClassification 
   const device = c.device_name ?? c.deviceName;
   if (!device) return null;
   const cls = String(c.ivdr_class ?? c.ivdrClass ?? c.classification ?? '').toUpperCase();
-  const classification = (['A', 'B', 'C', 'D'].includes(cls) ? cls : 'B') as IvdClass;
+  const classification = (['A', 'B', 'C', 'D'].includes(cls) ? cls : null) as IvdClass | null;
   return {
     id: String(c.id ?? device),
     device,

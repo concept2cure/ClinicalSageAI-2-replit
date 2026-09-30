@@ -162,7 +162,10 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'folder',
     group: 'workspace',
     uiKit: 'home',
-    apiPrefixes: ['/api/projects', '/api/programs'],
+    // 2026-09-29: '/api/programs' removed: every route under it is the device
+    // 510(k) app's predicate intelligence, SE render or RTM, and Projects calls
+    // none of them (docs/evidence/D2-API-SCOPE/2026-09-29-programs-claim/).
+    apiPrefixes: ['/api/projects'],
     anaToolFamilies: ['plan_submission'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -222,7 +225,8 @@ export const UI_SURFACES: UiSurface[] = [
     // Launch-scope API (2026-09-25, ci:launch-scope-api): ProjectHome reads and generates the schedule of events.
     // 2026-09-29: '/api/rim' removed: ProjectHome does not call it; it is the
     // hidden Registrations app's API.
-    apiPrefixes: ['/api/projects', '/api/programs', '/api/concept2cure/projects'],
+    // 2026-09-29: '/api/programs' removed for the same reason as on Projects.
+    apiPrefixes: ['/api/projects', '/api/concept2cure/projects'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -443,7 +447,9 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'fileCheck',
     group: 'device',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms'],
+    // 2026-09-29: '/api/programs' added: /api/programs/:id/predicate-intel,
+    // se-matrix and rtm are this app's (they were claimed by Projects).
+    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms', '/api/programs'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/predicate-intelligence',
     discoveryCatalog: null,

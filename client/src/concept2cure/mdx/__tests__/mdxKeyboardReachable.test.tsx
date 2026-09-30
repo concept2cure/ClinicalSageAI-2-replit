@@ -13,56 +13,82 @@
  *                   <div>, and which one was open was carried by a CSS class,
  *                   so assistive technology could neither reach it nor tell.
  *
- * ── Why this test turns sample mode on ───────────────────────────────────────
- * The first attempt at this rendered device-510k against the empty API response
- * the other MDX tests stub, and found zero checkboxes — so every assertion about
+ * ── Why this test serves candidates from the live endpoint ─────────────────
+ * The first attempt rendered device-510k against the empty API response the
+ * other MDX tests stub, and found zero checkboxes — so every assertion about
  * them passed while proving nothing. The predicate table only has rows when it
- * has predicates. Sample mode is the supported way to get canonical rows without
- * inventing a payload, and `expect(rows.length).toBeGreaterThan(0)` below is a
- * positive control: if the table is ever empty again, this test fails instead of
+ * has predicates.
+ *
+ * The second attempt turned sample mode on and read K510_PREDICATES. That set
+ * is gone: it paired real FDA clearances with an invented `match` score against
+ * the sponsor's device, and nothing on screen said the rows were examples. So
+ * the rows now arrive the way they do in production — from
+ * /api/predicate-intelligence/candidates, for an open program — and
+ * `expect(boxes.length).toBeGreaterThan(0)` below is still the positive
+ * control: if the table is ever empty again, this test fails instead of
  * quietly passing.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MdxSurfaceHost } from '../MdxSurfaceHost';
-import type { SurfaceViewProps } from '../../v2/surfaceViews';
+import { K510Surface } from '../surfaces/K510Surface';
+import type { Program } from '../data/programs';
 
-const SAMPLE_KEY = 'c2c_mdx_sample_data';
+vi.mock('@/utils/authToken', () => ({
+  getAuthToken: () => 'test-token',
+  getOrgId: () => '7',
+}));
+
+const PROGRAM = {
+  id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+  title: 'TEST-1 Sensor',
+  code: 'TEST-1',
+  stageIdx: 2,
+  status: 'active',
+} as unknown as Program;
+
+/* Three candidates in the wire shape the predicate service returns. Test data:
+   it lives here, is served through the real endpoint, and no surface can reach
+   it. The K-numbers are deliberately not real clearances. */
+const CANDIDATES = {
+  candidates: [
+    { k_number: 'K000001', device_name: 'Test Device A', applicant: 'Test Co', decision_date: '2024-01-02', product_code: 'AAA', match_score: 0.9 },
+    { k_number: 'K000002', device_name: 'Test Device B', applicant: 'Test Co', decision_date: '2023-05-06', product_code: 'AAA', match_score: 0.7 },
+    { k_number: 'K000003', device_name: 'Test Device C', applicant: 'Test Co', decision_date: '2022-08-09', product_code: 'AAA', match_score: 0.5 },
+  ],
+};
 
 beforeEach(() => {
-  window.localStorage.setItem(SAMPLE_KEY, 'on');
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () =>
-      new Response(JSON.stringify([]), {
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      const body = url.includes('/api/predicate-intelligence/candidates') ? CANDIDATES : [];
+      return new Response(JSON.stringify(body), {
         status: 200,
         headers: { 'content-type': 'application/json' },
-      })),
+      });
+    }),
   );
 });
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
-  window.localStorage.removeItem(SAMPLE_KEY);
 });
 
-function renderNav(nav: string) {
+function renderSurface() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MdxSurfaceHost
-        {...({ surface: { id: nav }, onAsk: () => {}, onNav: () => {}, segment: 'medtech' } as unknown as SurfaceViewProps)}
-        nav={nav as never}
-      />
+      <K510Surface program={PROGRAM} onAskAna={() => {}} onOpenEditor={() => {}} />
     </QueryClientProvider>,
   );
 }
 
 describe('510(k) predicate selection is operable without a mouse', () => {
   it('exposes each predicate as a real checkbox control', async () => {
-    const { container } = renderNav('device-510k');
+    const { container } = renderSurface();
     await waitFor(() => expect(container.querySelector('.cbox')).toBeTruthy());
 
     const boxes = Array.from(container.querySelectorAll('.cbox'));
@@ -79,7 +105,7 @@ describe('510(k) predicate selection is operable without a mouse', () => {
   });
 
   it('reports the selection through aria-checked, not a data attribute alone', async () => {
-    const { container } = renderNav('device-510k');
+    const { container } = renderSurface();
     await waitFor(() => expect(container.querySelector('.cbox')).toBeTruthy());
 
     /* Toggle an UNCHECKED one. `toggle` deliberately refuses to leave the
