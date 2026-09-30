@@ -33,6 +33,7 @@ import {
   type SignatureDbClient,
 } from '../../part11/signature-persistence';
 import { queryableFromDrizzle } from '../../../db/drizzle-queryable';
+import { projectBelongsToTenant } from '../../cmc/project-membership';
 import { createScopedLogger } from '../../../utils/logger';
 
 const logger = createScopedLogger('estar-submission-service');
@@ -96,6 +97,21 @@ export async function createEstarSubmission(
   const entry = getCatalogEntry(input.catalogKey as EstarCatalogKey);
   if (!entry) {
     throw new EstarSubmissionError('VALIDATION', `No eSTAR catalog entry for "${input.catalogKey}".`);
+  }
+  /* The project a filing is tracked under is one of this organization's own
+     (PF-15). It was stored as given, so a device filing could be put on
+     another organization's project spine — its schedule, milestones and the
+     unified work view read estar_submissions by project_id — or on an id that
+     names no project. Refused before the row or its audit entry is written; a
+     lookup that cannot complete throws, and nothing is written either. */
+  if (
+    input.projectId != null &&
+    !(await projectBelongsToTenant(
+      { organizationId: ctx.organizationId, projectId: String(input.projectId) },
+      queryableFromDrizzle(db),
+    ))
+  ) {
+    throw new EstarSubmissionError('NOT_FOUND', `Project ${input.projectId} is not a project of this organization.`);
   }
   const [row] = await db
     .insert(estarSubmissions)
