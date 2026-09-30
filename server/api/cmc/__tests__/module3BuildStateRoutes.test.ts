@@ -48,6 +48,9 @@ function sourceRow(sourceType: string, sourcePayload: Record<string, unknown>): 
     updatedAt: new Date('2026-03-01T00:00:00Z'),
   };
 }
+/* The project guard (PF-15) admits this suite's fixture project; its refusals
+   are in module3ProjectScope.test.ts. */
+vi.mock('../../../services/cmc/project-membership', () => ({ projectBelongsToTenant: async () => true }));
 vi.mock('../../../db', () => ({
   getPool: () => ({
     query: async (sql: string, params: unknown[] = []) => {
