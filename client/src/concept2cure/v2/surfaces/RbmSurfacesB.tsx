@@ -311,7 +311,7 @@ export function RbmPatients({ board, onReload }: SubProps) {
                 </div>
               );
             })}
-              {sel.metrics.length === 0 && <div className="rbm-note" style={{ margin: 0 }}>{I.info}Per-dimension breakdown isn&apos;t available from the profile store for this subject — the anomaly score and status are the scored result.</div>}
+              {sel.metrics.length === 0 && <div className="rbm-note" style={{ margin: 0 }}>{I.info}No dimension was comparable for this subject: either the cohort was below MIN_COHORT (5) on every metric it carries, or the subject was last scored before the breakdown was recorded. <b>Scan cohort</b> recomputes it. An absent dimension means <b>not comparable</b> — not typical.</div>}
               <div className="rbm-pt-foot"><RbmFreshness at={sel.at ?? '—'} />{sel.status !== 'normal' && <span className="rbm-pt-note">{I.alertTriangle}{sel.status === 'flagged' ? 'Flagged for medical review' : 'Queued for review'} — dimensions 3+ MAD from cohort median drive the score.</span>}</div>
             </div>
           </div>
@@ -464,6 +464,7 @@ export function RbmPlan({ board, onReload }: SubProps) {
   const acts: RbmBoardAction[] = plan ? board.actions.filter(a => a.planId === plan.id) : [];
   const [signFor, setSignFor] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [amending, setAmending] = useState(false);
   const mut = useRbmMutation(onReload);
   const owners = useRbmOwners();
   const cols: [string, string][] = [['open', 'Open'], ['in_progress', 'In progress'], ['done', 'Done']];
@@ -484,6 +485,18 @@ export function RbmPlan({ board, onReload }: SubProps) {
       });
     });
     if (done) setAdding(false);
+  };
+
+  /** Open a versioned amendment. The signed version stays on file untouched;
+   *  the new draft carries its unfinished actions and governs nothing until it
+   *  is approved in its own right. */
+  const amendPlan = async (f: Record<string, string>) => {
+    const done = await mut.run(async () => {
+      const { data, meta } = await rbmWriteWithMeta<{ version?: number }>('POST', `/rbm-monitoring-plans/${plan!.id}/amend`, { reason: f.reason });
+      const copied = Number(meta.actionsCopied ?? 0);
+      return `Amendment v${data.version ?? '?'} opened as a draft with ${copied} unfinished action${copied === 1 ? '' : 's'} carried forward. Add or change actions there, then approve it.`;
+    });
+    if (done) setAmending(false);
   };
 
   /** Derive the plan from the governing RACT, server-side. */
@@ -508,12 +521,13 @@ export function RbmPlan({ board, onReload }: SubProps) {
       {plan ? (
         <div className="rbm-asmt">
           <div className="rbm-asmt-l">
-            <b>{plan.title}</b>
+            <b>{plan.title}{plan.version != null ? ` — v${plan.version}` : ''}</b>
             <span>strategy <RbmChip vocab="strategy" value={plan.strategy} /> — {plan.status === 'active' ? 'active' : 'draft — approval pending'} — updated {plan.updated ?? '—'}</span>
             {plan.approval ? <span className="rbm-audit">{I.check}Approved by {plan.approval.by} — {plan.approval.when} — &quot;{plan.approval.reason}&quot;</span> : null}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, alignItems: 'flex-end' }}>
             {plan.status !== 'active' && <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setSignFor(true)}>{I.lock}Approve plan</button>}
+            {plan.status === 'active' && <button className="rbm-btn" disabled={mut.busy} onClick={() => setAmending(true)}>Amend</button>}
           </div>
         </div>
       ) : (
@@ -555,6 +569,12 @@ export function RbmPlan({ board, onReload }: SubProps) {
         ]}
         busy={mut.busy} error={mut.error}
         submitLabel="Add action" onCancel={() => { setAdding(false); mut.clearError(); }} onSubmit={addAction} />}
+      {plan?.status === 'active' && <div className="rbm-note">{I.lock}This plan is <b>approved</b>, so what it commits to is fixed: the e-signature attests to this strategy and these actions. New actions — escalations, scheduled visits, signal follow-ups — go on an amendment. <b>Amend</b> opens the next version as a draft carrying the unfinished actions; it governs nothing until it is approved.</div>}
+      {amending && plan && <RbmFormModal title={`Amend monitoring plan${plan.version != null ? ` v${plan.version}` : ''}`}
+        intro="Opens the next version as a draft. This version and its signature stay on file as the historical record."
+        fields={[{ key: 'reason', label: 'Why is the plan being amended?', type: 'textarea' }]}
+        busy={mut.busy} error={mut.error}
+        submitLabel="Open amendment" onCancel={() => { setAmending(false); mut.clearError(); }} onSubmit={amendPlan} />}
       {signFor && plan && <GovernedApprovalDialog what="Monitoring plan"
         meaning="The plan becomes the active monitoring commitment; visit cadence and SDV depth follow its tier definitions."
         onCancel={() => setSignFor(false)}

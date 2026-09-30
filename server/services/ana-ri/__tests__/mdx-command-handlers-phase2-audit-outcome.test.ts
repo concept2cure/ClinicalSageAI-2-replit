@@ -50,6 +50,11 @@ vi.mock('../../gspr-postmarket/post-market.service', () => ({
   validateDocument: (...a: any[]) => svc.validateDocument(...a),
   getDocument: (...a: any[]) => svc.getDocument(...a),
 }));
+// post_market.document.create authors through the canonical engine (PR #1315 port).
+vi.mock('../../gspr-postmarket/post-market-authoring', () => ({
+  authorPostMarketDocument: (...a: any[]) => svc.createDocument(...a),
+  AUTHORABLE_DOCUMENT_TYPES: ['pms_plan', 'pms_report', 'pmcf_plan', 'pmcf_evaluation', 'psur', 'sscp'],
+}));
 vi.mock('../../evidence-sufficiency/evidence-sufficiency.service', () => ({
   assessSufficiency: (...a: any[]) => svc.assessSufficiency(...a),
 }));
@@ -88,7 +93,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   storeUp();
   svc.upsertMapping.mockResolvedValue({ id: 'm-1', applicabilityChanged: false, evidenceChanged: false });
-  svc.createDocument.mockResolvedValue({ id: DOC_ID, docType: 'psur', status: 'draft' });
+  svc.createDocument.mockResolvedValue({
+    document: { id: DOC_ID, documentType: 'psur', code: 'PSUR', version: 1, status: 'draft' },
+    validation: { passesGate: true, criticalCount: 0, warningCount: 0, findings: [] },
+  });
   svc.approveDocument.mockResolvedValue({ ok: true, document: { id: DOC_ID, status: 'approved' } });
   svc.assessSufficiency.mockResolvedValue({ id: 'a-1', verdict: 'sufficient', overallScore: 88 });
   svc.runReviewerSimulation.mockResolvedValue({ runId: 'r-1', personas: [] });
@@ -106,7 +114,7 @@ const CALLS: Array<{ name: string; run: () => Promise<Record<string, unknown>> }
   },
   {
     name: 'post_market.document.create',
-    run: () => postMarketDocumentCreate(CTX, { ...gate, programId: PROGRAM_UUID, documentType: 'psur', code: 'PSUR-2026', title: 'PSUR 2026' }) as never,
+    run: () => postMarketDocumentCreate(CTX, { ...gate, programId: PROGRAM_UUID, documentType: 'psur', deviceName: 'Acme Stent', title: 'PSUR 2026' }) as never,
   },
   {
     name: 'post_market.document.approve',

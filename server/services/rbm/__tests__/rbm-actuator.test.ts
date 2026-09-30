@@ -11,7 +11,7 @@ import { describe, it, expect } from 'vitest';
 import {
   addCtqFactor, defineKri, recordKriReading, setQtl, raiseSignal, triageSignal,
   draftPlan, generatePlanFromAssessment, amendAssessment, createAction, updateAction, approveAssessment, approvePlan,
-  inferSecondaryLimit, type Exec,
+  amendMonitoringPlan, nextPlanVersion, inferSecondaryLimit, type Exec,
 } from '../rbm-actuator';
 
 function mockExec(script: any[][]) {
@@ -74,6 +74,20 @@ describe('rbm-actuator — inference', () => {
     expect(out.inferred.status).toBe('approaching');
   });
 
+  it('setQtl evaluates a lower-bound limit in its own direction and infers no upper-side secondary', async () => {
+    const { exec, calls } = mockExec([[{ id: 8 }]]);
+    const out = await setQtl(exec, ORG, { programId: 'p', parameter: 'Endpoint completeness', threshold: 0.9, currentValue: 0.4, direction: 'lower' });
+    expect(out.inferred.status).toBe('breached');
+    expect(out.inferred.secondaryLimit).toBeNull();
+    expect(calls[0].args).toContain('lower');
+  });
+
+  it('setQtl refuses a two-sided limit without both bounds', async () => {
+    const { exec, calls } = mockExec([[{ id: 9 }]]);
+    await expect(setQtl(exec, ORG, { parameter: 'Ratio', threshold: 1.1, direction: 'two_sided' })).rejects.toThrow(/both bounds/);
+    expect(calls).toHaveLength(0);
+  });
+
   it('inferSecondaryLimit is null without a threshold', () => {
     expect(inferSecondaryLimit(null)).toBeNull();
     expect(inferSecondaryLimit(100)).toBe(75);
@@ -104,18 +118,31 @@ describe('rbm-actuator — inference', () => {
   it('draftPlan infers strategy from the assessment overall risk', async () => {
     const { exec } = mockExec([
       [{ overall_risk: 'high' }], // SELECT assessment
+      [],                         // no open draft
+      [{ v: 1 }],                 // max version on file
       [{ id: 11, strategy: 'hybrid' }], // INSERT plan
     ]);
     const out = await draftPlan(exec, ORG, { programId: 'p' });
     // defaultPlanStrategy('high') → 'hybrid'
     expect(out.inferred.strategy).toBe('hybrid');
     expect(out.inferred.fromOverallRisk).toBe('high');
+    expect(out.plan).toMatchObject({ id: 11 });
   });
 
-  it('draftPlan falls back to risk_based when no assessment exists', async () => {
-    const { exec } = mockExec([[], [{ id: 12 }]]);
+  it('draftPlan falls back to risk_based when no assessment exists, and takes the next version', async () => {
+    const { exec, calls } = mockExec([[], [], [{ v: 0 }], [{ id: 12 }]]);
     const out = await draftPlan(exec, ORG, { programId: 'p' });
     expect(out.inferred.strategy).toBe('risk_based');
+    expect(out.plan).toMatchObject({ id: 12 });
+    expect(calls[3].args).toContain(1);
+  });
+
+  it('draftPlan reports an open draft rather than opening a second one', async () => {
+    const { exec, calls } = mockExec([[], [{ id: 4, version: 2 }]]);
+    const out = await draftPlan(exec, ORG, { programId: 'p' });
+    expect(out.plan).toBeNull();
+    expect(out).toMatchObject({ refused: 'draft_already_open' });
+    expect(calls.some(c => c.sql.includes('INSERT'))).toBe(false);
   });
 
   it('raiseSignal defaults source=manual, severity=medium and scopes to tenant', async () => {
@@ -238,6 +265,8 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
       [{ id: 21, ctq_factor: 'SAE reporting', risk_score: 20 },         // open critical factors
        { id: 22, ctq_factor: 'Consent', risk_score: 9 }],
       [{ site_number: '5', site_name: 'Mercy' }],                       // enhanced-tier sites
+      [],                                                               // no open draft plan
+      [{ v: 1 }],                                                       // max version on file
       [{ id: 3, strategy: 'hybrid' }],                                  // plan insert
       [{ id: 41 }], [{ id: 42 }], [{ id: 43 }],                         // action inserts
     ]);
@@ -245,15 +274,16 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
     expect(out.generated).toBe(true);
     expect(out.derivedFrom).toMatchObject({ assessmentId: 7, overallRisk: 'high', criticalFactors: 2, enhancedSites: 1 });
     // High overall risk → hybrid strategy, per defaultPlanStrategy.
-    expect(calls[3].args).toContain('hybrid');
-    // The plan is a DRAFT until it is signed for.
-    expect(calls[3].sql).toContain("'draft'");
+    expect(calls[5].args).toContain('hybrid');
+    // The plan is a DRAFT until it is signed for, and takes the next version.
+    expect(calls[5].sql).toContain("'draft'");
+    expect(calls[5].args).toContain(2);
     // One action per critical factor (priority banded off its own score) plus
     // one visit per enhanced-tier site.
     expect(out.actions).toHaveLength(3);
-    expect(calls[4].args).toContain('high');    // score 20 → high band
-    expect(calls[5].args).toContain('medium');  // score 9  → medium band
-    expect(calls[6].sql).toContain('site_visit');
+    expect(calls[6].args).toContain('high');    // score 20 → high band
+    expect(calls[7].args).toContain('medium');  // score 9  → medium band
+    expect(calls[8].sql).toContain('site_visit');
     // Tenant scope on every write.
     for (const c of calls) expect(c.args[0]).toBe(ORG);
   });
@@ -264,7 +294,7 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
     // from a superseded or draft one.
     const { exec, calls } = mockExec([
       [{ id: 7, title: 'RACT v2', overall_risk: 'medium', status: 'active' }],
-      [], [], [{ id: 3 }],
+      [], [], [], [{ v: 0 }], [{ id: 3 }],
     ]);
     await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
     const factorQuery = calls[1];
@@ -345,5 +375,83 @@ describe('amendAssessment — versioned revision of a signed RACT', () => {
     const out = await amendAssessment(exec, ORG, { assessmentId: 999, reason: 'x' });
     expect(out.amended).toBe(false);
     expect(out.reason).toBe('not_found');
+  });
+});
+
+describe('monitoring plan versioning — a signed plan stops being editable', () => {
+  const active = { id: 11, program_id: 'p', assessment_id: 7, title: 'Plan', strategy: 'hybrid', status: 'active', version: 2 };
+
+  it('nextPlanVersion counts past every version on file, including deleted ones', async () => {
+    const { exec, calls } = mockExec([[{ v: 3 }]]);
+    expect(await nextPlanVersion(exec, ORG, 'p')).toBe(4);
+    // A version number is never reused: a soft-deleted v3 still owns "3".
+    expect(calls[0].sql).not.toContain('deleted_at');
+    expect(calls[0].args).toEqual([ORG, 'p']);
+  });
+
+  it('generatePlanFromAssessment refuses while a draft version is already open', async () => {
+    const { exec, calls } = mockExec([
+      [{ id: 7, title: 'RACT', overall_risk: 'high', status: 'active' }],
+      [], [],
+      [{ id: 12, version: 3 }],                   // an open draft
+    ]);
+    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    expect(out.generated).toBe(false);
+    expect(out.reason).toBe('draft_already_open');
+    expect(calls.some(c => c.sql.includes('INSERT INTO rbm_monitoring_plans'))).toBe(false);
+  });
+
+  it('amend opens the next version as an unsigned draft and carries unfinished actions forward at open', async () => {
+    const { exec, calls } = mockExec([
+      [active],                 // load
+      [],                       // no open draft
+      [{ v: 2 }],               // max version
+      [{ id: 12, version: 3, status: 'draft' }], // insert
+      [{ id: 90 }, { id: 91 }], // copied actions
+    ]);
+    const out = await amendMonitoringPlan(exec, ORG, { planId: 11, reason: 'Add a central-monitoring review', openedBy: 5 });
+    expect(out.amended).toBe(true);
+    expect(out.supersedes).toBe(2);
+    const insert = calls[3];
+    expect(insert.sql).toContain("'draft'");
+    expect(insert.sql).not.toContain('approved_by');
+    expect(insert.args).toContain(3);
+    expect(insert.args).toContain(5);           // created_by — the amendment's author
+    const copy = calls[4];
+    expect(copy.sql).toContain("status <> 'done'");
+    expect(copy.sql).toContain("'open'");
+    expect(copy.args).toEqual([12, ORG, 11]);
+    for (const c of calls) expect(c.args).toContain(ORG);
+  });
+
+  it('amend refuses a draft plan, and a second concurrent amendment', async () => {
+    const draft = mockExec([[{ ...active, status: 'draft' }]]);
+    expect(await amendMonitoringPlan(draft.exec, ORG, { planId: 11, reason: 'x y z' }))
+      .toMatchObject({ amended: false, reason: 'not_approved' });
+
+    const open = mockExec([[active], [{ id: 12, version: 3 }]]);
+    expect(await amendMonitoringPlan(open.exec, ORG, { planId: 11, reason: 'x y z' }))
+      .toMatchObject({ amended: false, reason: 'amendment_already_open' });
+
+    const missing = mockExec([[]]);
+    expect(await amendMonitoringPlan(missing.exec, ORG, { planId: 99, reason: 'x y z' }))
+      .toMatchObject({ amended: false, reason: 'not_found' });
+  });
+
+  it('approvePlan archives the version it supersedes in the same executor', async () => {
+    const { exec, calls } = mockExec([[{ id: 12, status: 'active', program_id: 'p', version: 3 }], [{ version: 2 }]]);
+    const row = await approvePlan(exec, ORG, 7, 12, 'v3 approved');
+    expect(row).toMatchObject({ id: 12 });
+    expect(calls).toHaveLength(2);
+    expect(calls[1].sql).toMatch(/status = 'archived'/);
+    expect(calls[1].sql).toContain("status = 'active'");
+    expect(calls[1].args).toEqual([ORG, 'p', 12]);
+  });
+
+  it('createAction refuses a plan that is not a draft — its actions are signed', async () => {
+    const { exec, calls } = mockExec([[{ status: 'active' }]]);
+    const out = await createAction(exec, ORG, { planId: 11, description: 'late addition' });
+    expect(out).toMatchObject({ created: false, reason: 'plan_not_draft' });
+    expect(calls).toHaveLength(1);
   });
 });
