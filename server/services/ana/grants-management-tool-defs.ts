@@ -71,7 +71,7 @@ export const SET_GRANT_MILESTONE_STATUS: AnaTool = {
     "Transition a grant milestone's status (pending → in_progress → met/submitted, or missed). Met/submitted stamps the completion date. Governed + audited, org-scoped.",
   input_schema: {
     type: 'object',
-    properties: { milestone_id: { type: 'number' }, status: { type: 'string', enum: ['pending', 'in_progress', 'met', 'missed', 'submitted'] }, completed_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: { type: 'string' } },
+    properties: { milestone_id: { type: 'number' }, status: { type: 'string', enum: ['pending', 'in_progress', 'met', 'missed', 'submitted'] }, completed_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: STATED_REASON_INPUT },
     required: ['milestone_id', 'status'],
   },
 };
@@ -80,7 +80,7 @@ export const OPEN_GRANT_CLOSEOUT: AnaTool = {
   name: 'open_grant_closeout',
   description:
     "Open the closeout record for a grant award. Derives the federal closeout due date (period of performance end + 120 days, 2 CFR 200.344). One closeout per award. Governed + audited, org-scoped.",
-  input_schema: { type: 'object', properties: { award_id: { type: 'number' }, reason: { type: 'string' } }, required: ['award_id'] },
+  input_schema: { type: 'object', properties: { award_id: { type: 'number' }, reason: STATED_REASON_INPUT }, required: ['award_id'] },
 };
 
 export const UPDATE_GRANT_CLOSEOUT: AnaTool = {
@@ -93,7 +93,7 @@ export const UPDATE_GRANT_CLOSEOUT: AnaTool = {
       award_id: { type: 'number' },
       final_rppr_submitted: { type: 'boolean' }, final_ffr_submitted: { type: 'boolean' },
       equipment_inventory_returned: { type: 'boolean' }, final_invoices_reconciled: { type: 'boolean' },
-      deobligation_amount: { type: 'number' }, notes: { type: 'string' }, reason: { type: 'string' },
+      deobligation_amount: { type: 'number' }, notes: { type: 'string' }, reason: STATED_REASON_INPUT,
     },
     required: ['award_id'],
   },
@@ -116,7 +116,7 @@ export const RECORD_SUBAWARD: AnaTool = {
       award_id: { type: 'number' }, subrecipient_name: { type: 'string' }, subrecipient_uei: { type: 'string' },
       institution_type: { type: 'string', enum: ['higher_ed', 'nonprofit', 'commercial', 'foreign', 'government', 'other'] },
       amount: { type: 'number' }, period_start: { type: 'string' }, period_end: { type: 'string' },
-      risk_level: { type: 'string', enum: ['low', 'medium', 'high'] }, reason: { type: 'string' },
+      risk_level: { type: 'string', enum: ['low', 'medium', 'high'] }, reason: STATED_REASON_INPUT,
     },
     required: ['award_id', 'subrecipient_name'],
   },
@@ -128,7 +128,7 @@ export const SCREEN_SUBAWARD: AnaTool = {
     "Record the restricted-party screening result for a subaward's subrecipient (2 CFR 200.214). Use screen_restricted_party first to perform the live SAM.gov exclusions lookup, then record 'cleared' or 'excluded' here. Optionally set the risk level. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { subaward_id: { type: 'number' }, screen_status: { type: 'string', enum: ['cleared', 'excluded'] }, screen_source: { type: 'string' }, risk_level: { type: 'string', enum: ['low', 'medium', 'high'] }, reason: { type: 'string' } },
+    properties: { subaward_id: { type: 'number' }, screen_status: { type: 'string', enum: ['cleared', 'excluded'] }, screen_source: { type: 'string' }, risk_level: { type: 'string', enum: ['low', 'medium', 'high'] }, reason: STATED_REASON_INPUT },
     required: ['subaward_id', 'screen_status'],
   },
 };
@@ -148,7 +148,7 @@ export const ADD_GRANT_BUDGET_LINE: AnaTool = {
     "Add a budget line to an award by cost category (2 CFR 200.308). Gated: rejected if the running total budgeted would over-allocate the award amount. On the 'indirect' line, set indirect_rate_pct for the F&A rate (2 CFR 200.414). Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { award_id: { type: 'number' }, category: { type: 'string', enum: BUDGET_CATEGORY_ENUM }, budgeted_amount: { type: 'number' }, indirect_rate_pct: { type: 'number' }, notes: { type: 'string' }, reason: { type: 'string' } },
+    properties: { award_id: { type: 'number' }, category: { type: 'string', enum: BUDGET_CATEGORY_ENUM }, budgeted_amount: { type: 'number' }, indirect_rate_pct: { type: 'number' }, notes: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['award_id', 'category', 'budgeted_amount'],
   },
 };
@@ -159,7 +159,7 @@ export const RECORD_GRANT_EXPENDITURE: AnaTool = {
     "Record an actual expenditure booked against an award, by cost category (2 CFR 200.403). Expenditures are recorded as-is; over-budget categories are surfaced by review_grant_budget, not blocked here. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { award_id: { type: 'number' }, category: { type: 'string', enum: BUDGET_CATEGORY_ENUM }, amount: { type: 'number' }, expenditure_date: { type: 'string', description: 'YYYY-MM-DD.' }, description: { type: 'string' }, reason: { type: 'string' } },
+    properties: { award_id: { type: 'number' }, category: { type: 'string', enum: BUDGET_CATEGORY_ENUM }, amount: { type: 'number' }, expenditure_date: { type: 'string', description: 'YYYY-MM-DD.' }, description: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['award_id', 'category', 'amount'],
   },
 };
@@ -177,7 +177,7 @@ export const RECORD_COST_SHARE_CONTRIBUTION: AnaTool = {
     "Record an actual cost-share / matching contribution against an award's committed cost share (2 CFR 200.306), by source (institutional, third-party, in-kind, other). Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { award_id: { type: 'number' }, source: { type: 'string', enum: ['institutional', 'third_party', 'in_kind', 'other'] }, amount: { type: 'number' }, contribution_date: { type: 'string' }, description: { type: 'string' }, reason: { type: 'string' } },
+    properties: { award_id: { type: 'number' }, source: { type: 'string', enum: ['institutional', 'third_party', 'in_kind', 'other'] }, amount: { type: 'number' }, contribution_date: { type: 'string' }, description: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['award_id', 'source', 'amount'],
   },
 };
@@ -193,7 +193,7 @@ export const REQUEST_NO_COST_EXTENSION: AnaTool = {
   name: 'request_no_cost_extension',
   description:
     "Request a no-cost extension of an award's period of performance (2 CFR 200.308). Returns whether it is within grantee authority (first extension, ≤12 months) or requires sponsor prior approval. Governed + audited.",
-  input_schema: { type: 'object', properties: { award_id: { type: 'number' }, new_end_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: { type: 'string' } }, required: ['award_id', 'new_end_date'] },
+  input_schema: { type: 'object', properties: { award_id: { type: 'number' }, new_end_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: STATED_REASON_INPUT }, required: ['award_id', 'new_end_date'] },
 };
 
 export const APPROVE_NO_COST_EXTENSION: AnaTool = {
@@ -214,7 +214,7 @@ export const RECORD_GRANT_OPPORTUNITY: AnaTool = {
       funding_agency: { type: 'string', enum: ['nih', 'nsf', 'barda', 'dod', 'cdc', 'arpa_h', 'foundation', 'industry', 'other'] },
       mechanism: { type: 'string', enum: ['sbir', 'sttr', 'r01', 'r21', 'u01', 'p01', 'contract', 'cooperative_agreement', 'other'] },
       external_id: { type: 'string', description: 'Grants.gov opportunity id (from search_grants_gov).' },
-      due_date: { type: 'string', description: 'YYYY-MM-DD.' }, ceiling_amount: { type: 'number' }, reason: { type: 'string' },
+      due_date: { type: 'string', description: 'YYYY-MM-DD.' }, ceiling_amount: { type: 'number' }, reason: STATED_REASON_INPUT,
     },
     required: ['opportunity_number', 'title', 'funding_agency'],
   },

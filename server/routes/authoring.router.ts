@@ -5639,6 +5639,9 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
     if (!submittedBy) {
       return res.status(401).json({ error: 'Authentication required' });
     }
+    // The submitter's own stated reason, if any; none is invented (D5, 2026-09-29).
+    const statedSubmitReason = optionalGovernedReason(req.body?.reason);
+    if (!statedSubmitReason.ok) return res.status(400).json({ success: false, error: statedSubmitReason.error, field: 'reason' });
 
     // Check document exists and is in DRAFT status
     const docResult = await pool.query(
@@ -5699,7 +5702,7 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
     );
 
     // Create audit event
-    await createAuditTrail(req, docId, null, 'SUBMIT', null, null, null, { workflowId, steps: workflow_steps });
+    await createAuditTrail(req, docId, null, 'SUBMIT', null, null, statedSubmitReason.reason, { workflowId, steps: workflow_steps });
 
     // Connect this governed transition to the ONE canonical document spine:
     // commit the assembled document into concept2cure_artifacts (version + Part 11
@@ -5722,7 +5725,7 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
           organizationId: tenantId,
           projectId,
           userId: numericActor,
-          reason: `Submitted for review by ${submittedBy}`,
+          reason: statedSubmitReason.reason,
           triggerReview: true,
         },
         defaultAuthoringBridgeDeps(),
