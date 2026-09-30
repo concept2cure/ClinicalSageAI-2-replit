@@ -164,3 +164,7 @@ baseline` (`green/gate-fixed-after-merge.txt`); `--write-baseline` then wrote 12
 (`green/write-baseline-after-merge.txt`, `green/gate-after-merge.txt`). Compared key by key with trunk's baseline, the
 only change is the 15 files of this tranche leaving it; no count increased or decreased elsewhere.
 
+A second merge, the same day, met another lane's paydown (`87905b9d`, 25 different sites; trunk's baseline 121 sites /
+77 files). The gate on that merged tree again reported exactly this tranche's 25 sites fixed, and the baseline was
+written at 96 sites / 62 files, the same 15 files leaving it and no other count moving.
+
