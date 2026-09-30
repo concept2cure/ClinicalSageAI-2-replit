@@ -148,6 +148,15 @@ export const BINDING_BASIS = {
    */
   C2C_ARTIFACT_VERSION_CONTENT: 'c2c-artifact-version-content-sha256',
   /**
+   * sha256 of one Vault version's bytes: the `vault.documents.content_hash` of
+   * the version a lifecycle document is sourced from, read in the signing
+   * transaction (FOR SHARE), never from the client. The row's hash is frozen
+   * (migrations/20260926_vault_documents_record_immutability.sql), so the
+   * digest re-derives from the stored row. Added 2026-09-29 with
+   * server/services/regulatory/lifecycle-signature.ts (VR-12).
+   */
+  VAULT_DOCUMENT_VERSION: 'vault-document-version-sha256',
+  /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
    * tamper-evident link to the ledger row that records the signed act (target

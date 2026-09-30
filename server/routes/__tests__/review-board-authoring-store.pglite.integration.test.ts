@@ -117,6 +117,9 @@ beforeAll(async () => {
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       // The program binding the board filters and labels by (client_program_id).
       'migrations/20260727_authoring_document_program_scope.sql',
+      // Object permissions: the creator's OWNER grant, which the audit read
+      // decides access through (DP-42).
+      'db/migrations/20260727_authoring_object_permissions.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
       'db/migrations/20260725_authoring_audit_trail.sql',

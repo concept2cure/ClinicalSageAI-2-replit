@@ -11,6 +11,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { STATED_REASON_INPUT } from './stated-reason-input';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Document View Tools — read/view access across every document store the
@@ -131,7 +132,7 @@ export const SAVE_DOCUMENT_TO_VAULT: AnaTool = {
       content: { type: 'string', description: 'Full document text/content.' },
       category: { type: 'string', description: "Category, e.g. 'document', 'report', 'correspondence'. Default 'document'." },
       ctd_section: { type: 'string', description: "Optional CTD section, e.g. '2.7.3'." },
-      reason: { type: 'string', description: 'Reason-for-change (min 8 chars) — recorded in the audit trail.' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['title', 'content', 'reason'],
   },
@@ -174,7 +175,7 @@ export const UPDATE_VAULT_DOCUMENT: AnaTool = {
     properties: {
       artifact_id: { type: 'string', description: "Numeric id or 'artifact_…' external id." },
       content: { type: 'string', description: 'The full replacement content.' },
-      reason: { type: 'string', description: 'Reason-for-change (min 8 chars) — becomes the version change description.' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['artifact_id', 'content', 'reason'],
   },
@@ -204,7 +205,7 @@ export const SEED_TMF: AnaTool = {
     properties: {
       tmf_file_id: { type: 'number', description: 'The TMF file id (from create_tmf or get_tmf_view).' },
       scope: { type: 'string', enum: ['essential', 'all'], description: "Seed scope. Default 'all'." },
-      reason: { type: 'string', description: 'Reason-for-change (min 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['tmf_file_id', 'reason'],
   },
@@ -224,7 +225,7 @@ export const UPDATE_TMF_ARTIFACT_STATUS: AnaTool = {
         description: 'The new lifecycle status.',
       },
       document_date: { type: 'string', description: 'Optional document date (YYYY-MM-DD).' },
-      reason: { type: 'string', description: 'Reason-for-change (min 8 chars).' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['tmf_artifact_id', 'status', 'reason'],
   },

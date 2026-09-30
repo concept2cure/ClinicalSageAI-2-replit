@@ -1090,7 +1090,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         syncedOnceRef.current = true;
         const frag = collabRuntime.doc.getXmlFragment('default');
         if (frag.length === 0 && boot.html) {
-          editor.commands.setContent(boot.html);
+          editor.commands.setContentUntracked(boot.html);
         }
         // Whether seeded here or adopted from peers, what the synced doc
         // holds now is the clean baseline for dirty-tracking.
@@ -1114,7 +1114,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     useEffect(() => {
       if (!collabRuntime || !editor || editor.isDestroyed || collabSynced || collabStatus !== 'denied') return;
       syncedOnceRef.current = true;
-      if (boot.html) editor.commands.setContent(boot.html);
+      if (boot.html) editor.commands.setContentUntracked(boot.html);
       lastSavedRef.current = serializeEditor(editor, format);
       setDirty(false);
       setSaveState('saved');
@@ -1167,7 +1167,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           format === 'text' || !looksLikeHtml(restoreOffer)
             ? plainTextToHtml(restoreOffer)
             : restoreOffer;
-        editor.commands.setContent(html);
+        editor.commands.setContentUntracked(html);
       }
       setRestoreOffer(null);
     }, [restoreOffer, editor, boot.mode, format]);

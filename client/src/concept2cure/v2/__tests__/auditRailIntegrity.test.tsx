@@ -143,6 +143,7 @@ const EVENTS = [
 ];
 
 let exportReply: () => Response;
+let auditReply: () => Response;
 type FetchInit = Parameters<typeof fetch>[1];
 const fetchMock = vi.fn(async (input: Parameters<typeof fetch>[0], _init?: FetchInit) => {
   const url = String(input);
@@ -182,7 +183,7 @@ const fetchMock = vi.fn(async (input: Parameters<typeof fetch>[0], _init?: Fetch
     });
   }
   if (url.startsWith(`/api/authoring/docs/${DOC}/audit?`)) {
-    return reply({ success: true, events: EVENTS, count: EVENTS.length });
+    return auditReply();
   }
   if (url === EXPORT_URL) return exportReply();
   // Not this test's subject; answered as an honest "not available here".
@@ -227,6 +228,7 @@ beforeEach(() => {
   }
   exportReply = () =>
     reply({ format: 'authoring-record-export/1', events: EVENTS, chain: {}, verdicts: {} });
+  auditReply = () => reply({ success: true, events: EVENTS, count: EVENTS.length });
   vi.stubGlobal('fetch', fetchMock);
   Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, configurable: true, writable: true });
   Object.defineProperty(URL, 'revokeObjectURL', { value: revokeObjectURL, configurable: true, writable: true });
@@ -314,6 +316,17 @@ describe('Download the record', () => {
     expect(exportCalls()).toHaveLength(1);
     expect(createObjectURL).not.toHaveBeenCalled();
     expect(clicked).toHaveLength(0);
+  });
+
+  it('a person without access to the record is told so — not shown a failed read or an empty trail', async () => {
+    auditReply = () =>
+      reply({ success: false, error: { code: 'AUDIT_TRAIL_NOT_PERMITTED', message: 'Reading this document’s record needs access.' } }, 403);
+    render(<DocumentAuthoring {...props()} />);
+    await screen.findAllByText('Stability');
+    fireEvent.click(screen.getByRole('button', { name: 'Audit' }));
+    await screen.findByText('No access to this document’s record');
+    expect(screen.queryByText('Couldn’t load the audit trail')).toBeNull();
+    expect(screen.queryAllByTestId('audit-event')).toHaveLength(0);
   });
 
   it('says so when the session is not authenticated (401), rather than nothing', async () => {
