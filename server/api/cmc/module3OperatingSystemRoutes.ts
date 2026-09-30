@@ -1013,7 +1013,7 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
     if (msg.includes('NOT_FOUND') || msg.includes('FORBIDDEN')) {
       return res.status(404).json({ success: false, error: msg });
     }
-    return res.status(500).json({ success: false, error: msg || 'Placement failed' });
+    return serverError(res, logger, 'placing the document', error);
   }
 });
 
