@@ -768,7 +768,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     const { content, title, ctdSection } = req.body;
 
     // Find artifact in database
-    const dbArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+    const dbArtifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
     if (!dbArtifact) {
       return sendError(res, 404, 'Artifact not found');
@@ -1126,7 +1126,7 @@ router.put(
       }
 
       // Find the artifact
-      const dbArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const dbArtifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!dbArtifact) {
         return sendError(res, 404, 'Artifact not found');
@@ -1505,7 +1505,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -1551,7 +1551,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -1619,7 +1619,7 @@ router.get(
       }
 
       // 1. Get artifact
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) {
         return sendError(res, 404, 'Artifact not found');
@@ -1836,7 +1836,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -1886,7 +1886,7 @@ router.get(
 
       const mode = (req.query.mode as string) === 'detailed' ? 'detailed' : 'summary';
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -2087,7 +2087,7 @@ router.post(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -2491,7 +2491,7 @@ router.put(
       }
 
       // Another project's artifact is not found through this project's URL.
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
       const previousStatus = artifact.status || 'draft';
@@ -2948,7 +2948,7 @@ router.put(
         return sendError(res, 400, 'ctdSection is required');
       }
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3085,7 +3085,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3164,7 +3164,7 @@ router.post(
         return sendError(res, 400, 'targetVersion is required and must be a positive integer');
       }
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3385,7 +3385,7 @@ router.post(
         return sendError(res, 400, 'comment is required');
       }
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3457,7 +3457,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3508,7 +3508,7 @@ router.put(
       // The comment is resolved only on the URL's artifact, in its project: it
       // was found by id and organization alone, so any project's comment could
       // be resolved through this project's URL.
-      const commentArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const commentArtifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
       if (!commentArtifact) return sendError(res, 404, 'Artifact not found');
 
       const [comment] = await db
@@ -3600,7 +3600,7 @@ router.post(
         return sendError(res, 400, 'All reviewer IDs must be valid numbers');
       }
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3737,7 +3737,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3845,7 +3845,7 @@ router.delete(
       if (!assignment) return sendError(res, 404, 'Assignment not found');
 
       // Validate the assignment belongs to the artifact in the URL, in its project
-      const withdrawArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const withdrawArtifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!withdrawArtifact || assignment.artifactId !== withdrawArtifact.id) {
         return sendError(res, 404, 'Assignment not found for this artifact');
@@ -3962,7 +3962,7 @@ router.post(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
       // The assignment is reminded only on the URL's artifact, in its project.
-      const remindArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const remindArtifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
       if (!remindArtifact) return sendError(res, 404, 'Artifact not found');
 
       // Get the assignment
@@ -4054,7 +4054,7 @@ router.post(
         return sendError(res, 403, 'Only reviewer, approver, or admin can submit review decisions');
       }
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
       if (artifact.status !== 'review') {
@@ -4220,7 +4220,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
