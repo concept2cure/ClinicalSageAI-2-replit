@@ -8,6 +8,14 @@ import {
 } from '../../../shared/schema';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { CorrespondenceIssue } from '@shared/types/regulatory-correspondence';
+import type { RequestDb } from '../../db/requestDb';
+
+/**
+ * Where the writes below go. Defaults to the shared `db`; the correspondence
+ * intake passes its transaction so a letter and everything derived from it
+ * commit together or not at all (2026-09-30, row D2).
+ */
+type Executor = RequestDb;
 
 export type CanonicalTaskType =
   | 'correspondence_triage'
@@ -65,8 +73,8 @@ export async function computeCorrespondenceIssueImpact(input: {
   submissionId: string;
   correspondenceId: string;
   issue: CorrespondenceIssue;
-}): Promise<OperatingImpactResult> {
-  const [linkedPackage] = await db
+}, executor: Executor = db): Promise<OperatingImpactResult> {
+  const [linkedPackage] = await executor
     .select({ id: c2cSubmissionPackages.id, packageFamily: c2cSubmissionPackages.packageFamily })
     .from(c2cSubmissionPackages)
     .where(
@@ -81,7 +89,7 @@ export async function computeCorrespondenceIssueImpact(input: {
 
   let linkedSections: Array<{ sectionDbId: number; sectionKey: string }> = [];
   if (linkedPackage && input.issue.mappedCtdSections.length) {
-    linkedSections = await db
+    linkedSections = await executor
       .select({ sectionDbId: c2cPackageSections.id, sectionKey: c2cPackageSections.sectionKey })
       .from(c2cPackageSections)
       .where(
@@ -94,7 +102,7 @@ export async function computeCorrespondenceIssueImpact(input: {
 
   let blockerOpened = false;
   if (linkedPackage && input.issue.blocker) {
-    const [existing] = await db
+    const [existing] = await executor
       .select({ id: c2cBlockers.id })
       .from(c2cBlockers)
       .where(
@@ -109,7 +117,7 @@ export async function computeCorrespondenceIssueImpact(input: {
       .limit(1);
 
     if (!existing) {
-      await db.insert(c2cBlockers).values({
+      await executor.insert(c2cBlockers).values({
         blockerId: `blk_${crypto.randomUUID()}`,
         orgId: input.orgId,
         projectId: input.projectId,
@@ -144,12 +152,12 @@ export async function createCanonicalTasksForIssue(input: {
   ownerUserId: number;
   ownerName: string;
   linkedSectionKeys: string[];
-}): Promise<CanonicalTaskRecord[]> {
+}, executor: Executor = db): Promise<CanonicalTaskRecord[]> {
   const dueAt = new Date(Date.now() + slaHoursForSeverity(input.issue.severity) * 60 * 60 * 1000);
   const taskType = taskTypeForIssue(input.issue);
   const workItemId = `wi_${crypto.randomUUID()}`;
 
-  await db.insert(c2cProjectWorkItems).values({
+  await executor.insert(c2cProjectWorkItems).values({
     workItemId,
     orgId: input.orgId,
     projectId: input.projectId,

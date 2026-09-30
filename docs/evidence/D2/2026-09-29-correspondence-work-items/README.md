@@ -90,15 +90,7 @@ None was fixed here:
 
 ## Found, not fixed — handed on
 
-1. **The intake is not atomic.** The letter, each issue, each issue's blocker
-   and work item, the timeline event and the project-memory entry are written
-   one statement at a time, some through the shared `db`, some through
-   `pool.query`. Any failure after the first write leaves a letter holding only
-   some of its issues, and a retry records the letter a second time. With the
-   key fixed, the common failure is gone, but the shape remains. Making it
-   atomic means passing one transaction through
-   `computeCorrespondenceIssueImpact`, `createCanonicalTasksForIssue` and
-   `addTimelineEventDB`. → D2, unclaimed.
+1. ~~**The intake is not atomic.**~~ **Done 2026-09-30, below.**
 2. **Correspondence work items never reach the Task Board.** They are written
    to `c2c_project_work_items`, which `/api/task-management/board` does not
    read. That is part of the "two task stores" finding (work-orders README,
@@ -116,3 +108,29 @@ None was fixed here:
    `server/services/orchestration/cross-object-resolver.ts:189-192` hardcodes
    `blockedTasks: 0`, and that value reaches AnA's readiness context. → D2,
    still unclaimed.
+
+## Follow-up, 2026-09-30: the intake commits whole or not at all
+
+The first handed-on item is fixed. `POST /correspondence/intake` now runs every
+write the letter produces in **one** transaction on one connection (`transaction`
+from `server/db`): the letter, each issue, each issue's blocker and work item,
+and the timeline event. `computeCorrespondenceIssueImpact` and
+`createCanonicalTasksForIssue` take an optional executor, defaulting to the
+shared `db`, and the intake passes them Drizzle bound to the transaction's
+client. The pool applies the tenant scope right after that transaction's
+`BEGIN`, so RLS holds for every statement. The five tables written all have
+forced RLS with a policy on the reference database, so a green run as the
+runtime role proves the scope is applied inside the transaction. The central
+audit row is still written after COMMIT, as its comment says: it records an
+intake that happened.
+
+| Run | Result | File |
+|---|---|---|
+| Before (statement by statement), work-item INSERT revoked mid-intake | 2 of 7 fail: the failed intake leaves `{ letters: 1, issues: 1 }`, and the retry records the letter twice | `atomic-red-before.txt` |
+| After, reference database | 7 of 7 | `atomic-green-reference-db.txt` |
+| After, database provisioned from empty | 7 of 7 | `atomic-green-from-empty.txt` |
+
+The mocked suites now give `transaction` their own pool, as the real one hands
+its client to the callback. One suite's query mock read only string SQL; a pg
+client also takes the `{ text, values }` form Drizzle sends, and the mock now
+reads both. Correspondence suites: 6 files, 142 tests pass.

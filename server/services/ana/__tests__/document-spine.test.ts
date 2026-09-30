@@ -79,6 +79,8 @@ const baseReq: CanonicalRevisionRequest = {
   anaThreadId: 'thread-1',
   title: 'Clinical Overview',
   content: 'Section 2.5 body',
+  // The person's stated reason: the spine records no other (2026-09-29).
+  reasonForChange: 'Aligned 2.5 with the final CSR.',
   ctdSection: '2.5',
   provenance: [{ any: 'record' }],
 };
@@ -154,6 +156,37 @@ describe('commitCanonicalRevision — the atomic spine', () => {
       commitCanonicalRevision({ ...baseReq, content: '' }, deps),
     ).rejects.toThrow(/content/);
     expect(calls).toHaveLength(0);
+  });
+
+  /* It used to record `AnA revised "<title>" (v<n>)` as the reason whenever
+     none was passed, so the ledger said a person had given a reason nobody
+     gave. Any caller of the core, not only the tool, is held to the rule. */
+  it.each([
+    ['no reason', undefined],
+    ['a blank reason', '   '],
+    ['a reason under 8 characters once trimmed', '  fix  '],
+  ])('refuses %s before touching the transaction, and records nothing', async (_label, reasonForChange) => {
+    const { deps, calls } = makeDeps();
+    await expect(
+      commitCanonicalRevision({ ...baseReq, reasonForChange } as unknown as CanonicalRevisionRequest, deps),
+    ).rejects.toMatchObject({ name: 'ReasonNotStatedError', field: 'reason_for_change' });
+    expect(calls).toHaveLength(0);
+  });
+
+  it('records exactly the stated reason, trimmed, on the version and the ledger row', async () => {
+    const seen: { version?: string; ledger?: string } = {};
+    const { deps } = makeDeps({
+      async writeVersionTx(_client, req) {
+        seen.version = req.reasonForChange;
+        return { artifactId: 'artifact_1', artifactPk: 42, version: 3, created: true, contentHash: 'hash' };
+      },
+      async recordGovernedActionTx(_client, args) {
+        seen.ledger = args.reason;
+        return { actionId: 'act_1', auditId: 'audit_1' };
+      },
+    });
+    await commitCanonicalRevision({ ...baseReq, reasonForChange: '  Aligned 2.5 with the final CSR.  ' }, deps);
+    expect(seen).toEqual({ version: 'Aligned 2.5 with the final CSR.', ledger: 'Aligned 2.5 with the final CSR.' });
   });
 });
 
