@@ -31,7 +31,13 @@ import type { SignerCredentials, SignerReverification } from '../../server/servi
 import { SubmissionError } from '../../server/services/submission-service/submission-service';
 
 const ORG = 1;
+/** The author: creates and advances every document here. */
 const USER = 42;
+/**
+ * The signer: reviews and approves. Not the author, because the author may not
+ * sign off their own document (VR-12; separation of duties).
+ */
+const SIGNER = 46;
 const PASSWORD = 'correct horse battery staple';
 
 /** How many times the ceremony ran — a refused transition must not run it. */
@@ -86,14 +92,22 @@ const ADMIN: TestUser = { id: USER, organizationId: ORG, role: 'admin', roles: [
 
 let harness: IndPgliteDb;
 let app: express.Express;
+let signer: express.Express;
 const captured: DocumentAuditEvent[] = [];
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb({ leafSources: true });
+  // governedSigning: every sign-off here writes its real electronic_signatures
+  // row and ledger pair (VR-12), so the signers are org members with names.
+  harness = await createIndPgliteDb({ leafSources: true, governedSigning: true });
+  for (const id of [USER, 43, SIGNER]) {
+    await harness.pglite.query('INSERT INTO users (id, email, name) VALUES ($1, $2, $3)', [id, `u${id}@example.test`, `User ${id}`]);
+    await harness.pglite.query('INSERT INTO organization_users (organization_id, user_id) VALUES ($1, $2)', [ORG, id]);
+  }
 
   // Captures the org-wide trail + registration; keeps the real signature/leaf/
   // package effects and the real persisted hash chain.
   app = appAs(ADMIN);
+  signer = appAs({ ...ADMIN, id: SIGNER });
 });
 
 afterAll(async () => {
@@ -121,15 +135,15 @@ describe('governed document pipeline (HTTP → PGlite)', () => {
     expect((await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'in_review' })).status).toBe(200);
 
     // 4. in_review → approved is blocked until a review sign-off exists.
-    const noReview = await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved' });
+    const noReview = await request(signer).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved' });
     expect(noReview.status).toBe(409);
     expect(noReview.body.blockedBy).toContain('REVIEW_SIGNOFF_REQUIRED');
 
     // 5. Record the review sign-off, then approve (applies the approval signature).
-    const review = await request(app).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD });
+    const review = await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD });
     expect(review.status).toBe(200);
-    expect(review.body.signature.actor).toBe(String(USER));
-    expect((await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', password: PASSWORD })).status).toBe(200);
+    expect(review.body.signature.actor).toBe(String(SIGNER));
+    expect((await request(signer).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', password: PASSWORD })).status).toBe(200);
 
     // 6. approved → placed needs a complete dossier placement.
     const noPlacement = await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'placed' });
@@ -177,9 +191,11 @@ describe('governed document pipeline (HTTP → PGlite)', () => {
       expect(view.body.audit[i].eventHash).toBeTruthy();
       expect(view.body.audit[i].prevEventHash ?? '').toBe(i === 0 ? '' : view.body.audit[i - 1].eventHash);
     }
-    // The org-wide trail saw the same three events — and nothing for the
-    // refused one.
-    expect(captured.map((e) => e.to)).toEqual(['in_review', 'in_review', 'approved']);
+    // The org-wide trail saw the two transitions, and nothing for the refused
+    // one. The sign-off's org-wide record is its governed ledger row, written
+    // with its electronic_signatures row (VR-12,
+    // server/routes/__tests__/document-lifecycle-part11-record.test.ts).
+    expect(captured.map((e) => e.to)).toEqual(['in_review', 'approved']);
   });
 
   it('scopes reads to the tenant — another org cannot see the document', async () => {
@@ -234,20 +250,20 @@ describe('signing re-verifies, and writes are role-gated (2026-09-24)', () => {
 
   it('refuses a sign-off with no password, and with a wrong one', async () => {
     const id = await inReview();
-    const none = await request(app).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed' });
+    const none = await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed' });
     expect(none.status).toBe(400);
     expect(none.body.error).toBe('PASSWORD_REQUIRED');
-    const wrong = await request(app).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: 'guess' });
+    const wrong = await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: 'guess' });
     expect(wrong.status).toBe(401);
     // Neither recorded anything: approval is still blocked for want of a review.
-    const approve = await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', password: PASSWORD });
+    const approve = await request(signer).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', password: PASSWORD });
     expect(approve.status).toBe(409);
     expect(approve.body.blockedBy).toContain('REVIEW_SIGNOFF_REQUIRED');
   });
 
   it('records the server role, never the one in the request body', async () => {
     const id = await inReview();
-    const res = await request(app)
+    const res = await request(signer)
       .post(`/api/regulatory/documents/${id}/sign`)
       .send({ meaning: 'reviewed', password: PASSWORD, role: 'qualified-person' });
     expect(res.status).toBe(200);
@@ -256,8 +272,8 @@ describe('signing re-verifies, and writes are role-gated (2026-09-24)', () => {
 
   it('approving signs: no password, no approval — and the stage does not move', async () => {
     const id = await inReview();
-    expect((await request(app).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD })).status).toBe(200);
-    const res = await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved' });
+    expect((await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD })).status).toBe(200);
+    const res = await request(signer).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved' });
     expect(res.status).toBe(400);
     const view = await request(app).get(`/api/regulatory/documents/${id}`);
     expect(view.body.stage).toBe('in_review');
@@ -265,14 +281,15 @@ describe('signing re-verifies, and writes are role-gated (2026-09-24)', () => {
 
   it('a signatureRef in the body is never cited: the approval carries a server-minted reference', async () => {
     const id = await inReview();
-    expect((await request(app).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD })).status).toBe(200);
-    const res = await request(app)
+    expect((await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD })).status).toBe(200);
+    const res = await request(signer)
       .post(`/api/regulatory/documents/${id}/advance`)
       .send({ to: 'approved', password: PASSWORD, signatureRef: 'forged-ref' });
     expect(res.status).toBe(200);
     const view = await request(app).get(`/api/regulatory/documents/${id}`);
     const approved = view.body.audit.find((e: DocumentAuditEvent) => e.to === 'approved');
-    expect(approved.signatureRef).toMatch(/^csig:/);
+    // The electronic_signatures record it names (VR-12), not a minted reference.
+    expect(approved.signatureRef).toMatch(/^esig:\d+$/);
     expect(JSON.stringify(view.body.audit)).not.toContain('forged-ref');
   });
 
@@ -352,8 +369,8 @@ describe('the writer\'s refusals keep their status', () => {
     const id = (await request(app).post('/api/regulatory/documents')
       .send({ title: 'Writer refusal', documentType: 'US_IND', hasContent: true })).body.canonicalId;
     await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'in_review' });
-    await request(app).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD });
-    expect((await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', password: PASSWORD })).status).toBe(200);
+    await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD });
+    expect((await request(signer).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', password: PASSWORD })).status).toBe(200);
     return id;
   }
 
@@ -390,9 +407,11 @@ describe('the lifecycle record cannot be rewritten (VR-03, 2026-09-25)', () => {
     return id;
   }
   const sign = (id: string, meaning: string) =>
-    request(app).post(`/api/regulatory/documents/${id}/sign`).send({ meaning, password: PASSWORD });
+    request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning, password: PASSWORD });
+  // Approving signs, and the author may not sign (VR-12): the approval goes
+  // through the second signer.
   const advance = (id: string, to: string, extra: Record<string, unknown> = {}) =>
-    request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to, ...extra });
+    request(to === 'approved' ? signer : app).post(`/api/regulatory/documents/${id}/advance`).send({ to, ...extra });
 
   it('a review sign-off is recorded once: a second is refused before the ceremony, and the first stands', async () => {
     const id = await inReview();

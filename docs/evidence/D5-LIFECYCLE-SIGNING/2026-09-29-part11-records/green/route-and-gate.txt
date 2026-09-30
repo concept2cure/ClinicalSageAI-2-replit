@@ -1,0 +1,36 @@
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > authoring → in_review requires content 2ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > in_review → approved requires a review sign-off 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > a review bound to other content, or to no content, does not satisfy the approval gate 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > approved → placed requires an approval signature AND a complete placement 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > packaged → submitted requires packaging validation 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > immutability of approved content > approved cannot transition back to authoring (must supersede) 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > immutability of approved content > approved can be superseded 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > immutability of approved content > submitted cannot go back to packaged (terminal-forward) 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > legal back-transitions > in_review can request revision back to authoring 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > placement completeness > requires registryId, module, and section 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > audit event > captures from/to, actor, version, and placement for a transition 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > progress + wiring > progress increases monotonically across the forward spine 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > progress + wiring > every stage has a subsystem binding (no orphaned stage) 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > the chain verifier recomputes (VR-03) > an intact trail verifies, and reports that its hashes were recomputed 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > the chain verifier recomputes (VR-03) > an event whose actor was edited with its hashes left in place is broken, at that event 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > the chain verifier recomputes (VR-03) > an event with no hash at all is broken when hashes are recomputed 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > the chain verifier recomputes (VR-03) > without a hasher it says so: linkage only, never a claim that hashes were checked 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > a signature is its own trail event > records the sign-off at the current stage, naming the signer and the signature 0ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > writes exactly one electronic_signatures row, bound to the Vault version, and one chained audit row 100ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > approving writes its own record, bound to the same content, with the approver named 70ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > a document with no source the server can read binds the ledger, and says so 37ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > the signature record refuses UPDATE (control: the §11.70 trigger is in force here) 42ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash: the stored hash is the Vault row's 8ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash on a document with no readable source 5ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash on a transition: the trail records the stored one 17ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > refuses a Vault source that is not this organization's, and records nothing 5ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > an audit INSERT that fails rolls the transition back 18ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails rolls the approval back 54ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails leaves no review sign-off 37ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator cannot review it: 403 SELF_APPROVAL, before any credential check, and nothing is written 26ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the uploader of the Vault version cannot review it 25ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator cannot approve it after someone else reviewed it 50ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator is recorded, and the record cannot be reassigned 9ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review covers the content it was signed over > after a revision that changed the content, the round-1 review does not satisfy the approval gate 73ms
+ Test Files  2 passed (2)
+      Tests  34 passed (34)

@@ -1,0 +1,11 @@
+# c2c_d3d, provisioned from empty by scripts/db/provision-test-db.sh at this change (exit 0; the install path logged 'EXECUTE revoked on 48 unreviewed SECURITY DEFINER function(s)'). app_service, RLS_ENFORCE=on
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > the runtime role exists, so the privilege checks below mean something 9ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > self-test: the sweep catches a delegate-grant table with its RLS removed 165ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > self-test: the sweep catches the organizations table with its RLS removed 81ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > no table an RLS decision reads is writable by the runtime role without RLS 79ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > the runtime role exists, so the privilege check means something 9ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > every baseline entry carries a status and a reason 0ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: a definer function planted in a rolled-back transaction is caught 8ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: the runtime role's grant recipe revokes an unlisted one, and keeps a listed one 12ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > no callable definer function is missing from the reviewed allowlist 2ms
+      Tests  9 passed (9)
