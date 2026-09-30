@@ -86,6 +86,8 @@ vi.mock('../../db', () => ({
   pool,
   getPool: () => pool,
   getDb: () => ({}),
+  // The intake runs its writes in one transaction on one client (row D2).
+  transaction: async (cb: (client: typeof pool) => unknown) => cb(pool),
 }));
 
 import express from 'express';
