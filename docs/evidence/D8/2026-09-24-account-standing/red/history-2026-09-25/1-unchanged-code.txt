@@ -1,0 +1,273 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-25T02:32:32.670Z","pid":1893,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-25T02:32:32.672Z","pid":1893,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-25T02:32:32.672Z","pid":1893,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-09-25T02:32:32.898Z","pid":1893,"hostname":"vm","context":{"resource":"http://localhost:38883/mcp","issuer":"http://localhost:38883/","resourceMetadataUrl":"http://localhost:38883/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-25T02:32:33.199Z', poolSize: 1 }
+
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes
+[dbd8] unhandled route error: new row violates row-level security policy for table "mcp_oauth_authorization_codes"
+
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake
+[dbd8] unhandled route error: new row violates row-level security policy for table "mcp_oauth_authorization_codes"
+
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page
+[dbd8] unhandled route error: new row violates row-level security policy for table "mcp_oauth_authorization_codes"
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 47ms
+   → consent refused an account in use: {"error":"server_error"}: expected 500 to be 302 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 25ms
+   → consent refused an account in use: {"error":"server_error"}: expected 500 to be 302 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 7ms
+   → a suspended account's session still opened the connector: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page 12ms
+   → a suspended account's session authorised a connector client: {"error":"server_error"}: expected 500 to be 401 // Object.is equality
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page
+[dbd8] unhandled route error: new row violates row-level security policy for table "mcp_oauth_authorization_codes"
+
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page
+[dbd8] unhandled route error: new row violates row-level security policy for table "mcp_oauth_authorization_codes"
+
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code
+[dbd8] unhandled route error: new row violates row-level security policy for table "mcp_oauth_authorization_codes"
+
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code
+[dbd8] unhandled route error: new row violates row-level security policy for table "mcp_oauth_authorization_codes"
+
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither
+[dbd8] unhandled route error: new row violates row-level security policy for table "mcp_oauth_authorization_codes"
+
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 7ms
+   → a deprovisioned account's session still opened the connector: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page 10ms
+   → a deprovisioned account's session authorised a connector client: {"error":"server_error"}: expected 500 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 7ms
+   → a signed-out session still opened the connector: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 9ms
+   → a signed-out session authorised a connector client: {"error":"server_error"}: expected 500 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code 8ms
+   → consent refused an account in use: {"error":"server_error"}: expected 500 to be 302 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code 8ms
+   → consent refused an account in use: {"error":"server_error"}: expected 500 to be 302 // Object.is equality
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 19ms
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 10ms
+   → consent refused an account in use: {"error":"server_error"}: expected 500 to be 302 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes
+AssertionError: consent refused an account in use: {"error":"server_error"}: expected 500 to be 302 // Object.is equality
+
+- Expected
++ Received
+
+- 302
++ 500
+
+ ❯ codeFor server/mcp/__tests__/mcp-account-standing.dbtest.ts:154:75
+    152|   const { verifier, challenge } = pkce();
+    153|   const c = await consent(await authorize(challenge), m.session);
+    154|   expect(c.status, `consent refused an account in use: ${shown(c.body)…
+       |                                                                           ^
+    155|   expect(c.code).toBeTruthy();
+    156|   return { code: c.code!, verifier };
+ ❯ grant server/mcp/__tests__/mcp-account-standing.dbtest.ts:161:30
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:385:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake
+AssertionError: consent refused an account in use: {"error":"server_error"}: expected 500 to be 302 // Object.is equality
+
+- Expected
++ Received
+
+- 302
++ 500
+
+ ❯ codeFor server/mcp/__tests__/mcp-account-standing.dbtest.ts:154:75
+    152|   const { verifier, challenge } = pkce();
+    153|   const c = await consent(await authorize(challenge), m.session);
+    154|   expect(c.status, `consent refused an account in use: ${shown(c.body)…
+       |                                                                           ^
+    155|   expect(c.code).toBeTruthy();
+    156|   return { code: c.code!, verifier };
+ ❯ grant server/mcp/__tests__/mcp-account-standing.dbtest.ts:161:30
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:398:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why
+AssertionError: a suspended account's session still opened the connector: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:421:83
+    419|     it(`${key}: the session no longer opens /mcp, and says why`, async…
+    420|       const res = await mcp(members[key].session);
+    421|       expect(res.status, `a ${key} account's session still opened the …
+       |                                                                                   ^
+    422|       expect(res.challenge).toMatch(/invalid_token/);
+    423|       expect(res.challenge).toMatch(/not active/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page
+AssertionError: a suspended account's session authorised a connector client: {"error":"server_error"}: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:429:102
+    427|       const { challenge } = pkce();
+    428|       const c = await consent(await authorize(challenge), members[key]…
+    429|       expect(c.status, `a ${key} account's session authorised a connec…
+       |                                                                                                      ^
+    430|       expect(c.code, 'an authorization code was issued').toBeNull();
+    431|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why
+AssertionError: a deprovisioned account's session still opened the connector: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:421:83
+    419|     it(`${key}: the session no longer opens /mcp, and says why`, async…
+    420|       const res = await mcp(members[key].session);
+    421|       expect(res.status, `a ${key} account's session still opened the …
+       |                                                                                   ^
+    422|       expect(res.challenge).toMatch(/invalid_token/);
+    423|       expect(res.challenge).toMatch(/not active/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page
+AssertionError: a deprovisioned account's session authorised a connector client: {"error":"server_error"}: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:429:102
+    427|       const { challenge } = pkce();
+    428|       const c = await consent(await authorize(challenge), members[key]…
+    429|       expect(c.status, `a ${key} account's session authorised a connec…
+       |                                                                                                      ^
+    430|       expect(c.code, 'an authorization code was issued').toBeNull();
+    431|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp
+AssertionError: a signed-out session still opened the connector: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:438:75
+    436|   it('no longer opens /mcp', async () => {
+    437|     const res = await mcp(members.signedOut.session);
+    438|     expect(res.status, 'a signed-out session still opened the connecto…
+       |                                                                           ^
+    439|     expect(res.challenge).toMatch(/invalid_token/);
+    440|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page
+AssertionError: a signed-out session authorised a connector client: {"error":"server_error"}: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:445:94
+    443|     const { challenge } = pkce();
+    444|     const c = await consent(await authorize(challenge), members.signed…
+    445|     expect(c.status, `a signed-out session authorised a connector clie…
+       |                                                                                              ^
+    446|     expect(c.code).toBeNull();
+    447|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code
+AssertionError: consent refused an account in use: {"error":"server_error"}: expected 500 to be 302 // Object.is equality
+
+- Expected
++ Received
+
+- 302
++ 500
+
+ ❯ codeFor server/mcp/__tests__/mcp-account-standing.dbtest.ts:154:75
+    152|   const { verifier, challenge } = pkce();
+    153|   const c = await consent(await authorize(challenge), m.session);
+    154|   expect(c.status, `consent refused an account in use: ${shown(c.body)…
+       |                                                                           ^
+    155|   expect(c.code).toBeTruthy();
+    156|   return { code: c.code!, verifier };
+ ❯ grant server/mcp/__tests__/mcp-account-standing.dbtest.ts:161:30
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:457:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither
+AssertionError: consent refused an account in use: {"error":"server_error"}: expected 500 to be 302 // Object.is equality
+
+- Expected
++ Received
+
+- 302
++ 500
+
+ ❯ codeFor server/mcp/__tests__/mcp-account-standing.dbtest.ts:154:75
+    152|   const { verifier, challenge } = pkce();
+    153|   const c = await consent(await authorize(challenge), m.session);
+    154|   expect(c.status, `consent refused an account in use: ${shown(c.body)…
+       |                                                                           ^
+    155|   expect(c.code).toBeTruthy();
+    156|   return { code: c.code!, verifier };
+ ❯ grant server/mcp/__tests__/mcp-account-standing.dbtest.ts:161:30
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:499:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 3 passed (14)
+   Start at  02:32:29
+   Duration  4.76s (transform 1.62s, setup 72ms, import 214ms, tests 4.20s, environment 0ms)
+
