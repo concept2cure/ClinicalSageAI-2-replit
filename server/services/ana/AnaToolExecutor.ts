@@ -112,6 +112,12 @@ import {
 import { lookupIcd10 } from '../integrations/icd10-client.js';
 import { composeSafetyNarrative } from './safety-narrative.js';
 import { screenPromotionalLanguage } from './promotional-screening.js';
+import {
+  critiqueDraft,
+  critiqueDocument,
+  verifyRevision,
+  buildRevisionBrief,
+} from './writing-precision-gate.js';
 import { narrateStatisticalResult, type AnalysisType, type EffectMeasure } from './statistical-narrator.js';
 import { composeValueDossierGuidance, listValueDossierCatalog } from './value-dossier.js';
 import { adviseRegulatoryPathway, listRegulatoryPathways } from './regulatory-pathway.js';
@@ -3296,11 +3302,26 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
   if (orgId == null) {
     return JSON.stringify({ source: 'AnA RBM', error: 'Organization context required.' });
   }
-  const { recomputeSiteRisk } = await import('../rbm/site-risk-engine.js');
+  const { recomputeSiteRisk, SITE_READ_MESSAGE } = await import('../rbm/site-risk-engine.js');
   const { getPool } = await import('../../db.js');
+  // recomputeSiteRisk reports WHY it produced nothing (#1128): the study is not
+  // this org's, Site Intelligence is unavailable, or the read failed. Handed an
+  // empty array instead, the model would tell the user the study has no site
+  // data — a clean bill of health it has no evidence for. Return the reason.
+  const recompute = async (): Promise<any[] | string> => {
+    const out = await recomputeSiteRisk(orgId, programId);
+    if (!out.ok) {
+      return JSON.stringify({
+        source: 'AnA RBM Site Risk', error: SITE_READ_MESSAGE[out.reason], reason: out.reason,
+      });
+    }
+    return out.snapshots;
+  };
   let sites: any[];
   if (input.persist === true) {
-    sites = await recomputeSiteRisk(orgId, programId);
+    const r = await recompute();
+    if (typeof r === 'string') return r;
+    sites = r;
   } else {
     const { rows } = await getPool().query(
       `SELECT site_number, site_name, composite_risk, monitoring_tier, drivers FROM rbm_site_risk_scores
@@ -3308,7 +3329,11 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
       [orgId, programId],
     );
     sites = rows;
-    if (sites.length === 0) sites = await recomputeSiteRisk(orgId, programId);
+    if (sites.length === 0) {
+      const r = await recompute();
+      if (typeof r === 'string') return r;
+      sites = r;
+    }
   }
   const tiers = { reduced: 0, standard: 0, enhanced: 0 } as Record<string, number>;
   for (const s of sites) tiers[s.monitoringTier ?? s.monitoring_tier] = (tiers[s.monitoringTier ?? s.monitoring_tier] ?? 0) + 1;
@@ -3318,7 +3343,11 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
     siteCount: sites.length,
     tierCounts: tiers,
     sites,
-    note: sites.length === 0 ? 'No Site Intelligence data found for this program.' : undefined,
+    // Only reachable on a SUCCESSFUL read that found nothing, so it now means
+    // what it says instead of standing in for every failure mode.
+    note: sites.length === 0
+      ? 'Site Intelligence was read successfully and holds no sites for this program.'
+      : undefined,
   });
 });
 
@@ -3694,7 +3723,9 @@ registerToolHandler('create_monitoring_action', async (input, ctx) => {
     signalId: rbmNum(input.signalId) ?? null,
     owner: rbmNum(input.owner) ?? null,
   });
-  if (!out.created) return rbmErr('Monitoring plan not found in this tenant.');
+  // An approved plan's actions are frozen under its signature (#1166): say so,
+  // rather than reporting a plan that exists as "not found".
+  if (!out.created) return rbmErr(out.reason === 'plan_not_draft' ? out.message : 'Monitoring plan not found in this tenant.');
   return JSON.stringify({ source: 'AnA RBM · create_monitoring_action', ...out });
 });
 
@@ -3883,6 +3914,93 @@ registerToolHandler('medical_writing_review', async (input) => {
   const draftText = typeof input.draft_text === 'string' ? input.draft_text : undefined;
   const review = reviewMedicalWriting(documentType, draftText);
   return JSON.stringify({ source: 'AnA Medical-Writing QC', ...review });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Writing Precision Gate (PR #1003 port) — composes the checkers above
+// (grounding, readability, abbreviations, promotional screening, structure) plus
+// in-document terminology consistency into one deterministic score + verdict +
+// revision brief. The model revises; the gate decides. No DB, no org context.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function precisionAudience(v: unknown): ReadabilityAudience | undefined {
+  return typeof v === 'string' && ['patient', 'clinician', 'regulator', 'general'].includes(v)
+    ? (v as ReadabilityAudience)
+    : undefined;
+}
+
+registerToolHandler('critique_draft', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'text (the draft to critique) is required' });
+  }
+  const report = critiqueDraft({
+    text,
+    audience: precisionAudience(input.audience),
+    documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
+  });
+  return JSON.stringify({
+    status: 'computed',
+    engine: 'deterministic',
+    score: report.score,
+    verdict: report.verdict,
+    metrics: report.metrics,
+    findings: report.findings,
+    revisionBrief: buildRevisionBrief(report),
+    instruction:
+      report.verdict === 'pass'
+        ? 'The draft passes the deterministic precision gate. You may still improve prose, but no machine-checkable defect remains.'
+        : 'Revise the draft against the revisionBrief (most severe first), preserving every value that is already correct and cited, then re-run critique_draft until the verdict is pass.',
+  });
+});
+
+registerToolHandler('verify_revision', async (input) => {
+  const originalText = typeof input.originalText === 'string' ? input.originalText : '';
+  const revisedText = typeof input.revisedText === 'string' ? input.revisedText : '';
+  if (!originalText.trim() || !revisedText.trim()) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'originalText and revisedText are both required' });
+  }
+  const audience = precisionAudience(input.audience);
+  const documentType = typeof input.documentType === 'string' ? input.documentType : undefined;
+  const result = verifyRevision(
+    { text: originalText, audience, documentType },
+    { text: revisedText, audience, documentType },
+  );
+  return JSON.stringify({
+    status: 'computed',
+    engine: 'deterministic',
+    result,
+    instruction: result.passesNow
+      ? 'The revision passes the precision gate. Confirm the improvement and proceed.'
+      : result.improved
+        ? 'The revision improved but has not fully passed; re-critique and continue revising the remaining findings.'
+        : 'The revision did not improve (or introduced regressions). Re-read the original critique and try again.',
+  });
+});
+
+registerToolHandler('critique_document', async (input) => {
+  const sections = Array.isArray(input.sections) ? input.sections : [];
+  const clean = sections
+    .filter((s): s is { title: string; text: string } =>
+      !!s && typeof (s as any).title === 'string' && typeof (s as any).text === 'string')
+    .map((s) => ({ title: s.title, text: s.text }));
+  if (clean.length === 0) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'sections[] with {title, text} is required' });
+  }
+  const result = critiqueDocument(clean, {
+    audience: precisionAudience(input.audience),
+    documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
+  });
+  return JSON.stringify({
+    status: 'computed',
+    engine: 'deterministic',
+    documentScore: result.documentScore,
+    verdict: result.verdict,
+    crossSectionFindings: result.crossSectionFindings,
+    sections: result.sections.map((s) => ({ title: s.title, score: s.score, verdict: s.verdict, findings: s.report.findings })),
+    instruction:
+      'Report the document score and, first, any cross-section findings (a value stated inconsistently across sections is a reviewer blocker). Then list per-section findings for the sections that need revision.',
+  });
 });
 
 // Describe Capabilities — AnA's deterministic self-knowledge: registered tools

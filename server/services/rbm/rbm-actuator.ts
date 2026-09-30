@@ -27,8 +27,10 @@ import {
   bandFromScore,
   kriStatus,
   qtlStatus,
+  qtlRangeError,
   defaultPlanStrategy,
   type KriDirection,
+  type QtlDirection,
 } from './rbm-engine';
 
 /** Minimal pg-compatible executor: `pool`, a pooled client, or a test double. */
@@ -184,19 +186,40 @@ export interface SetQtlInput {
   threshold?: number | null;
   secondaryLimit?: number | null;
   currentValue?: number | null;
+  /** Which way the limit bites. Defaults to `upper` — the historical behaviour. */
+  direction?: QtlDirection;
+  /** two_sided only: the lower bound and its early-warning limit. */
+  thresholdLower?: number | null;
+  secondaryLimitLower?: number | null;
 }
 
 /** Create a QTL. Infers the secondary early-warning limit (75% of threshold)
- *  when omitted, and the within/approaching/breached status from the value. */
+ *  when omitted — for an UPPER limit only: 75% of a lower bound would sit on
+ *  the breached side of it — and the within/approaching/breached status from
+ *  the value, evaluated in the limit's own direction. Throws on a two-sided
+ *  limit that is not a usable range rather than storing one that can never
+ *  evaluate. */
 export async function setQtl(exec: Exec, organizationId: number, input: SetQtlInput) {
-  const secondary = input.secondaryLimit ?? inferSecondaryLimit(input.threshold);
-  const status = qtlStatus(input.currentValue ?? null, input.threshold ?? null, secondary);
+  const direction: QtlDirection = input.direction ?? 'upper';
+  const rangeErr = qtlRangeError({ direction, threshold: input.threshold, thresholdLower: input.thresholdLower });
+  if (rangeErr) throw new Error(rangeErr);
+  const secondary = input.secondaryLimit
+    ?? (direction === 'upper' ? inferSecondaryLimit(input.threshold) : null);
+  const status = qtlStatus(input.currentValue ?? null, {
+    threshold: input.threshold ?? null,
+    secondaryLimit: secondary,
+    direction,
+    thresholdLower: input.thresholdLower ?? null,
+    secondaryLimitLower: input.secondaryLimitLower ?? null,
+  });
   const { rows } = await exec.query(
-    `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit, current_value, breached, status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+    `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit,
+       direction, threshold_lower, secondary_limit_lower, current_value, breached, status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
     [
       organizationId, input.programId ?? null, input.parameter, input.rationale ?? null,
-      input.threshold ?? null, secondary, input.currentValue ?? null, status === 'breached', status,
+      input.threshold ?? null, secondary, direction, input.thresholdLower ?? null,
+      input.secondaryLimitLower ?? null, input.currentValue ?? null, status === 'breached', status,
     ],
   );
   return { qtl: rows[0], inferred: { secondaryLimit: secondary, status } };
@@ -286,10 +309,23 @@ export async function draftPlan(exec: Exec, organizationId: number, input: Draft
   }
   strategy = strategy ?? 'risk_based';
   const title = input.title ?? 'Risk-based monitoring plan';
+  // A new plan is a new VERSION in the study's chain. Two drafts off one study
+  // have no defined merge, so an open draft is reported, not duplicated.
+  const programId = input.programId ?? null;
+  const open = await openDraftPlan(exec, organizationId, programId);
+  if (open) {
+    return {
+      plan: null,
+      refused: 'draft_already_open' as const,
+      message: `A draft monitoring plan (v${open.version}, id ${open.id}) is already open for this study — edit or approve it instead of drafting another.`,
+      inferred: { strategy, fromOverallRisk: overall },
+    };
+  }
+  const version = await nextPlanVersion(exec, organizationId, programId);
   const { rows } = await exec.query(
-    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status)
-     VALUES ($1,$2,$3,$4,$5,'draft') RETURNING *`,
-    [organizationId, input.programId ?? null, input.assessmentId ?? null, title, strategy],
+    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, version)
+     VALUES ($1,$2,$3,$4,$5,'draft',$6) RETURNING *`,
+    [organizationId, programId, input.assessmentId ?? null, title, strategy, version],
   );
   return { plan: rows[0], inferred: { strategy, fromOverallRisk: overall } };
 }
@@ -396,7 +432,7 @@ export async function amendAssessment(
 export interface GeneratePlanResult {
   generated: boolean;
   /** Why nothing was generated, when `generated` is false. */
-  reason?: 'no_assessment' | 'assessment_not_approved';
+  reason?: 'no_assessment' | 'assessment_not_approved' | 'draft_already_open';
   plan?: any;
   actions?: any[];
   derivedFrom?: { assessmentId: number; overallRisk: string; criticalFactors: number; enhancedSites: number };
@@ -468,13 +504,20 @@ export async function generatePlanFromAssessment(
     : 'medium';
   const strategy = defaultPlanStrategy(overall);
 
+  // Generating lands a new plan VERSION, so it cannot silently sit alongside an
+  // amendment someone else has open: two drafts off one study have no defined
+  // merge, and picking one would discard the other's work.
+  const openDraft = await openDraftPlan(exec, organizationId, input.programId);
+  if (openDraft) return { generated: false, reason: 'draft_already_open' };
+  const version = await nextPlanVersion(exec, organizationId, input.programId);
+
   const plan = (await exec.query(
     /* created_by is the author of record for the Part 11 two-person rule. */
-    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, metadata, created_by)
-     VALUES ($1,$2,$3,$4,$5,'draft',$6,$7) RETURNING *`,
+    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, version, metadata, created_by)
+     VALUES ($1,$2,$3,$4,$5,'draft',$6,$7,$8) RETURNING *`,
     [
       organizationId, input.programId, assessment.id,
-      input.title ?? `Monitoring plan — ${assessment.title}`, strategy,
+      input.title ?? `Monitoring plan — ${assessment.title}`, strategy, version,
       JSON.stringify({
         generatedFrom: 'rbm_risk_assessment',
         assessmentId: assessment.id,
@@ -522,6 +565,120 @@ export async function generatePlanFromAssessment(
   };
 }
 
+/**
+ * The next monitoring-plan version for a study. Numbered across EVERY version
+ * of the plan on file — archived and soft-deleted ones included — so a version
+ * number is never reused: a reused number would make two different signed
+ * documents indistinguishable in the audit trail.
+ */
+export async function nextPlanVersion(
+  exec: Exec,
+  organizationId: number,
+  programId: string | null,
+): Promise<number> {
+  const { rows } = await exec.query(
+    `SELECT COALESCE(MAX(version), 0) AS v FROM rbm_monitoring_plans
+      WHERE organization_id = $1 AND program_id IS NOT DISTINCT FROM $2`,
+    [organizationId, programId],
+  );
+  return Number(rows[0]?.v ?? 0) + 1;
+}
+
+/** An open (draft) plan version for the study, if any. */
+async function openDraftPlan(exec: Exec, organizationId: number, programId: string | null) {
+  const { rows } = await exec.query(
+    `SELECT id, version FROM rbm_monitoring_plans
+      WHERE organization_id = $1 AND program_id IS NOT DISTINCT FROM $2
+        AND deleted_at IS NULL AND status = 'draft'
+      ORDER BY version DESC LIMIT 1`,
+    [organizationId, programId],
+  );
+  return rows[0] ?? null;
+}
+
+export interface AmendPlanResult {
+  amended: boolean;
+  reason?: 'not_found' | 'not_approved' | 'amendment_already_open';
+  plan?: any;
+  actions?: any[];
+  /** The version this amendment was opened from. */
+  supersedes?: number;
+}
+
+/**
+ * Open a versioned amendment to an APPROVED monitoring plan.
+ *
+ * The same argument as amendAssessment, applied to the document that actually
+ * directs monitoring activity. An active plan's e-signature attests to a
+ * specific strategy and a specific set of actions; editing it in place would
+ * leave the approver's name and timestamp attached to content they never saw.
+ * Monitoring plans genuinely change mid-study — that is the premise of
+ * risk-proportionate monitoring — so revision is supported, just not silently.
+ *
+ * Unfinished actions are copied forward so the amendment starts from the
+ * operational state, each copy reopened at `open`: a copy is a new instruction
+ * under a new plan version, and marking it `in_progress` would credit work to a
+ * plan that did not exist when the work was done. Actions already `done` stay
+ * with the version they were completed under.
+ *
+ * The new version carries NO approval fields — copying the previous signer
+ * forward would forge a signature — and records the amender as its author
+ * (created_by) so the two-person rule applies to its approval.
+ *
+ * The caller owns the transaction.
+ */
+export async function amendMonitoringPlan(
+  exec: Exec,
+  organizationId: number,
+  input: { planId: number; reason: string; openedBy?: number | null },
+): Promise<AmendPlanResult> {
+  const current = (await exec.query(
+    `SELECT * FROM rbm_monitoring_plans
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [input.planId, organizationId],
+  )).rows[0];
+  if (!current) return { amended: false, reason: 'not_found' };
+  // A draft is already editable, so amending one would fork it for no reason.
+  if (current.status !== 'active') return { amended: false, reason: 'not_approved' };
+
+  const open = await openDraftPlan(exec, organizationId, current.program_id ?? null);
+  if (open) return { amended: false, reason: 'amendment_already_open' };
+
+  const version = await nextPlanVersion(exec, organizationId, current.program_id ?? null);
+
+  const plan = (await exec.query(
+    `INSERT INTO rbm_monitoring_plans (
+       organization_id, program_id, assessment_id, title, strategy, status, version, metadata, created_by
+     ) VALUES ($1,$2,$3,$4,$5,'draft',$6,$7,$8) RETURNING *`,
+    [
+      organizationId, current.program_id ?? null, current.assessment_id ?? null, current.title,
+      current.strategy, version,
+      JSON.stringify({
+        amendmentOf: current.id,
+        amendmentOfVersion: current.version,
+        amendmentReason: input.reason,
+        amendmentOpenedBy: input.openedBy ?? null,
+      }),
+      input.openedBy ?? null,
+    ],
+  )).rows[0];
+
+  const actions = (await exec.query(
+    `INSERT INTO rbm_monitoring_actions (
+       organization_id, plan_id, risk_item_id, signal_id, action_type, description,
+       priority, owner, due_date, status
+     )
+     SELECT organization_id, $1, risk_item_id, signal_id, action_type, description,
+            priority, owner, due_date, 'open'
+       FROM rbm_monitoring_actions
+      WHERE organization_id = $2 AND plan_id = $3 AND status <> 'done'
+     RETURNING *`,
+    [plan.id, organizationId, current.id],
+  )).rows;
+
+  return { amended: true, plan, actions, supersedes: current.version };
+}
+
 export interface CreateActionInput {
   planId: number;
   riskItemId?: number | null;
@@ -533,14 +690,29 @@ export interface CreateActionInput {
   dueDate?: string | null;
 }
 
-/** Create a monitoring action under a plan (verifying the plan is in-tenant).
- *  Returns null when the plan is not found in the tenant. */
+/** Create a monitoring action under a plan, verifying the plan is in-tenant AND
+ *  still a draft.
+ *
+ *  Adding an action to an approved (or archived) plan changes the set of
+ *  actions the approver's signature attests to, and leaves the signed record
+ *  mutable. New actions go on a draft; to add one to an approved plan, amend it
+ *  (amendMonitoringPlan), which opens a new draft version. This is the one
+ *  implementation behind POST /rbm-monitoring-actions and the AnA tool. */
 export async function createAction(exec: Exec, organizationId: number, input: CreateActionInput) {
   const own = await exec.query(
-    `SELECT 1 FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    `SELECT status, version FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
     [input.planId, organizationId],
   );
-  if (own.rows.length === 0) return { created: false as const, reason: 'plan_not_found' };
+  if (own.rows.length === 0) return { created: false as const, reason: 'plan_not_found' as const };
+  if (own.rows[0].status !== 'draft') {
+    return {
+      created: false as const,
+      reason: 'plan_not_draft' as const,
+      planStatus: String(own.rows[0].status),
+      message: `Monitoring plan ${input.planId} is ${own.rows[0].status}, not a draft, so its actions are frozen under its signature. `
+        + `POST /rbm-monitoring-plans/${input.planId}/amend to open a new draft version and add the action there.`,
+    };
+  }
   const { rows } = await exec.query(
     `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, risk_item_id, signal_id, action_type, description, priority, owner, due_date, status)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'open') RETURNING *`,
@@ -694,5 +866,20 @@ export async function approvePlan(
       opts.authorKnown === false ? 'not_applicable_no_author_recorded' : 'enforced',
     ],
   );
-  return rows[0] ?? null;
+  if (rows.length === 0) return null;
+  /* Approving a version supersedes the one it replaces, so a study never has
+     two plans claiming to direct monitoring at once. Atomic with the UPDATE
+     above only when the caller passes its transaction client — the route does.
+     The archived row and its actions are otherwise untouched: that is the
+     signed record of what was being done before. */
+  if (rows[0].program_id) {
+    await exec.query(
+      `UPDATE rbm_monitoring_plans SET status = 'archived', updated_at = NOW()
+        WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+          AND id <> $3 AND status = 'active'
+        RETURNING version`,
+      [organizationId, rows[0].program_id, planId],
+    );
+  }
+  return rows[0];
 }

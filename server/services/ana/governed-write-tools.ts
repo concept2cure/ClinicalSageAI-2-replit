@@ -84,6 +84,10 @@ export const FREE_TEXT_NON_GOVERNED_TOOLS: Readonly<Record<string, string>> = {
     'Returns a deterministic grounding report; the text is not stored.',
   check_numerical_integrity:
     'Returns a deterministic numerical-consistency verdict; the content is not stored.',
+  critique_document:
+    'Returns a deterministic cross-section precision critique (Writing Precision Gate); nothing is stored.',
+  critique_draft:
+    'Returns a deterministic precision score and findings for the supplied draft; nothing is stored.',
   detect_evidence_contradictions:
     'Runs deterministic contradiction detection over the supplied claims and returns the result to the conversation.',
   extract_document_structure:
@@ -104,6 +108,8 @@ export const FREE_TEXT_NON_GOVERNED_TOOLS: Readonly<Record<string, string>> = {
     'Runs a deterministic promotional-claims screen and returns the findings; the text is not stored.',
   search_document:
     'Returns deterministic in-text search matches; nothing is stored.',
+  verify_revision:
+    'Returns a deterministic before/after comparison of two drafts; neither is stored.',
   validate_spl:
     'Runs deterministic structural SPL validation and returns the result; the spec text is not stored.',
 };

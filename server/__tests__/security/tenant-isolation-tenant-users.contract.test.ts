@@ -466,3 +466,43 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
     expect(executedMatching(/INSERT INTO organization_users/i).length).toBe(0);
   });
 });
+
+/**
+ * Ported from abandoned PR #973 (hunk b). An admin could demote or remove
+ * THEMSELVES — the last admin of an org could lock every administrator out of
+ * it with one request, and no one would be left who could undo it. Self
+ * role-change and self-removal are refused; the same admin acting on someone
+ * else is unaffected. The caller in these tests is user id 1.
+ */
+describe('Tenant-users self-modification (#973 port)', () => {
+  it('PATCH /:org/:self — an admin cannot change their own role (400, no UPDATE)', async () => {
+    authState.membershipRole = 'admin';
+    const res = await request(app).patch('/api/tenant-users/999/1').send({ role: 'viewer' }).expect(400);
+    expect(res.body.code).toBe('SELF_ROLE_CHANGE');
+    expect(executedMatching(/UPDATE organization_users/i).length).toBe(0);
+  });
+
+  it('DELETE /:org/:self — an admin cannot remove themselves (400, no DELETE)', async () => {
+    authState.membershipRole = 'admin';
+    const res = await request(app).delete('/api/tenant-users/999/1').expect(400);
+    expect(res.body.code).toBe('SELF_REMOVAL');
+    expect(executedMatching(/DELETE FROM organization_users/i).length).toBe(0);
+  });
+
+  it('super_admin is refused on self too — the guard is about the caller, not the role', async () => {
+    authState.callerRole = 'super_admin';
+    await request(app).delete('/api/tenant-users/999/1').expect(400);
+    expect(executedMatching(/DELETE FROM organization_users/i).length).toBe(0);
+  });
+
+  it('a non-member is still told 403 first — the self check never discloses past authZ', async () => {
+    authState.membershipRole = null;
+    await request(app).patch('/api/tenant-users/999/1').send({ role: 'admin' }).expect(403);
+  });
+
+  it('an admin acting on ANOTHER user still reaches the write', async () => {
+    authState.membershipRole = 'admin';
+    await request(app).delete('/api/tenant-users/999/42');
+    expect(executedMatching(/DELETE FROM organization_users/i).length).toBe(1);
+  });
+});

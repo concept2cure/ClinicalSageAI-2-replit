@@ -18940,6 +18940,9 @@ export const rbmMonitoringPlans = pgTable(
     title:          text('title').notNull(),
     strategy:       text('strategy').default('risk_based').notNull(),
     status:         text('status').default('draft').notNull(),
+    /** Plan version within the study. An approved plan is read-only; revising
+     *  it opens the next version (migrations/20260930_rbm_plan_versioning.sql). */
+    version:        integer('version').default(1).notNull(),
     approvedBy:     integer('approved_by').references(() => users.id),
     approvedAt:     timestamp('approved_at', { withTimezone: true }),
     metadata:       jsonb('metadata').default('{}'),
