@@ -17507,3 +17507,18 @@
     transition-duration: 1ms !important;
   }
 }
+
+
+/* Restored canonical IND-form layout contract. */
+.c2c-v2 .indf-record{border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 12px;margin-bottom:12px;}
+.c2c-v2 .indf-record-lead{font-size:12px;color:var(--text-400);margin-bottom:6px;}
+.c2c-v2 .indf-record-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,max-content));gap:6px 24px;}
+.c2c-v2 .indf-fact{margin:0;}
+.c2c-v2 .indf-fact dt{font-size:11px;color:var(--text-400);text-transform:uppercase;letter-spacing:.04em;}
+.c2c-v2 .indf-fact dd{margin:0;font-size:13px;font-weight:600;}
+.c2c-v2 .indf-fact dd .indf-missing{font-weight:400;color:var(--text-400);}
+
+/* Compact, keyboard-visible attachment control for governed AnA drafting. */
+.c2c-v2 .ed-ana-attach{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:var(--radius-sm,4px);background:transparent;color:var(--text-400);cursor:pointer;}
+.c2c-v2 .ed-ana-attach:hover{color:var(--text-900);border-color:var(--text-400);}
+.c2c-v2 .ed-ana-attach:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}

@@ -103,6 +103,12 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260604_shadow_review.sql',
   'migrations/20260609_audit_hmac_seal.sql',
+
+  // Public organization UUIDs are the bridge key consumed by the UUID-scoped
+  // tenant helpers and C-48. This existing idempotent migration was omitted
+  // from the durable path, allowing a provisioned database to reach those
+  // consumers without organizations.uuid.
+  'db/migrations/20260129_add_org_uuid_alignment.sql',
   // ── End golden-journey prerequisites ────────────────────────────────────────
 
   // ── Project schema repairs ─────────────────────────────────────────────────
@@ -139,6 +145,16 @@ export const C2C_MIGRATION_FILES = [
   // The file is CREATE TABLE IF NOT EXISTS throughout, so it is a no-op on the
   // fresh installs that already have it.
   'migrations/20260604_submission_core_canonical.sql',
+
+  // ── Runtime tables previously limited to fresh-install overlays ────────────
+  // These live routes query notification inboxes, organization AI placement,
+  // and AI usage metering. Their existing migrations were omitted from every
+  // durable incremental path, leaving provisioned databases without the tables.
+  // All three depend only on base tables / regulatory_programs already applied
+  // above and are idempotent on fresh installs.
+  'migrations/20260510_notifications_and_clinical.sql',
+  'migrations/20260608_ai_placement_policies.sql',
+  'migrations/20260702_usage_model_credit_ledger.sql',
 
   // AnA capability registry and outcome tables. Must precede the governance
   // migration below, which adds columns to ana_capability_registry.
@@ -2367,6 +2383,9 @@ export const C2C_MIGRATION_FILES = [
   // before the final isolation pair — it is a backfill, not a sweep; prerequisites
   // (identity.organizations from 051, organizations.uuid from 20260129) are far
   // earlier in the set.
+  // The audit repair must run first: an older generic audit trigger dereferences
+  // NEW.title on identity.organizations, preventing the bridge's backfill insert.
+  'db/migrations/20260920_audit_trigger_jsonb_entity_names.sql',
   C48_STAGE1_IDENTITY_ORG_BRIDGE,
 
   UUID_TENANT_ISOLATION_NONPUBLIC,

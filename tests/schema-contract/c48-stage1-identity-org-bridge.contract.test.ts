@@ -35,6 +35,8 @@ import {
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const BRIDGE = C48_STAGE1_IDENTITY_ORG_BRIDGE;
+const AUDIT_TRIGGER_REPAIR = 'db/migrations/20260920_audit_trigger_jsonb_entity_names.sql';
+const ORG_UUID_ALIGNMENT = 'db/migrations/20260129_add_org_uuid_alignment.sql';
 const T = 180_000;
 const readMig = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 const SEED = 'a1000000-0000-0000-0000-000000000001'; // a disjoint identity seed uuid
@@ -71,17 +73,50 @@ const seedSchema = `
   );
 `;
 
+const auditTriggerSchema = `
+  CREATE SCHEMA audit;
+  CREATE TYPE audit.event_category AS ENUM ('CREATE', 'UPDATE', 'DELETE');
+  CREATE FUNCTION audit.log_event(
+    p_category audit.event_category,
+    p_entity_type text,
+    p_entity_id uuid,
+    p_entity_name text,
+    p_description text,
+    p_previous_values jsonb,
+    p_new_values jsonb,
+    p_changed_fields text[]
+  ) RETURNS void LANGUAGE plpgsql AS $$ BEGIN END; $$;
+  CREATE FUNCTION audit.audit_trigger_func() RETURNS trigger LANGUAGE plpgsql AS $$
+  BEGIN
+    PERFORM NEW.title;
+    RETURN NEW;
+  END;
+  $$;
+  CREATE TRIGGER audit_organizations
+    AFTER INSERT OR UPDATE OR DELETE ON identity.organizations
+    FOR EACH ROW EXECUTE FUNCTION audit.audit_trigger_func();
+`;
+
 describe('C-48 Stage 1: wired before the final isolation pair', () => {
   it('is in the C2C deploy set, ahead of the uuid sweep and the integer sweep', () => {
     expect(C2C_MIGRATION_FILES).toContain(BRIDGE);
     const idxBridge = C2C_MIGRATION_FILES.indexOf(BRIDGE);
+    const idxAuditRepair = C2C_MIGRATION_FILES.indexOf(AUDIT_TRIGGER_REPAIR);
+    const idxOrgUuidAlignment = C2C_MIGRATION_FILES.indexOf(ORG_UUID_ALIGNMENT);
     const idxUuid = C2C_MIGRATION_FILES.indexOf(UUID_TENANT_ISOLATION_NONPUBLIC);
     const idxSweep = C2C_MIGRATION_FILES.indexOf(TENANT_ISOLATION_SWEEP);
     expect(idxBridge).toBeGreaterThan(-1);
+    expect(idxAuditRepair).toBeGreaterThan(-1);
+    expect(idxOrgUuidAlignment).toBeGreaterThan(-1);
+    expect(idxOrgUuidAlignment).toBeLessThan(idxBridge);
+    expect(idxAuditRepair).toBeLessThan(idxBridge);
     expect(idxBridge).toBeLessThan(idxUuid); // a backfill, before the sweeps
     expect(idxBridge).toBeLessThan(idxSweep);
     // and the final pair is left intact (sweep last, uuid step just before it)
-    expect(C2C_MIGRATION_FILES.slice(-2)).toEqual([UUID_TENANT_ISOLATION_NONPUBLIC, TENANT_ISOLATION_SWEEP]);
+    expect(C2C_MIGRATION_FILES.slice(-2)).toEqual([
+      UUID_TENANT_ISOLATION_NONPUBLIC,
+      TENANT_ISOLATION_SWEEP,
+    ]);
   });
 });
 
@@ -91,6 +126,8 @@ describe('C-48 Stage 1: backfill + forward-sync + idempotency', () => {
   beforeAll(async () => {
     pg = new PGlite();
     await pg.exec(seedSchema);
+    await pg.exec(auditTriggerSchema);
+    await pg.exec(readMig(AUDIT_TRIGGER_REPAIR));
     await pg.exec(`INSERT INTO public.organizations (name, slug) VALUES ('Acme Bio','acme');`);
     await pg.exec(readMig(BRIDGE));
     await pg.exec(readMig(BRIDGE)); // idempotent
@@ -104,7 +141,7 @@ describe('C-48 Stage 1: backfill + forward-sync + idempotency', () => {
     const { rows } = await pg.query<{ legal_name: string; business_model: string }>(
       `SELECT io.legal_name, io.business_model
          FROM identity.organizations io JOIN public.organizations po ON io.id = po.uuid
-        WHERE po.slug = 'acme'`,
+        WHERE po.slug = 'acme'`
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].legal_name).toBe('Acme Bio');
@@ -119,15 +156,23 @@ describe('C-48 Stage 1: backfill + forward-sync + idempotency', () => {
   it('forward-sync trigger mirrors a newly-created org automatically', async () => {
     await pg.exec(`INSERT INTO public.organizations (name, slug) VALUES ('Gamma Dx','gamma');`);
     const { rows } = await pg.query(
-      `SELECT 1 FROM identity.organizations io JOIN public.organizations po ON io.id = po.uuid WHERE po.slug = 'gamma'`,
+      `SELECT 1 FROM identity.organizations io JOIN public.organizations po ON io.id = po.uuid WHERE po.slug = 'gamma'`
     );
     expect(rows).toHaveLength(1);
+  });
+
+  it('repairs the stale audit trigger before it audits an organization row', async () => {
+    const { rows } = await pg.query<{ definition: string }>(
+      `SELECT pg_get_functiondef('audit.audit_trigger_func()'::regprocedure) AS definition`
+    );
+    expect(rows[0]?.definition).toContain("v_new_json ->> 'title'");
+    expect(rows[0]?.definition).not.toContain('PERFORM NEW.title');
   });
 
   it('leaves no public org without an identity mirror (the deploy invariant)', async () => {
     const { rows } = await pg.query<{ n: number }>(
       `SELECT count(*)::int AS n FROM public.organizations po
-        WHERE NOT EXISTS (SELECT 1 FROM identity.organizations io WHERE io.id = po.uuid)`,
+        WHERE NOT EXISTS (SELECT 1 FROM identity.organizations io WHERE io.id = po.uuid)`
     );
     expect(rows[0].n).toBe(0);
   });
@@ -143,7 +188,7 @@ describe('C-48 Stage 1: the fail-closed invariant detects an unmirrored org', ()
     await pg.exec(`INSERT INTO public.organizations (name, slug) VALUES ('Orphan Inc','orphan');`);
     const { rows } = await pg.query<{ n: number }>(
       `SELECT count(*)::int AS n FROM public.organizations po
-        WHERE NOT EXISTS (SELECT 1 FROM identity.organizations io WHERE io.id = po.uuid)`,
+        WHERE NOT EXISTS (SELECT 1 FROM identity.organizations io WHERE io.id = po.uuid)`
     );
     expect(rows[0].n).toBeGreaterThanOrEqual(1); // detected, before the migration heals it
     await pg.close();

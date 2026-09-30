@@ -4,7 +4,7 @@
 -- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
 -- Purpose: Provision the knowledge-graph, atom-versioning, quality-scoring and
 --          conflict-detection tables the Cortex intelligence services query,
---          keyed to the canonical integer atom identity (ledger C-36).
+--          keyed to the existing public atom identity (ledger C-36).
 --
 -- eCTD/CTD Context:
 --   - Module(s): all (data atoms carry evidence cited across the dossier)
@@ -14,13 +14,18 @@
 --
 -- Determinism Contract:
 --   - Schema changes must not undermine deterministic evidence pointers.
---   - Atom references MUST match lumen_data_atoms.id (`serial`); a uuid atom key
---     breaks both the foreign keys and every service JOIN.
+--   - Atom references MUST match public.lumen_data_atoms.id. Persisted stores
+--     may use either integer or uuid keys; the runtime services use string IDs
+--     and support both shapes when child tables match their parent.
 --   - Any change impacting canonical schemas requires spec version bump.
 --
 -- Notes:
 --   - RLS policies must enforce program_id isolation where applicable.
 --   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+--   - AMENDMENT 2026-09-20: a populated production-shaped atom store uses UUID
+--     keys. Child tables and traversal functions now derive their atom key type
+--     from public.lumen_data_atoms.id rather than attempting a destructive
+--     rewrite of governed source records.
 -- =============================================================================
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -38,21 +43,41 @@
 --                    1. KNOWLEDGE GRAPH EDGES
 -- ═══════════════════════════════════════════════════════════════════════════
 
-CREATE TABLE IF NOT EXISTS lumen_knowledge_graph_edges (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  source_atom_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
-  target_atom_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
-  relationship_type VARCHAR(100) NOT NULL,
-  relationship_strength REAL DEFAULT 0.5 CHECK (relationship_strength >= 0 AND relationship_strength <= 1),
-  bidirectional BOOLEAN DEFAULT false,
-  metadata JSONB DEFAULT '{}',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_by VARCHAR(255),
+DO $$
+DECLARE
+  atom_id_type TEXT;
+BEGIN
+  SELECT format_type(a.atttypid, a.atttypmod)
+    INTO atom_id_type
+    FROM pg_attribute a
+    JOIN pg_class c ON c.oid = a.attrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public'
+     AND c.relname = 'lumen_data_atoms'
+     AND a.attname = 'id'
+     AND a.attnum > 0
+     AND NOT a.attisdropped;
 
-  -- Prevent duplicate edges
-  UNIQUE(source_atom_id, target_atom_id, relationship_type)
-);
+  IF atom_id_type NOT IN ('integer', 'bigint', 'smallint', 'uuid') THEN
+    RAISE EXCEPTION 'public.lumen_data_atoms.id must be an integer-family or uuid key, found %', atom_id_type;
+  END IF;
+
+  EXECUTE format($ddl$
+    CREATE TABLE IF NOT EXISTS lumen_knowledge_graph_edges (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      source_atom_id %1$s NOT NULL REFERENCES public.lumen_data_atoms(id) ON DELETE CASCADE,
+      target_atom_id %1$s NOT NULL REFERENCES public.lumen_data_atoms(id) ON DELETE CASCADE,
+      relationship_type VARCHAR(100) NOT NULL,
+      relationship_strength REAL DEFAULT 0.5 CHECK (relationship_strength >= 0 AND relationship_strength <= 1),
+      bidirectional BOOLEAN DEFAULT false,
+      metadata JSONB DEFAULT '{}',
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      created_by VARCHAR(255),
+      UNIQUE(source_atom_id, target_atom_id, relationship_type)
+    )
+  $ddl$, atom_id_type);
+END $$;
 
 -- Indexes for graph traversal
 CREATE INDEX IF NOT EXISTS idx_kg_edges_source ON lumen_knowledge_graph_edges(source_atom_id);
@@ -63,21 +88,36 @@ CREATE INDEX IF NOT EXISTS idx_kg_edges_relationship ON lumen_knowledge_graph_ed
 --                    2. ATOM VERSION HISTORY (Audit Trail)
 -- ═══════════════════════════════════════════════════════════════════════════
 
-CREATE TABLE IF NOT EXISTS lumen_atom_versions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atom_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
-  version_number INTEGER NOT NULL,
-  content TEXT NOT NULL,
-  title TEXT,
-  metadata JSONB,
-  change_type VARCHAR(50) NOT NULL, -- 'created', 'updated', 'merged', 'split'
-  change_reason TEXT,
-  changed_by VARCHAR(255),
-  changed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-
-  -- Ensure version ordering
-  UNIQUE(atom_id, version_number)
-);
+DO $$
+DECLARE
+  atom_id_type TEXT;
+BEGIN
+  SELECT format_type(a.atttypid, a.atttypmod)
+    INTO atom_id_type
+    FROM pg_attribute a
+    JOIN pg_class c ON c.oid = a.attrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = 'lumen_data_atoms'
+     AND a.attname = 'id' AND a.attnum > 0 AND NOT a.attisdropped;
+  IF atom_id_type NOT IN ('integer', 'bigint', 'smallint', 'uuid') THEN
+    RAISE EXCEPTION 'public.lumen_data_atoms.id must be an integer-family or uuid key, found %', atom_id_type;
+  END IF;
+  EXECUTE format($ddl$
+    CREATE TABLE IF NOT EXISTS lumen_atom_versions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      atom_id %1$s NOT NULL REFERENCES public.lumen_data_atoms(id) ON DELETE CASCADE,
+      version_number INTEGER NOT NULL,
+      content TEXT NOT NULL,
+      title TEXT,
+      metadata JSONB,
+      change_type VARCHAR(50) NOT NULL,
+      change_reason TEXT,
+      changed_by VARCHAR(255),
+      changed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      UNIQUE(atom_id, version_number)
+    )
+  $ddl$, atom_id_type);
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_atom_versions_atom ON lumen_atom_versions(atom_id, version_number DESC);
 
@@ -139,29 +179,39 @@ CREATE INDEX IF NOT EXISTS idx_taxonomy_type ON lumen_domain_taxonomy(domain_typ
 --                    5. ATOM QUALITY METRICS
 -- ═══════════════════════════════════════════════════════════════════════════
 
-CREATE TABLE IF NOT EXISTS lumen_atom_quality_scores (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atom_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
-
-  -- Quality dimensions (0-1 scale)
-  completeness_score REAL DEFAULT 0,
-  accuracy_score REAL DEFAULT 0,
-  recency_score REAL DEFAULT 0,
-  relevance_score REAL DEFAULT 0,
-  citation_score REAL DEFAULT 0,
-
-  -- Computed overall score
-  overall_score REAL GENERATED ALWAYS AS (
-    (completeness_score + accuracy_score + recency_score + relevance_score + citation_score) / 5
-  ) STORED,
-
-  -- Assessment metadata
-  assessed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  assessed_by VARCHAR(50), -- 'system', 'ai', 'human'
-  assessment_notes TEXT,
-
-  UNIQUE(atom_id)
-);
+DO $$
+DECLARE
+  atom_id_type TEXT;
+BEGIN
+  SELECT format_type(a.atttypid, a.atttypmod)
+    INTO atom_id_type
+    FROM pg_attribute a
+    JOIN pg_class c ON c.oid = a.attrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = 'lumen_data_atoms'
+     AND a.attname = 'id' AND a.attnum > 0 AND NOT a.attisdropped;
+  IF atom_id_type NOT IN ('integer', 'bigint', 'smallint', 'uuid') THEN
+    RAISE EXCEPTION 'public.lumen_data_atoms.id must be an integer-family or uuid key, found %', atom_id_type;
+  END IF;
+  EXECUTE format($ddl$
+    CREATE TABLE IF NOT EXISTS lumen_atom_quality_scores (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      atom_id %1$s NOT NULL REFERENCES public.lumen_data_atoms(id) ON DELETE CASCADE,
+      completeness_score REAL DEFAULT 0,
+      accuracy_score REAL DEFAULT 0,
+      recency_score REAL DEFAULT 0,
+      relevance_score REAL DEFAULT 0,
+      citation_score REAL DEFAULT 0,
+      overall_score REAL GENERATED ALWAYS AS (
+        (completeness_score + accuracy_score + recency_score + relevance_score + citation_score) / 5
+      ) STORED,
+      assessed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      assessed_by VARCHAR(50),
+      assessment_notes TEXT,
+      UNIQUE(atom_id)
+    )
+  $ddl$, atom_id_type);
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_quality_overall ON lumen_atom_quality_scores(overall_score DESC);
 
@@ -169,27 +219,39 @@ CREATE INDEX IF NOT EXISTS idx_quality_overall ON lumen_atom_quality_scores(over
 --                    6. CITATION/PROVENANCE TRACKING
 -- ═══════════════════════════════════════════════════════════════════════════
 
-CREATE TABLE IF NOT EXISTS lumen_atom_citations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atom_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
-  citation_type VARCHAR(50) NOT NULL, -- 'source', 'reference', 'derived_from', 'supports', 'contradicts'
-
-  -- Citation details
-  source_url TEXT,
-  source_title TEXT,
-  source_authors TEXT,
-  source_publication TEXT,
-  source_date DATE,
-  source_doi VARCHAR(100),
-  source_pmid VARCHAR(20),
-
-  -- Verification
-  verified BOOLEAN DEFAULT false,
-  verified_at TIMESTAMP WITH TIME ZONE,
-  verified_by VARCHAR(255),
-
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+DO $$
+DECLARE
+  atom_id_type TEXT;
+BEGIN
+  SELECT format_type(a.atttypid, a.atttypmod)
+    INTO atom_id_type
+    FROM pg_attribute a
+    JOIN pg_class c ON c.oid = a.attrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = 'lumen_data_atoms'
+     AND a.attname = 'id' AND a.attnum > 0 AND NOT a.attisdropped;
+  IF atom_id_type NOT IN ('integer', 'bigint', 'smallint', 'uuid') THEN
+    RAISE EXCEPTION 'public.lumen_data_atoms.id must be an integer-family or uuid key, found %', atom_id_type;
+  END IF;
+  EXECUTE format($ddl$
+    CREATE TABLE IF NOT EXISTS lumen_atom_citations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      atom_id %1$s NOT NULL REFERENCES public.lumen_data_atoms(id) ON DELETE CASCADE,
+      citation_type VARCHAR(50) NOT NULL,
+      source_url TEXT,
+      source_title TEXT,
+      source_authors TEXT,
+      source_publication TEXT,
+      source_date DATE,
+      source_doi VARCHAR(100),
+      source_pmid VARCHAR(20),
+      verified BOOLEAN DEFAULT false,
+      verified_at TIMESTAMP WITH TIME ZONE,
+      verified_by VARCHAR(255),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+  $ddl$, atom_id_type);
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_citations_atom ON lumen_atom_citations(atom_id);
 CREATE INDEX IF NOT EXISTS idx_citations_doi ON lumen_atom_citations(source_doi) WHERE source_doi IS NOT NULL;
@@ -199,24 +261,37 @@ CREATE INDEX IF NOT EXISTS idx_citations_pmid ON lumen_atom_citations(source_pmi
 --                    7. CONFLICT/CONTRADICTION DETECTION
 -- ═══════════════════════════════════════════════════════════════════════════
 
-CREATE TABLE IF NOT EXISTS lumen_atom_conflicts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atom_a_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
-  atom_b_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
-
-  conflict_type VARCHAR(50) NOT NULL, -- 'contradiction', 'outdated', 'inconsistent', 'duplicate'
-  conflict_severity VARCHAR(20) NOT NULL, -- 'low', 'medium', 'high', 'critical'
-  conflict_description TEXT NOT NULL,
-
-  -- Resolution
-  resolution_status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'investigating', 'resolved', 'dismissed'
-  resolution_notes TEXT,
-  resolved_at TIMESTAMP WITH TIME ZONE,
-  resolved_by VARCHAR(255),
-
-  detected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  detected_by VARCHAR(50) -- 'system', 'ai', 'human'
-);
+DO $$
+DECLARE
+  atom_id_type TEXT;
+BEGIN
+  SELECT format_type(a.atttypid, a.atttypmod)
+    INTO atom_id_type
+    FROM pg_attribute a
+    JOIN pg_class c ON c.oid = a.attrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = 'lumen_data_atoms'
+     AND a.attname = 'id' AND a.attnum > 0 AND NOT a.attisdropped;
+  IF atom_id_type NOT IN ('integer', 'bigint', 'smallint', 'uuid') THEN
+    RAISE EXCEPTION 'public.lumen_data_atoms.id must be an integer-family or uuid key, found %', atom_id_type;
+  END IF;
+  EXECUTE format($ddl$
+    CREATE TABLE IF NOT EXISTS lumen_atom_conflicts (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      atom_a_id %1$s NOT NULL REFERENCES public.lumen_data_atoms(id) ON DELETE CASCADE,
+      atom_b_id %1$s NOT NULL REFERENCES public.lumen_data_atoms(id) ON DELETE CASCADE,
+      conflict_type VARCHAR(50) NOT NULL,
+      conflict_severity VARCHAR(20) NOT NULL,
+      conflict_description TEXT NOT NULL,
+      resolution_status VARCHAR(50) DEFAULT 'pending',
+      resolution_notes TEXT,
+      resolved_at TIMESTAMP WITH TIME ZONE,
+      resolved_by VARCHAR(255),
+      detected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      detected_by VARCHAR(50)
+    )
+  $ddl$, atom_id_type);
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_conflicts_status ON lumen_atom_conflicts(resolution_status);
 CREATE INDEX IF NOT EXISTS idx_conflicts_severity ON lumen_atom_conflicts(conflict_severity);
@@ -225,29 +300,38 @@ CREATE INDEX IF NOT EXISTS idx_conflicts_severity ON lumen_atom_conflicts(confli
 --                    8. REGULATORY TIMELINE EVENTS
 -- ═══════════════════════════════════════════════════════════════════════════
 
-CREATE TABLE IF NOT EXISTS lumen_regulatory_timeline (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_type VARCHAR(100) NOT NULL,
-  event_date DATE NOT NULL,
-
-  -- Context
-  agency VARCHAR(50), -- 'FDA', 'EMA', 'PMDA', 'Health Canada', etc.
-  product_name VARCHAR(255),
-  application_number VARCHAR(100),
-
-  -- Details
-  title TEXT NOT NULL,
-  description TEXT,
-  impact_assessment TEXT,
-
-  -- Relationships
-  related_atom_ids INTEGER[] DEFAULT '{}',
-
-  -- Metadata
-  source_url TEXT,
-  confidence_score REAL DEFAULT 0.8,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+DO $$
+DECLARE
+  atom_id_type TEXT;
+BEGIN
+  SELECT format_type(a.atttypid, a.atttypmod)
+    INTO atom_id_type
+    FROM pg_attribute a
+    JOIN pg_class c ON c.oid = a.attrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = 'lumen_data_atoms'
+     AND a.attname = 'id' AND a.attnum > 0 AND NOT a.attisdropped;
+  IF atom_id_type NOT IN ('integer', 'bigint', 'smallint', 'uuid') THEN
+    RAISE EXCEPTION 'public.lumen_data_atoms.id must be an integer-family or uuid key, found %', atom_id_type;
+  END IF;
+  EXECUTE format($ddl$
+    CREATE TABLE IF NOT EXISTS lumen_regulatory_timeline (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      event_type VARCHAR(100) NOT NULL,
+      event_date DATE NOT NULL,
+      agency VARCHAR(50),
+      product_name VARCHAR(255),
+      application_number VARCHAR(100),
+      title TEXT NOT NULL,
+      description TEXT,
+      impact_assessment TEXT,
+      related_atom_ids %1$s[] DEFAULT '{}'::%1$s[],
+      source_url TEXT,
+      confidence_score REAL DEFAULT 0.8,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+  $ddl$, atom_id_type);
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_timeline_date ON lumen_regulatory_timeline(event_date DESC);
 CREATE INDEX IF NOT EXISTS idx_timeline_agency ON lumen_regulatory_timeline(agency);
@@ -278,15 +362,31 @@ CREATE TABLE IF NOT EXISTS lumen_atom_collections (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS lumen_collection_atoms (
-  collection_id UUID NOT NULL REFERENCES lumen_atom_collections(id) ON DELETE CASCADE,
-  atom_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
-  added_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  added_by VARCHAR(255),
-  notes TEXT,
-
-  PRIMARY KEY (collection_id, atom_id)
-);
+DO $$
+DECLARE
+  atom_id_type TEXT;
+BEGIN
+  SELECT format_type(a.atttypid, a.atttypmod)
+    INTO atom_id_type
+    FROM pg_attribute a
+    JOIN pg_class c ON c.oid = a.attrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = 'lumen_data_atoms'
+     AND a.attname = 'id' AND a.attnum > 0 AND NOT a.attisdropped;
+  IF atom_id_type NOT IN ('integer', 'bigint', 'smallint', 'uuid') THEN
+    RAISE EXCEPTION 'public.lumen_data_atoms.id must be an integer-family or uuid key, found %', atom_id_type;
+  END IF;
+  EXECUTE format($ddl$
+    CREATE TABLE IF NOT EXISTS lumen_collection_atoms (
+      collection_id UUID NOT NULL REFERENCES lumen_atom_collections(id) ON DELETE CASCADE,
+      atom_id %1$s NOT NULL REFERENCES public.lumen_data_atoms(id) ON DELETE CASCADE,
+      added_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      added_by VARCHAR(255),
+      notes TEXT,
+      PRIMARY KEY (collection_id, atom_id)
+    )
+  $ddl$, atom_id_type);
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_collection_atoms_atom ON lumen_collection_atoms(atom_id);
 
@@ -294,14 +394,31 @@ CREATE INDEX IF NOT EXISTS idx_collection_atoms_atom ON lumen_collection_atoms(a
 --                    10. EMBEDDING AUDIT LOG
 -- ═══════════════════════════════════════════════════════════════════════════
 
-CREATE TABLE IF NOT EXISTS embedding_audit_log (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atom_id INTEGER REFERENCES lumen_data_atoms(id) ON DELETE SET NULL,
-  model VARCHAR(100) NOT NULL,
-  token_count INTEGER NOT NULL,
-  cached BOOLEAN DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+DO $$
+DECLARE
+  atom_id_type TEXT;
+BEGIN
+  SELECT format_type(a.atttypid, a.atttypmod)
+    INTO atom_id_type
+    FROM pg_attribute a
+    JOIN pg_class c ON c.oid = a.attrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = 'lumen_data_atoms'
+     AND a.attname = 'id' AND a.attnum > 0 AND NOT a.attisdropped;
+  IF atom_id_type NOT IN ('integer', 'bigint', 'smallint', 'uuid') THEN
+    RAISE EXCEPTION 'public.lumen_data_atoms.id must be an integer-family or uuid key, found %', atom_id_type;
+  END IF;
+  EXECUTE format($ddl$
+    CREATE TABLE IF NOT EXISTS embedding_audit_log (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      atom_id %1$s REFERENCES public.lumen_data_atoms(id) ON DELETE SET NULL,
+      model VARCHAR(100) NOT NULL,
+      token_count INTEGER NOT NULL,
+      cached BOOLEAN DEFAULT false,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+  $ddl$, atom_id_type);
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_embed_audit_atom ON embedding_audit_log(atom_id);
 CREATE INDEX IF NOT EXISTS idx_embed_audit_time ON embedding_audit_log(created_at DESC);
@@ -310,129 +427,141 @@ CREATE INDEX IF NOT EXISTS idx_embed_audit_time ON embedding_audit_log(created_a
 --                    UTILITY FUNCTIONS
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Function to get atom neighbors in knowledge graph
-CREATE OR REPLACE FUNCTION get_atom_neighbors(
-  p_atom_id INTEGER,
-  p_depth INTEGER DEFAULT 1,
-  p_relationship_types TEXT[] DEFAULT NULL
-)
-RETURNS TABLE (
-  atom_id INTEGER,
-  title TEXT,
-  atom_type TEXT,
-  relationship_type VARCHAR(100),
-  relationship_strength REAL,
-  depth INTEGER
-) AS $$
-WITH RECURSIVE neighbors AS (
-  -- Base case: direct neighbors
-  SELECT
-    CASE WHEN e.source_atom_id = p_atom_id THEN e.target_atom_id ELSE e.source_atom_id END as atom_id,
-    e.relationship_type,
-    e.relationship_strength,
-    1 as depth
-  FROM lumen_knowledge_graph_edges e
-  WHERE (e.source_atom_id = p_atom_id OR (e.target_atom_id = p_atom_id AND e.bidirectional))
-    AND (p_relationship_types IS NULL OR e.relationship_type = ANY(p_relationship_types))
+DO $$
+DECLARE
+  atom_id_type TEXT;
+  atom_id_array_type TEXT;
+BEGIN
+  SELECT format_type(a.atttypid, a.atttypmod)
+    INTO atom_id_type
+    FROM pg_attribute a
+    JOIN pg_class c ON c.oid = a.attrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = 'lumen_data_atoms'
+     AND a.attname = 'id' AND a.attnum > 0 AND NOT a.attisdropped;
+  IF atom_id_type NOT IN ('integer', 'bigint', 'smallint', 'uuid') THEN
+    RAISE EXCEPTION 'public.lumen_data_atoms.id must be an integer-family or uuid key, found %', atom_id_type;
+  END IF;
+  atom_id_array_type := atom_id_type || '[]';
 
-  UNION
+  EXECUTE format($function$
+    CREATE OR REPLACE FUNCTION get_atom_neighbors(
+      p_atom_id %1$s,
+      p_depth INTEGER DEFAULT 1,
+      p_relationship_types TEXT[] DEFAULT NULL
+    )
+    RETURNS TABLE (
+      atom_id %1$s,
+      title TEXT,
+      atom_type TEXT,
+      relationship_type VARCHAR(100),
+      relationship_strength REAL,
+      depth INTEGER
+    ) AS $body$
+    WITH RECURSIVE neighbors AS (
+      SELECT
+        CASE WHEN e.source_atom_id = p_atom_id THEN e.target_atom_id ELSE e.source_atom_id END AS atom_id,
+        e.relationship_type,
+        e.relationship_strength,
+        1 AS depth
+      FROM lumen_knowledge_graph_edges e
+      WHERE (e.source_atom_id = p_atom_id OR (e.target_atom_id = p_atom_id AND e.bidirectional))
+        AND (p_relationship_types IS NULL OR e.relationship_type = ANY(p_relationship_types))
+      UNION
+      SELECT
+        CASE WHEN e.source_atom_id = n.atom_id THEN e.target_atom_id ELSE e.source_atom_id END,
+        e.relationship_type,
+        e.relationship_strength,
+        n.depth + 1
+      FROM lumen_knowledge_graph_edges e
+      JOIN neighbors n ON (e.source_atom_id = n.atom_id OR (e.target_atom_id = n.atom_id AND e.bidirectional))
+      WHERE n.depth < p_depth
+        AND (p_relationship_types IS NULL OR e.relationship_type = ANY(p_relationship_types))
+    )
+    SELECT DISTINCT ON (n.atom_id)
+      n.atom_id,
+      a.title,
+      a.atom_type,
+      n.relationship_type,
+      n.relationship_strength,
+      n.depth
+    FROM neighbors n
+    JOIN public.lumen_data_atoms a ON n.atom_id = a.id
+    WHERE n.atom_id != p_atom_id
+    ORDER BY n.atom_id, n.depth;
+    $body$ LANGUAGE SQL
+  $function$, atom_id_type);
 
-  -- Recursive case
-  SELECT
-    CASE WHEN e.source_atom_id = n.atom_id THEN e.target_atom_id ELSE e.source_atom_id END,
-    e.relationship_type,
-    e.relationship_strength,
-    n.depth + 1
-  FROM lumen_knowledge_graph_edges e
-  JOIN neighbors n ON (e.source_atom_id = n.atom_id OR (e.target_atom_id = n.atom_id AND e.bidirectional))
-  WHERE n.depth < p_depth
-    AND (p_relationship_types IS NULL OR e.relationship_type = ANY(p_relationship_types))
-)
-SELECT DISTINCT ON (n.atom_id)
-  n.atom_id,
-  a.title,
-  a.atom_type,
-  n.relationship_type,
-  n.relationship_strength,
-  n.depth
-FROM neighbors n
-JOIN lumen_data_atoms a ON n.atom_id = a.id
-WHERE n.atom_id != p_atom_id
-ORDER BY n.atom_id, n.depth;
-$$ LANGUAGE SQL;
+  EXECUTE format($function$
+    CREATE OR REPLACE FUNCTION find_atom_path(
+      p_source_id %1$s,
+      p_target_id %1$s,
+      p_max_depth INTEGER DEFAULT 5
+    )
+    RETURNS TABLE (
+      path_atoms %2$s,
+      path_relationships TEXT[],
+      path_length INTEGER
+    ) AS $body$
+    WITH RECURSIVE paths AS (
+      SELECT
+        ARRAY[p_source_id, CASE WHEN e.source_atom_id = p_source_id THEN e.target_atom_id ELSE e.source_atom_id END] AS atoms,
+        ARRAY[e.relationship_type::TEXT] AS relationships,
+        1 AS depth
+      FROM lumen_knowledge_graph_edges e
+      WHERE e.source_atom_id = p_source_id OR (e.target_atom_id = p_source_id AND e.bidirectional)
+      UNION ALL
+      SELECT
+        p.atoms || CASE WHEN e.source_atom_id = p.atoms[array_length(p.atoms, 1)] THEN e.target_atom_id ELSE e.source_atom_id END,
+        p.relationships || e.relationship_type::TEXT,
+        p.depth + 1
+      FROM paths p
+      JOIN lumen_knowledge_graph_edges e ON (
+        e.source_atom_id = p.atoms[array_length(p.atoms, 1)]
+        OR (e.target_atom_id = p.atoms[array_length(p.atoms, 1)] AND e.bidirectional)
+      )
+      WHERE p.depth < p_max_depth
+        AND NOT (CASE WHEN e.source_atom_id = p.atoms[array_length(p.atoms, 1)] THEN e.target_atom_id ELSE e.source_atom_id END = ANY(p.atoms))
+    )
+    SELECT atoms, relationships, depth
+    FROM paths
+    WHERE atoms[array_length(atoms, 1)] = p_target_id
+    ORDER BY depth
+    LIMIT 5;
+    $body$ LANGUAGE SQL
+  $function$, atom_id_type, atom_id_array_type);
 
--- Function to find path between two atoms
-CREATE OR REPLACE FUNCTION find_atom_path(
-  p_source_id INTEGER,
-  p_target_id INTEGER,
-  p_max_depth INTEGER DEFAULT 5
-)
-RETURNS TABLE (
-  path_atoms INTEGER[],
-  path_relationships TEXT[],
-  path_length INTEGER
-) AS $$
-WITH RECURSIVE paths AS (
-  -- Base case - explicitly cast relationship_type to TEXT[]
-  SELECT
-    ARRAY[p_source_id, CASE WHEN e.source_atom_id = p_source_id THEN e.target_atom_id ELSE e.source_atom_id END] as atoms,
-    ARRAY[e.relationship_type::TEXT] as relationships,
-    1 as depth
-  FROM lumen_knowledge_graph_edges e
-  WHERE e.source_atom_id = p_source_id OR (e.target_atom_id = p_source_id AND e.bidirectional)
-
-  UNION ALL
-
-  -- Recursive case
-  SELECT
-    p.atoms || CASE WHEN e.source_atom_id = p.atoms[array_length(p.atoms, 1)] THEN e.target_atom_id ELSE e.source_atom_id END,
-    p.relationships || e.relationship_type::TEXT,
-    p.depth + 1
-  FROM paths p
-  JOIN lumen_knowledge_graph_edges e ON (
-    e.source_atom_id = p.atoms[array_length(p.atoms, 1)]
-    OR (e.target_atom_id = p.atoms[array_length(p.atoms, 1)] AND e.bidirectional)
-  )
-  WHERE p.depth < p_max_depth
-    AND NOT (CASE WHEN e.source_atom_id = p.atoms[array_length(p.atoms, 1)] THEN e.target_atom_id ELSE e.source_atom_id END = ANY(p.atoms))
-)
-SELECT atoms, relationships, depth
-FROM paths
-WHERE atoms[array_length(atoms, 1)] = p_target_id
-ORDER BY depth
-LIMIT 5;
-$$ LANGUAGE SQL;
-
--- Function to get atom with quality enrichment
-CREATE OR REPLACE FUNCTION get_enriched_atom(p_atom_id INTEGER)
-RETURNS TABLE (
-  -- a.id from lumen_data_atoms, whose canonical key is `serial` (C-36).
-  id INTEGER,
-  title TEXT,
-  content TEXT,
-  atom_type TEXT,
-  source_type TEXT,
-  confidence REAL,
-  quality_score REAL,
-  citation_count BIGINT,
-  neighbor_count BIGINT,
-  created_at TIMESTAMP
-) AS $$
-SELECT
-  a.id,
-  a.title,
-  a.content,
-  a.atom_type,
-  a.source_type,
-  a.confidence,
-  COALESCE(q.overall_score, 0) as quality_score,
-  (SELECT COUNT(*) FROM lumen_atom_citations c WHERE c.atom_id = a.id) as citation_count,
-  (SELECT COUNT(*) FROM lumen_knowledge_graph_edges e WHERE e.source_atom_id = a.id OR e.target_atom_id = a.id) as neighbor_count,
-  a.created_at
-FROM lumen_data_atoms a
-LEFT JOIN lumen_atom_quality_scores q ON a.id = q.atom_id
-WHERE a.id = p_atom_id;
-$$ LANGUAGE SQL;
+  EXECUTE format($function$
+    CREATE OR REPLACE FUNCTION get_enriched_atom(p_atom_id %1$s)
+    RETURNS TABLE (
+      id %1$s,
+      title TEXT,
+      content TEXT,
+      atom_type TEXT,
+      source_type TEXT,
+      confidence REAL,
+      quality_score REAL,
+      citation_count BIGINT,
+      neighbor_count BIGINT,
+      created_at TIMESTAMP
+    ) AS $body$
+    SELECT
+      a.id,
+      a.title,
+      a.content,
+      a.atom_type,
+      a.source_type,
+      a.confidence,
+      COALESCE(q.overall_score, 0) AS quality_score,
+      (SELECT COUNT(*) FROM lumen_atom_citations c WHERE c.atom_id = a.id) AS citation_count,
+      (SELECT COUNT(*) FROM lumen_knowledge_graph_edges e WHERE e.source_atom_id = a.id OR e.target_atom_id = a.id) AS neighbor_count,
+      a.created_at
+    FROM public.lumen_data_atoms a
+    LEFT JOIN lumen_atom_quality_scores q ON a.id = q.atom_id
+    WHERE a.id = p_atom_id;
+    $body$ LANGUAGE SQL
+  $function$, atom_id_type);
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 --                    SEED DOMAIN TAXONOMY
