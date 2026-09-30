@@ -242,10 +242,12 @@ describe('a live prompt', () => {
  * the browser could be trusted to supply.
  */
 describe('a confirmed tool', () => {
+  // A write that records no reason for change: confirmed with a yes. (seed_tmf,
+  // which records one, is put at the reason tier — see the describe below.)
   const heldTool = () => ({
     toolUseId: 'tu-9',
-    command: 'seed_tmf',
-    params: { reason: 'Seeding the TMF for the Phase 1 study' },
+    command: 'save_report_definition',
+    params: { title: 'Weekly enrolment report' },
     tier: 'confirm',
     toolContext: {
       projectId: 5,
@@ -262,8 +264,8 @@ describe('a confirmed tool', () => {
     expect(executed).toHaveLength(0); // not a command
     expect(toolCalls).toHaveLength(1);
     expect(toolCalls[0]).toMatchObject({
-      name: 'seed_tmf',
-      input: { reason: 'Seeding the TMF for the Phase 1 study' },
+      name: 'save_report_definition',
+      input: { title: 'Weekly enrolment report' },
       ctx: {
         humanConfirmed: true,
         organizationId: ORG,
@@ -284,7 +286,7 @@ describe('a confirmed tool', () => {
   });
 
   it('is not run from a body alone — there is no held run to take its context from', async () => {
-    const res = await post({ command: 'seed_tmf', params: { reason: 'x'.repeat(20) }, confirm: true });
+    const res = await post({ command: 'save_report_definition', params: { title: 'x'.repeat(20) }, confirm: true });
     expect(res.status).toBe(400);
     expect(toolCalls).toHaveLength(0);
   });
@@ -319,6 +321,60 @@ describe('a confirmed tool', () => {
     const res = await post({ runId: 'run-1', toolUseId: 'tu-9', confirm: true });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(toolCalls[0]?.name).toBe('a_tool_added_tomorrow');
+  });
+});
+
+/*
+ * A tool that records the person's reason for change runs with the reason the
+ * PERSON confirmed (D5, 2026-09-29). The model writes a reason into the call;
+ * the person sees it on the card, types their own or adopts that wording, and
+ * what they submit is what the tool records — the sign-off row keeps both.
+ */
+describe('a tool that records a reason for change', () => {
+  const MODEL_REASON = 'Seeding the TMF for the Phase 1 study';
+  const heldReasonTool = () => ({
+    toolUseId: 'tu-7',
+    command: 'seed_tmf',
+    params: { study_id: 12, reason: MODEL_REASON },
+    tier: 'reason',
+    toolContext: { projectId: 5, projectRef: '5', servingModel: { provider: 'anthropic', model: 'claude-opus-5-5' } },
+  });
+
+  it('is not run on a bare yes: the person states the reason', async () => {
+    pending = heldReasonTool();
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-7', confirm: true });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('REASON_REQUIRED');
+    expect(toolCalls).toHaveLength(0);
+  });
+
+  it('runs with the person\'s reason in place of the model\'s, and records both', async () => {
+    pending = heldReasonTool();
+    const mine = 'Phase 1 TMF set up per the sponsor SOP-114 index.';
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-7', reasonForChange: mine });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(toolCalls).toHaveLength(1);
+    expect(toolCalls[0].input).toEqual({ study_id: 12, reason: mine });
+    const signoff = audits.find(a => a.action === 'ana.governed_action.reason')!;
+    expect(signoff.details).toMatchObject({ reasonForChange: mine, proposedReason: MODEL_REASON, reasonAsProposed: false });
+  });
+
+  it('a person who adopts AnA\'s wording is recorded as having done so', async () => {
+    pending = heldReasonTool();
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-7', reasonForChange: MODEL_REASON });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(toolCalls[0].input).toMatchObject({ reason: MODEL_REASON });
+    const signoff = audits.find(a => a.action === 'ana.governed_action.reason')!;
+    expect(signoff.details).toMatchObject({ proposedReason: MODEL_REASON, reasonAsProposed: true });
+  });
+
+  it('a tool whose reason input is reason_for_change gets the person\'s reason there', async () => {
+    pending = { ...heldReasonTool(), command: 'commit_document_revision', params: { title: 'CSR 2.7.3', content: 'x', reason_for_change: 'model text here' } };
+    const mine = 'Corrected the efficacy table per the SAP amendment.';
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-7', reasonForChange: mine });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(toolCalls[0].input).toMatchObject({ reason_for_change: mine });
+    expect(toolCalls[0].input).not.toHaveProperty('reason');
   });
 });
 

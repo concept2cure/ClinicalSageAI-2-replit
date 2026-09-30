@@ -332,7 +332,11 @@ export function buildSignatureRequiredResult(
  */
 export function buildHumanConfirmationRequiredResult(
   command: string,
-  params?: Record<string, unknown>
+  params?: Record<string, unknown>,
+  /** The tier the caller's gate decided. A registered tool's is not its
+   *  command tier (governed-tool-gate.ts registeredToolTier): omitted, the
+   *  card would ask for a click the confirmation route then refuses. */
+  tierOverride?: GovernedTier,
 ): {
   success: false;
   action: string;
@@ -347,7 +351,7 @@ export function buildHumanConfirmationRequiredResult(
     retry: { command: string; params: Record<string, unknown> };
   };
 } {
-  const tier = governedTierOf(command);
+  const tier = tierOverride ?? governedTierOf(command);
   const message =
     tier === 'confirm'
       ? 'This action changes the record, so it is taken by a person rather than on your ' +

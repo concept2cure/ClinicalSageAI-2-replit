@@ -30,7 +30,7 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../governed-tool-gate.js';
+import { classifyToolCall, PLATFORM_COMMAND_TOOL, registeredToolTier } from '../governed-tool-gate.js';
 import { PROPOSE_ONLY_COMMANDS, isProposeOnlyCommand } from '../../ana-ri/command-rbac.js';
 import { PART11_ESIGN_COMMANDS, PART11_GOVERNED_COMMANDS } from '../../ana-ri/part11-governance.js';
 
@@ -164,10 +164,21 @@ describe('the command tool, and the tools that write on their own handlers', () 
     // here": the vault save and TMF seed ran unasked because they are not
     // commands. They are CONFIRM_TIER_TOOLS now; the full list and the
     // registry-side gate are pinned in direct-mutator-confirm-gate.test.ts.
-    expect(classifyToolCall({ name: 'save_document_to_vault', input: { title: 'x' } })).toMatchObject({
+    expect(classifyToolCall({ name: 'save_report_definition', input: { title: 'x' } })).toMatchObject({
       kind: 'NEEDS_APPROVAL',
       tier: 'confirm',
     });
+  });
+
+  it('a tool that records the person\'s reason for change is put to them at the reason tier (D5)', () => {
+    // The person types the reason, or adopts AnA's wording, at confirmation —
+    // it is not the reason the model wrote into the call.
+    expect(classifyToolCall({ name: 'save_document_to_vault', input: { title: 'x', reason: 'Filing the 24-month data' } })).toMatchObject({
+      kind: 'NEEDS_APPROVAL',
+      tier: 'reason',
+    });
+    expect(registeredToolTier('save_document_to_vault')).toBe('reason');
+    expect(registeredToolTier('save_report_definition')).toBe('confirm');
   });
 
   it('a tool named like a governed command is judged as a tool, not as that command', () => {
