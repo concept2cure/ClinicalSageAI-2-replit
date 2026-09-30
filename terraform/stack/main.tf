@@ -122,6 +122,10 @@ module "secrets" {
       description = "Tamper-proof audit HMAC secret"
       value       = var.audit_hmac_secret
     }
+    audit_export_signing_key = {
+      description = "Seals the signed audit export an inspector re-verifies"
+      value       = var.audit_export_signing_key
+    }
     connector_encryption_key = {
       description = "Encrypts stored connector credentials"
       value       = var.connector_encryption_key
@@ -149,6 +153,14 @@ resource "terraform_data" "boot_contract" {
     precondition {
       condition     = var.audit_hmac_key != var.audit_hmac_secret
       error_message = "audit_hmac_key and audit_hmac_secret must be different values: one seals the audit chain, the other signs tamper-proof audit rows."
+    }
+    precondition {
+      condition     = var.audit_export_signing_key != var.jwt_secret
+      error_message = "audit_export_signing_key must differ from jwt_secret: the app refuses to boot when the audit export would be sealed under the session-token key (server/services/audit/auditExportKeyPosture.ts)."
+    }
+    precondition {
+      condition     = var.audit_export_signing_key != var.audit_hmac_key && var.audit_export_signing_key != var.audit_hmac_secret
+      error_message = "audit_export_signing_key must differ from audit_hmac_key and audit_hmac_secret: each seals a different record."
     }
   }
 }
@@ -203,6 +215,7 @@ locals {
     { name = "MFA_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["mfa_encryption_key"] },
     { name = "AUDIT_HMAC_KEY", value_from = module.secrets.secret_arns["audit_hmac_key"] },
     { name = "AUDIT_HMAC_SECRET", value_from = module.secrets.secret_arns["audit_hmac_secret"] },
+    { name = "AUDIT_EXPORT_SIGNING_KEY", value_from = module.secrets.secret_arns["audit_export_signing_key"] },
     { name = "CONNECTOR_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["connector_encryption_key"] },
     { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
     { name = "SMTP_USER", value_from = module.secrets.secret_arns["smtp_user"] },

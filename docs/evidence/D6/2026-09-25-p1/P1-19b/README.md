@@ -146,3 +146,42 @@ npx eslint server/services/audit/signedAuditExport.ts server/services/audit/audi
    sentence in `GET /audit/export/signed` says "using the server signing key". Proposed: "using the key named by
    `manifest.signingKeyId` (the current `AUDIT_EXPORT_SIGNING_KEY`, or the `_PREV` key it was rotated from)". The
    `POST /audit/export/verify` response could also surface `result.signingKeyId`; both are one-line follow-ups.
+
+## The boot half, landed 2026-09-30
+
+The two files the cold half waited on had left their windows (last touched 2026-09-28 16:51 by lane `…01Jf7Uu6`), and
+so had every deploy file the key has to travel through. A boot refusal with no provisioning behind it would stop every
+deploy, so the key was wired end to end in one change:
+
+| Where | What |
+|---|---|
+| `server/config/environment.ts` | `assertAuditExportKeyPostureForProduction()` beside the two audit HMAC asserts: production refuses to start without a dedicated key, with a short one, or with one equal to either JWT secret; no accept flag |
+| `server/routes/audit-trail-routes.ts` | the signed export's `verification` carries `signingKeyId` and its instruction names "the audit export key named by `manifest.signingKeyId`" instead of "the server signing key"; `POST /audit/export/verify` answers which key vouched (`null` for a manifest from before key ids) |
+| `terraform/stack/{main,variables}.tf` | `var.audit_export_signing_key` (sensitive, `>= 32`), an `audit_export_signing_key` secret, the `AUDIT_EXPORT_SIGNING_KEY` boot secret on every container, and two plan-time preconditions: not the JWT secret, not either audit HMAC key |
+| `terraform/environments/{production,staging}/` | the variable declared and passed to the stack; the tfvars examples say how to mint it |
+| `terraform/stack/tests/boot_contract.tftest.hcl` | the test value, the no-secret-in-plain-environment list, and three refusal runs (short; equal to the JWT secret; equal to an audit seal key) |
+| `.github/workflows/deploy-aws.yml`, `scripts/deploy-prod.sh` | the name in both preflight lists, with its source file |
+| `.github/workflows/ci.yml` | the boot smoke, which starts the server with `NODE_ENV=production`, gets a throwaway key |
+| `docker-compose.yml`, `docker-compose.beta.yml`, `.env.beta.example` | required like its siblings (`${…:?}`), so `docker compose up` stops naming it |
+| `.env.example`, `docs/runbooks/env-var-documentation-gate.md` | the boot-contract list and the four-line block (`_ID`, `_PREV`, `_PREV_ID`) |
+| tests | `server/config/__tests__/environment-audit-export-key.test.ts` (5 cases); `environment.test.ts` and `storage-posture.test.ts` production fixtures given a key; three route cases in `audit-export-tenant-scope.test.ts` (whose harness gained the JSON parser the verify route needs) |
+
+| | File | Result |
+|---|---|---|
+| red | `red/boot-call-before.txt` | the five environment cases against `environment.ts` without the call: 3 refusal cases fail (the promise resolved), 45 others pass |
+| red | `red/terraform-before.txt` | the preflight list and the test name the key, the stack does not provision it: `staging_carries_every_name_the_deploy_preflight_requires` fails its assertion and `refuses_a_short_audit_export_key` fails with "Missing expected failure" |
+| red | `red/route-text-before.txt` | the three route cases against the unchanged route: `signingKeyId` absent from both answers |
+| green | `green/boot-wiring-after.txt` | 14 suites / 212 tests (every suite that boots production, signs or verifies exports, or serves the export routes), then the environment pair after the block moved to its own file for the 500-line rule: 48 / 48 |
+| green | `green/terraform-after.txt` | `terraform test`: 25 passed, 0 failed (22 before, plus the three refusal runs) |
+| green | `green/terraform-preflight-proof.txt` | `scripts/ops/terraform-preflight-proof.mjs`: the rendered task definition passes the deploy workflow's own preflight shell, names end to end, every check holds |
+| green | `green/validate-and-env-docs.txt` | `terraform validate` of both environment roots with the providers their lock file pins; the env-var documentation gate's 28 pre-existing names, none this change's |
+
+Terraform ran locally as 1.9.8 (the version `terraform-tests.yml` pins) against a filesystem mirror of the providers
+downloaded from releases.hashicorp.com, because the registry is not reachable from this container; the lock file the
+stack's `init` wrote was moved out of the tree, and the production root's tracked lock file is unchanged.
+
+**Operator ordering.** Provision `TF_VAR_audit_export_signing_key` (`openssl rand -hex 32`) before this reaches an
+environment: `terraform plan` now refuses without it, and a task definition without it fails the preflight and would
+refuse to boot. **Still open on DP-11:** the KMS asymmetric signature an inspector verifies offline with a published
+key and no shared secret (W2 and the founder; overlaps P1-11).
+
