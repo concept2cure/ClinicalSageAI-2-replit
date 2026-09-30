@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-29T21:59:03.443Z",
+  "generatedAt": "2026-09-30T23:36:50.140Z",
   "git": {
-    "sha": "8c7f9a699c3532e85140f1757746ed679e5c4826",
+    "sha": "36cb8e1b6e6c3e2af6a24f6f282f7fbcc76a395c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1103661
+        "bytes": 1103967
       },
       {
         "file": "shared/schema.ts",
@@ -1993,11 +1993,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 310967
+        "bytes": 314797
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 260007
+        "bytes": 260801
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2085,7 +2085,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 129824
+        "bytes": 129851
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2159,7 +2159,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21359
+        "lines": 21370
       },
       {
         "file": "shared/schema.ts",
@@ -2167,7 +2167,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7065
+        "lines": 7144
       },
       {
         "file": "server/statistics-service.ts",
@@ -2183,7 +2183,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5542
+        "lines": 5557
       },
       {
         "file": "server/routes/ana-features.ts",

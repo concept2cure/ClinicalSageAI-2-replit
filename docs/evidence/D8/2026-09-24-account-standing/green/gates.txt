@@ -1,0 +1,24 @@
+# Gates on trunk with the fix (3bdb50458), run 2026-09-30
+
+[exit 1] ci:tenant-entry-points ::   the digest: npm run ci:tenant-entry-points:write-baseline
+[exit 0] ci:tenant-isolation :: Total: 8 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each 
+[exit 0] ci:tenant-resolvers :: OK: no new local tenant resolvers.
+[exit 0] check:security-patterns :: check-security-patterns: 0 violations across 2923 file(s).
+[exit 0] ci:session-scoped-rls-bypass :: [ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 34 baselined occurrence(s) remain in 7 unmounted innovation service(s), every one of them releasin
+[exit 0] ci:discarded-audit-write ::   1 baselined file(s) now below their count — run --write-baseline to shrink it.
+[exit 0] ci:server-error-leaks :: [ci:server-error-leaks] OK — 146 baselined site(s) across 83 file(s); no file gained one.
+[exit 0] ci:jwt-verify-pinned :: [ci:jwt-verify-pinned] OK — every production jwt.verify call pins an algorithm
+[exit 0] ci:unauthenticated-fetch :: ✅ ci:unauthenticated-fetch — 70 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+[exit 0] ci:db-test-isolation :: [ci:db-test-isolation] OK — 86 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+[exit 0] ci:fabricated-identity :: [ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+[exit 0] ci:no-dev-auth-in-prod :: [ci:no-dev-auth-in-prod] OK — no leaky dev-auth gates found
+[exit 0] ci:js-ts-shadows :: [ci:js-ts-shadows] OK — 11 same-directory pair(s) and 3 ancestor pair(s), all allowlisted with justification
+[exit 0] ci:unreferenced-modules :: OK: no new unreachable modules.
+[info] ci:tenant-isolation candidates in this change's files: 0
+[exit 1] requestdb-coverage --strict-no-regression :: [ci:requestdb-coverage] FAIL — 1 NEW route(s) on the shared pool above baseline of 228. New tenant-facing routes must use requestDb(req):
+[exit 0] eslint-warning-ratchet --since 3bdb50458^ :: [ci:eslint-warning-ratchet] no file changed its warning count since 3bdb50458^.
+[exit 0] typecheck-no-regression :: [ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+Dependent unit suites (every file importing the token-class rule, revocation, the auth middleware or the connector):
+   Test Files  67 passed (67)
+        Tests  605 passed (605)
