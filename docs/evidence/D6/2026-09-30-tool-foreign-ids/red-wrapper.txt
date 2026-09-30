@@ -1,0 +1,14 @@
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > lets through a call that names no program, without asking 2ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > lets through the caller's own program 2ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses another tenant's program in program_id, without echoing it 1ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses another tenant's program in programId, without echoing it 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses another tenant's program in device_program_id, without echoing it 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > checks every program a call names 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses without an organization rather than guessing 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses when ownership cannot be checked, rather than passing 0ms
+ × server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > never runs a handler for another tenant's program 12ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > runs it for the caller's own 1ms
+ × server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > does not run it when ownership cannot be checked 1ms
+ × server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > covers the real tools too: a read for another tenant is refused before it reads 55ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 9 passed (12)
