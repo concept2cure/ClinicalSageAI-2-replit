@@ -64,9 +64,14 @@ locals {
   db_name = "concept2cure_ri"
 }
 
+# The two database passwords rotate by changing var.db_credentials_rotation
+# (P1-11, INF-18): a new value replaces both on the next apply, and the deploy
+# that follows re-aligns app_service (deploy-migrate) and rolls every task onto
+# the new secrets.
 resource "random_password" "db_master" {
   length  = 40
   special = false
+  keepers = { rotation = var.db_credentials_rotation }
 }
 
 # First-run setup's secret (server/routes/setup.ts): in production
@@ -82,6 +87,7 @@ resource "random_password" "setup_token" {
 resource "random_password" "db_app_service" {
   length  = 40
   special = false
+  keepers = { rotation = var.db_credentials_rotation }
 }
 
 locals {
@@ -108,8 +114,9 @@ locals {
 }
 
 module "secrets" {
-  source = "../modules/secrets"
-  prefix = "c2c/${var.environment}"
+  source     = "../modules/secrets"
+  prefix     = "c2c/${var.environment}"
+  kms_key_id = aws_kms_key.secrets.arn
   secrets = merge(local.openai_secret, {
     jwt_secret = {
       description = "JWT signing secret"
@@ -339,6 +346,7 @@ module "rds" {
   multi_az              = var.rds_multi_az
   backup_retention_days = var.rds_backup_retention_days
   deletion_protection   = var.rds_deletion_protection
+  kms_key_id            = aws_kms_key.database.arn
   tags                  = var.tags
 }
 
@@ -393,6 +401,8 @@ module "ecs" {
   worker_desired_count = var.worker_desired_count
 
   secret_arns = module.secrets.secret_arns_list
+  # database_keys.tf: the execution role decrypts the secrets through this key.
+  secrets_kms_key_arn = aws_kms_key.secrets.arn
   # Not the frontend bucket: CloudFront serves the SPA from it and the deploy
   # role publishes it. A task that could write it could rewrite the site every
   # user loads (security plan P0-15, INF-03; tests/boot_contract.tftest.hcl).
