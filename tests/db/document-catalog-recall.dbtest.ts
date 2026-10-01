@@ -337,8 +337,7 @@ describe('semantic search over the catalog', () => {
     const found = await callTool('search_project_documents', { query: 'repeat-dose toxicology NOAEL' });
     expect(found.ok).toBe(true);
     const hit = found.hits.find((h: { documentId: string }) => h.documentId === docId);
-    expect(hit, JSON.stringify(found)).toBeTruthy();
-    expect(hit).toMatchObject({ matchedBy: expect.arrayContaining(['meaning']), keyData: { study: 'TOX-77-A' } }); // D2
+    expect(hit, JSON.stringify(found)).toMatchObject({ matchedBy: expect.arrayContaining(['meaning']), keyData: { study: 'TOX-77-A' } }); // D2
     expect(found.semantic).toMatchObject({ available: true, searchedCount: 1 });
     expect(found.semantic.unsearchableCount).toBeGreaterThanOrEqual(1);
   });
