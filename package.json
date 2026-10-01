@@ -175,6 +175,8 @@
     "ci:coverage-ratchet": "node scripts/ci/check-coverage-ratchet.mjs",
     "ci:migration-drop-safety": "node scripts/ci/check-migration-drop-safety.mjs",
     "ci:migration-drop-safety:selftest": "node scripts/ci/check-migration-drop-safety.selftest.mjs",
+    "ci:migration-deploy-path": "node scripts/ci/check-migration-deploy-path.mjs",
+    "ci:migration-deploy-path:selftest": "node scripts/ci/check-migration-deploy-path.mjs --selftest",
     "ci:launch-scope": "node scripts/ci/check-launch-scope.mjs",
     "ci:launch-scope:selftest": "node scripts/ci/check-launch-scope.selftest.mjs",
     "ci:launch-scope-api": "npx tsx scripts/ci/check-launch-scope-api.ts",

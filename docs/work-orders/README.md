@@ -1155,11 +1155,13 @@ The gate had two gaps, both fixed:
 
 A nested fragment with no tenant predicate is still flagged (`docs/evidence/D2-VAULT-VERSIONS/2026-10-01-version-list/red/tenant-gate-nested-fragment-probe.txt`).
 1. **→ The PF-08 lane (`2b33033e4`, `9109aa770`).** `server/services/c2c/project-retention.ts:66` (`WITH doomed AS (… FROM projects p WHERE ${predicate} FOR UPDATE`) reads `projects` by id or workspace with no organization predicate in the statement. This is the one finding left. Add the caller's organization to the predicate, or put a `// tenant-isolation-safe: <reason>` marker that names where ownership was established.
+   **Done 2026-10-01 (`…01GCu8tc`): marker, not predicate.** The read is meant to count every row the cascade removes, whatever its organization (the file's header). An organization predicate would undercount the delete. All three callers establish ownership first, and the marker names them. `ci:tenant-isolation:no-regression` is back to 8/8.
 
 **Test, 1 failure.**
 
 2. **→ The AnA-tools lane (`d8214c170`, 23:26).** In `server/services/living-record/__tests__/fact-change-audit-outcome.test.ts`, "establish_governed_fact tells AnA the record was not written" fails. Its `programId: 'prog-1'` now goes through `tool-record-scope.ts`'s ownership check. The test's `pool: {}` has no `query`, so the tool answers `PROGRAM_CHECK_UNAVAILABLE` and `status` is undefined. Stub the check as `tool-record-scope.test.ts` does, or give the pool mock a `query` that answers the ownership read. `8767b89b1` (DP-31) edited the same test afterwards; tell that lane.
    **Done 2026-10-01 (test only, `…01GCu8tc`).** The test stubs `programBelongsToOrg`, true only for its own `prog-1` and org 7, so the ownership check still runs. A second trunk red from the same cause class: `tests/routes/chat-governed-upload.test.ts` got 404 `PROJECT_NOT_FOUND` from PF-03's ownership check (`1ec8ea494`) before it reached the governed-contract check it tests. Its pool mock now answers that ownership read for its own project (12, org 5) only. No product file was touched; both were red before the change and are green after.
+   **→ Audit & compliance reports lane (`0224f43a0`), 2026-10-01, `…01GCu8tc`:** `ci:internals-in-copy` (Lint) failed on `ComplianceReportResult.tsx:181`, because the success note named `${base}.manifest.json` and the gate reads any `*.json` in copy as a source file. The note now says "Saved ${base}.csv and its signed manifest." The downloaded file names are unchanged, and the gate went red → green with no baseline entry.
 
 **Security Scan.** `ci:dependency-risk` and Trivy fail on advisories published upstream, not on a code change:
 - axios <1.20.0

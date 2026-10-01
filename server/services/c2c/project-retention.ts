@@ -62,7 +62,7 @@ export async function projectDeletionHolds(q: Queryable, target: ProjectDeletion
     predicate = 'p.client_workspace_id = $1';
     param = target.workspaceId;
   }
-  // tenant-isolation-safe: deliberately unscoped. It must judge every row the cascade would remove, whatever its organization (header above). Every caller proves ownership first: projects-management (existingProject.organizationId), clients-routes (loadWorkspaceForCaller), device-projects (org-scoped select in the same transaction). RLS also scopes the read when enforced.
+  // tenant-isolation-safe: by design this reads every row the caller's delete would cascade away, whatever its organization, because the cascade does not ask (see header). Ownership is established before it is called: clients-routes.ts (loadWorkspaceForCaller), projects-management.ts (organizationId check) and device-projects.ts (organization filter). An organization predicate here would undercount the delete.
   const { rows } = await q.query(
     `WITH doomed AS (
        SELECT p.id, p.regulatory_program_id FROM projects p WHERE ${predicate} FOR UPDATE

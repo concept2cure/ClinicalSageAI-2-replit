@@ -155,6 +155,19 @@ if ! npm run --silent ci:migration-drop-safety 2>&1; then
 fi
 echo "   ✅ Replay-safe DROPs passed."
 
+# A new migrations/*.sql must be on a deploy path. install-fresh applies the
+# whole tree to a NEW database; deploy-migrate applies only C2C_MIGRATION_FILES,
+# so a file on neither reaches no database already deployed. Cheap: no database.
+echo "   Validating new migrations are on a deploy path..."
+if ! npm run --silent ci:migration-deploy-path 2>&1; then
+  echo ""
+  echo "🚫 ERROR: A migration is on no deploy path. Add it to C2C_MIGRATION_FILES"
+  echo "   (scripts/db/migration-set.mjs), replayable, above the tenant sweep."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Deploy-path check passed."
+
 # One level below table reachability: a column the server queries must be added
 # by a migration an applier runs. A file that only ALTERs creates no table, so
 # the table guard never sees it — six columns shipped that way, each a 42703 on
