@@ -52,6 +52,8 @@ export interface VaultDoc {
   versionCount?: number;
   /** vault.documents.document_code (uploads only): a refused upload at this code is offered as its next version. */
   documentCode?: string | null;
+  /** This version's lifecycle stage (uploads only, VR-13): null when it has no record, i.e. not reviewed. */
+  lifecycleStage?: string | null;
   /** A search hit for a version a later one supersedes (VR-09). */
   earlierVersion?: boolean;
 }

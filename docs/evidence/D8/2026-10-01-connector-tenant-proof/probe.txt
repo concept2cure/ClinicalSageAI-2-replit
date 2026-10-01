@@ -1,0 +1,42 @@
+## L under the runtime role (the suite as committed, filter removed)
+   exit 0; Tests  11 passed (11)
+   ✓ the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 10ms
+   ✓ discovery and authentication over HTTP > 401 + resource_metadata without a bearer; metadata documents resolve 36ms
+   ✓ tools/list > lists the 19 curated tools with annotations through the SDK client 125ms
+   ✓ tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s 286ms
+   ✓ tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document 165ms
+   ✓ tool calls are scoped to the token’s organisation > c2c_assess_sequence_readiness: A gets the engine verdict; B is refused for A’s sequence 2582ms
+   ✓ the governed write > is denied to a connector token without c2c:file 71ms
+   ✓ the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org 106ms
+   ✓ the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer) 60ms
+   ✓ model-backed tool without a provider key > returns the gateway refusal verbatim, never demo-mode text 44ms
+   ✓ model-backed tool without a provider key > a deterministic reference tool (ICH corpus) answers through the AnA handler 4490ms
+
+## L under the superuser (the pre-2026-10-01 posture, filter removed)
+   exit 1; Tests  2 failed | 9 passed (11)
+   × the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 16ms
+   ✓ discovery and authentication over HTTP > 401 + resource_metadata without a bearer; metadata documents resolve 50ms
+   ✓ tools/list > lists the 19 curated tools with annotations through the SDK client 112ms
+   × tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s 265ms
+   ✓ tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document 155ms
+   ✓ tool calls are scoped to the token’s organisation > c2c_assess_sequence_readiness: A gets the engine verdict; B is refused for A’s sequence 1989ms
+   ✓ the governed write > is denied to a connector token without c2c:file 51ms
+   ✓ the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org 108ms
+   ✓ the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer) 56ms
+   ✓ model-backed tool without a provider key > returns the gateway refusal verbatim, never demo-mode text 51ms
+   ✓ model-backed tool without a provider key > a deterministic reference tool (ICH corpus) answers through the AnA handler 4119ms
+
+## control: the superuser, filter intact
+   exit 1; Tests  1 failed | 10 passed (11)
+   × the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 16ms
+   ✓ discovery and authentication over HTTP > 401 + resource_metadata without a bearer; metadata documents resolve 34ms
+   ✓ tools/list > lists the 19 curated tools with annotations through the SDK client 108ms
+   ✓ tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s 290ms
+   ✓ tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document 133ms
+   ✓ tool calls are scoped to the token’s organisation > c2c_assess_sequence_readiness: A gets the engine verdict; B is refused for A’s sequence 2148ms
+   ✓ the governed write > is denied to a connector token without c2c:file 63ms
+   ✓ the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org 129ms
+   ✓ the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer) 61ms
+   ✓ model-backed tool without a provider key > returns the gateway refusal verbatim, never demo-mode text 43ms
+   ✓ model-backed tool without a provider key > a deterministic reference tool (ICH corpus) answers through the AnA handler 4177ms
+

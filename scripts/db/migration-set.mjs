@@ -2320,6 +2320,10 @@ export const C2C_MIGRATION_FILES = [
   // VR-03 (D5): the lifecycle trail only grows, signatures are written once,
   // nothing is deleted. Triggers only, created when absent; no table, no DROP.
   'migrations/20260925_canonical_documents_append_only.sql',
+  // VR-13 (D5): one lifecycle record per Vault version. A unique index on the
+  // version a record names, created only when no version already has two
+  // (NOTICE otherwise). After the table's own file; no table, no column, no DROP.
+  'migrations/20261001_canonical_documents_vault_version.sql',
 
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
@@ -2837,6 +2841,27 @@ export const C2C_MIGRATION_FILES = [
   // final pair because ci:migration-set-order pins those last.
   // Evidence docs/evidence/D2-REPORTING-LAUNCH-APP/2026-09-30/report-os/.
   'migrations/20260930_report_type_registry_seed.sql',
+
+  // ── IND lifecycle and assessment tables reach every deployed database (2026-10-01, D1) ─
+  // Five tables existed only on databases installed after their 20260615
+  // files. install-fresh overlays every top-level migrations/*.sql, so a new
+  // install creates them. deploy-migrate applies only this array, and they
+  // were not in it. drizzle-kit push does not create them either: their models
+  // live in shared/schema/*.ts modules that drizzle.config.ts does not push. A
+  // database provisioned before 2026-06-15 therefore never got them, and on
+  // that database the IND amendment and annual-report registers
+  // (server/routes/ind-lifecycle/registers.routes.ts) answer "relation does not
+  // exist". Each file is CREATE TABLE/INDEX IF NOT EXISTS only, with no DROP, in
+  // public and keyed by organization_id INTEGER NOT NULL. So it is a no-op where
+  // the table exists, and the sweep below gives it its tenant policy where it
+  // was missing. Replayed twice on PGlite: 0 of 5 tables before, 5 of 5 after.
+  // (report_subscriptions, the sixth 20260615 file, is created by the report-os
+  // push.)
+  'migrations/20260615_ind_amendments.sql',
+  'migrations/20260615_ind_annual_reports.sql',
+  'migrations/20260615_ind_icsr_transmissions.sql',
+  'migrations/20260615_regulatory_assessments.sql',
+  'migrations/20260615_tmf_artifact_filings.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

@@ -126,7 +126,9 @@ export async function cascadeUnblockOnCompletionInTx(
         cause: 'predecessor-completed',
         predecessor: completedTaskId,
       },
-      reason: next.unblocked
+      // What the cascade did, not a reason: nobody stated one for a dependent's
+      // move, so task-audit records the reason as null (D5).
+      summary: next.unblocked
         ? `Unblocked: predecessor ${completedTaskId} completed`
         : `Blocker ${completedTaskId} completed; removed from this task's blockers`,
     });
