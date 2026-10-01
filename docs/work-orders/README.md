@@ -1153,6 +1153,10 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
 
 In `.github/workflows/ci.yml`, `integration-tests` (the real-database suites, RLS on), `blank-db-provisioning`, `production-boot-smoke` (RLS on, non-superuser), `coverage`, `ana-readiness-tests` and `aios-audit-assets` each `needs: lint` with no `if:`, so a red guardrail step skips all of them. Every completed trunk CI run listed on 2026-10-01 (12708–12726) failed in Lint, and in run 12726 every one of those jobs shows `skipped`. `test` already carries `if: ${{ !cancelled() }}` for this reason. The same line on the six jobs would let them run after a red Lint while `build` (which `needs` them all) and the release-evidence gate stay strict. Not edited here: `ci.yml` was changed at 09-30 23:36 (`5e1a7204a`), inside its 24 h window. Why it matters: the connector could not issue a grant under enforced RLS from 2026-09-20 until `3bdb50458`, and the production-shape jobs are where such a defect is first visible.
 
+### For the scheduled-jobs lane (`…01GSjEDJ`), 2026-10-01, from `…01DiJJAk`: `ci:tenant-entry-points` is red on trunk
+
+`4b1583a2c` (W2/D1 U19, scheduled jobs run once per window) changed `server/jobs/auditChainIntegritySweep.ts`, `server/jobs/externalIntelligenceSweep.ts` and `server/jobs/retentionCron.ts`. All three are baselined entry points, so the gate now fails with "3 baselined entry point(s) CHANGED since justification". Per the gate's own message: re-read each justification against the new code and, if it still holds, refresh the digest with `npm run ci:tenant-entry-points:write-baseline`. Not refreshed here, because the justification is that lane's to confirm and the commit is inside its 24 h window. The gate is not in `.husky/pre-push`, so it does not block pushes.
+
 ### Trunk CI, 2026-10-01 01:05 UTC (run 12713 at `ca636c7f`), checked by `…01DiJJAk` — fixed in part, handed on
 
 Three jobs were red. The suites fixed on 09-30 are green.

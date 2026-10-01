@@ -1,15 +1,15 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-01T07:08:39.245Z",
+  "generatedAt": "2026-10-01T08:41:02.467Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 74,
+    "requirements": 75,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 3
+    "uncovered": 4
   },
   "byApp": {
     "Projects": {
@@ -21,12 +21,12 @@
       "uncovered": 0
     },
     "Vault": {
-      "requirements": 13,
+      "requirements": 14,
       "pass": 10,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 3
+      "uncovered": 4
     },
     "Authoring": {
       "requirements": 15,
@@ -819,6 +819,22 @@
         "risk": "high: an approval over other bytes, a self-approval, or two approved versions of one document misstates what was approved for a filing",
         "assurance": "scripted (credentialed)",
         "rationale": "OQ-VAULT-13/14. The refusals, supersession, rollback and the start's audit row are in `tests/db/vault-lifecycle.dbtest.ts`, on PostgreSQL with RLS on"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-014",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person files captured sources from the project's data room into the Vault. Each source goes through the same governed ingest as a Vault upload and lands suggested or unfiled, never confirmed by the system. The answer names each source as filed (with its version and where it landed), already in the Vault (with its version), or refused with the reason. One source's refusal does not undo another's filing, and the batch reports that it is not complete. A source whose stored bytes no longer match the checksum recorded at capture is refused and nothing is stored. A viewer is refused. Another organisation's or another project's source is refused as not found.",
+      "part11": "§11.10(c), §11.10(d), §11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "File captured sources from the data room through the governed ingest, with a result for each",
+        "risk": "high: changed bytes filed under a capture's name, a source filed into the wrong project, or a partial batch read as done would put the wrong evidence in the Vault",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-15. The byte-check, antivirus, cross-tenant, cross-project, superseded and viewer cases are in `tests/db/vault-data-room-file.dbtest.ts`, on PostgreSQL with RLS on"
       },
       "verdict": "uncovered"
     },

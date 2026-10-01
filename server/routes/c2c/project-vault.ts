@@ -69,8 +69,9 @@ import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vaul
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
-import { currentVersionLateral, readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
+import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
 import { readVaultLifecycles } from '../../services/vault/vault-lifecycle.js';
+import { fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
@@ -1324,33 +1325,17 @@ export default function createProjectVaultRoutes(): Router {
           );
           // …and as which version (VR-16): the version its bytes are, and the
           // family's current version when a later one replaced it.
-          const vaultHashes = new Map<string, NonNullable<DataRoomRow['filedAs']>>();
-          if (sourceChecksums.length > 0) {
-            const matchRes = await pool.query(
-              `SELECT DISTINCT ON (d.content_hash) d.content_hash, d.version,
-                      ${supersededSql('d')} AS superseded, cv.current_version
-                 FROM vault.documents d
-                 ${currentVersionLateral('d')}
-                WHERE ${uploadsWhere}
-                  AND d.content_hash = ANY($3::text[])
-                ORDER BY d.content_hash, d.created_at`,
-              [id, orgId, sourceChecksums],
-            );
-            for (const r of matchRes.rows as Array<{ content_hash: string | null; version: string | null; superseded: boolean; current_version: string | null }>) {
-              if (!r.content_hash) continue;
-              vaultHashes.set(String(r.content_hash).trim(), {
-                version: r.version ?? null,
-                supersededBy: r.superseded ? (r.current_version ?? null) : null,
-              });
-            }
-          }
+          // One join for the stage and for "File into Vault" (VR-11), so the
+          // two cannot disagree about what is filed.
+          const vaultHashes = await readFiledAs(pool, id, orgId, sourceChecksums);
           const rows: DataRoomRow[] = sources.map(s => {
             const meta = (s.metadata ?? {}) as Record<string, unknown>;
             const dossier = (meta.dossier ?? null) as
               | { evidenceKind?: string | null; suggestedFolder?: string | null;
                   confidence?: string | null; needsReview?: boolean }
               | null;
-            const filedAs = s.checksum ? vaultHashes.get(s.checksum) ?? null : null;
+            const match = s.checksum ? vaultHashes.get(s.checksum) : undefined;
+            const filedAs = match ? { version: match.version, supersededBy: match.supersededBy } : null;
             const filed = filedAs !== null;
             const proposed = Boolean(dossier?.suggestedFolder);
             const stage: DataRoomRow['stage'] =
@@ -1905,6 +1890,38 @@ export default function createProjectVaultRoutes(): Router {
         err: err instanceof Error ? err.message : String(err),
       });
       return res.status(500).json({ success: false, error: 'Failed to record the filing decision' });
+    }
+  });
+
+  /* POST /:id/data-room/file — File into Vault (VR-11, D2).
+     Captured sources, chosen in the data room, each filed through the one
+     upload-to-Vault orchestration (vault-data-room-filing.ts). Behind the same
+     governed-write gate as filing, so a viewer is refused before any byte is
+     read. 200 carries a result per source; `complete: false` when any was
+     refused. */
+  router.post('/:id/data-room/file', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const outcome = await fileDataRoomSources({
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        programId: String(req.params.id),
+        sourceIds: (req.body ?? {}).sourceIds,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, complete: outcome.complete, items: outcome.items });
+    } catch (err: unknown) {
+      logger.error('data room file error', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({
+        success: false,
+        error: 'FILING_FAILED',
+        message: 'The files could not be filed. Check the data room before trying again: some may have been filed.',
+      });
     }
   });
 
