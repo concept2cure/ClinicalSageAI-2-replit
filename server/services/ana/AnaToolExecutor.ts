@@ -16,6 +16,7 @@
 
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
+import { registeredToolTier } from './governed-tool-gate.js';
 import { foreignProgramRefusal, foreignRecordRefusal } from './tool-record-scope.js';
 import { buildHumanConfirmationRequiredResult } from '../ana-ri/part11-governance.js';
 import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
@@ -207,14 +208,10 @@ import { launchScopeEnforced } from '../entitlements/launch-scope';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
-import {
-  GOVERNED_REASON_MIN,
-  ReasonNotStatedError,
-  gatedReason,
-  reasonFieldOf,
-  statedReason,
-  type StatedReasonField,
-} from './stated-reason-input.js';
+import { GOVERNED_REASON_MIN, ReasonNotStatedError, gatedReason, reasonFieldOf, statedReason, type StatedReasonField, REASON_REQUIRED_TOOLS } from './stated-reason-input.js';
+// Re-exported: the set's home is the pure module, so the tool gate and the
+// confirmation route read it without loading this executor.
+export { REASON_REQUIRED_TOOLS };
 import {
   anaScratchDir,
   assertWithinDocumentWorkspace,
@@ -404,116 +401,7 @@ function reasonNotStated(tool: string, field: StatedReasonField = reasonFieldOf(
   });
 }
 
-/**
- * Every tool whose handler records a reason for change on a ledger row — a
- * governed action (recordGovernedAction -> audit_logs.reason), an audit row
- * (recordAuditRow), or through a service that records the reason it is handed
- * (commit_document_revision's document spine, the governed-fact orchestrator,
- * the change-control register): the person is asked for their reason before
- * they are asked to confirm. governed-reason-not-invented.test.ts holds this
- * list to the source of every module that registers a handler: a handler whose
- * path carries a reason to a write and is missing here fails it.
- */
-export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
-  'add_amendment_change',
-  'add_biological_agent',
-  'add_capa_action',
-  'add_committee_agenda_item',
-  'add_coverage_item',
-  'add_disclosure_interest',
-  'add_effort_line',
-  'add_eligibility_criterion',
-  'add_grant_budget_line',
-  'add_irb_site',
-  'add_other_support_entry',
-  'add_personnel_training',
-  'add_protocol_budget_item',
-  'add_protocol_milestone',
-  'add_protocol_objective',
-  'add_protocol_review_comment',
-  'add_protocol_risk',
-  'add_soa_assessment',
-  'apply_fact_change',
-  'apply_protocol_design_derivation',
-  'assign_committee_member',
-  'assign_protocol_reviewer',
-  'bind_protocol_to_study_design',
-  'cast_committee_vote',
-  'classify_coverage_item',
-  'classify_tmf_artifact',
-  'clone_protocol_template',
-  'commit_document_revision',
-  'convene_committee_meeting',
-  'create_biosketch',
-  'create_clinical_investigator',
-  'create_coi_disclosure',
-  'create_consent_form',
-  'create_coverage_analysis',
-  'create_dms_plan',
-  'create_effort_certification',
-  'create_export_control_review',
-  'create_financial_disclosure',
-  'create_grant_proposal',
-  'create_ha_interaction',
-  'create_iacuc_protocol',
-  'create_ibc_registration',
-  'create_inspection',
-  'create_invention_disclosure',
-  'create_irb_submission',
-  'create_lifecycle_obligation',
-  'create_nonclinical_study',
-  'create_other_support',
-  'create_protocol_amendment',
-  'create_protocol_document',
-  'create_protocol_template',
-  'create_qms_document',
-  'create_regulatory_commitment',
-  'create_research_agreement',
-  'create_rim_product',
-  'create_tmf',
-  'establish_governed_fact',
-  'fulfill_regulatory_commitment',
-  'import_citi_records',
-  'log_cs_transaction',
-  'log_inspection_finding',
-  'open_grant_closeout',
-  'qms_change_create',
-  'qms_change_transition',
-  'record_cost_share_contribution',
-  'record_grant_award',
-  'record_grant_expenditure',
-  'record_grant_opportunity',
-  'record_subaward',
-  'register_animal_cohort',
-  'register_controlled_substance',
-  'register_dea',
-  'report_protocol_deviation',
-  'request_no_cost_extension',
-  'revise_qms_document',
-  'save_document_as_template',
-  'save_document_to_vault',
-  'screen_subaward',
-  'seed_tmf',
-  'set_coverage_qualifying_determination',
-  'set_funding_profile',
-  'set_grant_milestone_status',
-  'set_protocol_budget_params',
-  'set_protocol_milestone_status',
-  'set_registration_status',
-  'set_soa_cell',
-  'submit_invention_disclosure',
-  'triage_compliance_attention',
-  'update_biosketch_section',
-  'update_consent_element',
-  'update_dms_plan_element',
-  'update_export_control_review',
-  'update_grant_closeout',
-  'update_invention_disclosure',
-  'update_protocol_section',
-  'update_research_agreement',
-  'update_tmf_artifact_status',
-  'update_vault_document',
-]);
+
 
 /**
  * Register a handler for a named tool. Every handler is wrapped with execution
@@ -597,7 +485,7 @@ function preHandlerRefusal(
     }
     return {
       code: 'HUMAN_CONFIRMATION_REQUIRED',
-      result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {})),
+      result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {}, registeredToolTier(name))),
     };
   }
   return null;
@@ -4551,67 +4439,42 @@ registerToolHandler('search_medicare_coverage', async (input) => {
 
 // Lookup FDA Guidance
 registerToolHandler('lookup_fda_guidance', async (input) => {
-  const topic = input.topic as string;
-  const regulationType = input.regulation_type as string || 'any';
-
-  // FDA guidance database lookup via openFDA or internal knowledge
-  const guidanceMap: Record<string, any> = {
-    '510(k)': {
-      title: 'The 510(k) Program: Evaluating Substantial Equivalence in Premarket Notifications',
-      documentNumber: 'FDA-2013-D-0718',
-      url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents',
-      keyRequirements: [
-        'Identify predicate device(s)',
-        'Compare intended use and technological characteristics',
-        'Demonstrate substantial equivalence',
-        'Include performance data if different technology',
-      ],
-    },
-    'biocompatibility': {
-      title: 'Use of International Standard ISO 10993-1, Biological evaluation of medical devices',
-      documentNumber: 'FDA-2013-D-0350',
-      regulations: ['21 CFR 820.30(g)', 'ISO 10993-1:2018'],
-      keyRequirements: [
-        'Material characterization',
-        'Biological evaluation plan',
-        'Risk-based approach to testing',
-        'Chemical characterization per ISO 10993-18',
-      ],
-    },
-    'software': {
-      title: 'Content of Premarket Submissions for Device Software Functions',
-      documentNumber: 'FDA-2018-D-3241',
-      regulations: ['21 CFR 820', 'IEC 62304'],
-      keyRequirements: [
-        'Software level of concern determination',
-        'Software requirements specification',
-        'Architecture design chart',
-        'Software testing (verification & validation)',
-      ],
-    },
-  };
-
-  // Find best match
-  const topicLower = topic.toLowerCase();
-  let bestMatch = null;
-  for (const [key, value] of Object.entries(guidanceMap)) {
-    if (topicLower.includes(key.toLowerCase())) {
-      bestMatch = { keyword: key, ...value };
-      break;
-    }
-  }
-
-  if (bestMatch) {
-    return JSON.stringify({ source: 'FDA Guidance Database', match: bestMatch });
-  }
-
+  /* No FDA guidance index is connected (plan open decision 11), so this names
+     no guidance, docket number or requirement. It used to answer from a
+     three-entry map ("510(k)", "biocompatibility", "software") whose docket
+     numbers nothing verified and whose requirements were typed from memory —
+     "software level of concern", which the 2023 device-software guidance
+     replaced, and 21 CFR 820.30(g), which the QMSR superseded — and returned a
+     fixed list of CFR parts for anything else. What it can stand behind is the
+     dated US facts in the verified currency registry, each with its source. */
+  const topic = typeof input.topic === 'string' ? input.topic.trim() : '';
+  if (!topic) return JSON.stringify({ error: 'lookup_fda_guidance requires a topic.' });
+  const { findFacts, verificationAgeDays, isVerificationStale } = await import(
+    '../regulatory-currency/currency-registry.js'
+  );
+  const asOf = new Date().toISOString().slice(0, 10);
+  const facts = findFacts({ topic, jurisdiction: 'US', asOf }).map((f) => ({
+    id: f.id,
+    topic: f.topic,
+    status: f.status,
+    effectiveDate: f.effectiveDate,
+    note: f.note,
+    sourceUrl: f.sourceUrl,
+    lastVerified: f.lastVerified,
+    verificationAgeDays: verificationAgeDays(f, asOf),
+    verificationStale: isVerificationStale(f, asOf),
+  }));
   return JSON.stringify({
-    source: 'FDA Guidance Database',
     topic,
-    note: `No exact match found. Search FDA guidance at https://www.fda.gov/regulatory-information/search-fda-guidance-documents for: "${topic}"`,
-    relatedRegulations: regulationType === '21cfr'
-      ? ['21 CFR Part 807 (510k)', '21 CFR Part 814 (PMA)', '21 CFR Part 820 (QSR)', '21 CFR Part 11 (Electronic Records)']
-      : undefined,
+    status: facts.length > 0 ? 'registry_facts' : 'not_indexed',
+    guidanceIndex: 'not_connected',
+    asOf,
+    facts,
+    note:
+      'No FDA guidance index is connected, so this cannot name an FDA guidance, its docket number or its ' +
+      'requirements. Any facts listed are dated entries from the verified regulatory currency registry. Name an ' +
+      'FDA guidance only from a document the user supplied, or say it needs confirming at ' +
+      'https://www.fda.gov/regulatory-information/search-fda-guidance-documents.',
   });
 });
 
@@ -4696,42 +4559,112 @@ registerToolHandler('check_regulatory_compliance', async (input) => {
 });
 
 // Validate Cross References
-registerToolHandler('validate_cross_references', async (input) => {
-  const documentId = input.document_id as string;
-  const references = input.section_references as string[] || [];
-
-  return JSON.stringify({
-    documentId,
-    referencesChecked: references.length,
-    results: references.map(ref => ({
-      reference: ref,
-      status: 'unverified',
-      note: 'Cross-reference validation requires document store access — flagged for manual review',
-    })),
-    recommendation: 'Run full cross-reference validation after document assembly',
-  });
+registerToolHandler('validate_cross_references', async (input, ctx) => {
+  /* Each reference is checked against the section outlines of the tenant's
+     own documents (c2c_document_sections): this document, then the other
+     documents of its project (cross-reference-check.ts). It used to read
+     nothing and return every reference 'unverified' — "requires document
+     store access". A table or figure number has no resolver, so it is not
+     assessed, never passed. */
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'validate_cross_references requires tenant context.' });
+  const documentId = typeof input.document_id === 'string' ? input.document_id.trim() : '';
+  if (!documentId) return JSON.stringify({ error: 'document_id (string) is required.' });
+  const references = Array.isArray(input.section_references)
+    ? (input.section_references as unknown[]).filter((r): r is string => typeof r === 'string' && r.trim() !== '')
+    : [];
+  if (references.length === 0) {
+    return JSON.stringify({
+      error: 'section_references is required: list the references to check, e.g. ["Section 3.2.P.5.1"].',
+    });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { checkCrossReference } = await import('./cross-reference-check.js');
+    const doc = await getPool().query(
+      `SELECT id, project_id, title FROM c2c_documents
+        WHERE org_id = $1 AND id = $2 LIMIT 1`,
+      [ctx.organizationId, documentId],
+    );
+    if (!doc.rows.length) return JSON.stringify({ error: `No document '${documentId}' in this organization.` });
+    /* This document's outline always, even when it belongs to no project
+       (project_id is nullable for legacy rows); the project's other
+       documents unless archived. */
+    const outlines = await getPool().query(
+      `SELECT s.document_id, d.title, s.section_key, s.status
+         FROM c2c_document_sections s
+         JOIN c2c_documents d ON d.id = s.document_id
+        WHERE d.org_id = $1
+          AND (d.id = $3 OR (d.project_id = $2 AND d.status <> 'archived'))
+        ORDER BY s.document_id, s.section_key`,
+      [ctx.organizationId, doc.rows[0].project_id, documentId],
+    );
+    const results = references.map((reference) => checkCrossReference(reference, documentId, outlines.rows));
+    const count = (...statuses: string[]) => results.filter((r) => statuses.includes(r.status)).length;
+    return JSON.stringify({
+      documentId,
+      referencesChecked: results.length,
+      results,
+      summary: {
+        found: count('found_in_document', 'found_in_project'),
+        outlineOnly: count('outline_only'),
+        parentOnly: count('parent_only'),
+        notFound: count('not_found'),
+        notAssessed: count('not_assessed'),
+      },
+      checkedAgainst: 'the section outlines of this document and of the other documents in its project',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `validate_cross_references failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
 });
 
 // Generate Citation
 registerToolHandler('generate_citation', async (input) => {
-  const sourceType = input.source_type as string;
-  const sourceId = input.source_identifier as string;
-  const style = input.citation_style as string || 'regulatory';
+  /* Formats only what it can stand behind, and says which (citation-generator.ts).
+     It filled a string template per type: a journal article came back as
+     `[Author(s)]. "[Title]." [Journal], <id>. DOI: [doi].`, and the style asked
+     for was echoed but never applied. */
+  const { generateCitation } = await import('./citation-generator.js');
+  return JSON.stringify(
+    await generateCitation({
+      sourceType: input.source_type,
+      sourceIdentifier: input.source_identifier,
+      style: input.citation_style,
+    }),
+  );
+});
 
-  const citationTemplates: Record<string, string> = {
-    fda_guidance: `U.S. Food and Drug Administration. "${sourceId}." Available at: https://www.fda.gov/regulatory-information/search-fda-guidance-documents.`,
-    ich_guideline: `International Council for Harmonisation. "${sourceId}." Available at: https://ich.org/page/ich-guidelines.`,
-    '21cfr': `Title 21, Code of Federal Regulations, Part ${sourceId}. U.S. Government Publishing Office.`,
-    eu_mdr: `Regulation (EU) 2017/745 of the European Parliament and of the Council, ${sourceId}.`,
-    iso_standard: `International Organization for Standardization. ${sourceId}. Geneva, Switzerland.`,
-    journal_article: `[Author(s)]. "[Title]." [Journal], ${sourceId}. DOI: [doi].`,
+// Verify Citations
+registerToolHandler('verify_citations', async (input) => {
+  /* A thin handler over citation-verification-service: the verdicts are the
+     engine's (PubMed, Crossref, retraction status, the tenant's public-source
+     egress honoured), counted. It was reachable only through
+     POST /api/citations/verify, so AnA audited a reference list by reading it. */
+  const citations = Array.isArray(input.citations) ? (input.citations as Array<Record<string, unknown>>) : [];
+  if (citations.length === 0) return JSON.stringify({ error: 'verify_citations requires citations (a non-empty array).' });
+  if (citations.length > 50) return JSON.stringify({ error: 'verify_citations checks at most 50 references per call.' });
+  const unidentified = citations.findIndex((c) => !c || !['raw', 'title', 'doi', 'pmid'].some((k) => typeof c[k] === 'string' && (c[k] as string).trim()));
+  if (unidentified >= 0) {
+    return JSON.stringify({ error: `Reference ${unidentified + 1} needs at least one of raw, title, doi or pmid.` });
+  }
+  const { verifyCitations } = await import('../citation-verification-service.js');
+  const results = await verifyCitations(citations as Parameters<typeof verifyCitations>[0]);
+  const count = (status: string) => results.filter((r) => r.status === status).length;
+  const summary = {
+    total: results.length,
+    verified: count('verified'),
+    retracted: results.filter((r) => r.retracted === true).length,
+    notFound: count('not_found'),
+    unverifiable: count('unverifiable'),
+    error: count('error'),
   };
-
   return JSON.stringify({
-    sourceType,
-    sourceIdentifier: sourceId,
-    citation: citationTemplates[sourceType] || `${sourceType}: ${sourceId}`,
-    style,
+    results,
+    summary,
+    message:
+      `${summary.verified} of ${summary.total} verified` +
+      (summary.retracted ? `, ${summary.retracted} retracted` : '') +
+      `; ${summary.notFound} not found, ${summary.unverifiable} unverifiable, ${summary.error} could not be checked.`,
   });
 });
 
@@ -7034,39 +6967,57 @@ registerToolHandler('ind_get_status', async (input: Record<string, unknown>) => 
   }
 });
 
-registerToolHandler('rasterize_page', async (input: Record<string, unknown>) => {
-  const documentPath = input.document_path as string;
-  const pageNumber = (input.page_number as number) || 1;
-  const dpi = (input.dpi as number) || 150;
-
-  // Rasterization requires Puppeteer or LibreOffice — return instructions
-  return JSON.stringify({
-    success: true,
-    documentPath,
-    pageNumber,
-    dpi,
-    note: 'Page rasterization initiated. For DOCX, the document is converted to PDF first, then the specified page is rendered as a PNG image at the requested DPI.',
-    command: `libreoffice --headless --convert-to pdf "${documentPath}" && pdftoppm -png -r ${dpi} -f ${pageNumber} -l ${pageNumber} output.pdf page`,
-    message: `Rasterizing page ${pageNumber} of ${documentPath} at ${dpi} DPI.`,
-  });
+registerToolHandler('rasterize_page', async (input, ctx) => {
+  /* Renders one page of a PDF or DOCX in the tenant's document workspace to a
+     PNG in its scratch area (page-render.ts) and succeeds only when that file
+     exists. It used to return `success: true` and a shell command it never
+     ran, for any path at all. */
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ success: false, error: 'rasterize_page requires tenant context (organizationId).' });
+  }
+  const confined = workspacePathOrRefusal(input.document_path, 'document_path', ctx.organizationId);
+  if (!confined.ok) return confined.refusal;
+  const page = input.page_number === undefined || input.page_number === null ? 1 : Number(input.page_number);
+  if (!Number.isInteger(page) || page < 1) {
+    return JSON.stringify({ success: false, error: 'page_number must be a whole number of 1 or more.' });
+  }
+  const dpi = Math.min(300, Math.max(36, Math.round(Number(input.dpi) || 150)));
+  try {
+    const { renderDocumentPage } = await import('./page-render.js');
+    const rendered = await renderDocumentPage({
+      documentPath: confined.path,
+      page,
+      dpi,
+      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
+    });
+    const lowered = rendered.dpi < dpi ? ` (lowered from ${dpi} dpi to stay within the page pixel limit)` : '';
+    return JSON.stringify({
+      success: true,
+      ...rendered,
+      displayed: false,
+      message:
+        `Rendered page ${page} of ${rendered.pageCount} at ${rendered.dpi} dpi${lowered} to ${rendered.pngPath} ` +
+        `(${rendered.widthPx}×${rendered.heightPx} px). The image is a file on the server; it is not shown to you or the user.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ success: false, error: err instanceof Error ? err.message : String(err) });
+  }
 });
 
-registerToolHandler('pdf_overlay', async (input: Record<string, unknown>) => {
-  const basePdfPath = input.base_pdf_path as string;
-  const overlays = input.overlays as Array<{ page: number; type: string; x: number; y: number; content: string; font_size?: number; color?: string }> || [];
-  const outputPath = input.output_path as string || basePdfPath.replace('.pdf', '_finalized.pdf');
-
-  // PDF overlay requires a PDF manipulation library (pdf-lib, PyPDF2, or reportlab)
-  return JSON.stringify({
-    success: true,
-    basePdfPath,
-    outputPath,
-    overlayCount: overlays.length,
-    overlays: overlays.map(o => ({ page: o.page, type: o.type, position: `(${o.x}, ${o.y})` })),
-    note: 'PDF overlay operations queued. Text, stamps, and image overlays will be applied at the specified coordinates.',
-    message: `${overlays.length} overlay operations will be applied to ${basePdfPath}.`,
-  });
-});
+registerToolHandler('pdf_overlay', async () =>
+  /* No overlay engine exists, so this applies nothing and says so. It used to
+     report overlays "queued" and "will be applied" — including approval
+     stamps and signatures — and write nothing. The planned replacement is the
+     deterministic bind engine (bind_pdf_package, plan WS13); whether to keep
+     this name until then or remove it is open founder decision 8. */
+  JSON.stringify({
+    success: false,
+    status: 'unavailable',
+    error:
+      'pdf_overlay is not available: no PDF overlay engine is connected, so nothing was applied or written. ' +
+      'Tell the user the overlay was not made.',
+  }),
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Precedent Engine handlers — exposes server/services/precedent-engine.ts.
@@ -9878,16 +9829,23 @@ registerToolHandler('check_consistency', async (input, ctx) => {
   if (!dimension) return JSON.stringify({ error: 'dimension is required.' });
   if (!left || !left.ref || !left.text) return JSON.stringify({ error: 'left { ref, text } is required.' });
   if (right.length === 0) return JSON.stringify({ error: 'right (non-empty array) is required.' });
+  if (right.some((r) => typeof r?.ref !== 'string' || !r.ref || typeof r?.text !== 'string')) {
+    return JSON.stringify({ error: 'each right item needs a ref and a text.' });
+  }
   try {
     const { runConsistencyCheck } = await import('../truth-engine/truth-engine-service.js');
-    const { findings, auditTrail } = await runConsistencyCheck(
+    const { findings, notCompared, auditTrail } = await runConsistencyCheck(
       { submissionId, dimension, left: { ref: left.ref, text: left.text }, right },
       { organizationId: ctx.organizationId, userId: ctx.userId }
     );
     const conflicts = findings.filter((f) => f.status === 'conflict').length;
+    const unread = notCompared.length
+      ? ` ${notCompared.length} figure(s) of the claim were not compared (see notCompared for which and why). That is not a finding of consistency.`
+      : '';
     return JSON.stringify({
-      ok: true, findings, conflicts, auditTrail,
-      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).`, auditTrail),
+      ok: true, findings, conflicts, notCompared, auditTrail,
+      comparedBy: 'deterministic comparison of labelled figures (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value)',
+      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).${unread}`, auditTrail),
     });
   } catch (err) {
     return JSON.stringify({ error: `check_consistency failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });

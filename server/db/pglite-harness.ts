@@ -35,6 +35,8 @@ const CANONICAL_DOCUMENTS_GUARD = new URL(
    harness table that names a project is held to its organization exactly as
    the deployed one is. Each block skips itself when its tables are absent. */
 const PROGRAM_SAME_ORG_KEYS = new URL('../../migrations/20260926b_program_same_org_keys.sql', import.meta.url);
+/* The integer project key (PF-03), applied after it for the same reason. */
+const INTEGER_PROJECT_SAME_ORG_KEYS = new URL('../../migrations/20261001_integer_project_same_org_keys.sql', import.meta.url);
 /** CREATE TABLE statements for the IND tables (mirrors the migrations). */
 export const IND_PGLITE_DDL = `
 CREATE TABLE IF NOT EXISTS ind_sponsors (
@@ -703,6 +705,7 @@ export async function createIndPgliteDb(
   // After every DDL block too: the keys need both the program spine and the
   // tables that name it, and each skips itself when either is absent.
   await pglite.exec(readFileSync(PROGRAM_SAME_ORG_KEYS, 'utf8'));
+  await pglite.exec(readFileSync(INTEGER_PROJECT_SAME_ORG_KEYS, 'utf8'));
   const guard = await pglite.query<{ table_present: boolean; triggers: number }>(
     `SELECT to_regclass('public.canonical_documents') IS NOT NULL AS table_present,
             (SELECT COUNT(*)::int FROM pg_trigger

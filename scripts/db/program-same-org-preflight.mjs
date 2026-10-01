@@ -21,6 +21,10 @@
  * (app.rls_enforce / app.bypass_rls): otherwise they hide other tenants' rows,
  * and a cross-tenant report under-counts exactly the rows it exists to find.
  *
+ * The integer project key on concept2cure_artifacts and c2c_submission_packages
+ * (migrations/20261001_integer_project_same_org_keys.sql, PF-03) is checked
+ * the same way, against projects (id, organization_id).
+ *
  * vault.documents and submission_transmittals are listed but not keyed by
  * 20260926b (see its header); their rows are reported so the same clean-up
  * covers them before their keys land.
@@ -99,6 +103,38 @@ export const PROGRAM_SAME_ORG_CHECKS = Object.freeze([
            ORDER BY s.id`,
   },
   {
+    // The integer key (PF-03, 20261001): an artifact of one organization under
+    // another organization's projects row.
+    relation: 'public.concept2cure_artifacts',
+    keyColumn: 'project_id',
+    // project_id is NOT NULL here, so the key cannot be cleared.
+    remedy: 're-file the row under a project of its own organization (project_id is NOT NULL)',
+    keyedBy: 'concept2cure_artifacts_project_same_org_fk',
+    references: 'public.projects',
+    sql: `SELECT a.id, a.organization_id AS org, a.project_id,
+                 p.organization_id AS project_org, (p.id IS NULL) AS project_missing
+            FROM public.concept2cure_artifacts a
+            LEFT JOIN public.projects p ON p.id = a.project_id
+           WHERE a.project_id IS NOT NULL
+             AND (p.id IS NULL OR p.organization_id <> a.organization_id)
+           ORDER BY a.id`,
+  },
+  {
+    relation: 'public.c2c_submission_packages',
+    keyColumn: 'project_id',
+    // project_id is NOT NULL here, so the key cannot be cleared.
+    remedy: 're-file the row under a project of its own organization (project_id is NOT NULL)',
+    keyedBy: 'c2c_submission_packages_project_same_org_fk',
+    references: 'public.projects',
+    sql: `SELECT k.id, k.org_id AS org, k.project_id,
+                 p.organization_id AS project_org, (p.id IS NULL) AS project_missing
+            FROM public.c2c_submission_packages k
+            LEFT JOIN public.projects p ON p.id = k.project_id
+           WHERE k.project_id IS NOT NULL
+             AND (p.id IS NULL OR p.organization_id <> k.org_id)
+           ORDER BY k.id`,
+  },
+  {
     relation: 'vault.documents',
     keyColumn: 'program_id',
     keyedBy: null,
@@ -137,8 +173,8 @@ export async function runProgramSameOrgPreflight(client) {
       `SELECT to_regclass($1) IS NOT NULL AS rel,
               EXISTS (SELECT 1 FROM information_schema.columns
                        WHERE table_schema = $2 AND table_name = $3 AND column_name = $4) AS col,
-              to_regclass('public.regulatory_programs') IS NOT NULL AS programs`,
-      [check.relation, schema, table, check.keyColumn],
+              to_regclass($5) IS NOT NULL AS programs`,
+      [check.relation, schema, table, check.keyColumn, check.references ?? 'public.regulatory_programs'],
     );
     const { rel, col, programs } = present.rows[0];
     if (!rel || !col || !programs) {
@@ -146,7 +182,7 @@ export async function runProgramSameOrgPreflight(client) {
       continue;
     }
     const { rows } = await client.query(check.sql);
-    results.push({ relation: check.relation, keyedBy: check.keyedBy, skipped: false, rows });
+    results.push({ relation: check.relation, keyedBy: check.keyedBy, skipped: false, rows, remedy: check.remedy ?? null });
   }
   return results;
 }
@@ -178,6 +214,7 @@ async function main() {
       }
       found += r.rows.length;
       console.info(`  ${r.rows.length ? '✗' : '✓'} ${r.relation}: ${r.rows.length} record(s) name a foreign or missing project`);
+      if (r.rows.length && r.remedy) console.info(`      remedy: ${r.remedy}`);
       for (const row of r.rows) console.info(`      ${JSON.stringify(row)}`);
     }
   } finally {
@@ -185,7 +222,7 @@ async function main() {
     await client.end().catch(() => {});
   }
   if (found) {
-    console.error(`\n✗ ${found} record(s) to clear before any tenant purge or VALIDATE CONSTRAINT (set the key to NULL).`);
+    console.error(`\n✗ ${found} record(s) to clear before any tenant purge or VALIDATE CONSTRAINT (set the key to NULL, unless a store names another remedy above).`);
     process.exit(1);
   }
   console.info('\n✓ every project key names a project of its own organization.');

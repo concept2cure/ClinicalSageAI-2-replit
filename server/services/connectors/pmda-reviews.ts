@@ -1,6 +1,14 @@
 /**
  * @fileoverview PMDA Review Reports Connector
  * Japanese Pharmaceuticals and Medical Devices Agency.
+ *
+ * No search is connected. PMDA publishes review reports as web pages and PDFs
+ * with no search API, and nothing here reads them. Until 2026-10-01 `search`
+ * answered every query with one result built from the query itself — "PMDA
+ * Approved Drugs: <query>", relevanceScore 0.8 — which repository search
+ * ranked beside real hits and deep research filed as primary-authority
+ * regulatory intelligence. It now refuses, naming where to search by hand,
+ * and callers report it as skipped.
  */
 
 import {
@@ -12,6 +20,9 @@ import {
   ConnectorCredentials,
 } from './connector-interface.js';
 
+const PMDA_REVIEWS_URL = 'https://www.pmda.go.jp/english/review-services/reviews/approved-information/drugs/0002.html';
+const NOT_CONNECTED = `No PMDA search is connected: PMDA review reports have no search API and this connector does not read them. Search them at ${PMDA_REVIEWS_URL}.`;
+
 export class PMDAConnector implements DataConnector {
   id = 'pmda_reviews';
   name = 'PMDA Review Reports';
@@ -20,48 +31,15 @@ export class PMDAConnector implements DataConnector {
   requiredTier = 'professional';
 
   async status(): Promise<ConnectorHealth> {
-    try {
-      const start = Date.now();
-      const res = await fetch('https://www.pmda.go.jp/english/review-services/reviews/approved-information/drugs/0002.html');
-      return { status: res.ok ? 'healthy' : 'degraded', latencyMs: Date.now() - start, lastChecked: new Date() };
-    } catch {
-      return { status: 'unavailable', lastChecked: new Date() };
-    }
+    return { status: 'unavailable', lastChecked: new Date(), message: NOT_CONNECTED };
   }
 
-  async search(query: ConnectorQuery): Promise<ConnectorResult[]> {
-    // PMDA does not have a public REST API — this returns structured metadata
-    // from the PMDA approved information database
-    const searchTerm = query.indication || query.keywords?.join(' ') || '';
-
-    // Use PMDA's approved drugs listing (structured data)
-    const results: ConnectorResult[] = [];
-    if (searchTerm) {
-      results.push({
-        id: `pmda:search:${encodeURIComponent(searchTerm)}`,
-        sourceConnector: this.id,
-        title: `PMDA Approved Drugs: ${searchTerm}`,
-        summary: `Search PMDA for approved drugs related to "${searchTerm}". Review reports available in Japanese with English summaries for select products.`,
-        relevanceScore: 0.8,
-        metadata: { searchTerm, market: 'Japan', agency: 'PMDA' },
-        url: `https://www.pmda.go.jp/english/review-services/reviews/approved-information/drugs/0002.html`,
-      });
-    }
-
-    return results;
+  async search(_query: ConnectorQuery): Promise<ConnectorResult[]> {
+    throw new Error(NOT_CONNECTED);
   }
 
-  async fetch(resourceId: string): Promise<ConnectorDocument> {
-    return {
-      id: resourceId,
-      sourceConnector: this.id,
-      title: `PMDA Document ${resourceId}`,
-      type: 'pmda_review',
-      content: JSON.stringify({ note: 'PMDA review reports are available as PDFs from the PMDA website. Full automated extraction requires Japanese language processing.' }),
-      metadata: { market: 'Japan', agency: 'PMDA' },
-      url: 'https://www.pmda.go.jp/english/review-services/reviews/approved-information/drugs/0002.html',
-      retrievedAt: new Date(),
-    };
+  async fetch(_resourceId: string): Promise<ConnectorDocument> {
+    throw new Error(NOT_CONNECTED);
   }
 
   async authenticate(_credentials: ConnectorCredentials): Promise<void> {}

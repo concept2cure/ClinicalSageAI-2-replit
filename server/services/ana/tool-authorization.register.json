@@ -2839,8 +2839,8 @@
    "site": "rbm/rbm-actuator.ts:221"
   },
   "rasterize_page": {
-   "class": "read",
-   "writes": "none",
+   "class": "self",
+   "writes": "scratch .png (and, for a DOCX, its converted .pdf) under tmp/docbuilder, not filed",
    "site": "AnaToolExecutor.ts:6575"
   },
   "read_governed_document": {
@@ -3939,6 +3939,11 @@
    "class": "read",
    "writes": "none",
    "site": "AnaToolExecutor.ts:2059"
+  },
+  "verify_citations": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4638"
   },
   "verify_docx_against_source": {
    "class": "read",

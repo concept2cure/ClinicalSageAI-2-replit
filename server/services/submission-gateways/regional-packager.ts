@@ -808,7 +808,11 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
      `xlink:href`. eCTD requires the checksum in the backbone to match the bytes
      shipped; finalization can change the bytes, so it must happen before the
      backbone is built. */
-  interface PreparedLeaf { leaf: EctdLeaf; relPath: string; ref: LeafRef; bytes: Buffer; }
+  interface PreparedLeaf {
+    leaf: EctdLeaf; relPath: string; ref: LeafRef; bytes: Buffer;
+    /** md5 of the bytes this packager was HANDED, when finalization changed them. */
+    sourceMd5?: string;
+  }
   const prepared: PreparedLeaf[] = [];
   /** Backbone-only withdrawals: no bytes, but a filing act the manifest records. */
   const withdrawn: EctdLeaf[] = [];
@@ -916,13 +920,23 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     // guards on the PDF/A-conversion branch. The bytes are already in memory, so
     // recomputing is free and makes the manifest correct by construction.
     const md5 = md5Override ?? createHash('md5').update(bytes).digest('hex');
+    /* The digest of what the caller HANDED us, recorded whenever finalization
+       changed the bytes (PDF/A conversion). The next sequence decides "did this
+       document change" by comparing the md5 its caller computed — over what it
+       rendered or staged, before this function runs — and that is only a
+       like-for-like comparison against THIS digest. Against `md5` it compares
+       two stages of one document, which Ghostscript makes differ on every run
+       (it stamps dates and a random document ID): with the toolchain in the
+       production image, every follow-up re-filed every unchanged document as
+       `replace`. `md5` stays what the backbone and index-md5 carry. */
+    const sourceMd5 = md5Override !== undefined ? createHash('md5').update(raw).digest('hex') : undefined;
 
     // Module, folder and carrying backbone — one canonicalising rule, shared
     // with the lifecycle-delete branch above (leafPackagePath).
     const { relPath, href, backboneDir } = leafPackagePath(leaf, region);
     const ref: LeafRef = { href, md5, backboneDir };
     refByLeaf.set(leaf, ref);
-    prepared.push({ leaf, relPath, ref, bytes });
+    prepared.push({ leaf, relPath, ref, bytes, ...(sourceMd5 && sourceMd5 !== md5 ? { sourceMd5 } : {}) });
   }
   const resolve = (l: EctdLeaf): LeafRef => {
     const ref = refByLeaf.get(l);
@@ -1179,6 +1193,8 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       fileName: p.leaf.fileName,
       href: p.relPath,
       md5: p.ref.md5,
+      // What the next sequence's diff compares against; see PreparedLeaf.
+      ...(p.sourceMd5 ? { sourceMd5: p.sourceMd5 } : {}),
       ...(p.leaf.operation ? { operation: p.leaf.operation } : {}),
       ...(p.leaf.modifiedFile ? { modifiedFile: p.leaf.modifiedFile } : {}),
       ...(p.leaf.title ? { title: p.leaf.title } : {}),

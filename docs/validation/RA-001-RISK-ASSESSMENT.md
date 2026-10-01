@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RA-001 |
-| Version | 0.7 |
+| Version | 0.10 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §3 |
 | Method | FDA CSA (Sept 2025 final; Feb 2026 update): identify intended use → determine risk (process risk and whether the feature can cause a quality/patient/data-integrity failure) → choose the least-burdensome assurance activity that gives confidence → record the result. Risk levels and activities are defined in VMP-001 §3.1. |
@@ -20,6 +20,8 @@
 | 0.6 | 2026-09-23 | W3 | URS-AUTH-010 reassessed for the signing ceremony that replaces the PIN (URS-003 v0.2): still high, scripted; the assurance now covers the PIN's removal, the password, the enrolled second factor, and §11.300. |
 | 0.8 | 2026-09-26 | D6 | URS-PROJ-013 (a session left alone ends) assessed: high, scripted, with the rule pinned by unit tests on both authenticators, the verifier and the refresh (plan P1-1). |
 | 0.7 | 2026-09-23 | W3 | URS-PROJ-012 (an account taken out of use can do nothing) assessed: high, scripted, with the refusals the OQ run cannot reach covered by an automated test on real PostgreSQL (VSR-001 §16, F-28, F-29). |
+| 0.9 | 2026-09-30 | `…01DiJJAk` (VR-08) | URS-VAULT-011 (version check-in) assessed: high, scripted. |
+| 0.10 | 2026-10-01 | `…01DiJJAk` (VR-09) | URS-VAULT-012 (a document listed once; every version listed, downloadable and in its history) assessed: high, scripted. |
 
 ## 1. Risk model
 
@@ -56,6 +58,8 @@ The columns below are parsed by `scripts/validation/build-traceability.mjs`; kee
 | URS-VAULT-008 | Chained audit of ingest/filing; chain verifies; ledger surface shows it | high — Part 11 §11.10(e) | scripted | chain verifier and ledger read model |
 | URS-VAULT-009 | Render the data room | medium | unscripted | screenshot; observed state recorded |
 | URS-VAULT-010 | Refuse foreign program ids | high | scripted | negative test |
+| URS-VAULT-011 | Version check-in: server-assigned version, kept code and filing, a validated predecessor link | high — a wrong link or number misstates which bytes a filing used | scripted | positive check-in, known-bytes and stale-head negatives; database refusals in `tests/db/vault-version-checkin.dbtest.ts` |
+| URS-VAULT-012 | One entry per document at its current version; every version listed, hash-verified on download, and in the document's history; search shows current versions unless asked | high — a superseded version shown as current, or a version missing from the list or history, puts the wrong bytes in a filing or hides who changed what | scripted | tree, versions, download, history and search checks; the legacy-link, cross-tenant and check-in agreement cases in `tests/db/vault-versions.dbtest.ts` |
 | URS-AUTH-001 | Gate authoring; identity from JWT only | high | scripted | anonymous negative; identity rule is code-reviewed and exercised implicitly by every write |
 | URS-AUTH-002 | Create a document with validated inputs | medium | scripted | one negative, one positive |
 | URS-AUTH-003 | Sections in filing order | medium — wrong order assembles a wrong dossier, visible at review | scripted | order and structure issues read back |

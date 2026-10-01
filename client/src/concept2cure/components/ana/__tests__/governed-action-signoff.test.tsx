@@ -218,6 +218,65 @@ describe('GovernedActionSignoff', () => {
  * Cancel now tells the waiting run; a prompt from a finished turn has nothing
  * waiting, so it sends nothing.
  */
+/*
+ * A tool that records the person's reason for change is put to them at the
+ * reason tier with the reason the model wrote (D5, 2026-09-29). The field
+ * starts empty; AnA's wording is shown whole and used only if the person
+ * adopts it. What they submit is what the tool records.
+ */
+const toolWithReason: PendingSignoff = {
+  command: 'seed_tmf',
+  params: { study_id: 12, reason: 'Seeding the TMF for the Phase 1 study', index: 'SOP-114' },
+  signatureRequired: false,
+  tier: 'reason',
+  runId: 'run-1',
+  toolUseId: 'tu-7',
+  message: 'AnA proposed this action. State the reason for change to run it under your name.',
+};
+
+describe('GovernedActionSignoff — a proposed reason', () => {
+  beforeEach(() => {
+    (global as any).fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { success: true, message: 'TMF seeded.' } }),
+    });
+  });
+
+  it('shows what AnA proposed and its reason whole, but leaves the reason field empty', () => {
+    render(<GovernedActionSignoff signoff={toolWithReason} onResolved={() => {}} onCancel={() => {}} />);
+    const field = screen.getByLabelText('Reason for change') as HTMLTextAreaElement;
+    expect(field.value).toBe('');
+    expect(screen.getByTestId('signoff-proposed-reason').textContent).toContain('Seeding the TMF for the Phase 1 study');
+    const summary = screen.getByLabelText('What AnA proposed');
+    expect(summary.textContent).toContain('seed_tmf');
+    expect(summary.textContent).toContain('SOP-114');
+    // The reason is asked for on its own, not summarised as a parameter.
+    expect(summary.textContent).not.toContain('Seeding the TMF');
+    expect((screen.getByRole('button', { name: 'Confirm and run' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('adopting AnA\'s wording is an act of the person, and that is what is sent', async () => {
+    const onResolved = vi.fn();
+    render(<GovernedActionSignoff signoff={toolWithReason} onResolved={onResolved} onCancel={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Use AnA’s wording' }));
+    expect((screen.getByLabelText('Reason for change') as HTMLTextAreaElement).value).toBe('Seeding the TMF for the Phase 1 study');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm and run' }));
+    await waitFor(() => expect(onResolved).toHaveBeenCalled());
+    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+    expect(body).toMatchObject({ command: 'seed_tmf', reasonForChange: 'Seeding the TMF for the Phase 1 study', runId: 'run-1', toolUseId: 'tu-7' });
+  });
+
+  it('the person\'s own words are sent when they write them', async () => {
+    const onResolved = vi.fn();
+    render(<GovernedActionSignoff signoff={toolWithReason} onResolved={onResolved} onCancel={() => {}} />);
+    fireEvent.change(screen.getByLabelText('Reason for change'), { target: { value: 'Phase 1 TMF per sponsor SOP-114.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm and run' }));
+    await waitFor(() => expect(onResolved).toHaveBeenCalled());
+    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+    expect(body.reasonForChange).toBe('Phase 1 TMF per sponsor SOP-114.');
+  });
+});
+
 describe('GovernedActionSignoff — declining', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
   beforeEach(() => {

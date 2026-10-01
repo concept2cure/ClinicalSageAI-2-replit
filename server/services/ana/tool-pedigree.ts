@@ -153,6 +153,9 @@ export const DETERMINISTIC_REGISTRY_EXTRA: string[] = [
   // Guidance Ingestion: check_guidance_freshness is a pure cross-reference against
   // the local currency registry + curated ICH step-date registry — deterministic.
   'check_guidance_freshness',
+  // fetch_ich_guideline_updates reads a static curated list in
+  // guidance-ingestion-service.ts; it was labelled a live ich.org fetch.
+  'fetch_ich_guideline_updates',
 ];
 
 const REGISTRY_NAME_SET: ReadonlySet<string> = new Set<string>([
@@ -191,9 +194,12 @@ export const DETERMINISTIC_QUERY_NAMES: ReadonlySet<string> = new Set<string>([
  * without relying on a prefix convention that does not apply to them.
  */
 export const EXTERNAL_API_NAMES: ReadonlySet<string> = new Set<string>([
-  // Guidance Ingestion: these hit live FDA/ICH APIs (or configurable endpoints).
+  // Guidance Ingestion: the FDA guidance list is the index a live source will
+  // fill (plan open decision 11); today it answers `unavailable` and fetches
+  // nothing, so no result carries this label with data behind it.
   'fetch_fda_guidance_list',
-  'fetch_ich_guideline_updates',
+  // PubMed and Crossref, through citation-verification-service.
+  'verify_citations',
 ]);
 
 /**

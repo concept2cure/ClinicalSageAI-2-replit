@@ -15,6 +15,7 @@
  */
 
 import { getPool } from '../../db';
+import { projectBelongsToTenant } from '../cmc/project-membership';
 import type { StatisticalInput } from '../ana-biostats/types';
 import type { PoolClient } from 'pg';
 import type { AuditTaskActionParams } from '../tasking/task-audit.js';
@@ -2012,6 +2013,18 @@ export async function createSubmissionPackage(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    /* The package's project is a projects row of this organization (PF-03),
+       the same rule as POST /api/submission-ops/packages. The id comes from the
+       command's params, which the model fills; it was inserted as given. */
+    if (!(await projectBelongsToTenant({ organizationId: ctx.organizationId, projectId: String(params.projectId) }, client))) {
+      await client.query('ROLLBACK');
+      return {
+        success: false,
+        action: 'create_submission_package',
+        error: 'PROJECT_NOT_FOUND',
+        message: `Project ${params.projectId} is not a project of this organization. No package was created.`,
+      };
+    }
     const result = await client.query(
       `INSERT INTO c2c_submission_packages
          (package_id, org_id, project_id, package_family, title, description,

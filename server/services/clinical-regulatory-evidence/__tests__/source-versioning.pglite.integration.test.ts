@@ -95,6 +95,8 @@ beforeAll(async () => {
   // must be applied here too, or this harness builds a schema no deployment has
   // (see tests/schema-contract/authoring-migration-list-closure.contract.test.ts).
   await pglite.exec(migration('db/migrations/20260730_authoring_comments_router_columns.sql'));
+  // authoring_documents.client_program_id: a citation is judged by its document's project (PF-11).
+  await pglite.exec(migration('migrations/20260727_authoring_document_program_scope.sql'));
   await pglite.exec(migration('db/migrations/20260817_doc_revisions_immutable_ledger.sql'));
   await pglite.exec(migration('migrations/20260726_authoring_citation_source_usage.sql'));
   // The migration under test.

@@ -2213,6 +2213,12 @@ export const C2C_MIGRATION_FILES = [
      file, green after). The code that may still UPDATE the table is named in
      scripts/ci/check-vault-document-writers.mjs. */
   'migrations/20260926_vault_documents_record_immutability.sql',
+  // VR-08 (D2): a version names its predecessor only inside its own family,
+  // and has at most one live successor. A trigger, plus a partial unique index
+  // created only when no version is already forked (NOTICE otherwise). After
+  // VR-06's file: it guards the same table's lineage column. No table, no
+  // column, no FK, no DROP.
+  'migrations/20260930_vault_documents_version_lineage.sql',
 
   /* c2c_template_specs + its doc_types column, added 2026-09-17 (WO-15
      finding 5). Self-contained: this file creates the base table IF NOT EXISTS
@@ -2782,6 +2788,15 @@ export const C2C_MIGRATION_FILES = [
   // table, so the sweep has nothing new to policy; it adds one column
   // (cdisc_prm_studies.program_id) to an existing table. No DROP.
   'migrations/20260926b_program_same_org_keys.sql',
+
+  // ── The same rule for the integer project key (PF-03, D3, 2026-10-01) ─────
+  // (project_id, org) → projects (id, organization_id) on concept2cure_artifacts
+  // and c2c_submission_packages, on a unique index it creates when absent.
+  // NOT VALID (legacy rows listed by program-same-org-preflight.mjs), ON DELETE
+  // CASCADE like each table's existing project_id key, so a project delete is
+  // unchanged. After every creator: 0000 (artifacts), 0002 (packages). Creates
+  // no table; adds one index and two keys. No DROP.
+  'migrations/20261001_integer_project_same_org_keys.sql',
 
   // ── RBQM: signed records stay signed; QTLs bite in their direction; a
   //    duplicate metric load is refused (2026-09-30) ─────────────────────────

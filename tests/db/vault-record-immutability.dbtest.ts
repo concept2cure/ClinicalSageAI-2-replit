@@ -27,8 +27,6 @@ import { databaseUrl } from '../setup.db';
 
 const PROBE = 'dbtest-vr06 ';
 const CODE = 'DBTEST-VR06';
-const PARENT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
-const OTHER = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 
 let owner: Pool;
 let orgId: number;
@@ -80,15 +78,30 @@ const applied = (r: Awaited<ReturnType<typeof asRuntime>>) => {
   expect(r.ok ? r.rowCount : r.message, 'a permitted change was refused').toBe(1);
 };
 
-async function insertDoc(code: string, storageVersionId: string | null, program = programId, org = orgId): Promise<string> {
+/**
+ * One version. A predecessor, when named, must be a live version of the same
+ * program, code and organization (the VR-08 lineage guard,
+ * migrations/20260930_vault_documents_version_lineage.sql). This fixture used
+ * to point every row at a UUID that named no document, which that guard now
+ * refuses, rightly.
+ */
+async function insertDoc(
+  code: string,
+  storageVersionId: string | null,
+  program = programId,
+  org = orgId,
+  opts: { version?: string; supersedes?: string | null } = {},
+): Promise<string> {
+  const version = opts.version ?? '1.0';
+  const seed = version === '1.0' ? code : `${code}-${version}`;
   const { rows } = await owner.query(
     `INSERT INTO vault.documents (program_id, organization_id, document_code, document_title, document_type, version,
        content_hash, classification, placement_status, processing_status, s3_bucket, s3_key, file_name,
        storage_version_id, storage_provider, supersedes_id, retention_policy)
-     VALUES ($1, $2, $3, 'Protocol', 'PROTOCOL', '1.0', $4, 'INTERNAL', 'unfiled', 'INDEXED', 'local', $5, 'protocol.pdf',
+     VALUES ($1, $2, $3, 'Protocol', 'PROTOCOL', $8, $4, 'INTERNAL', 'unfiled', 'INDEXED', 'local', $5, 'protocol.pdf',
        $6, 'local', $7, 'GCP-15Y')
      RETURNING id`,
-    [program, org, code, code.padEnd(64, '0').slice(0, 64), `uploads/${code}.pdf`, storageVersionId, PARENT],
+    [program, org, code, seed.padEnd(64, '0').slice(0, 64), `uploads/${seed}.pdf`, storageVersionId, opts.supersedes ?? null, version],
   );
   return String(rows[0].id);
 }
@@ -122,7 +135,9 @@ beforeAll(async () => {
     );
   programId = await prog('DBTEST-VR06-A');
   otherProgramId = await prog('DBTEST-VR06-B');
-  doc = await insertDoc(`${CODE}-DOC`, 'dbtest-vr06-v1');
+  // The subject carries a recorded lineage: it succeeds an earlier version.
+  const predecessor = await insertDoc(`${CODE}-DOC`, null, programId, orgId, { version: '0' });
+  doc = await insertDoc(`${CODE}-DOC`, 'dbtest-vr06-v1', programId, orgId, { supersedes: predecessor });
   legacy = await insertDoc(`${CODE}-LEGACY`, null);
 });
 
@@ -147,7 +162,10 @@ describe('a recorded Vault version cannot be rewritten (VR-06, D5)', () => {
   it('refuses re-pointing a stored copy, or rewriting lineage or retention', async () => {
     refused(await update(doc, `storage_version_id = 'dbtest-vr06-v2'`));
     refused(await update(doc, `s3_key = 'uploads/other.pdf'`));
-    refused(await update(doc, `supersedes_id = $2`, [OTHER]));
+    // Another live version of the same family, with no successor: a pointer the
+    // lineage guard would admit, so only the write-once rule refuses it.
+    const sibling = await insertDoc(`${CODE}-DOC`, null, programId, orgId, { version: '0.5' });
+    refused(await update(doc, `supersedes_id = $2`, [sibling]));
     refused(await update(doc, `retention_policy = 'NONE'`));
   });
 

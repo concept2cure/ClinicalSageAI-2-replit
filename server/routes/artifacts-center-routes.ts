@@ -248,7 +248,11 @@ export default function createArtifactsCenterRoutes(): Router {
               LIMIT 1
            )                                               AS signed_version
          FROM concept2cure_artifacts a
-         LEFT JOIN projects p ON p.id = a.project_id
+         -- The project is read only when it is the artifact's own organization's
+         -- (PF-03): an artifact written under another organization's project id
+         -- showed that organization's project code and name here. Such a row
+         -- falls back to proj_<id>, which names nothing.
+         LEFT JOIN projects p ON p.id = a.project_id AND p.organization_id = a.organization_id
          WHERE a.organization_id = $1
          ORDER BY a.updated_at DESC
          LIMIT ${MAX_ROWS}`,

@@ -603,7 +603,7 @@ const RECORD_HISTORY_SQL = `
     LEFT JOIN LATERAL public.actor_name(a.actor_id) u ON TRUE
    WHERE a.tenant_id = $1
      AND a.table_name = $2
-     AND a.record_id = $3
+     AND a.record_id = ANY($3::text[])
      AND a.sha256_chain IS NOT NULL
    ORDER BY a.chain_seq DESC NULLS LAST, a.occurred_at DESC, a.id DESC
    LIMIT $4`;
@@ -616,11 +616,13 @@ export interface RecordAuditHistory {
 export async function readRecordAuditHistory(
   client: Pick<PoolClient, 'query'>,
   orgId: number,
-  record: { tableName: string; recordId: string; limit?: number },
+  /** One record, or several read as one history: a Vault document's versions (VR-09). */
+  record: { tableName: string; recordId: string | string[]; limit?: number },
   verifyTenantChain: TenantChainVerifier = verifyOnSuperAdminScope,
 ): Promise<RecordAuditHistory> {
   const limit = Math.min(Math.max(record.limit ?? 200, 1), 1000);
-  const rows = await client.query(RECORD_HISTORY_SQL, [orgId, record.tableName, record.recordId, limit]);
+  const ids = Array.isArray(record.recordId) ? record.recordId : [record.recordId];
+  const rows = await client.query(RECORD_HISTORY_SQL, [orgId, record.tableName, ids, limit]);
   const signatures = await linkedSignatures(client, orgId, rows.rows as Record<string, unknown>[]);
   const data = rows.rows.map((r: Record<string, unknown>) => ({
     ...withSignature(auditLogEntry(r), signatures.get(String(r.id))),

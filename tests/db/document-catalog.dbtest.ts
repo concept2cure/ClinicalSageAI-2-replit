@@ -463,8 +463,11 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
       { program_id: programId },
       { id: otherOrgId, uuid: otherOrgUuid },
     );
-    expect(listed.ok).toBe(true);
-    expect(listed.documents).toHaveLength(0);
+    // Refused before any read (d8214c170), and answered exactly as a program id
+    // naming nothing anywhere is, so the refusal is no existence oracle.
+    expect(listed.code, JSON.stringify(listed)).toBe('PROGRAM_NOT_IN_ORGANIZATION');
+    const nowhere = { program_id: '00000000-0000-4000-8000-000000000000' };
+    expect(await callTool('list_project_documents', nowhere, { id: otherOrgId, uuid: otherOrgUuid })).toEqual(listed);
 
     const read = await callTool(
       'read_project_document',

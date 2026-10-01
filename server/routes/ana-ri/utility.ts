@@ -26,6 +26,8 @@ import {
 } from '../../services/ana-ri/part11-governance.js';
 import { isProposeOnlyCommand } from '../../services/ana-ri/command-rbac.js';
 import { TOOL_REGISTER, toolAuthorizationOf } from '../../services/ana/tool-authorization.js';
+import { registeredToolTier } from '../../services/ana/governed-tool-gate.js';
+import { personsReasonFor } from './persons-reason.js';
 import { verifyGovernedESignature } from './governed-esignature.js';
 import {
   readPendingApproval,
@@ -588,7 +590,7 @@ export function mountUtilityRoutes(router: Router): void {
     if (!command || !(isProposeOnlyCommand(command) || isTool)) {
       return sendError(res, 400, 'A governed command name is required', null, 'NOT_A_GOVERNED_COMMAND');
     }
-    const tier = governedTierOf(command);
+    const tier = isTool ? registeredToolTier(command) : governedTierOf(command);
     if (tier === 'confirm') {
       if (body.confirm !== true) {
         return sendError(res, 400, 'Confirm the proposed action to run it', null, 'CONFIRMATION_REQUIRED');
@@ -629,6 +631,7 @@ export function mountUtilityRoutes(router: Router): void {
     // logAction returns AuditWriteResult, so the refusal can be real: read
     // `persisted` and abort on it.
     const trace = governedActionTrace(runId, toolUseId, pendingForRun, params);
+    const personsReason = isTool && tier === 'reason' ? personsReasonFor(command, params, reasonForChange) : null;
     const signoffAudit = await auditService.logAction({
       tenantId: numericOrgId,
       userId,
@@ -639,7 +642,7 @@ export function mountUtilityRoutes(router: Router): void {
       userAgent: req.headers['user-agent'] as string | undefined,
       // With the declared §11.50 meaning on the e-signature tier; absent otherwise,
       // and the trace of what was authorised (governedActionTrace).
-      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified, ...(signatureMeaning && { signatureMeaning }), ...trace },
+      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified, ...(signatureMeaning && { signatureMeaning }), ...personsReason?.audit, ...trace },
     });
     if (!signoffAudit.persisted) {
       log.error('Governed action aborted: sign-off audit row was not persisted', {
@@ -701,7 +704,7 @@ export function mountUtilityRoutes(router: Router): void {
     };
     const executedRow = { organizationId: numericOrgId, userId, command, trace, startedAt: Date.now() };
     try {
-      const [ran] = isTool ? [await runConfirmedTool(command, params, pendingForRun!, numericOrgId, userId)] : await executeCommands([{ command, params } as any], ctx);
+      const [ran] = isTool ? [await runConfirmedTool(command, personsReason?.params ?? params, pendingForRun!, numericOrgId, userId)] : await executeCommands([{ command, params } as any], ctx);
       const result = withAuditTrail(ran, await recordGovernedExecution(executedRow, { result: ran }));
       // The execution stays HERE, in the one place that stamps humanConfirmed.
       // The waiting turn is handed the RESULT, not the right to run the command

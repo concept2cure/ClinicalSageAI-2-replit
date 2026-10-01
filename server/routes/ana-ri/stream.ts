@@ -1886,7 +1886,7 @@ export function mountStreamRoute(router: Router): void {
           // the tier and what it asks for are said one way. GovernedActionSignoff
           // opens on it. runId + toolUseId are what let the decision
           // come back to THIS waiting turn instead of running on its own.
-          const proposal = buildHumanConfirmationRequiredResult(verdict.command, verdict.params);
+          const proposal = buildHumanConfirmationRequiredResult(verdict.command, verdict.params, verdict.tier);
           emitControl({
             type: 'approval_required',
             round,
