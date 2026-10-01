@@ -68,6 +68,7 @@ import { createScopedLogger } from '../utils/logger.js';
 
 import { acceptedMachineText } from '../services/authoring/revision-ledger';
 import { coauthorReadOnlyRefusal, isCoauthorVerdictStatus } from '../services/coauthor/coauthor-status-write';
+import { versionReplacedCoauthorContent } from '../services/coauthor/coauthor-audit';
 
 const logger = createScopedLogger('batch-draft-routes');
 
@@ -331,11 +332,14 @@ export default function createBatchDraftRoutes(): Router {
   // real generated regulatory prose that the surface discarded on unmount. A
   // drafting service whose output cannot be kept is not a drafting service.
   //
-  // WHY NOT `PUT /api/coauthor/documents/:id`. That route accepts content, but
-  // it neither snapshots the content it replaces nor records who replaced it.
-  // Overwriting the body of a regulated document with machine-generated prose
-  // and keeping no prior copy is not a save we can offer. This route makes the
-  // write reversible and attributable:
+  // WHY NOT `PUT /api/coauthor/documents/:id`. When this route was written,
+  // that one neither snapshotted the content it replaced nor recorded who
+  // replaced it. Overwriting the body of a regulated document with
+  // machine-generated prose and keeping no prior copy is not a save we can
+  // offer. (2026-10-01, D5: the PUT now keeps the replaced text and records an
+  // audit event too, through the same writers; it still records no machine
+  // authorship, which is what this route adds.) This route makes the write
+  // reversible and attributable:
   //
   //   1. the content being REPLACED is snapshotted into
   //      coauthor_document_versions (a table the schema has always declared and
@@ -469,22 +473,14 @@ export default function createBatchDraftRoutes(): Router {
       // Snapshot only when there is something to lose. A section that has never
       // carried content has no prior state, and writing an empty version row
       // would put a version in the history that never existed as a document.
-      let versionNumber: number | null = null;
-      if (previousContent && previousContent.trim()) {
-        const { rows: versionRows } = await rdb.execute(sql`
-          INSERT INTO coauthor_document_versions
-            (document_id, version_number, content, created_by, change_summary)
-          SELECT ${documentId},
-                 COALESCE(MAX(version_number), 0) + 1,
-                 ${previousContent},
-                 ${actor.userLabel},
-                 'Superseded by an accepted AnA batch draft'
-            FROM coauthor_document_versions
-           WHERE document_id = ${documentId}
-          RETURNING version_number
-        `);
-        versionNumber = Number((versionRows[0] as { version_number: number }).version_number);
-      }
+      // 2026-10-01 (D5, P11-B-1): through the one writer of
+      // coauthor_document_versions, which the co-author PUTs now use too.
+      const versionNumber = await versionReplacedCoauthorContent(queryableFromDrizzle(rdb), {
+        documentId,
+        previousContent,
+        createdBy: actor.userLabel,
+        changeSummary: 'Superseded by an accepted AnA batch draft',
+      });
 
       // `metadata` is merged, never replaced — other writers keep their keys.
       // The double cast works whether the deployed column is json or jsonb.
