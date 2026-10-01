@@ -58,6 +58,7 @@ import { externalDocumentTableReason } from './leaf-document-tables';
 import type { LeafLineage, ResolvedFile } from './core-to-packager';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { aliasesFor, canonicalIdFor } from '../c2c/document-alias-map.js';
+import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle.js';
 
 /**
  * An eCTD leaf must be a PDF. Verify the ACTUAL bytes (magic number), never the
@@ -189,6 +190,11 @@ export type FinalizedStatusStore =
  *     two; `locked` is the post-approval publish lock). It has no `finalized`.
  * Anything else, including a missing status (the columns default to a draft
  * state), is unfinalized.
+ *
+ *   vault_documents — not a status column, so not in this map: a Vault version
+ *     is decided by vaultVersionNotTransmittable (server/services/vault/
+ *     vault-lifecycle.ts, VR-14) — its VR-13 lifecycle record at a steady stage,
+ *     the version current, the approval bound to the staged bytes.
  *
  * `store` defaults to the coauthor / unified document vocabulary this
  * predicate was first written for, which is the one server/routes/coauthor.ts
@@ -671,6 +677,17 @@ export async function materializeLeafSources(
         sha256: vaultSha,
       });
       materialized++;
+      // VR-14 (D7, 2026-10-01): staged is not approved. Until now this branch
+      // never reported an unfinalized leaf, so an upload nobody reviewed passed
+      // transmit's "only approved documents" rule. The version must be approved
+      // on its lifecycle record, current, and approved for these very bytes.
+      const notTransmittable = await vaultVersionNotTransmittable(
+        queryableFromDrizzle(db),
+        organizationId,
+        documentUuid,
+        vaultSha,
+      );
+      if (notTransmittable) noteUnfinalized(vaultRow.file_name || `vault_documents:${documentUuid}`, notTransmittable);
       continue;
     }
 
