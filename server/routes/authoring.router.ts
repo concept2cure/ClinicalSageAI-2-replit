@@ -5863,6 +5863,8 @@ router.post('/docs/:docId/file-to-vault', async (req: Request, res: Response) =>
         fileName: outcome.fileName,
         programId: outcome.programId,
         sealed: outcome.sealed,
+        // FD5 (c): whether the Authoring approval carried to this Vault version, and why not.
+        approval: outcome.approval,
       },
     });
   } catch (error) {

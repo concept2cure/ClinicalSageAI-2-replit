@@ -17,12 +17,14 @@ import { Hop, ORG_A, AUTHOR, PASSWORD, SHA256_X, HEX64, sha256, json, asPrincipa
 type Row = Record<string, unknown>;
 
 /**
- * 6b · The Vault copy is reviewed and approved (VR-13, VR-14; FD5 (a)).
+ * 6b · The Vault copy is reviewed and approved (VR-13, VR-14; FD5 (c)).
  *
  * Since 2026-10-01 only an approved, current Vault version is transmitted
- * (leaf-source-resolver.ts, vaultVersionNotTransmittable). No Authoring
- * signature is bound to the exported PDF's bytes yet, so under FD5's shipped
- * default the sealed export is approved again in the Vault: its filer starts
+ * (leaf-source-resolver.ts, vaultVersionNotTransmittable). Under FD5 (c) an
+ * Authoring approval carries to the Vault copy only after an independent
+ * Authoring review (authoring-approval-carryover.ts). This document was
+ * frozen by its author and approved, never reviewed, so hop 6 records that it
+ * did not carry, and the export is approved in the Vault: its filer starts
  * the record and sends it for review, a reviewer signs, the approver approves.
  * POST /api/regulatory/documents (document-lifecycle.ts) and /:id/advance, /:id/sign.
  */

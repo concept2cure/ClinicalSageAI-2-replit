@@ -29,8 +29,8 @@ import { serverError } from '../lib/api-response.js';
 import { requireAuditRecorder } from '../services/audit/audit-api-authority.js';
 import { inTenantSnapshot } from '../services/audit/compliance-reports/generate.js';
 import {
-  REVIEW_MEANING,
   REVIEW_REFUSAL_STATUS,
+  REVIEW_TARGET_PREFIX,
   ReviewRefusal,
   createReviewDraft,
   findReview,
@@ -40,6 +40,7 @@ import {
   signReviewAct,
 } from '../services/audit/compliance-reviews.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
+import { REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings.js';
 import { isSigningAuthorized } from '../services/part11/signing-authority.js';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context.js';
 import { resolveUserId } from '../types/auth-request.js';
@@ -139,12 +140,16 @@ async function draft(pool: Pool, req: Request, res: Response, orgId: number): Pr
 async function sign(req: Request, res: Response): Promise<void> {
   const id = reviewIdOr404(req, res);
   if (id == null) return;
-  // Before the ceremony checks the password, so a refused meaning spends no guess.
-  const meaning = (req.body ?? {}).meaning;
-  if (typeof meaning === 'string' && meaning.length > 0 && meaning !== REVIEW_MEANING) {
-    return refuse(res, 400, 'SIGNATURE_MEANING_NOT_REVIEW', 'A review record is signed with the meaning "review". Nothing was signed.');
-  }
-  await signGovernedAct(req, res, { domain: 'compliance', codeStatus: REVIEW_REFUSAL_STATUS, run: signReviewAct(id) });
+  // A review record is signed as a review, and the ceremony refuses any other
+  // meaning before it checks the password (P1-51; this route checked it itself
+  // until then, with its own code, SIGNATURE_MEANING_NOT_REVIEW).
+  await signGovernedAct(req, res, {
+    domain: 'compliance',
+    target: `${REVIEW_TARGET_PREFIX}:${id}`,
+    meanings: REVIEW_ACT_MEANINGS,
+    codeStatus: REVIEW_REFUSAL_STATUS,
+    run: signReviewAct(id),
+  });
 }
 
 export function createComplianceReviewRoutes(pool: Pool, gate: ReportGate): Router {

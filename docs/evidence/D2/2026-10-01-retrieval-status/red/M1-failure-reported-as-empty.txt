@@ -1,0 +1,183 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/w2
+
+stderr | server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts
+{
+  "timestamp": "2026-10-01T20:15:12.770Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > edit-section reports its retrieval outcome > failed: an outage is reported as failed, without its error text
+{
+  "timestamp": "2026-10-01T20:15:13.800Z",
+  "level": "warn",
+  "message": "[concept2cure-ai-editing] Data Room retrieval failed",
+  "context": {
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443 (embedding endpoint)"
+  }
+}
+
+stdout | server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > edit-section reports its retrieval outcome > failed: an outage is reported as failed, without its error text
+{
+  "timestamp": "2026-10-01T20:15:13.801Z",
+  "level": "info",
+  "message": "[concept2cure-ai-editing] AI edit completed with source traceability",
+  "context": {
+    "action": "rewrite",
+    "userId": 42,
+    "sourcesRetrieved": 0,
+    "claimsExtracted": 0,
+    "latencyMs": 5
+  }
+}
+
+stdout | server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > edit-section reports its retrieval outcome > empty: retrieval ran and nothing cleared the floor
+{
+  "timestamp": "2026-10-01T20:15:13.821Z",
+  "level": "info",
+  "message": "[concept2cure-ai-editing] AI edit completed with source traceability",
+  "context": {
+    "action": "rewrite",
+    "userId": 42,
+    "sourcesRetrieved": 0,
+    "claimsExtracted": 0,
+    "latencyMs": 1
+  }
+}
+
+stdout | server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > edit-section reports its retrieval outcome > ok: evidence was found (positive control)
+{
+  "timestamp": "2026-10-01T20:15:13.829Z",
+  "level": "info",
+  "message": "[concept2cure-ai-editing] AI edit completed with source traceability",
+  "context": {
+    "action": "rewrite",
+    "userId": 42,
+    "sourcesRetrieved": 1,
+    "claimsExtracted": 0,
+    "latencyMs": 2
+  }
+}
+
+stdout | server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > edit-section reports its retrieval outcome > not_requested: no project, no retrieval attempted
+{
+  "timestamp": "2026-10-01T20:15:13.835Z",
+  "level": "info",
+  "message": "[concept2cure-ai-editing] AI edit completed with source traceability",
+  "context": {
+    "action": "rewrite",
+    "userId": 42,
+    "sourcesRetrieved": 0,
+    "claimsExtracted": 0,
+    "latencyMs": 0
+  }
+}
+
+stderr | server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > template generation reports its retrieval outcome > failed: an outage is reported as failed, without its error text
+{
+  "timestamp": "2026-10-01T20:15:13.843Z",
+  "level": "warn",
+  "message": "[concept2cure-ai-editing] Template generation: Data Room retrieval failed",
+  "context": {
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443 (embedding endpoint)"
+  }
+}
+
+stdout | server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > template generation reports its retrieval outcome > failed: an outage is reported as failed, without its error text
+{
+  "timestamp": "2026-10-01T20:15:13.844Z",
+  "level": "info",
+  "message": "[concept2cure-ai-editing] Template generation completed",
+  "context": {
+    "templateId": "csr-synopsis",
+    "userId": 42,
+    "wordCount": 2,
+    "sourcesRetrieved": 0,
+    "latencyMs": 2
+  }
+}
+
+stdout | server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > template generation reports its retrieval outcome > empty: retrieval ran and nothing cleared the floor
+{
+  "timestamp": "2026-10-01T20:15:13.850Z",
+  "level": "info",
+  "message": "[concept2cure-ai-editing] Template generation completed",
+  "context": {
+    "templateId": "csr-synopsis",
+    "userId": 42,
+    "wordCount": 2,
+    "sourcesRetrieved": 0,
+    "latencyMs": 0
+  }
+}
+
+ × server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > edit-section reports its retrieval outcome > failed: an outage is reported as failed, without its error text 46ms
+   → expected 'empty' to be 'failed' // Object.is equality
+ ✓ server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > edit-section reports its retrieval outcome > empty: retrieval ran and nothing cleared the floor 7ms
+ ✓ server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > edit-section reports its retrieval outcome > ok: evidence was found (positive control) 8ms
+ ✓ server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > edit-section reports its retrieval outcome > not_requested: no project, no retrieval attempted 6ms
+ × server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > template generation reports its retrieval outcome > failed: an outage is reported as failed, without its error text 9ms
+   → expected 'empty' to be 'failed' // Object.is equality
+ ✓ server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > template generation reports its retrieval outcome > empty: retrieval ran and nothing cleared the floor 10ms
+stdout | server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > template generation reports its retrieval outcome > ok: evidence was found (positive control)
+{
+  "timestamp": "2026-10-01T20:15:13.871Z",
+  "level": "info",
+  "message": "[concept2cure-ai-editing] Template generation completed",
+  "context": {
+    "templateId": "csr-synopsis",
+    "userId": 42,
+    "wordCount": 2,
+    "sourcesRetrieved": 1,
+    "latencyMs": 0
+  }
+}
+
+stdout | server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > template generation reports its retrieval outcome > not_requested: no project, no retrieval attempted
+{
+  "timestamp": "2026-10-01T20:15:13.876Z",
+  "level": "info",
+  "message": "[concept2cure-ai-editing] Template generation completed",
+  "context": {
+    "templateId": "csr-synopsis",
+    "userId": 42,
+    "wordCount": 2,
+    "sourcesRetrieved": 0,
+    "latencyMs": 1
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > template generation reports its retrieval outcome > ok: evidence was found (positive control) 16ms
+ ✓ server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > template generation reports its retrieval outcome > not_requested: no project, no retrieval attempted 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > edit-section reports its retrieval outcome > failed: an outage is reported as failed, without its error text
+ FAIL  server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts > template generation reports its retrieval outcome > failed: an outage is reported as failed, without its error text
+AssertionError: expected 'empty' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "empty"
+
+ ❯ server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts:110:31
+    108|     expect(res.status).toBe(200);
+    109|     const c = carrier(res.body);
+    110|     expect(c.retrievalStatus).toBe('failed');
+       |                               ^
+    111|     expect(c.retrievalMessage).toMatch(/not grounded/i);
+    112|     expect(JSON.stringify(res.body)).not.toContain('ECONNREFUSED');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  20:15:09
+   Duration  4.10s (transform 1.47s, setup 99ms, import 3.51s, tests 112ms, environment 0ms)
+

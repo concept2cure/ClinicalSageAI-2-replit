@@ -13,7 +13,7 @@
  * @module server/services/report-os/pdf/bundle-pdf
  */
 import { PDFDocument, StandardFonts } from 'pdf-lib';
-import { GREY, Writer, iso, stampFooters } from './writer';
+import { GREY, Writer, iso, stampExportIdentity, stampFooters } from './writer';
 
 export interface BundlePdfItem {
   runId: number;
@@ -46,6 +46,7 @@ function itemLine(i: BundlePdfItem): string {
 /** Build the bundle's PDF. */
 export async function buildBundlePdf(input: BundlePdfInput): Promise<{ bytes: Buffer; pages: number; replacedCharacters: number }> {
   const pdf = await PDFDocument.create();
+  stampExportIdentity(pdf, { title: `Report bundle: ${input.bundle.name}`, exportId: input.exportId, exportedAt: input.exportedAt });
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const w = new Writer(pdf, regular, bold);

@@ -167,6 +167,16 @@ export const BINDING_BASIS = {
    */
   REPORT_RUN_SEAL: 'report-run-seal-sha256',
   /**
+   * sha256 of a Vault version's bytes that are a RENDERING of Authoring content
+   * a signature covers (FD5 (c), 2026-10-01). The Authoring signature covers the
+   * sections digest; the filing rendered exactly those sections (digest
+   * recomputed over the rows rendered) into these bytes. Recorded on a Vault
+   * lifecycle sign-off that names the Authoring signature
+   * (server/services/regulatory/authoring-approval-carryover.ts); no
+   * electronic_signatures row carries it, because nothing is signed again.
+   */
+  AUTHORING_RENDITION: 'authoring-rendition-sha256',
+  /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
    * tamper-evident link to the ledger row that records the signed act (target

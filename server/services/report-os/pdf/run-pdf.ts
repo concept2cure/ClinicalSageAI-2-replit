@@ -25,7 +25,7 @@
  * @module server/services/report-os/pdf/run-pdf
  */
 import { PDFDocument, StandardFonts, degrees, rgb, type PDFFont } from 'pdf-lib';
-import { GREY, Writer, iso, stampFooters } from './writer';
+import { GREY, Writer, iso, stampExportIdentity, stampFooters } from './writer';
 import type { RenderedReport, ReportBlock } from '../render/types';
 import type { RunSealView } from '../sealing/run-seal';
 
@@ -130,6 +130,7 @@ function stampPages(w: Writer, input: RunPdfInput, font: PDFFont) {
 /** Build the run's PDF. */
 export async function buildRunPdf(input: RunPdfInput): Promise<{ bytes: Buffer; pages: number; replacedCharacters: number }> {
   const pdf = await PDFDocument.create();
+  stampExportIdentity(pdf, { title: `${input.typeLabel}, run ${input.run.id}`, exportId: input.exportId, exportedAt: input.exportedAt });
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const w = new Writer(pdf, regular, bold);
