@@ -36,6 +36,7 @@ import {
 } from './canonicalDocumentStore';
 import { vaultSourceId } from './lifecycle-signature';
 import { drizzleSignatureClient } from '../part11/signature-persistence';
+import { writeChainedAuditRow } from '../auditService';
 import {
   findVaultLifecycleRecord,
   lockVaultLifecycleStart,
@@ -56,7 +57,9 @@ const notCurrent = (version: string | null, consequence: string): LifecycleOutco
   body: {
     ok: false,
     error: 'VERSION_NOT_CURRENT',
-    message: `Version ${version ?? '(unnumbered)'} has a later version, so it is not reviewed or approved. ${consequence}`,
+    message:
+      `${version ? `Version ${version}` : 'This version'} is no longer the current version, so it cannot be reviewed ` +
+      `or approved. Use the current version. ${consequence}`,
   },
 });
 
@@ -77,7 +80,7 @@ export async function startVaultLifecycleRecord(
     body: {
       ok: false,
       error: 'VAULT_SOURCE_NOT_FOUND',
-      message: "The Vault version named as this document's source is not in this organization. Nothing was created.",
+      message: 'This version is not in the Vault. Reload the Vault to see its current versions. Nothing was created.',
     },
   };
   if (p.vaultId === 'invalid') return notFound;
@@ -98,6 +101,16 @@ export async function startVaultLifecycleRecord(
       hasContent: true,
       contentHash: source.contentHash,
       sources: { vault_documents: { nativeId: source.id, role: 'artifact' } },
+    });
+    // Who started it is recorded: the record's creator is an author of it for
+    // separation of duties, so the start is as attributable as a sign-off.
+    await writeChainedAuditRow(q, {
+      organizationId: p.organizationId,
+      userId: p.createdBy,
+      action: 'regulated_document.created',
+      resourceType: 'canonical_document',
+      resourceId: canonicalId,
+      details: { vaultDocumentId: source.id, version: source.version, contentHash: source.contentHash, stage: 'authoring' },
     });
     return { status: 201, body: { ok: true, canonicalId, created: true } };
   });

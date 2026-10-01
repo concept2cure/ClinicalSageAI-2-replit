@@ -24,6 +24,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
+import { ApiRequestError } from '@/lib/queryClient';
 import { Vault } from '../surfaces/Vault';
 import { PID, DOC_ID, ok, uploadDoc, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
 
@@ -102,7 +103,7 @@ describe('a document with versions in the Vault (VR-09)', () => {
 
   it('exports the signed history of every version, and says when the role may not', async () => {
     mockApi();
-    let answer = ok({ success: true, export: { data: [], manifest: {}, signature: 'sig' } });
+    const answer = ok({ success: true, export: { data: [], manifest: {}, signature: 'sig' } });
     const base = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation(async (method: string, url: string) =>
       url.startsWith('/api/audit/export/signed') ? (calls.push(url), answer) : base(method, url));
@@ -113,9 +114,17 @@ describe('a document with versions in the Vault (VR-09)', () => {
     expect(url).toContain('resource_type=vault_document');
     expect(url).toContain(`record_ids=${DOC_ID},${V1}`);
 
-    answer = { ok: false, status: 403, json: async () => ({ error: 'forbidden' }) } as Response;
+    // As apiRequest delivers a 403 in production: thrown, never returned.
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (url.startsWith('/api/audit/export/signed')) {
+        calls.push(url);
+        throw new ApiRequestError('You do not have permission to export the audit trail.', 403, { error: 'forbidden' }, 'FORBIDDEN');
+      }
+      return base(method, url);
+    });
     fireEvent.click(screen.getByText('Export signed history'));
     expect(await screen.findByText(/Ask a user with audit export access/)).toBeTruthy();
+    expect(screen.queryByText(/connection dropped/)).toBeNull();
   });
 
 });

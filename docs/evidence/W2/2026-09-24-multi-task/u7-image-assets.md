@@ -266,3 +266,31 @@ step are left to the lead:
 "ci:image-runtime-assets": "node scripts/ci/check-image-runtime-assets.mjs",
 "ci:image-runtime-assets:selftest": "node scripts/ci/check-image-runtime-assets.selftest.mjs",
 ```
+
+## 2026-10-01 — the GAMP 5 validation kit ships
+
+`docs/validation` was a known gap. It holds 29 documents: the VMP, the URS
+and OQ for Projects, Vault, Authoring, Submission Center, Submission Readiness
+and QMS, IQ, PQ, the risk analyses, the Part 11 traceability matrix and the
+summary reports. A regulated client validates the platform with these, and
+`GET /api/validation-kit` (auth-gated) lists and serves them from
+`<cwd>/docs/validation`. `.dockerignore` excluded all of `docs/`, so
+production listed an honest but empty catalog.
+
+**Failing first.** Reclassifying the entry as `ship` before the image change
+made `ci:image-runtime-assets` exit 1:
+
+```
+  docs/validation — read at run time by server/routes/validation-kit.ts:24, server/routes/validation-kit.ts:67, server/routes/validation-kit.ts:129; the image must ship it, and no COPY in stage "production" puts anything at /app/docs/validation.
+```
+
+**Fix.** `.dockerignore` re-includes `docs/validation` only, and
+`Dockerfile.optimized` adds `COPY --from=builder /app/docs/validation ./docs/validation`.
+
+**After.**
+
+- The gate exits 0: "20 shipped and covered, 49 correctly not shipped, 6 known
+  gap(s)".
+- The self-test still fails on all 9 cuts.
+- The kit was scanned for keys, passwords, private keys and internal addresses
+  before shipping, and none were found.
