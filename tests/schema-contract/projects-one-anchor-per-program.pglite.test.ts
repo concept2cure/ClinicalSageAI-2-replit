@@ -24,6 +24,7 @@ const ANCHOR = 'migrations/20260814_projects_regulatory_program_anchor.sql';
 const ONE_ANCHOR = 'migrations/20261001b_projects_one_anchor_per_program.sql';
 const P1 = '11111111-1111-4111-8111-111111111111';
 const P2 = '22222222-2222-4222-8222-222222222222';
+const P3 = '33333333-3333-4333-8333-333333333333';
 
 let db: PGlite;
 
@@ -49,12 +50,15 @@ beforeAll(async () => {
   await db.exec(`
     INSERT INTO organizations VALUES (1);
     INSERT INTO client_workspaces VALUES (1);
-    INSERT INTO regulatory_programs (id, organization_id, code, name) VALUES ('${P1}', 1, 'ALPHA', 'Alpha'), ('${P2}', 1, 'BETA', 'Beta');
+    INSERT INTO regulatory_programs (id, organization_id, code, name) VALUES ('${P1}', 1, 'ALPHA', 'Alpha'), ('${P2}', 1, 'BETA', 'Beta'), ('${P3}', 1, 'GAMMA', 'Gamma');
     INSERT INTO projects (id, organization_id, client_workspace_id, name, type, regulatory_program_id) VALUES
       (10, 1, 1, 'Alpha anchor', 'regulatory', '${P1}'),
       (11, 1, 1, 'Alpha second anchor', 'regulatory', '${P1}'),
       (20, 1, 1, 'Unanchored', 'regulatory', NULL),
-      (21, 1, 1, 'Unanchored too', 'regulatory', NULL);
+      (21, 1, 1, 'Unanchored too', 'regulatory', NULL),
+      -- A cross-organization pair, writable unchecked 2026-08-14..09-24: the NOTICE names each row's organization.
+      (22, 1, 1, 'Beta anchor', 'regulatory', '${P2}'),
+      (23, 2, 1, 'Beta, written by another organization', 'regulatory', '${P2}');
   `);
 }, 60_000);
 afterAll(async () => {
@@ -75,7 +79,10 @@ describe('a program has at most one anchor row', () => {
   it('with two anchors for one program, every replay skips the index and names both rows', async () => {
     for (let deploy = 0; deploy < 2; deploy++) {
       const notices = await apply(ONE_ANCHOR);
-      expect(notices).toEqual([`PF-08: program ${P1} has 2 anchor rows (projects {10,11}); one-anchor index not created`]);
+      expect(notices).toEqual([
+        `PF-08: program ${P1} has 2 anchor rows (project@organization: 10@1, 11@1); one-anchor index not created`,
+        `PF-08: program ${P2} has 2 anchor rows (project@organization: 22@1, 23@2); one-anchor index not created`,
+      ]);
       expect(await indexExists()).toBe(false);
     }
     // Nothing was rewritten to make it fit.
@@ -84,7 +91,8 @@ describe('a program has at most one anchor row', () => {
   });
 
   it('once the duplicate is resolved, the next replay creates a partial unique index', async () => {
-    await db.exec(`UPDATE projects SET regulatory_program_id = NULL WHERE id = 11`);
+    // Same organization: the higher id's anchor cleared. Cross organization: the foreign row's.
+    await db.exec(`UPDATE projects SET regulatory_program_id = NULL WHERE id IN (11, 23)`);
     expect(await apply(ONE_ANCHOR)).toEqual([]);
     expect(await indexExists()).toBe(true);
     const def = await db.query<{ indexdef: string }>(`SELECT indexdef FROM pg_indexes WHERE indexname = 'projects_one_anchor_per_program'`);
@@ -93,16 +101,17 @@ describe('a program has at most one anchor row', () => {
     expect(await apply(ONE_ANCHOR)).toEqual([]);
   });
 
-  it('a second anchor for the program is refused; unanchored rows and other programs are not', async () => {
+  it('a second anchor for the program is refused, from any organization; unanchored rows and other programs are not', async () => {
     expect(await code(db.query(`UPDATE projects SET regulatory_program_id = $1 WHERE id = 11`, [P1]))).toBe('23505');
+    expect(await code(db.query(`UPDATE projects SET regulatory_program_id = $1 WHERE id = 23`, [P2]))).toBe('23505');
     expect(
       await code(
         db.query(`INSERT INTO projects (id, organization_id, client_workspace_id, name, type, regulatory_program_id) VALUES (12, 1, 1, 'x', 'regulatory', $1)`, [P1]),
       ),
     ).toBe('23505');
-    expect(await code(db.query(`UPDATE projects SET regulatory_program_id = $1 WHERE id = 20`, [P2]))).toBe('ok');
-    const nulls = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM projects WHERE regulatory_program_id IS NULL`);
-    expect(nulls.rows[0].n).toBe(2);
+    expect(await code(db.query(`UPDATE projects SET regulatory_program_id = $1 WHERE id = 20`, [P3]))).toBe('ok');
+    const nulls = await db.query<{ id: number }>(`SELECT id FROM projects WHERE regulatory_program_id IS NULL ORDER BY id`);
+    expect(nulls.rows.map((r) => r.id)).toEqual([11, 21, 23]);
   });
 
   it('the 20260814 backfill, replayed after the index, still runs and links no second row', async () => {
