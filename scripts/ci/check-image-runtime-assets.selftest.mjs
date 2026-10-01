@@ -122,6 +122,33 @@ const CASES = [
     expect: 'dist/rules/rules.yaml — read at run time by server/live.ts:5; the image must ship it, and COPY --from=builder /app/dist ./dist covers it, but `npm run build` produces only',
   },
   {
+    // The password blocklist (2026-10-01): the module directory spelled inline,
+    // not through a `__dirname` const, and the gate did not see the read at all.
+    name: 'a module-relative read spelled dirname(fileURLToPath(import.meta.url)) inline',
+    files: {
+      'server/live.ts': [
+        "import { readFileSync } from 'node:fs';",
+        "import { dirname, join } from 'node:path';",
+        "import { fileURLToPath } from 'node:url';",
+        "export const FORMS_DIR = join(process.cwd(), 'vendor', 'forms');",
+        "export const LIST = join(dirname(fileURLToPath(import.meta.url)), '..', 'lists', 'common.txt');",
+        'export const read = () => readFileSync(LIST, "utf8");',
+      ].join('\n'),
+    },
+    expect: 'lists/common.txt — read at run time by server/live.ts:5, and not classified',
+  },
+  {
+    // The same day: a `data` root entry, meant for the bare directory, matched
+    // as a prefix and filed the blocklist's data/common-passwords.txt under it.
+    name: 'an exact root entry does not classify a new read beneath it',
+    files: {
+      'server/live.ts': `${BASE['server/live.ts']}\nexport const LIST = path.join(process.cwd(), 'scratch', 'common.txt');`,
+      'server/index.ts': BASE['server/index.ts'].replace("import { FORMS_DIR } from './live';", "import { FORMS_DIR, LIST } from './live';").replace('console.log(FORMS_DIR,', 'console.log(LIST, FORMS_DIR,'),
+    },
+    classification: { ...CLASSIFICATION, scratch: { kind: 'not-shipped', exact: true, reason: 'fixture: the root alone' } },
+    expect: 'scratch/common.txt — read at run time by server/live.ts:3, and not classified',
+  },
+  {
     name: 'a classification no shipped module uses any more',
     classification: { ...CLASSIFICATION, 'old/vendored': { kind: 'ship', reason: 'fixture: stale' } },
     expect: 'RUNTIME_PATHS lists old/vendored, which no module in the production bundle resolves any more',
