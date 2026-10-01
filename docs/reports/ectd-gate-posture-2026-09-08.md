@@ -29,6 +29,14 @@ on before its precondition is met would block real transmits.
 | `ECTD_REQUIRE_EVALIDATOR` | `ectd/external-validator/config.ts` | **off** | a production transmit with no agency-grade validation report | a licensed validator is configured (`<PROVIDER>_VALIDATOR_URL`) and reachable |
 | `ECTD_REQUIRE_REGIONAL_BACKBONE` | `ectd/regional-backbone-readiness.ts` | **off** | a production transmit whose regional Module 1 backbone is not agency-structured (11 of 12 regions today) | the eleven non-conformant backbones are actually built — **engineering, not procurement** |
 
+> **2026-10-01, `ECTD_REQUIRE_PDFA`.** Its precondition, Ghostscript and veraPDF in the deploy image, is met:
+> `Dockerfile.optimized` installs both since `cd02466a4`. It stays off anyway, on a different ground. The gate
+> refuses a production package if **any** PDF leaf was not converted to PDF/A, and its message says *"a production
+> eCTD submission requires PDF/A"*. FDA and EMA both accept plain PDF 1.4–1.7 as well as PDF/A, so on, it would
+> refuse packages the agency accepts: a leaf Ghostscript cannot convert would hold a whole submission. Before it
+> is switched on, the rule needs deciding: block only where the region requires PDF/A, or where a leaf is
+> *declared* PDF/A without being converted. The binary being present is not, on its own, the reason to flip it.
+
 ## What each asset-gated flag would do *today*
 
 Computed from the repo's real drop-points by the test, not asserted from memory:

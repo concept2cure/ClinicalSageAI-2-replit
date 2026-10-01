@@ -178,7 +178,7 @@ function Downloads({ result, readersNotice }: { result: RunResult; readersNotice
     const diffs = countDifferences(result.data, exp.manifest);
     setNote({
       ok: true,
-      text: `Saved ${base}.csv and ${base}.manifest.json. Download CSV ran the report again: export ` +
+      text: `Saved ${base}.csv and its signed manifest. Download CSV ran the report again: export ` +
         `${second.exportId ?? 'not named'}, generated ${second.generatedAt ?? 'at a time not stated'}.`,
       warning: diffs.length
         ? `The second run found different row counts from the report on screen — ${diffs.join('; ')}. ` +

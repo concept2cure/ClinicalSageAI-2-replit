@@ -16,7 +16,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { RbmKris, RbmQtls, RbmRact, RbmOverview } from '../surfaces/RbmSurfacesA';
-import { RbmSignals, RbmSites, RbmPlan } from '../surfaces/RbmSurfacesB';
+import { RbmSignals, RbmSites, RbmPlan, RbmOversight } from '../surfaces/RbmSurfacesB';
 import type { RbmBoard } from '../surfaces/rbmBoard';
 
 const PROGRAM = '11111111-2222-3333-4444-555555555555';
@@ -50,6 +50,7 @@ function board(over: Partial<RbmBoard> = {}): RbmBoard {
     sites: [{ n: '5', name: 'Mercy Clinical', country: null, composite: 71, enr: 18, qual: 20, ops: 15, tier: 'enhanced', drivers: ['quality'], at: null }],
     oversight: { 5: { open: 1, high: 1 } },
     plan: { id: 3, title: 'Monitoring plan', strategy: 'risk_based', status: 'draft', updated: null, tiers: null, anaDraft: false, approval: null },
+    governingPlanId: 3,
     actions: [{ id: 41, planId: 3, type: 'issue', title: 'Confirm control', priority: 'high', owner: 'Unassigned', due: '2026-08-01', status: 'open', overdue: false, origin: 'ract' }],
     freshness: [],
     ...over,
@@ -175,7 +176,7 @@ describe('RBM v2 surfaces persist their writes', () => {
   });
 
   it('will not offer to raise an action when there is no plan to attach it to', async () => {
-    render(<RbmPlan board={board({ plan: null, actions: [] })} onReload={vi.fn()} />);
+    render(<RbmPlan board={board({ plan: null, governingPlanId: null, actions: [] })} onReload={vi.fn()} />);
     const add = await screen.findByRole('button', { name: /Add action/ });
     await waitFor(() => expect(add).toHaveProperty('disabled', true));
   });
@@ -214,9 +215,9 @@ describe('RBM v2 surfaces persist their writes', () => {
     }
   });
 
-  it('shows and mutates only the displayed plan\'s actions', async () => {
-    // An action carried on a superseded plan version must not appear under —
-    // or be advanced from — the plan on screen.
+  it('shows and mutates only the governing plan\'s actions', async () => {
+    // An action left on a superseded plan version (its completed history) must
+    // not appear under — or be advanced from — the plan in force.
     const multi = board({
       actions: [
         { id: 41, planId: 3, type: 'issue', title: 'Current plan action', priority: 'high', owner: 'Unassigned', due: '2026-08-01', status: 'open', overdue: false, origin: 'ract' },
@@ -429,6 +430,93 @@ describe('RBM plan — an approved plan is amended, not edited', () => {
   it('does not offer Amend on a draft plan', () => {
     render(<RbmPlan board={board()} onReload={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /^Amend$/ })).toBeNull();
+  });
+});
+
+describe('RBM actions are logged against the plan in force, not an open amendment', () => {
+  // v2 (id 3) is approved and in force; v3 (id 4) is an open amendment draft,
+  // which the plan surface shows for editing but which governs nothing.
+  const amending = () => board({
+    plan: { id: 4, title: 'Monitoring plan', strategy: 'risk_based', status: 'draft', version: 3, updated: null, tiers: null, anaDraft: false, approval: null },
+    governingPlanId: 3,
+    actions: [
+      { id: 41, planId: 3, type: 'issue', title: 'Action under the plan in force', priority: 'high', owner: 'Unassigned', due: '2026-08-01', status: 'open', overdue: false, origin: 'ract' },
+    ],
+  });
+
+  it('Add action posts to the plan in force while the amendment draft is on screen', async () => {
+    render(<RbmPlan board={amending()} onReload={vi.fn()} />);
+    expect(screen.getByText('Action under the plan in force')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Add action/ }));
+    fireEvent.change(await screen.findByLabelText('Description'), { target: { value: 'Re-train site 5' } });
+    fireEvent.click(screen.getAllByRole('button', { name: /Add action/ }).slice(-1)[0]);
+    await waitFor(() => expect(writes().length).toBe(1));
+    const [method, url, body] = writes()[0];
+    expect(method).toBe('POST');
+    expect(url).toBe('/api/mdx/rbm-monitoring-actions');
+    expect(body).toMatchObject({ planId: 3, description: 'Re-train site 5' });
+  });
+
+  it('a signal follow-up is raised on the plan in force', async () => {
+    render(<RbmSignals board={amending()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Site 5 is a quality outlier/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Escalate to action/ }));
+    await waitFor(() => expect(writes().length).toBe(1));
+    expect(writes()[0][2]).toMatchObject({ planId: 3, actionType: 'escalation' });
+  });
+
+  it('an investigation follow-up is raised on the plan in force', async () => {
+    render(<RbmSignals board={amending()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Site 5 is a quality outlier/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Document investigation/ }));
+    fireEvent.change(await screen.findByLabelText('Root cause'), { target: { value: 'Staff turnover' } });
+    fireEvent.change(screen.getByLabelText(/Action taken/), { target: { value: 'Retrain' } });
+    fireEvent.change(screen.getByLabelText('Follow-up action'), { target: { value: 'capa' } });
+    fireEvent.click(screen.getByRole('button', { name: /Save investigation/ }));
+    await waitFor(() => expect(writes().length).toBe(1));
+    expect((writes()[0][2] as { action: { planId: number } }).action).toMatchObject({ planId: 3 });
+  });
+
+  it('says so when the server saved the notes but did not raise the action', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET') return envelope({ data: [] });
+      if (url.endsWith('/investigate')) {
+        return envelope({ data: { signal: { id: 31 }, action: null, actionCreated: false,
+          actionRefused: { reason: 'plan_superseded', governingPlanId: 5, message: 'Monitoring plan 3 is archived. Actions are logged against the plan in force, plan 5 (v4).' } } });
+      }
+      return envelope({ data: { id: 1 } }, 201);
+    });
+    render(<RbmSignals board={board()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Site 5 is a quality outlier/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Document investigation/ }));
+    fireEvent.change(await screen.findByLabelText('Root cause'), { target: { value: 'Staff turnover' } });
+    fireEvent.change(screen.getByLabelText(/Action taken/), { target: { value: 'Retrain' } });
+    fireEvent.change(screen.getByLabelText('Follow-up action'), { target: { value: 'capa' } });
+    fireEvent.click(screen.getByRole('button', { name: /Save investigation/ }));
+    expect(await screen.findByText(/The follow-up action was not raised: Monitoring plan 3 is archived/)).toBeTruthy();
+  });
+
+  it('a scheduled oversight visit is raised on the plan in force', async () => {
+    render(<RbmOversight board={amending()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Schedule visit/ }));
+    fireEvent.change(await screen.findByLabelText(/Focus/), { target: { value: 'SAE reconciliation' } });
+    fireEvent.change(screen.getByLabelText('Target date'), { target: { value: '2026-11-02' } });
+    fireEvent.click(screen.getAllByRole('button', { name: /Schedule visit/ }).slice(-1)[0]);
+    await waitFor(() => expect(writes().length).toBe(1));
+    expect(writes()[0][2]).toMatchObject({ planId: 3, actionType: 'site_visit' });
+  });
+
+  it('opening an amendment does not claim to carry actions forward', async () => {
+    render(<RbmPlan board={board({
+      plan: { id: 3, title: 'Monitoring plan', strategy: 'risk_based', status: 'active', version: 2, updated: null,
+        tiers: null, anaDraft: false, approval: { by: 'Jordan Chen', when: '2026-06-01', reason: 'Plan review complete' } },
+    })} onReload={vi.fn()} />);
+    expect(screen.getByText(/actions raised while the study runs/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /^Amend$/ }));
+    fireEvent.change(await screen.findByLabelText(/Why is the plan being amended/), { target: { value: 'Add CSM cadence' } });
+    fireEvent.click(screen.getByRole('button', { name: /Open amendment/ }));
+    expect(await screen.findByText(/move to it/)).toBeTruthy();
+    expect(screen.queryByText(/carried forward/)).toBeNull();
   });
 });
 

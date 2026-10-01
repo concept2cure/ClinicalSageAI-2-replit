@@ -1,0 +1,12 @@
+ × server/routes/__tests__/record-exports-recorded.test.ts > an export of an existing record > lineage PDF: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 34ms
+ × server/routes/__tests__/record-exports-recorded.test.ts > an export of an existing record > lineage PDF: delivers nothing when the record does not persist 8ms
+ × server/routes/__tests__/record-exports-recorded.test.ts > an export of an existing record > citation DOCX: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 8ms
+ × server/routes/__tests__/record-exports-recorded.test.ts > an export of an existing record > citation DOCX: delivers nothing when the record does not persist 8ms
+ × server/routes/__tests__/record-exports-recorded.test.ts > an export of an existing record > artifact citation CSV: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 8ms
+ × server/routes/__tests__/record-exports-recorded.test.ts > an export of an existing record > artifact citation CSV: delivers nothing when the record does not persist 5ms
+ × server/routes/__tests__/record-exports-recorded.test.ts > an export of an existing record > project citation CSV: records EXPORT_GENERATED with the SHA-256 of the bytes delivered 5ms
+ × server/routes/__tests__/record-exports-recorded.test.ts > an export of an existing record > project citation CSV: delivers nothing when the record does not persist 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be truthy
+AssertionError: expected 200 to be 503 // Object.is equality
+      Tests  8 failed (8)
