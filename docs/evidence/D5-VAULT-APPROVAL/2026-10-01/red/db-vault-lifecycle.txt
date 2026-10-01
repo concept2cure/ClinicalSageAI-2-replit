@@ -1,0 +1,16 @@
+## RED: tests/db/vault-lifecycle.dbtest.ts with trunk's document-lifecycle.ts, project-vault.ts and vault-metadata-edit.service.ts (HEAD 9e9a9614e), 2026-10-01
+ × tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says 3070ms
+   → expected { stage: 'authoring', …(4) } to match object { stage: 'authoring', …(3) }
+ × tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version 26ms
+   → expected 400 to be 422 // Object.is equality
+ × tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review 36ms
+   → expected 404 to be 200 // Object.is equality
+ × tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes 21ms
+   → {"ok":false,"error":"title_and_document_type_required"}: expected 400 to be 201 // Object.is equality
+ × tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved 22ms
+   → {"ok":false,"error":"title_and_document_type_required"}: expected 400 to be 201 // Object.is equality
+ × tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were 21ms
+   → {"ok":false,"error":"title_and_document_type_required"}: expected 400 to be 201 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed (6)

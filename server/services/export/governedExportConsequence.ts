@@ -12,7 +12,11 @@ export type ExportSourceType =
   // ever emitted when a real filled official eSTAR PDF was produced.
   | 'export_estar_pdf'
   // A PowerPoint rendered from chat-artifact content (routes/c2c/exports.ts).
-  | 'export_pptx';
+  | 'export_pptx'
+  // A CSV download of existing records (AnA citation exports, routes/ana-features.ts).
+  | 'export_csv'
+  // An XML metadata file of existing records (AnA lineage dossier, routes/ana-ri/lineage.ts).
+  | 'export_xml';
 
 export interface GovernedExportInput {
   organizationId: number;

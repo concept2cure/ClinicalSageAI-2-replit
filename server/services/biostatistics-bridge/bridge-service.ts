@@ -24,8 +24,9 @@
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 
 import { db, pool } from '../../db';
-import { cdiscPrmStudies, concept2cureArtifacts, projects, unifiedTasks } from '../../../shared/schema';
+import { cdiscPrmStudies, concept2cureArtifacts, unifiedTasks } from '../../../shared/schema';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
+import { resolveProgramProjectAnchor } from '../c2c/program-project-anchor';
 import { recordGovernedAction } from '../../routes/c2c/actions';
 import { computationEngine } from '../ana-biostats/computation-engine';
 import { judgmentEngine } from '../ana-biostats/judgment-engine';
@@ -154,17 +155,16 @@ export async function programFilingContext(organizationId: number, programId: st
     .from(regulatoryPrograms)
     .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, organizationId)))
     .limit(1);
-  const [project] = await db
-    .select({ id: projects.id })
-    .from(projects)
-    .where(and(eq(projects.regulatoryProgramId, programId), eq(projects.organizationId, organizationId)))
-    .limit(1);
+  // The one anchor reader (PF-08), strict: a read that fails still throws, as it did.
+  const projectId = await resolveProgramProjectAnchor(db, {
+    programId, orgId: organizationId, context: 'biostatistics-bridge.programFilingContext', strict: true,
+  });
   const programType = program?.programType ?? null;
   return {
     programId,
     programType,
     applicationType: applicationTypeForProgramType(programType),
-    projectId: project?.id ?? null,
+    projectId,
   };
 }
 

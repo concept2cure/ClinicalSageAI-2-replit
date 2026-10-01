@@ -28,8 +28,8 @@
       "digest": "112f9dae014a0310"
     },
     "server/jobs/scheduleOfEventsSweep.ts": {
-      "reason": "NO PER-TENANT FAN-OUT at the sweep level: zero organization_id references, runs under a system scope. NOTE — the RLS burndown lists this as a writer, so if it ever selects per-organization it needs filterTenantsForBackgroundWork like taskDueSweep. The digest below is what forces that re-read.",
-      "digest": "bfd4fd54a2a03e88"
+      "reason": "NO PER-TENANT FAN-OUT at the sweep level: zero organization_id references, runs under a system scope. NOTE — the RLS burndown lists this as a writer, so if it ever selects per-organization it needs filterTenantsForBackgroundWork like taskDueSweep. The digest below is what forces that re-read. RE-READ 2026-09-25: the digest drifted because the sweep now runs under runScheduledOnce (server/db/scheduledOnce.ts, one process at a time) and claims each schedule with a guarded UPDATE of last_reviewed_by_ana_at before reviewing it. Still zero organization_id references and still a system scope, so the justification holds.",
+      "digest": "d7d1ed1194f20e99"
     },
     "server/routes/api-keys.ts": {
       "reason": "FALSE POSITIVE of the shape matcher (matches on the string 'validateApiKey'). This is the session-authenticated router for MANAGING keys, mounted under /api behind the auth boundary, so enforceTenantLifecycle already covers it. It is not itself an alternative-auth surface. RE-READ 2026-09-10: the digest drifted only because WO-0's lint cleanup removed an unused type-only import (`type ApiKeyScope`), which has no runtime effect. Re-verified against the current file: router.use(authMiddleware) and router.use(requireAdminRole) at :56-57, mounted at /api/api-keys by server/bootstrap/register-document-routes.ts. The justification holds and is now stronger than as first written — the router is admin-guarded, not merely session-authenticated.",

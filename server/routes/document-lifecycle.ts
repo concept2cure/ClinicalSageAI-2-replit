@@ -40,6 +40,12 @@ import {
   type CanonicalStoreDb,
 } from '../services/regulatory/canonicalDocumentStore';
 import {
+  startVaultLifecycleRecord,
+  supersedeOnVaultApproval,
+  SupersessionRefused,
+  vaultApprovalRefusal,
+} from '../services/regulatory/vault-lifecycle-record';
+import {
   buildLifecycleBindings,
   type LifecycleBindingDeps,
 } from '../services/regulatory/lifecycleBindings';
@@ -49,7 +55,6 @@ import {
   LIFECYCLE_SIGNATURE_TYPE,
   lifecycleTarget,
   LifecycleSignatureRefusal,
-  readVaultSource,
   vaultSourceId,
   type LifecycleBinding,
   type LifecycleSigner,
@@ -325,6 +330,8 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     if (!gate.allowed) {
       return { status: 409, body: { ok: false, from: state.stage, to: 'approved', blockedBy: gate.blockedBy } };
     }
+    const refusal = await vaultApprovalRefusal(client, input, resolveUserId(req));
+    if (refusal) return refusal;
     const pre = await signingPrecheck(req, client, input, 'APPROVED');
     if (!('binding' in pre)) return pre;
     const signer = await reverifiedSigner(req, res);
@@ -357,28 +364,16 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     if (createdBy === null) return res.status(401).json({ ok: false, error: 'AUTH_REQUIRED' });
 
     // A body `contentHash` is not read (VR-12): the hash a signature binds is
-    // the server's reading. A document made from a Vault version takes that
-    // version's hash, from this organization's row; one naming no source the
-    // server can read has none ('').
+    // the server's reading. A document made from a Vault version is that
+    // version's record (VR-13): see startVaultLifecycle.
     const { title, documentType, projectId, hasContent, sources } = req.body ?? {};
-    if (typeof title !== 'string' || !title.trim() || typeof documentType !== 'string' || !documentType.trim()) {
-      return res.status(400).json({ ok: false, error: 'title_and_document_type_required' });
-    }
-    let contentHash = '';
-    let contentPresent = Boolean(hasContent);
     const vaultId = vaultSourceId(sources);
     if (vaultId !== null) {
-      const source =
-        vaultId === 'invalid' ? null : await readVaultSource(drizzleSignatureClient(getDb()), organizationId, vaultId);
-      if (!source) {
-        return res.status(422).json({
-          ok: false,
-          error: 'VAULT_SOURCE_NOT_FOUND',
-          message: 'The Vault version named as this document\'s source is not in this organization. Nothing was created.',
-        });
-      }
-      contentHash = source.contentHash;
-      contentPresent = true;
+      const started = await startVaultLifecycleRecord(getDb(), { organizationId, createdBy, vaultId });
+      return res.status(started.status).json(started.body);
+    }
+    if (typeof title !== 'string' || !title.trim() || typeof documentType !== 'string' || !documentType.trim()) {
+      return res.status(400).json({ ok: false, error: 'title_and_document_type_required' });
     }
 
     const canonicalId = await createCanonicalDocument(getDb(), {
@@ -387,8 +382,8 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       title: title.trim(),
       documentType: documentType.trim(),
       projectId: typeof projectId === 'string' ? projectId : undefined,
-      hasContent: contentPresent,
-      contentHash,
+      hasContent: Boolean(hasContent),
+      contentHash: '',
       sources,
     });
     // Report how many blueprint sections were instantiated as the outline.
@@ -610,13 +605,22 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
         }
 
         const sealed = await persistState(tx, id, organizationId, result.state, result.auditEvent!, exportFacet);
+        // Approving a Vault version supersedes the version it replaces, on this
+        // transaction (VR-13). A failure rolls the approval back with it.
+        const superseded =
+          to === 'approved' && projected.state.stage === 'in_review'
+            ? await supersedeOnVaultApproval(tx, client, input, bindings, ctx)
+            : [];
         return {
           status: 200,
-          body: { ok: true, from: result.from, to: result.to, stage: result.state.stage, auditEvent: sealed },
+          body: { ok: true, from: result.from, to: result.to, stage: result.state.stage, auditEvent: sealed, superseded },
         };
       });
     } catch (err) {
       if (err instanceof LifecycleRecordRefusal) return res.status(409).json(refusalBody(err));
+      if (err instanceof SupersessionRefused) {
+        return res.status(409).json({ ok: false, error: err.code, message: `${err.message} Nothing was approved.` });
+      }
       throw err;
     }
     return send(res, outcome);

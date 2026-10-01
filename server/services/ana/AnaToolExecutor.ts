@@ -3611,9 +3611,16 @@ registerToolHandler('create_monitoring_action', async (input, ctx) => {
     signalId: rbmNum(input.signalId) ?? null,
     owner: rbmNum(input.owner) ?? null,
   });
-  // An approved plan's actions are frozen under its signature (#1166): say so,
-  // rather than reporting a plan that exists as "not found".
-  if (!out.created) return rbmErr(out.reason === 'plan_not_draft' ? out.message : 'Monitoring plan not found in this tenant.');
+  // Actions are logged against the plan in force. A superseded version or an
+  // amendment not yet approved is a 409 that names the plan in force, so the
+  // model can retry there instead of reporting a plan that exists as "not found".
+  if (!out.created) {
+    if (out.reason === 'plan_not_found') return rbmErr('Monitoring plan not found in this tenant.');
+    return JSON.stringify({
+      source: 'AnA RBM', status: 409, error: out.message,
+      reason: out.reason, governingPlanId: out.governingPlanId,
+    });
+  }
   return JSON.stringify({ source: 'AnA RBM · create_monitoring_action', ...out });
 });
 

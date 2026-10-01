@@ -79,6 +79,15 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:migration-prefix-collisions
 
+      - name: Guardrails — a new migration is on a DEPLOY path (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # install-fresh applies every top-level migrations/*.sql to a NEW
+        # database; deploy-migrate applies only C2C_MIGRATION_FILES. A file on
+        # neither the set nor the journal reaches no database already deployed:
+        # the IND amendment/annual-report tables were missing that way until
+        # 9d6e3375b. Baselined at 113 pre-existing files; must only shrink.
+        run: npm run ci:migration-deploy-path:selftest && npm run ci:migration-deploy-path
+
       - name: Guardrails — RLS allowlist TS↔SQL parity
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:rls-allowlist-sync
@@ -2114,7 +2123,10 @@ jobs:
           # vendored skill's own CI image, never built, published or deployed
           # here (Dockerfile.optimized runs as appuser). Every other Dockerfile
           # is checked. .trivyignore could only drop DS002 for the whole tree.
-          skip-files: .claude/skills/gstack/.github/docker/Dockerfile.ci
+          # Also the D1 document-runtime evidence record (2eda0ed0f): a verbatim
+          # copy of a build that ran, never built, published or deployed, and not
+          # to be edited (it is evidence). CI run 12734: DS-0002 on it.
+          skip-files: .claude/skills/gstack/.github/docker/Dockerfile.ci,docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green
 
   secret-history-scan:
     # Security plan P0-17 / audit INF-22. check-committed-secrets.mjs (Lint)

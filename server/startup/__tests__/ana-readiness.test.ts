@@ -41,10 +41,25 @@ vi.mock('../../services/ai-gateway/index.js', () => ({
   },
 }));
 
+/**
+ * Readiness now reads the model registry as well as the provider list (U3a),
+ * so the stub carries one model per provider: the approved Claude flagship for
+ * anthropic, an unapproved GPT for openai. The ids are real registry ids, so
+ * the approval verdict is the canonical registry's, not the stub's.
+ */
+const STUB_MODEL_BY_PROVIDER: Record<string, { id: string; capabilities: string[] }> = {
+  anthropic: { id: 'claude-opus-4', capabilities: ['chat', 'document_drafting', 'regulatory_review'] },
+  openai: { id: 'gpt-4o', capabilities: ['chat', 'document_drafting', 'regulatory_review'] },
+};
+
 function gateway(opts: { providers: string[]; deterministic?: boolean }) {
   return {
     getEnabledProviders: () => opts.providers,
     isDeterministic: () => Boolean(opts.deterministic),
+    getModels: () =>
+      opts.providers
+        .filter((p) => STUB_MODEL_BY_PROVIDER[p])
+        .map((p) => ({ ...STUB_MODEL_BY_PROVIDER[p], provider: p, enabled: true })),
   };
 }
 
@@ -121,6 +136,133 @@ describe('evaluateAnaReadiness', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+//
+// U3a — a provider is not the same thing as a drafting model.
+//
+// Production passed OPENAI_API_KEY alone. Every model approvedForHighRisk in
+// ai-governance/approved-models.ts is Claude, so the gateway refused every
+// Authoring draft with ModelNotApprovedError — while /readyz said ana 'ok',
+// because readiness counted providers and nothing else.
+//
+// These cases build the REAL gateway from the environment, not a stub: the
+// defect lived in the gap between the gateway's registry, its per-provider
+// enablement and the approval registry, and a hand-written stub would encode
+// the test author's idea of that gap rather than the code's.
+
+describe('evaluateAnaReadiness — regulatory drafting needs an approved model (U3a)', () => {
+  const ENV_KEYS = [
+    'OPENAI_API_KEY',
+    'ANTHROPIC_API_KEY',
+    'KIMI_API_KEY',
+    'MOONSHOT_API_KEY',
+    'AI_BEDROCK_ENABLED',
+    'AI_VERTEX_ENABLED',
+    'AZURE_OPENAI_API_KEY',
+    'AZURE_OPENAI_ENDPOINT',
+    'AI_LOCAL_ENABLED',
+    'AI_GATEWAY_DETERMINISTIC',
+    'DETERMINISTIC_MODE',
+  ] as const;
+  const saved: Record<string, string | undefined> = {};
+
+  beforeEach(() => {
+    for (const k of ENV_KEYS) {
+      saved[k] = process.env[k];
+      delete process.env[k];
+    }
+  });
+
+  afterEach(() => {
+    for (const k of ENV_KEYS) {
+      if (saved[k] === undefined) delete process.env[k];
+      else process.env[k] = saved[k];
+    }
+  });
+
+  /** The production gateway, built from whatever keys the env carries now. */
+  async function realGateway(env: Partial<Record<(typeof ENV_KEYS)[number], string>>) {
+    Object.assign(process.env, env);
+    const { AIGateway } = await vi.importActual<typeof import('../../services/ai-gateway/gateway')>(
+      '../../services/ai-gateway/gateway'
+    );
+    return new AIGateway({ auditEnabled: false });
+  }
+
+  it('is NOT serving on an OpenAI-only deployment — the production posture', async () => {
+    gatewayStub = await realGateway({ OPENAI_API_KEY: 'sk-test-openai-only' });
+
+    const state = await evaluateAnaReadiness();
+
+    expect(state).toBe('no_high_risk_model');
+    expect(isAnaReadinessServing(state)).toBe(false);
+    // The detail must say what is missing and what would fix it, in terms an
+    // operator can act on without reading approved-models.ts first.
+    const detail = getAnaReadinessDetail();
+    expect(detail).toContain('openai');
+    expect(detail).toMatch(/approved for regulatory drafting/);
+    expect(detail).toContain('claude-opus-4');
+    expect(detail).toContain('anthropic');
+    expect(detail).toContain('bedrock');
+  });
+
+  it('is serving when an Anthropic key is present, and names the drafting model', async () => {
+    gatewayStub = await realGateway({ ANTHROPIC_API_KEY: 'sk-ant-test' });
+
+    const state = await evaluateAnaReadiness();
+
+    expect(state).toBe('ready');
+    expect(isAnaReadinessServing(state)).toBe(true);
+    expect(getAnaReadinessDetail()).toContain('claude-opus-4');
+  });
+
+  it('is serving with OpenAI and Anthropic together', async () => {
+    gatewayStub = await realGateway({ OPENAI_API_KEY: 'sk-test', ANTHROPIC_API_KEY: 'sk-ant-test' });
+
+    expect(await evaluateAnaReadiness()).toBe('ready');
+  });
+
+  it('is serving on Bedrock alone — the private-cloud drafting path counts', async () => {
+    gatewayStub = await realGateway({ AI_BEDROCK_ENABLED: 'true' });
+
+    expect(await evaluateAnaReadiness()).toBe('ready');
+    expect(getAnaReadinessDetail()).toContain('claude-opus-4-bedrock');
+  });
+
+  it('still reports no_provider — not no_high_risk_model — when nothing is configured', async () => {
+    gatewayStub = await realGateway({});
+
+    expect(await evaluateAnaReadiness()).toBe('no_provider');
+  });
+
+  it('fails closed when the gateway exposes no model registry to check', async () => {
+    // A gateway readiness cannot inspect is not a gateway readiness may pass.
+    gatewayStub = { getEnabledProviders: () => ['anthropic'], isDeterministic: () => false };
+
+    const state = await evaluateAnaReadiness();
+
+    expect(isAnaReadinessServing(state)).toBe(false);
+    expect(getAnaReadinessDetail()).toMatch(/model registry/);
+  });
+
+  it('/readyz answers 503 with ana down on an OpenAI-only deployment', async () => {
+    gatewayStub = await realGateway({ OPENAI_API_KEY: 'sk-test-openai-only' });
+    await evaluateAnaReadiness();
+    setSchemaReadiness('ready', '');
+    delete process.env.REDIS_URL;
+    delete process.env.REDIS_TLS_URL;
+    const a = express();
+    mountFastPathHealthEndpoints(a, { query: async () => ({ rows: [{ '?column?': 1 }] }) } as never);
+
+    const res = await request(a).get('/readyz');
+
+    expect(res.status).toBe(503);
+    expect(res.body.dependencies.ana).toBe('down');
+    expect(res.body.anaState).toBe('no_high_risk_model');
+    expect(res.body.anaDetail).toMatch(/approved for regulatory drafting/);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 describe('logAnaReadinessBanner', () => {
   it('prints to console.error when AnA cannot answer', () => {
@@ -145,6 +287,20 @@ describe('logAnaReadinessBanner', () => {
 
     expect(errSpy).not.toHaveBeenCalled();
     expect(warnSpy.mock.calls[0][0]).toContain('DETERMINISTIC');
+  });
+
+  it('says drafting — not chat — is what failed when no model is approved for it', () => {
+    // The 'AnA CANNOT ANSWER … every chat turn will fail' banner would be false
+    // here: chat is answered. What fails is every draft.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setAnaReadiness('no_high_risk_model', 'AI provider(s) enabled: openai — but no enabled model is approved');
+
+    logAnaReadinessBanner();
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy.mock.calls[0][0]).toContain('AnA CANNOT DRAFT');
+    expect(spy.mock.calls[0][0]).not.toContain('Every chat turn will fail');
+    expect(spy.mock.calls[0][0]).toContain('NOT READY');
   });
 
   it('stays quiet on the happy path', () => {
