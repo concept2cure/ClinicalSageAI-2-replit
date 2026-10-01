@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T01:50:31.217Z",
+  "generatedAt": "2026-10-01T01:54:55.881Z",
   "git": {
-    "sha": "d14a873839941443f77bba70b53b62975dfd717c",
+    "sha": "e000003b9bf700550f9adffe3e4a9a0cfa1e08a0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1109693
+        "bytes": 1111576
       },
       {
         "file": "shared/schema.ts",
@@ -2068,12 +2068,12 @@
         "bytes": 134822
       },
       {
-        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "bytes": 133645
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "bytes": 134704
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 133331
+        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
+        "bytes": 133645
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2159,7 +2159,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21418
+        "lines": 21452
       },
       {
         "file": "shared/schema.ts",
@@ -2259,7 +2259,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2866
+        "lines": 2897
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
