@@ -259,6 +259,10 @@ function buildReflectionPrompt(params: {
     'colleague would be comfortable having read aloud. No PII beyond what the',
     'user volunteered. Merge, don\'t append: rewrite the summary as one coherent',
     'picture. If nothing meaningful changed, return the existing summary unchanged.',
+    'Humor: set "welcome" only once the person has started or returned play more',
+    'than once; never raise it on a turn about bad news, safety or strain. Keep',
+    'work-relevant observations only — never store personal disclosures (health,',
+    'family) even when volunteered.',
   ].join('\n');
 }
 

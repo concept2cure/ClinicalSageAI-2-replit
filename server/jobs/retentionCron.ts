@@ -41,6 +41,7 @@ import {
 import { writeChainedAuditRow } from '../services/auditService';
 import { reportSecurityAlert } from '../services/security-alerts';
 import { runWithSystemTenantScope } from '../db/tenantStore';
+import { runScheduledOncePerWindow, windowKeyOf } from '../db/scheduledOnce';
 import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('retention-sweep');
@@ -65,6 +66,11 @@ export interface RetentionSummary {
   destructionRefused: number;
   /** Expired documents left in place because a legal hold covers them. */
   heldByLegalHold: number;
+  /**
+   * Expired documents another run had already disposed of by the time this
+   * one reached them: nothing archived, nothing audited (U19).
+   */
+  alreadyDisposed: number;
   errors: number;
 }
 
@@ -115,7 +121,7 @@ async function organisationOf(client: TxClient, doc: VaultDocument): Promise<num
 async function disposeDocument(
   doc: VaultDocument,
   behaviour: { archiveBeforeDelete: boolean; policyMatched: boolean },
-): Promise<void> {
+): Promise<'disposed' | 'already_disposed'> {
   const client = (await pool.connect()) as unknown as TxClient;
   try {
     await client.query('BEGIN');
@@ -131,7 +137,16 @@ async function disposeDocument(
         [doc.id, doc.programId, doc.documentCode, doc.documentTitle, doc.documentType, doc.retentionPolicy, JSON.stringify(doc)],
       );
     }
-    await client.query('UPDATE vault.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL', [doc.id]);
+    // Only the run whose UPDATE matched records the disposition. Another
+    // process may have disposed of the document since the sweep listed it; its
+    // archive snapshot above is rolled back with this transaction, and no
+    // second retention_soft_delete audit row records a deletion this run did
+    // not make (U19).
+    const softDelete = await client.query('UPDATE vault.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL', [doc.id]);
+    if (softDelete.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return 'already_disposed';
+    }
     await writeChainedAuditRow(
       client,
       {
@@ -152,6 +167,7 @@ async function disposeDocument(
       doc.id,
     );
     await client.query('COMMIT');
+    return 'disposed';
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw error;
@@ -200,6 +216,7 @@ export async function runRetentionSweep(): Promise<RetentionSummary> {
       softDeleted: 0,
       destructionRefused: 0,
       heldByLegalHold: 0,
+      alreadyDisposed: 0,
       errors: 0,
     };
 
@@ -249,7 +266,11 @@ export async function runRetentionSweep(): Promise<RetentionSummary> {
           continue;
         }
 
-        await disposeDocument(doc, { archiveBeforeDelete, policyMatched: Boolean(policy) });
+        const outcome = await disposeDocument(doc, { archiveBeforeDelete, policyMatched: Boolean(policy) });
+        if (outcome === 'already_disposed') {
+          summary.alreadyDisposed += 1;
+          continue;
+        }
         if (archiveBeforeDelete) summary.archived += 1;
         summary.softDeleted += 1;
       } catch (error) {
@@ -294,6 +315,7 @@ async function notifyAdmins(summary: RetentionSummary): Promise<void> {
           <li>Archived: ${summary.archived}</li>
           <li>Soft-deleted: ${summary.softDeleted}</li>
           <li>Destruction refused (policy asks to destroy; awaiting the retention decision): ${summary.destructionRefused}</li>
+          <li>Already disposed of by another run: ${summary.alreadyDisposed}</li>
           <li>Errors: ${summary.errors}</li>
         </ul>`,
     });
@@ -368,6 +390,9 @@ export function resolveRetentionSweepPosture(env: NodeJS.ProcessEnv = process.en
 
 export const DEFAULT_RETENTION_SWEEP_CRON = '30 3 * * *';
 
+/** The sweep runs at most once per UTC day across every server process. */
+const RETENTION_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 /** Schedule the nightly sweep, or say why not. Called once at boot (server/index.ts). */
 export function startRetentionSchedule(): void {
   const posture = resolveRetentionSweepPosture(process.env);
@@ -381,8 +406,11 @@ export function startRetentionSchedule(): void {
   }
   const expr = process.env.RETENTION_SWEEP_CRON || DEFAULT_RETENTION_SWEEP_CRON;
   try {
+    // Every server process schedules this (two API tasks and the worker). One
+    // run per day: the first process to claim the day's window runs it, the
+    // others skip (U19). A run that throws gives the window back.
     cron.schedule(expr, () => {
-      void runRetentionJob().catch((err) =>
+      void runScheduledOncePerWindow('retention-sweep', windowKeyOf(RETENTION_WINDOW_MS), () => runRetentionJob()).catch((err) =>
         logger.error('Scheduled retention sweep failed', { error: err instanceof Error ? err.message : String(err) }),
       );
     });

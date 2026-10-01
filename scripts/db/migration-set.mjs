@@ -1445,6 +1445,11 @@ export const C2C_MIGRATION_FILES = [
   // superseded which, and inferring it would manufacture a lineage the system
   // never observed.
   'migrations/20260829_cre_source_versioning.sql',
+  // VR-16 (D2/D5): the data room's capture record is append-only. Triggers on
+  // cre_evidence_sources (checksum and lineage write-once, retirement one-way,
+  // no TRUNCATE, DELETE only by the owner). After the file that adds its
+  // versioning columns; no table, no column, no DROP.
+  'migrations/20261001_cre_evidence_sources_capture_immutability.sql',
 
   // Constraint repair only: no table, no column, no data. 0001_phase13_full
   // meant to widen concept2cure_review_tasks.task_type to include
@@ -2885,6 +2890,17 @@ export const C2C_MIGRATION_FILES = [
   // docs/evidence/W2/2026-09-24-multi-task/u14-u16-shared-state.md.
   'migrations/20261001_project_continuity_snapshots.sql',
   'db/migrations/20261001_collab_presence.sql',
+
+  // ── Scheduled jobs run once per window, not once per process (2026-10-01,
+  //    D1, audit W2 fix unit U19) ────────────────────────────────────────────
+  // The advisory lease stopped overlapping runs only; a tick on another task
+  // that did not overlap ran the same window again (retention archived and
+  // audited each disposition up to three times; the sentinel notified three
+  // times an hour). One claim row per (organization, job, window), in public
+  // with organization_id INTEGER NOT NULL so the sweep below gives it its
+  // tenant policy. IF NOT EXISTS only, no DROP. Evidence
+  // docs/evidence/W2/2026-09-24-multi-task/u19-scheduler-windows.md.
+  'migrations/20261001d_scheduled_job_claims.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

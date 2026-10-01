@@ -248,10 +248,13 @@ async function detectChanges(
 ): Promise<ContinuityChange[]> {
   const changes: ContinuityChange[] = [];
 
-  // Look at audit logs since the baseline (or over the default window)
-
+  // Look at audit logs since the baseline (or over the default window).
+  // A failed read is not "nothing changed": that briefing would be served and
+  // recorded, and later measured against as a baseline. It throws; the route
+  // answers 500 and AnA Command says the briefing could not be loaded.
+  let logs: Array<typeof regulatoryAuditLogs.$inferSelect>;
   try {
-    const logs = await db
+    logs = await db
       .select()
       .from(regulatoryAuditLogs)
       .where(
@@ -262,50 +265,53 @@ async function detectChanges(
       )
       .orderBy(desc(regulatoryAuditLogs.createdAt))
       .limit(100);
-
-    for (const log of logs) {
-      const nv = log.newValue as any;
-      if (nv?.projectId && nv.projectId !== projectId) continue;
-
-      const action = log.action || '';
-      const entityType = log.entityType || '';
-
-      if (action === 'run_validation' && nv?.success) {
-        changes.push({
-          type: 'validation_completed',
-          description: `Validation completed on ${nv.targetType}:${nv.targetId}`,
-          targetType: nv.targetType || entityType,
-          targetId: nv.targetId || log.entityId || '',
-          timestamp: log.createdAt?.toISOString() || '',
-        });
-      } else if (action === 'promote_artifact') {
-        changes.push({
-          type: 'artifact_promoted',
-          description: `Artifact promoted: ${nv.targetId}`,
-          targetType: 'artifact',
-          targetId: nv.targetId || log.entityId || '',
-          timestamp: log.createdAt?.toISOString() || '',
-        });
-      } else if (action === 'save_document_version') {
-        changes.push({
-          type: 'document_updated',
-          description: `Document version saved: ${nv.targetId}`,
-          targetType: 'document',
-          targetId: nv.targetId || log.entityId || '',
-          timestamp: log.createdAt?.toISOString() || '',
-        });
-      } else if (action === 'route_document_to_module') {
-        changes.push({
-          type: 'document_updated',
-          description: `Document routed to module: ${nv.targetId}`,
-          targetType: 'document',
-          targetId: nv.targetId || log.entityId || '',
-          timestamp: log.createdAt?.toISOString() || '',
-        });
-      }
-    }
   } catch (err) {
-    console.warn('[Continuity] Change detection failed:', err instanceof Error ? err.message : err);
+    throw new Error(
+      `Continuity: could not read the audit trail for what changed since ${since.toISOString()}: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err },
+    );
+  }
+
+  for (const log of logs) {
+    const nv = log.newValue as any;
+    if (nv?.projectId && nv.projectId !== projectId) continue;
+
+    const action = log.action || '';
+    const entityType = log.entityType || '';
+
+    if (action === 'run_validation' && nv?.success) {
+      changes.push({
+        type: 'validation_completed',
+        description: `Validation completed on ${nv.targetType}:${nv.targetId}`,
+        targetType: nv.targetType || entityType,
+        targetId: nv.targetId || log.entityId || '',
+        timestamp: log.createdAt?.toISOString() || '',
+      });
+    } else if (action === 'promote_artifact') {
+      changes.push({
+        type: 'artifact_promoted',
+        description: `Artifact promoted: ${nv.targetId}`,
+        targetType: 'artifact',
+        targetId: nv.targetId || log.entityId || '',
+        timestamp: log.createdAt?.toISOString() || '',
+      });
+    } else if (action === 'save_document_version') {
+      changes.push({
+        type: 'document_updated',
+        description: `Document version saved: ${nv.targetId}`,
+        targetType: 'document',
+        targetId: nv.targetId || log.entityId || '',
+        timestamp: log.createdAt?.toISOString() || '',
+      });
+    } else if (action === 'route_document_to_module') {
+      changes.push({
+        type: 'document_updated',
+        description: `Document routed to module: ${nv.targetId}`,
+        targetType: 'document',
+        targetId: nv.targetId || log.entityId || '',
+        timestamp: log.createdAt?.toISOString() || '',
+      });
+    }
   }
 
   return changes.slice(0, 20); // Cap at 20 changes

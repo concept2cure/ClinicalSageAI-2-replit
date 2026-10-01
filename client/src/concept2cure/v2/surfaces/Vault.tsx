@@ -66,6 +66,8 @@ interface DataRoomRow {
   evidenceKind: string | null;
   confidence: string | null;
   needsReview: boolean;
+  /** Which Vault version its bytes became, and what replaced it (VR-16). Absent on an older server. */
+  filedAs?: { version: string | null; supersededBy: string | null } | null;
 }
 
 interface DataRoomBlock {
@@ -90,6 +92,19 @@ const ROOM_STAGE: Record<DataRoomRow['stage'], { label: string; tone: string }> 
   needs_review: { label: 'Needs review', tone: 'warn' },
   captured: { label: 'Captured', tone: 'idle' },
 };
+
+/**
+ * A data-room source's stage in words. A filed one names the Vault version its
+ * bytes are, and the version that replaced it (VR-16): "Filed as v1.0,
+ * superseded by v2.0". A filed file that is no longer current reads as such.
+ */
+export function roomStageLabel(s: Pick<DataRoomRow, 'stage' | 'filedAs'>): string {
+  const base = (ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).label;
+  if (s.stage !== 'filed' || !s.filedAs) return base;
+  const as = s.filedAs.version ? ` as v${s.filedAs.version}` : '';
+  const replaced = s.filedAs.supersededBy ? `, superseded by v${s.filedAs.supersededBy}` : '';
+  return `${base}${as}${replaced}`;
+}
 
 /** What the lane's counts cover, and what needs a person. */
 function RoomNotes({ block }: { block: DataRoomBlock }) {
@@ -477,7 +492,7 @@ function DataRoomLane({
                 </span>
               ) : null}
               <span className={'rd-chip tone-' + (ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).tone}>
-                {(ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).label}
+                {roomStageLabel(s)}
               </span>
             </div>
           ))}

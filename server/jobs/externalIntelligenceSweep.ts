@@ -22,8 +22,11 @@ import cron from 'node-cron';
 import { runExternalIntelligenceSweep } from '../services/external-intelligence/index.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { runWithSystemTenantScope } from '../db/tenantStore';
+import { runScheduledOncePerWindow, windowKeyOf } from '../db/scheduledOnce';
 
 const logger = createScopedLogger('external-intel-sweep');
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Schedule the nightly external intelligence sweep. Enabled by default;
@@ -41,9 +44,11 @@ export function startExternalIntelligenceSchedule(): void {
   }
   const expr = process.env.EXTERNAL_INTELLIGENCE_CRON || '0 1 * * *';
   try {
+    // Every server process schedules this. One run per day across them (U19):
+    // three would triple the calls to FDA, EMA, MHRA, TGA and NCBI.
     cron.schedule(expr, () => {
-      void runWithSystemTenantScope('external-intelligence-sweep', () =>
-        runExternalIntelligenceSweep()
+      void runScheduledOncePerWindow('external-intelligence-sweep', windowKeyOf(DAY_MS), () =>
+        runWithSystemTenantScope('external-intelligence-sweep', () => runExternalIntelligenceSweep())
       ).catch(err => logger.error(`External intelligence sweep crashed: ${err?.message}`));
     });
     logger.info(`External intelligence sweep scheduled (${expr})`, {

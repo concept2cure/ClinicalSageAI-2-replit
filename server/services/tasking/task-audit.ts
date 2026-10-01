@@ -32,6 +32,7 @@ import { pool } from '../../db.js';
 /** Anything that can run a query — the pool, or a client inside a transaction. */
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 import { recordGovernedAction, type RecordGovernedActionParams } from '../../routes/c2c/actions.js';
+import { statedReasonOrNull } from '../../routes/governed-reason.js';
 import { queryableFromDrizzle, type DrizzleRunner } from '../../db/drizzle-queryable.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
@@ -70,12 +71,6 @@ export interface AuditTaskActionParams {
   summary?: string;
 }
 
-/** A person's stated reason, trimmed, or null when none was stated. */
-export function statedTaskReason(value: unknown): string | null {
-  const reason = typeof value === 'string' ? value.trim() : '';
-  return reason || null;
-}
-
 /** The ledger row for an attributable task event: the stated reason or null, the summary in the payload. */
 function lineageRow(params: AuditTaskActionParams & { userId: number }): RecordGovernedActionParams {
   const { orgId, userId, command, taskId, payload = {}, reason, summary } = params;
@@ -84,7 +79,7 @@ function lineageRow(params: AuditTaskActionParams & { userId: number }): RecordG
     userId,
     command,
     target: `task:${taskId}`,
-    reason: statedTaskReason(reason),
+    reason: statedReasonOrNull(reason),
     payload: summary ? { ...payload, summary } : payload,
     domain: 'tasking',
     surface: 'tasking-api',

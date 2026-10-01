@@ -180,3 +180,43 @@ How the DB suite was run: `TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:543
 - **Not fixed, outside U14 (pre-existing):** `detectChanges` (`continuity-service.ts`) catches an audit-log read failure and returns `[]`, which renders as "No changes recorded yet." That is an error shown as an empty result. Its fix is to propagate the failure so the briefing reports itself unavailable. That changes the surface's failure behaviour and deserves its own decision.
 - **Stale, pre-existing:** the "LOCK ENDPOINTS" comment in `realtime-collab.ts` still says locks "live in process memory". They have been durable since 20260807. Left unedited.
 - `shared/types/orchestration.ts` was not edited. The `'no_baseline'` trajectory and the `baseline` and `changesSince` fields are declared as `ContinuityBriefing` in `continuity-service.ts`.
+
+## 2026-10-01 — "what changed" fails closed
+
+The U14 review found a related problem in the same service. `detectChanges`
+caught a failed audit-log read and returned no changes. Two things followed:
+
+- AnA Command told the user nothing had changed;
+- the briefing was **recorded**, so a day later it became the baseline the
+  next verdict was measured against.
+
+That breaks "Fail closed, never fabricate". The failure now throws, naming the
+read. Two things already in place handle it honestly:
+
+- the route (`POST /api/orchestration/continuity`) answers 500 through
+  `serverError`;
+- AnA Command renders "Couldn't load the continuity briefing".
+
+An audit trail with nothing in the window is still an answer (no changes, and
+the briefing is recorded).
+
+**Test: `server/services/orchestration/__tests__/continuity-changes.fail-closed.test.ts`.**
+
+Before:
+
+```
+ × server/services/orchestration/__tests__/continuity-changes.fail-closed.test.ts > continuity briefing when the audit trail cannot be read > is refused, naming the read that failed 13ms
+ × server/services/orchestration/__tests__/continuity-changes.fail-closed.test.ts > continuity briefing when the audit trail cannot be read > records no snapshot, so it can never become a baseline 3ms
+ ✓ server/services/orchestration/__tests__/continuity-changes.fail-closed.test.ts > continuity briefing when the audit trail cannot be read > an audit trail with nothing in the window is still an answer: no changes, recorded 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)
+```
+
+After: 3/3. The orchestration suites and `promotionBlockersHonestGate` pass,
+27/27 across 6 files.
+
+**Still open, recorded rather than fixed here.** The read takes the newest 100
+audit rows *org-wide*, then filters by project. In a busy organisation, a
+project's changes can fall outside that window, and the list does not say it
+is partial. Fixing it means filtering on `new_value->>'projectId'` in SQL;
+that work stays with this lane.

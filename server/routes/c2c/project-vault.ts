@@ -69,7 +69,7 @@ import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vaul
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
-import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
+import { currentVersionLateral, readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
 import { readVaultLifecycles } from '../../services/vault/vault-lifecycle.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
@@ -160,6 +160,9 @@ interface DataRoomRow {
   evidenceKind: string | null;
   confidence: string | null;
   needsReview: boolean;
+  /** Which Vault version its bytes became (VR-16): `supersededBy` names the
+   *  family's current version when a later one replaced it. Null when not filed. */
+  filedAs: { version: string | null; supersededBy: string | null } | null;
 }
 
 interface DataRoomBlock {
@@ -1319,17 +1322,26 @@ export default function createProjectVaultRoutes(): Router {
           const sourceChecksums = Array.from(
             new Set(sources.map(s => s.checksum).filter((h): h is string => Boolean(h))),
           );
-          const vaultHashes = new Set<string>();
+          // …and as which version (VR-16): the version its bytes are, and the
+          // family's current version when a later one replaced it.
+          const vaultHashes = new Map<string, NonNullable<DataRoomRow['filedAs']>>();
           if (sourceChecksums.length > 0) {
             const matchRes = await pool.query(
-              `SELECT DISTINCT d.content_hash
+              `SELECT DISTINCT ON (d.content_hash) d.content_hash, d.version,
+                      ${supersededSql('d')} AS superseded, cv.current_version
                  FROM vault.documents d
+                 ${currentVersionLateral('d')}
                 WHERE ${uploadsWhere}
-                  AND d.content_hash = ANY($3::text[])`,
+                  AND d.content_hash = ANY($3::text[])
+                ORDER BY d.content_hash, d.created_at`,
               [id, orgId, sourceChecksums],
             );
-            for (const r of matchRes.rows as Array<{ content_hash: string | null }>) {
-              if (r.content_hash) vaultHashes.add(r.content_hash);
+            for (const r of matchRes.rows as Array<{ content_hash: string | null; version: string | null; superseded: boolean; current_version: string | null }>) {
+              if (!r.content_hash) continue;
+              vaultHashes.set(String(r.content_hash).trim(), {
+                version: r.version ?? null,
+                supersededBy: r.superseded ? (r.current_version ?? null) : null,
+              });
             }
           }
           const rows: DataRoomRow[] = sources.map(s => {
@@ -1338,7 +1350,8 @@ export default function createProjectVaultRoutes(): Router {
               | { evidenceKind?: string | null; suggestedFolder?: string | null;
                   confidence?: string | null; needsReview?: boolean }
               | null;
-            const filed = Boolean(s.checksum && vaultHashes.has(s.checksum));
+            const filedAs = s.checksum ? vaultHashes.get(s.checksum) ?? null : null;
+            const filed = filedAs !== null;
             const proposed = Boolean(dossier?.suggestedFolder);
             const stage: DataRoomRow['stage'] =
               filed ? 'filed' : proposed ? 'classified' : dossier ? 'needs_review' : 'captured';
@@ -1368,6 +1381,7 @@ export default function createProjectVaultRoutes(): Router {
               evidenceKind: dossier?.evidenceKind ?? null,
               confidence: dossier?.confidence ?? null,
               needsReview: Boolean(dossier?.needsReview),
+              filedAs,
             };
           });
           dataRoom = {
