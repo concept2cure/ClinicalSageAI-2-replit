@@ -6198,7 +6198,8 @@ export const conversationWorkingMemory = pgTable(
     // job can promote thread-keyed rows (conversation_id NULL — the live AnA
     // chat path) into project_memory_entries. Nullable: surfaces with no
     // project in scope write NULL and stay excluded from promotion.
-    projectId: integer('project_id').references(() => projects.id),
+    // ON DELETE SET NULL: a summary does not hold its project (20260820, amended 2026-10-01).
+    projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),

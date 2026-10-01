@@ -130,6 +130,50 @@ export function projectDeletionRefusal(
   return null;
 }
 
+/** The driver's error inside whatever wrapped it (drizzle puts it in `cause`). */
+function databaseErrorOf(err: unknown): { code: string; table?: string; constraint?: string } | null {
+  let e: unknown = err;
+  for (let depth = 0; depth < 3 && e && typeof e === 'object'; depth += 1) {
+    if (typeof (e as { code?: unknown }).code === 'string') return e as { code: string; table?: string; constraint?: string };
+    e = (e as { cause?: unknown }).cause;
+  }
+  return null;
+}
+
+/**
+ * The 409 a delete earns when the DATABASE refuses it, or null for any other
+ * error (which stays the route's 500).
+ *
+ * projectDeletionHolds judges what the delete would cascade away. About forty
+ * other stores name a project under a key that does not cascade (ON DELETE NO
+ * ACTION): agency correspondence, submissions, evidence-chain records and the
+ * like. A row in any of them makes the DELETE fail 23503, and every hard-delete
+ * route answered that as a bare 500 "Failed to delete" (PF-13 follow-up). Those
+ * rows are kept with the project, so the answer is the one a held record gets:
+ * archive instead. Nothing was deleted: the 23503 rolled the transaction back.
+ *
+ * `heldBy` names the store for the log only. A table or constraint name means
+ * nothing to the person and describes the schema, so it stays out of the body.
+ */
+export function projectDeleteBlockedRefusal(
+  err: unknown,
+  scope: 'project' | 'workspace',
+): { status: 409; body: ProjectDeletionRefusalBody; heldBy: { table?: string; constraint?: string } } | null {
+  const cause = databaseErrorOf(err);
+  if (cause?.code !== '23503') return null;
+  const subject = scope === 'project' ? 'This project' : 'This workspace';
+  return {
+    status: 409,
+    body: {
+      error: 'PROJECT_HOLDS_RECORDS',
+      message:
+        `${subject} still has records elsewhere on the platform that are kept with it, such as agency ` +
+        'correspondence, submissions or evidence records, so it cannot be deleted. Archive it instead. Nothing was deleted.',
+    },
+    heldBy: { table: cause.table, constraint: cause.constraint },
+  };
+}
+
 /** Thrown inside a deleting transaction so it rolls back; the route answers the refusal. */
 export class ProjectDeletionRefused extends Error {
   constructor(readonly refusal: { status: 409; body: ProjectDeletionRefusalBody }) {
