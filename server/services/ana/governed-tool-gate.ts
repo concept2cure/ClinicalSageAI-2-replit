@@ -112,11 +112,15 @@ export function classifyToolCall(call: ClassifiableToolCall): ToolGateVerdict {
 
   if (!isProposeOnlyCommand(command)) return { kind: 'UNGOVERNED' };
 
+  const params = asRecord(input.params) ?? {};
   return {
     kind: 'NEEDS_APPROVAL',
     command,
-    params: asRecord(input.params) ?? {},
-    tier: governedTierOf(command),
+    params,
+    // With the params: a command's tier can follow what the call does
+    // (part11-governance.ts requiredSignatureMeaning — AnA approving or locking
+    // an artifact is an e-signature, moving it to review is not).
+    tier: governedTierOf(command, params),
   };
 }
 

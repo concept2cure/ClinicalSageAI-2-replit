@@ -71,8 +71,8 @@ variable "multi_az" {
 
 variable "kms_key_id" {
   type        = string
-  description = "KMS key ARN for storage encryption (leave empty for default key)"
-  default     = ""
+  description = "Customer-managed KMS key ARN for storage, snapshots, backups and Performance Insights. Null: the AWS-managed aws/rds key."
+  default     = null
 }
 
 variable "deletion_protection" {

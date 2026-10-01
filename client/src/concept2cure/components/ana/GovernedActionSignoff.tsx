@@ -17,8 +17,10 @@
 
 import { Fragment, useEffect, useId, useRef, useState } from 'react';
 
+import { GOVERNED_SIGNATURE_ATTESTATION } from '@shared/constants/signature-attestation';
+
 import styles from './styles.module.css';
-import { tierOf, useGovernedAction, type PendingSignoff } from './useGovernedAction';
+import { tierOf, useGovernedAction, type DeclaredMeaning, type PendingSignoff } from './useGovernedAction';
 
 export interface GovernedActionSignoffProps {
   signoff: PendingSignoff;
@@ -30,13 +32,16 @@ export interface GovernedActionSignoffProps {
 
 const MIN_REASON_LEN = 10;
 
-/** The §11.50 signature meanings a high-impact governed action may declare. */
-const MEANING_OPTIONS: ReadonlyArray<{ value: 'AUTHOR' | 'REVIEWER' | 'APPROVER'; label: string }> = [
+/** The §11.50 signature meanings, as offered. */
+const MEANING_OPTIONS: ReadonlyArray<{ value: DeclaredMeaning; label: string }> = [
   { value: 'AUTHOR', label: 'Authorship' },
   { value: 'REVIEWER', label: 'Review' },
   { value: 'APPROVER', label: 'Approval' },
+  { value: 'RELEASE', label: 'Release' },
 ];
-type SignatureMeaning = (typeof MEANING_OPTIONS)[number]['value'];
+/** What a high-impact action may declare when its act fixes no meaning. */
+const CHOOSABLE: ReadonlySet<DeclaredMeaning> = new Set(['AUTHOR', 'REVIEWER', 'APPROVER']);
+type SignatureMeaning = DeclaredMeaning;
 
 /** The inputs a governed tool carries its reason for change in (server
  *  stated-reason-input.ts reasonFieldOf). The reason is not a parameter to
@@ -81,7 +86,12 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
   const [reason, setReason] = useState('');
   const [password, setPassword] = useState('');
   const [mfaToken, setMfaToken] = useState('');
-  const [meaning, setMeaning] = useState<SignatureMeaning | null>(null);
+  // An act that fixes its meaning (approving an artifact: Approval; locking it:
+  // Release) offers that one, already chosen; the server refuses any other.
+  const offered = signoff.signatureMeaning
+    ? MEANING_OPTIONS.filter(o => o.value === signoff.signatureMeaning)
+    : MEANING_OPTIONS.filter(o => CHOOSABLE.has(o.value));
+  const [meaning, setMeaning] = useState<SignatureMeaning | null>(signoff.signatureMeaning ?? null);
   const reasonId = useId();
   const pwId = useId();
   const mfaId = useId();
@@ -241,7 +251,7 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
             Meaning of signature (§11.50)
           </span>
           <div className={styles.signoffMeanings} role="radiogroup" aria-labelledby={meaningId} aria-required="true">
-            {MEANING_OPTIONS.map(opt => (
+            {offered.map(opt => (
               <button
                 key={opt.value}
                 type="button"
@@ -280,10 +290,7 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
             value={mfaToken}
             onChange={e => setMfaToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
           />
-          <p className={styles.signoffAttest}>
-            By signing, you confirm the §11.50 meaning above and your 21 CFR 11.100(b) intent. Your
-            credentials are verified at signing and are not reused from this session.
-          </p>
+          <p className={styles.signoffAttest}>{GOVERNED_SIGNATURE_ATTESTATION}</p>
         </>
       )}
 

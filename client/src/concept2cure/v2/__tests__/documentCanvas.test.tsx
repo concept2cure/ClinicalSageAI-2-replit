@@ -137,26 +137,27 @@ describe('DocumentCanvas — collapsed', () => {
     // Provenance names the model the store recorded and this conversation.
     expect(screen.getByTestId('dc-provenance').textContent).toBe('Drafted by AnA in this conversation · model claude-fable-5-1');
     // The first section, rendered through AuthoredHtml — as elements, from the record.
-    expect(within(canvas).getByText('Product Development Rationale')).toBeTruthy();
-    expect(within(canvas).getByText(/humanized IgG1 monoclonal antibody/)).toBeTruthy();
-    // Not the second one, until asked.
-    expect(within(canvas).queryByText('Overview of Biopharmaceutics')).toBeNull();
-    expect(within(canvas).getByText('3 sections')).toBeTruthy();
+    // (Scoped to the section's article: the outline names every section too.)
+    const firstSection = within(canvas).getByRole('article', { name: /2\.5\.1 Product Development Rationale/ });
+    expect(within(firstSection).getByText(/humanized IgG1 monoclonal antibody/)).toBeTruthy();
+    // Not the second one's BODY, until asked (the outline names every section).
+    expect(within(canvas).queryByText('Subcutaneous administration.')).toBeNull();
+    expect(screen.getByTestId('dc-progress').textContent).toBe('2 of 3 sections drafted');
     // The four actions.
     expect(screen.getByTestId('dc-open-editor')).toBeTruthy();
     expect(screen.getByTestId('dc-file-to-vault')).toBeTruthy();
     expect(screen.getByTestId('dc-assign-review')).toBeTruthy();
     expect(screen.getByTestId('place-into-filing-stub').getAttribute('data-doc')).toBe(DOC);
     // Type and status come from the row, not the stream.
-    expect(within(canvas).getByText(/Document · M2 · draft/)).toBeTruthy();
+    expect(within(canvas).getByText(/Document · Clinical overview · M2 · draft/)).toBeTruthy();
   });
 
   it('"Show all" reveals every section, with an honest "Not drafted yet" for an empty one', async () => {
     render(<Host />);
     const btn = await screen.findByRole('button', { name: /Show all 3 sections/ });
     fireEvent.click(btn);
-    expect(await screen.findByText('Overview of Clinical Pharmacology')).toBeTruthy();
-    expect(screen.getByText('Not drafted yet.')).toBeTruthy();
+    const third = await screen.findByRole('article', { name: /2\.5\.3 Overview of Clinical Pharmacology/ });
+    expect(within(third).getByText('Not drafted yet.')).toBeTruthy();
   });
 
   it('a failed read is an error with a retry, never an empty document', async () => {
