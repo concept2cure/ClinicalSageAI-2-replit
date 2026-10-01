@@ -55,7 +55,11 @@ describe('Trivy scans are not skipped by an earlier failure', () => {
  * after abc1c99a5, and only CI's Trivy noticed.
  */
 const ALLOWED_SKIP_DIRS = ['node_modules'];
-const ALLOWED_SKIP_FILES = ['.claude/skills/gstack/.github/docker/Dockerfile.ci'];
+const ALLOWED_SKIP_FILES = [
+  '.claude/skills/gstack/.github/docker/Dockerfile.ci',
+  // Evidence for 2eda0ed0f: built once, as root, to prove the document-runtime step; never deployed.
+  'docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green',
+];
 
 function jobSteps(file: string): Array<{ job: string; steps: Step[] }> {
   const wf = loadYaml(fs.readFileSync(path.join(ROOT, file), 'utf8')) as Workflow;
