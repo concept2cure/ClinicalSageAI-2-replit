@@ -52,3 +52,21 @@ The patch is kept outside the tree, and the design is short:
    markers under the prefix. Treat a second version, or a delete marker, on an
    anchor as broken. The grant needs `s3:ListBucketVersions` and
    `s3:GetObjectVersion`, and no `s3:DeleteObject`.
+
+## The parallel implementation, kept for reference
+
+`parallel-implementation.patch` is the whole discarded commit, kept here so
+nothing of it lives outside this branch. It is reference material for porting
+the three remedies above into the canonical `chain-anchor.ts`. **It is not to
+be applied as is**: it adds a second anchor module, which is the duplication
+the item avoided.
+
+The patch contains:
+
+- `server/services/audit/chain-anchor.ts`: every anchor's heads, write-once
+  puts, version and delete-marker reads;
+- the sweep's `audit_logs.anchor` store;
+- `terraform/modules/audit-anchor-access`: a grant with `s3:if-none-match`
+  required, its module test, and six Terraform mutations;
+- its dbtest (8 cases) and unit tests (31);
+- its evidence.

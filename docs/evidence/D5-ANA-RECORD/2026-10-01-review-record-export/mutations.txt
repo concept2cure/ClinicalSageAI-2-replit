@@ -1,0 +1,51 @@
+## e1: the words are not compared
+file: server/routes/c2c/review-record-export.ts
+exit=1
+ × tests/db/review-record-export.dbtest.ts > the record says when it does not match > a comment rewritten past the triggers is reported, and only that one 43ms
+      Tests  1 failed | 9 passed (10)
+
+## e2: a retraction on the row but not the chain is not looked at
+file: server/routes/c2c/review-record-export.ts
+exit=1
+ × tests/db/review-record-export.dbtest.ts > the record says when it does not match > a retraction the row shows but the chain does not is reported 43ms
+      Tests  1 failed | 9 passed (10)
+
+## e3: an unchained comment counts as intact
+file: server/routes/c2c/review-record-export.ts
+exit=1
+ × tests/db/review-record-export.dbtest.ts > the record says when it does not match > a comment with no chained row (as before 2026-10-01) is not chained, never intact 49ms
+      Tests  1 failed | 9 passed (10)
+
+## e4: no reader gate on the route
+file: server/routes/c2c/reviews.ts
+exit=1
+ × tests/db/review-record-export.dbtest.ts > who may take it, and when it may not leave > a member is refused (DP-18: the audit trail is read by owners, admins and managers) 37ms
+      Tests  1 failed | 9 passed (10)
+
+## e5: the package sent without being recorded
+file: server/routes/c2c/review-record-export.ts
+exit=1
+ × tests/db/review-record-export.dbtest.ts > an audit reader takes the review record > every thread and comment, a retraction with who and why, each intact against its chained row 48ms
+ × tests/db/review-record-export.dbtest.ts > an audit reader takes the review record > the package alone lets an inspector check every comment against its chained row 25ms
+ × tests/db/review-record-export.dbtest.ts > an audit reader takes the review record > the export itself is on the chain: who took which record, and what it said 42ms
+ × tests/db/review-record-export.dbtest.ts > who may take it, and when it may not leave > when the export cannot be recorded it is refused, and nothing leaves 34ms
+      Tests  4 failed | 6 passed (10)
+
+## e6: a retraction without who and why
+file: server/routes/c2c/review-record-export.ts
+exit=1
+ × tests/db/review-record-export.dbtest.ts > an audit reader takes the review record > every thread and comment, a retraction with who and why, each intact against its chained row 66ms
+      Tests  1 failed | 9 passed (10)
+
+## e7: the export offered to every role
+file: server/routes/c2c/reviews.ts
+exit=1
+ × tests/db/review-record-export.dbtest.ts > who may take it, and when it may not leave > the Review queue offers the export exactly to those the route serves 40ms
+      Tests  1 failed | 9 passed (10)
+
+## e8: the client saves whatever came back
+file: client/src/concept2cure/v2/surfaces/ReviewThreads.tsx
+exit=1
+ × client/src/concept2cure/v2/__tests__/reviewRecordExport.test.tsx > Export review record > a refusal is reported in the server’s words, and nothing is downloaded 34ms
+      Tests  1 failed | 2 passed (3)
+
