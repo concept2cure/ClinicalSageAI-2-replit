@@ -216,6 +216,10 @@ interface VaultDisplayShape {
    *  WHOLE program, not over `uploadsWindow` — a queue derived from a capped
    *  page would shrink as the backlog grew. */
   unfiledCount?: number;
+  /** Documents in a suggested folder that no person has confirmed (VR-11b).
+   *  Counted over the whole program, like `unfiledCount`. Absent when the
+   *  uploads store could not be read. */
+  awaitingConfirmationCount?: number;
   /**
    * How much of the filing cabinet the tree above actually carries. The vault
    * is unbounded and the tree read is capped (VAULT_TREE_MAX_DOCS), so a
@@ -1232,6 +1236,7 @@ export default function createProjectVaultRoutes(): Router {
       let uploadsStoreMissing = false;
       let uploadsWindow: { shown: number; total: number; truncated: boolean } | undefined;
       let unfiledCount = 0;
+      let awaitingConfirmationCount: number | undefined;
       try {
         // cap + 1 detects the overflow without a second round trip.
         const upRes = await pool.query(
@@ -1267,13 +1272,17 @@ export default function createProjectVaultRoutes(): Router {
                   COUNT(*) FILTER (
                     WHERE d.folder_id IS NULL
                        OR COALESCE(d.placement_status, 'unfiled') = 'unfiled'
-                  )::int AS unfiled
+                  )::int AS unfiled,
+                  COUNT(*) FILTER (
+                    WHERE d.folder_id IS NOT NULL AND d.placement_status = 'suggested'
+                  )::int AS suggested
              FROM vault.documents d
             WHERE ${headsWhere}`,
           [id, orgId],
         );
-        const counts = (cntRes.rows[0] ?? {}) as { total?: number; unfiled?: number };
+        const counts = (cntRes.rows[0] ?? {}) as { total?: number; unfiled?: number; suggested?: number };
         unfiledCount = counts.unfiled ?? 0;
+        awaitingConfirmationCount = counts.suggested ?? 0;
         uploadsWindow = {
           shown: uploads.length,
           total: counts.total ?? uploads.length,
@@ -1414,6 +1423,7 @@ export default function createProjectVaultRoutes(): Router {
         tree,
         coverage,
         unfiledCount,
+        ...(awaitingConfirmationCount !== undefined ? { awaitingConfirmationCount } : {}),
         ...(uploadsWindow ? { uploadsWindow } : {}),
         ...(dataRoom ? { dataRoom } : {}),
         ...(unavailable.length ? { unavailable } : {}),
@@ -1921,6 +1931,42 @@ export default function createProjectVaultRoutes(): Router {
         success: false,
         error: 'FILING_FAILED',
         message: 'The files could not be filed. Check the data room before trying again: some may have been filed.',
+      });
+    }
+  });
+
+  /* POST /:id/file-batch — Confirm N suggested (VR-11b, D2).
+     The suggested filings in one folder, confirmed by a person with one
+     reason (vault-placement-batch.ts): each through placeVaultDocument, each
+     with its own chained row carrying the reason. 422 without a reason;
+     otherwise 200 with an answer per document, `complete: false` when any was
+     refused. */
+  router.post('/:id/file-batch', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const { confirmSuggestedFilings } = await import('../../services/vault/vault-placement-batch.js');
+      const outcome = await confirmSuggestedFilings({
+        programId: String(req.params.id),
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        folderId: body.folderId,
+        documentIds: body.documentIds,
+        note: body.note,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, complete: outcome.complete, items: outcome.items });
+    } catch (err: unknown) {
+      logger.error('project vault file-batch error', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({
+        success: false,
+        error: 'CONFIRM_FAILED',
+        message: 'The filings could not be confirmed. Reload the Vault before trying again: some may have been confirmed.',
       });
     }
   });
