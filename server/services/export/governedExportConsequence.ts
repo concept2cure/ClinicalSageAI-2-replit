@@ -16,7 +16,9 @@ export type ExportSourceType =
   // A CSV download of existing records (AnA citation exports, routes/ana-features.ts).
   | 'export_csv'
   // An XML metadata file of existing records (AnA lineage dossier, routes/ana-ri/lineage.ts).
-  | 'export_xml';
+  | 'export_xml'
+  // A plain-text rendition (Artifacts Center TXT export, routes/artifacts-center-routes.ts).
+  | 'export_txt';
 
 export interface GovernedExportInput {
   organizationId: number;
