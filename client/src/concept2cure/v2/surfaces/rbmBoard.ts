@@ -16,7 +16,8 @@
  *   - qtls.unit                 → always null; the breach response is the flat
  *     breachActionTaken narrative, not a structured breach record
  *   - signals: resolution notes only, no structured investigation record
- *   - patients.metrics          → always []
+ *   - patients.metrics          → the scorer's per-dimension signed z breakdown;
+ *     empty until the cohort is scored (see RbmBoardPatient.metrics)
  *   - sites.country             → always null
  *   - plan.version/basis        → absent; plan.tiers → always null; anaDraft false
  */
@@ -150,9 +151,13 @@ export interface RbmBoardPatient {
   top: string;
   status: string;
   at: string | null;
-  // The board exposes the profile row's scalar fields; the per-dimension z
-  // breakdown is not carried in the read-model, so this is always []. Typed to
-  // the dimension shape (matching the server) so surfaces render it null-safe.
+  /**
+   * The per-dimension signed robust-z breakdown behind `anomaly`, most extreme
+   * first — the explanation of the score. Empty when the subject has not been
+   * scored since the breakdown was recorded, or when no dimension had a cohort
+   * of at least MIN_COHORT. An absent dimension means NOT COMPARABLE, not
+   * typical, so surfaces must not render a missing dimension as a zero.
+   */
   metrics: { k: string; z: number }[];
 }
 
@@ -174,6 +179,9 @@ export interface RbmBoardPlan {
   title: string;
   strategy: string;
   status: string;
+  /** Plan version within the study. An approved plan is read-only; revising it
+   *  opens the next version (POST /rbm-monitoring-plans/:id/amend). */
+  version?: number;
   updated: string | null;
   // Monitoring tiers (enhanced/standard/reduced) when the plan carries them;
   // null when the read-model has not populated them. Typed `null` previously,

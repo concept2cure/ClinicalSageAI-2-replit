@@ -404,3 +404,61 @@ describe('RBM RACT — versioned amendment of a signed assessment', () => {
     expect(screen.getByRole('button', { name: /Add CtQ factor/ })).toHaveProperty('disabled', false);
   });
 });
+
+describe('RBM plan — an approved plan is amended, not edited', () => {
+  const approvedPlan = () => board({
+    plan: {
+      id: 3, title: 'Monitoring plan', strategy: 'risk_based', status: 'active', version: 2, updated: null,
+      tiers: null, anaDraft: false, approval: { by: 'Jordan Chen', when: '2026-06-01', reason: 'Plan review complete' },
+    },
+  });
+
+  it('offers Amend on an approved plan and posts the reason to /amend', async () => {
+    render(<RbmPlan board={approvedPlan()} onReload={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /Approve plan/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /^Amend$/ }));
+    fireEvent.change(await screen.findByLabelText(/Why is the plan being amended/), {
+      target: { value: 'Add a central-monitoring review cadence' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Open amendment/ }));
+    await waitFor(() => {
+      expect(writes()).toContainEqual(['POST', '/api/mdx/rbm-monitoring-plans/3/amend', { reason: 'Add a central-monitoring review cadence' }]);
+    });
+  });
+
+  it('does not offer Amend on a draft plan', () => {
+    render(<RbmPlan board={board()} onReload={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /^Amend$/ })).toBeNull();
+  });
+});
+
+describe('RBM metric ingest — a duplicate load is refused, and reprocess needs a reason', () => {
+  it('holds the 409 as its own state and resubmits only with reprocess + reason', async () => {
+    const posts: unknown[] = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body: unknown) => {
+      if (method === 'GET') return envelope({ data: [] });
+      if (url === '/api/mdx/rbm-metric-ingest') {
+        posts.push(body);
+        if (!(body as { reprocess?: boolean }).reprocess) {
+          return envelope({ error: 'This exact extract is already loaded for this source — run #7 on 2026-07-02, 12 row(s) accepted.' }, 409);
+        }
+        return envelope({ data: { runId: 9, status: 'succeeded', received: 1, accepted: 1, rejected: 0, rejects: [],
+          projection: { kriReadings: 1, qtlUpdates: 0, subjectProfiles: 0, siteObservations: 0, unmatched: [] } } }, 201);
+      }
+      return envelope({ data: {} }, 201);
+    });
+    render(<RbmOverview board={board()} onTab={vi.fn()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Load extract…/ }));
+    fireEvent.change(await screen.findByLabelText(/paste the rows/), { target: { value: 'metric_key,value\nQuery rate,12\n' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Load extract' }));
+    expect(await screen.findByText(/Already loaded\./)).toBeTruthy();
+    const reprocess = screen.getByRole('button', { name: /Reprocess and replace that run/ });
+    expect(reprocess).toHaveProperty('disabled', true);
+    fireEvent.change(screen.getByLabelText(/Reason for reprocessing/), { target: { value: 'Unit mapping corrected' } });
+    fireEvent.click(reprocess);
+    expect(await screen.findByText(/Run 9 — succeeded/)).toBeTruthy();
+    expect(posts).toHaveLength(2);
+    expect(posts[0]).not.toHaveProperty('reprocess');
+    expect(posts[1]).toMatchObject({ reprocess: true, reprocessReason: 'Unit mapping corrected' });
+  });
+});

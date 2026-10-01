@@ -39,9 +39,12 @@
  *     POST  /api/mdx/rbm-monitoring-plans       GET .../:id (plan + actions)
  *     POST  /api/mdx/rbm-monitoring-plans/generate  (derive a draft plan + actions
  *                                                    from the governing RACT)
- *     PATCH /api/mdx/rbm-monitoring-plans/:id
+ *     PATCH /api/mdx/rbm-monitoring-plans/:id    (409 on an approved plan)
+ *     POST  /api/mdx/rbm-monitoring-plans/:id/approve  (e-signed; archives the
+ *                                                       version it supersedes)
+ *     POST  /api/mdx/rbm-monitoring-plans/:id/amend    (opens the next version)
  *     GET   /api/mdx/rbm-monitoring-actions?plan_id=&program_id=
- *     POST  /api/mdx/rbm-monitoring-actions     PATCH .../:id
+ *     POST  /api/mdx/rbm-monitoring-actions     (draft plans only)  PATCH .../:id
  *
  *   Program summary
  *     GET   /api/mdx/rbm-summary/:programId
@@ -56,11 +59,14 @@ import {
 } from '../lib/api-response';
 import { pool } from '../db';
 import {
-  scoreRisk, overallRiskFromScores, kriStatus, qtlStatus,
-  DEFAULT_CTQ_FACTORS, DEFAULT_KRIS, DEFAULT_QTLS,
-  type KriDirection,
+  scoreRisk, overallRiskFromScores, kriStatus, qtlStatus, qtlRangeError,
+  DEFAULT_CTQ_FACTORS, DEFAULT_KRIS, DEFAULT_QTLS, QTL_DIRECTIONS,
+  type KriDirection, type QtlDirection,
 } from '../services/rbm/rbm-engine';
-import { generatePlanFromAssessment, amendAssessment, approveAssessment, approvePlan } from '../services/rbm/rbm-actuator';
+import {
+  generatePlanFromAssessment, amendAssessment, approveAssessment, approvePlan,
+  amendMonitoringPlan, nextPlanVersion, createAction,
+} from '../services/rbm/rbm-actuator';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
 import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
@@ -104,7 +110,6 @@ const SIGNAL_SOURCE = ['central_stat', 'kri', 'qtl', 'site_score', 'manual'] as 
 const SEVERITY = ['low', 'medium', 'high', 'critical'] as const;
 const SIGNAL_STATUS = ['new', 'triaged', 'investigating', 'resolved', 'dismissed'] as const;
 const PLAN_STRATEGY = ['centralized', 'risk_based', 'on_site', 'hybrid'] as const;
-const PLAN_STATUS = ['draft', 'active', 'archived'] as const;
 const ACTION_TYPE = ['issue', 'capa', 'site_visit', 'query', 'escalation'] as const;
 const PRIORITY = ['low', 'medium', 'high'] as const;
 const ACTION_STATUS = ['open', 'in_progress', 'done'] as const;
@@ -159,12 +164,16 @@ router.get('/rbm-assessments', async (req, res) => {
   } catch (err) { return serverError(res, log, 'list-assessments', err); }
 });
 
+// `status` is deliberately NOT accepted on create. A hand-created assessment is
+// always a draft: 'active' attests to a signed approval and is reachable only
+// through POST /rbm-assessments/:id/approve. Accepting status:'active' here
+// minted an approved-looking governing risk basis with no signature, no
+// approved_by and no approved_at (#1166).
 const createAssessBody = z.object({
   programId: z.string().regex(UUID_RE).optional().nullable(),
   title: z.string().min(1).max(300),
   framework: z.enum(FRAMEWORK).optional(),
   overallRisk: z.enum(['low', 'medium', 'high']).optional().nullable(),
-  status: z.enum(ASSESS_STATUS).optional(),
 });
 
 router.post('/rbm-assessments', async (req, res) => {
@@ -176,8 +185,8 @@ router.post('/rbm-assessments', async (req, res) => {
   try {
     const { rows } = await pool.query(
       `INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [orgId, p.programId ?? null, p.title, p.framework ?? 'ich_e6r3', p.overallRisk ?? null, p.status ?? 'draft', getUserId(req)],
+       VALUES ($1,$2,$3,$4,$5,'draft',$6) RETURNING *`,
+      [orgId, p.programId ?? null, p.title, p.framework ?? 'ich_e6r3', p.overallRisk ?? null, getUserId(req)],
     );
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'create-assessment', err); }
@@ -645,6 +654,11 @@ const createQtlBody = z.object({
   rationale: z.string().max(2000).optional().nullable(),
   threshold: z.number().optional().nullable(),
   secondaryLimit: z.number().optional().nullable(),
+  /** Which way the limit bites. Defaults to `upper` — the historical behaviour. */
+  direction: z.enum(QTL_DIRECTIONS as [QtlDirection, ...QtlDirection[]]).optional(),
+  /** two_sided only: the lower bound and its early-warning limit. */
+  thresholdLower: z.number().optional().nullable(),
+  secondaryLimitLower: z.number().optional().nullable(),
   currentValue: z.number().optional().nullable(),
   breachActionTaken: z.string().max(2000).optional().nullable(),
 });
@@ -655,13 +669,25 @@ router.post('/rbm-qtls', async (req, res) => {
   const parsed = createQtlBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
-  const status = qtlStatus(p.currentValue ?? null, p.threshold ?? null, p.secondaryLimit ?? null);
+  // A two-sided limit that is not a usable range would read not_evaluated or
+  // breached forever with no hint the limit is the problem — refuse it.
+  const rangeErr = qtlRangeError(p);
+  if (rangeErr) return clientError(res, 422, rangeErr);
+  const status = qtlStatus(p.currentValue ?? null, {
+    threshold: p.threshold ?? null,
+    secondaryLimit: p.secondaryLimit ?? null,
+    direction: p.direction ?? 'upper',
+    thresholdLower: p.thresholdLower ?? null,
+    secondaryLimitLower: p.secondaryLimitLower ?? null,
+  });
   try {
     const { rows } = await pool.query(
-      `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit, current_value, breached, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit,
+         direction, threshold_lower, secondary_limit_lower, current_value, breached, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [orgId, p.programId ?? null, p.parameter, p.rationale ?? null, p.threshold ?? null,
-        p.secondaryLimit ?? null, p.currentValue ?? null, status === 'breached', status],
+        p.secondaryLimit ?? null, p.direction ?? 'upper', p.thresholdLower ?? null,
+        p.secondaryLimitLower ?? null, p.currentValue ?? null, status === 'breached', status],
     );
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'create-qtl', err); }
@@ -695,6 +721,7 @@ const patchQtlBody = createQtlBody.partial();
 const QTL_COL: Record<string, string> = {
   parameter: 'parameter', rationale: 'rationale', threshold: 'threshold',
   secondaryLimit: 'secondary_limit', currentValue: 'current_value', breachActionTaken: 'breach_action_taken',
+  direction: 'direction', thresholdLower: 'threshold_lower', secondaryLimitLower: 'secondary_limit_lower',
 };
 
 router.patch('/rbm-qtls/:id', async (req, res) => {
@@ -708,15 +735,35 @@ router.patch('/rbm-qtls/:id', async (req, res) => {
   if (!patch) return clientError(res, 422, 'No updatable fields in body');
   try {
     const cur = await pool.query(
-      `SELECT threshold, secondary_limit, current_value FROM rbm_qtls WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      `SELECT threshold, secondary_limit, direction, threshold_lower, secondary_limit_lower, current_value
+         FROM rbm_qtls WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
       [id, orgId],
     );
     if (cur.rows.length === 0) return notFoundInTenant(res, 'QTL');
     const row = cur.rows[0];
-    const threshold = parsed.data.threshold ?? num(row.threshold);
-    const secondary = parsed.data.secondaryLimit ?? num(row.secondary_limit);
-    const value = parsed.data.currentValue ?? num(row.current_value);
-    const status = qtlStatus(value, threshold, secondary);
+    // Status is recomputed against the row's EFFECTIVE limits: the patched value
+    // where the key was GIVEN, the stored one where it was OMITTED. `??` got that
+    // wrong for an explicit null — `{ threshold: null }` fell back to the stored
+    // threshold, so a QTL whose limit was cleared (buildPatch writes the NULL)
+    // kept reporting within/approaching/breached instead of not_evaluated.
+    const body = parsed.data as Record<string, unknown>;
+    const given = <T>(key: string, stored: T | null): T | null =>
+      (Object.prototype.hasOwnProperty.call(body, key) && body[key] !== undefined
+        ? (body[key] as T | null)
+        : stored);
+    const limits = {
+      threshold: given<number>('threshold', num(row.threshold)),
+      secondaryLimit: given<number>('secondaryLimit', num(row.secondary_limit)),
+      direction: (parsed.data.direction ?? row.direction ?? 'upper') as QtlDirection,
+      thresholdLower: given<number>('thresholdLower', num(row.threshold_lower)),
+      secondaryLimitLower: given<number>('secondaryLimitLower', num(row.secondary_limit_lower)),
+    };
+    // Validated on the MERGED limits: switching an upper-bound QTL to two_sided
+    // without supplying a lower bound must fail even though the patch body
+    // looks complete on its own.
+    const rangeErr = qtlRangeError(limits);
+    if (rangeErr) return clientError(res, 422, rangeErr);
+    const status = qtlStatus(given<number>('currentValue', num(row.current_value)), limits);
     patch.args.push(status, status === 'breached');
     patch.setSql += `, status = $${patch.args.length - 1}, breached = $${patch.args.length}`;
     patch.args.push(id, orgId);
@@ -1104,17 +1151,23 @@ router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
     );
   }
 
+  const client = await pool.connect();
   try {
+    await client.query('BEGIN');
     // §11.10(d) two-person rule — see the assessment route above for why an
     // authorless row is approved rather than stranded.
-    const authorRow = await pool.query(
+    const authorRow = await client.query(
       `SELECT created_by FROM rbm_monitoring_plans
         WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
       [id, orgId],
     );
-    if (authorRow.rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
+    if (authorRow.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return notFoundInTenant(res, 'Monitoring plan');
+    }
     const authorId: number | null = authorRow.rows[0].created_by ?? null;
     if (authorId !== null && authorId === signerId) {
+      await client.query('ROLLBACK');
       return clientError(
         res,
         403,
@@ -1124,12 +1177,23 @@ router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
     }
     // The route carried its own copy of this UPDATE while the AnA path wrote
     // the same table through rbm-actuator; both go through approvePlan now.
-    const row = await approvePlan(pool, orgId, signerId, id, parsed.data.reason, {
+    // One transaction: activating this version and archiving the one it
+    // supersedes commit together, so a study never has two active plans.
+    const row = await approvePlan(client, orgId, signerId, id, parsed.data.reason, {
       authorKnown: authorId !== null,
     });
-    if (!row) return notFoundInTenant(res, 'Monitoring plan');
+    if (!row) {
+      await client.query('ROLLBACK');
+      return notFoundInTenant(res, 'Monitoring plan');
+    }
+    await client.query('COMMIT');
     return ok(res, row);
-  } catch (err) { return serverError(res, log, 'approve-plan', err); }
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'approve-plan', err);
+  } finally {
+    client.release();
+  }
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1153,12 +1217,17 @@ router.get('/rbm-monitoring-plans', async (req, res) => {
   } catch (err) { return serverError(res, log, 'list-plans', err); }
 });
 
+// `status` is deliberately NOT accepted here. A hand-created plan is always a
+// draft: 'active' attests to a signed approval and must be reached only through
+// POST /rbm-monitoring-plans/:id/approve, which re-verifies the signer, stamps
+// approved_by/approved_at and archives the superseded version in one
+// transaction. status:'active' on create minted an unsigned plan wearing a
+// signature's authority (#1166).
 const createPlanBody = z.object({
   programId: z.string().regex(UUID_RE).optional().nullable(),
   assessmentId: z.number().int().positive().optional().nullable(),
   title: z.string().min(1).max(300),
   strategy: z.enum(PLAN_STRATEGY).optional(),
-  status: z.enum(PLAN_STATUS).optional(),
 });
 
 router.post('/rbm-monitoring-plans', async (req, res) => {
@@ -1168,10 +1237,13 @@ router.post('/rbm-monitoring-plans', async (req, res) => {
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
   try {
+    // A hand-created plan takes the next version in the study's chain rather
+    // than always being v1, so it cannot collide with a version on file.
+    const version = await nextPlanVersion(pool, orgId, p.programId ?? null);
     const { rows } = await pool.query(
-      `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [orgId, p.programId ?? null, p.assessmentId ?? null, p.title, p.strategy ?? 'risk_based', p.status ?? 'draft', getUserId(req)],
+      `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, version, created_by)
+       VALUES ($1,$2,$3,$4,$5,'draft',$6,$7) RETURNING *`,
+      [orgId, p.programId ?? null, p.assessmentId ?? null, p.title, p.strategy ?? 'risk_based', version, getUserId(req)],
     );
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'create-plan', err); }
@@ -1200,6 +1272,10 @@ router.post('/rbm-monitoring-plans/generate', async (req, res) => {
     const result = await generatePlanFromAssessment(client, orgId, parsed.data);
     if (!result.generated) {
       await client.query('ROLLBACK');
+      if (result.reason === 'draft_already_open') {
+        return clientError(res, 409,
+          'A draft monitoring plan version is already open for this study — approve or archive it before generating another.');
+      }
       return clientError(res, 409, result.reason === 'assessment_not_approved'
         ? 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.'
         : 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan');
@@ -1256,8 +1332,29 @@ router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const patch = buildPatch(parsed.data, PLAN_COL);
   if (!patch) return clientError(res, 422, 'No updatable fields in body');
-  patch.args.push(id, orgId);
   try {
+    const cur = await pool.query(
+      `SELECT status, version FROM rbm_monitoring_plans
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [id, orgId],
+    );
+    if (cur.rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
+    const { status: curStatus, version: curVersion } = cur.rows[0];
+    // A plan that is no longer a draft is read-only. An approved plan's
+    // e-signature attests to a specific strategy and set of actions, so editing
+    // it in place would leave the approver's name on content they never saw.
+    // /amend opens a new draft version instead. A status-only change to
+    // 'archived' stays allowed so a plan can be retired without amending it;
+    // moving a non-draft BACK to draft is not, since that would reopen a signed
+    // record for editing with its approval fields still attached.
+    const statusOnly = Object.entries(parsed.data).every(([k, v]) => k === 'status' || v === undefined);
+    const retiring = statusOnly && parsed.data.status === 'archived';
+    if (curStatus !== 'draft' && !retiring) {
+      return clientError(res, 409,
+        `Monitoring plan v${curVersion ?? '?'} is ${curStatus} and cannot be edited. `
+        + `POST /rbm-monitoring-plans/${id}/amend to open a new draft version — the signed version stays on file.`);
+    }
+    patch.args.push(id, orgId);
     const { rows } = await pool.query(
       `UPDATE rbm_monitoring_plans SET ${patch.setSql}, updated_at = NOW()
         WHERE id = $${patch.args.length - 1} AND organization_id = $${patch.args.length} AND deleted_at IS NULL
@@ -1267,6 +1364,50 @@ router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
     if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
     return ok(res, rows[0]);
   } catch (err) { return serverError(res, log, 'patch-plan', err); }
+});
+
+/**
+ * Open a versioned amendment to an approved monitoring plan — a new draft
+ * carrying the unfinished actions forward, leaving the signed version intact.
+ * See amendMonitoringPlan for why revision is a new version, not an edit.
+ *
+ * Opening an amendment is not itself a signed act, so it takes a reason for
+ * the record but no e-signature; the signature is required to approve it.
+ */
+const amendPlanBody = z.object({ reason: z.string().min(3).max(2000) });
+
+router.post('/rbm-monitoring-plans/:id/amend', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = numericId(req.params.id);
+  if (id === null) return clientError(res, 422, 'id must be numeric');
+  const parsed = amendPlanBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'A reason for the amendment is required', parsed.error.flatten().fieldErrors);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await amendMonitoringPlan(client, orgId, {
+      planId: id, reason: parsed.data.reason, openedBy: getUserId(req),
+    });
+    if (!result.amended) {
+      await client.query('ROLLBACK');
+      if (result.reason === 'not_found') return notFoundInTenant(res, 'Monitoring plan');
+      return clientError(res, 409, result.reason === 'amendment_already_open'
+        ? 'A draft plan version is already open for this study — approve or archive it before opening another.'
+        : 'Only an approved monitoring plan can be amended. This one is still a draft, so edit it directly.');
+    }
+    await client.query('COMMIT');
+    return created(res, { ...result.plan, actions: result.actions }, {
+      supersedes: result.supersedes,
+      actionsCopied: result.actions?.length ?? 0,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'amend-plan', err);
+  } finally {
+    client.release();
+  }
 });
 
 const actionListQuery = z.object({
@@ -1313,21 +1454,16 @@ router.post('/rbm-monitoring-actions', async (req, res) => {
   if (orgId === null) return orgRequired(res);
   const parsed = createActionBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
-  // Verify the plan belongs to the caller's org.
-  const own = await pool.query(
-    `SELECT 1 FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-    [p.planId, orgId],
-  );
-  if (own.rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
+  // One implementation with the AnA tool: createAction verifies the plan is
+  // this org's AND still a draft. An approved plan's actions are what its
+  // signature attests to, so a new one goes on an amendment (#1166).
   try {
-    const { rows } = await pool.query(
-      `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, risk_item_id, signal_id, action_type, description, priority, owner, due_date, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'open') RETURNING *`,
-      [orgId, p.planId, p.riskItemId ?? null, p.signalId ?? null, p.actionType ?? 'issue',
-        p.description, p.priority ?? 'medium', p.owner ?? null, p.dueDate ?? null],
-    );
-    return created(res, rows[0]);
+    const out = await createAction(pool, orgId, parsed.data);
+    if (!out.created) {
+      if (out.reason === 'plan_not_found') return notFoundInTenant(res, 'Monitoring plan');
+      return clientError(res, 409, out.message, { reason: out.reason, planStatus: out.planStatus });
+    }
+    return created(res, out.action);
   } catch (err) { return serverError(res, log, 'create-action', err); }
 });
 
