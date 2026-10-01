@@ -9,7 +9,9 @@
  * answer was "nothing says". Decided 2026-10-01: an export of an existing record
  * gets the same EXPORT_GENERATED row as a generated document. That means the
  * SHA-256 of the exact bytes, and no delivery when the row does not persist.
- * The citation JSON views are API reads, not files, and are unchanged.
+ * The citation JSON views are API reads, not files, and are unchanged. The AnA
+ * lineage dossier's XML form (GET /api/ana-ri/documents/:id/lineage-dossier.xml)
+ * is the same kind of file and is held to the same rule.
  */
 import crypto from 'node:crypto';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -52,6 +54,12 @@ vi.mock('../../services/ana/citation-export', () => ({
   formatCitationsJsonExport: () => ({ rows: [] }),
 }));
 
+const XML = vi.hoisted(() => '<?xml version="1.0"?><lineage/>');
+vi.mock('../../services/ana/lineage-dossier.js', () => ({ buildDocumentLineageDossier: vi.fn(async () => ({ artifactId: 'art-1' })) }));
+vi.mock('../../services/ana/lineage-dossier-xml.js', () => ({ serializeDocumentLineageDossierXml: () => XML }));
+
+import { Router } from 'express';
+import { mountLineageRoutes } from '../ana-ri/lineage';
 import dataOriginsRouter from '../data-origins.routes';
 import anaFeaturesRouter from '../ana-features';
 
@@ -68,10 +76,14 @@ function app() {
   a.use((req: Request, _s: Response, n: NextFunction) => {
     (req as any).user = { id: 3, organizationId: 7, email: 'reviewer@example.com' };
     (req as any).tenantContext = { organizationId: 7 };
+    (req as any).tenantId = 7;
     n();
   });
   a.use('/api/data-origins', dataOriginsRouter);
   a.use('/api/ana', anaFeaturesRouter);
+  const anaRi = Router();
+  mountLineageRoutes(anaRi);
+  a.use('/api/ana-ri', anaRi);
   return a;
 }
 
@@ -82,6 +94,7 @@ const cases = [
   { name: 'citation DOCX', go: () => request(app()).post('/api/ana/citations/art-1/export.docx').send({}), body: DOCX },
   { name: 'artifact citation CSV', go: () => request(app()).get('/api/ana/citations/art-1/export?format=csv'), body: Buffer.from(CSV) },
   { name: 'project citation CSV', go: () => request(app()).get('/api/ana/citations/projects/5/export?format=csv'), body: Buffer.from(CSV) },
+  { name: 'lineage dossier XML', go: () => request(app()).get('/api/ana-ri/documents/art-1/lineage-dossier.xml'), body: Buffer.from(XML) },
 ];
 
 beforeEach(() => logAction.mockReset());
