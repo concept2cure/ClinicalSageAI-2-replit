@@ -1,0 +1,62 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T00:27:18.081Z","pid":18465,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T00:27:18.082Z","pid":18465,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T00:27:18.082Z","pid":18465,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-reports.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful { timestamp: '2026-10-01T00:27:18.574Z', poolSize: 1 }
+
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read 77ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows 44ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > authentication-events runs as organisation A, verifies, and carries only A rows 23ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > administrative-changes runs as organisation A, verifies, and carries only A rows 20ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > electronic-signatures runs as organisation A, verifies, and carries only A rows 24ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > audit-trail-integrity runs as organisation A, verifies, and carries only A rows 23ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention-legal-holds runs as organisation A, verifies, and carries only A rows 19ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled-documents runs as organisation A, verifies, and carries only A rows 15ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access review: A members only, with the last sign-in read from the sign-in audit row 16ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > sign-in events and administrative changes: A rows are there, B rows are not 29ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > signature register: the A fixture signature, never the B one 21ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention and holds: the vault is reached under its own policy, A hold and disposition only 23ms
+ × tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty 13ms
+   → expected [] to deeply equal [ 'wo03_18465_muosog92-policy-A' ]
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled documents: the A document only 16ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict 14ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > each run writes exactly one compliance.report_run row on A's chain, and none on B's 18ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty
+AssertionError: expected [] to deeply equal [ 'wo03_18465_muosog92-policy-A' ]
+
+- Expected
++ Received
+
+- [
+-   "wo03_18465_muosog92-policy-A",
+- ]
++ []
+
+ ❯ tests/db/compliance-reports.dbtest.ts:279:48
+    277|     );
+    278|     const policies = tagged(data.sections.find((x) => x.key === 'polic…
+    279|     expect(policies.map((r) => r.policy_name)).toEqual([`${TAG}-policy…
+       |                                                ^
+    280|   });
+    281|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  00:27:15
+   Duration  3.28s (transform 1.26s, setup 73ms, import 2.17s, tests 718ms, environment 0ms)
+

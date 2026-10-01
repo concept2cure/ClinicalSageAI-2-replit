@@ -1,0 +1,105 @@
+# Mutation run (review round 1): finalizeOnChain made to COMMIT the status and the seal before the chain row is written,
+# i.e. the round-0 shape (two transactions). The all-or-none case must fail. Restored afterwards (cmp identical).
+#   +      await client.query('COMMIT'); // MUTATION: the writes commit before the chain row
+#   +      await client.query('BEGIN');
+
+$ TEST_DATABASE_URL='postgresql://postgres@127.0.0.1:5432/c2c_testdb?sslmode=disable' APP_DATABASE_URL='postgresql://app_service:local-testdb-app-service-password@127.0.0.1:5432/c2c_testdb?sslmode=disable' RLS_ENFORCE=on NODE_OPTIONS=--max-old-space-size=3072 npx vitest run --config vitest.db.config.ts tests/db/report-os-registry-seed.dbtest.ts   # MUTATION: finalize commits the status and seal before writing the chain row
+# run at 2026-10-01T01:47:43Z
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T01:47:46.529Z","pid":9091,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T01:47:46.530Z","pid":9091,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T01:47:46.530Z","pid":9091,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T01:47:46.676Z', poolSize: 1 }
+
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-registry-seed.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > applies to the provisioned database and registers every in-code type, column for column 18ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > re-applies idempotently: the code's values return, an operator's disable survives 24ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > as app_service under RLS, POST /runs for a seeded type creates the run and records it 161ms
+{"level":50,"time":"2026-10-01T01:47:47.773Z","pid":9091,"hostname":"vm","context":{"runId":17,"error":"refused by the review round 1 dbtest"},"msg":"[report-os] report finalize not recorded on the audit chain; rolled back"}
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > refuses a member: nothing is sealed and nothing is recorded 12ms
+ × tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > when the chain row is refused, the status and the seal roll back with it (503, nothing changed) 34ms
+   → nothing may have changed: expected { status: 'final', …(1) } to deeply equal { Object (status, seal_hash) }
+ × tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > an admin finalizes: status, seal and one chained row, together 15ms
+   → {"success":false,"error":{"code":"RUN_ALREADY_FINAL","message":"This report is already final. Its seal stands and is not replaced."},"data":{"runId":17}}: expected 409 to be 200 // Object.is equality
+ × tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > a second finalize is refused: the seal stands and nothing more is recorded 16ms
+   → expected [] to have a length of 1 but got +0
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > a bundle export is recorded on the chain with the hash of the bytes sent 82ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > when the chain row is refused, the status and the seal roll back with it (503, nothing changed)
+AssertionError: nothing may have changed: expected { status: 'final', …(1) } to deeply equal { Object (status, seal_hash) }
+
+- Expected
++ Received
+
+  {
+-   "seal_hash": null,
+-   "status": "completed",
++   "seal_hash": "2dbfaee2fb39c9ac6ae20d79f49933521660e8a468de4889377fdbc2a1ee220a",
++   "status": "final",
+  }
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:259:58
+    257|       await owner.query(`DROP FUNCTION IF EXISTS ${REFUSE_FN}()`);
+    258|     }
+    259|     expect(await runState(), 'nothing may have changed').toEqual({ sta…
+       |                                                          ^
+    260|     expect(await finalizedRows()).toEqual([]);
+    261|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > an admin finalizes: status, seal and one chained row, together
+AssertionError: {"success":false,"error":{"code":"RUN_ALREADY_FINAL","message":"This report is already final. Its seal stands and is not replaced."},"data":{"runId":17}}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:265:50
+    263|   it('an admin finalizes: status, seal and one chained row, together',…
+    264|     const res = await request(ro).post(`/api/report-os/runs/${runId}/f…
+    265|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    266|     const sealHash = res.body.data.seal.contentHash as string;
+    267|     expect(await runState()).toEqual({ status: 'final', seal_hash: sea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > a second finalize is refused: the seal stands and nothing more is recorded
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:279:35
+    277|     expect(res.body.error.code).toBe('RUN_ALREADY_FINAL');
+    278|     expect(await runState()).toEqual(before);
+    279|     expect(await finalizedRows()).toHaveLength(1);
+       |                                   ^
+    280|   });
+    281|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 passed (8)
+   Start at  01:47:44
+   Duration  3.64s (transform 1.53s, setup 75ms, import 2.64s, tests 641ms, environment 0ms)
+
+exit=1
