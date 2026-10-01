@@ -89,6 +89,7 @@ import {
   readFiledSequences,
   SequenceLifecycleRefusal,
   type SequencePlan,
+  type StaleOnFile,
 } from '../services/ectd/package-sequence-lifecycle';
 import {
   artifactApproval,
@@ -2119,6 +2120,36 @@ function fdaIdentifierRefusal(
 }
 
 /**
+ * The finding for a document this sequence leaves current on file although the
+ * package no longer files it there. A moved document is an ERROR: the agency
+ * would keep a current copy at a heading the product no longer places it at,
+ * and every later revision would replace only the new copy (sweep F12, W5/D7,
+ * 2026-10-01). A placeholder filed before empty sections stopped filing one is
+ * a warning (sweep F11). Each names the exact `withdraw` entry.
+ */
+function staleOnFileFinding(s: StaleOnFile): { severity: 'error' | 'warning'; ruleId: string; message: string } {
+  const entry = `withdraw: [{ ctdSection: '${s.ctdSection}', fileName: '${s.fileName}' }]`;
+  const held = s.sequenceNumber ? ` (filed in sequence ${s.sequenceNumber})` : '';
+  if (s.reason === 'relocated' && s.movedTo) {
+    return {
+      severity: 'error',
+      ruleId: 'LEAF-RELOCATED-OLD-COPY-CURRENT',
+      message:
+        `${s.ctdSection}/${s.fileName}${held} stays current at the agency: the same artifact is now placed at ${s.movedTo.ctdSection} ` +
+        `and this sequence files it there as a new document. A move is a withdrawal and a new filing — add ${entry} to this assembly, ` +
+        `or place the artifact back at ${s.ctdSection}.`,
+    };
+  }
+  return {
+    severity: 'warning',
+    ruleId: 'PLACEHOLDER-ON-FILE',
+    message:
+      `${s.ctdSection}/${s.fileName}${held} is a generated empty-section placeholder, and it is still current at the agency. ` +
+      `Withdraw it with ${entry}.`,
+  };
+}
+
+/**
  * The assemble gate's REGULATORY-IDENTIFIER-MISSING message: the identifiers the
  * package does not record usably, named by their metadata paths as this finding
  * always has, then what an FDA backbone needs that the recorded ones do not
@@ -2666,6 +2697,12 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           // instead of asking the operator to read them out of a sentence.
           ...(e.acceptedSubmissionTypes ? { acceptedSubmissionTypes: e.acceptedSubmissionTypes } : {}),
         });
+      }
+      // What this sequence leaves current at the agency although the package no
+      // longer files it there (sweep F12, F11). Withdrawal stays explicit, so it
+      // is named — as the exact entry to add — never inferred.
+      for (const s of lifecycle.staleOnFile) {
+        placementFindings.push(staleOnFileFinding(s));
       }
       // Apply the plan: each shipping leaf carries its operation (and, when it
       // supersedes one already on file, the modified-file pointer to it), and a
