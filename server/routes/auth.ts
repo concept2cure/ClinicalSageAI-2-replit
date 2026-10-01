@@ -208,6 +208,12 @@ function maskEmail(email: string): string {
   return `${visible}${'*'.repeat(Math.max(0, local.length - 2))}@${domain}`;
 }
 
+/** A locked account's answer at either sign-in step. No lockout timestamp. */
+const ACCOUNT_LOCKED_BODY = {
+  success: false,
+  error: { code: 'AUTH_002', message: 'Account temporarily locked due to too many failed attempts. Try again later.' },
+};
+
 function requireDb(res: Response): boolean {
   if (!db) {
     res.status(503).json({
@@ -444,14 +450,7 @@ router.post('/login', signInLimits.login, async (req: Request, res: Response) =>
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
       });
-      return res.status(423).json({
-        success: false,
-        error: {
-          code: 'AUTH_002',
-          message: 'Account temporarily locked due to too many failed attempts. Try again later.',
-        },
-        // SECURITY: Don't leak exact lockout timestamp
-      });
+      return res.status(423).json(ACCOUNT_LOCKED_BODY);
     }
 
     if (!userData.passwordHash) {
@@ -528,8 +527,9 @@ router.post('/login', signInLimits.login, async (req: Request, res: Response) =>
       });
     }
 
-    // Successful password check — reset lockout counter
-    await resetFailedLogins(userData.id);
+    // An authenticator code still to come counts too, so /mfa/verify clears the
+    // count then: a fresh password buys no fresh guesses (U17).
+    if (mfaEnrolmentOf(userData).signInFactor !== 'totp' || isDevAuthAllowed()) await resetFailedLogins(userData.id);
     // NOTE: the "success" audit fires where the session is created: on the
     // development path below, or on /mfa/verify for every other sign-in. This
     // route records the MFA challenge it issues, so a sign-in is recorded as
@@ -1612,6 +1612,38 @@ router.get('/me', async (req: Request, res: Response) => {
   }
 });
 
+type MfaChallenge = NonNullable<ReturnType<typeof mfaService.verifyMfaChallengeToken>>;
+
+/**
+ * A challenge issued before the account was suspended or deprovisioned (VSR-001
+ * F-29), or locked, does not become a session after it. Checked before the code,
+ * so neither spends one. Answers whether it refused.
+ */
+async function refuseAccountAtSecondFactor(req: Request, res: Response, challenge: MfaChallenge, userId: number) {
+  const inactive = !(await isAccountActive(userId));
+  if (!inactive && !(await isAccountLocked(userId)).locked) return false;
+  const reason = inactive ? 'account_inactive' : 'account_locked';
+  await recordAuthEvent({ action: 'user_login', userId, tenantId: challenge.organizationId, email: challenge.email, outcome: 'failure', reason, ipAddress: req.ip, userAgent: req.headers['user-agent'] });
+  if (inactive) res.status(403).json({ success: false, error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE } });
+  else res.status(423).json(ACCOUNT_LOCKED_BODY);
+  return true;
+}
+
+/**
+ * A wrong authenticator or recovery code counts toward the password step's
+ * lockout, in the users row, so every API task sees it (U17). An emailed code
+ * keeps its own cap (emailOtpService).
+ */
+async function refuseWrongSecondFactor(req: Request, res: Response, challenge: MfaChallenge, userId: number, counts: boolean) {
+  const locked = counts && (await recordFailedLogin(userId)).locked;
+  const reason = locked ? 'invalid_code_threshold_exceeded' : 'invalid_code';
+  await recordAuthEvent({ action: 'user_login_mfa_failed', userId, tenantId: challenge.organizationId, email: challenge.email, outcome: 'failure', reason, ipAddress: req.ip, userAgent: req.headers['user-agent'] });
+  res.status(401).json({
+    success: false,
+    error: { code: 'AUTH_004', message: 'Invalid or expired verification code. Each code works once; if you just used it, wait for the next.' },
+  });
+}
+
 /**
  * POST /api/auth/mfa/verify
  * Complete MFA verification during login.
@@ -1649,26 +1681,7 @@ router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: 
     }
 
     const userId = parseInt(challenge.userId);
-
-    // A challenge issued before the account was suspended or deprovisioned does
-    // not become a session after it (VSR-001 F-29). Checked before the code, so
-    // an account out of use spends none.
-    if (!(await isAccountActive(userId))) {
-      await recordAuthEvent({
-        action: 'user_login',
-        userId,
-        tenantId: challenge.organizationId,
-        email: challenge.email,
-        outcome: 'failure',
-        reason: 'account_inactive',
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-      });
-      return res.status(403).json({
-        success: false,
-        error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
-      });
-    }
+    if (await refuseAccountAtSecondFactor(req, res, challenge, userId)) return;
 
     // The factor this account signs in with (mfa-enrolment.ts). An account with
     // an authenticator never completes sign-in with an emailed code: the emailed
@@ -1693,30 +1706,12 @@ router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: 
       isValid = (await mfaService.verifyLoginSecondFactor(userId, code)) !== null;
     }
 
-    if (!isValid) {
-      await recordAuthEvent({
-        action: 'user_login_mfa_failed',
-        userId,
-        tenantId: challenge.organizationId,
-        email: challenge.email,
-        outcome: 'failure',
-        reason: 'invalid_code',
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-      });
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_004',
-          message: 'Invalid or expired verification code. Each code works once; if you just used it, wait for the next.',
-        },
-      });
-    }
+    if (!isValid) return await refuseWrongSecondFactor(req, res, challenge, userId, authenticatorAccount);
 
-    // MFA verified — update last login and issue full tokens
+    // Sign-in complete: clear the lockout count and stamp last login.
     if (!requireDb(res)) return;
 
-    await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, userId));
+    await resetFailedLogins(userId);
 
     const [userData] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 

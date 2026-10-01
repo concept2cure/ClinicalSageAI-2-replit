@@ -337,14 +337,15 @@ router.post('/continuity', async (req: Request, res: Response) => {
 // GET /api/orchestration/continuity/:projectId
 // ---------------------------------------------------------------------------
 
-router.get('/continuity/:projectId', (req: Request, res: Response) => {
+router.get('/continuity/:projectId', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
     const projectId = projectIdOf(req.params.projectId);
     if (projectId === null) {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
-    const snapshot = getLatestSnapshot(orgId, projectId);
+    // Read from project_continuity_snapshots, shared by every API task (U14).
+    const snapshot = await getLatestSnapshot(orgId, projectId);
     if (!snapshot) {
       return res.status(404).json({ error: 'No continuity snapshot available. POST to /api/orchestration/continuity to generate one.' });
     }
