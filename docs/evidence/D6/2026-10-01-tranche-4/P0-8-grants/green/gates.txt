@@ -1,0 +1,20 @@
+## npm run -s ci:audit-logs-fixture
+  fixtures found            : 16
+
+✅ every audit_logs fixture accepts the writer's full column list.
+exit=0
+## npm run -s ci:tenant-isolation
+    … 1 more
+
+Total: 8 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+exit=0
+## ci:tenant-isolation candidates in this item's files (none expected)
+0
+## node scripts/ci/check-unrun-tests.mjs
+[ci:unrun-tests] 3283 test files · 13 vitest globs · 5 non-vitest runner globs · 0 unrun (0 allowlisted).
+[ci:unrun-tests] OK — every test file is reachable by a runner, or explained.
+exit=0
+## node scripts/ci/check-db-test-isolation.mjs
+[ci:db-test-isolation] OK — 105 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+## eslint (this item's TypeScript files; scripts/** is outside ESLint's scope by config)
+exit=0 (0 errors, 0 warnings; HEAD's versions of the two edited files: 0 warnings)

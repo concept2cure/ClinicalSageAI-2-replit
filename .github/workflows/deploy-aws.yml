@@ -466,6 +466,11 @@ jobs:
         #                            turns a missing trail, a failed immutability
         #                            probe or a disabled sweep into a boot refusal.
         #                            Both exactly `true` (security plan P0-9).
+        #   DB_AUDIT_REQUIRED        scripts/db/database-audit.mjs — exactly
+        #                            `pgaudit`: deploy-migrate (derived from this
+        #                            definition) then refuses to roll services onto
+        #                            a database whose pgaudit is not recording
+        #                            (security audit INF-13, plan P1-11).
         #   CONNECTOR_ENCRYPTION_KEY server/services/connectors/connector-registry.ts
         #                            — module-level throw in production.
         #   CONCEPT2CURE_SIGNER_MODE server/services/signature/signer-mode.ts —
@@ -506,7 +511,7 @@ jobs:
                      AI_SENSITIVE_DATA_POLICY_MODE AI_PROVIDER_PLACEMENT_APPROVALS \
                      CONCEPT2CURE_SIGNER_MODE STORAGE_PROVIDER AWS_S3_BUCKET \
                      SMTP_HOST SMTP_USER SMTP_PASS \
-                     AUDIT_TRAIL_ENABLED AUDIT_REQUIRE_ENFORCE \
+                     AUDIT_TRAIL_ENABLED AUDIT_REQUIRE_ENFORCE DB_AUDIT_REQUIRED \
                      MCP_ENABLED MCP_PUBLIC_URL MCP_CLIENT_REDIRECT_ALLOWLIST; do
             if ! grep -qx "$VAR" <<< "$PRESENT"; then MISSING="$MISSING $VAR"; fi
           done
@@ -534,6 +539,14 @@ jobs:
           fi
           if [[ "$RLS_VALUE" != "on" ]]; then
             echo "::error::RLS_ENFORCE must be exactly 'on' in the task definition; got '${RLS_VALUE:-<unset>}'. Aliases (true/1/enforce) are rejected by the production kill-switch."
+            FAIL=1
+          fi
+          DB_AUDIT_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "DB_AUDIT_REQUIRED")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json)
+          if [[ "$DB_AUDIT_VALUE" != "pgaudit" ]]; then
+            echo "::error::DB_AUDIT_REQUIRED must be exactly 'pgaudit' in the task definition; got '${DB_AUDIT_VALUE:-<unset>}'. Without it the migration would roll services onto a database whose audit of statements that bypass the application is not recording."
             FAIL=1
           fi
           # assertSensitivePlacementConfiguration refuses any production boot
