@@ -47,6 +47,9 @@ and the next one written.
 - **Not keyed:** `concept2cure_conversations.project_id`. Its writer, the AnA
   stream, has no project check yet, and a key now would fail such a turn
   mid-conversation. It goes with that writer's fix.
+  - **Corrected 2026-10-01** (`../2026-10-01-conversation-project-key/`): the
+    AnA stream does not write that table. Its one writer checks the project's
+    organization first. The key was added by amending `20261001` in place.
 
 ## Tests
 

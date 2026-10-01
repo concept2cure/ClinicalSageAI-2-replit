@@ -107,10 +107,10 @@ describe('aggregatePortfolio', () => {
     expect(members.map(m => m.name)).toEqual(order);
   });
 
-  it('returns zeros and low risk for empty members', () => {
+  it('returns zeros and low risk for empty members, and no readiness average', () => {
     const summary = aggregatePortfolio(9, []);
     expect(summary.memberCount).toBe(0);
-    expect(summary.avgReadiness).toBe(0);
+    expect(summary.avgReadiness).toBeNull();
     expect(summary.avgConfidence).toBe(0);
     expect(summary.worstRisk).toBe('low');
     expect(summary.readyCount).toBe(0);
@@ -119,6 +119,23 @@ describe('aggregatePortfolio', () => {
     expect(summary.totalCriticalBlockers).toBe(0);
     expect(summary.attentionRanked).toEqual([]);
     expect(summary.topBlockerThemes).toEqual([]);
+  });
+});
+
+describe('readiness that was not computed', () => {
+  it('averages only the members with a readiness, and ranks the rest first for attention', () => {
+    const members: ProgramMemberInsight[] = [
+      member({ projectId: 1, name: 'Known', readinessScore: 80 }),
+      member({ projectId: 2, name: 'Unknown', readinessScore: null }),
+      member({ projectId: 3, name: 'Low', readinessScore: 20 }),
+    ];
+    const summary = aggregatePortfolio(7, members);
+    expect(summary.avgReadiness).toBe(50);
+    expect(summary.attentionRanked.map((m) => m.name)).toEqual(['Unknown', 'Low', 'Known']);
+  });
+
+  it('has no average when no member has a readiness', () => {
+    expect(aggregatePortfolio(7, [member({ readinessScore: null })]).avgReadiness).toBeNull();
   });
 });
 
@@ -145,7 +162,7 @@ describe('aggregateOrgPortfolio', () => {
 
   it('returns zeros + low risk for an empty org', () => {
     const org = aggregateOrgPortfolio(42, []);
-    expect(org).toMatchObject({ organizationId: 42, memberCount: 0, avgReadiness: 0, worstRisk: 'low', truncated: false });
+    expect(org).toMatchObject({ organizationId: 42, memberCount: 0, avgReadiness: null, worstRisk: 'low', truncated: false });
   });
 });
 

@@ -135,6 +135,21 @@ export const PROGRAM_SAME_ORG_CHECKS = Object.freeze([
            ORDER BY k.id`,
   },
   {
+    relation: 'public.concept2cure_conversations',
+    keyColumn: 'project_id',
+    // project_id is NOT NULL here, so the key cannot be cleared.
+    remedy: 're-file the row under a project of its own organization (project_id is NOT NULL)',
+    keyedBy: 'concept2cure_conversations_project_same_org_fk',
+    references: 'public.projects',
+    sql: `SELECT c.id, c.organization_id AS org, c.project_id,
+                 p.organization_id AS project_org, (p.id IS NULL) AS project_missing
+            FROM public.concept2cure_conversations c
+            LEFT JOIN public.projects p ON p.id = c.project_id
+           WHERE c.project_id IS NOT NULL
+             AND (p.id IS NULL OR p.organization_id <> c.organization_id)
+           ORDER BY c.id`,
+  },
+  {
     relation: 'vault.documents',
     keyColumn: 'program_id',
     keyedBy: null,

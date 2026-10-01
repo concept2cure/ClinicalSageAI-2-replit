@@ -121,7 +121,7 @@ interface CanvasPortfolioProgram {
   code: string | null;
   label: string;
   indication: string | null;
-  readiness: number;
+  readiness: number | null;
   confidence: number;
   status: ProgramMemberInsight['status'];
   riskLevel: RiskLevel;
@@ -130,7 +130,7 @@ interface CanvasPortfolioProgram {
 
 interface CanvasPortfolioSummary {
   programCount: number;
-  avgReadiness: number;
+  avgReadiness: number | null;
   avgConfidence: number;
   worstRisk: RiskLevel;
   readyCount: number;
@@ -175,7 +175,9 @@ const LOCKED_PORTFOLIO_DECISION: ReportEntitlementDecision = {
 function pickFlagship(members: ProgramMemberInsight[]): ProgramMemberInsight | null {
   if (members.length === 0) return null;
   const sorted = [...members].sort((a, b) => {
-    if (b.readinessScore !== a.readinessScore) return b.readinessScore - a.readinessScore;
+    const ar = a.readinessScore ?? -1;
+    const br = b.readinessScore ?? -1;
+    if (br !== ar) return br - ar;
     if (a.criticalBlockerCount !== b.criticalBlockerCount) {
       return a.criticalBlockerCount - b.criticalBlockerCount;
     }

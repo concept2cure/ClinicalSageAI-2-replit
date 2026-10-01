@@ -31,7 +31,7 @@ import { fetchPortfolioReport, fetchOrgPortfolioSummary } from '../services/repo
 import { resolveCapabilities } from '../services/entitlements/resolver';
 import type { Tier } from '../services/entitlements/types';
 import { computeInitialRun } from '../services/report-os/orchestrator';
-import { renderReport, type RenderInput } from '../services/report-os/render/render';
+import { renderReport, gapsWereEvaluated, type RenderInput } from '../services/report-os/render/render';
 import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
 import type { SealedRecord } from '../services/report-os/sealing/types';
@@ -1759,7 +1759,9 @@ function buildRenderedFromRun(
       confidence: run.confidence ?? 0,
       blockers,
       criticalBlockers,
-      gapsSection: true,
+      gapsSection: gapsWereEvaluated(summary),
+      // The generic renderer and the stored lineage report emit no disclosure block.
+      disclosure: false,
     },
     rules
   );
