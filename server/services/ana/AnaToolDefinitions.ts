@@ -734,6 +734,35 @@ export const GENERATE_CITATION: AnaTool = {
   },
 };
 
+export const VERIFY_CITATIONS: AnaTool = {
+  name: 'verify_citations',
+  description:
+    "Check that each reference in a list exists, against PubMed (by PMID) and Crossref (by DOI), else by title search — with retraction status and any field that disagrees with the record. Returns each reference's verdict (verified, not_found, unverifiable, error) and the counts. Use it to audit a draft's reference list; report its verdicts, do not decide them. With the organization's public-source lookups off, every reference is unverifiable.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      citations: {
+        type: 'array',
+        description: 'The references to check (at most 50). Each needs at least one of raw, title, doi or pmid.',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Your label for the reference, echoed back (e.g. "ref 12")' },
+            raw: { type: 'string', description: 'The reference as written in the document' },
+            title: { type: 'string' },
+            authors: { type: 'string' },
+            journal: { type: 'string' },
+            year: { type: 'number' },
+            doi: { type: 'string' },
+            pmid: { type: 'string' },
+          },
+        },
+      },
+    },
+    required: ['citations'],
+  },
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Intelligence Tools
 // ─────────────────────────────────────────────────────────────────────────────
@@ -827,6 +856,7 @@ export const DOCUMENT_DRAFTING_TOOLS: AnaTool[] = [
   LOOKUP_FDA_GUIDANCE,
   LOOKUP_ICH_GUIDELINE,
   GENERATE_CITATION,
+  VERIFY_CITATIONS,
   ANALYZE_PREDICATE_DEVICE,
 ];
 
@@ -1957,6 +1987,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   CHECK_REGULATORY_COMPLIANCE,
   VALIDATE_CROSS_REFERENCES,
   GENERATE_CITATION,
+  VERIFY_CITATIONS,
   LOOKUP_REGULATORY_PRECEDENTS,
   COMPARE_SUBMISSION_AGAINST_PRECEDENT,
   ASSESS_CLAIM_EVIDENCE_INTEGRITY,

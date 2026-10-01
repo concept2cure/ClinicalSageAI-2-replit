@@ -4634,6 +4634,40 @@ registerToolHandler('generate_citation', async (input) => {
   );
 });
 
+// Verify Citations
+registerToolHandler('verify_citations', async (input) => {
+  /* A thin handler over citation-verification-service: the verdicts are the
+     engine's (PubMed, Crossref, retraction status, the tenant's public-source
+     egress honoured), counted. It was reachable only through
+     POST /api/citations/verify, so AnA audited a reference list by reading it. */
+  const citations = Array.isArray(input.citations) ? (input.citations as Array<Record<string, unknown>>) : [];
+  if (citations.length === 0) return JSON.stringify({ error: 'verify_citations requires citations (a non-empty array).' });
+  if (citations.length > 50) return JSON.stringify({ error: 'verify_citations checks at most 50 references per call.' });
+  const unidentified = citations.findIndex((c) => !c || !['raw', 'title', 'doi', 'pmid'].some((k) => typeof c[k] === 'string' && (c[k] as string).trim()));
+  if (unidentified >= 0) {
+    return JSON.stringify({ error: `Reference ${unidentified + 1} needs at least one of raw, title, doi or pmid.` });
+  }
+  const { verifyCitations } = await import('../citation-verification-service.js');
+  const results = await verifyCitations(citations as Parameters<typeof verifyCitations>[0]);
+  const count = (status: string) => results.filter((r) => r.status === status).length;
+  const summary = {
+    total: results.length,
+    verified: count('verified'),
+    retracted: results.filter((r) => r.retracted === true).length,
+    notFound: count('not_found'),
+    unverifiable: count('unverifiable'),
+    error: count('error'),
+  };
+  return JSON.stringify({
+    results,
+    summary,
+    message:
+      `${summary.verified} of ${summary.total} verified` +
+      (summary.retracted ? `, ${summary.retracted} retracted` : '') +
+      `; ${summary.notFound} not found, ${summary.unverifiable} unverifiable, ${summary.error} could not be checked.`,
+  });
+});
+
 // Analyze Predicate Device
 registerToolHandler('analyze_predicate_device', async (input) => {
   const kNumber = input.predicate_510k_number as string;

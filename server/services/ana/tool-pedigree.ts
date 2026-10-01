@@ -198,6 +198,8 @@ export const EXTERNAL_API_NAMES: ReadonlySet<string> = new Set<string>([
   // fill (plan open decision 11); today it answers `unavailable` and fetches
   // nothing, so no result carries this label with data behind it.
   'fetch_fda_guidance_list',
+  // PubMed and Crossref, through citation-verification-service.
+  'verify_citations',
 ]);
 
 /**
