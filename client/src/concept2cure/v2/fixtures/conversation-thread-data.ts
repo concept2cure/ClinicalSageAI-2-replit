@@ -45,6 +45,10 @@ export interface CtTurn {
   role: string;
   text?: string;
   answer?: string;
+  /** AnA's turn has finished streaming; only a settled answer can be inserted into a document. */
+  settled?: boolean;
+  /** The retained turn record that produced the answer, when the server confirmed one. */
+  sourceRecord?: string;
   links?: CtLink[];
   grounding?: CtGrounding[];
   doc?: any;
