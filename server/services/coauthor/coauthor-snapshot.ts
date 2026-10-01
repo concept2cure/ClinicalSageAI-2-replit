@@ -87,7 +87,11 @@ import {
   type AuthoringDocumentSnapshot,
   type AuthoringSectionRow,
 } from '../ana/authoring-canonical-bridge.js';
-import { recordCoauthorDocumentEvent, type CoauthorAuditActor } from './coauthor-audit.js';
+import {
+  recordCoauthorDocumentEvent,
+  versionReplacedCoauthorContent,
+  type CoauthorAuditActor,
+} from './coauthor-audit.js';
 
 type CoauthorRow = typeof coauthorDocuments.$inferSelect;
 
@@ -365,7 +369,9 @@ async function retakeAliasedCopy(
     templateId: number | null;
     createdBy: string | null;
     provenance: Record<string, unknown>;
-    retaken: (id: number, before: CoauthorRow | null) => Promise<void>;
+    /** Who is placing it, as the version row records the author of a replacement. */
+    replacedBy: string;
+    retaken: (id: number, before: CoauthorRow | null, supersededVersion?: number | null) => Promise<void>;
   },
 ): Promise<SnapshotOutcome> {
   const { id, organizationId, derived, moduleNumber, templateId, createdBy, provenance, retaken } = args;
@@ -381,6 +387,18 @@ async function retakeAliasedCopy(
       existing.content === derived.content &&
       existing.title === derived.title;
     if (unchanged) return { ok: true, created: false, document: existing, aliasRecorded: true };
+    /* 2026-10-01 (D5, P11-B-1): the text this replaces — on a draft copy, an
+       author's saved co-author edits — is kept as the copy's next version, as
+       every writer of this column now does; the event kept only its digest. */
+    const supersededVersion =
+      existing.content !== derived.content
+        ? await versionReplacedCoauthorContent(q, {
+            documentId: id,
+            previousContent: existing.content,
+            createdBy: args.replacedBy,
+            changeSummary: 'Replaced when this filing copy was re-taken from its source authoring document',
+          })
+        : null;
     const [document] = await tx
       .update(coauthorDocuments)
       .set({
@@ -391,7 +409,7 @@ async function retakeAliasedCopy(
       })
       .where(and(eq(coauthorDocuments.id, id), eq(coauthorDocuments.organizationId, organizationId)))
       .returning();
-    await retaken(id, existing);
+    await retaken(id, existing, supersededVersion);
     return { ok: true, created: false, document, aliasRecorded: true };
   }
   /* The copy was deleted and its identity is still recorded (DELETE does
@@ -457,7 +475,7 @@ export async function takeAuthoringSnapshot(args: {
       status: readState || 'UNKNOWN',
       ...(seal ? { sealVersion: seal.version, sealContentHash: seal.contentHash } : {}),
     };
-    const retaken = (id: number, before: CoauthorRow | null) =>
+    const retaken = (id: number, before: CoauthorRow | null, supersededVersion: number | null = null) =>
       recordCoauthorDocumentEvent(q, {
         organizationId,
         documentId: id,
@@ -473,6 +491,7 @@ export async function takeAuthoringSnapshot(args: {
             ? { status: before.status, title: before.title, contentSha256: sha256(before.content ?? '') }
             : null,
           after: { status, title: body.title, contentSha256: sha256(body.content) },
+          supersededVersion,
           ...(seal ? { sealVersion: seal.version, sealContentHash: seal.contentHash } : {}),
         },
       });
@@ -492,6 +511,7 @@ export async function takeAuthoringSnapshot(args: {
         templateId,
         createdBy,
         provenance,
+        replacedBy: actor.name,
         retaken,
       });
     }

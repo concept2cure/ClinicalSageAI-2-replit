@@ -260,6 +260,14 @@ beforeAll(async () => {
       version TEXT NOT NULL, frozen_content TEXT NOT NULL, content_hash TEXT NOT NULL,
       frozen_by TEXT NOT NULL, frozen_reason TEXT, tenant_id INTEGER NOT NULL,
       frozen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), UNIQUE (document_id, version, tenant_id));
+    -- 2026-10-01 (D5, P11-B-1): every writer of a copy's text keeps the text it
+    -- replaces here; the foreign key has no ON DELETE action, as drizzle-kit
+    -- pushes it from shared/schema.ts.
+    CREATE TABLE IF NOT EXISTS coauthor_document_versions (
+      id SERIAL PRIMARY KEY, document_id INTEGER NOT NULL REFERENCES coauthor_documents(id),
+      version_number INTEGER NOT NULL, content TEXT, created_at TIMESTAMP NOT NULL DEFAULT now(),
+      updated_at TIMESTAMP DEFAULT now(), created_by TEXT, change_summary TEXT,
+      UNIQUE (document_id, version_number));
     CREATE TABLE IF NOT EXISTS audit_events (
       id SERIAL PRIMARY KEY, organization_id INTEGER, event_type TEXT, entity_type TEXT,
       entity_id TEXT, user_id INTEGER, user_name TEXT, user_role TEXT, ip_address TEXT,
@@ -623,8 +631,11 @@ describe('re-taking an existing copy is recorded', () => {
     const SRC = '10000000-0000-4000-8000-000000000001';
     await source(SRC, 'draft', [['1.3', 'Letter', 'source text']]);
     const id = (await place(SRC)).body.document.id;
-    // An author saves an edit to the draft copy in the co-author editor.
-    const save = await request(app).put(`/api/coauthor/documents/${id}`).send({ content: '<p>edited in co-author</p>' });
+    // An author saves an edit to the draft copy in the co-author editor
+    // (2026-10-01, D5: with its reason, and recorded as its own event).
+    const save = await request(app)
+      .put(`/api/coauthor/documents/${id}`)
+      .send({ content: '<p>edited in co-author</p>', changeReason: 'Tightened the cover letter' });
     expect(save.status).toBe(200);
 
     const again = await place(SRC);
@@ -633,13 +644,25 @@ describe('re-taking an existing copy is recorded', () => {
     expect(again.body.replaced).toBe(true);
     expect(await row(id)).toMatchObject({ content: '## 1.3 — Letter\n\nsource text' });
     const events = await auditFor(id);
-    expect(events.map((e) => e.event_type)).toEqual(['coauthor_document.retaken']);
-    expect(events[0].user_id).toBe(3);
-    expect(events[0].metadata).toMatchObject({
+    expect(events.map((e) => e.event_type)).toEqual(['coauthor_document.updated', 'coauthor_document.retaken']);
+    expect(events[1].user_id).toBe(3);
+    expect(events[1].metadata).toMatchObject({
       sourceAuthoringDocId: SRC,
       before: { status: 'draft', contentSha256: sha('<p>edited in co-author</p>') },
       after: { status: 'draft', contentSha256: sha('## 1.3 — Letter\n\nsource text') },
+      supersededVersion: 2,
     });
+    /* 2026-10-01 (D5, P11-B-1): the author's saved edits are kept, not only
+       their digest — version 1 is the placed text the save replaced, version
+       2 the edits the re-take replaced. */
+    const versions = await h.pglite.query<{ version_number: number; content: string }>(
+      'SELECT version_number, content FROM coauthor_document_versions WHERE document_id = $1 ORDER BY version_number',
+      [id],
+    );
+    expect(versions.rows).toEqual([
+      { version_number: 1, content: '## 1.3 — Letter\n\nsource text' },
+      { version_number: 2, content: '<p>edited in co-author</p>' },
+    ]);
   });
 
   it('an unchanged re-take writes no audit event (and nothing else)', async () => {
@@ -669,10 +692,17 @@ describe('re-taking an existing copy is recorded', () => {
     const SRC = '10000000-0000-4000-8000-000000000004';
     await source(SRC, 'draft', [['1.8', 'Letter', 'v1']]);
     const id = (await place(SRC)).body.document.id;
-    await h.pglite.query("UPDATE authoring_sections SET content = 'v2' WHERE doc_id = $1", [SRC]);
-    expect((await place(SRC)).status).toBe(200);
+    /* 2026-10-01 (D5, P11-B-1): deleted first, then re-created, then re-taken
+       over changed text. In the old order the re-take kept the text it
+       replaced as a version, and a copy with history is not deleted (409
+       DOCUMENT_HAS_HISTORY) — shown last. */
     expect((await request(app).delete(`/api/coauthor/documents/${id}`)).status).toBe(200);
     expect((await place(SRC)).status).toBe(201);
+    await h.pglite.query("UPDATE authoring_sections SET content = 'v2' WHERE doc_id = $1", [SRC]);
+    expect((await place(SRC)).status).toBe(200);
+    const kept = await request(app).delete(`/api/coauthor/documents/${id}`);
+    expect(kept.status).toBe(409);
+    expect(kept.body.error).toBe('DOCUMENT_HAS_HISTORY');
     const rows = (
       await h.pglite.query(
         `SELECT event_type, reason, regulatory_significant, gxp_relevant, user_id, organization_id
@@ -682,9 +712,12 @@ describe('re-taking an existing copy is recorded', () => {
     ).rows;
     const flags = { regulatory_significant: true, gxp_relevant: true, user_id: 3, organization_id: ORG };
     expect(rows).toEqual([
-      { event_type: 'coauthor_document.retaken', reason: 'filing copy re-taken from its source authoring document', ...flags },
-      { event_type: 'coauthor_document.deleted', reason: 'coauthor document deleted', ...flags },
+      // 2026-10-01 (D5, P11-B-1): the person's stated reason, or null — this
+      // said 'coauthor document deleted', a sentence the code wrote in the
+      // person's place (routes/governed-reason.ts statedReasonOrNull).
+      { event_type: 'coauthor_document.deleted', reason: null, ...flags },
       { event_type: 'coauthor_document.retaken', reason: 'deleted filing copy re-created from its source authoring document', ...flags },
+      { event_type: 'coauthor_document.retaken', reason: 'filing copy re-taken from its source authoring document', ...flags },
     ]);
   });
 });

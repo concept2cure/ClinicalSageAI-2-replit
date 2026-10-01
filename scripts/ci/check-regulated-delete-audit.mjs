@@ -3,7 +3,7 @@
  * Regulated-data delete → audit coverage gate (21 CFR Part 11 §11.10(e)).
  *
  * Every DELETE of a regulated record must be accompanied by an audit-trail
- * write. This static gate scans server/routes/ for DELETEs on regulated tables
+ * write. This static gate scans server/routes/ (and SCAN_DIRS) for DELETEs on regulated tables
  * (Drizzle `.delete(<Table>)` and raw `DELETE FROM <table>`) and fails if a
  * delete has no audit call nearby — so no NEW unaudited regulated delete can
  * land. It does not assert ordering/transactionality (a separate concern); it
@@ -27,6 +27,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..', '..');
 const ROUTES = path.join(ROOT, 'server', 'routes');
+/* 2026-10-01 (D5, P11-B-1): both coauthor DELETE handlers now delete through
+   deleteCoauthorDocument (server/services/coauthor/coauthor-audit.ts), so the
+   DELETE FROM coauthor_documents lives in that service and a routes-only scan
+   no longer saw it. Each directory that holds a regulated delete is scanned. */
+const SCAN_DIRS = [ROUTES, path.join(ROOT, 'server', 'services', 'coauthor')];
 const jsonOut = process.argv.includes('--json');
 
 // Regulated record tables — Drizzle identifiers and their SQL names.
@@ -130,7 +135,7 @@ function deleteSiteRe() {
 const siteRe = deleteSiteRe();
 const violations = [];
 
-for (const file of listTsFiles(ROUTES)) {
+for (const file of SCAN_DIRS.flatMap((dir) => listTsFiles(dir))) {
   const rel = path.relative(ROOT, file);
   const src = fs.readFileSync(file, 'utf-8');
   const lines = src.split('\n');
