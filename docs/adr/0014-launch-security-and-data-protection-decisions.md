@@ -62,6 +62,13 @@ An answer of "the founder has not decided" is an answer of "no".
    The cost is one inexpensive fallback lane. It is not worth any of the above.
 4. **Embeddings follow the same placement decision** (the application half of P0-11 is closed;
    P1-45 extends the election rule to them).
+5. **The production embedding lane is self-hosted.** Text embeddings for Vault search and retrieval are produced
+   by an OpenAI-compatible embedding server running the open-weight multilingual model BAAI `bge-m3` (MIT
+   licence) inside our own network, one per region (`EMBEDDING_PROVIDER=local`, `EMBEDDING_LOCAL_BASE_URL`).
+   No tenant text leaves the platform to be embedded, every tenant has search without electing a second vendor,
+   residency follows the region, and Japanese and European languages are served by one model. Until that service
+   is deployed, an unelected tenant's embedding fails closed with an error that says so, never "no sources found"
+   (P1-54).
 
 ### 2. Redis is part of the production stack
 
@@ -181,6 +188,7 @@ customer, not the vendor, decides to open it.
 | P1-45 | Production provider election (OpenAI only when named; Moonshot never) | plan §2 |
 | P1-46 | ElastiCache in the stack; boot and preflight require `rediss://` | plan §2 |
 | P1-47 | Per-organization enablement of the connector | plan §2 |
+| P1-54 | Self-hosted embedding lane; an embedding refusal is reported, not rendered as no results | plan §2 |
 | P1-2b | Authenticator required for owners, administrators and signers | plan §2, P1-2 |
 | P1-10 | Alarms, SNS receiver, WAF | plan §2 |
 | P1-22, P1-25, P1-43, P2-1 | Retention default, audit-trail review, access review, regions | plan §2, §3 |

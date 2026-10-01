@@ -141,11 +141,12 @@ are `us`, `eu`, `apac`, `on_prem`; "global" means no residency guarantee):
 |---|---|---|---|---|
 | Anthropic Claude API (default) | Shared frontier API | global | Only when a signed ZDR agreement is in force and the operator sets `ANTHROPIC_ZERO_RETENTION=true`; **not in force as of 2026-09-20** | Primary drafting model. Anthropic's standard commercial API terms do not use API inputs/outputs for model training. [Counsel: cite the current Anthropic Commercial Terms and retention schedule at signature.] |
 | Claude on Amazon Bedrock | Frontier model in Provider's (or Customer's) AWS account | `us` by default (us-east-1); otherwise the region the client is deployed to (`AI_BEDROCK_REGION` / `AWS_REGION`). The residency the platform claims is derived from that region, and a production deployment whose declared `AI_BEDROCK_RESIDENCY` disagrees with it refuses to start | Yes by default (no-retention, no-training posture of the private substrate) | The placement for residency- or BAA-constrained tenants. Requires an Order Form line; not provisioned by default. |
-| Claude on Google Vertex AI | Frontier model in a GCP project | The region the client is deployed to (`AI_VERTEX_REGION`; `us-east5`, so `us`, by default) | Only when the operator records it (`AI_VERTEX_ZERO_RETENTION=true`) once project-side caching and logging are confirmed off | Available in code; not deployed for launch. |
-| OpenAI models on Azure | Frontier model in an Azure tenant | Only as declared (`AI_AZURE_RESIDENCY`); none claimed otherwise | Only when modified abuse monitoring is approved and recorded (`AI_AZURE_ZERO_RETENTION=true`) | Available in code; not deployed for launch; not approved for high-risk regulatory drafting. |
-| OpenAI API | Shared frontier API | global | Only with a signed ZDR agreement (`OPENAI_ZERO_RETENTION`) | Fallback lane; not approved for high-risk regulatory drafting. |
-| Moonshot AI (Kimi) | Shared frontier API | global | No | Cross-provider fallback only; excluded for any residency- or ZDR-constrained tenant. |
+| Claude on Google Vertex AI | Frontier model in a GCP project | The region the client is deployed to (`AI_VERTEX_REGION`; `us-east5`, so `us`, by default) | Only when the operator records it (`AI_VERTEX_ZERO_RETENTION=true`) once project-side caching and logging are confirmed off | Available in code; not deployed for launch. Used for a tenant only when its Order Form elects it, which the platform records as its placement policy and enforces in production. |
+| OpenAI models on Azure | Frontier model in an Azure tenant | Only as declared (`AI_AZURE_RESIDENCY`); none claimed otherwise | Only when modified abuse monitoring is approved and recorded (`AI_AZURE_ZERO_RETENTION=true`) | Available in code; not deployed for launch; not approved for high-risk regulatory drafting. Used for a tenant only when its Order Form elects it. |
+| OpenAI API | Shared frontier API | global | Only with a signed ZDR agreement (`OPENAI_ZERO_RETENTION`) | Used for a tenant only when its Order Form elects it, for generation, fallback and embeddings; the platform enforces this in production. Without that election no request, fallback or embedding reaches OpenAI, and when Anthropic is unavailable the tenant's request fails with an error rather than being answered by another provider. Not approved for high-risk regulatory drafting. |
 | Self-hosted open-weight models | Self-hosted | `on_prem` | Yes | The only air-gappable lane; not approved for high-risk regulatory drafting until PQ. Not offered for launch. |
+
+Moonshot AI (Kimi) is not available in production for any tenant, under any election: a production deployment configured with a Moonshot key refuses to start (ADR-0014 §1). Text embeddings for search are produced by a self-hosted embedding model inside Provider's own network in the tenant's region (ADR-0014 §1.5), so no tenant text is sent to a third party to be embedded unless the tenant elects OpenAI.
 
 6.3 **Recommended pilot configuration** (founder decision; record on the
 Order Form): Anthropic Claude API only, no cross-provider fallback, residency
@@ -266,7 +267,10 @@ with `SECURITY.md`.
 | Functional Software, Inc. (Sentry) | Application error monitoring (stack traces and request metadata; content scrubbing configured) | United States | Sentry DPA |
 | [SMTP provider — founder to name] | Transactional email: login one-time codes, notifications (recipient email address and code only) | [region] | [DPA] |
 | [Uptime monitoring provider — founder to name, e.g. UptimeRobot] | External availability probes (no Customer Data) | [region] | [terms] |
-| OpenAI, L.L.C.; Moonshot AI | Present in the gateway as fallback lanes; **disabled for a tenant unless its Order Form lists them** | United States; [Moonshot — founder to confirm] | Only with the tenant's written election |
+| OpenAI, L.L.C. | LLM inference and text embeddings, **only for a Customer whose Order Form elects it** | United States | Customer's written election, recorded as its placement policy; in production nothing of a Customer's reaches OpenAI without it |
+| Google LLC (Vertex AI); Microsoft Corporation (Azure OpenAI) | LLM inference, only for a Customer whose Order Form elects it; not deployed for launch | As the elected placement declares | Customer's written election, recorded as its placement policy and enforced in production |
+
+Moonshot AI is not a subprocessor and cannot be elected (ADR-0014 §1: GDPR Chapter V, APPI Art. 28, 28 CFR Part 202).
 
 ## Annex IV — Transfer mechanism details
 
