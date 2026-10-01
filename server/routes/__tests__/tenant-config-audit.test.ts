@@ -158,7 +158,9 @@ describe('a security settings change is recorded with its values before and afte
     expect(details.sections).toEqual(['notifications', 'qmp']);
     expect(details.changedFields).toEqual({
       notifications: ['slackEnabled', 'slackWebhook'],
-      qmp: ['auditTrailRetentionDays', 'requireQmpForAllProjects'],
+      // requireQmpForAllProjects is kept, not erased (DP-62): before 2026-10-01
+      // this line listed it because the section was replaced whole.
+      qmp: ['auditTrailRetentionDays'],
     });
     expect(details.values).toEqual({
       qmp: { before: { auditTrailRetentionDays: 365 }, after: { auditTrailRetentionDays: 3650 } },
@@ -210,5 +212,43 @@ describe('a failed audit write is a failed settings write', () => {
     expect(res.status).toBe(404);
     expect(h.auditCalls).toHaveLength(0);
     expect(flow()).toEqual(['BEGIN', 'SELECT FOR UPDATE', 'ROLLBACK']);
+  });
+});
+
+/**
+ * DP-62 (2026-10-01): the reset and the whole-settings PATCH dropped keys they
+ * do not manage. A reset replaced the whole object with the tier defaults, so
+ * it erased `anaToolPolicy` (the organisation's own switch-off list for AnA
+ * tools: a reset re-enabled every tool it had turned off) and
+ * `security.maxConcurrentSessions`. A PATCH of one field of a section replaced
+ * the whole section. A reset restores what the defaults define; a PATCH merges
+ * each section field by field.
+ */
+describe('settings writes keep what they do not manage (DP-62)', () => {
+  beforeEach(() => {
+    h.tenant!.settings = {
+      ...h.tenant!.settings,
+      security: { mfaRequired: false, sessionTimeoutMinutes: 60, passwordPolicy: { minLength: 8 }, maxConcurrentSessions: 3 },
+      anaToolPolicy: { deny: ['send_external_email'] },
+    };
+  });
+
+  it('a reset restores the defaults and keeps the tool policy and the session limit', async () => {
+    const res = await request(app).post(`/api/tenant-config/${ORG}/settings/reset`).send({});
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const stored = h.tenant!.settings as Record<string, any>;
+    expect(stored.anaToolPolicy).toEqual({ deny: ['send_external_email'] });
+    expect(stored.security.maxConcurrentSessions).toBe(3);
+    expect(stored.security.mfaRequired).toBe(true); // the enterprise default was restored
+  });
+
+  it('a PATCH of one field of a section keeps the section\'s other fields', async () => {
+    const res = await request(app).patch(`/api/tenant-config/${ORG}/settings`).send({ security: { mfaRequired: true } });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const stored = h.tenant!.settings as Record<string, any>;
+    expect(stored.security.mfaRequired).toBe(true);
+    expect(stored.security.maxConcurrentSessions).toBe(3);
+    expect(stored.security.sessionTimeoutMinutes).toBe(60);
+    expect(stored.anaToolPolicy).toEqual({ deny: ['send_external_email'] });
   });
 });

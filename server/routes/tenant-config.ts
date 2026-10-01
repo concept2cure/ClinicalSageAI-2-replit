@@ -233,6 +233,27 @@ async function writeTenantSettings(req: Request, tenantId: number, change: Setti
   }
 }
 
+function isPlainObject(value: unknown): value is Settings {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * `patch` laid over `current`: where both hold an object the merge recurses,
+ * otherwise `patch`'s value wins, and a key `patch` does not name is kept.
+ * Until 2026-10-01 (DP-62) a reset replaced the whole object and a PATCH the
+ * whole section, which erased `anaToolPolicy` (the organisation's switch-off
+ * list for AnA tools) and `security.maxConcurrentSessions` (session-inactivity.ts),
+ * neither of which those writes manage.
+ */
+function overlaySettings(current: Settings, patch: Settings): Settings {
+  const out: Settings = { ...current };
+  for (const [key, value] of Object.entries(patch)) {
+    const existing = out[key];
+    out[key] = isPlainObject(existing) && isPlainObject(value) ? overlaySettings(existing, value) : value;
+  }
+  return out;
+}
+
 /** The defaults a reset restores, by tier. */
 function defaultSettingsFor(tier: string): Settings {
   return {
@@ -355,10 +376,11 @@ router.patch(
 
       const newSettings = validationResult.data;
 
-      // Each section named in the body replaces the stored one.
+      // Each section named in the body is merged field by field over the stored
+      // one (DP-62): a field the body does not send is kept, never dropped.
       const stored = await writeTenantSettings(req, tenantId, {
         action: 'tenant_settings_changed',
-        next: current => ({ ...current, ...newSettings }),
+        next: current => overlaySettings(current, newSettings),
         sections: () => Object.keys(newSettings).sort(),
       });
       if (!stored) {
@@ -402,10 +424,12 @@ router.post(
           .json({ error: 'You can only reset settings for your own organization' });
       }
 
-      // Every stored section is replaced by the tier's defaults.
+      // Every setting the tier's defaults define is restored; what they do not
+      // define is kept (DP-62): the organisation's AnA tool policy and the
+      // server-enforced security keys are not this reset's to erase.
       const stored = await writeTenantSettings(req, tenantId, {
         action: 'tenant_settings_reset',
-        next: (_current, tier) => defaultSettingsFor(tier),
+        next: (current, tier) => overlaySettings(current, defaultSettingsFor(tier)),
         sections: (current, next) => [...new Set([...Object.keys(current), ...Object.keys(next)])].sort(),
       });
       if (!stored) {
