@@ -150,6 +150,17 @@ the FILED history and its fold — and delegates the diff itself to the canonica
   the inventory existed is exactly this case. The governed `sign` row and its signature
   manifest both record which sequence the signature filed and whether the history took it —
   a lost baseline used to leave no durable trace beyond a server log.
+- **One bundle per filed sequence** (2026-10-01, sweep F19). A production send of a bundle
+  whose sequence the history already holds on file as a *different* bundle is refused
+  before the bytes leave (`409`, `details.code: 'SEQUENCE_ALREADY_FILED'`): the agency
+  loads at most one of two filings under one number. Re-sending the *same* bundle (after
+  a rollback) is allowed and reports `filedSequenceReason: 'already-recorded'`. If another
+  bundle was recorded under the sequence while this one was in flight, the send reports
+  `filedSequenceRecorded: false`, `filedSequenceReason: 'sequence-conflict'` and names
+  the bundle the history holds (`filedSequenceConflict`); confirm with the agency which
+  one it loaded. A rollback does **not** un-file a sequence — the agency still holds the
+  bytes. An entry marked `state: 'rejected'` is not on file and its number can be reused;
+  the governed action that records an agency technical rejection is not built yet.
 - **The baseline is a fold, not the last sequence.** A leaf untouched since 0000 is still
   compared to 0000, and `modified-file` points at the sequence folder that actually holds
   the version being superseded. A leaf whose last operation was `delete` has been
