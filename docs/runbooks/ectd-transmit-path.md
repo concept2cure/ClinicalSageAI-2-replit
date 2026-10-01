@@ -159,8 +159,24 @@ the FILED history and its fold — and delegates the diff itself to the canonica
   `filedSequenceRecorded: false`, `filedSequenceReason: 'sequence-conflict'` and names
   the bundle the history holds (`filedSequenceConflict`); confirm with the agency which
   one it loaded. A rollback does **not** un-file a sequence — the agency still holds the
-  bytes. An entry marked `state: 'rejected'` is not on file and its number can be reused;
-  the governed action that records an agency technical rejection is not built yet.
+  bytes. An entry marked `state: 'rejected'` is not on file and its number can be reused.
+
+  **Recording an agency technical rejection** (the agency did not load the sequence; for
+  FDA, a failed Ack3) is the only way an entry becomes `rejected`. Upload the agency's
+  notice to the Vault (`POST /api/vault/ingest`), then use **Technical rejection** on the
+  transmittal's row in Gateway transmittals
+  (`POST /api/mdx/gateways/transmittals/:id/technical-rejection` with
+  `{ evidenceDocumentId, reason, meaning, reauth }`; services/ectd/filed-sequence-rejection).
+  It re-authenticates like transmit and, in one transaction under the package lock, writes
+  a governed `sign` and an e-signature bound to the notice's Vault content hash, moves the
+  transmittal from `in_transit`/`received`/`ack1_received`/`ack2_received` to
+  `validation_failed`, marks the entry `rejected` (kept, with its evidence) and clears a
+  stored bundle assembled above it. A failed write un-files nothing. It is keyed on the
+  transmittal: a second send the history never recorded un-files nothing. Refusals (each
+  with `details.code`): `NOT_LATEST_FILED_SEQUENCE` (record the later sequences first,
+  each with its own notice), `TRANSMITTAL_RECORDS_ACCEPTANCE` (Ack3, validation passed,
+  review or later), `EVIDENCE_NOT_FOUND`, `TRANSMITTAL_NOT_ON_FILE`,
+  `NOT_A_PACKAGE_TRANSMITTAL`, `TRANSMITTAL_NOT_FOUND`. There is no undo.
 - **The baseline is a fold, not the last sequence.** A leaf untouched since 0000 is still
   compared to 0000, and `modified-file` points at the sequence folder that actually holds
   the version being superseded. A leaf whose last operation was `delete` has been
