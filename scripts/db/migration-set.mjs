@@ -2886,6 +2886,16 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20261001_project_continuity_snapshots.sql',
   'db/migrations/20261001_collab_presence.sql',
 
+  // ── A review comment is fixed once posted (2026-10-01, D5) ────────────────
+  // concept2cure_thread_comments (the Review surface's threads) could be
+  // rewritten in place, soft-deleted and overwritten by the GDPR erasure, with
+  // no record of what a comment said. Triggers only: the words, author and
+  // place fixed, deleted_at set once (a retraction), DELETE and TRUNCATE
+  // refused. Creates no table, so the sweep has nothing new to policy. Above
+  // the final pair because ci:migration-set-order pins the tail. Evidence
+  // docs/evidence/D5-ANA-RECORD/2026-10-01-review-comments/.
+  'migrations/20261001_review_comments_record.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
