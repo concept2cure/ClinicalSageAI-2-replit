@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS concept2cure_signatures (id SERIAL PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS concept2cure_submission_snapshots (id SERIAL PRIMARY KEY);
 CREATE SCHEMA IF NOT EXISTS vault;
 CREATE TABLE IF NOT EXISTS vault.documents (id SERIAL PRIMARY KEY, content_hash TEXT);
+CREATE TABLE IF NOT EXISTS cre_evidence_sources (id SERIAL PRIMARY KEY, organization_id INTEGER, checksum TEXT, is_current BOOLEAN DEFAULT TRUE);
 `;
 
 const TRIGGER_MIGRATIONS = Array.from(new Set(EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS.map((t) => t.source)));

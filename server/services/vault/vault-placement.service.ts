@@ -53,6 +53,7 @@ import { writeChainedAuditRow } from '../auditService.js';
 import { resolveVaultView, isFolderInView, folderLabel, filingVocabularyRefusal } from './vault-filing.service.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
+import { programInOrganization } from '../c2c/program-access';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -223,12 +224,7 @@ export async function placeVaultDocument(
 
   // Program ownership — the same guard as the read path. A program in another
   // organization is reported as absent, not as forbidden.
-  const projRes = await pool.query(
-    `SELECT id FROM regulatory_programs
-      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-    [programId, organizationId],
-  );
-  if (projRes.rows.length === 0) {
+  if (!(await programInOrganization(pool, programId, organizationId))) {
     return invalid('NOT_FOUND', 'No such project.', 404);
   }
   const view = await resolveVaultView(programId, organizationId);

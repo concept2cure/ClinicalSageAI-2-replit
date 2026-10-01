@@ -34,11 +34,19 @@ const { svc, audit } = vi.hoisted(() => ({
   audit: { logAction: vi.fn() },
 }));
 
-const ownership = vi.hoisted(() => ({ check: vi.fn(async () => true) }));
+const ownership = vi.hoisted(() => ({ check: vi.fn(async (_programId: string, _orgId: number) => true) }));
 // The tool proves program ownership through the canonical guard (ledger L195);
 // these tests exercise what happens after it answers, so it answers yes unless a
 // case says otherwise.
-vi.mock('../../../routes/innovation-routes', () => ({ programBelongsToOrg: ownership.check }));
+// The one program check (server/services/c2c/program-access.ts), answered by the test.
+vi.mock('../../c2c/program-access', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => ownership.check(programId, orgId),
+}));
+vi.mock('../../c2c/program-access.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => ownership.check(programId, orgId),
+}));
 vi.mock('../../gspr-postmarket/gspr.service', () => ({
   upsertMapping: (...a: any[]) => svc.upsertMapping(...a),
 }));

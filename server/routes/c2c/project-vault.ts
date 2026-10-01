@@ -69,7 +69,7 @@ import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vaul
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
-import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
+import { currentVersionLateral, readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
 import { readVaultLifecycles } from '../../services/vault/vault-lifecycle.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
@@ -78,6 +78,7 @@ import { getStorageProvider, getStorageProviderFor } from '../../services/storag
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
+import { programInOrganization } from '../../services/c2c/program-access';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -159,6 +160,9 @@ interface DataRoomRow {
   evidenceKind: string | null;
   confidence: string | null;
   needsReview: boolean;
+  /** Which Vault version its bytes became (VR-16): `supersededBy` names the
+   *  family's current version when a later one replaced it. Null when not filed. */
+  filedAs: { version: string | null; supersededBy: string | null } | null;
 }
 
 interface DataRoomBlock {
@@ -1318,17 +1322,26 @@ export default function createProjectVaultRoutes(): Router {
           const sourceChecksums = Array.from(
             new Set(sources.map(s => s.checksum).filter((h): h is string => Boolean(h))),
           );
-          const vaultHashes = new Set<string>();
+          // …and as which version (VR-16): the version its bytes are, and the
+          // family's current version when a later one replaced it.
+          const vaultHashes = new Map<string, NonNullable<DataRoomRow['filedAs']>>();
           if (sourceChecksums.length > 0) {
             const matchRes = await pool.query(
-              `SELECT DISTINCT d.content_hash
+              `SELECT DISTINCT ON (d.content_hash) d.content_hash, d.version,
+                      ${supersededSql('d')} AS superseded, cv.current_version
                  FROM vault.documents d
+                 ${currentVersionLateral('d')}
                 WHERE ${uploadsWhere}
-                  AND d.content_hash = ANY($3::text[])`,
+                  AND d.content_hash = ANY($3::text[])
+                ORDER BY d.content_hash, d.created_at`,
               [id, orgId, sourceChecksums],
             );
-            for (const r of matchRes.rows as Array<{ content_hash: string | null }>) {
-              if (r.content_hash) vaultHashes.add(r.content_hash);
+            for (const r of matchRes.rows as Array<{ content_hash: string | null; version: string | null; superseded: boolean; current_version: string | null }>) {
+              if (!r.content_hash) continue;
+              vaultHashes.set(String(r.content_hash).trim(), {
+                version: r.version ?? null,
+                supersededBy: r.superseded ? (r.current_version ?? null) : null,
+              });
             }
           }
           const rows: DataRoomRow[] = sources.map(s => {
@@ -1337,7 +1350,8 @@ export default function createProjectVaultRoutes(): Router {
               | { evidenceKind?: string | null; suggestedFolder?: string | null;
                   confidence?: string | null; needsReview?: boolean }
               | null;
-            const filed = Boolean(s.checksum && vaultHashes.has(s.checksum));
+            const filedAs = s.checksum ? vaultHashes.get(s.checksum) ?? null : null;
+            const filed = filedAs !== null;
             const proposed = Boolean(dossier?.suggestedFolder);
             const stage: DataRoomRow['stage'] =
               filed ? 'filed' : proposed ? 'classified' : dossier ? 'needs_review' : 'captured';
@@ -1367,6 +1381,7 @@ export default function createProjectVaultRoutes(): Router {
               evidenceKind: dossier?.evidenceKind ?? null,
               confidence: dossier?.confidence ?? null,
               needsReview: Boolean(dossier?.needsReview),
+              filedAs,
             };
           });
           dataRoom = {
@@ -1524,12 +1539,7 @@ export default function createProjectVaultRoutes(): Router {
     try {
       // The program must be this org's before any of its documents are listed —
       // the same guard the read and download routes apply.
-      const prog = await pool.query(
-        `SELECT id FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-        [id, orgId],
-      );
-      if (prog.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      if (!(await programInOrganization(pool, id, orgId))) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
       /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary
          user text (quotes, OR, -negation) and never raises a syntax error, so a
@@ -1730,12 +1740,7 @@ export default function createProjectVaultRoutes(): Router {
 
     try {
       // The program must be this org's before any document of it is served.
-      const prog = await pool.query(
-        `SELECT id FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-        [id, orgId],
-      );
-      if (prog.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      if (!(await programInOrganization(pool, id, orgId))) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
       const docRes = await pool.query(
         `SELECT id, file_name, document_title, mime_type, file_size, s3_key,

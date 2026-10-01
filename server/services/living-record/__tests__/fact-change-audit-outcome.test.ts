@@ -30,8 +30,14 @@ vi.mock('../program-link', () => ({ resolveLegacyProgram: async () => null }));
 // 2026-10-01: AnA tools that name a program now check it is the caller's
 // (tool-record-scope.ts, d8214c170) before running. The database is stubbed, so
 // the ownership read is too, true only for this test's own program and org.
-vi.mock('../../../routes/innovation-routes.js', () => ({
-  programBelongsToOrg: async (programId: string, organizationId: number) => programId === 'prog-1' && organizationId === 7,
+// The one program check (server/services/c2c/program-access.ts), answered by the test.
+vi.mock('../../c2c/program-access', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => (async (p: string, o: number) => p === 'prog-1' && o === 7)(programId, orgId),
+}));
+vi.mock('../../c2c/program-access.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => (async (p: string, o: number) => p === 'prog-1' && o === 7)(programId, orgId),
 }));
 vi.mock('../../living-file/change-router.service', () => ({ propagateRegulatoryChange: async () => undefined }));
 vi.mock('../../resolution/resolution-planner', () => ({ createResolutionPlan: async () => null }));

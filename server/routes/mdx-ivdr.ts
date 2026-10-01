@@ -38,6 +38,7 @@ import { recordAuditRow } from '../services/audit/audit-write-outcome';
  * records a submission is assembled from.
  */
 import { requireEditorAccess } from '../middleware/orgMembership';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 const log = createScopedLogger('mdx-ivdr');
@@ -52,16 +53,6 @@ function getOrgId(req: Request): number | null {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const IVDR_CLASS = ['A', 'B', 'C', 'D'] as const;
 const IVDR_RULE = ['1', '2', '3', '4', '5', '6', '7'] as const;
-
-async function ownsProgram(programId: string | null | undefined, orgId: number): Promise<boolean> {
-  if (!programId) return true;
-  const result = await pool.query(
-    `SELECT 1 FROM regulatory_programs
-      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-    [programId, orgId],
-  );
-  return result.rows.length > 0;
-}
 
 async function ownsArtifact(artifactId: number | null | undefined, orgId: number): Promise<boolean> {
   if (!artifactId) return true;
@@ -128,7 +119,7 @@ router.post('/ivdr/classifications', requireEditorAccess, async (req: Request, r
   /* Notified body required for Class B/C/D per IVDR Article 48. */
   const nbRequired = p.ivdrClass !== 'A';
   try {
-    if (!(await ownsProgram(p.programId, orgId))) return notFoundInTenant(res, 'Program');
+    if (p.programId && !(await programInOrganization(pool, p.programId, orgId))) return notFoundInTenant(res, 'Program');
     const { rows } = await pool.query(
       `INSERT INTO ivdr_classifications (
          organization_id, program_id, device_name, ivdr_class, classification_rule,
@@ -212,7 +203,7 @@ router.patch('/ivdr/classifications/:id', requireEditorAccess, async (req: Reque
   args.push(id, orgId);
 
   try {
-    if (!(await ownsProgram(parsed.data.programId, orgId))) return notFoundInTenant(res, 'Program');
+    if (parsed.data.programId && !(await programInOrganization(pool, parsed.data.programId, orgId))) return notFoundInTenant(res, 'Program');
     const { rows } = await pool.query(
       `UPDATE ivdr_classifications SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
@@ -294,7 +285,7 @@ router.post('/ivdr/per', requireEditorAccess, async (req: Request, res: Response
     return clientError(res, 422, 'New PER documents must begin in draft');
   }
   try {
-    if (!(await ownsProgram(p.programId, orgId))) return notFoundInTenant(res, 'Program');
+    if (p.programId && !(await programInOrganization(pool, p.programId, orgId))) return notFoundInTenant(res, 'Program');
     if (!(await ownsArtifact(p.artifactId, orgId))) return notFoundInTenant(res, 'Artifact');
     const { rows } = await pool.query(
       `INSERT INTO ivdr_per_documents (
@@ -369,7 +360,7 @@ router.patch('/ivdr/per/:id', requireEditorAccess, async (req: Request, res: Res
   args.push(id, orgId);
 
   try {
-    if (!(await ownsProgram(parsed.data.programId, orgId))) return notFoundInTenant(res, 'Program');
+    if (parsed.data.programId && !(await programInOrganization(pool, parsed.data.programId, orgId))) return notFoundInTenant(res, 'Program');
     if (!(await ownsArtifact(parsed.data.artifactId, orgId))) return notFoundInTenant(res, 'Artifact');
     const current = await pool.query<{ per_status: PerStatus }>(
       `SELECT per_status FROM ivdr_per_documents

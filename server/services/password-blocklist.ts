@@ -16,10 +16,14 @@
  * with its leading and trailing decorations (digits, punctuation) removed.
  */
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
-const LIST_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'common-passwords.txt');
+/* Anchored on the working directory, not the module: in production this code
+   is inside the one bundle at /app/dist/index.js, so a module-relative path
+   named /app/data/…, which does not exist, and every password set threw
+   (tests/services/password-blocklist-bundle-resolution.test.ts). The image
+   ships server/ under its WORKDIR, as tsx and vitest see it from the repo. */
+const LIST_PATH = resolve(process.cwd(), 'server', 'data', 'common-passwords.txt');
 /** A stripped core shorter than this is not compared: "ab" matching a list entry says nothing. */
 const MIN_CORE_LENGTH = 4;
 /** A context word shorter than this is not searched for: "al" appears in most passwords. */

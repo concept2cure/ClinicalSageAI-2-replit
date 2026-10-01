@@ -26,7 +26,7 @@
  */
 
 import { and, asc, eq, desc } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import {
@@ -42,6 +42,7 @@ import {
 import { applyIndClearanceIfTerminal } from './pdev-clearance';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import auditService from '../auditService';
+import { programInOrganization } from '../c2c/program-access';
 
 const logger = createScopedLogger('pdev-workflow-bridge');
 
@@ -400,17 +401,7 @@ export class PdevWorkflowBridge {
     activityKey: string
   ): Promise<PdevApprovalChainStatus | null> {
     // Tenant gate first.
-    const programRows = await db
-      .select({ id: regulatoryPrograms.id })
-      .from(regulatoryPrograms)
-      .where(
-        and(
-          eq(regulatoryPrograms.id, programId),
-          eq(regulatoryPrograms.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-    if (!programRows[0]) return null;
+        if (!(await programInOrganization(pool, programId, organizationId))) return null;
 
     // Find the most recent workflow run for this activity.
     const runs = await db

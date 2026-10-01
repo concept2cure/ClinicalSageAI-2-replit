@@ -15,14 +15,15 @@
  *
  * A deleted program is not the tenant's to write under. The programs arm
  * admitted a soft-deleted program (2026-09-29, PF-15), so a record could be
- * filed under a project its organization had deleted; it now holds the same
- * rule as programInOrganization, the canonical program check.
+ * filed under a project its organization had deleted. The programs arm is now
+ * programInOrganization itself, the one program check (D3, 2026-10-01).
  *
  * A lookup that cannot complete throws: "could not tell" is not "not yours".
  *
  * @module server/services/cmc/project-membership
  */
 import { getPool } from '../../db';
+import { programInOrganization } from '../c2c/program-access';
 
 export interface MembershipQueryable {
   query(text: string, params?: unknown[]): Promise<{ rows: any[] }>;
@@ -37,11 +38,10 @@ export async function projectBelongsToTenant(
   const projectId = String(params.projectId ?? '').trim();
   if (!projectId) return false;
   const db = q ?? getPool();
+  // A program: the one program check. A legacy project: its own table.
+  if (await programInOrganization(db, projectId, organizationId)) return true;
   const { rows } = await db.query(
-    `SELECT 1 AS present FROM regulatory_programs WHERE id::text = $1 AND organization_id = $2 AND deleted_at IS NULL
-     UNION ALL
-     SELECT 1 AS present FROM projects WHERE id::text = $1 AND organization_id = $2
-     LIMIT 1`,
+    `SELECT 1 AS present FROM projects WHERE id::text = $1 AND organization_id = $2 LIMIT 1`,
     [projectId, organizationId],
   );
   return rows.length > 0;

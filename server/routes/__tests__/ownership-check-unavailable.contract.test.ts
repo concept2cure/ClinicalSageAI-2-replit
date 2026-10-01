@@ -13,10 +13,11 @@
  * so a control that had completely stopped working looked exactly like a
  * control that was working, with nothing logged and no way for a test to tell.
  *
- * This is not hypothetical. On a database where install-fresh's governed-content
+ * This was not hypothetical. On a database where install-fresh's governed-content
  * step was skipped, `core.programs` exists WITHOUT `org_id` (WO-15 finding 1),
- * and source 2 of PROGRAM_ORG_SOURCES raises 42703 on every call. Before this
- * change that was swallowed.
+ * and the program check's second source raised 42703 on every call. Before
+ * 2026-09-10 that was swallowed. (Since D3, 2026-10-01, the program check reads
+ * `regulatory_programs` only; core.programs is written by nothing.)
  *
  * ── WHAT IS ASSERTED ─────────────────────────────────────────────────────────
  * The distinction, in both directions. A check that RAN and found nothing still
@@ -50,19 +51,6 @@ function pgError(code: string, message: string): Error & { code: string } {
   return Object.assign(new Error(message), { code });
 }
 
-function client(handler: (sql: string) => unknown) {
-  return {
-    query: vi.fn(async (sql: string) => {
-      if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') return { rows: [] };
-      if (sql.startsWith('SET LOCAL')) return { rows: [] };
-      const out = handler(sql);
-      if (out instanceof Error) throw out;
-      return { rows: out as unknown[] };
-    }),
-    release: vi.fn(),
-  };
-}
-
 async function load() {
   vi.resetModules();
   return import('../innovation-routes');
@@ -73,77 +61,64 @@ beforeEach(() => {
   queryMock.mockReset();
 });
 
-describe('programBelongsToOrg distinguishes "no match" from "could not check"', () => {
-  it('THROWS when every program->org source fails to run', async () => {
-    // The reproduced production case: core.programs without org_id, and the
-    // other two registries absent in this environment.
-    connectMock.mockImplementation(async () =>
-      client((sql) => {
-        if (sql.includes('core.programs')) return pgError('42703', 'column "org_id" does not exist');
-        return pgError('42P01', 'relation does not exist');
+/**
+ * The program check itself is `programInOrganization` (D3, 2026-10-01): one
+ * source, `regulatory_programs`, on the pool the router reads with. Its own
+ * suite and tests/db/program-ownership.dbtest.ts pin what it answers; what is
+ * pinned here is that the ROUTE keeps the distinction — "could not check" is a
+ * 503, "checked and not yours" is a 404, through a real innovation route.
+ */
+describe('an innovation route distinguishes "not yours" from "could not check"', () => {
+  const PROGRAM = '11111111-1111-4111-8111-111111111111';
+
+  async function get(programQuery: (sql: string) => unknown, programId = PROGRAM) {
+    const { default: express } = await import('express');
+    const { default: request } = await import('supertest');
+    const { initializeInnovationRoutes } = await load();
+    const pool = {
+      connect: connectMock,
+      query: vi.fn(async (sql: string, _params?: unknown[]) => {
+        const out = programQuery(sql);
+        if (out instanceof Error) throw out;
+        return { rows: out as unknown[] };
       }),
-    );
-
-    const { programBelongsToOrg, GuardUnavailableError } = await load();
-
-    await expect(programBelongsToOrg('prog-1', 42)).rejects.toBeInstanceOf(GuardUnavailableError);
-  });
-
-  it('returns FALSE — a real deny — when a source ran and found nothing', async () => {
-    connectMock.mockImplementation(async () => client(() => []));
-
-    const { programBelongsToOrg } = await load();
-
-    // This is the assertion that keeps the fix honest. If every failure became
-    // a throw, the guard would 503 on a genuine cross-tenant attempt and stop
-    // denying anything.
-    await expect(programBelongsToOrg('prog-1', 42)).resolves.toBe(false);
-  });
-
-  it('returns TRUE when a source confirms the program', async () => {
-    connectMock.mockImplementation(async () =>
-      client((sql) => (sql.includes('FROM programs') ? [{ '?column?': 1 }] : [])),
-    );
-
-    const { programBelongsToOrg } = await load();
-
-    await expect(programBelongsToOrg('prog-1', 42)).resolves.toBe(true);
-  });
-
-  it('still decides when only SOME sources fail — a partial outage is not an outage', async () => {
-    connectMock.mockImplementation(async () =>
-      client((sql) => {
-        if (sql.includes('core.programs')) return pgError('42703', 'column "org_id" does not exist');
-        if (sql.includes('FROM programs')) return [{ '?column?': 1 }];
-        return [];
-      }),
-    );
-
-    const { programBelongsToOrg } = await load();
-
-    await expect(programBelongsToOrg('prog-1', 42)).resolves.toBe(true);
-  });
-
-  it('treats caller garbage (22P02) as a completed check, not an outage', async () => {
-    // A malformed uuid that survived the ::text casts is the caller's problem.
-    // Their own input cannot prove ownership, so denying is honest and the
-    // check genuinely ran — it must NOT escalate to a 503.
-    connectMock.mockImplementation(async () =>
-      client(() => pgError('22P02', 'invalid input syntax for type uuid')),
-    );
-
-    const { programBelongsToOrg } = await load();
-
-    await expect(programBelongsToOrg('not-a-uuid', 42)).resolves.toBe(false);
-  });
-
-  it('THROWS rather than denying when there is no pool at all', async () => {
-    connectMock.mockImplementation(async () => {
-      throw new Error('pool exhausted');
+    };
+    const app = express();
+    app.use((req, _res, next) => {
+      (req as unknown as { user: { organizationId: number } }).user = { organizationId: 42 };
+      next();
     });
+    app.use(initializeInnovationRoutes(pool as never));
+    const res = await request(app).get(`/delta-radar/statistics/${programId}`);
+    return { res, pool };
+  }
 
-    const { programBelongsToOrg, GuardUnavailableError } = await load();
+  it('answers 503 — not 404 — when the check could not run', async () => {
+    const { res } = await get(() => pgError('42P01', 'relation "regulatory_programs" does not exist'));
+    expect(res.status).toBe(503);
+    expect(res.body.error).toMatch(/not a permission decision/);
+  });
 
-    await expect(programBelongsToOrg('prog-1', 42)).rejects.toBeInstanceOf(GuardUnavailableError);
+  it('answers 404 — a real deny — when the check ran and found nothing', async () => {
+    // This keeps the fix honest: a guard that 503'd on everything would stop
+    // denying a genuine cross-tenant attempt.
+    const { res, pool } = await get(() => []);
+    expect(res.status).toBe(404);
+    expect(pool.query.mock.calls[0][0]).toMatch(/FROM regulatory_programs WHERE id = \$1 AND organization_id = \$2 AND deleted_at IS NULL/);
+    expect(pool.query.mock.calls[0][1]).toEqual([PROGRAM, 42]);
+  });
+
+  it('asks no registry but regulatory_programs, and lets the owner through', async () => {
+    const { res, pool } = await get(sql => (sql.includes('regulatory_programs') ? [{ id: PROGRAM }] : []));
+    expect(res.status).not.toBe(404);
+    expect(res.status).not.toBe(503);
+    const asked = pool.query.mock.calls.map(c => String(c[0])).filter(q => /programs\b/.test(q));
+    expect(asked.every(q => q.includes('regulatory_programs'))).toBe(true);
+  });
+
+  it('denies caller garbage without asking the database, and without a 503', async () => {
+    const { res, pool } = await get(() => pgError('22P02', 'invalid input syntax for type uuid'), 'not-a-uuid');
+    expect(res.status).toBe(404);
+    expect(pool.query).not.toHaveBeenCalled();
   });
 });

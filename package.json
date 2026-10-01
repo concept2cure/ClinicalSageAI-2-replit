@@ -353,6 +353,8 @@
     "ci:canonicalizers": "node scripts/ci/check-canonicalizers.mjs",
     "ci:canonicalizers:write-baseline": "node scripts/ci/check-canonicalizers.mjs --write-baseline",
     "ci:fabricated-identity": "node scripts/ci/check-fabricated-identity.mjs",
+    "ci:program-ownership-single-source": "node scripts/ci/check-program-ownership-single-source.mjs",
+    "ci:program-ownership-single-source:selftest": "node scripts/ci/check-program-ownership-single-source.mjs --self-test",
     "ci:fabricated-identity:list": "node scripts/ci/check-fabricated-identity.mjs --list",
     "ci:fabricated-identity:write-baseline": "node scripts/ci/check-fabricated-identity.mjs --write-baseline",
     "ci:component-class-coverage": "node scripts/ci/check-component-class-coverage.mjs",

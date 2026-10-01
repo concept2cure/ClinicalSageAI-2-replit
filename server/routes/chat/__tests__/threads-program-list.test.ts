@@ -1,8 +1,12 @@
 /**
  * GET /api/chat/threads?program_id= — the program-scoped thread list.
  *
- * Threads carry the shell's program key in metadata.programId; the list reads
- * it back org-scoped, refuses a non-UUID, and never lists across tenants.
+ * Threads carry the shell's program key in chat_threads.program_id (PF-10 S2,
+ * bound only to a program of the thread's own organization); the list reads it
+ * back org-scoped, refuses a non-UUID, and never lists across tenants. A
+ * thread whose legacy metadata names a program but whose program_id is NULL
+ * (the 20261001c backfill left it unbound: the program was another
+ * organization's) is not listed under that program.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -33,14 +37,15 @@ describe('programIdForThread', () => {
 });
 
 describe('listThreads by program', () => {
-  it('lists the org\'s threads whose metadata names the program, newest first, with the first user message as title', async () => {
+  it('lists the org\'s threads bound to the program, newest first, with the first user message as title', async () => {
     query.mockResolvedValue({ rows: [{ id: 'ana-ri_1', title: 'Draft 2.5', created_at: 'x', updated_at: 'y', program_id: PID.toLowerCase() }] });
     const r = res();
     await listThreads({ query: { program_id: PID, limit: '5' }, tenantId: 7 } as any, r);
     expect(r.statusCode).toBe(200);
     expect(r.body).toEqual({ threads: [expect.objectContaining({ id: 'ana-ri_1', title: 'Draft 2.5' })] });
     const [sql, params] = query.mock.calls[0];
-    expect(sql).toMatch(/metadata->>'programId' = \$2/);
+    expect(sql).toMatch(/t\.program_id = \$2/);
+    expect(sql).not.toMatch(/metadata->>'programId'/);
     expect(sql).toMatch(/organization_id = \$1/);
     expect(sql).toMatch(/role = 'user'/);
     expect(params).toEqual([7, PID.toLowerCase(), 5]);

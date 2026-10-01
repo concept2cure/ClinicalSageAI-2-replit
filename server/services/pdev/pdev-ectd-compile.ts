@@ -28,13 +28,12 @@
  * @module server/services/pdev/pdev-ectd-compile
  */
 
-import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { pool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
-import { regulatoryPrograms } from '../../../shared/schema/programs';
 import { assembleSubmissionEctd } from '../ectd/assemble-from-core';
 import { pdevIndAssemblyService, type IndAssemblyReport } from './pdev-ind-assembly';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
+import { programInOrganization } from '../c2c/program-access';
 
 const logger = createScopedLogger('pdev-ectd-compile');
 
@@ -120,17 +119,7 @@ export class PdevEctdCompileService {
     const forced = Boolean(input.force);
 
     // Tenant gate.
-    const programRows = await db
-      .select({ id: regulatoryPrograms.id })
-      .from(regulatoryPrograms)
-      .where(
-        and(
-          eq(regulatoryPrograms.id, input.programId),
-          eq(regulatoryPrograms.organizationId, input.organizationId)
-        )
-      )
-      .limit(1);
-    if (!programRows[0]) {
+        if (!(await programInOrganization(pool, input.programId, input.organizationId))) {
       throw new Error('PDEV program not found in tenant');
     }
 

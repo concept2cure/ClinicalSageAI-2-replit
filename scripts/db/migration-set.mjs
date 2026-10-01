@@ -1445,6 +1445,11 @@ export const C2C_MIGRATION_FILES = [
   // superseded which, and inferring it would manufacture a lineage the system
   // never observed.
   'migrations/20260829_cre_source_versioning.sql',
+  // VR-16 (D2/D5): the data room's capture record is append-only. Triggers on
+  // cre_evidence_sources (checksum and lineage write-once, retirement one-way,
+  // no TRUNCATE, DELETE only by the owner). After the file that adds its
+  // versioning columns; no table, no column, no DROP.
+  'migrations/20261001_cre_evidence_sources_capture_immutability.sql',
 
   // Constraint repair only: no table, no column, no data. 0001_phase13_full
   // meant to widen concept2cure_review_tasks.task_type to include
@@ -2808,6 +2813,14 @@ export const C2C_MIGRATION_FILES = [
   // proceeds. After 20260814, which creates the column. Creates no table. No
   // DROP.
   'migrations/20261001b_projects_one_anchor_per_program.sql',
+
+  // ── An AnA conversation names its project, by key (PF-10 S1, 2026-10-01) ──
+  // chat_threads.program_id, held to the thread's organization by a NOT VALID
+  // composite key (ON DELETE SET NULL (program_id)), with a CHECK, an index,
+  // and a same-organization-only backfill from metadata->>'programId'. After
+  // 20260728 (chat_threads) and 20260926b (regulatory_programs_id_org_uq,
+  // created here too when absent). Creates no table. No DROP.
+  'migrations/20261001c_chat_threads_program_key.sql',
 
   // ── RBQM: signed records stay signed; QTLs bite in their direction; a
   //    duplicate metric load is refused (2026-09-30) ─────────────────────────

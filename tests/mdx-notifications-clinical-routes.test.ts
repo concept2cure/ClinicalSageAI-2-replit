@@ -198,6 +198,31 @@ describe('AnA memory + threads', () => {
     expect(res.body.data).toHaveLength(1);
   });
 
+  it('threads list by program reads program_id, the key bound at mint (PF-10 S2)', async () => {
+    const PID = '0f3c1a2b-1111-4222-8333-444455556666';
+    queryFn.mockResolvedValueOnce({ rows: [] });
+    const res = await request(makeApp()).get(`/api/mdx/ana/threads?program_id=${PID.toUpperCase()}`);
+    expect(res.status).toBe(200);
+    const [sql, params] = queryFn.mock.calls[queryFn.mock.calls.length - 1];
+    expect(sql).toMatch(/program_id = \$2/);
+    expect(sql).not.toMatch(/metadata->>'programId'/);
+    expect(params).toContain(PID);
+  });
+
+  it('threads list refuses a program id that is not a UUID', async () => {
+    const before = queryFn.mock.calls.length;
+    const res = await request(makeApp()).get('/api/mdx/ana/threads?program_id=42');
+    expect(res.status).toBe(422);
+    expect(queryFn.mock.calls.length).toBe(before);
+  });
+
+  it('threads list says the store is missing rather than answering an empty list', async () => {
+    queryFn.mockRejectedValueOnce(Object.assign(new Error('column "program_id" does not exist'), { code: '42703' }));
+    const res = await request(makeApp()).get('/api/mdx/ana/threads');
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('THREAD_STORE_UNPROVISIONED');
+  });
+
   it('thread pin toggles metadata.pinned', async () => {
     queryFn.mockResolvedValueOnce({
       rows: [{ id: 't-1', metadata: { pinned: true } }],
