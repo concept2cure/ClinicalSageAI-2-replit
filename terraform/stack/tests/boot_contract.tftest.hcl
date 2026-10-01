@@ -691,3 +691,33 @@ run "refuses_a_pinned_rds_minor_version" {
   }
   expect_failures = [var.rds_engine_version]
 }
+
+# P1-11 / INF-13 (W2 / D1): the parameter group set pgaudit.log from the start,
+# and pgaudit recorded nothing, because RDS runs it only when it is preloaded.
+# Preloading replaces RDS's default list, so pg_stat_statements must stay in it.
+# Every task carries DB_AUDIT_REQUIRED=pgaudit, so deploy-migrate (which runs as
+# a task derived from the API's) refuses to roll services onto a database that
+# is not recording (scripts/db/database-audit.mjs).
+run "database_level_audit_is_loaded_and_required" {
+  command = plan
+
+  assert {
+    condition     = contains([for l in split(",", lookup(module.rds.parameters, "shared_preload_libraries", "")) : trimspace(l)], "pgaudit")
+    error_message = "pgaudit must be in shared_preload_libraries: pgaudit.log alone records nothing on RDS."
+  }
+  assert {
+    condition     = contains([for l in split(",", lookup(module.rds.parameters, "shared_preload_libraries", "")) : trimspace(l)], "pg_stat_statements")
+    error_message = "Setting shared_preload_libraries replaces RDS's default; pg_stat_statements must stay loaded."
+  }
+  assert {
+    condition     = !contains(["", "none"], lower(lookup(module.rds.parameters, "pgaudit.log", "")))
+    error_message = "pgaudit.log must name the classes to record."
+  }
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      one([for e in defs.environment : e.value if e.name == "DB_AUDIT_REQUIRED"]) == "pgaudit"
+    ])
+    error_message = "Every task must carry DB_AUDIT_REQUIRED=pgaudit, so the deploy refuses a database that is not recording."
+  }
+}
