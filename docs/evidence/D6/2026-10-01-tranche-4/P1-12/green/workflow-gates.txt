@@ -1,0 +1,26 @@
+== npm run ci:workflow-targets
+[ci:workflow-targets] 16 dead reference(s); 16 baselined
+[ci:workflow-targets] OK
+exit=0
+== npm run ci:required-workflow-concurrency
+  ✓ CI (.github/workflows/ci.yml)
+  ✓ CodeQL (.github/workflows/codeql.yml)
+  ✓ Semgrep (.github/workflows/semgrep.yml)
+  ✓ Tier 5 Browser Smoke (.github/workflows/tier5-browser-smoke.yml)
+exit=0
+== npm run ci:required-workflow-concurrency:self-test
+Required-workflow concurrency guard self-test passed: 6 simulated drifts rejected, 3 safe shapes accepted.
+exit=0
+== npm run ci:node-runtime
+Node runtime contracts are pinned to Node 22 (17 fixed surfaces plus active workflows).
+exit=0
+== npm run ci:node-runtime:self-test
+Node runtime guard self-test passed: 8 simulated drifts were rejected.
+exit=0
+== npm run ci:trivyignore-hygiene
+[ci:trivyignore-hygiene] OK — 2 suppression(s) in /home/user/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+exit=0
+== node scripts/ci/check-trivy-inline-ignores.mjs
+  AWS-0011 → resource "aws_cloudfront_distribution" "this"  (terraform/modules/cloudfront/main.tf:157)
+  AWS-0104 → egress  (terraform/modules/ecs-fargate/main.tf:110)
+exit=0

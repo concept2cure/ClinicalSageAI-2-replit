@@ -8,21 +8,12 @@ permissions:
   contents: read
 
 jobs:
-  # Semgrep runs in its own job. As a container action it executes as root in
-  # the shared workspace, and the files it leaves behind are root-owned — which
-  # is why the dependency install in this workflow failed with EACCES on
-  # package-lock.json on every run. Isolating it keeps the SAST scan while
-  # giving the validation job a workspace it owns.
-  semgrep:
-    name: Semgrep (SAST)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Run Semgrep (SAST)
-        uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d # v1
-        with:
-          config: p/ci
-
+  # The `p/ci` Semgrep scan that lived here moved to semgrep.yml (security audit
+  # 2026-09-24 INF-02/INF-10, plan P1-12), which runs it with p/default on every
+  # push as well as on pull requests, and blocks. This copy had stopped scanning
+  # anything: returntocorp/semgrep-action@v1 runs semgrep 1.36.0, which crashed
+  # on the registry's current rules ("invalid rule severity value: MEDIUM") and
+  # the job still reported success (run 35982180716, 2026-09-24).
   pr-validation:
     name: PR Validation
     runs-on: ubuntu-latest
