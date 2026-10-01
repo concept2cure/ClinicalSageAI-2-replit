@@ -387,20 +387,66 @@ describe('planSequence', () => {
     expect(plan.summary).toMatchObject({ replace: 1, new: 0 });
   });
 
-  it('moving a document to a DIFFERENT CTD section is not a replace across sections', () => {
+  it('moving a document to a DIFFERENT CTD section is not a replace across sections — and the copy left on file is named', () => {
     // Identity is the document at a section. A corrected placement files at the
-    // new section and leaves the old copy on file — withdrawing it is an
-    // explicit act, which is the honest answer until withdrawal exists here.
+    // new section; the old copy stays on file until it is withdrawn, which is
+    // an explicit act. 2026-10-01 (W5/D7, sweep F12): nothing said so, so the
+    // agency kept a current copy at a heading the product no longer placed it
+    // at, and every later revision replaced only the new copy.
+    const filed: FiledSequence = {
+      ...SEQ_0000,
+      leaves: [leaf('2.5', 'a.pdf', 'm1', { leafKey: 'artifact:artifact_x@2.5' })],
+    };
+    const moved = [{ ctdSection: '2.7', fileName: 'a.pdf', md5: 'm1', title: 'x', leafKey: 'artifact:artifact_x@2.7' }];
+    const plan = planSequence({ sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed], desired: moved });
+    expect(plan.summary).toMatchObject({ new: 1, replace: 0 });
+    expect(plan.leaves[0]).not.toHaveProperty('modifiedFile');
+    expect(plan.staleOnFile).toEqual([{
+      reason: 'relocated', ctdSection: '2.5', fileName: 'a.pdf', sequenceNumber: '0000',
+      movedTo: { ctdSection: '2.7', fileName: 'a.pdf' },
+    }]);
+    // Withdrawing the old copy in the same sequence is the move done whole.
+    const whole = planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed], desired: moved,
+      withdraw: [{ ctdSection: '2.5', fileName: 'a.pdf' }],
+    });
+    expect(whole.summary).toMatchObject({ new: 1, delete: 1 });
+    expect(whole.staleOnFile).toEqual([]);
+  });
+
+  it('a document filed at TWO sections on purpose is not a move', () => {
     const filed: FiledSequence = {
       ...SEQ_0000,
       leaves: [leaf('2.5', 'a.pdf', 'm1', { leafKey: 'artifact:artifact_x@2.5' })],
     };
     const plan = planSequence({
       sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
-      desired: [{ ctdSection: '2.7', fileName: 'a.pdf', md5: 'm1', title: 'x', leafKey: 'artifact:artifact_x@2.7' }],
+      desired: [
+        { ctdSection: '2.5', fileName: 'a.pdf', md5: 'm1', title: 'x', leafKey: 'artifact:artifact_x@2.5' },
+        { ctdSection: '2.7', fileName: 'a.pdf', md5: 'm1', title: 'x', leafKey: 'artifact:artifact_x@2.7' },
+      ],
     });
-    expect(plan.summary).toMatchObject({ new: 1, replace: 0 });
-    expect(plan.leaves[0]).not.toHaveProperty('modifiedFile');
+    expect(plan.staleOnFile).toEqual([]);
+  });
+
+  it('names an empty-section placeholder still on file from before placeholders stopped being filed', () => {
+    // Sweep F11: an empty section files nothing now, but a history written
+    // before that can hold a generated "[EMPTY SECTION]" leaf. It stays current
+    // until withdrawn, so the plan says where it is.
+    const filed: FiledSequence = {
+      ...SEQ_0000,
+      leaves: [
+        leaf('2.5', 'a.pdf', 'm1', { leafKey: 'artifact:artifact_x@2.5' }),
+        leaf('3.2.P.1', '3-2-p-1-s14.pdf', 'm-ph', { leafKey: 'section:14@3.2.P.1' }),
+      ],
+    };
+    const plan = planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
+      desired: [{ ctdSection: '2.5', fileName: 'a.pdf', md5: 'm2', title: 'x', leafKey: 'artifact:artifact_x@2.5' }],
+    });
+    expect(plan.staleOnFile).toEqual([
+      { reason: 'placeholder', ctdSection: '3.2.P.1', fileName: '3-2-p-1-s14.pdf', sequenceNumber: '0000' },
+    ]);
   });
 
   it('REFUSES a gap and a backfill alike — the only ordering this knows is the sequence number', () => {
