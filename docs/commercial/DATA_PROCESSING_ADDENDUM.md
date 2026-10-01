@@ -169,7 +169,7 @@ APPROVALS`, fail closed).
 
 ## 7. Personal Data Breach
 
-7.1 Provider will notify Customer without undue delay and within [48] hours of
+7.1 Provider will notify Customer without undue delay and within 48 hours of
 becoming aware of a Personal Data Breach affecting Customer's Personal Data,
 providing the nature of the breach, categories and approximate numbers of
 Data Subjects and records, likely consequences, measures taken, and a

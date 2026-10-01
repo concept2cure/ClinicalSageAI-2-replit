@@ -391,7 +391,7 @@ needs a deployed environment or a live account. The correction to each refuted o
 | G.1 | Backups and a restore drill; not timed on production | verified as written | synthetic CI Postgres only (INF-15) |
 | G.2 | RTO/RPO targets, not measured | verified (honest) | — |
 | G.3 | Incident response plan (DRAFT), no tabletop | verified as written | — |
-| G.4 | Breach notification 72 h to tenants | partial | the DPA says [48] h (counsel to align; INF-07); IR-004 §3a now states the regulator clocks and SIG G.4 answers from it (2026-09-26) |
+| G.4 | Breach notification 48 h to tenants | partial | one figure since 2026-10-01: the DPA, IR-004 and SIG G.4 say 48 h (ADR-0014 §5; INF-07); IR-004 §3a states the regulator clocks (2026-09-26); no tabletop yet |
 | G.5 | Boot security self-test; readiness probe; CloudTrail; no GuardDuty/WAF | verified as written | and no alerting at all (INF-06) |
 | H.1 | Provider list | verified | `approved-models.ts` |
 | H.2 | Tenants can restrict providers and regions; never crosses | partial | embeddings (DP-07) |
