@@ -1,0 +1,38 @@
+$ npx vitest run <the five suites below>   # with the change
+ ✓ server/services/ana/__tests__/catalog-gated-tools.test.ts > CATALOG_GATED_TOOLS > names exactly the tools whose handlers call requireCatalog 21ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > the three Vault tools are offered whatever the catalog flag says 3ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > search_project_documents finds a document by full text, with no key and no catalog 20ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > with the catalog on and no embedding provider, the full-text hits still come back 1ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > a document found both ways is one hit that says so 1ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > nothing found is said as nothing found, not as unavailable 1ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > list_project_documents and read_project_document do not refuse when the catalog is off 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > a v2 project open: lists that project, not the whole organization 5ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > another project's documents are refused while a project is open, and nothing is listed 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > naming the open project itself is fine 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > no project open: the organization, as today, or a program of the organization when named 2ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > files into the open project 15ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > never into another project while one is open: refused, and nothing is ingested 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > with no project open: refused, pointing to the audited adopt; nothing is ingested 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > read_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > catalog_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > place_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > the open project's own document is read 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_project_documents searches the open program only; with no project, the organization 30ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_document_passages searches the open program only; with no project, the organization 2ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > an open project with no program > reads nothing: not the organization, and not a named program 0ms
+ ✓ server/services/vault/__tests__/vault-search.test.ts > searchVaultDocuments > the library search names the organisation in the count and in the page 3ms
+ ✓ server/services/vault/__tests__/vault-search.test.ts > searchVaultDocuments > a project search adds the project, and keeps the organisation 1ms
+ ✓ server/services/vault/__tests__/vault-search.test.ts > any-term matching (AnA asks in sentences) > turns a question into an OR of its words, without operators from punctuation 2ms
+ ✓ server/services/vault/__tests__/vault-search.test.ts > any-term matching (AnA asks in sentences) > 'any' sends the OR query; the default keeps the search box's every-term meaning 0ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > removes a denied tool from the surface the model is offered 3ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > returns everything when the tenant denies nothing 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > does NOT apply the allowlist — that would strip every search tool 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > skips the policy lookup entirely when there is no organization 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > ignores a non-numeric organization id rather than passing it to the query 0ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > is default-allow when the policy cannot be read 0ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer the catalog tools to an organization whose catalog is off 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > offers them when the catalog is on 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > fails closed when the toggle cannot be read — a tool that would refuse is not offered 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer them to an org-less turn, which they refuse outright 0ms
+ Test Files  5 passed (5)
+      Tests  35 passed (35)

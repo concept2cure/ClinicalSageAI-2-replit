@@ -50,3 +50,22 @@ describe('searchVaultDocuments', () => {
     expect(calls[0].sql).not.toMatch(/vault\.documents succ/);
   });
 });
+
+describe('any-term matching (AnA asks in sentences)', () => {
+  it('turns a question into an OR of its words, without operators from punctuation', async () => {
+    const { anyTermsQuery } = await import('../vault-search');
+    expect(anyTermsQuery('Which report shows 24-month stability for "batch 12"?')).toBe(
+      'which or report or shows or 24 or month or stability or for or batch or 12',
+    );
+    expect(anyTermsQuery('  -- ??  ')).toBe('');
+  });
+
+  it("'any' sends the OR query; the default keeps the search box's every-term meaning", async () => {
+    const { db, calls } = capture();
+    await searchVaultDocuments(db, { organizationId: ORG, programId: null, q: 'stability batch', limit: 5, offset: 0, includeSuperseded: false, match: 'any' });
+    expect(calls[0].params[1]).toBe('stability or batch');
+    const plain = capture();
+    await searchVaultDocuments(plain.db, { organizationId: ORG, programId: null, q: 'stability batch', limit: 5, offset: 0, includeSuperseded: false });
+    expect(plain.calls[0].params[1]).toBe('stability batch');
+  });
+});

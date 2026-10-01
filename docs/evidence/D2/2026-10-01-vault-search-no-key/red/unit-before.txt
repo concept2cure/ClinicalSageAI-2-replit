@@ -1,0 +1,15 @@
+$ npx vitest run server/services/ana/__tests__/vault-access-without-key.test.ts   # before the change
+ × server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > the three Vault tools are offered whatever the catalog flag says 6ms
+ × server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > search_project_documents finds a document by full text, with no key and no catalog 4ms
+ × server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > with the catalog on and no embedding provider, the full-text hits still come back 2ms
+ × server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > a document found both ways is one hit that says so 2ms
+ × server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > nothing found is said as nothing found, not as unavailable 1ms
+ × server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > list_project_documents and read_project_document do not refuse when the catalog is off 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'catalog_project_document', …(6) ] to not include 'list_project_documents'
+AssertionError: expected undefined to be true // Object.is equality
+AssertionError: expected false to be true // Object.is equality
+AssertionError: expected undefined to deeply equal [ 'text', 'meaning' ]
+AssertionError: expected undefined to be true // Object.is equality
+AssertionError: expected 'AnA cannot open this organization\'s …' not to match /not enabled|catalog/i
+      Tests  6 failed (6)

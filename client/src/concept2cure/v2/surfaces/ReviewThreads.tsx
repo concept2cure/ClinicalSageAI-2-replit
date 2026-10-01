@@ -3,6 +3,8 @@ import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiCall, apiErrorText } from '../apiCall';
+import { apiRequest, serverMessage, ApiRequestError } from '@/lib/queryClient';
+import { downloadBlob, safeFileName } from '../download';
 import type { FireToast } from '../toast';
 import { ANA_REVIEW_COMMENT_ROLE } from '@shared/constants/review-comment';
 
@@ -52,6 +54,9 @@ export function CommentByline({ authorName, authorRole }: { authorName: string; 
 interface QueueThread {
   threadId: string;
   title: string | null;
+  /** The artifact's public id and its project, for the review record export. */
+  artifactId?: string | null;
+  projectId?: number | null;
   priority?: string | null;
   artifactTitle?: string | null;
   anchorLabel?: string | null;
@@ -76,6 +81,8 @@ interface MyQueuePayload {
     canComment: boolean;
     canRequestChanges: boolean;
     canResolve: boolean;
+    /** May take the artifact's review record (the audit readers, DP-18). */
+    canExportRecord?: boolean;
   };
 }
 interface CommentRow {
@@ -107,6 +114,52 @@ function initials(name: string): string {
   return (name || '?').split(/\s+/).map(s => s[0]).join('').slice(0, 2).toUpperCase();
 }
 
+
+/**
+ * The document's whole review record, for an inspector: every thread and
+ * comment, retractions with who and why, each checked against the audit trail
+ * (GET …/review-record/export). Offered to the audit readers the route serves
+ * (permissions.canExportRecord). Through apiRequest, so the bearer token and
+ * tenant header travel with it. The server records the export before it sends
+ * anything and answers 503 when it cannot; a refusal is reported in the
+ * server's own words, never as a download.
+ */
+export function ExportReviewRecord({ thread, onNotice }: { thread: QueueThread; onNotice: FireToast }) {
+  const [exporting, setExporting] = useState(false);
+  if (!thread.artifactId || thread.projectId == null) return null;
+  const artifactId = thread.artifactId;
+  const path = `/api/concept2cure/projects/${encodeURIComponent(String(thread.projectId))}/artifacts/${encodeURIComponent(artifactId)}/review-record/export`;
+  const failed = (why: string | null) =>
+    onNotice(`The review record was not exported. ${why ?? 'The service could not be reached.'}`, 'error');
+  const run = async () => {
+    setExporting(true);
+    try {
+      const res = await apiRequest('GET', path);
+      // apiRequest RETURNS a 401 rather than throwing it.
+      if (!res.ok) {
+        failed(serverMessage(await res.json().catch(() => null)) ?? 'Your session isn’t authenticated.');
+      } else if (downloadBlob(`review-record-${safeFileName(artifactId, 'document')}.json`, await res.blob())) {
+        onNotice('Review record exported. The export is recorded in the audit trail.');
+      } else {
+        onNotice('The review record was prepared, but this browser did not save the file. Try again.', 'error');
+      }
+    } catch (err) {
+      failed(err instanceof ApiRequestError ? serverMessage(err.payload) ?? err.message : null);
+    } finally {
+      setExporting(false);
+    }
+  };
+  return (
+    <button
+      className="btn ghost"
+      disabled={exporting}
+      onClick={() => void run()}
+      title="Every thread and comment on this document, each checked against the audit trail"
+    >
+      {I.download} {exporting ? 'Exporting…' : 'Export review record'}
+    </button>
+  );
+}
 
 /**
  * The approval-board slice of the parent Review surface's screen state, merged
@@ -154,6 +207,7 @@ export function ReviewThreadsPane({
   const canResolve = perms?.canResolve === true;
   const canRequestChanges = perms?.canRequestChanges === true;
   const canComment = perms?.canComment !== false;
+  const canExportRecord = perms?.canExportRecord === true;
   const selected = threads.find(t => t.threadId === sel) ?? null;
   const refresh = () => setRefreshKey(k => k + 1);
 
@@ -341,9 +395,12 @@ export function ReviewThreadsPane({
                       anchor. Hidden outright when the caller lacks `resolve` —
                       the server 403s, and a disabled button someone can never
                       enable is just clutter. */}
-                  {canResolve && (
-                    <button className="btn primary" onClick={() => resolveThread(selected.threadId)}>{I.check} Resolve thread</button>
-                  )}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {canExportRecord && <ExportReviewRecord thread={selected} onNotice={onNotice} />}
+                    {canResolve && (
+                      <button className="btn primary" onClick={() => resolveThread(selected.threadId)}>{I.check} Resolve thread</button>
+                    )}
+                  </div>
                 </div>
 
                 {comments.loading ? (
