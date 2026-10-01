@@ -130,6 +130,10 @@ module "secrets" {
       description = "Seals the signed audit export an inspector re-verifies"
       value       = var.audit_export_signing_key
     }
+    audit_attestation_key = {
+      description = "Signs tenant-export attestation reports"
+      value       = var.audit_attestation_key
+    }
     connector_encryption_key = {
       description = "Encrypts stored connector credentials"
       value       = var.connector_encryption_key
@@ -171,6 +175,10 @@ resource "terraform_data" "boot_contract" {
     precondition {
       condition     = var.audit_export_signing_key != var.audit_hmac_key && var.audit_export_signing_key != var.audit_hmac_secret
       error_message = "audit_export_signing_key must differ from audit_hmac_key and audit_hmac_secret: each seals a different record."
+    }
+    precondition {
+      condition     = !contains([var.jwt_secret, var.audit_hmac_key, var.audit_hmac_secret, var.audit_export_signing_key], var.audit_attestation_key)
+      error_message = "audit_attestation_key must differ from jwt_secret, both audit HMAC keys and audit_export_signing_key: each signs a different record."
     }
   }
 }
@@ -226,12 +234,19 @@ locals {
     { name = "AUDIT_HMAC_KEY", value_from = module.secrets.secret_arns["audit_hmac_key"] },
     { name = "AUDIT_HMAC_SECRET", value_from = module.secrets.secret_arns["audit_hmac_secret"] },
     { name = "AUDIT_EXPORT_SIGNING_KEY", value_from = module.secrets.secret_arns["audit_export_signing_key"] },
+    { name = "AUDIT_ATTESTATION_KEY", value_from = module.secrets.secret_arns["audit_attestation_key"] },
     { name = "CONNECTOR_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["connector_encryption_key"] },
     { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
     { name = "ANTHROPIC_API_KEY", value_from = module.secrets.secret_arns["anthropic_api_key"] },
     { name = "SMTP_USER", value_from = module.secrets.secret_arns["smtp_user"] },
     { name = "SMTP_PASS", value_from = module.secrets.secret_arns["smtp_pass"] },
   ]
+}
+
+# Optional error reporting (server/utils/sentry.ts): absent rather than empty
+# when not configured, so the server's own "recommended" warning still fires.
+locals {
+  observability_environment = var.sentry_dsn == "" ? [] : [{ name = "SENTRY_DSN", value = var.sentry_dsn }]
 }
 
 # ── Database ─────────────────────────────────────────────────────────────────
@@ -326,8 +341,8 @@ module "ecs" {
   worker_secrets = local.boot_secrets
 
   # The release signer (release_signing.tf) and the boot contract's plain values.
-  api_environment    = concat(local.signer_environment, local.boot_environment)
-  worker_environment = concat(local.signer_environment, local.boot_environment)
+  api_environment    = concat(local.signer_environment, local.boot_environment, local.observability_environment)
+  worker_environment = concat(local.signer_environment, local.boot_environment, local.observability_environment)
 
   tags = var.tags
 }

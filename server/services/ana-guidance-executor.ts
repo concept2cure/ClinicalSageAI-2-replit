@@ -26,6 +26,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { executeGovernedAnaOperation } from './governed-ana-execution.js';
 import { validateArtifactQuality } from './ana-ri/enforcement.js';
 import { recordCommentPosted } from '../routes/c2c/review-comment-record';
+import { ANA_REVIEW_COMMENT_ROLE } from '../../shared/constants/review-comment';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 
 async function getDbClient() {
@@ -414,6 +415,7 @@ async function executeReviewThreadCreation(payload: AnaActionPayload): Promise<A
         artifactId: artifactPk,
         authorId: payload.userId,
         authorName: payload.userName,
+        authorRole: ANA_REVIEW_COMMENT_ROLE,
         body: payload.content,
         kind: 'comment',
       }).returning();
