@@ -862,6 +862,13 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      and a leaf for the same reason. Both were found by ci:purge-coverage on the
      blank-database job of CI run 12756. */
   'project_continuity_snapshots',
+  /* Per-organization scheduled-job claims (U19, 4b1583a2c): one row per
+     (organization, job, window), so a job runs once per window across processes.
+     An operational record, but org-keyed with no foreign key, so it outlived a
+     purge. A purge deletes only this tenant's claims; the estate-wide jobs
+     claim under organization 0, which no tenant purge touches. Found by
+     ci:purge-coverage on CI run 12804. */
+  'scheduled_job_claims',
   /* The CMC workflow subsystem. All five are org-keyed with organization_id
      NOT NULL, so every row belongs to exactly one tenant — there is no
      platform-template population here for a purge to spare. What they hold is

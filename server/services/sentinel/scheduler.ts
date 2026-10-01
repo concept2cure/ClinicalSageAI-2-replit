@@ -164,6 +164,10 @@ export class SentinelScheduler {
       );
       if (!claim.ran) {
         log.debug(`[SentinelScheduler] org ${organizationId}: this window's scan ran (or is running) elsewhere (${claim.reason})`);
+        // The scanner on this process is alive and the window is covered, as
+        // the digest heartbeat records a skipped tick; recording nothing made
+        // /api/health/jobs on the skipping tasks read 'stale' (degraded).
+        recordBackgroundJobRun(BACKGROUND_JOB.SENTINEL_SCAN, { ok: true, processed: 0 });
         return;
       }
       // Single aggregate heartbeat across orgs: "the scanner is alive and a scan

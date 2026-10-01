@@ -140,3 +140,20 @@ stack renders, and sets `SMTP_PASSWORD` to a decoy value.
   - unconfigured SMTP raises the alert;
   - a send failure raises the alert.
 - After the fix, `server/jobs` passes 65/65.
+
+## Follow-up: a regression this unit introduced, fixed the same day
+
+Background-job heartbeats are kept per process. With the claim in place, the
+sentinel on a process that found its window already scanned recorded
+nothing. On the two tasks that lose the claim, the heartbeat would therefore
+pass its 90-minute threshold, and `/api/health/jobs` would report
+**degraded** while the scanner was healthy.
+
+The fix records a skipped tick as a successful tick with nothing processed.
+The digest heartbeat already did exactly this.
+
+**Test.** A new case in `scheduler-once-per-window.test.ts` checks that each
+of the three processes records a live heartbeat.
+
+- Before the fix, it failed: `expected [ { ok: true } ] to have a length of 3 but got 1`.
+- After the fix, the sentinel and qa-storm suites pass 15/15.

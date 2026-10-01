@@ -160,4 +160,50 @@ test('a baseline entry without a written reason fails', () => {
   assert.deepEqual(r.unreasoned, ['server/routes/x.ts']);
 });
 
+
+// ── Approval stamps (2026-10-01) ─────────────────────────────────────────────
+// The two defects this widening exists for, as they stood before e1c224f69 and
+// 028a0c704: an approval stamped under command 'transition', no signature row.
+const PRE_FIX_QMS_TOOL = `
+registerToolHandler('approve_qms_document', async (input, ctx) => {
+  await client.query(\`UPDATE qms_documents SET status = 'effective', approver_id = $3, approved_at = NOW() WHERE id = $1\`, [id, org, ctx.userId]);
+  await recordGovernedAction(client, { orgId, userId, command: 'transition', target, reason, payload: { kind: 'approve' } });
+});
+`;
+const PRE_FIX_CHANGE_SERVICE = `
+export async function transitionChange(orgId, id, to, actor) {
+  if (to === 'approved') { sets.push('approved_at = now()'); add('approved_by', actor.userId); }
+  await pool.query(\`UPDATE qms_change_controls SET \${sets.join(', ')} WHERE id = $1\`, args);
+}
+`;
+const SIGNED_STAMP = `
+export async function approveQmsChangeSigned(client, params) {
+  await client.query(\`UPDATE qms_change_controls SET status = 'approved', approved_by = $3, approved_at = $4::timestamptz WHERE id = $1\`, args);
+  const gov = await recordGovernedAction(client, { command: 'approve', target, reason });
+  await persistGovernedActionSignature(client, { orgId, userId, target, reason });
+}
+`;
+
+test('an approval stamped under a non-sign verb fails the gate (the QMS AnA tool before e1c224f69)', () => {
+  const f = failsWith(PRE_FIX_QMS_TOOL);
+  assert.equal(f.length, 1);
+  assert.equal(f[0].sites.length, 1, 'approver_id and approved_at on one line are one stamp');
+  assert.equal(f[0].sites[0].kind, 'approval-stamp');
+});
+
+test('an approval stamp built up in a service fails the gate (transitionChange before 028a0c704)', () => {
+  const f = failsWith(PRE_FIX_CHANGE_SERVICE);
+  assert.equal(f.length, 1);
+  assert.equal(f[0].sites[0].kind, 'approval-stamp');
+});
+
+test('an approval stamp written beside its signature row passes', () => {
+  assert.equal(failsWith(SIGNED_STAMP).length, 0);
+});
+
+test('clearing an approval (a revision) is not a stamp', () => {
+  const src = "router.post('/x', async () => { await pool.query(`UPDATE qms_documents SET status = 'draft', approver_id = NULL, approved_at = NULL WHERE id = $1`, [id]); });";
+  assert.deepEqual(scanSource(src), []);
+});
+
 console.log(`[ci:sign-ceremony:selftest] ${passed} passed — the gate fails on what it exists to catch.`);

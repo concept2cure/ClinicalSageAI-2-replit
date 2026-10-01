@@ -2473,7 +2473,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         // eslint-disable-next-line no-alert
         window.alert(
           'Not downloaded — ' +
-            (why?.message || why?.error || `the server refused it (HTTP ${res.status})`) + '.',
+            (why?.message || why?.error || `the server refused it (HTTP ${res.status})`).replace(/\.$/, '') + '.',
         );
         return;
       }
