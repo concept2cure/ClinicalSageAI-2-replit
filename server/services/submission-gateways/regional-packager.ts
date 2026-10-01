@@ -86,7 +86,7 @@ import { leafIdSlug, baseLeafId, createLeafIdAssigner } from './ectd-packager/le
 import { buildMd5Index } from './ectd-packager/md5-index';
 import { escapeXml, studyFolderSlug, commonDir } from './ectd-packager/paths';
 import { isPathWithin } from '../../utils/document-file-roots';
-import { buildIchModuleTree, findDroppedLeaves, type RenderedLeaf } from './ectd-packager/ich-headings';
+import { buildIchModuleTree, findDroppedLeaves, ECTD_XLINK_NS, type RenderedLeaf } from './ectd-packager/ich-headings';
 import { normalizeCtdCode } from '../ectd/section-to-ctd';
 import { ctdFolderSlug } from '../../../shared/regulatory/section-code';
 
@@ -520,7 +520,7 @@ function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRe
 <?xml-stylesheet type="text/xsl" href="../../util/style/us-regional.xsl"?>
 <fda-regional:fda-regional dtd-version="3.3" xml:lang="en"
     xmlns:fda-regional="http://www.ich.org/fda"
-    xmlns:xlink="http://www.w3.org/1999/xlink">
+    xmlns:xlink="${ECTD_XLINK_NS}">
   <admin>
 ${contacts}
     <application-set>
@@ -712,7 +712,7 @@ function buildIndexXml(
 <?xml-stylesheet type="text/xsl" href="util/style/ectd-2-0.xsl"?>
 <!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
-           xmlns:xlink="http://www.w3.org/1999/xlink"
+           xmlns:xlink="${ECTD_XLINK_NS}"
            dtd-version="3.2">
 ${regional ? regionalBackboneReference(regional) : ''}${moduleBlocks}
 </ectd:ectd>`;

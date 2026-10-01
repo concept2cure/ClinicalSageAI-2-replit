@@ -19,13 +19,16 @@
     DTD_BAD_ROOT             — root is <ectd:ectd>
     DTD_MISSING_ECTD_NS      — declares xmlns:ectd
     DTD_MISSING_XLINK_NS     — declares xmlns:xlink
+    DTD_WRONG_XLINK_NS       — with the value the ICH 3.2 DTD fixes,
+                               http://www.w3c.org/1999/xlink (not w3.org;
+                               corrected 2026-10-01, W5/D7 sweep F01)
     DTD_LEAF_MISSING_ATTR    — every <leaf> has xlink:href, checksum, operation
     DTD_CHECKSUM_TYPE        — every checksum-type is "md5"
     DTD_UNKNOWN_ELEMENT      — every m* element is in the authoritative catalogue
     DTD_MISSING_REQUIRED_CHILD — module content elements are present
 -->
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
-           xmlns:xlink="http://www.w3.org/1999/xlink"
+           xmlns:xlink="http://www.w3c.org/1999/xlink"
            dtd-version="3.2">
   <m2-common-technical-document-summaries>
     <m2-3-quality-overall-summary>
