@@ -131,6 +131,56 @@ export async function priorSteadyRecords(
   return earlier.flatMap((id) => (byVault.has(id) ? [byVault.get(id)!] : []));
 }
 
+/**
+ * Why a Vault version may not leave for an agency, or null when it may (VR-14,
+ * D7). A version is transmittable only when all three hold:
+ *
+ *   - its lifecycle record in this organization is at a steady stage
+ *     (STEADY_STAGES: approved, or placed / packaged / submitted after it);
+ *   - it is the current version — no live later version in its family. A
+ *     superseded version is not filed into a new assembly;
+ *   - the record's content hash, which is what was reviewed and approved
+ *     (FD6 refuses an edit after approval), is the hash of the bytes about to be
+ *     staged. An approval of other bytes approves nothing here.
+ *
+ * The record is found as readVaultLifecycles finds it (the oldest one for the
+ * version). The answer is the status the transmit refusal prints beside the
+ * leaf. FD5 — grandfathering vault leaves already in open sequences — is
+ * undecided, so nothing is grandfathered.
+ *
+ * Called from the vault branch of materializeLeafSources
+ * (server/services/ectd/leaf-source-resolver.ts), whose unfinalized count
+ * transmit, the governed freeze and dispatch already refuse on.
+ */
+export async function vaultVersionNotTransmittable(
+  q: LifecycleQueryable,
+  organizationId: number,
+  vaultId: string,
+  stagedSha256: string,
+): Promise<string | null> {
+  const { rows } = await q.query(
+    `SELECT NOT ${supersededSql('d')} AS current, c.stage, c.content_hash
+       FROM vault.documents d
+       LEFT JOIN LATERAL (
+         SELECT stage, content_hash FROM canonical_documents
+          WHERE organization_id = $2 AND source_refs ? 'vault_documents'
+            AND source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text
+          ORDER BY created_at, canonical_id LIMIT 1
+       ) c ON TRUE
+      WHERE d.id = $1::uuid AND d.deleted_at IS NULL`,
+    [vaultId, organizationId],
+  );
+  const r = rows[0];
+  if (!r) return 'not found';
+  if (!r.current) return 'superseded by a later version';
+  if (!r.stage) return 'not reviewed';
+  if (!(STEADY_STAGES as readonly string[]).includes(r.stage)) {
+    return r.stage === 'superseded' ? 'superseded by a later version' : `${r.stage}, not approved`;
+  }
+  if (!r.content_hash || r.content_hash !== stagedSha256) return 'approved for different content than these bytes';
+  return null;
+}
+
 /** A sign-off as the Vault shows it: who, what it means, and when. */
 export interface SignOffManifestation {
   /** The printed name the signature record holds (21 CFR 11.50(a)(1)). */
