@@ -1875,7 +1875,8 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
     // A final run is shown as what was sealed, not re-rendered, and only when
     // the stored copy still verifies. A copy that no longer matches its seal is
     // refused, never shown as the sealed record; so is a run the audit chain
-    // records as finalized whose status no longer says so.
+    // records as finalized whose status no longer says so. The status is read
+    // again inside that transaction, after the chain (run-seal.ts).
     const stored = await inTenantTransaction(run.organizationId, (client) => readVerifiedSealedDocument(client, run));
     if (stored.verdict === 'intact' && stored.document) return res.json({ data: stored.document, sealed: true });
     if (stored.verdict === 'mismatch') {
@@ -1883,7 +1884,7 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
         success: false,
         error: {
           code: 'SEALED_DOCUMENT_MISMATCH',
-          message: "This report's stored record no longer matches its finalization on the audit chain, so it is not shown. GET /runs/:id/seal states which check failed.",
+          message: "This report's stored record does not verify against the audit chain, so it is not shown. GET /runs/:id/seal states which check failed.",
         },
         data: { runId },
       });

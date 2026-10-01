@@ -27,8 +27,16 @@
  * document was stored, and whose stored seal agrees with what the chain
  * recorded, is "not verifiable"; a read that fails throws, so the caller
  * answers with an error, never a verdict.
- * (Adversarial review of this change, 2026-10-01: ten confirmed findings, all
- * addressed here.)
+ * The chain row is trusted only as far as the chain vouches for it: it must
+ * hold a chain position, re-derive from its predecessor and, where the audit
+ * HMAC key is configured, carry a valid seal (audit/chain-row.ts
+ * verifySequencedRow). A row the app role could insert without the key is
+ * therefore not the record. The finalization's electronic signature must exist
+ * and must have signed the same seal hash. The run's status is read inside the
+ * same transaction, after the chain, so a finalize committing between the two
+ * reads is not mistaken for a rewrite.
+ * (Adversarial reviews of this change, 2026-10-01: fifteen confirmed findings,
+ * all addressed here.)
  *
  * @module server/services/report-os/sealing/run-seal
  */
@@ -37,16 +45,17 @@ import type { RenderedReport } from '../render/types';
 import type { SealedRecord } from './types';
 import { computeContentHash, extractProvenanceAtoms } from './seal';
 import { readCanonVersion } from '../../../../shared/versioned-digest.js';
+import { verifySequencedRow, type SequencedRowVerdict } from '../../audit/chain-row.js';
 
 export type SealVerdict = 'intact' | 'mismatch' | 'not-verifiable';
 
 export interface SealCheck {
-  check: 'audit-chain' | 'stored-seal' | 'stored-document';
+  check: 'audit-chain' | 'stored-seal' | 'stored-document' | 'signature';
   ok: boolean;
   detail: string;
 }
 
-/** What the audit chain recorded about one finalization. */
+/** What the audit chain recorded about one finalization, and how far the chain vouches for the row. */
 export interface ChainRecord {
   sealHash: string | null;
   sealedAt: string | null;
@@ -55,12 +64,22 @@ export interface ChainRecord {
   canonVersion: number | null;
   /** Finalize recorded that it stored the sealed document (finalizations since 2026-10-01). */
   documentStored: boolean;
-  /** The row's recorded content hashes to its payload_hash, which the chain links. */
+  /** The row's recorded content hashes to its payload_hash. */
   payloadBound: boolean;
+  /** The row's place on the tenant's audit chain (audit/chain.ts verifySequencedRow). */
+  chained: SequencedRowVerdict;
   occurredAt: string | null;
   reason: string | null;
   meaning: string | null;
   priorStatus: string | null;
+}
+
+/** The finalization's electronic signature (11.50), with the seal hash its manifest signed. */
+export interface SignatureRecord {
+  signerName: string | null;
+  signedAt: string | null;
+  meaning: string | null;
+  signedSealHash: string | null;
 }
 
 export interface RunSealView {
@@ -81,6 +100,8 @@ interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
 }
 
+type RunRef = { id: number; organizationId: number };
+
 const text = (v: unknown): string | null => (typeof v === 'string' && v.length > 0 ? v : null);
 const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 const iso = (v: unknown): string | null => (v instanceof Date ? v.toISOString() : text(v));
@@ -97,27 +118,40 @@ const asObject = (v: unknown): Record<string, unknown> | null => {
 };
 const short = (hash: string | null) => (hash ? `${hash.slice(0, 12)}…` : 'none');
 
-/** The chain check: exactly one finalization, bound to its payload hash, with a seal hash. */
-function chainCheck(chain: ChainRecord | null, rows: number): SealCheck {
-  if (rows > 1) {
-    return { check: 'audit-chain', ok: false, detail: `The audit chain holds ${rows} finalizations of this run; a run is finalized once.` };
-  }
-  if (rows === 0 || !chain) return { check: 'audit-chain', ok: false, detail: 'The audit chain holds no finalization of this run.' };
-  if (!chain.payloadBound) {
-    return { check: 'audit-chain', ok: false, detail: "The finalization row's recorded content no longer matches its payload hash." };
-  }
-  if (!chain.sealHash) return { check: 'audit-chain', ok: false, detail: 'The finalization row records no seal hash.' };
-  return {
-    check: 'audit-chain',
-    ok: true,
-    detail: `The audit chain records seal ${short(chain.sealHash)}; the row's content matches its payload hash, and the chain link itself is verified by the audit-trail integrity report.`,
-  };
+/** Why the chain's place for the row fails, or null when it holds. */
+function chainedFailure(chained: SequencedRowVerdict): string | null {
+  if (chained.link === 'unsequenced') return 'The finalization row holds no position on the audit chain, so the chain does not vouch for it.';
+  if (chained.link === 'broken') return "The finalization row does not link to the organisation's audit chain.";
+  if (chained.seal === 'absent') return 'The finalization row carries no audit HMAC seal although the key is configured.';
+  if (chained.seal === 'invalid') return "The finalization row's audit HMAC seal does not verify.";
+  return null;
 }
 
+/** The chain check: exactly one finalization, bound to its payload hash, on the chain, with a seal hash. */
+function chainCheck(chain: ChainRecord | null, rows: number): SealCheck {
+  const fail = (detail: string): SealCheck => ({ check: 'audit-chain', ok: false, detail });
+  if (rows > 1) return fail(`The audit chain holds ${rows} finalizations of this run; a run is finalized once.`);
+  if (rows === 0 || !chain) return fail('The audit chain holds no finalization of this run.');
+  if (!chain.payloadBound) return fail("The finalization row's recorded content no longer matches its payload hash.");
+  const chained = chainedFailure(chain.chained);
+  if (chained) return fail(chained);
+  if (!chain.sealHash) return fail('The finalization row records no seal hash.');
+  const keyed = chain.chained.seal === 'valid'
+    ? 'and its audit HMAC seal verifies'
+    : 'but no audit HMAC key is configured here, so the link is not checked against a key held outside the database';
+  return { check: 'audit-chain', ok: true, detail: `The audit chain records seal ${short(chain.sealHash)}; the row links to the organisation's audit chain, ${keyed}.` };
+}
+
+/** A check that was not run because the chain's record it is compared with did not verify. */
+const notChecked = (check: SealCheck['check'], chain: SealCheck): SealCheck => ({
+  check,
+  ok: false,
+  detail: `Not checked: there is no verified record on the audit chain to compare it with (${chain.detail.replace(/\.$/, '')}).`,
+});
+
 /** The stored seal against the chain's record of it, field by field. */
-function sealCheck(seal: SealedRecord | null, chain: ChainRecord | null): SealCheck {
+function sealCheck(seal: SealedRecord | null, chain: ChainRecord): SealCheck {
   if (!seal) return { check: 'stored-seal', ok: false, detail: 'No seal is stored with this run.' };
-  if (!chain) return { check: 'stored-seal', ok: false, detail: 'There is no recorded finalization to check the stored seal against.' };
   const differs: string[] = [];
   if (chain.sealHash !== seal.contentHash) differs.push('hash');
   if (chain.sealedAt != null && chain.sealedAt !== seal.sealedAt) differs.push('sealing time');
@@ -129,64 +163,76 @@ function sealCheck(seal: SealedRecord | null, chain: ChainRecord | null): SealCh
     : { check: 'stored-seal', ok: true, detail: 'The stored seal agrees with the audit chain, field by field.' };
 }
 
-/** The seal to check a document against: the chain's record when there is one, else the stored seal. */
-function recordedSeal(seal: SealedRecord | null, chain: ChainRecord | null) {
-  if (chain) return { hash: chain.sealHash, canon: readCanonVersion(chain.canonVersion), atoms: chain.atomCount };
-  if (seal) return { hash: seal.contentHash, canon: readCanonVersion(seal.canonVersion), atoms: seal.atomCount };
-  return null;
+/** The document's hash and provenance atom count, or null when it is not a document these can be computed over. */
+function measure(doc: RenderedReport, canon: ReturnType<typeof readCanonVersion>): { hash: string; atoms: number } | null {
+  try {
+    return { hash: computeContentHash(doc, canon), atoms: extractProvenanceAtoms(doc).length };
+  } catch {
+    return null;
+  }
 }
 
-/** The stored document, re-hashed and its atoms recounted, against the recorded seal. */
-function documentCheck(doc: RenderedReport | null, seal: SealedRecord | null, chain: ChainRecord | null): SealCheck {
+/** The stored document, re-hashed and its atoms recounted, against the chain's record of the seal. */
+function documentCheck(doc: RenderedReport | null, chain: ChainRecord): SealCheck {
   if (!doc) return { check: 'stored-document', ok: false, detail: 'No sealed document is stored with this run, so its hash cannot be recomputed.' };
-  const recorded = recordedSeal(seal, chain);
-  if (!recorded?.hash) return { check: 'stored-document', ok: false, detail: 'There is no recorded seal hash to check the stored document against.' };
-  if (computeContentHash(doc, recorded.canon) !== recorded.hash) {
-    return { check: 'stored-document', ok: false, detail: 'The stored document no longer hashes to the recorded seal.' };
-  }
-  const atoms = extractProvenanceAtoms(doc).length;
-  const recordedAtoms = recorded.atoms;
-  if (recordedAtoms != null && atoms !== recordedAtoms) {
-    return { check: 'stored-document', ok: false, detail: `The stored document carries ${atoms} provenance atoms; the seal records ${recordedAtoms}.` };
+  const measured = measure(doc, readCanonVersion(chain.canonVersion));
+  if (!measured) return { check: 'stored-document', ok: false, detail: 'The stored document is malformed: its hash cannot be computed.' };
+  if (measured.hash !== chain.sealHash) return { check: 'stored-document', ok: false, detail: 'The stored document no longer hashes to the recorded seal.' };
+  if (chain.atomCount != null && measured.atoms !== chain.atomCount) {
+    return { check: 'stored-document', ok: false, detail: `The stored document carries ${measured.atoms} provenance atoms; the seal records ${chain.atomCount}.` };
   }
   return { check: 'stored-document', ok: true, detail: 'The stored document hashes to the recorded seal, and its provenance atoms match.' };
 }
 
-/** PURE: the verdict over what was read. */
-export function verifyStoredSeal(input: {
-  seal: SealedRecord | null;
-  sealedDocument: RenderedReport | null;
-  chain: ChainRecord | null;
-  chainRows: number;
-}): { verdict: SealVerdict; checks: SealCheck[] } {
-  const { seal, sealedDocument, chain, chainRows } = input;
-  const c = chainCheck(chain, chainRows);
-  const s = sealCheck(seal, c.ok ? chain : null);
-  const d = documentCheck(sealedDocument, seal, c.ok ? chain : null);
-  const checks = [c, s, d];
-
-  if (chainRows === 0) {
-    // No recorded finalization. A stored document only exists since finalize
-    // began recording one, so a document without a chain row is a mismatch; a
-    // bare seal is a run sealed before either existed, and cannot be verified.
-    return { verdict: sealedDocument ? 'mismatch' : 'not-verifiable', checks };
+/** The finalization's signature: present, and its manifest signed the seal the chain recorded. */
+function signatureCheck(sig: SignatureRecord | null, chain: ChainRecord): SealCheck {
+  if (!sig) return { check: 'signature', ok: false, detail: 'No electronic signature is recorded for this finalization.' };
+  if (sig.signedSealHash !== chain.sealHash) {
+    return { check: 'signature', ok: false, detail: "The electronic signature's manifest does not name the seal the audit chain recorded." };
   }
-  if (!c.ok) return { verdict: 'mismatch', checks };
-  if (chain!.documentStored) {
-    // Finalize recorded storing the document: anything missing was removed.
-    return { verdict: s.ok && d.ok ? 'intact' : 'mismatch', checks };
-  }
-  // A finalization from before the document was stored.
-  if (seal && !s.ok) return { verdict: 'mismatch', checks };
-  if (sealedDocument) return { verdict: s.ok && d.ok ? 'intact' : 'mismatch', checks };
-  return { verdict: 'not-verifiable', checks };
+  return { check: 'signature', ok: true, detail: 'The electronic signature signed the seal the audit chain recorded.' };
 }
 
-/** The seal and sealed document stored with a final run, or nulls when none were. */
+export interface StoredSealInput {
+  seal: SealedRecord | null;
+  sealedDocument: RenderedReport | null;
+  /** The run's latest snapshot row exists (a seal missing from it was removed, not never written). */
+  snapshotFound: boolean;
+  chain: ChainRecord | null;
+  chainRows: number;
+  signature: SignatureRecord | null;
+}
+
+/** The verdict when the chain's record verified: what finalize recorded storing must all be there and agree. */
+function verdictOnRecord(input: StoredSealInput, chain: ChainRecord, checks: SealCheck[]): SealVerdict {
+  const [, s, d, g] = checks;
+  if (chain.documentStored) return s.ok && d.ok && g.ok ? 'intact' : 'mismatch';
+  // A finalization from before the document was stored: its seal was stored whenever a snapshot existed.
+  if (input.seal ? !s.ok : input.snapshotFound) return 'mismatch';
+  if (input.sealedDocument) return s.ok && d.ok ? 'intact' : 'mismatch';
+  return 'not-verifiable';
+}
+
+/** PURE: the verdict over what was read. */
+export function verifyStoredSeal(input: StoredSealInput): { verdict: SealVerdict; checks: SealCheck[] } {
+  const c = chainCheck(input.chain, input.chainRows);
+  if (!c.ok || !input.chain) {
+    const checks = [c, notChecked('stored-seal', c), notChecked('stored-document', c), notChecked('signature', c)];
+    // No recorded finalization at all: a stored document exists only since finalize began recording one,
+    // so a document without a chain row is a mismatch; a bare seal predates both and cannot be verified.
+    if (input.chainRows === 0) return { verdict: input.sealedDocument ? 'mismatch' : 'not-verifiable', checks };
+    return { verdict: 'mismatch', checks };
+  }
+  const chain = input.chain;
+  const checks = [c, sealCheck(input.seal, chain), documentCheck(input.sealedDocument, chain), signatureCheck(input.signature, chain)];
+  return { verdict: verdictOnRecord(input, chain, checks), checks };
+}
+
+/** The seal and sealed document on the run's latest snapshot, and whether that snapshot exists. */
 export async function readSealedDocument(
   q: Queryable,
-  run: { id: number; organizationId: number },
-): Promise<{ seal: SealedRecord | null; sealedDocument: RenderedReport | null }> {
+  run: RunRef,
+): Promise<{ seal: SealedRecord | null; sealedDocument: RenderedReport | null; snapshotFound: boolean }> {
   const { rows } = await q.query(
     `SELECT snapshot_metadata FROM report_snapshots
       WHERE run_id = $1 AND organization_id = $2 AND is_latest = true
@@ -199,106 +245,135 @@ export async function readSealedDocument(
   return {
     seal: seal && typeof seal.contentHash === 'string' ? seal : null,
     sealedDocument: doc && Array.isArray((doc as { sections?: unknown }).sections) ? doc : null,
+    snapshotFound: rows.length > 0,
   };
 }
 
 /** Every finalization row the chain holds for the run (at most a few), read as the chain wrote it. */
-async function readChainRecords(q: Queryable, run: { id: number; organizationId: number }): Promise<ChainRecord[]> {
+async function readChainRows(q: Queryable, run: RunRef): Promise<Array<Record<string, unknown>>> {
   const { rows } = await q.query(
-    `SELECT new_values::text AS nv, payload_hash, occurred_at FROM audit_logs
+    `SELECT new_values::text AS nv, payload_hash, occurred_at, tenant_id, action, actor_id, target,
+            sha256_chain, hmac_seal, chain_seq
+       FROM audit_logs
       WHERE tenant_id = $1 AND record_id = $2 AND action = 'report_os.run_finalized'
       ORDER BY occurred_at ASC LIMIT 5`,
     [run.organizationId, String(run.id)],
   );
-  return rows.map((row) => {
-    const raw = typeof row.nv === 'string' ? row.nv : '';
-    const d = asObject(raw) ?? {};
-    return {
-      sealHash: text(d.sealHash),
-      sealedAt: text(d.sealedAt),
-      atomCount: num(d.atomCount),
-      algorithm: text(d.algorithm),
-      canonVersion: num(d.canonVersion),
-      documentStored: d.documentStored === true,
-      payloadBound: raw !== '' && createHash('sha256').update(raw, 'utf8').digest('hex') === row.payload_hash,
-      occurredAt: iso(row.occurred_at),
-      reason: text(d.reason),
-      meaning: text(d.meaning),
-      priorStatus: text(d.priorStatus),
-    };
-  });
+  return rows;
 }
 
-/** The stored seal and document, the chain's record, and the verdict over them. */
-async function loadAndVerify(q: Queryable, run: { id: number; organizationId: number }) {
-  const stored = await readSealedDocument(q, run);
-  const chainRows = await readChainRecords(q, run);
-  const chain = chainRows.length === 1 ? chainRows[0] : null;
-  const verification = verifyStoredSeal({
-    seal: stored.seal,
-    sealedDocument: stored.sealedDocument,
-    chain,
-    chainRows: chainRows.length,
+/** One finalization row as a ChainRecord, its place on the chain verified. */
+async function toChainRecord(q: Queryable, row: Record<string, unknown>): Promise<ChainRecord> {
+  const raw = typeof row.nv === 'string' ? row.nv : '';
+  const d = asObject(raw) ?? {};
+  const chained = await verifySequencedRow(q, {
+    action: String(row.action ?? ''),
+    actor_id: num(row.actor_id),
+    target: text(row.target),
+    payload_hash: text(row.payload_hash),
+    occurred_at: row.occurred_at instanceof Date ? row.occurred_at : String(row.occurred_at ?? ''),
+    tenant_id: (row.tenant_id as number | string | null) ?? null,
+    sha256_chain: text(row.sha256_chain),
+    hmac_seal: text(row.hmac_seal),
+    chain_seq: (row.chain_seq as number | string | null) ?? null,
   });
-  return { stored, chain, verification };
-}
-
-/**
- * For a run not marked final: the chain check when the chain nonetheless
- * records a finalization of it, else null. The app role can write
- * report_runs.status, so a status rewritten after finalizing would otherwise
- * hide the act and let the run be re-rendered from live data as if never sealed.
- */
-async function finalizedButNotFinal(q: Queryable, run: { id: number; organizationId: number; status: string }): Promise<SealCheck | null> {
-  const rows = await readChainRecords(q, run);
-  if (rows.length === 0) return null;
   return {
-    check: 'audit-chain',
-    ok: false,
-    detail: `The audit chain records this run as finalized, but the run is now marked "${run.status}".`,
+    sealHash: text(d.sealHash),
+    sealedAt: text(d.sealedAt),
+    atomCount: num(d.atomCount),
+    algorithm: text(d.algorithm),
+    canonVersion: num(d.canonVersion),
+    documentStored: d.documentStored === true,
+    payloadBound: raw !== '' && createHash('sha256').update(raw, 'utf8').digest('hex') === row.payload_hash,
+    chained,
+    occurredAt: iso(row.occurred_at),
+    reason: text(d.reason),
+    meaning: text(d.meaning),
+    priorStatus: text(d.priorStatus),
   };
 }
 
-/** Read a run's seal, its chain row and its signature, and verify them. Throws when a read fails. */
-export async function readRunSeal(
-  q: Queryable,
-  run: { id: number; organizationId: number; status: string },
-): Promise<RunSealView> {
-  if (run.status !== 'final') {
-    const contradiction = await finalizedButNotFinal(q, run);
-    return {
-      runId: run.id,
-      sealed: false,
-      seal: null,
-      finalizedAt: null,
-      signature: null,
-      finalization: null,
-      verification: contradiction ? { verdict: 'mismatch', checks: [contradiction] } : { verdict: 'not-verifiable', checks: [] },
-    };
-  }
+/** The run's status as this transaction now sees it, or null when the run is gone. */
+async function readRunStatus(q: Queryable, run: RunRef): Promise<string | null> {
+  const { rows } = await q.query('SELECT status FROM report_runs WHERE id = $1 AND organization_id = $2', [run.id, run.organizationId]);
+  return text(rows[0]?.status);
+}
 
-  const { chain, verification } = await loadAndVerify(q, run);
-  const signed = await q.query(
-    `SELECT signer_name, signed_at, signature_meaning FROM electronic_signatures
+/** The finalization's current signature row, with the seal hash its manifest signed. */
+async function readSignature(q: Queryable, run: RunRef): Promise<SignatureRecord | null> {
+  const { rows } = await q.query(
+    `SELECT signer_name, signed_at, signature_meaning, signature_manifest::text AS manifest FROM electronic_signatures
       WHERE organization_id = $1 AND signed_target = $2 AND superseded_by IS NULL
       ORDER BY signed_at DESC LIMIT 1`,
     [run.organizationId, `report-run:${run.id}`],
   );
-  const sig = signed.rows[0];
+  const sig = rows[0];
+  if (!sig) return null;
+  const act = asObject(asObject(sig.manifest)?.act);
+  return { signerName: text(sig.signer_name), signedAt: iso(sig.signed_at), meaning: text(sig.signature_meaning), signedSealHash: text(act?.sealHash) };
+}
 
+/**
+ * The chain's finalization rows and the run's status, read in that order: a
+ * finalize commits both together, so a status of final read after the chain
+ * found nothing means the finalize committed in between, and the chain is
+ * read again.
+ */
+async function readChainThenStatus(q: Queryable, run: RunRef) {
+  let rows = await readChainRows(q, run);
+  const status = await readRunStatus(q, run);
+  if (status === 'final' && rows.length === 0) rows = await readChainRows(q, run);
+  return { rows, status };
+}
+
+/** A run the chain records as finalized, whose status no longer says final. */
+const statusContradicts = (status: string | null): SealCheck => ({
+  check: 'audit-chain',
+  ok: false,
+  detail: `The audit chain records this run as finalized, but the run is now marked "${status ?? 'missing'}".`,
+});
+
+interface SealRecordRead {
+  status: string | null;
+  chain: ChainRecord | null;
+  stored: Awaited<ReturnType<typeof readSealedDocument>> | null;
+  signature: SignatureRecord | null;
+  verification: { verdict: SealVerdict; checks: SealCheck[] };
+}
+
+/** Everything the seal readers return, read in one transaction and verified. Throws when a read fails. */
+async function readSealRecord(q: Queryable, run: RunRef): Promise<SealRecordRead> {
+  const { rows, status } = await readChainThenStatus(q, run);
+  if (status !== 'final') {
+    const verification = rows.length > 0
+      ? { verdict: 'mismatch' as const, checks: [statusContradicts(status)] }
+      : { verdict: 'not-verifiable' as const, checks: [] };
+    return { status, chain: null, stored: null, signature: null, verification };
+  }
+  const chain = rows.length === 1 ? await toChainRecord(q, rows[0]) : null;
+  const stored = await readSealedDocument(q, run);
+  const signature = await readSignature(q, run);
+  const verification = verifyStoredSeal({ ...stored, chain, chainRows: rows.length, signature });
+  return { status, chain, stored, signature, verification };
+}
+
+/** The view of what was read: only what the chain recorded is returned as the seal. */
+function viewOf(run: RunRef, r: SealRecordRead): RunSealView {
+  const chain = r.chain;
   return {
     runId: run.id,
-    sealed: true,
-    seal: chain
-      ? { algorithm: chain.algorithm, contentHash: chain.sealHash, atomCount: chain.atomCount, sealedAt: chain.sealedAt }
-      : null,
+    sealed: r.status === 'final',
+    seal: chain ? { algorithm: chain.algorithm, contentHash: chain.sealHash, atomCount: chain.atomCount, sealedAt: chain.sealedAt } : null,
     finalizedAt: chain?.occurredAt ?? null,
-    signature: sig
-      ? { signerName: text(sig.signer_name), signedAt: iso(sig.signed_at), meaning: text(sig.signature_meaning) }
-      : null,
+    signature: r.signature ? { signerName: r.signature.signerName, signedAt: r.signature.signedAt, meaning: r.signature.meaning } : null,
     finalization: chain ? { reason: chain.reason, meaning: chain.meaning, priorStatus: chain.priorStatus } : null,
-    verification,
+    verification: r.verification,
   };
+}
+
+/** Read a run's seal, its chain row and its signature, and verify them. Throws when a read fails. */
+export async function readRunSeal(q: Queryable, run: RunRef): Promise<RunSealView> {
+  return viewOf(run, await readSealRecord(q, run));
 }
 
 /**
@@ -309,11 +384,17 @@ export async function readRunSeal(
  */
 export async function readVerifiedSealedDocument(
   q: Queryable,
-  run: { id: number; organizationId: number; status: string },
+  run: RunRef,
 ): Promise<{ verdict: SealVerdict; document: RenderedReport | null }> {
-  if (run.status !== 'final') {
-    return { verdict: (await finalizedButNotFinal(q, run)) ? 'mismatch' : 'not-verifiable', document: null };
-  }
-  const { stored, verification } = await loadAndVerify(q, run);
-  return { verdict: verification.verdict, document: stored.sealedDocument };
+  const r = await readSealRecord(q, run);
+  return { verdict: r.verification.verdict, document: r.stored?.sealedDocument ?? null };
+}
+
+/** The seal view and the verified sealed document together, for the PDF export. */
+export async function readSealForExport(
+  q: Queryable,
+  run: RunRef,
+): Promise<{ view: RunSealView; document: RenderedReport | null }> {
+  const r = await readSealRecord(q, run);
+  return { view: viewOf(run, r), document: r.verification.verdict === 'intact' ? (r.stored?.sealedDocument ?? null) : null };
 }

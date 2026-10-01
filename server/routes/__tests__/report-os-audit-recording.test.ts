@@ -79,6 +79,7 @@ import reportOsRouter from '../report-os';
 import { resetReportOsHarness } from './_report-os-route-harness';
 import { buildSealedRecord, verifySeal } from '../../services/report-os/sealing/seal';
 import type { RenderedReport } from '../../services/report-os/render/types';
+import { deriveChainHash } from '../../services/audit/chain';
 
 const app = express();
 app.use(express.json());
@@ -395,13 +396,21 @@ describe('GET /runs/:id/rendered', () => {
 
   const sealedDocument: RenderedReport = { reportTypeId: TYPE.typeId, scopeType: 'submission', scopeId: 'sub-1', generatedAt: '2026-09-30T12:00:00.000Z', status: 'final', sections: [{ id: 'as-sealed', title: 'As sealed', blocks: [] }] };
   const seal = buildSealedRecord(sealedDocument, '2026-09-30T13:00:00.000Z');
-  /** The snapshot holds `metadata`; the chain row is finalize's (documentStored), bound to its payload hash. */
-  const sealedOnRecord = (metadata: Record<string, unknown>) => {
+  /**
+   * On the record: the snapshot holds `metadata`; finalize's chain row (documentStored,
+   * payload-bound, linked from genesis) and its signature exist; the run reads `status`
+   * inside the transaction.
+   */
+  const sealedOnRecord = (metadata: Record<string, unknown>, status = 'final') => {
     const nv = JSON.stringify({ sealHash: seal.contentHash, sealedAt: seal.sealedAt, atomCount: seal.atomCount, algorithm: seal.algorithm, canonVersion: seal.canonVersion, documentStored: true });
+    const linked = { action: 'report_os.run_finalized', actor_id: 5, target: `report_run:${RUN.id}`, payload_hash: createHash('sha256').update(nv).digest('hex'), occurred_at: new Date('2026-09-30T13:00:01Z') };
+    const row = { ...linked, nv, tenant_id: 7, chain_seq: 3, sha256_chain: deriveChainHash(linked, '0'.repeat(64)), hmac_seal: null };
+    const signature = { signer_name: 'Dana Reyes', signed_at: new Date(), signature_meaning: 'approval', manifest: JSON.stringify({ act: { sealHash: seal.contentHash } }) };
     h.respond.fn = (sql) =>
-      /FROM report_snapshots/.test(sql)
-        ? [{ snapshot_metadata: metadata }]
-        : /FROM audit_logs/.test(sql) ? [{ nv, payload_hash: createHash('sha256').update(nv).digest('hex'), occurred_at: new Date() }] : [];
+      /FROM report_runs/.test(sql) ? [{ status }]
+        : /FROM report_snapshots/.test(sql) ? [{ snapshot_metadata: metadata }]
+          : /run_finalized/.test(sql) ? [row]
+            : /FROM electronic_signatures/.test(sql) ? [signature] : [];
   };
 
   it('shows a final run as what was sealed, not a re-render', async () => {
@@ -426,7 +435,7 @@ describe('GET /runs/:id/rendered', () => {
     ['its status was rewritten after the chain recorded its finalization', 'completed', { seal, sealedDocument }],
   ])('refuses a run whose record contradicts the chain (%s), and renders nothing', async (_label, status, metadata) => {
     h.queued.select.push([{ ...RUN, status }], [{ label: TYPE.label, truthfulnessRules: {} }]);
-    sealedOnRecord(metadata);
+    sealedOnRecord(metadata, status);
     const res = await rendered();
     expect([res.status, res.body.error?.code, res.body.data?.sections]).toEqual([409, 'SEALED_DOCUMENT_MISMATCH', undefined]);
   });

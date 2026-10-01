@@ -25,6 +25,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import reportOsRouter from '../../server/routes/report-os';
+import { getPool } from '../../server/db/runtime';
+import { runWithTenantScope } from '../../server/db/tenantStore';
+import { setTenantContextTx } from '../../server/services/tenant/governed-tenant-context';
+import { buildSealedRecord } from '../../server/services/report-os/sealing/seal';
+import type { RenderedReport } from '../../server/services/report-os/render/types';
 import { applyMigrationFiles } from '../../scripts/db/migration-set.mjs';
 import {
   REPORT_TYPE_REGISTRY_SEED,
@@ -412,6 +417,50 @@ describe('the seal on the record: what a rewrite of the mutable rows cannot hide
       await owner.query(`UPDATE report_runs SET status = 'final' WHERE id = $1`, [runId]);
     }
     expect(await sealAndRendered()).toEqual({ verdict: 'intact', rendered: [200, undefined] });
+  });
+});
+
+/**
+ * The forgery the second review found: the app role can write report_runs,
+ * report_snapshots and audit_logs, so in three writes it could make a run that
+ * was never finalized read "intact" over a document it wrote. A finalization row
+ * inserted without a chain position (the trigger lets an unchained row through as
+ * legacy) is not the record.
+ */
+describe('the seal on the record: a forgery by the app role is not the record', () => {
+  it('a run given final status, a forged sealed document and an unchained finalization row reads as a mismatch', async () => {
+    const created = await request(ro).post('/api/report-os/runs').set(auth(tokenB)).send({ scopeType: 'project', scopeId: ids.B.projects, reportTypeId: RUN_TYPE });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const forgedRun = created.body.data.run.id as number;
+    const forged: RenderedReport = {
+      reportTypeId: RUN_TYPE, scopeType: 'project', scopeId: String(ids.B.projects), generatedAt: new Date().toISOString(), status: 'final',
+      sections: [{ id: 's', title: 'Summary', blocks: [{ kind: 'summary', text: 'FORGED: ready to file.' }] }],
+    };
+    const seal = buildSealedRecord(forged, new Date().toISOString());
+    const nv = JSON.stringify({ sealHash: seal.contentHash, algorithm: seal.algorithm, canonVersion: seal.canonVersion, atomCount: seal.atomCount, sealedAt: seal.sealedAt, documentStored: true });
+    await runWithTenantScope({ tenantId: String(ORG_B), role: 'member', source: 'test', caller: 'report-seal-forgery' }, async () => {
+      const app = await getPool().connect();
+      try {
+        await app.query('BEGIN');
+        await setTenantContextTx(app, ORG_B);
+        await app.query(`UPDATE report_runs SET status = 'final' WHERE id = $1`, [forgedRun]);
+        await app.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE run_id = $1 AND is_latest', [forgedRun, JSON.stringify({ seal, sealedDocument: forged })]);
+        await app.query(
+          `INSERT INTO audit_logs (tenant_id, action, table_name, record_id, new_values, payload_hash)
+           VALUES ($1, 'report_os.run_finalized', 'report_run', $2, $3::json, $4)`,
+          [ORG_B, String(forgedRun), nv, createHash('sha256').update(nv).digest('hex')]
+        );
+        await app.query('COMMIT');
+      } finally {
+        app.release();
+      }
+    });
+    const seen = await request(ro).get(`/api/report-os/runs/${forgedRun}/seal`).set(auth(tokenB));
+    expect(seen.body.data.verification.verdict).toBe('mismatch');
+    expect(seen.body.data.verification.checks[0].detail).toMatch(/no position on the audit chain/);
+    const shown = await request(ro).get(`/api/report-os/runs/${forgedRun}/rendered`).set(auth(tokenB));
+    expect(shown.status).toBe(409);
+    expect(JSON.stringify(shown.body)).not.toContain('FORGED');
   });
 });
 
