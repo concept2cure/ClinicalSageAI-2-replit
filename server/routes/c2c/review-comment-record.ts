@@ -16,7 +16,7 @@
 import { createHash } from 'node:crypto';
 import type { Request } from 'express';
 import { eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { requestDb } from '../../db/requestDb';
 import { concept2cureThreadComments } from '../../../shared/schema';
 import { writeChainedAuditRow } from '../../services/auditService';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable';
@@ -95,7 +95,7 @@ export async function recordCommentPosted(
 
 /** Insert a person's comment and its chained row in one transaction. */
 export async function postRecordedComment(req: Request, values: NewComment): Promise<RecordedComment> {
-  return db.transaction(async (tx) => {
+  return requestDb(req).transaction(async (tx) => {
     const [c] = await tx.insert(concept2cureThreadComments).values(values).returning();
     await recordCommentPosted(queryableFromDrizzle(tx), c, 'person', requestFacts(req));
     return c;
@@ -112,7 +112,7 @@ export async function retractRecordedComment(
   retractedBy: number,
   reason: unknown,
 ): Promise<Date> {
-  return db.transaction(async (tx) => {
+  return requestDb(req).transaction(async (tx) => {
     const at = new Date();
     await tx
       .update(concept2cureThreadComments)

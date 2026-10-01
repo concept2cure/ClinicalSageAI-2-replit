@@ -1,0 +1,18 @@
+# The server's own production boot assertions, run (via tsx) against the app environment
+# that 'docker compose config' resolves, with every variable each file asks for set to a placeholder.
+== docker-compose.yml as on trunk (HEAD), every variable it asks for set
+  REFUSED   signer mode (signer-mode.ts assertSignerModeForProduction): [signer-mode] REFUSING TO BOOT: CONCEPT2CURE_SIGNER_MODE is not set in production. Set kms (with CONCEPT2CURE_SIGNER_KMS_KEY_ID and CONCEPT2CURE_SIGNER_KMS_REGION/AWS_REGION) or hmac with CONCEPT2CURE_SIGNER_ACCEPT_HMAC=true to record that a symmetric seal is the accepted signer.
+  REFUSED   AI placement (sensitive-placement-policy.ts assertSensitivePlacementConfiguration): [ai-sensitive-placement] production requires AI_SENSITIVE_DATA_POLICY_MODE=enforce
+  REFUSED   login email (emailService.ts isEmailConfigured): SMTP is not configured: no one can receive a login code
+== docker-compose.yml with this change, every variable it asks for set
+  accepted  signer mode (signer-mode.ts assertSignerModeForProduction)
+  accepted  AI placement (sensitive-placement-policy.ts assertSensitivePlacementConfiguration)
+  accepted  login email (emailService.ts isEmailConfigured)
+== docker-compose.beta.yml as on trunk (HEAD), every variable it asks for set
+  REFUSED   signer mode (signer-mode.ts assertSignerModeForProduction): [signer-mode] REFUSING TO BOOT: CONCEPT2CURE_SIGNER_MODE is not set in production. Set kms (with CONCEPT2CURE_SIGNER_KMS_KEY_ID and CONCEPT2CURE_SIGNER_KMS_REGION/AWS_REGION) or hmac with CONCEPT2CURE_SIGNER_ACCEPT_HMAC=true to record that a symmetric seal is the accepted signer.
+  REFUSED   AI placement (sensitive-placement-policy.ts assertSensitivePlacementConfiguration): [ai-sensitive-placement] production requires AI_SENSITIVE_DATA_POLICY_MODE=enforce
+  REFUSED   login email (emailService.ts isEmailConfigured): SMTP is not configured: no one can receive a login code
+== docker-compose.beta.yml with this change, every variable it asks for set
+  accepted  signer mode (signer-mode.ts assertSignerModeForProduction)
+  accepted  AI placement (sensitive-placement-policy.ts assertSensitivePlacementConfiguration)
+  accepted  login email (emailService.ts isEmailConfigured)

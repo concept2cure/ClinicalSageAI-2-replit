@@ -54,6 +54,20 @@
  * governed-transmit baseline entries). These limits are why the baseline carries
  * reasons and why each signing surface keeps its own behavioural tests.
  *
+ * ── Approval stamps (2026-10-01) ──────────────────────────────────────────────
+ * A SQL write that sets approver_id / approved_by / approved_by_user_id /
+ * approved_at to a value is also a site. An approval is read as a signed record
+ * whatever ledger verb records it. The QMS controlled-document approval
+ * (e1c224f69) and change-control approval (028a0c704) both stamped one under
+ * `command: 'transition'`, from an AnA tool and from HTTP, and this gate saw
+ * neither. A stamp needs a signature-row write in its handler. Re-verification is
+ * not demanded there, because an approval's ceremony is usually the route's, one
+ * function boundary away. Limits: a template-built placeholder
+ * (`approved_by = $${i}`) is not seen, though its `approved_at = NOW()` partner
+ * usually is; Drizzle `.set({ approvedBy })` is not seen at all; and a helper that
+ * writes the stamp for a caller holding the ceremony is baselined with that
+ * reason.
+ *
  * The baseline is exact: an entry above the current count fails too, so fixing a
  * site means lowering its entry, and a freed allowance cannot absorb a new site.
  *
@@ -214,8 +228,29 @@ export function findSignSites(code) {
   }
   const wm = /\bwriteMutation\s*\(\s*(['"`])sign\1/g;
   while ((m = wm.exec(code))) sites.push({ index: m.index, kind: 'writeMutation' });
+  // An approval stamp in SQL: the approver or the approval time set to a value.
+  // Clearing one (`= NULL`, a revision) is not an approval.
+  // One site per line: `approved_by = $2, approved_at = NOW()` is one stamp.
+  APPROVAL_STAMP.lastIndex = 0;
+  const stampLines = new Set();
+  while ((m = APPROVAL_STAMP.exec(code))) {
+    const line = lineOf(code, m.index);
+    if (stampLines.has(line)) continue;
+    stampLines.add(line);
+    sites.push({ index: m.index, kind: 'approval-stamp' });
+  }
   return sites.sort((a, b) => a.index - b.index);
 }
+
+/**
+ * A SQL assignment that records an approval: the approver, or the approval
+ * time, set to a value. Added 2026-10-01. An approval need not be written as a
+ * `sign` ledger row to be read as a signed one. The QMS controlled-document
+ * approval (e1c224f69) and the change-control approval (028a0c704) both stamped
+ * approver and approval time under `command: 'transition'`, from an AnA tool
+ * and from HTTP, and this gate saw neither.
+ */
+const APPROVAL_STAMP = /\b(?:approver_id|approved_by|approved_by_user_id|approved_at)\s*=\s*(?!NULL\b)(?:\$\d+|NOW\(\)|now\(\)|CURRENT_TIMESTAMP|COALESCE\()/g;
 
 /** The enclosing top-level statement: from its column-0 start to the next one. */
 export function handlerBody(code, index) {
@@ -239,7 +274,12 @@ export function scanSource(src) {
     const body = handlerBody(code, s.index);
     const reauth = REAUTH.test(body.text);
     const signatureRow = s.kind === 'writeMutation' || SIGNATURE_ROW.test(body.text);
-    return { line: lineOf(code, s.index), kind: s.kind, handlerLine: body.startLine, reauth, signatureRow, ok: reauth && signatureRow };
+    // An approval stamp is held to the signature row only. The re-verification
+    // for an approval is usually the route's, one function boundary away (the QMS
+    // approvals call reverifySigner in the route, then the signed service), which
+    // this scanner cannot see. The row is what an inspector reads as the signature.
+    const ok = s.kind === 'approval-stamp' ? signatureRow : reauth && signatureRow;
+    return { line: lineOf(code, s.index), kind: s.kind, handlerLine: body.startLine, reauth, signatureRow, ok };
   });
 }
 
@@ -257,7 +297,7 @@ export function scanRepo() {
     const abs = path.join(ROOT, f);
     if (!existsSync(abs)) continue;
     const src = readFileSync(abs, 'utf8');
-    if (!/['"]sign['"]/.test(src)) continue;
+    if (!/['"]sign['"]/.test(src) && !/\b(?:approver_id|approved_by|approved_by_user_id|approved_at)\s*=/.test(src)) continue;
     const sites = scanSource(src);
     if (sites.length) results[f] = sites;
   }
@@ -293,7 +333,7 @@ function main() {
   if (args.includes('--list')) {
     for (const [f, sites] of Object.entries(scan)) {
       for (const s of sites) {
-        const why = s.ok ? 'ok' : [!s.reauth && 'no signer re-verification', !s.signatureRow && 'no signature row'].filter(Boolean).join(', ');
+        const why = s.ok ? 'ok' : s.kind === 'approval-stamp' ? 'no signature row' : [!s.reauth && 'no signer re-verification', !s.signatureRow && 'no signature row'].filter(Boolean).join(', ');
         console.log(`${f}:${s.line}  ${s.kind}  ${why}`);
       }
     }
@@ -315,10 +355,12 @@ function main() {
   let failed = false;
   if (failures.length) {
     failed = true;
-    console.error('[ci:sign-ceremony] FAIL — a `sign` ledger write without the signature ceremony:');
+    console.error('[ci:sign-ceremony] FAIL — a `sign` ledger write, or an approval stamp, without the signature ceremony:');
     for (const f of failures) {
       for (const s of f.sites) {
-        const why = [!s.reauth && 'no verifyReauth/reverifySigner', !s.signatureRow && 'no signature-row write'].filter(Boolean).join(', ');
+        const why = s.kind === 'approval-stamp'
+          ? 'approval stamp with no signature-row write in its handler'
+          : [!s.reauth && 'no verifyReauth/reverifySigner', !s.signatureRow && 'no signature-row write'].filter(Boolean).join(', ');
         console.error(`  ✗ ${f.file}:${s.line}  (${why})`);
       }
       if (f.allowed) console.error(`    ${f.file}: ${f.count} site(s), baseline allows ${f.allowed}.`);

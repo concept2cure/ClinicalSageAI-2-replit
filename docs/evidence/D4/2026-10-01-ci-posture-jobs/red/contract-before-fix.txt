@@ -1,0 +1,43 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > the jobs this contract names still exist, and each orders itself after lint 3ms
+ × tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > every job that needs lint runs after a red lint, unless it aggregates verdicts 8ms
+   → a red guardrail would skip: coverage (Coverage (ratchet)), ana-readiness-tests (AnA Readiness Tests), integration-tests (Integration Tests), blank-db-provisioning (Blank DB Provisioning + Deploy Migration), production-boot-smoke (Production Boot Smoke (RLS on, non-superuser role)), aios-audit-assets (AIOS Audit Assets): expected [ …(6) ] to deeply equal []
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > the aggregates stay strict: Build and the release evidence still refuse on any failure 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > every job that needs lint runs after a red lint, unless it aggregates verdicts
+AssertionError: a red guardrail would skip: coverage (Coverage (ratchet)), ana-readiness-tests (AnA Readiness Tests), integration-tests (Integration Tests), blank-db-provisioning (Blank DB Provisioning + Deploy Migration), production-boot-smoke (Production Boot Smoke (RLS on, non-superuser role)), aios-audit-assets (AIOS Audit Assets): expected [ …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "coverage (Coverage (ratchet))",
++   "ana-readiness-tests (AnA Readiness Tests)",
++   "integration-tests (Integration Tests)",
++   "blank-db-provisioning (Blank DB Provisioning + Deploy Migration)",
++   "production-boot-smoke (Production Boot Smoke (RLS on, non-superuser role))",
++   "aios-audit-assets (AIOS Audit Assets)",
++ ]
+
+ ❯ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts:64:74
+     62|     expect(afterLint.length).toBeGreaterThanOrEqual(POSTURE_JOBS.lengt…
+     63|     const skipped = afterLint.filter(([, j]) => !runsAfterFailure(j)).…
+     64|     expect(skipped, `a red guardrail would skip: ${skipped.join(', ')}…
+       |                                                                          ^
+     65|   });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  08:54:10
+   Duration  4.16s (transform 127ms, setup 154ms, import 247ms, tests 20ms, environment 0ms)
+

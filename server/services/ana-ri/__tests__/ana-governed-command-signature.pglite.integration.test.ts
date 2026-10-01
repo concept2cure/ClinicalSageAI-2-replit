@@ -565,3 +565,19 @@ describe('tagArtifact into a section that already has an artifact', () => {
     expect(asJson(row.metadata)).toMatchObject({ origin: 'seed', revisedBy: 'section-write' });
   });
 });
+
+// 2026-10-01 (D5): a review comment AnA wrote for the person is filed as AnA's
+// (author_role 'ana', fixed once posted), and commits with its chained row.
+describe('add_review_comment files AnA’s words as AnA’s', () => {
+  it('stamps author_role ana and chains the comment with origin ana', async () => {
+    const artifactPk = await seedArtifact();
+    const { addReviewComment } = await import('../command-executor');
+    const words = 'Section 4 needs the starting-dose rationale.';
+    const r = await addReviewComment(ctxWith(signoff()) as never, { threadId: 1, artifactId: artifactPk, body: words });
+    expect(r.success).toBe(true);
+    const id = r.data?.externalId as string;
+    expect((await q(`SELECT author_role FROM concept2cure_thread_comments WHERE comment_id = $1`, [id]))[0].author_role).toBe('ana');
+    const [chained] = await q(`SELECT new_values FROM audit_logs WHERE action = 'review.comment.posted' AND record_id = $1`, [id]);
+    expect(asJson(chained.new_values)).toMatchObject({ origin: 'ana', authorRole: 'ana', body: words });
+  });
+});
