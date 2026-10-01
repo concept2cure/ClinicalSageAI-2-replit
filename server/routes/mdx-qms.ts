@@ -1331,7 +1331,11 @@ router.get('/qms/changes/summary', async (req: Request, res: Response) => {
 });
 
 // Create a change request.
-router.post('/qms/changes', async (req: Request, res: Response) => {
+/* DP-60 (2026-10-01): change-control writes carry the editor gate the
+   document, supplier, audit and nonconformance writes carry (P1-31). A viewer
+   could open, edit, transition and delete a change record and its links; only
+   the approve step (a signature with its own authority check) refused it. */
+router.post('/qms/changes', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = changeCreate.safeParse(req.body ?? {});
@@ -1372,7 +1376,7 @@ router.get('/qms/changes/:id', async (req: Request, res: Response) => {
 });
 
 // Partial update (draft edits; not a lifecycle move — use /transition for that).
-router.patch('/qms/changes/:id', async (req: Request, res: Response) => {
+router.patch('/qms/changes/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -1395,7 +1399,7 @@ router.patch('/qms/changes/:id', async (req: Request, res: Response) => {
 });
 
 // Advance a change through the controlled lifecycle.
-router.post('/qms/changes/:id/transition', async (req: Request, res: Response) => {
+router.post('/qms/changes/:id/transition', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);
   if (orgId === null) return orgRequired(res);
@@ -1496,7 +1500,7 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
 });
 
 // Soft-delete (retire) a change request.
-router.delete('/qms/changes/:id', async (req: Request, res: Response) => {
+router.delete('/qms/changes/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -1533,7 +1537,7 @@ router.get('/qms/changes/:id/links', async (req: Request, res: Response) => {
 });
 
 // Cross-references: link a change to a deviation / CAPA / validation / document.
-router.post('/qms/changes/:id/links', async (req: Request, res: Response) => {
+router.post('/qms/changes/:id/links', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -1558,7 +1562,7 @@ router.post('/qms/changes/:id/links', async (req: Request, res: Response) => {
 });
 
 // Cross-references: remove a link.
-router.delete('/qms/changes/:id/links/:linkId', async (req: Request, res: Response) => {
+router.delete('/qms/changes/:id/links/:linkId', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
