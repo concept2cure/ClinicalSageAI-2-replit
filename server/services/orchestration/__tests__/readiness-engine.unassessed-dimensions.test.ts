@@ -219,3 +219,19 @@ describe('readiness engine — a dimension nothing measured is null, not 50', ()
     expect(a.unassessedDimensions.map((u) => u.dimension)).toEqual(['consistency']);
   });
 });
+
+describe('a task store that could not be read (2026-10-01)', () => {
+  it('is a blocker, not "no blocked work"', () => {
+    const payload = emptyPayload();
+    payload.project.taskCountsPartial = true;
+    const blockers = computeReadinessAssessment(payload).blockers;
+    expect(blockers.map((b) => b.message)).toContain(
+      'Not every task store could be read, so blocked or overdue work may be missing from this review',
+    );
+  });
+
+  it('says nothing about tasks when every store was read and none is blocked', () => {
+    const blockers = computeReadinessAssessment(emptyPayload()).blockers;
+    expect(blockers.filter((b) => b.category === 'blocked_task')).toEqual([]);
+  });
+});
