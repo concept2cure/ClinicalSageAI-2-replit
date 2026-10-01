@@ -128,7 +128,9 @@ if (process.argv.includes('--write-baseline')) {
     };
   }
   fs.mkdirSync(path.dirname(BASELINE), { recursive: true });
-  fs.writeFileSync(BASELINE, JSON.stringify({ entries }, null, 2) + '\n');
+  // Keep every other key of the baseline (its _readme warning above all): rewriting
+  // the entries must not delete what the file tells the next reader.
+  fs.writeFileSync(BASELINE, JSON.stringify({ ...existing, entries }, null, 2) + '\n');
   console.log(`[ci:tenant-blind-models] wrote baseline with ${blind.length} entr(ies).`);
   process.exit(0);
 }
