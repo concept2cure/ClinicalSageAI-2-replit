@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-002 |
-| Version | 0.10 |
+| Version | 0.11 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-002 (`tests/validation/oq/vault/run.mjs`) |
@@ -24,6 +24,7 @@
 | 0.8 | 2026-10-01 | `…01DiJJAk` (critique 15) | URS-VAULT-017, the library search across the organisation's projects, verified by OQ-VAULT-18. Not yet executed (W3). |
 | 0.9 | 2026-10-01 | `…01DiJJAk` (critique 15) | URS-VAULT-018, re-proving every stored version against its recorded SHA-256, verified by OQ-VAULT-19. Not yet executed (W3). |
 | 0.10 | 2026-10-01 | `…01DiJJAk` (critique 15) | URS-VAULT-019, document relationships (the replacement for the `parentDocumentId` VR-05 refused), verified by OQ-VAULT-20. Not yet executed (W3). |
+| 0.11 | 2026-10-01 | `…01DiJJAk` (VR-14a) | URS-VAULT-020, where each version is placed, verified by OQ-VAULT-21. Not yet executed (W3). |
 
 ## 1. Intended use
 
@@ -52,6 +53,7 @@ The Vault is the program's document store: the regulatory user uploads source do
 | URS-VAULT-017 | A search across every project the organisation holds finds documents by title, file name and content, each named with its project, ranked, paginated with a real total, current versions unless earlier ones are asked for. Another organisation's documents are never among them. An empty query answers no results, and a failed search is reported as a failure, not as no matches. A project's own search still searches only that project. | §11.10(d) | medium | `server/services/vault/vault-search.ts`, `server/routes/c2c/project-vault.ts` (`GET /search`, `GET /:id/search`), `client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx` |
 | URS-VAULT-018 | A person can re-prove every stored version of a program: each is re-read through the verifier downloads use and checked against the SHA-256 recorded at ingest. Each verdict (verified, altered, missing, unreadable, or unverifiable when no SHA-256 was recorded) is written to the audit chain against that version, naming the person. The answer gives the counts and names every version that was not verified, and says when the program has more versions than one check covers. A viewer is refused. | §11.10(c), §11.10(e) | high | `server/services/vault/vault-fixity.ts`, `server/routes/c2c/project-vault.ts` (`POST /:id/fixity`), `client/src/concept2cure/v2/surfaces/VaultFixityCheck.tsx` |
 | URS-VAULT-019 | A person can relate one Vault version to another version of the organisation, in any of its projects, as supported by, references or based on it, with an optional note. Both documents list the relationship, each in its own words, and a related version that has since been superseded says so. A document cannot be related to itself or to another version of itself, nor twice in the same way, nor to another organisation's document. Removing a relationship requires a reason for change and keeps the record; nothing changes or deletes a relationship otherwise. Each relate and removal is written to the audit chain against both documents, naming the person. A viewer is refused. | §11.10(c), §11.10(e) | medium | `server/services/vault/vault-relationships.ts`, `server/routes/c2c/project-vault.ts` (`/:id/documents/:documentId/relationships`, `/:id/relationships/:relationshipId/remove`), `migrations/20261001_vault_document_relationships.sql`, `client/src/concept2cure/v2/surfaces/VaultRelationships.tsx` |
+| URS-VAULT-020 | Each version in a document's version list names every live submission leaf that carries it: the submission, the sequence and its status, the section, and the leaf's lifecycle operation. A version carried by none says so. A removed leaf, or a leaf in a removed sequence or submission, is not listed, and no other organisation's leaf is. | §11.10(e) | medium | `server/services/vault/vault-where-used.ts`, `server/routes/c2c/project-vault.ts` (`GET /:id/documents/:documentId/versions`), `client/src/concept2cure/v2/surfaces/VaultVersions.tsx` |
 
 ## 3. Assumptions and constraints
 
