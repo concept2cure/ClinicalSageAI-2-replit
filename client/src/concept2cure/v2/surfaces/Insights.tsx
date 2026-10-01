@@ -164,7 +164,7 @@ interface CanvasPortfolioProgram {
   code: string | null;
   label: string;
   indication: string | null;
-  readiness: number;
+  readiness: number | null;
   confidence: number;
   status: string;
   riskLevel: string;
@@ -175,7 +175,7 @@ interface CanvasPortfolio {
   requiredTier: string;
   summary: {
     programCount: number;
-    avgReadiness: number;
+    avgReadiness: number | null;
     avgConfidence: number;
     worstRisk: string;
     readyCount: number;
@@ -361,7 +361,7 @@ function roMarketsIn(utterance: string): string[] {
 }
 
 /* ── Portfolio rollup (live, from overview.portfolio.programs) ── */
-interface PortfolioRow { code: string; indication: string | null; readiness: number }
+interface PortfolioRow { code: string; indication: string | null; readiness: number | null }
 function roPortfolioFrom(programs: CanvasPortfolioProgram[]): PortfolioRow[] {
   return programs.map(p => ({ code: programName(p), indication: p.indication, readiness: p.readiness }));
 }
@@ -623,7 +623,7 @@ function ROBlock({ block }: { block: ROBlockData }) {
       return (
         <div className="ro-metric">
           <div className="ro-m-lbl">{block.label}</div>
-          <div className="ro-m-val" title={prov} aria-label={prov}>{disp}{block.unit ? <span className="ro-m-unit">{block.unit}</span> : null}</div>
+          <div className="ro-m-val" title={prov} aria-label={prov}>{disp}{block.unit && disp !== '--' ? <span className="ro-m-unit">{block.unit}</span> : null}</div>
           {stLabel ? <div className={'ro-m-st st-' + st}>{stLabel}</div> : null}
           {prov ? <div className="ro-m-prov" title={prov}>Source on hover</div> : null}
         </div>
@@ -716,14 +716,19 @@ function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tie
 
   if (dashboard.kind === 'portfolio') {
     const rows = dashboard.rows || [];
-    const avg = rows.reduce((a, r) => a + r.readiness, 0) / Math.max(1, rows.length);
+    /* Readiness is null for a program none was computed for. The average is
+       over the computed ones only, and states nothing when there are none. */
+    const known = rows.filter((r) => r.readiness != null).map((r) => r.readiness as number);
+    const avg = known.length ? Math.round(known.reduce((a, v) => a + v, 0) / known.length) : null;
     return (
       <div className="ro-dash">
-        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{rows.length} programs</span><span className="ro-status st-ok">avg readiness {Math.round(avg)}%</span></div></div></div>
+        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{rows.length} programs</span>{avg == null ? <span className="ro-status">readiness not computed</span> : <span className="ro-status">avg readiness {avg}%{known.length < rows.length ? ` · ${rows.length - known.length} not computed` : ''}</span>}</div></div></div>
         <div className="ro-port-grid">
           {rows.map((r, i) => (
             <div key={i} className="ro-port-card">
-              <ROChart chartType="readiness_ring" spec={{ value: r.readiness || 0, label: '' }} />
+              {r.readiness == null
+                ? <div className="ro-port-ind" role="note">Readiness not computed</div>
+                : <ROChart chartType="readiness_ring" spec={{ value: r.readiness, label: '' }} />}
               <div className="ro-port-b"><div className="ro-port-code">{r.code}</div><div className="ro-port-ind">{r.indication}</div></div>
             </div>
           ))}
