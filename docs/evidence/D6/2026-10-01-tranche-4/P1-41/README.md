@@ -72,3 +72,37 @@ There are none. `grep -rn "tenant-users" client/src` finds only `POST /api/tenan
 - Still not recorded, and still stated: SCIM-group role changes, invitation acceptance, SCIM token and IP allow-list administration. The access review does not reconstruct a past role from the new rows.
 - No migration and no manifest change.
 - **Test rows left in the local shared test DB.** `tests/db/memberships.dbtest.ts` (role change by its multi-org admin) and `tests/db/organizations-writes.dbtest.ts` (staff cross-org settings write) now produce one real chained row each on fixture org 90302. Neither suite's `afterAll` removes audit rows by actor. From this session's run there are two rows on 90302: `member_role_changed` (actor 359) and `tenant_settings_changed` (actor 381). Their removal was declined by the session's permission policy, so they are still there. They are inert (fixture org, deleted actors). Proposed fix for both suites' `afterAll`, before their users are deleted: in one owner transaction with `trg_audit_logs_no_delete` disabled, `DELETE FROM audit_logs WHERE tenant_id = ANY($1::int[]) AND actor_id = ANY($2::int[])` with `FIXTURE_ORGS` and the suite's own provisioned user ids. This is the pattern `admin-change-audit.dbtest.ts` and `compliance-reports.dbtest.ts` already use.
+
+## Fix round (2026-10-01, adversarial verifier finding 1)
+
+**What was wrong.** After the first round, the access review (`server/services/audit/compliance-reports/queries/access-review.ts`, `notRecorded`) said, with no qualification: *"Role changes, with the role before and after, are listed in the administrative changes report."* That is false for a role assigned through a SCIM group. `server/routes/scim.ts` `PATCH /Groups/:id` is the only other writer of `organization_users.role`. It runs `UPDATE organization_users SET role …` and writes no row to `audit_logs` or `audit_events`. The administrative changes report already stated the gap. The access review, the report a periodic reviewer actually reads, did not. Its removal line was also worded so that "role changes" could be read as covering every channel.
+
+**What is true now.** The two lines read:
+
+- *"A member who was removed leaves no membership record, so removed members do not appear. A removal made by an administrator in the product or through SCIM provisioning is recorded and appears in the administrative changes report. Removals and role changes an administrator made before the product began recording them were not recorded."*
+- *"A member's role on a past date is not reconstructed: the role shown is the current one. A role change made by an administrator in the product is listed, with the role before and after, in the administrative changes report. A role change made through a SCIM group, which is how an identity provider assigns roles, is not recorded, so a role the identity provider assigned has no record of when it was assigned or what it replaced."*
+
+The module header says the same and names the handler. No other file quoted the old wording (`grep` across `.ts`, `.tsx` and `.md`).
+
+**The test ties the disclosure to the code, both ways** (`server/services/audit/compliance-reports/__tests__/review-round-1.test.ts`):
+
+- *No sentence says role changes in general are listed or recorded.* Every access-review sentence that says role changes "are/is listed/recorded" (and is not a "not recorded" sentence) must say "made by an administrator in the product".
+- *Both reports state the SCIM-group gap while the handler writes no row, and stop once it writes one.* The test reads `server/routes/scim.ts`, finds the `PATCH /Groups/:id` handler, and checks that it still writes the role. If the handler has no `auditScim(`, `writeChainedAuditRow(` or `INSERT INTO audit_` call, both `access-review` and `administrative-changes` must contain *"role change made / that arrives through a SCIM group … is not recorded"*. Once the handler records the change, neither report may contain it. So when the SCIM gap is closed, the disclosure has to be removed in the same change.
+
+| Run | File | Result |
+|---|---|---|
+| Red: at HEAD 0e58e794 (the first-round wording) | `red/fix-round-scim-group-disclosure.txt` | 4 failed, 14 passed. The pinned wording (×2), the unqualified-sentence check (on *"Role changes, with the role before and after, are listed …"*) and "access-review states the gap" fail. "administrative-changes states the gap" passes, because that report already did |
+| Mutation: the SCIM line removed from `administrative-changes.ts` (then restored byte for byte from a scratch copy) | `red/fix-round-mutation-admin-changes-scim-line-removed.txt` | 1 failed: administrative-changes states the gap |
+| Mutation: the handler made to call `auditScim` (a scratch copy of `scim.ts`, read by a temporary copy of the test, which was then deleted; `scim.ts` was not edited) | `red/fix-round-mutation-scim-handler-audits.txt` | 2 failed: both reports still state a gap that would no longer exist |
+| Green: review-round-1 | `green/fix-round-scim-group-disclosure.txt` | 18 / 18 |
+| Green: every compliance-report unit test, the tenant-users contract test, both P1-41 route tests | `green/fix-round-related-unit-tests.txt` | 11 files, 140 / 140 |
+| ESLint on both changed files | `green/fix-round-eslint.txt` | 0 errors, 0 warnings |
+| `ci:internals-in-copy` | — | no new occurrences |
+
+```
+NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/services/audit/compliance-reports/ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts server/routes/__tests__/tenant-users-audit.test.ts server/routes/__tests__/tenant-config-audit.test.ts
+npx eslint server/services/audit/compliance-reports/queries/access-review.ts server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+```
+
+**Residual found in this round, not changed.** `auditScim` (`server/routes/scim.ts:290`) is best-effort. If its insert fails, the SCIM removal or deactivation still goes through, the failure is only logged, and there is no row. So *"a removal … through SCIM provisioning is recorded"* holds only when that write succeeds, and neither report says so. The fix belongs in `scim.ts`, which is another file: either write the row in the same transaction as the membership change and fail closed, or add a disclosure. Proposed disclosure text for both reports, if `scim.ts` stays as it is: *"A removal or deactivation through SCIM is recorded on a best-effort basis: if the record cannot be written, the change is still made and is not recorded."*
