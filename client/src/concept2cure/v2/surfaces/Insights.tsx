@@ -30,16 +30,12 @@ const RO_TIERS: Tier[] = [
 
 const RO_FEATURE_TIER: Record<string, string> = {
   report_families: 'standard',
-  prediction_forecast_report: 'professional',
-  crl_rtf_premortem: 'professional',
   scheduled_reports: 'professional',
   portfolio_rollup: 'enterprise',
 };
 
 const RO_FEATURE_LABEL: Record<string, string> = {
   report_families: 'Governed report families',
-  prediction_forecast_report: 'Predictive forecast',
-  crl_rtf_premortem: 'CRL / RTF pre-mortem',
   scheduled_reports: 'Scheduled reports',
   portfolio_rollup: 'Portfolio rollup',
 };
@@ -114,8 +110,6 @@ const RO_TYPES: ReportType[] = [
   { typeId: 'effort.certification_register', label: 'Effort Certification Register', family: 'effort_certification', scopes: ['program', 'project', 'account'], segments: ['academic', 'biotech', 'pharma'], t: { allowPartial: true, requireBlockers: true } },
   { typeId: 'research_security.coi_register', label: 'Research Security & COI Disclosure Register', family: 'research_security', scopes: ['program', 'project', 'account'], segments: ['academic', 'biotech', 'pharma'], t: { allowPartial: true, requireBlockers: true } },
   { typeId: 'research_admin.scorecard', label: 'Research Administration Scorecard', family: 'research_admin', scopes: ['program', 'account'], segments: ['academic', 'biotech', 'pharma'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'prediction.regulatory_forecast', label: 'Predictive Regulatory Forecast', family: 'prediction', scopes: ['program', 'project', 'submission'], segments: ['pharma', 'biotech', 'device'], t: { allowPartial: true, forbidFinal: true, requireDisclosure: true } },
-  { typeId: 'prediction.crl_rtf_premortem', label: 'CRL / RTF Pre-Mortem', family: 'prediction', scopes: ['program', 'project', 'submission'], segments: ['pharma', 'biotech'], t: { allowPartial: true, forbidFinal: true, requireDisclosure: true } },
 ];
 
 /* ── Segment labels ── */
@@ -250,8 +244,6 @@ function roDecide(typeId: string, family: string, tier: string): { entitled: boo
   const hay = (typeId + ' ' + (family || '')).toLowerCase();
   let feature = 'report_families';
   if (/(^|[._\s])portfolio|board[_\s-]?pack|rollup|roll[_\s-]up/.test(hay)) feature = 'portfolio_rollup';
-  else if (/premortem|pre[_\s-]?mortem|(^|[._\s])crl([._\s]|$)|(^|[._\s])rtf([._\s]|$)/.test(hay)) feature = 'crl_rtf_premortem';
-  else if (/(^|[._\s])prediction|forecast|trajectory|probability[_\s-]?of[_\s-]?success/.test(hay)) feature = 'prediction_forecast_report';
   const required = RO_FEATURE_TIER[feature] || 'standard';
   const rank = (t: string) => (RO_TIERS.find(x => x.id === t) || { rank: 0 }).rank;
   return { entitled: rank(tier) >= rank(required), feature, requiredTier: required };
@@ -274,11 +266,11 @@ interface Preset {
    Insights.presetCopy.test.ts. */
 const RO_PRESETS: Record<string, Preset[]> = {
   pharma: [
-    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'prediction.crl_rtf_premortem', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], why: 'Pairs the readiness digest with a CRL/RTF pre-mortem, safety-signal alignment and the audit assurance an action date calls for.' },
+    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], why: 'Pairs the readiness digest with safety-signal alignment and the audit assurance an action date calls for.' },
     { id: 'globalfile', label: 'Global filing harmonization', types: ['ema.maa_readiness_assessment', 'china_nmpa.ctd_module_gap_analysis', 'provenance.evidence_trace_report'], why: 'Reuse the US dossier across EMA and NMPA — the gap analyses show what each region still needs.' },
   ],
   biotech: [
-    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'prediction.regulatory_forecast', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], why: 'Tracks readiness, forecasts the review trajectory, and closes the evidence and financial-disclosure gaps before filing.' },
+    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], why: 'Tracks readiness and closes the evidence and financial-disclosure gaps before filing.' },
     { id: 'nonclin', label: 'Nonclinical & CMC readiness', types: ['nonclinical.study_send_register', 'compliance.audit_assurance_pack'], why: 'Confirm Module 4 / SEND datasets and the audit trail are submission-grade.' },
   ],
   medtech: [
@@ -324,8 +316,6 @@ function roResolveType(utterance: string, seg: string): ReportType | null {
     tokens.forEach(tok => { if (hay.includes(tok)) s++; });
     if (/510|equivalence|predicate/.test(text) && t.typeId.includes('510k')) s += 3;
     if (/readiness|ready|digest|executive/.test(text) && t.typeId === 'readiness.executive_digest') s += 3;
-    if (/crl|rtf|pre.?mortem|reject/.test(text) && t.typeId === 'prediction.crl_rtf_premortem') s += 3;
-    if (/forecast|predict|trajectory/.test(text) && t.typeId === 'prediction.regulatory_forecast') s += 3;
     if (/etmf|tmf|trial master/.test(text) && t.typeId === 'etmf.completeness_pack') s += 3;
     if (/audit|compliance|part 11|assurance/.test(text) && t.typeId === 'compliance.audit_assurance_pack') s += 2;
     if (/evidence|provenance|trace/.test(text) && t.typeId === 'provenance.evidence_trace_report') s += 2;
@@ -398,7 +388,7 @@ function roSuggestForClient(p: ProgramCtx, seg: string) {
     prompts: [
       `Build the ${preset.label}`,
       p.readiness != null ? `How ready is ${p.code} to file?` : `What reports can you run for ${p.code}?`,
-      seg === 'pharma' || seg === 'biotech' ? 'What is my CRL risk?' : 'Show the 510(k) equivalence matrix',
+      seg === 'pharma' || seg === 'biotech' ? 'Run the audit assurance pack' : 'Show the 510(k) equivalence matrix',
       'Compare readiness across all my programs',
     ],
   };
@@ -522,12 +512,19 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
     const reasons = (rep.truthfulness && rep.truthfulness.reasons) || [];
     return { tool: name, text: `"${rep.reportTypeLabel}" is held at ${rep.status} because: ${reasons.join('; ')}. Those are the gate's own reasons, verbatim. Clear them and it can promote toward final; the status gate is deterministic.`, report: rep, dashboard: null };
   }
+  /* A forecast or CRL/RTF pre-mortem was the readiness run under a prediction's
+     title, behind a Professional lock: no prediction model ran (reporting
+     review 2026-10-01). None is part of this release, and the server now
+     refuses a prediction type as a run. The question is answered with what the
+     governed record does hold. */
   if (name === 'get_prediction') {
-    const isPre = /crl|rtf|reject|refuse/.test((utterance || '').toLowerCase());
-    const t = RO_TYPES.find(x => x.typeId === (isPre ? 'prediction.crl_rtf_premortem' : 'prediction.regulatory_forecast'))!;
-    const dec = entitledFor(t);
-    if (!dec.entitled) return lockMsg(dec.feature, t.label);
-    return { tool: name, text: `Running the ${t.label} for ${p.code}. It is advisory — the model is not validated, so every projected value carries a disclosure and the result is held at partial, never final.`, report: null, reportType: t, dashboard: null };
+    return {
+      tool: name,
+      text: `Forecasts and CRL/RTF pre-mortems are not part of this release: no validated prediction model is in the governed record, and a readiness report is not shown under a prediction's name. The Executive Readiness Digest states ${p.code}'s evaluated readiness and the blockers that stand before filing.`,
+      chips: [['Executive Readiness Digest', `Generate the executive readiness digest for ${p.code}`]],
+      report: null,
+      dashboard: null,
+    };
   }
   const resolved = roResolveType(utterance, seg);
   if (name === 'list_report_types' || !resolved) {

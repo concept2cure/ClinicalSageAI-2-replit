@@ -16,7 +16,7 @@ import { renderReport, gapsWereEvaluated, type RenderInput } from '../render/ren
 import { evaluateTruthfulness, type TruthfulnessRules } from '../truthfulness';
 import { REPORT_TYPE_SEED } from '../taxonomy';
 import { GLOBAL_REPORT_TYPE_SEED } from '../taxonomy-global';
-import { PREDICTION_REPORT_TYPES } from '../prediction/report-types';
+import { PREDICTION_NOT_A_RUN, PREDICTION_REPORT_TYPES, isPredictionFamily } from '../prediction/report-types';
 import type { ReportScope } from '@shared/schema/report-os';
 
 const ALL_SEED = [...REPORT_TYPE_SEED, ...GLOBAL_REPORT_TYPE_SEED, ...PREDICTION_REPORT_TYPES];
@@ -45,6 +45,7 @@ export async function renderGovernedReport(
 ): Promise<GovernedRenderResult> {
   const def = SEED_BY_ID.get(params.typeId);
   if (!def) throw new Error(`Unknown report type: ${params.typeId}`);
+  if (isPredictionFamily(def.family)) throw new Error(PREDICTION_NOT_A_RUN);
 
   const computed = await computeInitialRun(organizationId, params.scopeType, params.scopeId, {
     explicitRegistryId: params.typeId,

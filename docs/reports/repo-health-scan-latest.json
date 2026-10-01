@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T08:13:02.702Z",
+  "generatedAt": "2026-10-01T08:35:38.312Z",
   "git": {
-    "sha": "e97d933df82b61fc2a4ceb6463ab8822696358d9",
+    "sha": "19f31c9548972614bb3236a9496cca0ffa106323",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2010,7 +2010,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1111769
+        "bytes": 1111886
       },
       {
         "file": "shared/schema.ts",
@@ -2066,7 +2066,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 156478
+        "bytes": 156008
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2192,7 +2192,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21460
+        "lines": 21462
       },
       {
         "file": "shared/schema.ts",
@@ -2275,12 +2275,12 @@
         "lines": 3118
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3117
-      },
-      {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
         "lines": 3116
+      },
+      {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 3104
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2324,7 +2324,7 @@
       },
       {
         "file": "server/routes/report-os.ts",
-        "lines": 2416
+        "lines": 2393
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
