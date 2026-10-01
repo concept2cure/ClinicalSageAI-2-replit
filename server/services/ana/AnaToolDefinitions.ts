@@ -690,28 +690,28 @@ export const LOOKUP_ICH_GUIDELINE: AnaTool = {
 export const VALIDATE_CROSS_REFERENCES: AnaTool = {
   name: 'validate_cross_references',
   description:
-    'Validate cross-references within a document — check that cited sections exist, table/figure numbers are correct, and internal references are consistent.',
+    "Check CTD section references (\"Section 3.2.P.5.1\", \"Module 2.7.3\", \"m2.5\") against the section outlines of one of the organization's documents and the other documents in its project. Each reference is reported found in this document, found in another document of the project (named), present only as a parent section, or not found. Table and figure numbers are not assessed.",
   input_schema: {
     type: 'object',
     properties: {
       document_id: {
         type: 'string',
-        description: 'Internal document ID to validate',
+        description: "The document the references are in (a governed document id, e.g. 'doc_…').",
       },
       section_references: {
         type: 'array',
         items: { type: 'string' },
-        description: 'List of section references to validate (e.g., ["Section 3.2", "Table 4", "Figure 1"])',
+        description: 'The references to check (e.g., ["Section 3.2.P.5.1", "Module 2.7.3"])',
       },
     },
-    required: ['document_id'],
+    required: ['document_id', 'section_references'],
   },
 };
 
 export const GENERATE_CITATION: AnaTool = {
   name: 'generate_citation',
   description:
-    'Generate a properly formatted regulatory citation for a given source. Supports FDA guidance, ICH guidelines, EU MDR articles, journal articles, and 21 CFR references.',
+    'Format a citation, labelled with what it rests on. A journal article (PMID or DOI, else a title) is looked up in PubMed / Crossref and formatted from the record found — or not formatted at all when it cannot be verified. An ICH guideline takes its title from the ICH corpus. FDA guidance, 21 CFR, EU MDR and ISO citations are formatted from the identifier given and labelled not verified. Journal styles: Vancouver or AMA.',
   input_schema: {
     type: 'object',
     properties: {
@@ -722,12 +722,12 @@ export const GENERATE_CITATION: AnaTool = {
       },
       source_identifier: {
         type: 'string',
-        description: 'Source identifier (guidance number, DOI, CFR section, etc.)',
+        description: 'Source identifier (PMID, DOI, ICH code, CFR section, guidance title, article, standard number)',
       },
       citation_style: {
         type: 'string',
-        enum: ['regulatory', 'apa', 'vancouver'],
-        description: 'Citation style (default: regulatory)',
+        enum: ['regulatory', 'vancouver', 'ama'],
+        description: 'Citation style for a journal article (default: Vancouver)',
       },
     },
     required: ['source_type', 'source_identifier'],

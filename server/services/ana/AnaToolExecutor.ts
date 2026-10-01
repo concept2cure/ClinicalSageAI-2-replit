@@ -4671,43 +4671,73 @@ registerToolHandler('check_regulatory_compliance', async (input) => {
 });
 
 // Validate Cross References
-registerToolHandler('validate_cross_references', async (input) => {
-  const documentId = input.document_id as string;
-  const references = input.section_references as string[] || [];
-
-  return JSON.stringify({
-    documentId,
-    referencesChecked: references.length,
-    results: references.map(ref => ({
-      reference: ref,
-      status: 'unverified',
-      note: 'Cross-reference validation requires document store access — flagged for manual review',
-    })),
-    recommendation: 'Run full cross-reference validation after document assembly',
-  });
+registerToolHandler('validate_cross_references', async (input, ctx) => {
+  /* Each reference is checked against the section outlines of the tenant's
+     own documents (c2c_document_sections): this document, then the other
+     documents of its project (cross-reference-check.ts). It used to read
+     nothing and return every reference 'unverified' — "requires document
+     store access". A table or figure number has no resolver, so it is not
+     assessed, never passed. */
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'validate_cross_references requires tenant context.' });
+  const documentId = typeof input.document_id === 'string' ? input.document_id.trim() : '';
+  if (!documentId) return JSON.stringify({ error: 'document_id (string) is required.' });
+  const references = Array.isArray(input.section_references)
+    ? (input.section_references as unknown[]).filter((r): r is string => typeof r === 'string' && r.trim() !== '')
+    : [];
+  if (references.length === 0) {
+    return JSON.stringify({
+      error: 'section_references is required: list the references to check, e.g. ["Section 3.2.P.5.1"].',
+    });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { checkCrossReference } = await import('./cross-reference-check.js');
+    const doc = await getPool().query(
+      `SELECT id, project_id, title FROM c2c_documents
+        WHERE org_id = $1 AND id = $2 LIMIT 1`,
+      [ctx.organizationId, documentId],
+    );
+    if (!doc.rows.length) return JSON.stringify({ error: `No document '${documentId}' in this organization.` });
+    const outlines = await getPool().query(
+      `SELECT s.document_id, d.title, s.section_key, s.status
+         FROM c2c_document_sections s
+         JOIN c2c_documents d ON d.id = s.document_id
+        WHERE d.org_id = $1 AND d.project_id = $2`,
+      [ctx.organizationId, doc.rows[0].project_id],
+    );
+    const results = references.map((reference) => checkCrossReference(reference, documentId, outlines.rows));
+    const count = (...statuses: string[]) => results.filter((r) => statuses.includes(r.status)).length;
+    return JSON.stringify({
+      documentId,
+      referencesChecked: results.length,
+      results,
+      summary: {
+        found: count('found_in_document', 'found_in_project'),
+        parentOnly: count('parent_only'),
+        notFound: count('not_found'),
+        notAssessed: count('not_assessed'),
+      },
+      checkedAgainst: 'the section outlines of this document and of the other documents in its project',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `validate_cross_references failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
 });
 
 // Generate Citation
 registerToolHandler('generate_citation', async (input) => {
-  const sourceType = input.source_type as string;
-  const sourceId = input.source_identifier as string;
-  const style = input.citation_style as string || 'regulatory';
-
-  const citationTemplates: Record<string, string> = {
-    fda_guidance: `U.S. Food and Drug Administration. "${sourceId}." Available at: https://www.fda.gov/regulatory-information/search-fda-guidance-documents.`,
-    ich_guideline: `International Council for Harmonisation. "${sourceId}." Available at: https://ich.org/page/ich-guidelines.`,
-    '21cfr': `Title 21, Code of Federal Regulations, Part ${sourceId}. U.S. Government Publishing Office.`,
-    eu_mdr: `Regulation (EU) 2017/745 of the European Parliament and of the Council, ${sourceId}.`,
-    iso_standard: `International Organization for Standardization. ${sourceId}. Geneva, Switzerland.`,
-    journal_article: `[Author(s)]. "[Title]." [Journal], ${sourceId}. DOI: [doi].`,
-  };
-
-  return JSON.stringify({
-    sourceType,
-    sourceIdentifier: sourceId,
-    citation: citationTemplates[sourceType] || `${sourceType}: ${sourceId}`,
-    style,
-  });
+  /* Formats only what it can stand behind, and says which (citation-generator.ts).
+     It filled a string template per type: a journal article came back as
+     `[Author(s)]. "[Title]." [Journal], <id>. DOI: [doi].`, and the style asked
+     for was echoed but never applied. */
+  const { generateCitation } = await import('./citation-generator.js');
+  return JSON.stringify(
+    await generateCitation({
+      sourceType: input.source_type,
+      sourceIdentifier: input.source_identifier,
+      style: input.citation_style,
+    }),
+  );
 });
 
 // Analyze Predicate Device
