@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db, getPool } from '../db';
 import { authedOrgId, usableOrgId } from '../utils/authedOrgId';
 import {
@@ -36,7 +36,8 @@ import { computeInitialRun } from '../services/report-os/orchestrator';
 import { renderReport, gapsWereEvaluated, type RenderInput } from '../services/report-os/render/render';
 import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
-import { readRunSeal, readVerifiedSealedDocument } from '../services/report-os/sealing/run-seal';
+import { readRunSeal, readSealForExport, readVerifiedSealedDocument } from '../services/report-os/sealing/run-seal';
+import { buildRunPdf } from '../services/report-os/pdf/run-pdf';
 import type { SealedRecord } from '../services/report-os/sealing/types';
 import { decideDelivery } from '../services/report-os/scheduling/delivery';
 import {
@@ -470,6 +471,26 @@ async function sendRecordedPdf(
   return res.send(pdf.buffer);
 }
 
+/** The printed name of a user as this organisation may see it (public.actor_name), or null. */
+async function actorName(client: PoolClient, userId: number | null): Promise<string | null> {
+  if (userId == null) return null;
+  const { rows } = await client.query('SELECT name FROM public.actor_name($1)', [userId]);
+  const name = (rows[0] as { name?: unknown } | undefined)?.name;
+  return typeof name === 'string' && name.trim() ? name : null;
+}
+
+/** 409: the stored record does not verify against the audit chain, so it is neither shown nor exported. */
+function refuseSealMismatch(res: Response, runId: number, verb: 'shown' | 'exported') {
+  return res.status(409).json({
+    success: false,
+    error: {
+      code: 'SEALED_DOCUMENT_MISMATCH',
+      message: `This report's stored record does not verify against the audit chain, so it is not ${verb}. GET /runs/:id/seal states which check failed.`,
+    },
+    data: { runId },
+  });
+}
+
 /** 409: a final report keeps its seal; it is never sealed a second time. */
 function refuseAlreadyFinal(res: Response, runId: number) {
   return res.status(409).json({
@@ -736,67 +757,6 @@ async function getReportTypeLabelMap(typeIds: string[]) {
   const map = new Map<string, string>();
   for (const row of rows) map.set(row.typeId, row.label);
   return map;
-}
-
-async function createRunPdf(params: {
-  run: any;
-  typeLabel: string;
-  blockers: string[];
-  providers: Array<{ provider: string; status: string; blocker?: string | null }>;
-}): Promise<Buffer> {
-  const pdf = await PDFDocument.create();
-  const page = pdf.addPage([612, 792]);
-  const regular = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const left = 50;
-  let y = 750;
-
-  page.drawText('Concept2Cure Regulatory Report', { x: left, y, size: 18, font: bold });
-  y -= 24;
-  page.drawText(`Run #${params.run.id} (${sanitizePdfText(params.run.runUuid)})`, {
-    x: left,
-    y,
-    size: 10,
-    font: regular,
-    color: rgb(0.35, 0.35, 0.35),
-  });
-  y -= 24;
-
-  const lines = [
-    `Report Type: ${sanitizePdfText(params.typeLabel)} (${sanitizePdfText(params.run.reportTypeId)})`,
-    `Scope: ${sanitizePdfText(params.run.scopeType)}:${sanitizePdfText(params.run.scopeId)}`,
-    `Status: ${sanitizePdfText(params.run.status)}`,
-    `Confidence: ${params.run.confidence ?? 'N/A'}`,
-    `Generated: ${safeIso(params.run.createdAt)}`,
-  ];
-  for (const line of lines) {
-    page.drawText(line, { x: left, y, size: 10, font: regular });
-    y -= 16;
-  }
-
-  y -= 6;
-  page.drawText('Dependency Providers', { x: left, y, size: 11, font: bold });
-  y -= 16;
-  for (const provider of params.providers) {
-    const text = `${provider.provider} — ${provider.status}${provider.blocker ? ` (${provider.blocker})` : ''}`;
-    page.drawText(sanitizePdfText(text), { x: left + 8, y, size: 9, font: regular });
-    y -= 14;
-    if (y < 80) break;
-  }
-
-  if (params.blockers.length > 0 && y > 120) {
-    y -= 4;
-    page.drawText('Known Blockers', { x: left, y, size: 11, font: bold });
-    y -= 16;
-    for (const blocker of params.blockers) {
-      page.drawText(`- ${sanitizePdfText(blocker)}`, { x: left + 8, y, size: 9, font: regular });
-      y -= 13;
-      if (y < 80) break;
-    }
-  }
-
-  const bytes = await pdf.save();
-  return Buffer.from(bytes);
 }
 
 async function createBundlePdf(bundle: ReportBundleRecord): Promise<Buffer> {
@@ -1694,6 +1654,54 @@ router.get('/runs/:id/dependencies', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * The run's governed PDF (services/report-os/pdf/run-pdf.ts), recorded before
+ * it is sent. The body is the report itself: for a final run, the sealed
+ * document, and only when it verifies; a record that contradicts the audit
+ * chain is not exported. The seal read and the requester's name come from one
+ * tenant-stamped transaction (run-seal.ts reads the status again there). The
+ * export's id and time are printed on every page and recorded on the chain.
+ */
+async function sendRunPdf(
+  req: Request,
+  res: Response,
+  run: typeof reportRuns.$inferSelect,
+  reportType: { label: string | null; truthfulnessRules: unknown } | undefined,
+) {
+  const { view, document, runBy } = await inTenantTransaction(run.organizationId, async (client) => ({
+    ...(await readSealForExport(client, run)),
+    runBy: await actorName(client, run.requestedBy),
+  }));
+  if (view.verification.verdict === 'mismatch') return refuseSealMismatch(res, run.id, 'exported');
+  const status = view.sealed ? 'final' : run.status;
+  const exportId = randomUUID();
+  const exportedAt = new Date().toISOString();
+  const pdf = await buildRunPdf({
+    run: { ...run, status },
+    typeLabel: reportType?.label || run.reportTypeId,
+    report: document ?? buildRenderedFromRun(run, reportType).rendered,
+    seal: view.sealed ? view : null,
+    runBy,
+    exportId,
+    exportedAt,
+  });
+  return sendRecordedPdf(
+    req,
+    res,
+    {
+      organizationId: run.organizationId,
+      action: 'report_os.run_exported',
+      resourceType: 'report_run',
+      resourceId: String(run.id),
+      details: {
+        runUuid: run.runUuid, reportTypeId: run.reportTypeId, status, exportId, exportedAt,
+        pages: pdf.pages, sealVerdict: view.sealed ? view.verification.verdict : null,
+      },
+    },
+    { filename: `report-run-${run.id}.pdf`, buffer: pdf.bytes }
+  );
+}
+
 router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
   try {
     const runId = Number(req.params.id);
@@ -1715,7 +1723,7 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
       .limit(1);
     if (!run) return res.status(404).json({ error: 'Run not found' });
     const [reportType] = await db
-      .select({ label: reportTypeRegistry.label, family: reportTypeRegistry.family })
+      .select({ label: reportTypeRegistry.label, family: reportTypeRegistry.family, truthfulnessRules: reportTypeRegistry.truthfulnessRules })
       .from(reportTypeRegistry)
       .where(eq(reportTypeRegistry.typeId, run.reportTypeId))
       .limit(1);
@@ -1733,35 +1741,8 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
         tier: exportGate.tier,
       });
     }
-    const providers = await db
-      .select({
-        provider: reportRunDependencies.provider,
-        status: reportRunDependencies.status,
-        blocker: reportRunDependencies.blocker,
-      })
-      .from(reportRunDependencies)
-      .where(
-        and(eq(reportRunDependencies.runId, runId), eq(reportRunDependencies.organizationId, organizationId))
-      )
-      .orderBy(asc(reportRunDependencies.provider));
-    const buffer = await createRunPdf({
-      run,
-      typeLabel: reportType?.label || run.reportTypeId,
-      blockers: toBlockerArray(run.blockers),
-      providers,
-    });
-    return sendRecordedPdf(
-      req,
-      res,
-      {
-        organizationId,
-        action: 'report_os.run_exported',
-        resourceType: 'report_run',
-        resourceId: String(runId),
-        details: { runUuid: run.runUuid, reportTypeId: run.reportTypeId, status: run.status },
-      },
-      { filename: `report-run-${runId}.pdf`, buffer }
-    );
+
+    return await sendRunPdf(req, res, run, reportType);
   } catch (error: any) {
     return serverError(res, logger, 'loading export.pdf', error);
   }
@@ -1879,16 +1860,7 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
     // again inside that transaction, after the chain (run-seal.ts).
     const stored = await inTenantTransaction(run.organizationId, (client) => readVerifiedSealedDocument(client, run));
     if (stored.verdict === 'intact' && stored.document) return res.json({ data: stored.document, sealed: true });
-    if (stored.verdict === 'mismatch') {
-      return res.status(409).json({
-        success: false,
-        error: {
-          code: 'SEALED_DOCUMENT_MISMATCH',
-          message: "This report's stored record does not verify against the audit chain, so it is not shown. GET /runs/:id/seal states which check failed.",
-        },
-        data: { runId },
-      });
-    }
+    if (stored.verdict === 'mismatch') return refuseSealMismatch(res, runId, 'shown');
 
     const { rendered } = buildRenderedFromRun(run, reportType);
     return res.json({ data: rendered });

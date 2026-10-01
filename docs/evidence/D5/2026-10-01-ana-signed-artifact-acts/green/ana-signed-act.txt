@@ -1,0 +1,63 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T13:51:27.458Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T13:51:27.460Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T13:51:27.460Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T13:51:27.776Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning approval: approved at the version, one signature, its ledger row
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > with a reason only (no verified signature): refused, and nothing is written 15ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning approval: approved at the version, one signature, its ledger row 43ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning release: refused, nothing written — the act fixes its meaning 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning authorship: refused, nothing written — the act fixes its meaning 5ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning review: refused, nothing written — the act fixes its meaning 4ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a member, whom the status route does not let approve: refused, nothing written 10ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a manager, whom the status route does not let approve: refused, nothing written 7ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a author, whom the status route does not let approve: refused, nothing written 7ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > with a reason only: refused, not locked, no snapshot 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > signed with the meaning release: locked at the version, with its snapshot, signature and ledger row 23ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > signed with the meaning approval: refused, not locked 4ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > a reviewer, whom the status route lets approve but not lock: refused 7ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  13:51:24
+   Duration  10.13s (transform 4.16s, setup 98ms, import 6.89s, tests 2.72s, environment 0ms)
+
