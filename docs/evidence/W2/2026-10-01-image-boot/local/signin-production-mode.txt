@@ -1,0 +1,29 @@
+# The production bundle (npm run build) booted from source with NODE_ENV=production,
+# RLS_ENFORCE=on, APP_DATABASE_URL on app_service, and the posture env of ci.yml's
+# production-boot-smoke, against the database provisioned above. Then
+# scripts/ci/image-boot-signin.mjs with SIGNIN_ORIGIN=https://app.concept2cure-ri.ai.
+
+GET /readyz → 200
+{"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+
+enrolled user 1 in organisation 3, authenticator on
+POST /api/auth/login → 200, second factor required (authenticator)
+POST /api/auth/mfa/verify with a wrong code → 401, refused
+POST /api/auth/mfa/verify with the authenticator code → 200, access token issued
+GET /api/auth/me → 200, signed in as image-boot-signin@example.invalid
+image sign-in: OK
+exit=0
+
+# The check made to fail.
+# 1. The authenticator enrolled under a key the server does not hold:
+POST /api/auth/login → 200, second factor required (authenticator)
+::error::image sign-in FAILED at second factor: expected 200 with an access token; got 500 {"success":false,"error":{"code":"AUTH_010","message":"MFA verification failed"}}
+exit=1
+# 2. An origin the deployment does not allow:
+::error::image sign-in FAILED at login: expected 200 with a second-factor challenge; got 403 {"error":"Origin not allowed","code":"CORS_ORIGIN_BLOCKED"}
+exit=1
+
+# Also found: before provisioning a fresh database, the same boot against the shared
+# test database was refused — "[security-self-test] ... audit_chain_integrity:
+# Signature invalid at sequence 1" — because that database holds audit rows sealed
+# under other test keys. Production refusing a chain it cannot verify is correct.

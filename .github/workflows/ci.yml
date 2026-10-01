@@ -2025,6 +2025,153 @@ jobs:
         if: always()
         run: docker rm -f pgboot || true
 
+  # The image itself, not the source (launch row D1; evidence
+  # docs/evidence/W2/2026-10-01-image-boot/). production-boot-smoke above runs
+  # dist/index.js on the runner; nothing started the image Dockerfile.optimized
+  # produces until this job. It builds both targets the deploy builds, provisions
+  # an EMPTY database with the provision image's own `npm run db:provision`,
+  # starts the production image as `appuser` under RLS_ENFORCE=on as app_service,
+  # requires /healthz and /readyz to answer 200, and signs a person in, second
+  # factor included, from inside the image (scripts/ci/image-boot-signin.mjs).
+  # The session that wrote it could not build the image (its network refuses
+  # Debian's mirrors); GitHub's runners reach them, as deploy-aws.yml's build does.
+  production-image-boot:
+    name: Production Image Boot (built image, empty database, sign-in)
+    runs-on: ubuntu-latest
+    needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
+    timeout-minutes: 60
+    env:
+      APP_SERVICE_PASSWORD: ci-image-boot-app-service-password
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Build the provision and production images (as deploy-aws.yml does)
+        run: |
+          docker build -f Dockerfile.optimized --target provision -t c2c-provision:ci .
+          docker build -f Dockerfile.optimized --target production -t c2c-app:ci .
+          echo "production image runs as: $(docker inspect --format '{{.Config.User}}' c2c-app:ci)"
+          if [ "$(docker inspect --format '{{.Config.User}}' c2c-app:ci)" != "appuser" ]; then
+            echo "::error::the production image must run as appuser"; exit 1
+          fi
+
+      - name: Start an empty PostgreSQL with TLS
+        run: |
+          mkdir -p "$RUNNER_TEMP/pgcerts" "$RUNNER_TEMP/ca"
+          openssl req -new -x509 -days 2 -nodes -text \
+            -out "$RUNNER_TEMP/pgcerts/server.crt" \
+            -keyout "$RUNNER_TEMP/pgcerts/server.key" \
+            -subj "/CN=localhost" \
+            -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+          # The containers verify the server against this certificate.
+          cp "$RUNNER_TEMP/pgcerts/server.crt" "$RUNNER_TEMP/ca/server.crt"
+          chmod 644 "$RUNNER_TEMP/ca/server.crt"
+          sudo chown 999:999 "$RUNNER_TEMP/pgcerts/server.key" "$RUNNER_TEMP/pgcerts/server.crt"
+          sudo chmod 600 "$RUNNER_TEMP/pgcerts/server.key"
+          docker run -d --name pgimage \
+            -e POSTGRES_HOST_AUTH_METHOD=trust \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_DB=c2c_image \
+            -p 5432:5432 \
+            -v "$RUNNER_TEMP/pgcerts:/certs:ro" \
+            pgvector/pgvector:pg15 \
+            -c ssl=on -c ssl_cert_file=/certs/server.crt -c ssl_key_file=/certs/server.key
+          for i in $(seq 1 45); do
+            docker exec pgimage pg_isready -U postgres && break
+            sleep 2
+          done
+
+      - name: Provision the empty database with the provision image
+        run: |
+          docker run --rm --network host \
+            -v "$RUNNER_TEMP/ca:/ca:ro" \
+            -e DATABASE_OWNER_URL=postgresql://postgres@localhost:5432/c2c_image \
+            -e APP_DATABASE_URL="postgresql://app_service:${APP_SERVICE_PASSWORD}@localhost:5432/c2c_image" \
+            -e APP_SERVICE_DB_PASSWORD="${APP_SERVICE_PASSWORD}" \
+            -e NODE_EXTRA_CA_CERTS=/ca/server.crt \
+            -e PGSSLROOTCERT=/ca/server.crt \
+            c2c-provision:ci
+
+      - name: Start the production image and require /healthz and /readyz = 200
+        run: |
+          # The production posture production-boot-smoke runs, as an env file.
+          # Throwaway values for a container destroyed with the job; each
+          # acceptance below is explained in production-boot-smoke's env.
+          cat > "$RUNNER_TEMP/app.env" <<ENV
+          NODE_ENV=production
+          RLS_ENFORCE=on
+          PORT=5199
+          DATABASE_URL=postgresql://postgres@localhost:5432/c2c_image
+          APP_DATABASE_URL=postgresql://app_service:${APP_SERVICE_PASSWORD}@localhost:5432/c2c_image
+          NODE_EXTRA_CA_CERTS=/ca/server.crt
+          PGSSLROOTCERT=/ca/server.crt
+          JWT_SECRET=ci-image-boot-jwt-secret-min-32-chars-long-aaa
+          SESSION_SECRET=ci-image-boot-session-secret-min-32-chars-bbb
+          REFRESH_TOKEN_SECRET=ci-image-boot-refresh-secret-min-32-chars-ccc
+          AUDIT_HMAC_SECRET=ci-image-boot-audit-hmac-secret-min-32-chars-ddd
+          AUDIT_HMAC_KEY=ci-image-boot-audit-hmac-key-min-32-chars-eee
+          AUDIT_EXPORT_SIGNING_KEY=ci-image-boot-audit-export-key-min-32-chars-hhh
+          MFA_ENCRYPTION_KEY=ci-image-boot-mfa-encryption-key-min-32-chars-fff
+          CONNECTOR_ENCRYPTION_KEY=ci-image-boot-connector-encryption-key-32-ggg
+          CONCEPT2CURE_SIGNER_MODE=hmac
+          CONCEPT2CURE_SIGNER_ACCEPT_HMAC=true
+          STORAGE_PROVIDER=local
+          STORAGE_ACCEPT_LOCAL_DISK=true
+          AUDIT_TRAIL_ENABLED=true
+          AUDIT_REQUIRE_ENFORCE=true
+          AI_GATEWAY_DETERMINISTIC=true
+          AI_GATEWAY_ACCEPT_DETERMINISTIC=true
+          AI_SENSITIVE_DATA_POLICY_MODE=enforce
+          AI_PROVIDER_PLACEMENT_APPROVALS={"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}
+          ALLOWED_ORIGINS=https://image-boot.invalid
+          ENV
+          docker run -d --name c2c-app --network host \
+            -v "$RUNNER_TEMP/ca:/ca:ro" --env-file "$RUNNER_TEMP/app.env" c2c-app:ci
+          READY=""
+          for i in $(seq 1 300); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5199/readyz || true)
+            if [ "$CODE" = "200" ]; then READY="yes"; echo "/readyz=200 after ${i}s"; break; fi
+            if [ "$(docker inspect --format '{{.State.Running}}' c2c-app)" != "true" ]; then
+              echo "::error::the production container exited during boot (last /readyz: ${CODE:-none})."
+              break
+            fi
+            if [ $((i % 30)) -eq 0 ]; then echo "…still booting at ${i}s (last /readyz: ${CODE:-none})"; fi
+            sleep 1
+          done
+          if [ -z "$READY" ]; then
+            echo "──────── /readyz body ────────"
+            curl -s http://127.0.0.1:5199/readyz || echo "(no HTTP response — the port was never bound)"
+            echo ""
+            echo "──────── container log ────────"
+            docker logs --tail 150 c2c-app
+            echo "::error::the production image did not reach /readyz=200 on a freshly provisioned database."
+            exit 1
+          fi
+          curl -s http://127.0.0.1:5199/readyz; echo
+          HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5199/healthz)
+          echo "/healthz=$HEALTH"
+          if [ "$HEALTH" != "200" ]; then echo "::error::/healthz answered $HEALTH"; exit 1; fi
+
+      - name: Sign a person in to the running image, second factor included
+        run: |
+          docker run --rm --network host -w /app \
+            -v "$PWD/scripts/ci/image-boot-signin.mjs:/app/image-boot-signin.mjs:ro" \
+            -e DATABASE_URL=postgresql://postgres@localhost:5432/c2c_image \
+            -e BASE_URL=http://127.0.0.1:5199 \
+            -e SIGNIN_ORIGIN=https://image-boot.invalid \
+            -e MFA_ENCRYPTION_KEY=ci-image-boot-mfa-encryption-key-min-32-chars-fff \
+            c2c-app:ci node image-boot-signin.mjs
+
+      - name: Container log on failure
+        if: failure()
+        run: docker logs --tail 200 c2c-app || true
+
+      - name: Tear down
+        if: always()
+        run: docker rm -f c2c-app pgimage || true
+
   aios-audit-assets:
     name: AIOS Audit Assets
     runs-on: ubuntu-latest
