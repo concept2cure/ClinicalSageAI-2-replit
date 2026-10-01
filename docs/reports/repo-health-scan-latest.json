@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T08:27:36.667Z",
+  "generatedAt": "2026-10-01T08:35:38.312Z",
   "git": {
-    "sha": "dd8babe644d83a3fcb4101541a075b427ba03c58",
+    "sha": "19f31c9548972614bb3236a9496cca0ffa106323",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2324,7 +2324,7 @@
       },
       {
         "file": "server/routes/report-os.ts",
-        "lines": 2416
+        "lines": 2393
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
