@@ -489,5 +489,44 @@ await step(
   },
 );
 
+await step(
+  {
+    id: 'OQ-VAULT-16',
+    urs: ['URS-VAULT-015'],
+    title: 'Suggested filings in one folder are confirmed together with one reason, each answered; a second confirmation is refused',
+    action:
+      'Ingest two PDFs (each suggested a folder by the classifier); GET /api/c2c/project-vault/:id; POST /api/c2c/project-vault/:id/file-batch {folderId, documentIds} without a note, then with a note; ' +
+      'POST the same again; GET /api/c2c/project-vault/:id',
+    expected:
+      'Both ingests answer placementStatus "suggested" in the same folder, and awaitingConfirmationCount counts them. Without a note: 422 REASON_REQUIRED. With one: 200 complete:true, both confirmed. ' +
+      'The repeat: 200 complete:false, both refused CONFLICT. awaitingConfirmationCount is two lower than before.',
+    dependsOn: ['OQ-VAULT-00'],
+  },
+  async ({ api, expect }) => {
+    const a = await ingestPdf(api, expect, { programId: state.programId, title: `OQ-002 Confirm set A ${stamp}` });
+    const b = await ingestPdf(api, expect, { programId: state.programId, title: `OQ-002 Confirm set B ${stamp}` });
+    const folderId = a.filing?.folderId;
+    expect(a.filing?.placementStatus === 'suggested' && b.filing?.placementStatus === 'suggested' && folderId && b.filing.folderId === folderId,
+      'the two ingests were not suggested into the same folder', [a.filing, b.filing]);
+    const read = async () => (await api('GET', `/api/c2c/project-vault/${state.programId}`)).json?.data?.awaitingConfirmationCount;
+    const waiting = await read();
+    expect(Number.isInteger(waiting) && waiting >= 2, `awaitingConfirmationCount: expected at least 2, got ${waiting}`);
+    const path = `/api/c2c/project-vault/${state.programId}/file-batch`;
+    const documentIds = [a.document.id, b.document.id];
+    const bare = await api('POST', path, { folderId, documentIds });
+    expect(bare.status === 422 && bare.json?.error === 'REASON_REQUIRED', `without a note: expected 422 REASON_REQUIRED, got ${bare.status}`, bare.json);
+    const note = 'OQ-002 step 16: confirmed for validation';
+    const done = await api('POST', path, { folderId, documentIds, note });
+    expect(done.status === 200 && done.json.complete === true && done.json.items.every((i) => i.outcome === 'confirmed'),
+      'the two suggestions were not both confirmed', done.json);
+    const again = await api('POST', path, { folderId, documentIds, note });
+    expect(again.status === 200 && again.json.complete === false && again.json.items.every((i) => i.code === 'CONFLICT'),
+      'a second confirmation was not refused CONFLICT for each document', again.json);
+    const after = await read();
+    expect(after === waiting - 2, `awaitingConfirmationCount: expected ${waiting - 2}, got ${after}`);
+    return `2 suggested in ${folderId} (awaiting ${waiting}); no note → 422; confirmed both; repeat → CONFLICT ×2; awaiting ${after}`;
+  },
+);
+
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);
