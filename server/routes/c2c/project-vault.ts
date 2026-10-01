@@ -70,7 +70,7 @@ import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
-import { readVaultLifecycles } from '../../services/vault/vault-lifecycle.js';
+import { readVaultLifecycles, vaultVersionNotTransmittable } from '../../services/vault/vault-lifecycle.js';
 import { fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
 import { searchVaultDocuments } from '../../services/vault/vault-search.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
@@ -1664,11 +1664,17 @@ export default function createProjectVaultRoutes(): Router {
       const ids = family.map((v) => v.id);
       const placements = await readVaultPlacements(pool, orgId, ids);
       const estarUses = await readVaultEstarUses(pool, orgId, ids);
-      const versions = family.map((v) => ({
+      // Why each version would not be transmitted, in the words the transmit
+      // refusal prints (VR-14's one rule, read for display), or null. Placement
+      // is not refused on it; freeze, dispatch and transmit are. An unreadable
+      // verdict fails the read, as the stage does.
+      const refusals = await Promise.all(family.map((v) => vaultVersionNotTransmittable(pool, orgId, v.id, v.contentHash ?? '')));
+      const versions = family.map((v, i) => ({
         ...v,
         lifecycle: lifecycles.get(v.id) ?? null,
         placements: placements.get(v.id) ?? [],
         estarUses: estarUses.get(v.id) ?? [],
+        transmitRefusal: refusals[i],
       }));
       return res.json({ success: true, data: { versions } });
     } catch (err) {

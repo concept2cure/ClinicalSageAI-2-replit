@@ -33,6 +33,8 @@ export interface VaultPlacement {
   region: string | null;
   /** The sequence's own status: draft, assembling, validated, frozen or dispatched. */
   sequenceStatus: string | null;
+  /** Its dispatch status (pending, sent, acknowledged …), or null. 'sent' and 'acknowledged' mean the agency holds it. */
+  dispatchStatus: string | null;
   sectionCode: string;
   leafTitle: string;
   /** The eCTD lifecycle operation: new, replace, append or delete. */
@@ -53,7 +55,7 @@ export async function readVaultPlacements(
   if (vaultIds.length === 0) return out;
   const { rows } = await q.query(
     `SELECT l.document_uuid::text AS vault_id, l.id AS leaf_id, l.section_code, l.title AS leaf_title, l.lifecycle_op,
-            s.id AS sequence_id, s.sequence_number, s.region, s.status AS sequence_status,
+            s.id AS sequence_id, s.sequence_number, s.region, s.status AS sequence_status, s.dispatch_status,
             sub.id AS submission_id, sub.title AS submission_title, sub.application_type
        FROM submission_leaves l
        JOIN ectd_sequences s
@@ -78,6 +80,7 @@ export async function readVaultPlacements(
       sequenceNumber: r.sequence_number ?? null,
       region: r.region ?? null,
       sequenceStatus: r.sequence_status ?? null,
+      dispatchStatus: r.dispatch_status ?? null,
       sectionCode: String(r.section_code),
       leafTitle: String(r.leaf_title),
       operation: String(r.lifecycle_op),

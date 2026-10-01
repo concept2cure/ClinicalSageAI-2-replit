@@ -16,7 +16,11 @@
  *   - an official eSTAR export whose record names a version as an attachment
  *     source is listed (VR-14c), whether the record went to the artifact
  *     registry or to the audit row of an unplaced export; a record that names
- *     no source, or another organisation's, is not.
+ *     no source, or another organisation's, is not;
+ *   - each version carries the server's own verdict on transmitting it
+ *     (VR-14, vaultVersionNotTransmittable, in the words the transmit refusal
+ *     prints), and each placement its sequence's dispatch status, so the Vault
+ *     can say before a check-in which sequences have not left yet.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
@@ -184,6 +188,31 @@ afterAll(async () => {
   for (const t of [mine, theirs]) {
     if (t) await fs.rm(path.resolve(process.cwd(), 'storage', 'vault', String(t.orgId)), { recursive: true, force: true }).catch(() => {});
   }
+});
+
+describe("the server's transmit verdict and the dispatch status (VR-14)", () => {
+  it('each version says why it would not be transmitted, in the refusal\'s own words', async () => {
+    const res = await versions(mine, ids.v2);
+    expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(200);
+    const byId = new Map(res.body.data.versions.map((v: { id: string }) => [v.id, v]));
+    expect((byId.get(ids.v1) as any).transmitRefusal).toBe('superseded by a later version');
+    expect((byId.get(ids.v2) as any).transmitRefusal).toBe('not reviewed');
+    const { vaultVersionNotTransmittable } = await import('../../server/services/vault/vault-lifecycle');
+    const hash = (byId.get(ids.v2) as any).contentHash;
+    expect(await vaultVersionNotTransmittable(owner, mine.orgId, ids.v2, hash)).toBe('not reviewed');
+  });
+
+  it("each placement carries its sequence's dispatch status", async () => {
+    await owner.query(`UPDATE ectd_sequences SET dispatch_status = 'sent' WHERE id = $1`, [seq.first]);
+    try {
+      const res = await versions(mine, ids.v2);
+      const byId = new Map(res.body.data.versions.map((v: { id: string }) => [v.id, v]));
+      expect((byId.get(ids.v1) as any).placements.map((p: any) => [p.sequenceId, p.dispatchStatus])).toEqual([[seq.first, 'sent']]);
+      expect((byId.get(ids.v2) as any).placements.map((p: any) => [p.sequenceId, p.dispatchStatus])).toEqual([[seq.second, null]]);
+    } finally {
+      await owner.query('UPDATE ectd_sequences SET dispatch_status = NULL WHERE id = $1', [seq.first]);
+    }
+  });
 });
 
 describe('where a Vault version is placed (VR-14a)', () => {

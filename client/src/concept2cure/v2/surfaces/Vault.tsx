@@ -1098,7 +1098,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* The vault document currently being filed into a submission, if any. The
      tree id is `up-<uuid>`; the uuid is what a leaf names. */
   const [filingIntoSubmission, setFilingIntoSubmission] = React.useState<
-    { documentUuid: string; documentTitle: string; mimeType?: string | null } | null
+    {
+      documentUuid: string; documentTitle: string; mimeType?: string | null;
+      /** The document's filing, so the dialog can pre-fill a confirmed section. */
+      filing?: { ctdSection: string | null; placementStatus: string } | null;
+    } | null
   >(null);
 
   /* The tree's record of a document wins over a search hit for the same one:
@@ -1389,6 +1393,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           documentUuid={filingIntoSubmission.documentUuid}
           documentTitle={filingIntoSubmission.documentTitle}
           mimeType={filingIntoSubmission.mimeType}
+          projectId={projectId ?? null}
+          filing={filingIntoSubmission.filing ?? null}
           onClose={() => setFilingIntoSubmission(null)}
         />
       )}
@@ -1750,6 +1756,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                                 documentUuid: sel.docId!,
                                 documentTitle: sel.title || sel.num || 'Vault document',
                                 mimeType: sel.mimeType,
+                                filing: sel.filing
+                                  ? { ctdSection: sel.filing.ctdSection ?? null, placementStatus: sel.filing.placementStatus ?? 'unfiled' }
+                                  : null,
                               })
                             }
                             data-testid="vault-place-into-submission"

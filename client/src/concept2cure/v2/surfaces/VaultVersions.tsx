@@ -47,6 +47,8 @@ export interface VaultVersion {
   placements?: VaultPlacement[];
   /** The official eSTAR exports whose record names it as an attachment (VR-14c). */
   estarUses?: VaultEstarUse[];
+  /** Why this version would not be transmitted (the server's VR-14 rule, verbatim), or null. Absent when the server did not say. */
+  transmitRefusal?: string | null;
 }
 
 /** An official eSTAR export that attached a version, as the server returns it (vault-where-used.ts). */
@@ -70,16 +72,18 @@ export interface VaultPlacement {
   sequenceNumber: string | null;
   region: string | null;
   sequenceStatus: string | null;
+  /** The sequence's dispatch status; 'sent' and 'acknowledged' mean the agency holds it. */
+  dispatchStatus?: string | null;
   sectionCode: string;
   leafTitle: string;
   operation: string;
 }
 
-interface VersionsShape {
+export interface VersionsShape {
   versions: VaultVersion[];
 }
 
-const isVersionsShape: ShapeGuard<VersionsShape> = (v): v is VersionsShape =>
+export const isVersionsShape: ShapeGuard<VersionsShape> = (v): v is VersionsShape =>
   !!v && typeof v === 'object' && Array.isArray((v as VersionsShape).versions);
 
 function sizeLabel(bytes: number | null): string {
@@ -278,12 +282,40 @@ function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleCh
   );
 }
 
+/** The versions read for one document, which the placement dialog reads too. */
+export const versionsPath = (projectId: string, documentId: string) =>
+  '/api/c2c/project-vault/' + encodeURIComponent(projectId) + '/documents/' + encodeURIComponent(documentId) + '/versions';
+
+/** A version's placements in sequences the agency does not yet hold, that carry its content. */
+export function openPlacementsOf(v: VaultVersion | undefined): VaultPlacement[] {
+  return (v?.placements ?? []).filter((p) =>
+    p.operation !== 'delete' && !['sent', 'acknowledged'].includes(p.dispatchStatus ?? '') && p.sequenceStatus !== null);
+}
+
+/**
+ * Said before a new version is added: the current version is placed in
+ * sequences not yet transmitted, and only a current version is transmitted
+ * (VR-14). It does not block the upload.
+ */
+function CheckInWarning({ current }: { current: VaultVersion | undefined }) {
+  const open = openPlacementsOf(current);
+  if (open.length === 0) return null;
+  const list = open
+    .map((p) => `${p.submissionTitle ?? `submission ${p.submissionId}`}, sequence ${p.sequenceNumber ?? 'not numbered'} (${p.sequenceStatus})`)
+    .join('; ');
+  return (
+    <div className="vd-dr-err" role="status" data-testid="vault-checkin-warning">
+      {I.alertTriangle} Version {current?.version ?? 'current'} is placed in {open.length} sequence{open.length === 1 ? '' : 's'} not
+      yet transmitted: {list}. Once a new version is added, this version can no longer be transmitted from them. A draft sequence
+      can take the new version after it is approved. A frozen or dispatched sequence cannot be changed, so it could not be transmitted.
+    </div>
+  );
+}
+
 export function VaultVersions({
   projectId, documentId, title, onDownload, downloadingId, onUploadNewVersion, uploading, onLifecycleChanged,
 }: Props) {
-  const path =
-    '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
-    '/documents/' + encodeURIComponent(documentId) + '/versions';
+  const path = versionsPath(projectId, documentId);
   const st = useLiveData<VersionsShape>(path, [path], isVersionsShape);
   const picker = useRef<HTMLInputElement | null>(null);
   const { exporting, exportNote, exportHistory } = useSignedHistoryExport(title);
@@ -332,6 +364,7 @@ export function VaultVersions({
           e.target.value = '';
         }}
       />
+      <CheckInWarning current={versions.find((v) => v.current)} />
       <button className="sp-ask" disabled={uploading} onClick={() => picker.current?.click()}>
         {I.upload} Upload new version
       </button>

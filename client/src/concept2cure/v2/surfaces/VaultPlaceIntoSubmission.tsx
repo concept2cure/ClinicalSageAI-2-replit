@@ -25,12 +25,25 @@
  *     container, not a section a document can be filed at, and it is refused
  *     BEFORE anything is written;
  *   • the server's verdict is surfaced verbatim; a refusal never reads as a
- *     placement, and success reports the leaf the server actually wrote.
+ *     placement, and success reports the leaf the server actually wrote;
+ *   • this version's review stage and the server's own verdict on transmitting
+ *     it (VR-14, `transmitRefusal` on GET …/versions) are SHOWN, never
+ *     re-judged here: there is no list of stages in this file, and a read that
+ *     failed says so rather than reading as approved. Placement is not refused
+ *     on them — the server refuses to freeze, dispatch or transmit a sequence
+ *     whose leaf names a version that is not approved and current, so the
+ *     dialog says that before the click and again in the success verdict;
+ *   • the section code is pre-filled only from a CONFIRMED filing (a suggestion
+ *     is the classifier's guess), and a pre-filled code is judged exactly as a
+ *     typed one.
  */
 import React from 'react';
 import { I } from '../icons';
 import { mutateVerbatim } from './SubmissionSeqWorkspaces';
 import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
+import { useLiveData } from '../dataConnect';
+import { versionsPath, isVersionsShape, type VersionsShape } from './VaultVersions';
+import { stageLabel } from './VaultLifecycle';
 import {
   useFilingTarget,
   FilingTargetFields,
@@ -65,6 +78,10 @@ export interface VaultPlaceIntoSubmissionProps {
    * means the caller did not say, and the dialog behaves as it did.
    */
   mimeType?: string | null;
+  /** regulatory_programs.id the document is in; with it the dialog reads this version's stage and the server's transmit verdict. */
+  projectId?: string | null;
+  /** The document's filing; the section is pre-filled only from a confirmed one. */
+  filing?: { ctdSection: string | null; placementStatus: string } | null;
 }
 
 const PDF = 'application/pdf';
@@ -108,6 +125,83 @@ function NotPdfNotice({ mimeType }: { mimeType: string | null | undefined }) {
   );
 }
 
+/** This version's review stage and the server's transmit verdict, as far as they were read. */
+type StageRead =
+  | { kind: 'none' }
+  | { kind: 'unread' }
+  | { kind: 'loading' }
+  | { kind: 'unknown' }
+  | { kind: 'read'; stage: string | null | undefined; refusal: string | null };
+
+/* The verdict is the server's (vaultVersionNotTransmittable), read from the
+   versions list the detail pane reads too. A failed read, a list without this
+   version, or a version the server gave no verdict for are all 'unknown' —
+   never 'approved'. A file that can never be filed is not read at all. */
+function useVersionStage(projectId: string | null | undefined, documentUuid: string, filable: boolean): StageRead {
+  const path = projectId && filable ? versionsPath(projectId, documentUuid) : null;
+  const st = useLiveData<VersionsShape>(path, [path], isVersionsShape);
+  if (!filable) return { kind: 'none' };
+  if (!path) return { kind: 'unread' };
+  if (st.loading) return { kind: 'loading' };
+  const v = st.error ? undefined : st.data?.versions.find((x) => x.id === documentUuid);
+  if (!v || v.transmitRefusal === undefined) return { kind: 'unknown' };
+  return { kind: 'read', stage: v.lifecycle?.stage, refusal: v.transmitRefusal };
+}
+
+const TRANSMIT_RULE = 'Only an approved, current version is transmitted.';
+
+/** The server's reason this leaf would not be transmitted, or null. A Delete leaf ships no content. */
+function refusalFor(read: StageRead, op: string): string | null {
+  return read.kind === 'read' && op !== 'delete' ? read.refusal : null;
+}
+
+/** The success verdict: the leaf the server wrote, and — when the server would refuse it — that it will not be transmitted. */
+function placedMessage(sectionCode: string, sequenceNumber: string, refusal: string | null): string {
+  return (
+    `Filed as leaf ${sectionCode} in sequence ${sequenceNumber}. ` +
+    'The vault copy is what will be assembled — nothing was duplicated.' +
+    (refusal ? ` It will not be transmitted until this leaf names an approved, current version (${refusal}).` : '')
+  );
+}
+
+/* Only a person's confirmed filing pre-fills the code: a suggestion is the
+   classifier's guess. The code is then judged exactly as a typed one, so a
+   container still keeps Place disabled. */
+function confirmedSectionOf(filing: VaultPlaceIntoSubmissionProps['filing']): string | null {
+  return filing?.placementStatus === 'confirmed' ? filing.ctdSection?.trim() || null : null;
+}
+
+function StageNotice({ read, op }: { read: StageRead; op: string }) {
+  if (read.kind === 'none') return null;
+  let body: React.ReactNode;
+  if (read.kind === 'unread') {
+    body = <div className="de-desc">{`This version's review stage is not shown here. ${TRANSMIT_RULE}`}</div>;
+  } else if (read.kind === 'loading') {
+    body = <div className="de-desc">{"Reading this version's review stage…"}</div>;
+  } else if (read.kind === 'unknown') {
+    body = (
+      <div className="de-err" role="status">
+        {`This version's review stage could not be read, so whether it would be transmitted is not shown. ${TRANSMIT_RULE}`}
+      </div>
+    );
+  } else if (op === 'delete') {
+    body = <div className="de-desc">{"A Delete leaf ships no content, so this version's approval is not checked for it."}</div>;
+  } else if (read.refusal === null) {
+    body = <div className="de-desc">{`Review and approval: ${stageLabel(read.stage)}. This is the approved, current version.`}</div>;
+  } else {
+    body = (
+      <>
+        <div className="de-desc">{`Review and approval: ${stageLabel(read.stage)}.`}</div>
+        <div className="de-err" role="status">
+          {`This version would not be transmitted: ${read.refusal}. It can be placed now, but the sequence will not be ` +
+            'frozen, dispatched or transmitted until this leaf names an approved, current version.'}
+        </div>
+      </>
+    );
+  }
+  return <div data-testid="vault-place-stage">{body}</div>;
+}
+
 function SectionFields({
   section,
   onSection,
@@ -115,6 +209,8 @@ function SectionFields({
   judged,
   op,
   onOp,
+  confirmedSection,
+  filing,
 }: {
   section: string;
   onSection: (value: string) => void;
@@ -122,6 +218,8 @@ function SectionFields({
   judged: Judged;
   op: string;
   onOp: (value: string) => void;
+  confirmedSection: string | null;
+  filing: VaultPlaceIntoSubmissionProps['filing'];
 }) {
   const note = judged.note;
   const isErr = note?.tone === 'err';
@@ -138,6 +236,14 @@ function SectionFields({
           onChange={(e) => onSection(e.target.value)}
           placeholder={SECTION_PLACEHOLDER[vocabulary] ?? 'e.g. 3.2.P.8.3'}
         />
+        {confirmedSection && section === confirmedSection && (
+          <div className="de-desc">{"Pre-filled from this document's confirmed filing."}</div>
+        )}
+        {filing?.placementStatus === 'suggested' && filing.ctdSection && (
+          <div className="de-desc">
+            {`The filing suggests ${filing.ctdSection}. It is not confirmed, so the section is left for you to enter.`}
+          </div>
+        )}
         {note && (
           <div className={isErr ? 'de-err' : 'de-desc'} role="status">
             {note.text}
@@ -165,7 +271,7 @@ function SectionFields({
         <span className="de-gov-t">
           Placement is recorded in the submission of record — audited and org-scoped. The
           server refuses a frozen or dispatched sequence, and re-checks the document against
-          the hash held for it before assembling.
+          the hash held for it before assembling. {TRANSMIT_RULE}
         </span>
       </div>
     </>
@@ -190,14 +296,18 @@ export function VaultPlaceIntoSubmission({
   onClose,
   onPlaced,
   mimeType,
+  projectId,
+  filing,
 }: VaultPlaceIntoSubmissionProps) {
   // Refused here, before anything loads (see NotPdfNotice).
   const notPdf = mimeType !== undefined && mimeType !== PDF;
   const [verdict, setVerdict] = React.useState<Verdict>(null);
   const target = useFilingTarget(() => setVerdict(null));
   const { seq } = target;
+  const stage = useVersionStage(projectId, documentUuid, !notPdf);
 
-  const [section, setSection] = React.useState('');
+  const confirmedSection = confirmedSectionOf(filing);
+  const [section, setSection] = React.useState(confirmedSection ?? '');
   const [op, setOp] = React.useState('new');
   const [reason, setReason] = React.useState('');
   const [placing, setPlacing] = React.useState(false);
@@ -295,12 +405,7 @@ export function VaultPlaceIntoSubmission({
         return;
       }
       setPlaced(put.data);
-      setVerdict({
-        kind: 'ok',
-        message:
-          `Filed as leaf ${put.data.sectionCode} in sequence ${seq.sequenceNumber}. ` +
-          'The vault copy is what will be assembled — nothing was duplicated.',
-      });
+      setVerdict({ kind: 'ok', message: placedMessage(put.data.sectionCode, seq.sequenceNumber, refusalFor(stage, op)) });
       onPlaced?.();
     } finally {
       setPlacing(false);
@@ -338,8 +443,13 @@ export function VaultPlaceIntoSubmission({
         </div>
 
         <div className="de-body">
-          <div className="de-desc" style={{ marginBottom: 12 }}>
-            Filing <b>{documentTitle}</b>.
+          {/* One wrapper, as the line it replaces was one div: the half-width
+              fields' margins are set by :nth-of-type among .de-body's divs. */}
+          <div style={{ marginBottom: 12 }}>
+            <div className="de-desc">
+              Filing <b>{documentTitle}</b>.
+            </div>
+            <StageNotice read={stage} op={op} />
           </div>
 
           {notPdf ? (
@@ -354,6 +464,8 @@ export function VaultPlaceIntoSubmission({
                 judged={judged}
                 op={op}
                 onOp={setOp}
+                confirmedSection={confirmedSection}
+                filing={filing}
               />
               <PlacementReasonField value={reason} onChange={setReason} idPrefix="vpf" disabled={placing || Boolean(placed)} />
             </>

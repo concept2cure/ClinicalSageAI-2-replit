@@ -1,6 +1,6 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-01T21:47:27.205Z",
+  "generatedAt": "2026-10-01T22:45:11.641Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
@@ -922,7 +922,7 @@
       "id": "URS-VAULT-020",
       "app": "Vault",
       "doc": "URS-002-VAULT.md",
-      "requirement": "Each version in a document's version list names every live submission leaf that carries it: the submission, the sequence and its status, the section, and the leaf's lifecycle operation. A version carried by none says so. A removed leaf, or a leaf in a removed sequence or submission, is not listed, and no other organisation's leaf is. The version also names each official eSTAR export whose record names it as an attachment's source, from the artifact registry or the export's audit row; an export whose record names no source is not inferred from a hash.",
+      "requirement": "Each version in a document's version list names every live submission leaf that carries it: the submission, the sequence and its status, the section, and the leaf's lifecycle operation. A version carried by none says so. A removed leaf, or a leaf in a removed sequence or submission, is not listed, and no other organisation's leaf is. The version also names each official eSTAR export whose record names it as an attachment's source, from the artifact registry or the export's audit row; an export whose record names no source is not inferred from a hash. Each version also carries the server's own verdict on whether it would be transmitted (null when it is approved and current, otherwise the reason the transmit refusal prints), and each placement its sequence's dispatch status; the Vault and the Place dialog print that verdict and never judge approval themselves.",
       "part11": "§11.10(e)",
       "risk": "medium",
       "steps": [],

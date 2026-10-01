@@ -89,3 +89,53 @@ describe('where each version is placed (VR-14a)', () => {
         + 'submission 9, sequence not numbered, 2.3 (new; sequence status not recorded)');
   });
 });
+
+/**
+ * Said before a new version is checked in (VR-14): the current version is
+ * placed in a sequence the agency does not yet hold, and once a later version
+ * exists only that one is current, so the placed one could no longer be
+ * transmitted from it. A sequence the agency holds, a Delete leaf (no content)
+ * and a placement of an earlier version are not that case.
+ */
+describe('the check-in warning names the open sequences the current version is placed in', () => {
+  const settled = () => screen.findByTestId(`vault-version-placed-${V2}`);
+
+  it('W1 names the submission, the sequence and its status when that sequence is not yet sent', async () => {
+    onVersions = () => ok({ versions: [
+      version(V2, '2.0', true, [leaf({ sequenceNumber: '0001', sequenceStatus: 'frozen', dispatchStatus: 'pending' })]),
+      version(V1, '1.0', false, []),
+    ] });
+    mount();
+    const warning = await screen.findByTestId('vault-checkin-warning');
+    expect(warning.textContent).toContain('IND 123456, sequence 0001 (frozen)');
+    expect(warning.textContent).toContain('Version 2.0 is placed in 1 sequence not');
+  });
+
+  it('W2 says nothing when the agency already holds that sequence', async () => {
+    onVersions = () => ok({ versions: [
+      version(V2, '2.0', true, [leaf({ sequenceNumber: '0001', sequenceStatus: 'frozen', dispatchStatus: 'sent' })]),
+    ] });
+    mount();
+    await settled();
+    expect(screen.queryByTestId('vault-checkin-warning')).toBeNull();
+  });
+
+  it('W3 says nothing when the only leaf is a Delete, which carries no content', async () => {
+    onVersions = () => ok({ versions: [
+      version(V2, '2.0', true, [leaf({ sequenceStatus: 'draft', dispatchStatus: null, operation: 'delete' })]),
+    ] });
+    mount();
+    await settled();
+    expect(screen.queryByTestId('vault-checkin-warning')).toBeNull();
+  });
+
+  it('W4 says nothing when only an earlier version is placed', async () => {
+    onVersions = () => ok({ versions: [
+      version(V2, '2.0', true, []),
+      version(V1, '1.0', false, [leaf({ sequenceStatus: 'draft', dispatchStatus: 'pending' })]),
+    ] });
+    mount();
+    await settled();
+    expect(screen.queryByTestId('vault-checkin-warning')).toBeNull();
+  });
+});

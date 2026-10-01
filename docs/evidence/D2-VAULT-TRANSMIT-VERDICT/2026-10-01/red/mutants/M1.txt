@@ -1,0 +1,67 @@
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no class that no stylesheet defines 251ms
+ × client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no invented class when it shows a pre-filled section, a version's stage and the server's transmit verdict 65ms
+   → Unable to find an element with the text: /Pre-filled from this document's confirmed filing/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+              [0mVault → filing[0m
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > names the vault document by uuid, on the vault_documents table 323ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > renders the shared dialog shell the other dialogs use 48ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > is labelled by its own title 28ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > moves focus into the dialog on open 23ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > returns focus to whatever opened it 41ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on Escape 25ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on a click outside, but not on a click inside 31ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > writes NO snapshot — that is the whole point of the uuid column 121ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > reports the leaf the server actually wrote 111ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > surfaces the server verdict verbatim and never claims a placement 82ms
+ × client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into submission from the Vault > opens with a confirmed filing's section filled in, and reads this version's stage 389ms
+   → expected '' to be '3.2.P.8.3' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into submission from the Vault > leaves a suggested filing's section for the person to enter 102ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > writes nothing for a section code no document can be filed at 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the target picker is the shared one > offers the draft sequence and disables the frozen one, saying why 101ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files a vault document into an IRB package at an IRB slot 68ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > refuses a CTD code in an IRB package, naming the IRB vocabulary 50ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files into a 510(k) at an eSTAR section 52ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > stays strict for an eCTD submission: an IRB slot is not a CTD section 45ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > says why, and offers no placement 9ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > a PDF is filed as before 42ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the placement carries its reason > keeps Place disabled until a reason meets the floor, and says why 60ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the placement carries its reason > sends the trimmed reason with the leaf 54ms
+ × client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (a) pre-fills a confirmed filing's section, says where it came from, and files at it 19ms
+ × client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (a) stops saying "pre-filled" once the person changes the code 5012ms
+   → Unable to find an element with the text: Pre-filled from this document's confirmed filing.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (b) leaves a suggested section for the person to enter, and says what was suggested 14ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) no filing leaves the section blank and claims nothing 18ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) a null filing leaves the section blank and claims nothing 13ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) a confirmed filing with no section leaves the section blank and claims nothing 16ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) a confirmed filing with a blank section leaves the section blank and claims nothing 17ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) an unfiled document leaves the section blank and claims nothing 13ms
+ × client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (d) a pre-filled code is judged like a typed one: a container keeps Place disabled 36ms
+   → Unable to find an element with the text: /container, not a section/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (d) a pre-filled CTD code is judged in the chosen submission's vocabulary 20ms
+   → expected '' to be '3.2.P.8' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (e) an in-review version: its stage, and the server's reason it would not be transmitted 17ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > says it is reading while the read is in flight 11ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (f) an approved, current version says so and warns of nothing 28ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (g) an approved stage the server refuses anyway: "superseded by a later version", printed verbatim 15ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (g) an approved stage the server refuses anyway: "approved for different content than these bytes", printed verbatim 13ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (h) a Delete leaf ships no content: no approval is checked and nothing is warned of 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (i) an unapproved version can still be placed, and the verdict says it will not be transmitted 83ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (j) an approved, current version's placement claims nothing about transmission 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (k) a failed read says the stage could not be read, and placement stays open 47ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (k) a list without this version says the stage could not be read, and placement stays open 47ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (k) a version the server gave no verdict for says the stage could not be read, and placement stays open 48ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (l) without a project it reads nothing and says the stage is not shown 47ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > a file that can never be filed is not read for its stage 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into submission from the Vault > opens with a confirmed filing's section filled in, and reads this version's stage
+AssertionError: expected '' to be '3.2.P.8.3' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (a) pre-fills a confirmed filing's section, says where it came from, and files at it
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (a) stops saying "pre-filled" once the person changes the code
+TestingLibraryElementError: Unable to find an element with the text: Pre-filled from this document's confirmed filing.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (d) a pre-filled code is judged like a typed one: a container keeps Place disabled
+TestingLibraryElementError: Unable to find an element with the text: /container, not a section/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (d) a pre-filled CTD code is judged in the chosen submission's vocabulary
+AssertionError: expected '' to be '3.2.P.8' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no invented class when it shows a pre-filled section, a version's stage and the server's transmit verdict
+TestingLibraryElementError: Unable to find an element with the text: /Pre-filled from this document's confirmed filing/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  3 failed (3)
+      Tests  6 failed | 41 passed (47)
