@@ -22,6 +22,7 @@
  */
 
 import { getEmbeddingProvider } from './ai-gateway/embeddings/embedding-provider';
+import { isTerminalGatewayError } from './ai-gateway/gateway-outcome';
 import pg from 'pg';
 import { assertTenantIsCurrent, isTenantUuid, TenantKeyRequiredError } from '../db/currentTenant';
 import crypto from 'crypto';
@@ -225,6 +226,9 @@ export class EnhancedEmbeddingService {
           }
           break;
         } catch (error) {
+          // A placement refusal is the gateway's decision, not a provider
+          // fault: asking again cannot change it (P1-54).
+          if (isTerminalGatewayError(error)) throw error;
           retries++;
           if (retries >= config.maxRetries) throw error;
           await this.sleep(config.retryDelayMs * retries);

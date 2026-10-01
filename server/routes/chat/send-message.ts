@@ -75,6 +75,7 @@ import {
 import { ensureGateway, normalizeBody } from './shared.js';
 import { sha256, stableStringify } from './provenance.js';
 import { verifyClaim, type VerifierFlag } from './verifier.js';
+import { evidencePromptBlock, type RetrievalStatus } from './retrieval-evidence-block';
 
 // ── Retrieval + generation tuning (externalized for runtime changes) ────────
 const RETRIEVAL_TOP_K = parseInt(process.env.ANA_RETRIEVAL_TOP_K ?? '5', 10);
@@ -292,6 +293,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
 
     // ── STEP 4: RETRIEVE (org-scoped + project-scoped when available) ───
     let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
+    // 'unavailable' when the search could not run (P1-54): told to the model and
+    // returned in retrievalMeta, never rendered as "no sources found".
+    let retrievalStatus: RetrievalStatus = 'searched';
     let confidence: number | null = null;
     let retrievalRunId: string | null = null;
     let snapshotHashSha256: string | null = null;
@@ -395,7 +399,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         }
       }
     } catch (srcErr: any) {
-      // Non-fatal — chat still works, just without grounded evidence
+      // Non-fatal — chat still works, without grounded evidence, and says so.
+      retrievalStatus = 'unavailable';
       console.warn('[AnA] Source retrieval failed:', srcErr.message);
     }
 
@@ -406,14 +411,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     let memoryAtomCount = 0;
     let memoryBlockChars = 0;
     let memoryDiagnostics: MemoryAssemblyDiagnostics | null = null;
-    if (sources.length > 0) {
-      evidenceBlock =
-        '\n\n--- RETRIEVED EVIDENCE (cite as [SRC-n]) ---\n' +
-        sources.map((s, i) => `[SRC-${i + 1}] "${s.title}"\n${s.content}`).join('\n\n') +
-        '\n--- END EVIDENCE ---\n\n' +
-        'When your answer relies on information from the evidence above, cite it inline using [SRC-n]. ' +
-        'If the evidence does not contain relevant information, answer from your training knowledge and state that no knowledge-base sources were found.';
-    }
+    evidenceBlock = evidencePromptBlock(sources, retrievalStatus);
 
     let assistantMessage: string;
     let model: string;
@@ -705,7 +703,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
             : 'NONE'
         }\n` +
         `- Memory: working=${workingMemoryPresent ? 'yes' : 'no'}, semantic atoms=${semanticMemoryCount}\n` +
-        `- Retrieved sources: ${sources.length}\n` +
+        `- Retrieved sources: ${retrievalStatus === 'unavailable' ? 'UNAVAILABLE (the knowledge-base search could not run)' : sources.length}\n` +
         `- User role: ${snapshotUserRole}\n\n`;
 
       const systemPrompt =
@@ -1314,6 +1312,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       citations,
       confidence,
       retrievalMeta: {
+        status: retrievalStatus,
         retrievedCount: sources.length,
         citedCount: citedRefs.size,
         orgScoped: !!orgUuid,
