@@ -188,6 +188,19 @@
   .ec-panel-t{ font-size:16px; font-weight:600; color:var(--text-100); }
   .ec-panel-s{ font-size:11.5px; color:var(--text-400); font-family:var(--font-mono); margin-top:3px; }
   .ec-empty{ color:var(--text-300); font-size:13px; padding:40px 0; text-align:center; }
+  /* The reason a co-author save is gated on (D5, P11-B-1). Same contract as
+     .pde-reason in protocol-dev-editing.css. */
+  .ec-reason{ display:flex; flex-direction:column; gap:5px; padding:8px 10px;
+    font-size:11.5px; color:var(--text-400); border-bottom:1px solid var(--border); }
+  .ec-reason-row{ display:flex; gap:8px; align-items:center; }
+  .ec-reason input{ flex:1; border:1px solid var(--border); border-radius:7px; padding:6px 10px;
+    font-size:13px; background:var(--bg-000); color:var(--text-100); font-family:inherit; }
+  .ec-reason input:focus-visible{ outline:2px solid var(--accent-200); outline-offset:1px; }
+  .ec-reason input[aria-invalid="true"]{ border-color:var(--warning); }
+  .ec-reason-note{ font-size:11.5px; color:var(--text-300); }
+  .ec-reason .req{ color:var(--accent-200); margin-left:3px; }
+  .ec-readonly-note{ padding:8px 10px; font-size:12.5px; color:var(--text-300);
+    border-bottom:1px solid var(--border); }
   .ec-vstat{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
   .ec-vbadge{ font-size:12px; font-weight:600; padding:4px 12px; border-radius:20px; }
   .ec-vbadge.ok{ background:var(--success-muted); color:var(--success); }

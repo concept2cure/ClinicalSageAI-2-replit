@@ -1,0 +1,10 @@
+$ (deleteCoauthorDocument with its recordCoauthorDocumentEvent call removed)
+[regulated-delete-audit] FAIL — 1 unaudited regulated delete(s):
+
+  server/services/coauthor/coauthor-audit.ts:164
+    await client.query('DELETE FROM coauthor_documents WHERE id = $1 AND organization_id = $2', [
+
+21 CFR Part 11 §11.10(e): a delete of a regulated record must write an audit-trail entry.
+Add an audit call (writeMutation / logAuditEntry / recordGovernedAction) before the delete,
+or, if intentional, allow-list it with a justification in this script.
+exit=1

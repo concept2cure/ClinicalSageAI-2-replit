@@ -140,11 +140,19 @@ describe('the acceptance write stays reversible, attributable, and atomic', () =
   });
 
   it('snapshots the replaced content into coauthor_document_versions', () => {
-    expect(acceptRoute).toMatch(/INSERT INTO coauthor_document_versions/);
+    // 2026-10-01 (D5, P11-B-1): through the one writer of that table, which
+    // the co-author PUTs and the filing-copy re-take use too. What it writes
+    // is pinned on a real database by batch-draft-accept-lineage.pglite and
+    // coauthorPutStatus.test.ts.
+    const writer = executableOnly(
+      readFileSync(join(__dirname, '../../services/coauthor/coauthor-audit.ts'), 'utf8'),
+    );
+    expect(writer).toMatch(/INSERT INTO coauthor_document_versions/);
+    expect(acceptRoute).toMatch(/versionReplacedCoauthorContent\(/);
     // The snapshot must carry the content being REPLACED. Writing the new
     // content instead would leave the history describing a state that never
     // preceded anything, and the accept would not be undoable.
-    expect(acceptRoute).toMatch(/\$\{previousContent\}/);
+    expect(acceptRoute).toMatch(/versionReplacedCoauthorContent\(queryableFromDrizzle\(rdb\), \{[^}]*\bpreviousContent,/);
   });
 
   it('locks the row it is about to read-then-overwrite', () => {
