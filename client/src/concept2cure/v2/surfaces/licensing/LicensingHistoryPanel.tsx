@@ -72,9 +72,17 @@ type IntegrityReason =
   | 'chain-and-seals-verified'
   | 'chain-verified-seals-not-configured'
   | 'chain-broken'
+  | 'chain-head-broken'
   | 'seal-broken'
   | 'store-too-large'
   | 'check-failed';
+
+/**
+ * The newest entries against the copy of the chain's end kept outside the
+ * database (the anchor): checked and matching, found missing or changed, or not
+ * checked. null when nothing was checked at all. Absent from an older server.
+ */
+type HeadState = 'verified' | 'broken' | 'not-verified' | null;
 
 interface HistoryPayload {
   entries: HistoryEntry[];
@@ -92,6 +100,7 @@ interface HistoryPayload {
     reason: IntegrityReason;
     rowsChecked: number;
     checkedAt: string;
+    head?: HeadState;
   };
 }
 
@@ -216,7 +225,9 @@ export function integrityHeadline(status: string, reason: IntegrityReason): stri
       : 'Record chain verified';
   }
   if (status === 'broken') {
-    return reason === 'seal-broken' ? 'A record seal did not verify' : 'A break was found in the record chain';
+    if (reason === 'seal-broken') return 'A record seal did not verify';
+    if (reason === 'chain-head-broken') return 'The end of the record chain does not match its anchor';
+    return 'A break was found in the record chain';
   }
   return 'Record integrity was not verified for this view';
 }
@@ -229,6 +240,8 @@ export function integrityDetail(reason: IntegrityReason): string {
       return 'Every entry was re-derived from the one before it. Record sealing is not configured on this deployment, so seals could not be checked and no entry is shown as sealed-and-verified.';
     case 'chain-broken':
       return 'One entry does not match its position. Entries recorded before it were verified; the entry itself and everything after it cannot be proven from the chain.';
+    case 'chain-head-broken':
+      return "A copy of the chain's newest entry is kept outside the database. That entry is missing here or has changed, so entries may have been removed or rewritten at the end of the record. The entries below were re-derived and still match one another.";
     case 'seal-broken':
       return 'At least one seal failed verification, so no sealed entry on this page is shown as verified.';
     case 'store-too-large':
@@ -237,6 +250,16 @@ export function integrityDetail(reason: IntegrityReason): string {
     default:
       return 'The verification could not be completed. The entries below are shown without a verification result.';
   }
+}
+
+/**
+ * The caveat when the chain verified but its newest entries were not checked
+ * against the anchor: the walk alone cannot see entries removed from the end.
+ * null when there is nothing to add.
+ */
+export function headCaveat(status: string, head: HeadState | undefined): string | null {
+  if (status !== 'verified' || head !== 'not-verified') return null;
+  return 'The newest entries were not checked against the copy kept outside the database, so entries removed from the end of the record would not show here.';
 }
 
 /** The per-row verdict: a short label, a sentence, and a chip tone. */
@@ -330,6 +353,7 @@ export default function LicensingHistoryPanel() {
   };
 
   const payload = hist.data;
+  const caveat = payload ? headCaveat(payload.integrity.status, payload.integrity.head) : null;
   const page = payload?.page;
   const entries = payload?.entries ?? [];
 
@@ -366,6 +390,7 @@ export default function LicensingHistoryPanel() {
               {integrityHeadline(payload.integrity.status, payload.integrity.reason)}
             </div>
             <p className="ml-enf-body">{integrityDetail(payload.integrity.reason)}</p>
+            {caveat && <p className="ml-enf-body">{caveat}</p>}
             <p className="ml-enf-body">
               {payload.integrity.rowsChecked > 0
                 ? `${payload.integrity.rowsChecked.toLocaleString()} entries checked at ${whenText(payload.integrity.checkedAt)}.`

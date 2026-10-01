@@ -1,0 +1,1 @@
+[ci:dead-audit-tables] ✅ 19 dropped + 0 withheld table(s); none declared on the drizzle push surface (11 file(s) scanned); 19/19 in the migration's drop list; 78 permitted mention(s), baseline 80 (shrink-only).

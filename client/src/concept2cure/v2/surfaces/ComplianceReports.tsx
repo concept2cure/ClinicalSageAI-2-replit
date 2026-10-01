@@ -18,7 +18,8 @@
  *
  * Files: complianceReportsModel.ts (catalog, period, run, refusals, AnA
  * context), complianceReportData.ts (what a run returns), ComplianceReportResult
- * (the result), ComplianceReportsVerify (verifying a saved report).
+ * (the result), ComplianceReportsVerify (verifying a saved report),
+ * ComplianceReviewRecords (recording and signing a periodic review, P1-25/P1-43).
  */
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
@@ -34,6 +35,7 @@ import {
 } from './complianceReportsModel';
 import { NotRecorded, ReportResult } from './ComplianceReportResult';
 import { VerifySavedReport } from './ComplianceReportsVerify';
+import { ReviewRecords } from './ComplianceReviewRecords';
 import '../styles/project-home-v2.css';
 
 const CATALOG_PATH = '/api/audit/reports';
@@ -150,6 +152,7 @@ export function ComplianceReports(_props: SurfaceViewProps) {
           period={period} onPeriod={setPeriod} onRun={start} problem={problem} run={run}
         />
       )}
+      {catalog && <ReviewRecords canRun={catalog.canRun} result={result} />}
       <VerifySavedReport />
     </div>
   );

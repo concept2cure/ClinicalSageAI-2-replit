@@ -1,0 +1,195 @@
+# Fix round, database tier (PostgreSQL 16, NOSUPERUSER NOBYPASSRLS runtime role, RLS_ENFORCE=on). 2026-10-01T14:27:32Z, HEAD 0812a990 + working tree
+ ✓ tests/db/session-termination.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one 2223ms
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held 1468ms
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a refresh token minted in the same second as the change, before it, mints nothing after it 847ms
+ ✓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > logout with terminateAllSessions ends the other sessions, access and refresh, at every door 1309ms
+ ✓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > a sign-out everywhere from a session that has already ended ends nothing, and says so 145ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session suspended and then reactivated stays ended 133ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session deprovisioned by the identity provider and then reactivated stays ended 76ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a reactivated account signs in afresh 73ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed from the organisation is refused at the next request and mints nothing 149ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed and re-added holds nothing from before: the session is over at every door, and they sign in again (R1) 258ms
+ ✓ tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate, a router gate behind it, and every successor token carry 181ms
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a session begun in the same second as the change, before it, is over at every door 984ms
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > the sign-in that follows the change is current: the change stamps the first whole second after it, and answers once that second has begun 1899ms
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a sign-in begun with the old password before the change and completed after it opens nothing 820ms
+ ✓ tests/db/session-termination.dbtest.ts > (5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql, endEverySessionOf) > a confirmed sign-up ends nothing, leaving active stamps it, and no writer moves it backwards 11ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 16ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 187ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 311ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 11ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page, and is told why 15ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 7ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page, and is told why 12ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 9ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use 2493ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use 2456ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a password change ends the connector grants authorised before it > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 2396ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a sign-out of every session ends the connector grants authorised before it (R2) > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 2443ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 44ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 82ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 28ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > discovery and authentication over HTTP > 401 + resource_metadata without a bearer; metadata documents resolve 60ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client 209ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s 255ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document 349ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_assess_sequence_readiness: A gets the engine verdict; B is refused for A’s sequence 3505ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > is denied to a connector token without c2c:file 126ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org 190ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer) 76ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > returns the gateway refusal verbatim, never demo-mode text 67ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > a deterministic reference tool (ICH corpus) answers through the AnA handler 5292ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the posture is the one production runs in > enrolment used the step it presented 6ms
+ × tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses the same code the second time 100ms
+ × tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses a code from a step earlier than the last accepted, though that code was never used 46ms
+ × tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > accepts the next code: a refusal is per step, not a lockout 121ms
+ × tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > two sign-ins racing one code: exactly one session 88ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it 56ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > one record of used codes, whichever path verifies > the enterprise sign-in refuses a code it already accepted 194ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > one record of used codes, whichever path verifies > the password sign-in refuses a code the enterprise sign-in used 65ms
+ × tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the modal can check a code, even twice, and it is still unused 11ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the signature then accepts that same code, and uses it 25ms
+ × tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > a used code neither checks nor signs again 7ms
+ × tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the code pre-check is metered per signer, and a wrong code counts against the account 62ms
+ × tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the password pre-check is metered per signer too, on its own budget, and a wrong password counts 16ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > five verifiers racing one emailed code: exactly one accepts it 80ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > after 4 wrong guesses the right code is accepted: true (the limit is exactly five) 39ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > after 5 wrong guesses the right code is accepted: false (the limit is exactly five) 34ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused 123ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > a password-reset token is used once > two resets racing one token: exactly one succeeds, and its password is the one set 2076ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > replay state belongs to one secret > a new authenticator's first code is not refused for the old one's last step 48ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > count against the account, and the fifth locks it 71ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > lock the sign-in too: the account has one password and one allowance 64ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > while locked, refuse a signature even with the right password, without comparing it 8ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > unlock when the lockout has run out 12ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong codes at signing > count against the account once the password is right, and the fifth locks it 109ms
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a signer who mistypes and then gets it right signs 71ms
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a successful sign-in clears the count, as it always has 48ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > count a wrong password, and the fifth locks the account 183ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > say the account is locked, and do not compare the password 18ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > count a wrong code, and the fifth locks the account 139ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 6ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > is refused, hands out no secret, and leaves the stored one as it was 127ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing them in 116ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing for them 42ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > records the refused attempt against the account 4ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > a member without two-step verification can enrol, and the enrolment is recorded 97ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > once enrolled, that member is refused a new secret too 36ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > an enrolment not yet confirmed can be restarted: nothing is switched on until a code confirms it 92ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > the owner rotates by turning it off with a current code, then enrolling again 103ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 6ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the MFA challenge a password sign-in issues, against the organisation 78ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong authenticator code 36ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the session /mfa/verify issues 82ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong password on a real account, against its organisation 29ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > does not let a token the server never signed write into the organisation chain 25ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens the API with the session /mfa/verify issued 32ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the end of a session the server issued, against its organisation 24ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens nothing once it is signed out (AUTH-03) 42ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > refuses a session another server signed out, which only the database can know 18ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong password 26ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the challenge a correct password receives 23ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong code 21ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the session it issues 49ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records entering an organisation, against that organisation 116ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > ends the session it reports ending, and records it 43ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/users/login asks for the code instead of issuing a session 27ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/user/login asks for the code instead of issuing a session 24ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > creates no account outside signup 7ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the organisation audit chain > verifies end to end over every row the organisation holds 5ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 7ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > the three accounts are what their names say 3ms
+ × tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so 132ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree 235ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree 165ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false 148ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address 28ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the enterprise router refuses setup over an enrolled authenticator, and says so (F-26) > 409 MFA_ALREADY_ENABLED, no secret handed out, the enrolled secret untouched 13ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 34ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 3ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > an active account signs in 210ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 27ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 20ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it 35ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 136ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account 112ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated 75ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 14ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read 156ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > that token opens /mcp and is refused the governed write there 213ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for another client: no code, no code row, and nothing for /mcp 18ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for its own client: no code, no code row, and nothing for /mcp 16ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for another client: no code, no code row, and nothing for /mcp 11ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for its own client: no code, no code row, and nothing for /mcp 12ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the c2c:read connector token still opens /mcp for a read 134ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > a refresh cannot widen the grant either 19ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the user's own session still consents to all three scopes, and that grant files the draft 341ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 126ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 39ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 6ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 10ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 10ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 8ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 829ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 49ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 267ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 37ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > when its audit row cannot be written, the role stays as it was 53ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > an added member: one chained row on the organisation's chain, written by the change's own transaction 25ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a member already in the group: nothing changes, nothing is recorded 15ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a removed member is set to member, with the role it held recorded 35ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > removal from a group the member is not in changes nothing and records nothing 32ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > DELETE: a refused event leaves the account active; otherwise status and event share a transaction 40ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PUT active=false: a refused event leaves the account active 48ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PATCH active=false on a shared account: a refused event leaves this organisation's membership 27ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > POST: a refused event provisions nobody; otherwise membership and event share a transaction 23ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were 141ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a settings change writes the record the tenant configuration route writes, and keeps what it does not name 132ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a module toggle is recorded by the same writer 40ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > reads none of B's user rows, by id, by email, or by scanning 10ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > cannot rewrite B's password hash, MFA secret or reset token, nor delete B's user 5ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > reads its own organization's members, the caller included 2ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > updates its own member's profile 11ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > INSERT … RETURNING of a non-member is refused, so tenant-users takes the id first 11ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > user_id_for_email answers an existing account’s id, and nothing else 3ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > pre-auth: the sign-in lookup by email finds any tenant’s user, and writes it 7ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > system: SCIM and platform administration read and write every tenant’s users 10ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account 405ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of failing or duplicating it 42ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into 268ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > positive control: the console refuses a plain member 109ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > cannot write its member a platform role, so the console never admits them 31ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > cannot reinstate, re-role or delete a grant 20ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > a tenant scope reads grants: the platform-admin check runs in the caller's own scope 24ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > the platform scope grants and revokes 8ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > a platform operator grants and revokes through the Access Management console 110ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses the same code the second time
+AssertionError: {"success":false,"error":{"code":"MFA_002","message":"This sign-in has ended. Sign in again."}}: expected 401 to be 200 // Object.is equality
+ FAIL  tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses a code from a step earlier than the last accepted, though that code was never used
+AssertionError: expected +0 to be 1 // Object.is equality
+ FAIL  tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > accepts the next code: a refusal is per step, not a lockout
+AssertionError: expected 1 to be 2 // Object.is equality
+ FAIL  tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > two sign-ins racing one code: exactly one session
+AssertionError: expected [ 401, 401 ] to deeply equal [ 200, 401 ]
+ FAIL  tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the modal can check a code, even twice, and it is still unused
+AssertionError: {"error":"This session has ended. Sign in again.","code":"SESSION_ENDED"}: expected 401 to be 200 // Object.is equality
+ FAIL  tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > a used code neither checks nor signs again
+AssertionError: expected { …(2) } to deeply equal { valid: false }
+ FAIL  tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the code pre-check is metered per signer, and a wrong code counts against the account
+AssertionError: expected [ 401, 401, 401, 401, 401, 401, …(2) ] to deeply equal [ 200, 200, 200, 200, 200, 423, …(2) ]
+ FAIL  tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the password pre-check is metered per signer too, on its own budget, and a wrong password counts
+AssertionError: expected { …(2) } to deeply equal { valid: true, mfaRequired: true }
+ FAIL  tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so
+AssertionError: {"success":false,"error":{"code":"MFA_002","message":"This sign-in has ended. Sign in again."}}: expected 401 to be 200 // Object.is equality
+ Test Files  2 failed | 12 passed (14)
+      Tests  9 failed | 164 passed (173)

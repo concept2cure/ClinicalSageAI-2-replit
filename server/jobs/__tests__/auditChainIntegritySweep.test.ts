@@ -458,3 +458,88 @@ describe('runAuditChainIntegrityCheck anchors the chain head outside the databas
     expect(result.anchorWrite).toEqual({ written: false, reason: 'anchor write failed: SlowDown' });
   });
 });
+
+describe('runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up)', () => {
+  // Rows written after the latest anchor can be removed without the anchor
+  // showing it until the next anchor is written. A stale anchor widens that
+  // window, so its age is reported on every run and past 48 hours it is an
+  // incident: before this, a sweep whose anchor writes kept failing reported
+  // `ok` against an ever older anchor, and only the write's error line said so.
+  const ANCHORED_AT = Date.parse(anchorOk.anchoredAt);
+  const HOUR = 3_600_000;
+  const anchorVerdict = (result: Awaited<ReturnType<typeof runAuditChainIntegrityCheck>>) =>
+    result.stores.find((s) => s.store === 'audit_logs.anchor');
+
+  beforeEach(() => {
+    setUpSweep();
+    vi.useFakeTimers({ toFake: ['Date'] });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    tearDownSweep();
+  });
+
+  it('reports the age on a clean run, and a 24-hour-old anchor is not an incident', async () => {
+    vi.setSystemTime(ANCHORED_AT + 24 * HOUR);
+    const result = await runAuditChainIntegrityCheck();
+    expect(result.anchorAge).toEqual({ anchorKey: ANCHOR_KEY, anchoredAt: anchorOk.anchoredAt, hours: 24, staleAfterHours: 48 });
+    expect(anchorVerdict(result)).toMatchObject({ status: 'ok' });
+    expect(anchorVerdict(result)?.reason).toMatch(/24 hour\(s\) old/);
+    expect(result.ok).toBe(true);
+    expect(m.reportSecurityAlert).not.toHaveBeenCalled();
+  });
+
+  it('at exactly 48 hours the anchor is not yet stale', async () => {
+    vi.setSystemTime(ANCHORED_AT + 48 * HOUR);
+    const result = await runAuditChainIntegrityCheck();
+    expect(anchorVerdict(result)).toMatchObject({ status: 'ok' });
+    expect(result.anchorAge?.hours).toBe(48);
+  });
+
+  it('an anchor older than 48 hours is an incident: alerted, and a fresh anchor is still written to close the window', async () => {
+    vi.setSystemTime(ANCHORED_AT + 49 * HOUR);
+    const result = await runAuditChainIntegrityCheck();
+    expect(anchorVerdict(result)).toMatchObject({ status: 'stale' });
+    expect(anchorVerdict(result)?.reason).toMatch(/latest anchor is 49 hour\(s\) old, past the 48-hour limit/);
+    expect(result.ok).toBe(false);
+    expect(result.failures).toEqual(['audit_logs.anchor']);
+    expect(result.anchorAge?.hours).toBe(49);
+    expect(emitWarning).toHaveBeenCalledOnce();
+    expect(m.reportSecurityAlert).toHaveBeenCalledOnce();
+    expect(m.reportSecurityAlert.mock.calls[0][0].detail.failures).toEqual(['audit_logs.anchor']);
+    // Every head the stale anchor names was verified present: today's anchor
+    // is what shortens the window again, so staleness alone does not block it.
+    expect(m.writeAuditChainAnchor).toHaveBeenCalledOnce();
+    expect(result.anchorWrite).toMatchObject({ written: true });
+  });
+
+  it('a stale anchor that the database also breaks is broken, and nothing is anchored over it', async () => {
+    vi.setSystemTime(ANCHORED_AT + 72 * HOUR);
+    m.verifyAuditChainAnchor.mockResolvedValue({
+      ...anchorOk, status: 'broken', reason: '1 anchored head(s) missing or different',
+      breaks: [{ organizationId: 7, rowId: '6f1c0d2e-0000-4000-8000-000000000007', kind: 'head_missing', anchoredRows: 4, currentRows: 2 }],
+    });
+    const result = await runAuditChainIntegrityCheck();
+    expect(anchorVerdict(result)).toMatchObject({ status: 'broken' });
+    expect(result.anchorAge?.hours).toBe(72);
+    expect(m.writeAuditChainAnchor).not.toHaveBeenCalled();
+  });
+
+  it('a stale anchor beside another incident does not get a new anchor written over that incident', async () => {
+    vi.setSystemTime(ANCHORED_AT + 49 * HOUR);
+    m.verifyAuditChainSeals.mockResolvedValue({ valid: false, brokenAt: 3 });
+    const result = await runAuditChainIntegrityCheck();
+    expect(result.failures).toEqual(['audit_logs.seals', 'audit_logs.anchor']);
+    expect(m.writeAuditChainAnchor).not.toHaveBeenCalled();
+  });
+
+  it('with no anchor yet there is no age to report, and the run says so', async () => {
+    m.verifyAuditChainAnchor.mockResolvedValue({
+      status: 'not_anchored', anchorKey: null, anchoredAt: null, organizations: 0, breaks: [], archived: [],
+      reason: 'no anchor has been written to s3://c2c-prod-part11-evidence/anchors/audit-chain/',
+    });
+    const result = await runAuditChainIntegrityCheck();
+    expect(result.anchorAge).toBeNull();
+    expect(anchorVerdict(result)).toMatchObject({ status: 'unverifiable' });
+  });
+});

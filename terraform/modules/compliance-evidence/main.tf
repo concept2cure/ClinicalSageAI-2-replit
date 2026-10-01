@@ -23,6 +23,21 @@
 // prefix, the key policy lets it use this key through S3 only, and an explicit
 // Deny keeps it from deleting or unlocking any evidence. The bucket's default
 // object-lock retention applies to every anchor.
+//
+// 2026-10-01 (P0-8 follow-up): an anchor is written once. Object lock keeps
+// every VERSION for the retention period, and under COMPLIANCE no one can
+// delete a version or shorten its retention. It does not refuse a new version
+// on an existing key, and the verifier reads current versions, so a plain put
+// could replace what it reads. The writer sends If-None-Match: * (S3 answers
+// 412 when the key exists), and the bucket policy denies EVERY principal a put
+// under anchors/ that lacks the header (s3:if-none-match, which S3 has
+// evaluated in bucket policies since November 2024; the policy is a JSON string
+// the AWS provider passes through, so no provider version is involved). What
+// this does not stop: a principal allowed s3:DeleteObject (not the anchor
+// writer, which is denied it) can put a delete marker over an anchor, after
+// which a conditional put to that key succeeds; the locked version survives
+// and is readable by version id. An account administrator can also rewrite
+// this policy.
 
 terraform {
   required_providers {
@@ -168,6 +183,19 @@ locals {
         Action    = "s3:*"
         Resource  = [local.bucket_arn, "${local.bucket_arn}/*"]
         Condition = { Bool = { "aws:SecureTransport" = "false" } }
+      },
+      {
+        # An anchor is never replaced by a put: every put under anchors/ must
+        # carry If-None-Match, which S3 refuses (412) on a key that exists. One
+        # condition key only; a second in this statement would be ANDed and
+        # narrow the Deny. Multipart uploads cannot carry the header, so none
+        # is possible under anchors/; an anchor is one small put.
+        Sid       = "AnchorsAreWrittenOnce"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:PutObject"
+        Resource  = "${local.bucket_arn}/${local.anchor_prefix}*"
+        Condition = { Null = { "s3:if-none-match" = "true" } }
       },
     ], local.anchor_bucket_statements)
   })

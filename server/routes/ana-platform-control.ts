@@ -19,8 +19,22 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { anaPlatformController, AnaAction } from '../services/ana-platform-controller';
 import { requireRole } from '../middleware/auth';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const logger = createScopedLogger('ana-platform-control');
+
+/**
+ * A settings write that throws was not made: the settings writer
+ * (services/tenant/tenant-settings-writer.ts) rolls the change back when its
+ * audit row, or the change itself, is refused (P1-49, DP-58). It is answered as
+ * a failure — never as success, and without the error's text.
+ */
+function notSaved(res: Response, action: string, message: string, err: unknown) {
+  logger.error(`AnA platform ${action} failed`, err as Record<string, unknown>);
+  res.status(500).json({ success: false, action, error: message });
+}
+const SETTINGS_NOT_SAVED = 'The settings could not be saved.';
 
 /*
  * IAM-20 (security review 2026-10-01): every write below changes
@@ -76,9 +90,12 @@ router.patch('/settings', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (!orgId) return res.status(400).json({ error: 'Organization ID required' });
 
-  const userId = (req as any).userId || (req as any).user?.id;
-  const result = await anaPlatformController.updateSettings(orgId, req.body, userId);
-  res.status(result.success ? 200 : 403).json(result);
+  try {
+    const result = await anaPlatformController.updateSettings(orgId, req.body, req);
+    res.status(result.success ? 200 : 403).json(result);
+  } catch (err) {
+    notSaved(res, 'update_settings', SETTINGS_NOT_SAVED, err);
+  }
 });
 
 // ── Capabilities & Modules ────────────────────────────────
@@ -142,8 +159,12 @@ router.post('/modules/toggle', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'moduleId (string) and enabled (boolean) required' });
   }
 
-  const result = await anaPlatformController.toggleModule(orgId, moduleId, enabled);
-  res.status(result.success ? 200 : 403).json(result);
+  try {
+    const result = await anaPlatformController.toggleModule(orgId, moduleId, enabled, req);
+    res.status(result.success ? 200 : 403).json(result);
+  } catch (err) {
+    notSaved(res, 'toggle_module', SETTINGS_NOT_SAVED, err);
+  }
 });
 
 // ── Project Management ────────────────────────────────────
@@ -195,8 +216,12 @@ router.patch('/ai-config', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (!orgId) return res.status(400).json({ error: 'Organization ID required' });
 
-  const result = await anaPlatformController.configureAI(orgId, req.body);
-  res.status(result.success ? 200 : 403).json(result);
+  try {
+    const result = await anaPlatformController.configureAI(orgId, req.body, req);
+    res.status(result.success ? 200 : 403).json(result);
+  } catch (err) {
+    notSaved(res, 'configure_ai', SETTINGS_NOT_SAVED, err);
+  }
 });
 
 // ── Compliance ────────────────────────────────────────────
@@ -209,8 +234,12 @@ router.patch('/compliance', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (!orgId) return res.status(400).json({ error: 'Organization ID required' });
 
-  const result = await anaPlatformController.setComplianceDefaults(orgId, req.body);
-  res.status(result.success ? 200 : 403).json(result);
+  try {
+    const result = await anaPlatformController.setComplianceDefaults(orgId, req.body, req);
+    res.status(result.success ? 200 : 403).json(result);
+  } catch (err) {
+    notSaved(res, 'set_compliance_defaults', SETTINGS_NOT_SAVED, err);
+  }
 });
 
 // ── Onboarding ────────────────────────────────────────────
@@ -229,13 +258,16 @@ router.post('/onboard', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'therapeuticArea, primaryAgency, and submissionType are required' });
   }
 
-  const result = await anaPlatformController.onboardOrganization(orgId, {
-    therapeuticArea,
-    primaryAgency,
-    submissionType,
-    companySize,
-  });
-  res.status(result.success ? 200 : 403).json(result);
+  try {
+    const result = await anaPlatformController.onboardOrganization(
+      orgId,
+      { therapeuticArea, primaryAgency, submissionType, companySize },
+      req
+    );
+    res.status(result.success ? 200 : 403).json(result);
+  } catch (err) {
+    notSaved(res, 'onboard', 'Onboarding did not complete.', err);
+  }
 });
 
 // ── Usage & Recommendations ───────────────────────────────
@@ -284,8 +316,12 @@ router.post('/execute', async (req: Request, res: Response) => {
     });
   }
 
-  const result = await anaPlatformController.executeAction(orgId, action);
-  res.status(result.success ? 200 : 403).json(result);
+  try {
+    const result = await anaPlatformController.executeAction(orgId, action, req);
+    res.status(result.success ? 200 : 403).json(result);
+  } catch (err) {
+    notSaved(res, 'execute', 'The action could not be completed.', err);
+  }
 });
 
 export default router;

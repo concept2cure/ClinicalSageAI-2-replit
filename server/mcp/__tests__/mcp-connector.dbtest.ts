@@ -58,9 +58,12 @@ let tokenB: string;
 let readOnlyTokenA: string;
 
 async function seedTenant(tag: string): Promise<Tenant> {
+  // Its owner has turned the connector on (P1-47; mcp-connector-enablement.dbtest.ts proves the off state).
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
+    `INSERT INTO organizations (name, slug, settings) VALUES ($1, $2, '{"claudeConnector":{"enabled":true}}'::json)
+       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name,
+         settings = (COALESCE(organizations.settings::jsonb, '{}'::jsonb) || '{"claudeConnector":{"enabled":true}}'::jsonb)::json
+       RETURNING id, uuid`,
     [`${PREFIX} org ${tag}`, `${PREFIX}-org-${tag}`],
   );
   // tenant-isolation-safe: fixture user in a throw-away test database; `users` is global and tenancy is the organization_users row below

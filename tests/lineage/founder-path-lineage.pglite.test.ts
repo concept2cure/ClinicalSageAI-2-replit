@@ -180,6 +180,10 @@ const MIGRATIONS = [
   // Identity, the chained audit ledger, and the Part 11 signing columns.
   'db/migrations/20260813_audit_tamper_proof_log.sql',
   'db/migrations/20260725_users_signing_lockout_columns.sql',
+  // The account standing every authenticator and the signer re-verify read
+  // gained users.sessions_ended_at (P0-4b); without it every signature is
+  // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
+  'migrations/20261001_users_sessions_ended_at.sql',
   'migrations/20260527_mutation_primitives.sql',
   'migrations/20260609_audit_hmac_seal.sql',
   'migrations/20260921_audit_logs_chain_seq.sql',

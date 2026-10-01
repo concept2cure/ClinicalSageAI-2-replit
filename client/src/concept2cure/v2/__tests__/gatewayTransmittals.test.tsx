@@ -38,7 +38,13 @@ vi.mock('../C2CForm', () => ({
     (globalThis as any).__c2cFormConfig = config; // the mounted form, for picker assertions
     const values =
       config.title === 'Record regulatory identifiers'
-        ? { packageId: '77', applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER' }
+        // FDA's form (sweep F05, F07b): six digits, nine-digit D-U-N-S, a contact.
+        ? ((globalThis as any).__c2cFormValues
+            ?? {
+              packageId: '77', applicationNumber: '123456', applicantId: '123456789', applicantName: 'Acme Biologics Inc',
+              contactName: 'Jane Q. Regulatory', contactPhone: '+1 301 555 0100', contactEmail: 'regulatory@acme.example',
+              reason: 'Recording the IND number assigned by CDER',
+            })
         : config.title === 'Assemble bundle'
           // A case that needs particular field values sets __c2cFormValues; the
           // default stands in for "the operator filled the form in".
@@ -233,14 +239,47 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     render(<GatewayTransmittals {...props()} />);
     await screen.findByText('FDA ESG');
     fireEvent.click(screen.getByRole('button', { name: /Record identifiers/ }));
+    // The example is FDA's own form: six digits, no IND/NDA/BLA prefix (sweep
+    // F05). 'e.g. IND123456' taught every operator to record what FDA refuses.
+    const fields = (globalThis as any).__c2cFormConfig.fields as Array<{ key: string; placeholder?: string; desc?: string }>;
+    const field = (key: string) => fields.find((f) => f.key === key)!;
+    expect(field('applicationNumber').placeholder).toBe('e.g. 123456');
+    expect(field('applicationNumber').desc).toMatch(/six digits FDA assigned/);
+    expect(field('applicationNumber').desc).toMatch(/K-number/);
+    expect(field('applicantId').placeholder).toBe('e.g. 123456789');
+    expect(fields.map((f) => f.key)).toEqual(expect.arrayContaining(['contactName', 'contactPhone', 'contactEmail']));
     fireEvent.click(screen.getByTestId('form-submit'));
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => c[0] === 'PUT');
       expect(call).toBeTruthy();
       expect(call![1]).toBe('/api/submission-ops/packages/77/regulatory-identifiers');
-      expect(call![2]).toMatchObject({ applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER' });
+      expect(call![2]).toMatchObject({
+        applicationNumber: '123456', applicantId: '123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER',
+        contact: { name: 'Jane Q. Regulatory', phone: '+1 301 555 0100', email: 'regulatory@acme.example' },
+      });
     });
     expect(await screen.findByText(/Identifiers recorded on package pkg_77.*cleared — assemble again before transmitting/)).toBeTruthy();
+  });
+
+  it('sends no contact when none of its fields is filled (a 510(k) or a non-US package needs none)', async () => {
+    (globalThis as any).__c2cFormValues = {
+      packageId: '77', applicationNumber: 'K123456', applicantId: '123456789', applicantName: 'Acme Devices Inc',
+      contactName: '', contactPhone: ' ', contactEmail: '', reason: 'Recording the 510(k) number',
+    };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'PUT') return env({ packageId: 'pkg_77', changed: true, staleBundleCleared: false, ledgerWriteFailed: false });
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Record identifiers/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    await waitFor(() => expect(apiRequest.mock.calls.find((c) => c[0] === 'PUT')).toBeTruthy());
+    const body = apiRequest.mock.calls.find((c) => c[0] === 'PUT')![2];
+    expect(body).toMatchObject({ applicationNumber: 'K123456' });
+    expect(body).not.toHaveProperty('contact');
   });
 
   it('surfaces a refused identifier (400) with the server’s own reason, and records nothing', async () => {

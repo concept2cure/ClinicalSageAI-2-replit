@@ -446,3 +446,58 @@ variable "db_credentials_rotation" {
     error_message = "db_credentials_rotation must name the current rotation, e.g. \"initial\" or the date of the last one."
   }
 }
+
+# ── The self-hosted embedding lane (P1-54, ADR-0014 §1.5; main.tf, module "embeddings") ──
+
+variable "embedding_image" {
+  description = <<-EOT
+    The embedding server (modules/embedding-service): Hugging Face Text
+    Embeddings Inference, CPU build, pinned by digest, pulled from ghcr.io
+    through the NAT. To move it: resolve a cpu-<version> tag's index digest
+    (ghcr.io/huggingface/text-embeddings-inference) and replace both parts. To
+    pull from a registry of your own, mirror the same digest and name the
+    mirror here.
+  EOT
+  type        = string
+  # cpu-1.9.4, the index digest resolved 2026-10-01 (linux/amd64, Fargate's
+  # default platform): docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/image/.
+  default = "ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.4@sha256:2538ea1c9640d3763b15af668039d24172d063b42337b0c27796fc2be180c78d"
+  validation {
+    condition     = can(regex("@sha256:[0-9a-f]{64}$", var.embedding_image))
+    error_message = "embedding_image must be pinned by digest (…@sha256:<64 hex>): a tag can be moved under a running deployment."
+  }
+}
+
+variable "embedding_model_revision" {
+  description = <<-EOT
+    The Hugging Face commit of BAAI/bge-m3 the embedding server loads. Unset, it
+    loads the hub's current main and every plan warns (main.tf, check
+    "embedding_model_is_pinned"). Resolve it with
+    curl -s https://huggingface.co/api/models/BAAI/bge-m3 | jq -r .sha
+  EOT
+  type        = string
+  default     = null
+  validation {
+    # try(), not ||: Terraform evaluates both sides, and regex() of null errors.
+    condition     = try(var.embedding_model_revision == null || can(regex("^[0-9a-f]{40}$", var.embedding_model_revision)), false)
+    error_message = "embedding_model_revision must be a 40-character commit id: a branch moves, and the stored vectors would then mix two models."
+  }
+}
+
+variable "embedding_cpu" {
+  description = "Fargate CPU units for each embedding task (4096 = 4 vCPU; bge-m3 runs on CPU)."
+  type        = number
+  default     = 4096
+}
+
+variable "embedding_memory" {
+  description = "Fargate memory (MiB) for each embedding task: the model's weights (~2.3 GB) and its working set."
+  type        = number
+  default     = 16384
+}
+
+variable "embedding_desired_count" {
+  description = "Embedding tasks; two spread the lane across the private subnets' zones."
+  type        = number
+  default     = 2
+}

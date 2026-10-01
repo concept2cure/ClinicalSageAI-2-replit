@@ -107,7 +107,14 @@ CREATE TABLE c2c_artifact_section_map (
   ownership_type TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMP DEFAULT NOW()
 );`;
 
-const REGULATORY = { applicationNumber: '123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc' };
+/** An IND's identifiers in FDA's form (sweep F05, F07b): the six digits FDA
+ *  assigned, the nine-digit D-U-N-S number, and the regulatory contact. */
+const REGULATORY = {
+  applicationNumber: '123456',
+  applicantId: '123456789',
+  applicantName: 'Acme Biologics Inc',
+  contact: { name: 'Jane Q. Regulatory', phone: '+1 301 555 0100', email: 'regulatory@acme.example' },
+};
 
 async function seed() {
   await pg.exec(`DROP TABLE IF EXISTS c2c_artifact_section_map, concept2cure_artifacts, c2c_package_sections, c2c_submission_packages CASCADE;`);
@@ -149,16 +156,17 @@ async function storedBundle() {
 }
 
 /** What governed transmit does once the gateway has accepted the bytes. */
-async function fileTheStoredBundle(submissionType: string) {
+async function fileTheStoredBundle(submissionType: string, transmittalId = 1) {
   const { bundle } = await storedBundle();
   const ok = await recordFiledSequence(PKG, {
     sequence: bundle.sequence,
     submissionType,
     sha256: bundle.sha256,
-    transmittalId: 1,
+    transmittalId,
     leaves: bundle.leafManifest,
   });
-  expect(ok, 'the filed history was written').toBe(true);
+  expect(ok, 'the filed history was written').toEqual({ outcome: 'recorded' });
+  return bundle as { sequence: string; sha256: string; leafManifest: any[] };
 }
 
 const md5 = (b: Uint8Array) => createHash('md5').update(b).digest('hex');
@@ -308,5 +316,140 @@ describe('a filed withdrawal leaves the filed state (sweep F10)', () => {
     const { zip, bundle } = await storedBundle();
     expect(bundle.leafManifest).toEqual([expect.objectContaining({ ctdSection: '3.2.P.1', operation: 'new' })]);
     expect(await zip.file('index.xml')!.async('string')).not.toContain('modified-file=');
+  });
+});
+
+describe('an empty section files nothing (sweep F11)', () => {
+  const unmapTheDescription = () => pg.query(`DELETE FROM c2c_artifact_section_map WHERE artifact_id = 3`);
+
+  it('ships no leaf for it — no generated placeholder document reaches the agency — and says so', async () => {
+    await unmapTheDescription();
+    const res = await assemble();
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const { zip, bundle } = await storedBundle();
+    await assertInternallyConsistent(zip);
+    expect(bundle.leafManifest.map((l: any) => l.ctdSection).sort()).toEqual(['1.2', '2.5']);
+    expect(bundle.leafManifest.some((l: any) => String(l.leafKey).startsWith('section:'))).toBe(false);
+    expect(Object.keys(zip.files).some((n) => n.includes('3-2-p-1'))).toBe(false);
+    const findings: Array<{ severity: string; ruleId: string; message: string }> = bundle.validation.findings;
+    expect(findings).toContainEqual(expect.objectContaining({
+      severity: 'warning', ruleId: 'SECTION-EMPTY', message: expect.stringMatching(/Description and Composition \(3\.2\.P\.1\).*files nothing/),
+    }));
+    // The summary counts the empty section although nothing ships for it.
+    expect(findings.find((f) => f.ruleId === 'SUMMARY')?.message).toMatch(/2 leaf\(s\), 1 empty section\(s\)/);
+  });
+
+  it("withdrawing a section's only document files the withdrawal alone, not a placeholder in its place", async () => {
+    expect((await assemble()).status).toBe(200);
+    await fileTheStoredBundle('original');
+    const filed = (await storedMetadata()).filedSequences[0].leaves.find((l: any) => l.ctdSection === '3.2.P.1');
+    await unmapTheDescription();
+    const res = await assemble({
+      sequence: '0001', submissionType: 'Efficacy Supplement',
+      withdraw: [{ ctdSection: '3.2.P.1', fileName: filed.fileName }],
+    });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ new: 0, delete: 1 });
+    const { bundle } = await storedBundle();
+    expect(bundle.leafManifest).toEqual([expect.objectContaining({ ctdSection: '3.2.P.1', operation: 'delete' })]);
+  });
+});
+
+describe('per-submission Module 1 documents on an FDA follow-up (sweep F13)', () => {
+  it("a revised cover letter files as NEW in the follow-up — sequence 0000's letter is not superseded", async () => {
+    expect((await assemble()).status).toBe(200);
+    await fileTheStoredBundle('original');
+    await pg.query(`UPDATE concept2cure_artifacts SET content = 'We submit sequence 0001.', version = 2, approved_version_id = 2,
+      updated_at = '2026-02-03T04:05:06Z' WHERE id = 1`);
+    const res = await assemble({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ new: 1, replace: 0 });
+    const { zip, bundle } = await storedBundle();
+    expect(bundle.leafManifest).toEqual([expect.objectContaining({ ctdSection: '1.2', operation: 'new' })]);
+    expect(await zip.file('m1/us/us-regional.xml')!.async('string')).not.toContain('modified-file=');
+  });
+
+  it('an IND follow-up that carries no Form FDA 1571 is blocked, and one with no new cover letter is warned', async () => {
+    expect((await assemble()).status).toBe(200);
+    await fileTheStoredBundle('original');
+    await pg.query(`UPDATE concept2cure_artifacts SET content = 'The overview, version two.', version = 2, approved_version_id = 2,
+      updated_at = '2026-02-03T04:05:06Z' WHERE id = 2`);
+    const res = await assemble({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const { bundle } = await storedBundle();
+    const byRule = (id: string) => bundle.validation.findings.filter((f: any) => f.ruleId === id);
+    expect(byRule('M1-FORM-1571-MISSING')).toEqual([expect.objectContaining({ severity: 'error' })]);
+    expect(byRule('M1-COVER-LETTER-MISSING')).toEqual([expect.objectContaining({ severity: 'warning' })]);
+  });
+});
+
+describe('a document moved to another CTD section (sweep F12)', () => {
+  it('blocks the sequence that files it at the new section while the copy at the old one stays current, naming the withdrawal', async () => {
+    expect((await assemble()).status).toBe(200);
+    await fileTheStoredBundle('original');
+    const old = (await storedMetadata()).filedSequences[0].leaves.find((l: any) => l.ctdSection === '2.5');
+    // The clinical overview's declared section is corrected to 2.7.3.
+    await pg.query(`UPDATE concept2cure_artifacts SET ctd_section = '2.7.3' WHERE id = 2`);
+
+    const res = await assemble({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ new: 1, delete: 0 });
+    const { bundle } = await storedBundle();
+    const relocated = bundle.validation.findings.filter((f: any) => f.ruleId === 'LEAF-RELOCATED-OLD-COPY-CURRENT');
+    expect(relocated).toHaveLength(1);
+    expect(relocated[0].severity).toBe('error');
+    expect(relocated[0].message).toContain(`withdraw: [{ ctdSection: '2.5', fileName: '${old.fileName}' }]`);
+
+    // The move done whole: the new filing and the withdrawal in one sequence.
+    const whole = await assemble({
+      sequence: '0001', submissionType: 'Efficacy Supplement',
+      withdraw: [{ ctdSection: '2.5', fileName: old.fileName }],
+    });
+    expect(whole.status, JSON.stringify(whole.body)).toBe(200);
+    expect(whole.body.data.bundle.lifecycle.summary).toMatchObject({ new: 1, delete: 1 });
+    const after = (await storedBundle()).bundle;
+    expect(after.validation.findings.some((f: any) => f.ruleId === 'LEAF-RELOCATED-OLD-COPY-CURRENT')).toBe(false);
+  });
+});
+
+/*
+ * 2026-10-01 (W5/D7, sweep F19). recordFiledSequence answered `true` for a
+ * DIFFERENT bundle sent under a sequence already on file, and kept the first
+ * one's inventory: the second send was reported recorded while the history
+ * described the other. It now says which of the two happened.
+ */
+describe('one bundle per filed sequence (sweep F19)', () => {
+  it('the same bundle again is already recorded; a different bundle under that number is a conflict, and nothing is written', async () => {
+    expect((await assemble()).status).toBe(200);
+    const filed = await fileTheStoredBundle('original');
+    const again = { sequence: '0000', submissionType: 'original', sha256: filed.sha256, transmittalId: 5, leaves: filed.leafManifest };
+    expect(await recordFiledSequence(PKG, again)).toEqual({ outcome: 'already-recorded' });
+    const before = await storedMetadata();
+    expect(before.filedSequences).toEqual([expect.objectContaining({ sha256: filed.sha256, transmittalId: 1, state: 'transmitted' })]);
+    expect(await recordFiledSequence(PKG, { ...again, sha256: 'c'.repeat(64) }))
+      .toEqual({ outcome: 'conflict', filed: { sha256: filed.sha256, transmittalId: 1 } });
+    expect(await storedMetadata(), 'the conflict wrote nothing').toEqual(before);
+  });
+});
+
+/*
+ * 2026-10-01 (W5/D7, sweep F05, F07b). The packager writes the applicant and
+ * its contacts into us-regional.xml, and the assemble route never passed a
+ * contact, so no package-spine backbone named one. The route now hands the
+ * recorded regulatory contact over; this reads it back out of the real file.
+ */
+describe('the us-regional backbone names the applicant and its regulatory contact (sweep F05, F07b)', () => {
+  it('us-regional.xml carries the D-U-N-S number as <id>, the company name, the six-digit application number and the contact', async () => {
+    const res = await assemble();
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const { zip, bundle } = await storedBundle();
+    expect(bundle.validation.findings.filter((f: any) => f.ruleId === 'REGULATORY-IDENTIFIER-MISSING')).toEqual([]);
+    const xml = await zip.file('m1/us/us-regional.xml')!.async('string');
+    expect(xml).toContain('<id>123456789</id>');
+    expect(xml).toContain('<company-name>Acme Biologics Inc</company-name>');
+    expect(xml).toContain('<application-number application-type="fdaat4">123456</application-number>');
+    expect(xml).toMatch(
+      /<applicant-contacts>\s*<applicant-contact>\s*<applicant-contact-name applicant-contact-type="fdaact1">Jane Q\. Regulatory<\/applicant-contact-name>\s*<telephones>\s*<telephone>\+1 301 555 0100<\/telephone>\s*<\/telephones>\s*<emails>\s*<email>regulatory@acme\.example<\/email>\s*<\/emails>\s*<\/applicant-contact>\s*<\/applicant-contacts>/,
+    );
   });
 });

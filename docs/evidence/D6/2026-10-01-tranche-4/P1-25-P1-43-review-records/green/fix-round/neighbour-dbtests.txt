@@ -1,0 +1,80 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T15:30:30.038Z","pid":22359,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:30:30.039Z","pid":22359,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:30:30.039Z","pid":22359,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/qms-document-signature-required.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/qms-document-signature-required.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:30:30.517Z', poolSize: 1 }
+
+stdout | tests/db/qms-document-signature-required.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to retired with no retirement signature is refused
+[database] Database connection successful { timestamp: '2026-10-01T15:30:31.003Z', poolSize: 1 }
+
+stdout | tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count
+[database] Database connection successful { timestamp: '2026-10-01T15:30:31.040Z', poolSize: 1 }
+
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > runs as the runtime role, under RLS, in its own tenant 8ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to effective with no signature is refused, and the document stays draft 14ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct INSERT of an effective document is refused 12ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to retired with no retirement signature is refused 18ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > the table owner is refused too 13ms
+stdout | tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count
+[database] Database connection successful { timestamp: '2026-10-01T15:30:31.067Z', poolSize: 1 }
+
+stdout | tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective
+[database] Database connection successful { timestamp: '2026-10-01T15:30:31.155Z', poolSize: 1 }
+
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count 56ms
+{"level":30,"time":"2026-10-01T15:30:31.246Z","pid":22359,"hostname":"vm","context":{"userId":914,"tenantId":93180,"resourceId":"517"},"msg":"[audit-service] [AUDIT] mdx.qms.document.revise qms_document"}
+stdout | tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > approve: the route makes the document effective with one approval signature from the same transaction
+[database] Database connection successful { timestamp: '2026-10-01T15:30:31.277Z', poolSize: 1 }
+
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective 184ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > approve: the route makes the document effective with one approval signature from the same transaction 56ms
+{"level":30,"time":"2026-10-01T15:30:31.439Z","pid":22359,"hostname":"vm","context":{"userId":914,"tenantId":93180,"resourceId":"520"},"msg":"[audit-service] [AUDIT] mdx.qms.document.revise qms_document"}
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > retire: the route retires the effective document with its retirement signature 66ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a revised document is approved again through the route 95ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > the service writes the status before the signature, so the check is deferred to COMMIT; checked per statement it refuses 31ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a fixture gives an effective document its signature on the same transaction, before or after the status 13ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a document already effective is not re-checked: an edit that leaves its status alone commits 10ms
+{"level":30,"time":"2026-10-01T15:30:32.710Z","pid":22384,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:30:32.712Z","pid":22384,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:30:32.712Z","pid":22384,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-reports.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-reports.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful { timestamp: '2026-10-01T15:30:33.662Z', poolSize: 1 }
+
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read 75ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows 38ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > authentication-events runs as organisation A, verifies, and carries only A rows 23ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > administrative-changes runs as organisation A, verifies, and carries only A rows 21ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > electronic-signatures runs as organisation A, verifies, and carries only A rows 19ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > audit-trail-integrity runs as organisation A, verifies, and carries only A rows 32ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention-legal-holds runs as organisation A, verifies, and carries only A rows 30ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled-documents runs as organisation A, verifies, and carries only A rows 27ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > access review: A members only, with the last sign-in read from the sign-in audit row 22ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > sign-in events and administrative changes: A rows are there, B rows are not 42ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > signature register: the A fixture signature, never the B one 16ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > retention and holds: the vault is reached under its own policy, A hold and disposition only 29ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty 8ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > controlled documents: the A document only 22ms
+ ✓ tests/db/compliance-reports.dbtest.ts > administrator changes, as their writers record them, appear in the administrative changes report (P1-41) > a role change, a removal and a security settings change each appear, with what changed and why 103ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict 24ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > each run writes exactly one compliance.report_run row on A's chain, and none on B's 21ms
+
+ Test Files  2 passed (2)
+      Tests  30 passed (30)
+   Start at  15:30:27
+   Duration  6.57s (transform 1.97s, setup 110ms, import 1.93s, tests 4.04s, environment 0ms)
+

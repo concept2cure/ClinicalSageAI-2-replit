@@ -1,0 +1,748 @@
+# Fix round, 2026-10-01T15:27:17Z. git HEAD: 0812a990 + the shared working tree (P1-47 fix round included)
+# command: npx vitest run server/mcp/__tests__/mcp-auth-contract.test.ts server/mcp/__tests__/mcp-governed-role-gate.test.ts server/mcp/__tests__/mcp-standing-unreadable.test.ts server/mcp/__tests__/mcp-tenant-tool-policy.test.ts server/mcp/__tests__/platform-token-session.test.ts server/__tests__/security/mcp-client-registration.contract.test.ts server/__tests__/security/security-swarm-hardening.test.ts server/routes/__tests__/session-open-contract.test.ts server/mcp/auth/__tests__ server/__tests__/routes/ana-platform-control.test.ts server/routes/__tests__/tenant-config-audit.test.ts server/services/audit/compliance-reports/__tests__/review-round-1.test.ts server/mcp/__tests__/mcp-connector-enablement.test.ts server/routes/__tests__/tenant-config-claude-connector.test.ts client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx
+# (structured JSON log lines filtered out)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the owner is told they can change it 3428ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a admin sees the state and that they cannot change it 13ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a manager sees the state and that they cannot change it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a member sees the state and that they cannot change it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a viewer sees the state and that they cannot change it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a stored value that is not exactly true reads as disabled 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > another organization's setting is not read 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > an administrator is refused with 403, and nothing is written or recorded 13ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a manager is refused with 403, and nothing is written or recorded 9ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a member is refused with 403, and nothing is written or recorded 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > platform staff (super_admin) is refused with 403, and nothing is written or recorded 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > another organization's owner is refused with 403, and nothing is written or recorded 4ms
+stderr | server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved
+{
+  "timestamp": "2026-10-01T15:27:23.622Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error changing the connector setting for tenant 900",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > the owner enables it: one transaction, the setting and its chained audit row with the value before and after 11ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > the owner disables it, and the row records true → false 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {} is refused with 400 and nothing is written 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {"enabled":"yes"} is refused with 400 and nothing is written 9ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {"enabled":true,"extra":1} is refused with 400 and nothing is written 7ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of null is refused with 400 and nothing is written 8ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved 8ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > PATCH /settings naming claudeConnector → 403, nothing written 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > control: PATCH /settings without it still writes 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > PATCH /settings/claudeConnector is not a section the section door writes 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > a reset keeps the stored connector setting: it is not a default to restore 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it on is refused: rolled back before the UPDATE, nothing recorded 10ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it off is refused too: only its own door changes it, either way 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > nulling it is refused (a null reads as off, so it would turn it off) 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > erasing it is refused (a door that replaces the settings whole and leaves the key out) 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > control: a general write that leaves it as stored is written, and keeps it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > control: the connector's own door changes it 3ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > returns the membership of an active user in an active organisation 7ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > refuses a suspended user even though the membership row exists 2ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > refuses a deactivated (inactive) user 3ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > refuses any member of a suspended organisation 2ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > still refuses a user with no membership in the organisation 2ms
+stdout | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+{
+  "timestamp": "2026-10-01T15:27:25.181Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:27:25.184Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+{
+  "timestamp": "2026-10-01T15:27:25.184Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+{
+  "timestamp": "2026-10-01T15:27:25.320Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:27:25.322Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+{
+  "timestamp": "2026-10-01T15:27:25.322Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T15:27:25.582Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform update_settings failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T15:27:25.585Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform toggle_module failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T15:27:25.587Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform configure_ai failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T15:27:25.590Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform set_compliance_defaults failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T15:27:25.593Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform onboard failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T15:27:25.595Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform execute failed",
+  "context": {}
+}
+
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing 1150ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > returns entitlements when tenant context provides organization id 7ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /settings is refused before the controller runs 14ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /modules/toggle is refused before the controller runs 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /projects is refused before the controller runs 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /projects/7 is refused before the controller runs 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /ai-config is refused before the controller runs 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /compliance is refused before the controller runs 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /onboard is refused before the controller runs 5ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /execute is refused before the controller runs 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > an admin may still change settings 5ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member may still read settings 2ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: the request reaches the controller 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: the request reaches the controller 8ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: the request reaches the controller 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: the request reaches the controller 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: the request reaches the controller 2ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: the request reaches the controller 2ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: a refused write is a 500 with no detail, never a success 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: a refused write is a 500 with no detail, never a success 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: a refused write is a 500 with no detail, never a success 2ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: a refused write is a 500 with no detail, never a success 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: a refused write is a 500 with no detail, never a success 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: a refused write is a 500 with no detail, never a success 3ms
+stdout | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+{
+  "timestamp": "2026-10-01T15:27:25.622Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 9728 protected-resource metadata for /mcp 22ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 8414 authorization-server metadata with PKCE S256 and dynamic registration 4ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp without a token with 401 and a resource_metadata challenge 16ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp with a forged token with 401 (same verifier as the API: HS256 + rotation) 4ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > rejects a refresh-class token on the MCP path (token-class allow-list) 6ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > curated tool catalog > has 19 uniquely named tools, each with all four annotation hints, a scope and exactly one governed write 4ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > returns the gateway’s own refusal verbatim when no provider key is configured 190ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > maps an AnA handler error to a verbatim refusal, never an empty success 2ms
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+{
+  "timestamp": "2026-10-01T15:27:27.164Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:27:27.166Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+{
+  "timestamp": "2026-10-01T15:27:27.166Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+{
+  "timestamp": "2026-10-01T15:27:27.358Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:27:27.360Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+{
+  "timestamp": "2026-10-01T15:27:27.360Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+{
+  "timestamp": "2026-10-01T15:27:27.394Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > control: enabled, both a connector token and the session open the connector 70ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > no settings at all: a connector token is refused with invalid_token and the reason 8ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > settings without the connector: a connector token is refused with invalid_token and the reason 6ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: false: a connector token is refused with invalid_token and the reason 9ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: "true" (a string, not true): a connector token is refused with invalid_token and the reason 4ms
+stdout | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+{
+  "timestamp": "2026-10-01T15:27:27.541Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the connector stored as a bare true: a connector token is refused with invalid_token and the reason 5ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the session token is refused the same way 14ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > refuses as an outage when the organization cannot be read: never admits, never "bad token" 9ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > control: enabled, consent issues a code 9ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > no settings at all: 403 access_denied with the reason, and no code 8ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > settings without the connector: 403 access_denied with the reason, and no code 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: false: 403 access_denied with the reason, and no code 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: "true" (a string, not true): 403 access_denied with the reason, and no code 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > the connector stored as a bare true: 403 access_denied with the reason, and no code 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > answers 503 and issues no code when the organization cannot be read 3ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > control: enabled, a refresh rotates and issues, and a code exchange issues 2ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a refresh is refused (invalid_grant) and the grant is left as it was 2ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a code exchange is refused and issues nothing 1ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > a refresh refuses as an outage when the organization cannot be read, and neither rotates nor issues 3ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > control: with the standing readable, the session opens the connector 108ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > refuses as an outage when the standing cannot be read — never admits, never "bad token" 8ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > control: with the standing readable, consent issues a code 9ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > answers 503 and issues no code when the standing cannot be read 7ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a refresh rotates and issues 3ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a refresh refuses as an outage, and neither rotates nor issues 3ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a code exchange issues 1ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a code exchange refuses as an outage and issues nothing 1ms
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+{
+  "timestamp": "2026-10-01T15:27:29.195Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:27:29.196Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+{
+  "timestamp": "2026-10-01T15:27:29.197Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins 1340ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > is null when the variable is unset; production + null is the closed state, development + null is not 3ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > throws on a malformed allowlist instead of resolving to an open or partial one (fail closed) 2ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > keeps the existing behaviour and shape of the rest of the config 1ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > allowlist set + foreign origin → 400 invalid_redirect_uri, the SDK handler never runs, and the body is not logged 41ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > allowlist set + a listed origin (any path, host case-insensitive) → next() is called 7ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > matches by origin, never by prefix: a look-alike host or a different port is refused 12ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > one bad entry refuses the whole registration 6ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > production posture: an http redirect is refused even with no allowlist, and even for loopback 14ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > development posture: http://localhost and http://127.0.0.1 pass; any other http host does not 9ms
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > installs the /register route layer with the guard BEFORE the SDK router layer
+{
+  "timestamp": "2026-10-01T15:27:29.546Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > end to end: a foreign origin is refused by the guard; a listed origin reaches the SDK handler and is registered
+{
+  "timestamp": "2026-10-01T15:27:29.551Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > no path spelling reaches the SDK handler around the guard
+{
+  "timestamp": "2026-10-01T15:27:29.576Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > a fragment is refused whatever the posture 15ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > not an absolute URL, or not a string → invalid_redirect_uri 12ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > missing, empty or non-array redirect_uris, or no JSON object at all → invalid_client_metadata 33ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > installs the /register route layer with the guard BEFORE the SDK router layer 16ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > end to end: a foreign origin is refused by the guard; a listed origin reaches the SDK handler and is registered 25ms
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > rate-limits registration attempts per IP (20 per hour), counting refused attempts too
+{
+  "timestamp": "2026-10-01T15:27:29.588Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > production + no allowlist: closedInProduction is true, registration is refused, and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request
+{
+  "timestamp": "2026-10-01T15:27:29.632Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > production + no allowlist: closedInProduction is true, registration is refused, and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request
+{
+  "timestamp": "2026-10-01T15:27:29.630Z",
+  "level": "warn",
+  "message": "[mcp] Dynamic client registration (POST /register) is refused in production: no redirect origins are listed. Set MCP_CLIENT_REDIRECT_ALLOWLIST to the origins allowed to register (for launch: https://claude.ai,https://claude.com).",
+  "context": {
+    "control": "MCP_CLIENT_REDIRECT_ALLOWLIST",
+    "finding": "IAM-02",
+    "plan": "P0-2d"
+  }
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > an allowlist, or a non-production posture, emits no such warning
+{
+  "timestamp": "2026-10-01T15:27:29.648Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+{
+  "timestamp": "2026-10-01T15:27:29.650Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > no path spelling reaches the SDK handler around the guard 12ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > rate-limits registration attempts per IP (20 per hour), counting refused attempts too 43ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > production + no allowlist: closedInProduction is true, registration is refused, and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request 16ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > an allowlist, or a non-production posture, emits no such warning 5ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > labels the count as authenticator enrolment and a member without one as "Emailed code" 187ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > refuses a tool the organization denied 2ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > runs it for an organization that did not deny it 43ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > does not let an allowlist for governed mutations strip a read tool, as on the chat doors 1ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > shows the sign-in policy row as a fact, not a setting to change 93ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > API keys: "--" and "Couldn't load", not "0" and "No API keys" 67ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > audit: "Couldn't load the admin audit", not "No admin audit entries yet" 58ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > settings and SSO: say they could not be read 83ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > retries the read from the error 462ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > renders the audit band and Last seen for a reader 53ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > shows an API key by prefix and owner name, and revokes it by its numeric id 175ms
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-01T15:27:31.534Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating security settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-01T15:27:31.540Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-01T15:27:31.545Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error resetting settings for tenant 900",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT 843ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings: names every section written; values only for security and audit retention 8ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > a stored secret in a section that is value-audited is still not carried 5ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a reset to defaults is recorded > POST /settings/reset: one tenant_settings_reset row naming every section, with the security and retention values 5ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text 6ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text 5ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text 5ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > an unknown tenant is 404, rolled back, and nothing is recorded 4ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > settings writes keep what they do not manage (DP-62) > a reset restores the defaults and keeps the tool policy and the session limit 6ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > settings writes keep what they do not manage (DP-62) > a PATCH of one field of a section keeps the section's other fields 4ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > the owner turns it on after confirming, and the stored value is read back 468ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > cancel sends nothing 155ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > anyone but the owner sees the state, no switch, and who can change it 40ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a read that fails is "Could not be read", never "Off" 55ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a read that answers in a shape the page does not know is "Could not be read", never "Off" 57ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a refused change says it was not changed, and the state stays as stored 127ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > accepts a normal access token (returns null) 2ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA-partial token (mfaPending claim) 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA-partial token (pending_mfa role) 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects a refresh token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA challenge token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > is case-insensitive on the type claim 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects UNKNOWN explicit token classes (allow-list, not deny-list) 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > accepts only an explicit access token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > rejects a token with NO type claim (missing_token_type) 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > rejects every non-access class, known or unknown 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > every first-party authenticator refuses it, on either entry point 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > refuses any delegated use, known or unknown, and whatever the type claim says 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > the connector, and only a caller naming that use, accepts its own tokens 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > an absent or null claim is not a delegated token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > accepts valid regions without throwing 2ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > defaults to US_EAST when empty/undefined 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > rejects an unknown region 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > rejects a SQL-injection payload that breaks out of the array literal 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > accepts valid snake_case field names 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > defaults to the standard PHI fields when empty/undefined 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > rejects a field name containing a quote / injection characters 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > rejects an uppercase / non-identifier field name 0ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > renders the REAL members and audit, with no provenance pill or fixture 173ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > derives every KPI from the real rows (not hardcoded, not a fixture) 71ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > adopts the real API-keys and SSO panels on tab switch 82ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest empty state > shows an EmptyState — never a fixture — when the org has no admin data 46ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest error state > says "no access" — not "didn't respond" — when the caller is not an org admin (403) 24ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest error state > shows an error state — never a fixture — when the read fails (500) 31ms
+stdout | server/mcp/__tests__/mcp-governed-role-gate.test.ts
+{
+  "timestamp": "2026-10-01T15:27:33.042Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:27:33.044Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-governed-role-gate.test.ts
+{
+  "timestamp": "2026-10-01T15:27:33.044Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/mcp/__tests__/mcp-governed-role-gate.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/mcp/__tests__/mcp-governed-role-gate.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/mcp/__tests__/mcp-governed-role-gate.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses a viewer before the tool runs, and records the denial 27ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses someone who is no longer a member before the tool runs, and records the denial 2ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > fails closed when the role cannot be read 2ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > lets an editor run the governed tool 2ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > does not ask for a role on a tool that is not governed 1ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > no route mints session claims without registering them 3ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > each sign-in door opens its session through openSession 4ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > finds the mints (the scan is not empty and every payload is a literal it can read) 7ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > a type:access payload spreads the session openSession, openConnectorSession or continuedSessionClaims gave it 1ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > a file that mints an access token gets its session from the service, never from newSessionClaims 6ms
+stdout | server/mcp/__tests__/platform-token-session.test.ts
+{
+  "timestamp": "2026-10-01T15:27:33.768Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:27:33.770Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/mcp/__tests__/platform-token-session.test.ts
+{
+  "timestamp": "2026-10-01T15:27:33.771Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/mcp/__tests__/platform-token-session.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/mcp/__tests__/platform-token-session.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/mcp/__tests__/platform-token-session.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > connector sessions hold slots in their own pool: beyond the limit the oldest connector token is superseded, the browser session is not
+{
+  "timestamp": "2026-10-01T15:27:33.858Z",
+  "level": "info",
+  "message": "[session-inactivity] Sessions ended by a sign-in beyond the account limit",
+  "context": {
+    "account": "connector:7",
+    "limit": 5,
+    "ended": 1
+  }
+}
+
+stdout | server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the limit is the membership organisation's maxConcurrentSessions, as at sign-in
+{
+  "timestamp": "2026-10-01T15:27:33.860Z",
+  "level": "info",
+  "message": "[session-inactivity] Sessions ended by a sign-in beyond the account limit",
+  "context": {
+    "account": "connector:7",
+    "limit": 1,
+    "ended": 1
+  }
+}
+
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the token carries the session claims: a fresh id, its start, and the token TTL as its idle window 11ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the idle window is the TTL held inside the platform window [1 min, 24 h] 3ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the lifetime rule is the platform rule: the session is over ABSOLUTE_SESSION_HOURS after its start, whatever the TTL 2ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > connector sessions hold slots in their own pool: beyond the limit the oldest connector token is superseded, the browser session is not 7ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the limit is the membership organisation's maxConcurrentSessions, as at sign-in 2ms
+stdout | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-01T15:27:34.470Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:27:34.472Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-01T15:27:34.472Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-01T15:27:34.524Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > ok only when every check is intact 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > false when any check is broken, whatever the others say 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > null, with how many could not verify, when none is broken and not all are intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the instruction names the HMAC key the platform holds, the verifier, the CSV case and the inspector 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the manifest does not claim independent verification 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > the past role and the review decision are stated as not shown; role changes are where they are recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41: no longer says an administrator's role change or removal goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41 fix round: no sentence says role changes in general are listed or recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > the SCIM group handler is where the test thinks it is 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > P1-49: the handler records each role change, through the canonical membership writer 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > access-review states the gap while the handler writes no row, and stops once it writes one 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > administrative-changes states the gap while the handler writes no row, and stops once it writes one 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > P1-49: the administrative changes report says how a SCIM-group role change is listed 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration is recorded by section and field name, with values only for security and audit-trail retention 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: no longer says a role change, a removal or a tenant configuration change goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: reads the actions the membership and tenant configuration writers store 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 6 — the signature register shows what was signed, as stored > carries the purpose and the signed version as their own columns 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > documents carry the approving signer, meaning, the revoked count and the superseding document 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > change controls carry their description and reason 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > states what does not appear and where training lives 0ms
+
+ Test Files  17 passed (17)
+      Tests  202 passed (202)
+   Start at  15:27:19
+   Duration  15.52s (transform 12.09s, setup 970ms, import 8.10s, tests 28.66s, environment 2.31s)
+

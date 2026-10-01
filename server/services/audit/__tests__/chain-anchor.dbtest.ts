@@ -63,7 +63,7 @@ let dbName: string;
 /** Holds SELECT and INSERT on the archive ledger and nothing else: the runtime role's grant there. */
 const forger = `p08_ledger_forger_${randomBytes(4).toString('hex')}`;
 
-/** An object-locked bucket's contract, in memory: put never overwrites; latest is the newest key. */
+/** The anchor store's contract, in memory: put refuses a key that exists (If-None-Match: *); latest is the newest key. */
 function memoryStore() {
   const objects = new Map<string, string>();
   return {
@@ -425,5 +425,53 @@ describe('the archive ledger excuses only what the archive door could have remov
       breaks: [],
       archived: [{ organizationId: 11, rowId: dormant[2], kind: 'head_missing', anchoredRows: 3, currentRows: 0 }],
     });
+  });
+});
+
+describe('the on-demand verifiers consult the anchor, or say they did not (P0-8 follow-up, 2026-10-01)', () => {
+  // The verifiers an operator or a page runs on demand (verify-chain,
+  // seal-integrity, the licensing history, the tenant verdict and
+  // ops:verify-audit-chain) walked the chain only, so each answered ok for the
+  // chain of case 1. They now take the head's verdict from verifyChainHead,
+  // which is verifyAuditChainAnchor against the latest anchor, scoped to one
+  // organisation where the caller is. The routes are driven in
+  // chain-head-on-demand.test.ts; the ops script runs here, on this database.
+  const loadOps = () => import('../../../../scripts/ops/verify-audit-chain.mjs');
+
+  it('13. a truncated chain: the head verdict is broken for that organisation only, and the ops script exits 1', async () => {
+    const { writeAuditChainAnchor, verifyChainHead } = await loadAnchor();
+    const { verifyAuditChains } = await loadOps();
+    const { store } = memoryStore();
+    const seven = await writeChain(7, 4);
+    await writeChain(8, 2);
+    await withClient((c) => writeAuditChainAnchor(c, store));
+    expect(await tamper('DELETE FROM audit_logs WHERE id = ANY($1::uuid[])', [seven.slice(2)])).toBe(2);
+    expect(await withClient((c) => verifyAuditChain(c))).toMatchObject({ ok: true });
+
+    const missing = { organizationId: 7, rowId: seven[3], kind: 'head_missing', anchoredRows: 4, currentRows: 2 };
+    expect(await withClient((c) => verifyChainHead(c, { store }))).toMatchObject({ verified: false, status: 'broken', breaks: [missing] });
+    expect(await withClient((c) => verifyChainHead(c, { store, organizationId: 7 }))).toMatchObject({ status: 'broken', breaks: [missing] });
+    expect(await withClient((c) => verifyChainHead(c, { store, organizationId: 8 }))).toMatchObject({ verified: true, status: 'verified', breaks: [] });
+
+    const report = await withClient((c) => verifyAuditChains(c, {}, { anchorStore: store }));
+    const logs = report.tables.find((t: { table: string }) => t.table === 'public.audit_logs');
+    expect(logs).toMatchObject({ status: 'broken', head: { status: 'broken', breaks: [missing] } });
+    expect(report).toMatchObject({ verdict: 'broken', exitCode: 1 });
+  });
+
+  it('14. no anchor store: the walk passes, and every verdict says the head was not verified against the anchor', async () => {
+    const { verifyChainHead } = await loadAnchor();
+    const { verifyAuditChains } = await loadOps();
+    const seven = await writeChain(7, 4);
+    expect(await tamper('DELETE FROM audit_logs WHERE id = ANY($1::uuid[])', [seven.slice(2)])).toBe(2);
+
+    const head = await withClient((c) => verifyChainHead(c, { store: null }));
+    expect(head).toMatchObject({ verified: false, status: 'not_configured' });
+    expect(head.reason).toMatch(/^head not verified against the anchor/);
+
+    const report = await withClient((c) => verifyAuditChains(c, {}, { anchorStore: null }));
+    const logs = report.tables.find((t: { table: string }) => t.table === 'public.audit_logs');
+    expect(logs).toMatchObject({ status: 'ok', chainedRows: 2, head: { verified: false, status: 'not_configured' } });
+    expect(logs?.head?.reason).toMatch(/^head not verified against the anchor/);
   });
 });

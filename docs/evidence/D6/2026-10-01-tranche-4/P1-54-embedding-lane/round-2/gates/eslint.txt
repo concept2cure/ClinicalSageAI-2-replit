@@ -1,0 +1,51 @@
+# 2026-10-01T16:27:15Z: ESLint, warnings per changed TypeScript file: the working tree against the file as committed at HEAD (f8d40474), read through --stdin. 'new' = the file does not exist at HEAD.
+file                                                                               tree   head
+server/services/ai-gateway/embeddings/embedding-provider.ts                           0      0
+server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts            1      1
+server/services/embedding-corpus-policy.ts                                            0      0
+server/services/__tests__/embedding-corpus-policy.test.ts                             0      0
+server/services/__tests__/embedding-corpus-policy.dbtest.ts                           0    new
+server/services/ai-gateway/gateway.ts                                                26     26
+server/services/ai-gateway/__tests__/self-hosted-residency.test.ts                    0    new
+server/startup/ana-readiness-state.ts                                                 0      0
+server/startup/__tests__/ana-readiness.test.ts                                        0      0
+server/startup/__tests__/ana-readiness-embedding-probe.test.ts                        0    new
+server/startup/__tests__/support/embedding-lane.ts                                    0    new
+tests/db/vault-passage-search.dbtest.ts                                               0      0
+tests/db/document-catalog-recall.dbtest.ts                                            0      0
+
+## the working tree's messages
+
+/home/user/ClinicalSageAI-2-replit/server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+  148:72  warning  Arrow function has too many lines (127). Maximum allowed is 100  max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts
+    39:3   warning  'GatewayUsage' is defined but never used                                                        @typescript-eslint/no-unused-vars
+    44:3   warning  'StreamCallback' is defined but never used                                                      @typescript-eslint/no-unused-vars
+    45:3   warning  'ContentBlock' is defined but never used                                                        @typescript-eslint/no-unused-vars
+   548:1   warning  Function 'partitionSystemMessages' has a complexity of 17. Maximum allowed is 15                complexity
+   793:1   warning  File has too many lines (3089). Maximum allowed is 500                                          max-lines
+   800:1   warning  Function 'normalizeCitation' has a complexity of 20. Maximum allowed is 15                      complexity
+   989:1   warning  Function 'applyOpenAIToolParams' has a complexity of 32. Maximum allowed is 15                  complexity
+  1345:3   warning  Async method 'route' has too many lines (181). Maximum allowed is 100                           max-lines-per-function
+  1345:3   warning  Async method 'route' has a complexity of 43. Maximum allowed is 15                              complexity
+  1969:3   warning  Async method 'assertSensitiveDispatchAllowed' has too many lines (109). Maximum allowed is 100  max-lines-per-function
+  1969:3   warning  Async method 'assertSensitiveDispatchAllowed' has a complexity of 31. Maximum allowed is 15     complexity
+  2163:3   warning  Async method 'executeOpenAI' has a complexity of 31. Maximum allowed is 15                      complexity
+  2340:3   warning  Async method 'executeAnthropic' has too many lines (185). Maximum allowed is 100                max-lines-per-function
+  2340:3   warning  Async method 'executeAnthropic' has a complexity of 51. Maximum allowed is 15                   complexity
+  2582:3   warning  Async method 'executeAnthropicStream' has too many lines (247). Maximum allowed is 100          max-lines-per-function
+  2582:3   warning  Async method 'executeAnthropicStream' has a complexity of 82. Maximum allowed is 15             complexity
+  2784:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                          max-depth
+  2902:3   warning  Async method 'executeMoonshot' has a complexity of 29. Maximum allowed is 15                    complexity
+  2994:3   warning  Async method 'executeOpenAICompatibleStream' has too many lines (147). Maximum allowed is 100   max-lines-per-function
+  2994:3   warning  Async method 'executeOpenAICompatibleStream' has a complexity of 40. Maximum allowed is 15      complexity
+  3111:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                          max-depth
+  3112:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                          max-depth
+  3188:3   warning  Method 'selectModel' has a complexity of 23. Maximum allowed is 15                              complexity
+  3775:3   warning  Async method 'logAudit' has too many parameters (7). Maximum allowed is 5                       max-params
+  3932:3   warning  Async method 'logContentPolicyBlock' has too many parameters (6). Maximum allowed is 5          max-params
+  4142:3   warning  Method 'initProviderClients' has a complexity of 26. Maximum allowed is 15                      complexity
+
+✖ 27 problems (0 errors, 27 warnings)
+

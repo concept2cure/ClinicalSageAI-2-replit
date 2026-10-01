@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-002 |
-| Version | 0.12 |
+| Version | 0.13 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-002 |
 | Runner (the executable protocol) | `tests/validation/oq/vault/run.mjs` — `npm run validation:oq -- vault` |
@@ -25,6 +25,7 @@
 | 0.10 | 2026-10-01 | `…01DiJJAk` (critique 15) | OQ-VAULT-18 added (URS-VAULT-017, library search), with its runner step. Not yet executed (→ W3). No other step changed. |
 | 0.11 | 2026-10-01 | `…01DiJJAk` (critique 15) | OQ-VAULT-19 added (URS-VAULT-018, stored-file fixity), with its runner step. Not yet executed (→ W3). No other step changed. |
 | 0.12 | 2026-10-01 | `…01DiJJAk` (critique 15) | OQ-VAULT-20 added (URS-VAULT-019, document relationships), with its runner step. Not yet executed (→ W3). No other step changed. |
+| 0.13 | 2026-10-01 | `…01DiJJAk` (VR-14a) | OQ-VAULT-21 added (URS-VAULT-020, where a version is placed), with its runner step. Not yet executed (→ W3). No other step changed. |
 
 ## 1. Method
 
@@ -60,6 +61,7 @@ IQ-001 executed; the test identity can create programs (OQ-VAULT-00 creates one 
 | OQ-VAULT-18 | URS-VAULT-017 | scripted | Create a second program and ingest a PDF into it with a unique word in its title. Search the library for that word, search the first program for it, and search the library with an empty query | The library search finds the document, named with the second program. The first program's search does not list it. The empty query answers `EMPTY_QUERY` |
 | OQ-VAULT-19 | URS-VAULT-018 | scripted | Run the fixity check on the program. Read the OQ-VAULT-03 document's history | 200, every stored version verified (no altered, missing or unreadable version on an untampered installation), and the history carries a `vault.document.fixity` entry |
 | OQ-VAULT-20 | URS-VAULT-019 | scripted | Ingest a PDF. Relate the OQ-VAULT-03 document to it as supported by it. Read both documents' relationships. Remove it without a reason, then with one. Read the OQ-VAULT-03 document's history | 201; the document lists "Supported by" the PDF and the PDF lists "Supports" the document; 422 REASON_REQUIRED without a reason, 200 with one, after which neither lists it; the history carries "Related: supported by …" and "Relationship removed: supported by …" |
+| OQ-VAULT-21 | URS-VAULT-020 | scripted | Create a program, ingest two PDFs into it, and create an IND submission on it with sequence 0000. Place the first PDF as a leaf at 2.5. Read each PDF's versions | The leaf is placed (200). The first PDF's version lists one placement (the submission, sequence 0000, section 2.5, operation new). The second lists none |
 
 ## 4. Acceptance
 

@@ -43,6 +43,23 @@ export interface VaultVersion {
   link: 'none' | 'verified' | 'unverified';
   /** Its review and approval (VR-13); null when nobody has started one. */
   lifecycle?: VaultVersionLifecycle | null;
+  /** The live submission leaves that name it (VR-14a). Absent when the server did not say. */
+  placements?: VaultPlacement[];
+}
+
+/** One leaf that names a version, as the server returns it (vault-where-used.ts). */
+export interface VaultPlacement {
+  leafId: number;
+  submissionId: number;
+  submissionTitle: string | null;
+  applicationType: string | null;
+  sequenceId: number;
+  sequenceNumber: string | null;
+  region: string | null;
+  sequenceStatus: string | null;
+  sectionCode: string;
+  leafTitle: string;
+  operation: string;
 }
 
 interface VersionsShape {
@@ -67,6 +84,16 @@ function dateLabel(iso: string): string {
 function uploaderLabel(v: VaultVersion): string {
   if (v.uploader) return v.uploader;
   return v.uploaderId != null ? `user ${v.uploaderId}` : 'uploader not recorded';
+}
+
+/** Where a version is placed, in words: each submission sequence and section, with the leaf's operation. */
+export function placedInText(placements: VaultPlacement[] | undefined): string {
+  if (!placements) return '';
+  if (placements.length === 0) return ' · not placed in any submission';
+  const one = (p: VaultPlacement) =>
+    `${p.submissionTitle ?? `submission ${p.submissionId}`}, sequence ${p.sequenceNumber ?? 'not numbered'}, ` +
+    `${p.sectionCode} (${p.operation}; sequence ${p.sequenceStatus ?? 'status not recorded'})`;
+  return ` · placed in ${placements.map(one).join('; ')}`;
 }
 
 const LINK_TEXT: Record<VaultVersion['link'], string> = {
@@ -185,6 +212,7 @@ function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleCh
               </>
             ) : null}
             {LINK_TEXT[v.link]}
+            <span data-testid={`vault-version-placed-${v.id}`}>{placedInText(v.placements)}</span>
             <LifecycleSummary lifecycle={v.lifecycle} />
           </span>
           <button

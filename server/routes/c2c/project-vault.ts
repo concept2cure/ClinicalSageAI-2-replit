@@ -1638,7 +1638,16 @@ export default function createProjectVaultRoutes(): Router {
       // and sign-offs, or none (not reviewed). An unreadable stage fails the
       // read: "not reviewed" would be a claim about a record not read.
       const lifecycles = await readVaultLifecycles(pool, orgId, family.map((v) => v.id));
-      const versions = family.map((v) => ({ ...v, lifecycle: lifecycles.get(v.id) ?? null }));
+      // Where each version is placed (VR-14a): the live submission leaves that
+      // name it. An unreadable placement list fails the read, as the stage does:
+      // "placed nowhere" would be a claim about leaves not read.
+      const { readVaultPlacements } = await import('../../services/vault/vault-where-used.js');
+      const placements = await readVaultPlacements(pool, orgId, family.map((v) => v.id));
+      const versions = family.map((v) => ({
+        ...v,
+        lifecycle: lifecycles.get(v.id) ?? null,
+        placements: placements.get(v.id) ?? [],
+      }));
       return res.json({ success: true, data: { versions } });
     } catch (err) {
       if (isMissingStore(err)) {

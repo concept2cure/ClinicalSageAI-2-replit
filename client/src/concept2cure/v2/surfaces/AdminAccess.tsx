@@ -8,6 +8,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { ClaudeConnectorSetting } from './ClaudeConnectorSetting';
 import '../styles/admin-access.css';
 
 /**
@@ -680,6 +681,9 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                   )}
                 </div>
               )}
+              {/* Its own read and its own door, for the owner or an administrator (P1-47), so it is
+                  shown whether or not the settings above could be read. */}
+              <ClaudeConnectorSetting />
             </section>
           )}
 

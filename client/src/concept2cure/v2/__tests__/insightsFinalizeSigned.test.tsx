@@ -192,4 +192,27 @@ describe('Insights — Finalize is a signature, separate from Export', () => {
     await waitFor(() => expect(within(dialog).getByRole('alert').textContent).toMatch(/You authored this record, so you cannot approve it/));
     expect(within(dialog).getByRole('alert').textContent).not.toMatch(/owners, admins and managers/);
   });
+
+  /* P1-44b: finalizing signs, so a role in finalize's tier without signing
+     authority (§11.10(g)) is refused by the server. The signer reads why, not
+     the tier sentence, which would be wrong: they are in the tier. */
+  it('a role without signing authority is refused with the server\'s sentence, and nothing is sealed', async () => {
+    finalizeReply = () => {
+      throw Object.assign(new Error('refused'), {
+        status: 403,
+        payload: {
+          success: false,
+          error: {
+            code: 'ESIGNATURE_NO_AUTHORITY',
+            message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)), and finalizing a report signs it. Nothing was finalized.',
+          },
+        },
+      });
+    };
+    await runReport();
+    const dialog = await signInDialog();
+    await waitFor(() => expect(within(dialog).getByRole('alert').textContent).toMatch(/Your role does not permit applying an electronic signature/));
+    expect(within(dialog).getByRole('alert').textContent).not.toMatch(/owners, admins and managers/);
+    expect(screen.queryByTestId('ro-seal')).toBeNull();
+  });
 });

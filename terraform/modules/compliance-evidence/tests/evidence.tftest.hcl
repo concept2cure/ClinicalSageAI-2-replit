@@ -119,3 +119,34 @@ run "names_come_from_the_prefix_not_ros_staging" {
     error_message = "Every name must carry the environment's prefix: ${jsonencode(output.names)}"
   }
 }
+
+# An anchor is never overwritten (P0-8 follow-up, 2026-10-01). Under versioning,
+# a put to an existing key adds a new current version: object lock keeps the old
+# one but does not refuse the put, and the verifier reads current versions. The
+# writer sends If-None-Match: * (chain-anchor.ts), and the bucket refuses any
+# put under anchors/ that does not carry it, from every principal.
+run "a_put_under_anchors_without_if_none_match_is_refused_for_everyone" {
+  command = apply
+  variables {
+    anchor_writer_role_arn = "arn:aws:iam::111122223333:role/c2c-prod-task"
+  }
+
+  assert {
+    condition = anytrue([
+      for st in jsondecode(output.bucket_policy).Statement :
+      st.Effect == "Deny" && try(st.Principal, "") == "*" &&
+      contains(flatten([st.Action]), "s3:PutObject") &&
+      flatten([st.Resource]) == ["arn:aws:s3:::c2c-prod-part11-evidence/anchors/*"] &&
+      try(st.Condition.Null["s3:if-none-match"], "") == "true"
+    ])
+    error_message = "The bucket policy must deny every principal a PutObject under anchors/ that does not carry If-None-Match (s3:if-none-match), so no put can replace an anchor."
+  }
+  assert {
+    condition = alltrue([
+      for st in jsondecode(output.bucket_policy).Statement :
+      length(flatten([for op, kv in st.Condition : keys(kv)])) == 1
+      if st.Effect == "Deny" && contains(flatten([st.Action]), "s3:PutObject") && try(st.Condition.Null["s3:if-none-match"], "") == "true"
+    ])
+    error_message = "The If-None-Match Deny must stand on that one condition: a second condition key in the same statement is ANDed and narrows the Deny."
+  }
+}

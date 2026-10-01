@@ -1,0 +1,13 @@
+# Fix round, 2026-10-01T15:29:40Z: npx eslint <the item's 18 files>
+# AdminAccess.tsx's 5 warnings are HEAD's (same rules and lines as the first round's gates/); every other file is clean.
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/AdminAccess.tsx
+   99:8   warning  Function 'AdminAccess' has too many lines (553). Maximum allowed is 100  max-lines-per-function
+   99:8   warning  Function 'AdminAccess' has a complexity of 65. Maximum allowed is 15     complexity
+  186:52  warning  Async arrow function has a complexity of 22. Maximum allowed is 15       complexity
+  244:22  warning  'setRoleFilter' is assigned a value but never used                       @typescript-eslint/no-unused-vars
+  644:1   warning  File has too many lines (594). Maximum allowed is 500                    max-lines
+
+✖ 5 problems (0 errors, 5 warnings)
+
+exit=0

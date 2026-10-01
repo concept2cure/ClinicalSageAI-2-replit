@@ -1,0 +1,3 @@
+# INF-35 GREEN, 2026-10-01T16:18:48Z: npm run -s ci:launch-scope-api with '/api/tenant-config' on the admin-console entry (shared/constants/ui-surface-registry.ui-v2.ts).
+ci:launch-scope-api: 284 API paths named by launch and shell screens; none refused. {"launch":237,"never-gated":45,"infrastructure":2}
+exit=0

@@ -1,0 +1,210 @@
+# GREEN, 2026-10-01T16:24:51Z: npx vitest run server/startup/__tests__/ana-readiness.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports no_provider — the incident — when the gateway has zero providers
+[database] Database connection test failed { error: 'p.on is not a function' }
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports no_provider — the incident — when the gateway has zero providers
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports no_provider — the incident — when the gateway has zero providers
+[database] Initial connection test failed: p.on is not a function
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports ready and names the providers when at least one is enabled
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=4 4ms org=- user=- caller=embedding-provider req=f6615fca-f846-48b7-9f9d-e6e3660558a9
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports ready and names the providers when at least one is enabled
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports ready and names the providers when at least one is enabled
+[AI Gateway Audit] ✓ openai/text-embedding-3-large task=embedding tokens=4 1ms org=- user=- caller=embedding-provider req=386e8936-e6c6-4ab1-97ad-56c6a6e65523
+
+(node:11455) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving when an Anthropic key is present, and names the drafting model
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=4 0ms org=- user=- caller=embedding-provider req=c0f4ec54-f56a-4faf-8e17-7e104c1991bd
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving when an Anthropic key is present, and names the drafting model
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving when an Anthropic key is present, and names the drafting model
+[AI Gateway Audit] ✓ openai/text-embedding-3-large task=embedding tokens=4 1ms org=- user=- caller=embedding-provider req=13aee50d-80f5-42e2-ad87-cb96a66a1269
+
+(node:11455) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving with OpenAI and Anthropic together
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=4 0ms org=- user=- caller=embedding-provider req=833598c8-6a52-4d51-a0f8-aa75cf810f68
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving with OpenAI and Anthropic together
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving with OpenAI and Anthropic together
+[AI Gateway Audit] ✓ openai/text-embedding-3-large task=embedding tokens=4 1ms org=- user=- caller=embedding-provider req=213060d5-1c04-4e80-8d02-659bfbc4dfe2
+
+(node:11455) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving on Bedrock alone — the private-cloud drafting path counts
+{
+  "timestamp": "2026-10-01T16:24:56.099Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving on Bedrock alone — the private-cloud drafting path counts
+{
+  "timestamp": "2026-10-01T16:24:56.102Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving on Bedrock alone — the private-cloud drafting path counts
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=4 1ms org=- user=- caller=embedding-provider req=32a3f69f-cc09-461f-84d2-b9297c242533
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving on Bedrock alone — the private-cloud drafting path counts
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving on Bedrock alone — the private-cloud drafting path counts
+[AI Gateway Audit] ✓ openai/text-embedding-3-large task=embedding tokens=4 0ms org=- user=- caller=embedding-provider req=cb04e656-16cd-422e-868d-1b3cfef52588
+
+(node:11455) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports no_provider — the incident — when the gateway has zero providers 1915ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports ready and names the providers when at least one is enabled 40ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports deterministic — never ready — when the fixture mode is opted into 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports error rather than throwing when the gateway cannot be constructed 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports error when getGateway returns nothing 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > defaults to unknown, and unknown does not serve 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture 12ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving when an Anthropic key is present, and names the drafting model 12ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving with OpenAI and Anthropic together 12ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving on Bedrock alone — the private-cloud drafting path counts 13ms
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > is serving in production with the self-hosted embedding lane, and says which lane embeds
+{
+  "timestamp": "2026-10-01T16:24:56.174Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > is serving in production with the self-hosted embedding lane, and says which lane embeds
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > is serving in production with the self-hosted embedding lane, and says which lane embeds
+{
+  "timestamp": "2026-10-01T16:24:56.176Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+(node:11455) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > outside production nothing needs an election, so the default embedding lane does not change the verdict
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=4 0ms org=- user=- caller=embedding-provider req=2091c436-76a1-4d95-8898-367a65663836
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > outside production nothing needs an election, so the default embedding lane does not change the verdict
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > outside production nothing needs an election, so the default embedding lane does not change the verdict
+[AI Gateway Audit] ✓ openai/text-embedding-3-large task=embedding tokens=4 1ms org=- user=- caller=embedding-provider req=69ed4e50-1f9d-4e8f-b4d9-c00919c86cc6
+
+(node:11455) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54) > is NOT serving in production when drafting runs only on Vertex, a lane an organization must elect
+{
+  "timestamp": "2026-10-01T16:24:56.208Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54) > Vertex beside Anthropic is serving: every organization still has a drafting lane
+{
+  "timestamp": "2026-10-01T16:24:56.222Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54) > Vertex beside Anthropic is serving: every organization still has a drafting lane
+{
+  "timestamp": "2026-10-01T16:24:56.224Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54) > Vertex beside Anthropic is serving: every organization still has a drafting lane
+{
+  "timestamp": "2026-10-01T16:24:56.225Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54) > Vertex beside Anthropic is serving: every organization still has a drafting lane
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54) > Vertex beside Anthropic is serving: every organization still has a drafting lane
+{
+  "timestamp": "2026-10-01T16:24:56.226Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > still reports no_provider — not no_high_risk_model — when nothing is configured 7ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > fails closed when the gateway exposes no model registry to check 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > /readyz answers 503 with ana down on an OpenAI-only deployment 37ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > is NOT serving in production when embeddings run on OpenAI, the default lane 9ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > an OpenAI key does not make the OpenAI lane serve an organization that has not elected it 6ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > is serving in production with the self-hosted embedding lane, and says which lane embeds 10ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > is NOT serving when the self-hosted lane names no address 5ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > outside production nothing needs an election, so the default embedding lane does not change the verdict 7ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > /readyz answers 503 with ana down when the only embedding lane needs an election 12ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54) > is NOT serving in production when drafting runs only on Vertex, a lane an organization must elect 9ms
+(node:11455) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54) > Vertex beside Anthropic is serving: every organization still has a drafting lane 18ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > prints to console.error when AnA cannot answer 2ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > warns — not errors — that responses are fixtures in deterministic mode 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > says drafting — not chat — is what failed when no model is approved for it 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > says who is refused when a lane serves elected organizations only (R4) 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > says search is what fails when the embedding lane cannot be built (R4) 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > says search is what fails when the embedding lane has not answered at the corpus width (DP-71) 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > says a corpus must be re-embedded when it holds vectors another model wrote (DP-71) 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > stays quiet on the happy path 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > is NOT ready when AnA has no provider, with every other dependency green 12ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > is NOT ready when AnA readiness was never evaluated 5ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > is NOT ready when the gateway failed to construct 4ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > is ready when AnA has a live provider 4ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > serves in deterministic mode but says so on the success path 3ms
+
+ Test Files  1 passed (1)
+      Tests  34 passed (34)
+   Start at  16:24:53
+   Duration  3.26s (transform 1.61s, setup 156ms, import 585ms, tests 2.18s, environment 0ms)
+

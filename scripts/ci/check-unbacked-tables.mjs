@@ -177,9 +177,22 @@ for (const f of collect(path.join(repoRoot, 'server'), ['.ts'])) {
  * DISTINCT, which is never a table-introducing FROM. Adding the column name to
  * NOT_A_TABLE would have been the weaker fix, silencing this one spelling while
  * leaving the next `IS DISTINCT FROM` to fail the same way.
+ *
+ * FIFTH: `EXTRACT(field FROM source)`. The FROM inside EXTRACT separates the
+ * date part from the value it is taken from, so
+ *
+ *     SELECT (extract(epoch FROM last_seen_at) * 1000)::float8 AS seen
+ *
+ * yielded a phantom table `last_seen_at`, a column (session-inactivity.ts,
+ * 2026-10-01). It is the second time: on 2026-09-26 the same misreading was
+ * answered by rewriting the SQL to `date_part('epoch', …)`, which fixed that
+ * statement and left the gate to fail the next author of idiomatic SQL. Same
+ * narrow remedy: suppress only a FROM preceded by `EXTRACT(<field>`, which
+ * never introduces a table. The query's own FROM, after the closing paren, is
+ * still read.
  */
 const REF_RE =
-  /\b(?<!FOR\s)(?<!FOR\s{2})(?<!DISTINCT\s)(?<!DISTINCT\s{2})(FROM|JOIN|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(?:ONLY\s+)?([a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?)(\s*\()?/gi;
+  /\b(?<!FOR\s)(?<!FOR\s{2})(?<!DISTINCT\s)(?<!DISTINCT\s{2})(?<!\bEXTRACT\s*\(\s*[a-zA-Z_]+\s+)(FROM|JOIN|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(?:ONLY\s+)?([a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?)(\s*\()?/gi;
 
 /** SQL keywords and set-returning functions that follow FROM/JOIN but are not tables. */
 const NOT_A_TABLE = new Set([

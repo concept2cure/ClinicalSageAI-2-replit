@@ -280,6 +280,8 @@ export function cellText(value: unknown): string {
 
 /** The integrity attestation's verdict cells carry their tone; the word is always shown. */
 export function verdictTone(key: string, value: unknown): Tone | null {
+  // A review record's status (P1-25, P1-43): the word is in the cell; the tone only repeats it.
+  if (key === 'review_status') return value === 'Overdue' ? 'error' : value === 'Current' ? 'ok' : 'muted';
   if (key !== 'verdict') return null;
   return value === 'broken' ? 'error' : value === 'not verified' ? 'muted' : value === 'intact' ? 'ok' : null;
 }
