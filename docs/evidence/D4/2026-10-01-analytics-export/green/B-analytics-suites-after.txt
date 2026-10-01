@@ -1,0 +1,25 @@
+ ✓ server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /dashboard refuses (403) without org context — never aggregates across tenants 29ms
+ ✓ server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /dashboard with org context proceeds to the scoped reads 7ms
+ ✓ server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /export?type=predictive&format=json is not served, and serves no figure 9ms
+ ✓ server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /export?type=predictive&format=csv is not served, and serves no figure 4ms
+ ✓ server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /export?type=predictive&format=pdf is not served, and serves no figure 5ms
+ ✓ server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /export?type=summary&format=json is not served, and serves no figure 4ms
+ ✓ server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /export?type=summary&format=csv is not served, and serves no figure 4ms
+ ✓ server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /export?type=summary&format=pdf is not served, and serves no figure 3ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-provenance.test.ts > demo-analysis provenance > emits no manufactured academic citations 63ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-provenance.test.ts > demo-analysis provenance > emits no DOI anywhere in the response 10ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-provenance.test.ts > demo-analysis provenance > does not interpolate the caller’s indication into a citation-shaped title 7ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-provenance.test.ts > demo-analysis provenance > says no comparison was performed when the protocol store is empty 6ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-provenance.test.ts > demo-analysis provenance > reports a real comparison when the store actually returns matches 7ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-ind-readiness.test.ts > demo-analysis IND readiness > asserts no adequacy verdict about a protocol it never read 57ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-ind-readiness.test.ts > demo-analysis IND readiness > asserts no regulatory alignment for a protocol it never read 13ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-ind-readiness.test.ts > demo-analysis IND readiness > says the assessment was not run, rather than returning an unlabelled verdict list 7ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-ind-readiness.test.ts > demo-analysis IND readiness > keeps the standing guidance it genuinely has, labelled as standing guidance 7ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-ind-readiness.test.ts > demo-analysis IND readiness > persists no verdict to exports/<session_id>/analysis_results.json either 7ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-ind-readiness.test.ts > demo-analysis IND readiness > still returns the analysis the handler genuinely produces 5ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-provenance.test.ts > demo-analysis provenance > does not claim benchmark, robustness or duration analysis it never performs 5ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-provenance.test.ts > demo-analysis provenance > never renders an unmatched field as the word undefined 6ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-provenance.test.ts > demo-analysis provenance > claims no statistical-power or representativeness work it does not do 5ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-provenance.test.ts > demo-analysis provenance > still returns the analysis the handler genuinely produces 9ms
+ Test Files  3 passed (3)
+      Tests  23 passed (23)

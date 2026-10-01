@@ -1,0 +1,16 @@
+ ✓ server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /dashboard refuses (403) without org context — never aggregates across tenants 30ms
+ ✓ server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /dashboard with org context proceeds to the scoped reads 8ms
+ × server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /export?type=predictive&format=json is not served, and serves no figure 14ms
+   → expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /export?type=predictive&format=csv is not served, and serves no figure 6ms
+   → expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /export?type=predictive&format=pdf is not served, and serves no figure 527ms
+   → expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /export?type=summary&format=json is not served, and serves no figure 6ms
+   → expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /export?type=summary&format=csv is not served, and serves no figure 7ms
+   → expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/analytics-tenant-isolation.test.ts > analytics tenant isolation — csr_reports is org-scoped > GET /export?type=summary&format=pdf is not served, and serves no figure 18ms
+   → expected 200 to be 404 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 2 passed (8)

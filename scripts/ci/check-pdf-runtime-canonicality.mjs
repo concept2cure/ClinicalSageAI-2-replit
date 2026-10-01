@@ -145,12 +145,17 @@ if (assertAllowlistPathsExist({ tag: '[ci:pdf-runtime]', repoRoot, name: 'APPROV
 const PDF_LIB_IMPORT = /from\s+['"](pdfkit|pdf-lib)['"]/;
 const PDF_LIB_DYNAMIC = /import\(\s*['"](pdfkit|pdf-lib)['"]\s*\)/;
 const PUPPETEER_PDF = /\bpage\.pdf\s*\(/;
+// require() too. Until 2026-10-01 the gate read only `import`, and the one file
+// that reached pdfkit through require() was an unrecorded export serving
+// hard-coded figures (routes/analytics-routes.ts GET /export, retired that day).
+const PDF_LIB_REQUIRE = /\brequire\(\s*['"](pdfkit|pdf-lib)['"]\s*\)/;
 
 /** How a file generates PDF, as the findings name it; empty when it does not. */
 function pdfUses(text) {
   const matches = [];
   if (PDF_LIB_IMPORT.test(text)) matches.push("imports 'pdfkit' or 'pdf-lib'");
   if (PDF_LIB_DYNAMIC.test(text)) matches.push("dynamic import of 'pdfkit'/'pdf-lib'");
+  if (PDF_LIB_REQUIRE.test(text)) matches.push("require() of 'pdfkit'/'pdf-lib'");
   if (PUPPETEER_PDF.test(text)) matches.push('calls page.pdf() (puppeteer)');
   return matches;
 }
@@ -167,6 +172,7 @@ function unusedApprovals(approved, read) {
   const caught =
     pdfUses("import { PDFDocument } from 'pdf-lib';").length === 1 &&
     pdfUses("const { PDFDocument } = await import('pdf-lib');").length === 1 &&
+    pdfUses("const PDFDocument = require('pdfkit');").length === 1 &&
     pdfUses('await page.pdf({ format: "A4" });').length === 1 &&
     pdfUses('export const report = "pdf";').length === 0 &&
     JSON.stringify(unusedApprovals(probe, rel => text[rel] ?? '')) === '["probe/unused.ts"]';
