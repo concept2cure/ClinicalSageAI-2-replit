@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-002 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-002 |
 | Runner (the executable protocol) | `tests/validation/oq/vault/run.mjs` — `npm run validation:oq -- vault` |
@@ -16,6 +16,7 @@
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
 | 0.2 | 2026-09-21 | control tower (`0014daa87`) | OQ-VAULT-08b: a newest-first windowed read cannot be asserted to "grow"; the step asserts that the window lists this document's ingest and filing, hash-chained, and that the server's chain verdict is present (VSR-001 §10.1). The step text carried the change; this row and the version field were not updated at the time and are recorded here. |
 | 0.3 | 2026-09-22 | W3 | OQ-VAULT-08b requires the verdict to say the chain verifies (`meta.chain.ok = true`), not merely to be present. Under v0.2 the 2026-09-21 record passed this step over "server chain verdict ok=false over 33 row(s)" (VSR-001 §12). §5 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
+| 0.4 | 2026-09-30 | `…01DiJJAk` (VR-08) | OQ-VAULT-11 added (URS-VAULT-011, version check-in), with its runner step. Not yet executed: the run needs the validation identities this session does not hold (→ W3). No other step changed. |
 
 ## 1. Method
 
@@ -41,6 +42,7 @@ IQ-001 executed; the test identity can create programs (OQ-VAULT-00 creates one 
 | OQ-VAULT-08b | URS-VAULT-008 | scripted | `GET /api/audit-trail/ledger` | The window lists this document's ingest and filing, each hash-chained; the server's chain verdict says the chain verifies, `meta.chain.ok = true` (v0.2: a windowed read cannot be asserted to "grow"; v0.3: presence of a verdict is not a pass) |
 | OQ-VAULT-09 | URS-VAULT-009 | unscripted (browser) | Open `/concept2cure/vault` with the program selected | Document title visible in the data room; screenshot |
 | OQ-VAULT-10 | URS-VAULT-010 | scripted | Read a random program id | 404 |
+| OQ-VAULT-11 | URS-VAULT-011 | scripted | Check in new bytes as the next version of the OQ-VAULT-03 document; resend those bytes against the new version; send new bytes against the OQ-VAULT-03 document again | 201, version `2.0`, the same document code; then 409 `CONTENT_ALREADY_A_VERSION`; then 409 `VERSION_NOT_CURRENT` naming `2.0` |
 
 ## 4. Acceptance
 

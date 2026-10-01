@@ -25,6 +25,7 @@ import { loadUnifiedWork } from '../services/unified-work/unified-work-view';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import { db, pool } from '../db';
+import { projectBelongsToTenant } from '../services/cmc/project-membership';
 import {
   c2cSubmissionPackages,
   c2cPackageSections,
@@ -234,6 +235,12 @@ router.post('/packages', requireEditorAccess, async (req: Request, res: Response
       return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
     }
     const { projectId, packageFamily, title, description, targetDate, sections } = parsed.data;
+    /* The package's project is a projects row of this organization (PF-03).
+       It was taken from the body as given, so a package, its sections and its
+       readiness could sit on another organization's project. */
+    if (!(await projectBelongsToTenant({ organizationId: orgId, projectId: String(projectId) }, pool))) {
+      return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+    }
 
     const packageId = `pkg_${randomUUID()}`;
     const [pkg] = await db

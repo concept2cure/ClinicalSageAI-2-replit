@@ -2213,6 +2213,12 @@ export const C2C_MIGRATION_FILES = [
      file, green after). The code that may still UPDATE the table is named in
      scripts/ci/check-vault-document-writers.mjs. */
   'migrations/20260926_vault_documents_record_immutability.sql',
+  // VR-08 (D2): a version names its predecessor only inside its own family,
+  // and has at most one live successor. A trigger, plus a partial unique index
+  // created only when no version is already forked (NOTICE otherwise). After
+  // VR-06's file: it guards the same table's lineage column. No table, no
+  // column, no FK, no DROP.
+  'migrations/20260930_vault_documents_version_lineage.sql',
 
   /* c2c_template_specs + its doc_types column, added 2026-09-17 (WO-15
      finding 5). Self-contained: this file creates the base table IF NOT EXISTS

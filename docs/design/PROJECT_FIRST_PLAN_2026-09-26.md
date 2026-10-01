@@ -827,6 +827,7 @@ The founder chose the plan's recommended option in each case:
   - The user's half: `27d87155`. The Data Room offers the caller's conversation files, and "Add to this project" is the audited adopt.
   - Handed to W1 (`…01T2wooC`): the chat message shown for an upload made with no project open.
 - **PF-04**: done, `f8c32f28` (precondition P2: `b4b218bd`). The same-organization keys cover five stores, with a pre-flight for legacy rows, proven on real PostgreSQL 16 (`docs/evidence/D3/2026-09-26-program-same-org-keys/`). `vault.documents` and `submission_transmittals` are deliberately left out (see the migration header), and handed to D6 and PF-12.
+- **PF-08**: the anchor-delete half is done (`docs/evidence/D5-PROJECT-RETENTION/2026-09-30-legacy-hard-delete/`). `DELETE /api/projects/:id` and `DELETE /api/clients/:id` refuse to hard-delete a program's anchor row, or a project holding documents past draft. The unique anchor index, the anchor reader's `.limit(1)`, and the founder decision on auto-linking same-named legacy projects are still open.
 - **PF-15**: the CMC and eSTAR halves are done. LX-26 (the device filing path) waits on its founder decision.
   - `652e0947`: the Module 3 routes and `POST /api/cmc-changes` write only under a project of the caller's organization.
   - `369cc698`: one membership check for CMC, `project-membership.ts` `projectBelongsToTenant`, which no longer admits a deleted program.

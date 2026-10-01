@@ -3,7 +3,7 @@
  * Protocol: docs/validation/OQ-002-VAULT.md. Requirements: docs/validation/URS-002-VAULT.md.
  */
 import { createRun, helpers } from '../../lib/harness.mjs';
-import { createProgram, ingestPdf, sha256 } from '../../lib/fixtures.mjs';
+import { createProgram, ingestPdf, makePdfBuffer, sha256 } from '../../lib/fixtures.mjs';
 
 const run = await createRun({
   app: 'VAULT',
@@ -248,6 +248,43 @@ await step(
     const r = await api('GET', '/api/c2c/project-vault/00000000-0000-4000-8000-000000000000');
     expect(r.status === 404, `expected 404, got ${r.status}`, r.json);
     return 'HTTP 404';
+  },
+);
+
+await step(
+  {
+    id: 'OQ-VAULT-11',
+    urs: ['URS-VAULT-011'],
+    title: 'A new version of a document is checked in, numbered and linked by the server',
+    action:
+      'POST /api/vault/ingest with supersedesDocumentId = the OQ-VAULT-03 document and new bytes; then the same ' +
+      'bytes again against the new version; then new bytes against the OQ-VAULT-03 document again',
+    expected:
+      'HTTP 201 with version 2.0 and the OQ-VAULT-03 document code; then 409 CONTENT_ALREADY_A_VERSION; ' +
+      'then 409 VERSION_NOT_CURRENT naming 2.0',
+    dependsOn: ['OQ-VAULT-03'],
+  },
+  async ({ api, expect }) => {
+    const send = async (headId, text) => {
+      const form = new FormData();
+      form.append('file', new Blob([makePdfBuffer(text)], { type: 'application/pdf' }), 'next-version.pdf');
+      form.append('programId', state.programId);
+      form.append('documentCode', 'ignored-for-a-new-version');
+      form.append('documentTitle', state.docTitle);
+      form.append('documentType', 'PROTOCOL');
+      form.append('supersedesDocumentId', headId);
+      return api('POST', '/api/vault/ingest', form);
+    };
+    const next = await send(state.doc.id, `${state.docTitle} revision 2`);
+    expect(next.status === 201, `expected 201, got ${next.status}`, next.json);
+    expect(next.json.document.version === '2.0', `version ${next.json.document.version}, expected 2.0`, next.json.document);
+    expect(next.json.document.documentCode === state.doc.documentCode, 'document code changed', next.json.document);
+    const again = await send(next.json.document.id, `${state.docTitle} revision 2`);
+    expect(again.status === 409 && again.json?.error?.code === 'CONTENT_ALREADY_A_VERSION', `expected 409 CONTENT_ALREADY_A_VERSION, got ${again.status}`, again.json);
+    const stale = await send(state.doc.id, `${state.docTitle} revision 3`);
+    expect(stale.status === 409 && stale.json?.error?.code === 'VERSION_NOT_CURRENT', `expected 409 VERSION_NOT_CURRENT, got ${stale.status}`, stale.json);
+    expect(/2\.0/.test(stale.json.error.message ?? ''), 'the refusal does not name the current version', stale.json);
+    return `version ${next.json.document.version} (${next.json.document.id}) of ${next.json.document.documentCode}; known bytes refused; stale head refused`;
   },
 );
 

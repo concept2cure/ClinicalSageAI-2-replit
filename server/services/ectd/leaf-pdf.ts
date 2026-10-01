@@ -1,26 +1,36 @@
 /**
  * Renders one eCTD leaf as a PDF, REPRODUCIBLY.
  *
- * Reproducibility is not a nicety here, it is what makes two other things true:
+ * Reproducibility is what lets the sequence lifecycle tell what changed. A
+ * follow-up sequence carries only the leaves that differ from what is on file,
+ * and it decides that by comparing the md5 of the rendered file against the
+ * digest recorded for the same stage when the prior sequence was filed (the
+ * packager's `sourceMd5` — see below). If rendering the same content twice
+ * produced different bytes, every leaf would differ from itself, `unchanged`
+ * would be unreachable, and every follow-up would re-file the entire tree as
+ * `replace`, superseding documents at the agency that nobody edited.
  *
- *   - **The sequence lifecycle can tell what changed.** A follow-up sequence
- *     carries only the leaves that differ from what is on file, and it decides
- *     that by comparing the md5 of the rendered file against the md5 recorded
- *     when the prior sequence was filed. If rendering the same content twice
- *     produces different bytes, every leaf differs from itself, `unchanged` is
- *     unreachable, and every follow-up re-files the entire tree as `replace` —
- *     superseding documents at the agency that nobody edited.
- *   - **A signed bundle digest means something.** The Part 11 signature binds a
- *     bundle sha256. If assembling the same package twice yields two digests,
- *     the digest identifies a rendering run rather than the content that was
- *     signed, and no one can re-derive it.
+ * What this does NOT give you, stated because an earlier version of this
+ * comment claimed it:
  *
- * PDFKit defeats both by default: it stamps `/CreationDate` and `/ModDate` from
- * the wall clock at one-second granularity, and writes its own version into
- * `/Producer` and `/Creator`. So the output is pinned here on both counts —
- * the timestamps come from the CONTENT (see `contentModifiedAt`), and the
- * producer strings are ours, so that upgrading pdfkit does not re-file an
- * entire application at an agency as a side effect of a dependency bump.
+ *   - **The shipped bytes.** Where Ghostscript is installed (the production
+ *     image), the packager converts every leaf to PDF/A after this runs, and
+ *     Ghostscript stamps dates and a random document ID of its own. So the
+ *     lifecycle compares against the digest of what was HANDED to the packager,
+ *     which it records as `sourceMd5` whenever it changed the bytes; comparing
+ *     against the shipped `md5` compared two stages of one document and
+ *     re-filed every unchanged leaf in production.
+ *   - **A reproducible bundle digest.** The ZIP writer stamps every entry with
+ *     the current time, so assembling the same content twice yields two bundle
+ *     sha256s. The Part 11 signature binds the exact bytes that were sent, which
+ *     is what it must bind; it is not a content identifier.
+ *
+ * PDFKit would defeat even the leaf half by default: it stamps `/CreationDate`
+ * and `/ModDate` from the wall clock at one-second granularity, and writes its
+ * own version into `/Producer` and `/Creator`. So the output is pinned here on
+ * both counts — the timestamps come from the CONTENT (see `contentModifiedAt`),
+ * and the producer strings are ours, so that upgrading pdfkit does not re-file
+ * an entire application at an agency as a side effect of a dependency bump.
  *
  * @module server/services/ectd/leaf-pdf
  */

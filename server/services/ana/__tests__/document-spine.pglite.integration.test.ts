@@ -143,6 +143,8 @@ beforeEach(async () => {
   // organizations row for the FK, the evidence spine and the span-lineage store.
   await pg.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
   await pg.exec(`INSERT INTO organizations (id, name) VALUES (3, 'org-3') ON CONFLICT DO NOTHING;`);
+  // The revision's project, a projects row of its organization (PF-03): the store checks it first.
+  await pg.exec(`CREATE TABLE IF NOT EXISTS regulatory_programs (id uuid PRIMARY KEY, organization_id integer NOT NULL, deleted_at timestamp); CREATE TABLE IF NOT EXISTS projects (id integer PRIMARY KEY, organization_id integer NOT NULL); INSERT INTO projects (id, organization_id) VALUES (21, 3) ON CONFLICT DO NOTHING;`);
   for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql', 'migrations/20260908_span_lineage_machine_draft.sql']) {
     await pg.exec(fs.readFileSync(path.resolve(__dirname, '../../../../', rel), 'utf8'));
   }
