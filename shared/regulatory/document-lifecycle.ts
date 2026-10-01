@@ -119,6 +119,17 @@ export interface ApprovalSignature {
   boundContentHash?: string;
   /** What the electronic_signatures row's digest is a digest OF (BINDING_BASIS). */
   bindingBasis?: string;
+  /**
+   * Present when this sign-off is an Authoring signature carried to a Vault
+   * rendition (FD5 (c)): the signature it names, and the content digest that
+   * signature covers. `signatureRef` is then `authoring-sig:<signatureId>`.
+   */
+  carriedFrom?: {
+    system: 'authoring';
+    documentId: string;
+    signatureId: string;
+    signedContentHash: string;
+  };
 }
 
 // ─── Document state ───────────────────────────────────────────────────────────

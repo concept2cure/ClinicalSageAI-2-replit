@@ -145,8 +145,9 @@ export async function priorSteadyRecords(
  *
  * The record is found as readVaultLifecycles finds it (the oldest one for the
  * version). The answer is the status the transmit refusal prints beside the
- * leaf. FD5 — grandfathering vault leaves already in open sequences — is
- * undecided, so nothing is grandfathered.
+ * leaf. FD5, decided (c) by the founder 2026-10-01: nothing is grandfathered,
+ * and an Authoring approval reaches a Vault version only as this record,
+ * through authoring-approval-carryover.ts, bound to these same bytes.
  *
  * Called from the vault branch of materializeLeafSources
  * (server/services/ectd/leaf-source-resolver.ts), whose unfinalized count
@@ -190,6 +191,12 @@ export interface SignOffManifestation {
   signatureRef: string;
   /** The signer's user id: lets the page say, before anyone signs, who may not approve. */
   signerId: number | null;
+  /**
+   * 'authoring' when this sign-off is an Authoring signature carried to this
+   * version, a rendition of the content it covers (FD5 (c)). The printed name
+   * and meaning are then read from authoring_signatures.
+   */
+  carriedFrom?: 'authoring';
 }
 
 /** A version's lifecycle, as the Vault shows it. */
@@ -213,6 +220,15 @@ const esigId = (ref: string | undefined): number | null => {
   const m = /^esig:(\d+)$/.exec(ref ?? '');
   return m ? Number(m[1]) : null;
 };
+
+/** The authoring_signatures id a carried sign-off names (`authoring-sig:<uuid>`), or null. */
+const authoringSigId = (ref: string | undefined): string | null => {
+  const m = /^authoring-sig:([0-9a-f-]{36})$/i.exec(ref ?? '');
+  return m ? m[1] : null;
+};
+
+/** Authoring meanings, in the words the Vault's sign-offs use. */
+const AUTHORING_MEANING: Record<string, string> = { REVIEWER: 'REVIEWED', APPROVER: 'APPROVED', AUTHOR: 'AUTHORED' };
 
 /**
  * The lifecycle of each of `vaultIds` that has one, keyed by version id. A
@@ -248,15 +264,35 @@ export async function readVaultLifecycles(
     );
     for (const s of sig.rows) names.set(Number(s.id), { name: s.signer_name ?? null, meaning: s.signature_meaning ?? null });
   }
+  // A carried sign-off names the Authoring signature it is (FD5 (c)); read its
+  // printed name and meaning there, in this tenant.
+  const carriedRefs = rows.flatMap((r) => [authoringSigId(r.review_signature?.signatureRef), authoringSigId(r.approval_signature?.signatureRef)])
+    .filter((x): x is string => x !== null);
+  const authoringNames = new Map<string, { name: string | null; meaning: string | null }>();
+  if (carriedRefs.length > 0) {
+    const sig = await q.query(
+      `SELECT id::text AS id, signer_name, meaning FROM authoring_signatures
+        WHERE id::text = ANY($1::text[]) AND tenant_id = $2`,
+      [carriedRefs, organizationId],
+    );
+    for (const s of sig.rows) {
+      authoringNames.set(String(s.id).toLowerCase(), {
+        name: s.signer_name ?? null,
+        meaning: AUTHORING_MEANING[String(s.meaning ?? '').toUpperCase()] ?? null,
+      });
+    }
+  }
   const manifest = (s: StoredSignOff | null | undefined): SignOffManifestation | null => {
     if (!s?.signatureRef || !s.signedAt) return null;
-    const rec = names.get(esigId(s.signatureRef) ?? -1);
+    const carried = authoringSigId(s.signatureRef);
+    const rec = carried ? authoringNames.get(carried.toLowerCase()) : names.get(esigId(s.signatureRef) ?? -1);
     return {
       printedName: rec?.name ?? null,
       meaning: rec?.meaning ?? String(s.meaning ?? '').toUpperCase(),
       signedAt: s.signedAt,
       signatureRef: s.signatureRef,
       signerId: /^\d+$/.test(String(s.actor ?? '')) ? Number(s.actor) : null,
+      ...(carried ? { carriedFrom: 'authoring' as const } : {}),
     };
   };
   for (const r of rows) {
