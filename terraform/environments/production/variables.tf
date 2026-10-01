@@ -124,9 +124,17 @@ variable "connector_encryption_key" {
   sensitive = true
 }
 
+# OpenAI only when a tenant's Order Form elects it (ADR-0014 §1); validated in
+# terraform/stack.
+variable "openai_enabled" {
+  type    = bool
+  default = false
+}
+
 variable "openai_api_key" {
   type      = string
   sensitive = true
+  default   = ""
 }
 
 # Regulatory drafting's provider; validated in terraform/stack.
@@ -175,4 +183,10 @@ variable "sentry_dsn" {
 variable "platform_owner_emails" {
   description = "The platform owner(s), by password sign-in address, lower case (the stack's variable says what they are given)."
   type        = list(string)
+}
+
+variable "db_credentials_rotation" {
+  type        = string
+  default     = "initial"
+  description = "Rotation marker for the database passwords. Change it (e.g. to the date) to rotate both; apply, then deploy at once. See terraform/stack/variables.tf."
 }

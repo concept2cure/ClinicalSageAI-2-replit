@@ -170,6 +170,10 @@ interface AnaTurnProps {
     onAsk: (text: string) => void;
     fireToast: FireToast;
     liveDrive?: OwnedSurfaceViewProps['liveDrive'];
+    /** The pane beside the conversation the expanded editor renders into. */
+    paneEl?: HTMLElement | null;
+    /** Bumped when an AnA turn ends, so the canvas re-reads the record. */
+    refreshKey?: number;
   };
 }
 
@@ -245,6 +249,8 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas }: Ana
             onAsk={canvas.onAsk}
             fireToast={canvas.fireToast}
             liveDrive={canvas.liveDrive}
+            paneEl={canvas.paneEl}
+            refreshKey={canvas.refreshKey}
           />
         )}
         {turn.links && (
@@ -771,6 +777,18 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
   /* The one document canvas expanded into the editor, by document id. One
      at a time: the expanded canvas takes the conversation's full width. */
   const [expandedDocId, setExpandedDocId] = useState<string | null>(null);
+  /* The pane beside the conversation that an expanded canvas renders its
+     editor into (2026-10-01). Always mounted, hidden while no canvas is open,
+     so a workbench portalled into it keeps its state across close and reopen. */
+  const [canvasPaneEl, setCanvasPaneEl] = useState<HTMLDivElement | null>(null);
+  /* Counts AnA turns as they settle. Every canvas re-reads its document on a
+     new value, so a section AnA revised in that turn is on the card. */
+  const [turnsSettled, setTurnsSettled] = useState(0);
+  const wasStreamingRef = useRef(false);
+  useEffect(() => {
+    if (wasStreamingRef.current && !anaChat.isStreaming) setTurnsSettled(n => n + 1);
+    wasStreamingRef.current = anaChat.isStreaming;
+  }, [anaChat.isStreaming]);
   /* The side column — AnA's progress over the governed outputs — is the
      progress dock on this page: one shared show/hide memory with every other
      host (workDock.ts), toggled by the chip in the header, closed from inside
@@ -803,6 +821,16 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
   const prefillComposer = (text: string) => {
     setDraft(text);
     draftRef.current?.focus();
+  };
+  /* Beside the conversation, an ask from the editor lands in the composer in
+     view. Too narrow for two columns the conversation is hidden while the
+     editor is open (authoring-v2.css), so the ask closes the editor first:
+     the prefilled message is then on screen, never typed behind the document. */
+  const canvasAsk = (text: string) => {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(max-width: 1100px)').matches) {
+      setExpandedDocId(null);
+    }
+    prefillComposer(text);
   };
   /* Scoped to the open project so extracted text lands in THAT project's
      memory, exactly as the shell composer and ProjectHome do. Null when no
@@ -1056,7 +1084,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
         </div>
       </div>
 
-      <div className="ct-main">
+      <div className="ct-main" data-canvas-open={expandedDocId ? 'true' : undefined}>
         <div className="ct-conv">
           <div className="ct-scroll" ref={scrollRef} onScroll={onScroll}>
             <div className="ct-col">
@@ -1097,9 +1125,11 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                       conversationId: anaChat.threadId ?? (isNew || isCurrent ? null : sel.id),
                       expanded: expandedDocId === t.authoringDoc.docId,
                       onExpandedChange: (open) => setExpandedDocId(open ? t.authoringDoc!.docId : null),
-                      onAsk: prefillComposer,
+                      onAsk: canvasAsk,
                       fireToast,
                       liveDrive,
+                      paneEl: canvasPaneEl,
+                      refreshKey: turnsSettled,
                     } : undefined}
                   />
                 )
@@ -1184,14 +1214,21 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
           </div>
         </div>
 
+        {/* The document being built, beside the conversation (2026-10-01). An
+            expanded canvas portals the one editor in here, so the person edits
+            with AnA's answers and the composer still in view. Empty and hidden
+            until a canvas opens; each canvas's region keeps its own label. */}
+        <div className="ct-canvas-pane" ref={setCanvasPaneEl} hidden={!expandedDocId} data-testid="ct-canvas-pane" />
+
         {/* The side column: AnA's live work above the governed outputs. The
             dock is the same component the shell rail mounts — progress, queue,
             tools, outputs, context. Hidden, the column is not rendered at all,
             so the conversation takes the full width rather than the width
             minus a stub. `data-artifacts` lets the stylesheet cap the dock's
             height only when there is something below it to make room for. */}
-        {/* Not drawn while a document canvas is expanded: the editor takes
-            the conversation's full width, and its own rails are on screen. */}
+        {/* Not drawn while a document canvas is expanded: the editor's pane
+            takes that room beside the conversation, and its own rails are on
+            screen. */}
         {!panelCollapsed && !expandedDocId && (
           <div className="ct-side" id={dock.panelId} data-artifacts={artifacts.length > 0 ? 'true' : 'false'}>
             <div className="ct-side-work">

@@ -64,9 +64,14 @@ locals {
   db_name = "concept2cure_ri"
 }
 
+# The two database passwords rotate by changing var.db_credentials_rotation
+# (P1-11, INF-18): a new value replaces both on the next apply, and the deploy
+# that follows re-aligns app_service (deploy-migrate) and rolls every task onto
+# the new secrets.
 resource "random_password" "db_master" {
   length  = 40
   special = false
+  keepers = { rotation = var.db_credentials_rotation }
 }
 
 # First-run setup's secret (server/routes/setup.ts): in production
@@ -82,6 +87,7 @@ resource "random_password" "setup_token" {
 resource "random_password" "db_app_service" {
   length  = 40
   special = false
+  keepers = { rotation = var.db_credentials_rotation }
 }
 
 locals {
@@ -92,17 +98,29 @@ locals {
 
 # ── Secrets Manager ─────────────────────────────────────────────────────────
 
+# OpenAI's key is stored only when a tenant elected OpenAI (var.openai_enabled;
+# P0-11, ADR-0014 §1); otherwise the secret does not exist and no task is given
+# OPENAI_API_KEY. The secret and the container entry read the same map, so they
+# cannot disagree.
+locals {
+  openai_secret = {
+    for k, v in {
+      openai_api_key = {
+        description = "OpenAI API key (a tenant's Order Form elects OpenAI)"
+        value       = var.openai_api_key
+      }
+    } : k => v if var.openai_enabled
+  }
+}
+
 module "secrets" {
-  source = "../modules/secrets"
-  prefix = "c2c/${var.environment}"
-  secrets = {
+  source     = "../modules/secrets"
+  prefix     = "c2c/${var.environment}"
+  kms_key_id = aws_kms_key.secrets.arn
+  secrets = merge(local.openai_secret, {
     jwt_secret = {
       description = "JWT signing secret"
       value       = var.jwt_secret
-    }
-    openai_api_key = {
-      description = "OpenAI API key"
-      value       = var.openai_api_key
     }
     anthropic_api_key = {
       description = "Anthropic API key (regulatory drafting: the approved high-risk models)"
@@ -160,7 +178,7 @@ module "secrets" {
       description = "SMTP password (login OTP delivery)"
       value       = var.smtp_pass
     }
-  }
+  })
   tags = var.tags
 }
 
@@ -173,6 +191,13 @@ resource "terraform_data" "boot_contract" {
       # draft that carries PII/PHI is refused per request on a "ready" deployment.
       condition     = contains(try(keys(jsondecode(var.ai_provider_placement_approvals)), []), "anthropic")
       error_message = "ai_provider_placement_approvals must name \"anthropic\", the provider regulatory drafting runs on (anthropic_api_key)."
+    }
+    # OpenAI is provisioned exactly when a tenant elected it (P0-11): a key with no
+    # election would be held for nobody; an election with no key leaves the
+    # gateway's OpenAI provider off while the Order Form says it is on.
+    precondition {
+      condition     = var.openai_enabled == (length(trimspace(var.openai_api_key)) > 0)
+      error_message = "openai_enabled and openai_api_key go together: set both when a tenant's Order Form elects OpenAI (DPA Annex III), and neither otherwise."
     }
     precondition {
       condition     = var.refresh_token_secret != var.jwt_secret
@@ -217,6 +242,12 @@ locals {
     { name = "AUDIT_TRAIL_ENABLED", value = "true" },
     { name = "AUDIT_REQUIRE_ENFORCE", value = "true" },
     { name = "AI_SENSITIVE_DATA_POLICY_MODE", value = "enforce" },
+    # Database-level audit must be recording: deploy-migrate (a task derived
+    # from this definition) refuses to roll services otherwise. It records what
+    # the application's own trail cannot: statements that never went through
+    # the application (scripts/db/database-audit.mjs; the RDS module preloads
+    # pgaudit).
+    { name = "DB_AUDIT_REQUIRED", value = "pgaudit" },
     { name = "AI_PROVIDER_PLACEMENT_APPROVALS", value = var.ai_provider_placement_approvals },
     # Reset and invitation links are built on APP_URL and never on the Host
     # header. The public origin is the CloudFront custom domain.
@@ -273,7 +304,7 @@ locals {
 
   # What every container of this image needs to boot. The API and the worker
   # run the same image and the same import-time refusals, so they share it.
-  boot_secrets = [
+  boot_secrets = concat([
     { name = "DATABASE_URL", value_from = module.secrets.secret_arns["database_url"] },
     { name = "APP_DATABASE_URL", value_from = module.secrets.secret_arns["app_database_url"] },
     { name = "JWT_SECRET", value_from = module.secrets.secret_arns["jwt_secret"] },
@@ -284,11 +315,13 @@ locals {
     { name = "AUDIT_EXPORT_SIGNING_KEY", value_from = module.secrets.secret_arns["audit_export_signing_key"] },
     { name = "AUDIT_ATTESTATION_KEY", value_from = module.secrets.secret_arns["audit_attestation_key"] },
     { name = "CONNECTOR_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["connector_encryption_key"] },
-    { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
     { name = "ANTHROPIC_API_KEY", value_from = module.secrets.secret_arns["anthropic_api_key"] },
     { name = "SMTP_USER", value_from = module.secrets.secret_arns["smtp_user"] },
     { name = "SMTP_PASS", value_from = module.secrets.secret_arns["smtp_pass"] },
-  ]
+    ], [
+    # Present exactly when the secret is: only when a tenant elected OpenAI.
+    for k in keys(local.openai_secret) : { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns[k] }
+  ])
 }
 
 # Optional error reporting (server/utils/sentry.ts): absent rather than empty
@@ -313,6 +346,7 @@ module "rds" {
   multi_az              = var.rds_multi_az
   backup_retention_days = var.rds_backup_retention_days
   deletion_protection   = var.rds_deletion_protection
+  kms_key_id            = aws_kms_key.database.arn
   tags                  = var.tags
 }
 
@@ -367,6 +401,8 @@ module "ecs" {
   worker_desired_count = var.worker_desired_count
 
   secret_arns = module.secrets.secret_arns_list
+  # database_keys.tf: the execution role decrypts the secrets through this key.
+  secrets_kms_key_arn = aws_kms_key.secrets.arn
   # Not the frontend bucket: CloudFront serves the SPA from it and the deploy
   # role publishes it. A task that could write it could rewrite the site every
   # user loads (security plan P0-15, INF-03; tests/boot_contract.tftest.hcl).

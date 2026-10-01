@@ -1,0 +1,15 @@
+{
+  "name": "P0-11 round 1, as filed: \"Replace the last row of Annex III, and add a sentence under the table\" (README lines 103-108 before the fix round)",
+  "edits": [
+    {
+      "op": "replaceLastAnnexIIIRow",
+      "where": "the last row of Annex III",
+      "with": "| OpenAI, L.L.C. | LLM inference, as a fallback lane, for a tenant whose Order Form elects it | United States (global API) | **Not provisioned unless a tenant's Order Form elects it.** Where one has, the deployment holds an OpenAI key and the gateway still refuses every request from any organization that has not elected OpenAI, before dispatch. Not approved for high-risk regulatory drafting. |"
+    },
+    {
+      "op": "addUnderAnnexIIITable",
+      "where": "under the Annex III table",
+      "text": "*Anthropic, PBC is the only model subprocessor provisioned in every deployment. No other model provider receives Customer Data unless that Customer's Order Form elects it. Moonshot AI (Kimi) is not available in production for any Customer.*"
+    }
+  ]
+}

@@ -54,7 +54,11 @@ SELECT ou.user_id,
        ou.role AS org_role,
        ou.persona,
        u.status AS account_status,
-       CASE WHEN u.mfa_enabled AND u.mfa_method = 'totp' THEN 'authenticator_app' ELSE 'emailed_code' END AS mfa_posture,
+       CASE
+         WHEN u.password_hash LIKE 'saml:%' OR u.password_hash LIKE 'scim:%' THEN 'Identity provider (not verified by the platform)'
+         WHEN u.mfa_enabled AND u.mfa_method = 'totp' THEN 'Authenticator app'
+         ELSE 'Emailed code'
+       END AS mfa_posture,
        ${isoNaiveUtc('u.mfa_verified_at')} AS authenticator_enrolled_at,
        CASE WHEN json_typeof(u.mfa_backup_codes) = 'array' THEN json_array_length(u.mfa_backup_codes) END AS recovery_codes_remaining,
        ${isoNaiveUtc('u.locked_until')} AS locked_until,
@@ -86,13 +90,19 @@ async function run(ctx: RunContext): Promise<Record<string, SectionResult>> {
   const currentState =
     'Organisation role, persona, platform roles, account status, second factor, recovery codes and lock are read as they are at generation time; none of them has a recorded history to read a past value from.';
   const times = naiveUtcNote('Membership, second-factor enrolment, lock and password-change times');
+  /* Reporting review 2026-10-01 (HONEST-STATE-9): every account without an
+     authenticator read 'emailed_code', including accounts created by single
+     sign-on or SCIM, which have no password here and are never asked for a
+     code by the platform. */
+  const secondFactor =
+    'Second factor is the one password sign-in asks for. An account created by single sign-on or SCIM has no password here and signs in through the organisation\'s identity provider; the platform does not see whether that provider asked for a second factor. A member with a password who also signs in through the identity provider is not asked for the platform\'s second factor on that path.';
   return {
-    members: { ...members, notes: [currentState, times] },
+    members: { ...members, notes: [currentState, secondFactor, times] },
     privileged: {
       rows: members.rows.filter(isPrivileged),
       // Derived from the members list: incomplete exactly when that list is.
       truncated: members.truncated,
-      notes: ['Owners, admins and managers of this organisation, and anyone holding a platform role.', currentState, times],
+      notes: ['Owners, admins and managers of this organisation, and anyone holding a platform role.', currentState, secondFactor, times],
     },
   };
 }

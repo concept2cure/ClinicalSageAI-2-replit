@@ -37,10 +37,11 @@ vi.mock('../surfaces/AuthoringPlaceIntoFiling', () => ({
 }));
 
 const chatMessages: { current: AnaChatMessage[] } = { current: [] };
+const chatStreaming = { current: false };
 vi.mock('../../components/ana/useAnaChat', () => ({
   useAnaChat: () => ({
     messages: chatMessages.current,
-    isStreaming: false,
+    isStreaming: chatStreaming.current,
     isLoadingThread: false,
     loadThread: vi.fn().mockResolvedValue(undefined),
     send: vi.fn(),
@@ -154,6 +155,59 @@ describe('ConversationThread — the document canvas', () => {
     expect(document.querySelector('.dcv-workbench .ed')).not.toBeNull();
     // The composer is still there, below.
     expect(screen.getByLabelText('Reply to AnA')).toBeTruthy();
+  });
+});
+
+describe('ConversationThread — the editor opens beside the conversation (2026-10-01)', () => {
+  /* The founder's ask: AnA builds the document and keeps talking with the
+     client while it builds, as Claude does. Inline, the expanded editor filled
+     the thread's width at viewport height, so AnA's replies scrolled away above
+     it and the person edited with the conversation out of sight. Beside it,
+     the conversation keeps its column, its answers and its composer. */
+  it('mounts the workbench in a pane beside the conversation, and the conversation stays', async () => {
+    chatMessages.current = [USER, DRAFTED];
+    render(<ConversationThread {...OWNED_PROPS} />);
+    const open = await screen.findByTestId('dc-open-editor');
+    await vi.waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
+    open.click();
+    const expandedRegion = await screen.findByTestId('dc-expanded');
+
+    const pane = document.querySelector('.ct-canvas-pane') as HTMLElement | null;
+    expect(pane, 'a pane beside the conversation holds the editor').not.toBeNull();
+    expect(pane!.contains(expandedRegion)).toBe(true);
+    expect(pane!.hidden).toBe(false);
+    expect(document.querySelector('.ct-main')?.getAttribute('data-canvas-open')).toBe('true');
+
+    const conv = document.querySelector('.ct-conv') as HTMLElement;
+    expect(conv.contains(expandedRegion)).toBe(false);
+    // The answer, the card that opened the editor, and the composer all stay.
+    expect(conv.querySelector('.ct-ana-text')).not.toBeNull();
+    const card = conv.querySelector('.dcv-card') as HTMLElement;
+    expect(card.hidden).toBe(false);
+    expect(within(card).getByTestId('dc-open-editor').getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByLabelText('Reply to AnA')).toBeTruthy();
+
+    // Back closes the pane; the workbench stays mounted in it, hidden.
+    screen.getByTestId('dc-back').click();
+    await vi.waitFor(() => expect(document.querySelector('.ct-main')?.getAttribute('data-canvas-open')).toBeNull());
+    expect(pane!.hidden).toBe(true);
+    expect(pane!.querySelector('.dcv-workbench .ed')).not.toBeNull();
+  });
+});
+
+describe('ConversationThread — the canvas keeps up with AnA (2026-10-01)', () => {
+  it('re-reads the document when AnA\u2019s turn ends', async () => {
+    chatMessages.current = [USER, DRAFTED];
+    chatStreaming.current = true;
+    const { rerender } = render(<ConversationThread {...OWNED_PROPS} />);
+    await screen.findByTestId('document-canvas');
+    const reads = () => apiRequest.mock.calls.filter(c => c[1] === `/api/authoring/docs/${DOC}/sections`).length;
+    await vi.waitFor(() => expect(reads()).toBe(1));
+
+    chatStreaming.current = false; // the turn settles
+    rerender(<ConversationThread {...OWNED_PROPS} />);
+    await vi.waitFor(() => expect(reads()).toBe(2));
+    chatStreaming.current = false;
   });
 });
 

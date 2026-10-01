@@ -321,12 +321,23 @@ variable "platform_owner_emails" {
   }
 }
 
+# OpenAI is a lane a tenant elects in writing (ADR-0014 §1; DPA Annex III;
+# security plan P0-11, DP-07). The gateway refuses it, before dispatch, for
+# every organisation that has not elected it (P1-45), so a key held for no
+# elected tenant serves nobody; it is provisioned exactly when one has.
+variable "openai_enabled" {
+  type        = bool
+  default     = false
+  description = "True when a tenant's Order Form elects OpenAI; then openai_api_key is required and provisioned."
+}
+
 variable "openai_api_key" {
   type      = string
   sensitive = true
+  default   = ""
   validation {
-    condition     = startswith(var.openai_api_key, "sk-") && !startswith(var.openai_api_key, "sk-ant-")
-    error_message = "openai_api_key must be an OpenAI API key (sk-…, not an Anthropic sk-ant- key): Vault search embeds with it."
+    condition     = var.openai_api_key == "" || (startswith(var.openai_api_key, "sk-") && !startswith(var.openai_api_key, "sk-ant-"))
+    error_message = "openai_api_key must be empty or an OpenAI API key (sk-…, not an Anthropic sk-ant- key)."
   }
 }
 
@@ -416,5 +427,22 @@ variable "sentry_dsn" {
   validation {
     condition     = var.sentry_dsn == "" || startswith(var.sentry_dsn, "https://")
     error_message = "sentry_dsn must be empty or an https:// DSN."
+  }
+}
+
+variable "db_credentials_rotation" {
+  type        = string
+  description = <<-EOT
+    Rotation marker for the two database passwords (the RDS master and app_service).
+    Changing it — to the date of the change, say "2027-01" — generates both passwords
+    anew on the next apply: RDS takes the new master password, the secrets take both,
+    and the deploy that must follow re-aligns app_service and rolls every task onto the
+    new secrets. A deliberate, recorded change rather than a timer: running tasks hold
+    the old values until that deploy, so the apply and the deploy go together, in a
+    maintenance window. The runbook is docs/evidence/W2/2026-10-01-p1-11-db-audit-keys/.
+  EOT
+  validation {
+    condition     = length(trimspace(var.db_credentials_rotation)) > 0
+    error_message = "db_credentials_rotation must name the current rotation, e.g. \"initial\" or the date of the last one."
   }
 }

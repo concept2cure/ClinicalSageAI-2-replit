@@ -77,6 +77,19 @@ mock_provider "aws" {
 
 # Throwaway values of the right SHAPE, for production's settings. Nothing here
 # is a real credential.
+# The database tier's two keys get distinct ARNs for every run (file level: runs
+# share state, so a per-run override of a key an earlier run created is
+# ignored). Without them, assertions that RDS uses the database key and the
+# secrets the secrets key cannot tell the two apart.
+override_resource {
+  target = aws_kms_key.database
+  values = { arn = "arn:aws:kms:us-east-1:123456789012:key/database", key_id = "database" }
+}
+override_resource {
+  target = aws_kms_key.secrets
+  values = { arn = "arn:aws:kms:us-east-1:123456789012:key/secrets", key_id = "secrets" }
+}
+
 variables {
   environment                     = "production"
   region                          = "us-east-1"
@@ -86,6 +99,7 @@ variables {
   azs                             = ["us-east-1a", "us-east-1b"]
   rds_instance_class              = "db.t3.medium"
   rds_engine_version              = "15"
+  db_credentials_rotation         = "initial"
   rds_allocated_storage           = 50
   rds_max_allocated_storage       = 500
   rds_multi_az                    = true
@@ -104,7 +118,6 @@ variables {
   domain_aliases                  = ["app.example.com"]
   cloudfront_origin_secret        = "c2cTestOriginSecret_0123456789abcdef"
   create_github_oidc_provider     = true
-  openai_api_key                  = "sk-test-openai-0123456789"
   anthropic_api_key               = "sk-ant-test-0123456789"
   jwt_secret                      = "jwt-0123456789abcdef0123456789abcdef"
   refresh_token_secret            = "refresh-0123456789abcdef0123456789abcdef"
@@ -366,12 +379,14 @@ run "renders_the_boot_contract" {
     condition = nonsensitive(alltrue(flatten([
       for defs in [module.ecs.api_container, module.ecs.worker_container] : [
         for e in defs.environment : [
+          # An unset optional key (openai_api_key, no tenant elected OpenAI) is "",
+          # which every string contains; it is not a secret to look for.
           for secret in [
             random_password.db_master.result, random_password.db_app_service.result,
             var.jwt_secret, var.refresh_token_secret, var.mfa_encryption_key, var.audit_hmac_key,
             var.audit_hmac_secret, var.audit_export_signing_key, var.audit_attestation_key, var.connector_encryption_key, var.openai_api_key, var.anthropic_api_key,
             var.smtp_user, var.smtp_pass,
-          ] : !strcontains(e.value, secret)
+          ] : !strcontains(e.value, secret) if secret != ""
         ]
       ]
     ])))
@@ -908,17 +923,59 @@ run "refuses_placement_approvals_that_omit_the_drafting_provider" {
   expect_failures = [terraform_data.boot_contract]
 }
 
-# Vault search embeds with OpenAI by default (server/services/ai-gateway/embeddings).
-# An empty key deployed, and the Vault then had no embeddings and searched
-# nothing, with no error at boot (D1, docs/evidence/W2/2026-10-01-inventory-gaps/).
-run "refuses_an_empty_openai_key" {
+# OpenAI is a lane a tenant elects in writing (ADR-0014 §1; DPA Annex III; P0-11).
+# The gateway refuses it for every organisation that has not elected it (P1-45),
+# so the key is provisioned exactly when one has: absent by default, a secret
+# when elected, and the two settings go together.
+run "openai_is_absent_unless_a_tenant_elected_it" {
+  command = apply
+
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      !contains([for e in defs.secrets : e.name], "OPENAI_API_KEY") &&
+      !contains([for e in defs.environment : e.name], "OPENAI_API_KEY")
+    ]) && !contains(keys(module.secrets.secret_arns), "openai_api_key")
+    error_message = "With no tenant electing OpenAI, no OpenAI key is stored and no container is given OPENAI_API_KEY."
+  }
+}
+
+run "openai_is_a_secret_when_a_tenant_elected_it" {
+  command = apply
+
+  variables {
+    openai_enabled = true
+    openai_api_key = "sk-test-openai-0123456789"
+  }
+
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      one([for e in defs.secrets : e.valueFrom if e.name == "OPENAI_API_KEY"]) == module.secrets.secret_arns["openai_api_key"] &&
+      !contains([for e in defs.environment : e.name], "OPENAI_API_KEY")
+    ])
+    error_message = "An elected OpenAI key reaches each container as a secret, never in its plain environment."
+  }
+}
+
+run "refuses_an_openai_election_without_a_key" {
   command = plan
 
   variables {
-    openai_api_key = ""
+    openai_enabled = true
   }
 
-  expect_failures = [var.openai_api_key]
+  expect_failures = [terraform_data.boot_contract]
+}
+
+run "refuses_an_openai_key_without_an_election" {
+  command = plan
+
+  variables {
+    openai_api_key = "sk-test-openai-0123456789"
+  }
+
+  expect_failures = [terraform_data.boot_contract]
 }
 
 run "refuses_an_anthropic_key_as_the_openai_key" {
@@ -1001,4 +1058,106 @@ run "refuses_a_pinned_rds_minor_version" {
     rds_engine_version = "15.4"
   }
   expect_failures = [var.rds_engine_version]
+}
+
+# P1-11 / INF-13 (W2 / D1): the parameter group set pgaudit.log from the start,
+# and pgaudit recorded nothing, because RDS runs it only when it is preloaded.
+# Preloading replaces RDS's default list, so pg_stat_statements must stay in it.
+# Every task carries DB_AUDIT_REQUIRED=pgaudit, so deploy-migrate (which runs as
+# a task derived from the API's) refuses to roll services onto a database that
+# is not recording (scripts/db/database-audit.mjs).
+run "database_level_audit_is_loaded_and_required" {
+  command = plan
+
+  assert {
+    condition     = contains([for l in split(",", lookup(module.rds.parameters, "shared_preload_libraries", "")) : trimspace(l)], "pgaudit")
+    error_message = "pgaudit must be in shared_preload_libraries: pgaudit.log alone records nothing on RDS."
+  }
+  assert {
+    condition     = contains([for l in split(",", lookup(module.rds.parameters, "shared_preload_libraries", "")) : trimspace(l)], "pg_stat_statements")
+    error_message = "Setting shared_preload_libraries replaces RDS's default; pg_stat_statements must stay loaded."
+  }
+  assert {
+    condition     = !contains(["", "none"], lower(lookup(module.rds.parameters, "pgaudit.log", "")))
+    error_message = "pgaudit.log must name the classes to record."
+  }
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      one([for e in defs.environment : e.value if e.name == "DB_AUDIT_REQUIRED"]) == "pgaudit"
+    ])
+    error_message = "Every task must carry DB_AUDIT_REQUIRED=pgaudit, so the deploy refuses a database that is not recording."
+  }
+}
+
+# P1-11 / INF-14, INF-18 (W2 / D1): the database's storage, its Performance
+# Insights data (which holds query text) and every secret the tasks read were
+# under AWS-managed keys. Unset, the mock invents a random string for these
+# computed attributes, so the assertions require an ARN in this account.
+run "the_database_tier_is_under_customer_managed_keys" {
+  command = apply
+
+  assert {
+    condition     = startswith(coalesce(module.rds.storage_kms_key_id, "none"), "arn:aws:kms:us-east-1:123456789012:key/")
+    error_message = "RDS storage (and so its snapshots and backups) must be on a customer-managed key, not aws/rds: ${coalesce(module.rds.storage_kms_key_id, "none")}"
+  }
+  assert {
+    condition     = module.rds.performance_insights_kms_key_id == module.rds.storage_kms_key_id
+    error_message = "Performance Insights holds query text; it must be on the database's key."
+  }
+  assert {
+    condition = alltrue([
+      for name, key in module.secrets.kms_key_ids :
+      startswith(coalesce(key, "none"), "arn:aws:kms:us-east-1:123456789012:key/")
+    ])
+    error_message = "Every secret must be on a customer-managed key, not aws/secretsmanager."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(module.ecs.execution_secrets_policy).Statement :
+      contains(flatten([st.Action]), "kms:Decrypt")
+      && contains(flatten([st.Resource]), one(distinct(values(module.secrets.kms_key_ids))))
+      && try(st.Condition.StringEquals["kms:ViaService"], "") == "secretsmanager.us-east-1.amazonaws.com"
+    ])
+    error_message = "The execution role must be able to decrypt the secrets' key, through Secrets Manager only; otherwise no task can start."
+  }
+}
+
+# The same, by identity: each key carries its own ARN (the file-level overrides
+# above; under the shared mock ARN the database key wired where the secrets key
+# belongs would pass). And the two database passwords rotate on the marker.
+run "each_key_is_used_where_it_belongs_and_the_passwords_rotate_on_the_marker" {
+  command = apply
+
+  assert {
+    condition     = module.rds.storage_kms_key_id == aws_kms_key.database.arn && module.rds.performance_insights_kms_key_id == aws_kms_key.database.arn
+    error_message = "RDS storage and Performance Insights must be on the database key."
+  }
+  assert {
+    condition     = alltrue([for k, v in module.secrets.kms_key_ids : v == aws_kms_key.secrets.arn])
+    error_message = "Every secret must be on the secrets key."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(module.ecs.execution_secrets_policy).Statement :
+      contains(flatten([st.Action]), "kms:Decrypt") && flatten([st.Resource]) == [aws_kms_key.secrets.arn]
+    ])
+    error_message = "The execution role decrypts with the secrets key, and only that key."
+  }
+  assert {
+    condition     = aws_kms_key.database.enable_key_rotation && aws_kms_key.secrets.enable_key_rotation
+    error_message = "Both keys rotate annually."
+  }
+  assert {
+    condition     = random_password.db_master.keepers.rotation == var.db_credentials_rotation && random_password.db_app_service.keepers.rotation == var.db_credentials_rotation
+    error_message = "Both database passwords must be replaced when the rotation marker changes."
+  }
+}
+
+run "refuses_an_empty_rotation_marker" {
+  command = plan
+  variables {
+    db_credentials_rotation = " "
+  }
+  expect_failures = [var.db_credentials_rotation]
 }

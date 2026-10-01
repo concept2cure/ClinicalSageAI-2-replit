@@ -24,13 +24,25 @@ import { fileURLToPath } from 'node:url';
 // A pool bound to whichever PGlite instance the current test created, so
 // createSource can be exercised against a spine-only schema.
 let active: PGlite | null = null;
+const activeQuery = async (sql: string, params?: unknown[]) => {
+  const r = await active!.query(sql, params as unknown[]);
+  return { rows: r.rows as unknown[], rowCount: (r.rows as unknown[]).length };
+};
+// `connect` too: a data-room capture's INSERT and its chained row run in one transaction (VR-16b).
 vi.mock('../../../db', () => ({
   pool: {
-    query: async (sql: string, params?: unknown[]) => {
-      const r = await active!.query(sql, params as unknown[]);
-      return { rows: r.rows as unknown[], rowCount: (r.rows as unknown[]).length };
-    },
+    query: (sql: string, params?: unknown[]) => activeQuery(sql, params),
+    connect: async () => ({ query: (sql: string, params?: unknown[]) => activeQuery(sql, params), release: () => {} }),
   },
+}));
+
+// A data-room capture writes its chained audit row in the same transaction
+// (VR-16b). The chain itself is exercised on PostgreSQL
+// (tests/db/data-room-capture-provenance.dbtest.ts); here the writer is
+// captured, so the spine-only schema needs no audit_logs table.
+vi.mock('../../auditService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../auditService')>()),
+  writeChainedAuditRow: async () => undefined,
 }));
 
 const here = path.dirname(fileURLToPath(import.meta.url));

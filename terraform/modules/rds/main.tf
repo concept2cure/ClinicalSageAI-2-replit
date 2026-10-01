@@ -54,8 +54,10 @@ resource "aws_db_instance" "this" {
   maintenance_window      = "Mon:04:00-Mon:05:00"
 
   performance_insights_enabled = true
-  monitoring_interval          = 60
-  monitoring_role_arn          = aws_iam_role.rds_monitoring.arn
+  # Performance Insights keeps query text; on the instance's own key, not aws/rds.
+  performance_insights_kms_key_id = var.kms_key_id
+  monitoring_interval             = 60
+  monitoring_role_arn             = aws_iam_role.rds_monitoring.arn
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
@@ -101,6 +103,19 @@ resource "aws_db_parameter_group" "this" {
   parameter {
     name  = "log_statement"
     value = "ddl"
+  }
+
+  # pgaudit runs only when preloaded (2026-10-01, security audit INF-13, plan
+  # P1-11). pgaudit.log below was set from the start and recorded nothing for
+  # want of this. A static parameter: it takes effect at boot, which a new
+  # instance does after this group is attached. It replaces RDS's default list,
+  # so pg_stat_statements is named too. deploy-migrate creates the extension and
+  # refuses to roll services when DB_AUDIT_REQUIRED=pgaudit and it is not
+  # recording (scripts/db/database-audit.mjs).
+  parameter {
+    name         = "shared_preload_libraries"
+    value        = "pg_stat_statements,pgaudit"
+    apply_method = "pending-reboot"
   }
 
   parameter {
