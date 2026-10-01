@@ -109,17 +109,14 @@ async function loadReviewer() {
   }
 }
 
-// ---------- Seed data -- loaded lazily for overview defaults ----------------
-let seedData: any = null;
-function getSeedData(): any {
-  if (seedData) return seedData;
-  try {
-    seedData = require('../src/services/manufacturing/seed.json');
-  } catch {
-    seedData = {};
-  }
-  return seedData;
-}
+/* REMOVED 2026-10-01: the seed-data loader and server/src/services/manufacturing/seed.json.
+   The seed was an invented plant — "BioPlant A" and "FillFinish B", a mixer
+   whose PQ was never done, a bioreactor in commissioning, PPQ runs, stability
+   months and change controls. GET /ai/review took validation, process,
+   stability and change controls from it for EVERY tenant, and used the whole
+   seed when the database read failed; POST /ai/simulate-deficiency reviewed it
+   when no snapshot was posted. So the deterministic review reported findings
+   about a plant nobody owns, beside the tenant's own equipment. */
 
 export default function createManufacturingRoutes(pool: Pool): Router {
   const router = Router();
@@ -769,45 +766,42 @@ export default function createManufacturingRoutes(pool: Pool): Router {
     try {
       await loadReviewer();
 
-      // Build snapshot from DB or fall back to seed data
-      let snapshot: any;
-      try {
-        const [eqRows, batchRows, devRows] = await Promise.all([
-          pool.query(
-            `SELECT equipment_code AS id,
-                    (equipment_class IN ('BIOREACTOR','CHROMATOGRAPHY','FILTRATION','FILLING','ANALYTICAL')) AS critical,
-                    next_calibration_due AS "calibrationDue",
-                    pq_completed AS pq
-             FROM manufacturing.equipment_registry
-             WHERE status != 'DECOMMISSIONED'`
-          ),
-          pool.query(
-            `SELECT id, batch_number, status, deviation_count, deviations
-             FROM manufacturing.batch_execution_records
-             ORDER BY created_at DESC LIMIT 50`
-          ),
-          pool.query(
-            `SELECT COUNT(*) FILTER (WHERE status NOT IN ('COMPLETED','APPROVED')) AS incomplete
-             FROM manufacturing.quality_test_results`
-          ),
-        ]);
+      const orgId = requireOrgId(req, res);
+      if (!orgId) return;
 
-        snapshot = {
-          equipment: eqRows.rows.map((r: any) => ({
-            id: r.id,
-            critical: r.critical,
-            calibrationDue: r.calibrationDue,
-            pq: r.pq,
-          })),
-          validation: getSeedData().validation || { ppq: { completedRuns: 0, targetRuns: 3 } },
-          process: getSeedData().process || { cppCqaMatrix: [] },
-          ebr: { incompleteSteps: parseInt(devRows.rows[0]?.incomplete || '0', 10) },
-          stability: getSeedData().stability || { longTermMonths: 0, claimMonths: 0 },
-          changeControls: getSeedData().changeControls || [],
-        };
-      } catch {
-        snapshot = getSeedData();
-      }
+      /* The snapshot is the tenant's own records only. Validation (PPQ),
+         process (CPP/CQA), stability and change controls have no table this
+         route reads, so they are not in the snapshot and their rules do not
+         run — the response names them as not assessed. A failed read is an
+         error, never a review of something else. */
+      const [eqRows, devRows] = await Promise.all([
+        pool.query(
+          `SELECT equipment_code AS id,
+                  (equipment_class IN ('BIOREACTOR','CHROMATOGRAPHY','FILTRATION','FILLING','ANALYTICAL')) AS critical,
+                  next_calibration_due AS "calibrationDue",
+                  pq_completed AS pq
+           FROM manufacturing.equipment_registry
+           WHERE status != 'DECOMMISSIONED' AND org_id = $1`,
+          [orgId]
+        ),
+        pool.query(
+          `SELECT COUNT(*) FILTER (WHERE status NOT IN ('COMPLETED','APPROVED')) AS incomplete
+           FROM manufacturing.quality_test_results
+           WHERE org_id = $1`,
+          [orgId]
+        ),
+      ]);
+
+      const snapshot = {
+        equipment: eqRows.rows.map((r: any) => ({
+          id: r.id,
+          critical: r.critical,
+          calibrationDue: r.calibrationDue,
+          pq: r.pq,
+        })),
+        ebr: { incompleteSteps: parseInt(devRows.rows[0]?.incomplete || '0', 10) },
+      };
+      const notAssessed = ['validation', 'process', 'stability', 'changeControls'];
 
       if (reviewManufacturing) {
         const findings = await reviewManufacturing(snapshot, { useLLM: false });
@@ -816,6 +810,7 @@ export default function createManufacturingRoutes(pool: Pool): Router {
           totalFindings: findings.length,
           checkedAt: new Date().toISOString(),
           source: 'deterministic_rules',
+          notAssessed,
         });
       }
 
@@ -840,7 +835,15 @@ export default function createManufacturingRoutes(pool: Pool): Router {
     try {
       await loadReviewer();
 
-      const snapshot = req.body.snapshot || getSeedData();
+      const snapshot = req.body?.snapshot;
+      if (!snapshot || typeof snapshot !== 'object') {
+        return res.status(400).json({
+          error: {
+            code: 'MFG_SNAPSHOT_REQUIRED',
+            message: 'Post the manufacturing snapshot to simulate a deficiency letter against.',
+          },
+        });
+      }
 
       if (simulateDeficiency) {
         const result = await simulateDeficiency(snapshot, { useLLM: false });

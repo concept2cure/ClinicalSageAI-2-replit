@@ -46,16 +46,20 @@ function pushRule(findings, ruleId, { evidence = [], confidence = 0.78 } = {}) {
 
 function runDeterministicChecks(snapshot = {}) {
   const findings = [];
-  const ppq = snapshot.validation?.ppq || { completedRuns: 0, targetRuns: 3 };
+  // A rule runs only on a section the snapshot carries. PPQ used to default to
+  // { completedRuns: 0, targetRuns: 3 }, so a snapshot with no validation data
+  // was reported as "PPQ completed 0 / target 3" — a finding about runs nobody
+  // planned. Stability's 0/0 default never fired; it is made explicit too.
+  const ppq = snapshot.validation?.ppq;
   const matrix = snapshot.process?.cppCqaMatrix || [];
   const equipment = snapshot.equipment || []; // [{id, critical, calibrationDue, pq:true/false}, ...]
   const ebrIssues = snapshot.ebr?.incompleteSteps || 0;
-  const stability = snapshot.stability || { longTermMonths: 0, claimMonths: 0 };
+  const stability = snapshot.stability;
 
   // PV-101
-  if ((ppq.completedRuns ?? 0) < (ppq.targetRuns ?? 0)) {
+  if (ppq && typeof ppq.completedRuns === 'number' && typeof ppq.targetRuns === 'number' && ppq.completedRuns < ppq.targetRuns) {
     pushRule(findings, 'PV-101', {
-      evidence: [`PPQ completed ${ppq.completedRuns ?? 0} / target ${ppq.targetRuns ?? 0}`],
+      evidence: [`PPQ completed ${ppq.completedRuns} / target ${ppq.targetRuns}`],
       confidence: 0.88
     });
   }
@@ -70,7 +74,7 @@ function runDeterministicChecks(snapshot = {}) {
   }
 
   // STAB-330
-  if ((stability.longTermMonths ?? 0) < (stability.claimMonths ?? 0)) {
+  if (stability && typeof stability.longTermMonths === 'number' && typeof stability.claimMonths === 'number' && stability.longTermMonths < stability.claimMonths) {
     pushRule(findings, 'STAB-330', {
       evidence: [`Long-term data: ${stability.longTermMonths}m < claim: ${stability.claimMonths}m`],
       confidence: 0.86
@@ -117,12 +121,15 @@ function toDeficiencyLetter(findings = []) {
 }
 
 function draftApplicantResponse(deficiency) {
-  // Draft a sober, regulator-credible response stub
+  // A response STUB: the bracketed parts are the applicant's to write. It used
+  // to state "We performed an impact assessment" and commit to "completing
+  // corrective actions within 60–90 days" — work and a timeline nobody had
+  // agreed, in a document drafted for a regulator.
   return [
     `We acknowledge the Agency's comment regarding ${deficiency.section}.`,
-    `Rationale & Data: We performed an impact assessment and identified the following gaps related to "${deficiency.comment}".`,
-    `Actions & Commitments: We will ${deficiency.comment.replace(/^.*Provide:\s*/,'')}.`,
-    `Timing: We anticipate completing corrective actions within 60–90 days and will update Module 3 accordingly.`,
+    `Rationale & Data: [state the assessment performed and its results for "${deficiency.comment}"].`,
+    `Actions & Commitments: [state the actions taken or planned to ${deficiency.comment.replace(/^.*Provide:\s*/,'')}].`,
+    `Timing: [state the committed completion date and the Module 3 sections to be updated].`,
   ].join('\n');
 }
 
