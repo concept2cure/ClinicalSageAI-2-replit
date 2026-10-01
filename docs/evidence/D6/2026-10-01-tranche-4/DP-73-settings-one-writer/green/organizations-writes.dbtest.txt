@@ -1,0 +1,73 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T19:13:06.725Z","pid":29445,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T19:13:06.727Z","pid":29445,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T19:13:06.727Z","pid":29445,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/organizations-writes.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > a tenant scope cannot write another organization at the database 5ms
+{"level":40,"time":"2026-10-01T19:13:07.459Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.463Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings
+[database] Database connection successful
+
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings
+[database] Database connection successful { timestamp: '2026-10-01T19:13:07.470Z', poolSize: 1 }
+
+{"level":40,"time":"2026-10-01T19:13:07.525Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.528Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings 141ms
+{"level":40,"time":"2026-10-01T19:13:07.583Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still cannot touch another organization's settings
+[database] Database connection successful { timestamp: '2026-10-01T19:13:07.585Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-01T19:13:07.586Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.599Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.600Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.611Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.613Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.623Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.624Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":20,"time":"2026-10-01T19:13:07.626Z","pid":29445,"hostname":"vm","context":{"caller":"system:PATCH /api/organizations/90302/settings"},"msg":"[establish-tenant-scope] Nesting system scope over an existing request scope"}
+{"level":40,"time":"2026-10-01T19:13:07.663Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.665Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.671Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.672Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":20,"time":"2026-10-01T19:13:07.674Z","pid":29445,"hostname":"vm","context":{"caller":"system:PATCH /api/organizations/90302/profile"},"msg":"[establish-tenant-scope] Nesting system scope over an existing request scope"}
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still cannot touch another organization's settings 30ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's settings, and the change is really there 52ms
+{"level":30,"time":"2026-10-01T19:13:07.685Z","pid":29445,"hostname":"vm","context":{"userId":3609,"tenantId":90302,"resourceId":"90302"},"msg":"[audit-service] [AUDIT] data_modify organization"}
+{"level":40,"time":"2026-10-01T19:13:07.716Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.718Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.726Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.728Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":20,"time":"2026-10-01T19:13:07.731Z","pid":29445,"hostname":"vm","context":{"caller":"system:PATCH /api/tenant-config/90302/settings"},"msg":"[establish-tenant-scope] Nesting system scope over an existing request scope"}
+{"level":40,"time":"2026-10-01T19:13:07.769Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.771Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.778Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.780Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's profile 50ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff update another tenant's configuration through tenant-config 54ms
+ ✓ tests/db/organizations-writes.dbtest.ts > the organisation settings door writes through the one settings writer (DP-73) > a change and its chained row, with the reason, commit together 44ms
+{"level":40,"time":"2026-10-01T19:13:07.819Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.820Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.826Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.827Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+stderr | tests/db/organizations-writes.dbtest.ts > the organisation settings door writes through the one settings writer (DP-73) > a change whose row is refused is not made
+Error updating organization settings: refused by the DP-73 dbtest
+
+{"level":40,"time":"2026-10-01T19:13:07.859Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.860Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.866Z","pid":29445,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:07.867Z","pid":29445,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/organizations-writes.dbtest.ts > the organisation settings door writes through the one settings writer (DP-73) > a change whose row is refused is not made 45ms
+ ✓ tests/db/organizations-writes.dbtest.ts > the organisation settings door writes through the one settings writer (DP-73) > a partial section is laid over the stored one: a server-enforced key it does not name survives 42ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  19:13:04
+   Duration  3.68s (transform 1.34s, setup 91ms, import 2.41s, tests 839ms, environment 0ms)
+
+exit 0

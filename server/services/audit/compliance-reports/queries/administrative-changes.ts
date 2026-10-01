@@ -19,8 +19,10 @@
  *                                        targetUserId, previousRole, newRole, reason)
  *   tenant_settings_changed, tenant_settings_reset
  *                                        services/tenant/tenant-settings-writer.ts
- *                                        writeTenantSettings, for routes/tenant-config.ts
- *                                        and services/ana-platform-controller.ts (P1-49)
+ *                                        writeTenantSettings, for routes/tenant-config.ts,
+ *                                        services/ana-platform-controller.ts (P1-49) and
+ *                                        routes/organizations-routes.ts PATCH /:id/settings
+ *                                        (DP-73, with the reason on the row)
  *                                        (writeChainedAuditRow; new_values: sections,
  *                                        changedFields, and values before/after for
  *                                        security and qmp.auditTrailRetentionDays only)
@@ -32,7 +34,8 @@
  *   tenant_impersonation_attempt         middleware/enterprise-security.ts
  *   data_modify on organization / organization_settings
  *                                        routes/organizations-routes.ts (orgAdminAction
- *                                        in new_values names the change)
+ *                                        in new_values names the change): the profile,
+ *                                        and settings rows written before DP-73
  *   audit_events scim.user.*             routes/scim.ts auditScim, in the write's own
  *                                        transaction since P1-49
  *
@@ -45,9 +48,10 @@
  * Settings (verified 2026-10-01, P1-41): routes/tenant-config.ts PATCH
  * /:tenantId/settings, PATCH /:tenantId/settings/:section and POST
  * /:tenantId/settings/reset each write one chained row in the write's own
- * transaction (above); routes/organizations-routes.ts PATCH /:id/settings
- * records data_modify on organization_settings with the section names only
- * (`sections`), never values.
+ * transaction (above), and since DP-73 (2026-10-01) so does
+ * routes/organizations-routes.ts PATCH /:id/settings, through the same writer.
+ * Before that it recorded data_modify on organization_settings, section names
+ * only, after the change had committed; those rows are still read.
  *
  * @module server/services/audit/compliance-reports/queries/administrative-changes
  */
