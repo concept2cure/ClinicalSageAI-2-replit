@@ -77,7 +77,7 @@ import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from './RichSectionEditor';
-import type { SuggestionDecision } from './suggestions';
+import type { SuggestionAuthor, SuggestionDecision } from './suggestions';
 import type { CommentAnchorPayload } from './commentAnchor';
 import { citedSourceIdsInHtml } from './citationNode';
 import { captionedObjectsInHtml } from './captionNumbering';
@@ -663,6 +663,15 @@ const STATUSES = ['all', 'draft', 'in_review', 'approved', 'frozen'];
 /** The document rows the host lists — the shape GET /api/authoring/docs returns. */
 export type { AuthDoc };
 
+/** What an embedding host may do with the open section (see `embedded.onEditorBridge`). */
+export interface EditorBridge {
+  docId: string;
+  sectionCode: string;
+  sectionTitle: string;
+  /** Insert text as an attributed tracked suggestion; false when the section cannot take it. */
+  insert: (text: string, author: SuggestionAuthor) => boolean;
+}
+
 export interface DocumentWorkbenchProps {
   onNav: (id: string) => void;
   liveDrive?: OwnedSurfaceViewProps['liveDrive'];
@@ -688,7 +697,14 @@ export interface DocumentWorkbenchProps {
    *  the document canvas's bar does — so this component does not draw a
    *  second one into its crumb trail. `onBack` is still the one callback the
    *  way back runs, whoever draws the control. */
-  embedded?: { onBack: () => void; backLabel?: string; hostShowsBack?: boolean } | null;
+  embedded?: {
+    onBack: () => void;
+    backLabel?: string;
+    hostShowsBack?: boolean;
+    /** The host is told which section is open and given its suggestion door,
+     *  or null when nothing can take a suggestion (no section, or sealed). */
+    onEditorBridge?: (bridge: EditorBridge | null) => void;
+  } | null;
   /** Surface-action bus id to register under, or null to register nothing —
    *  the canvas must not claim the bus while ConversationThread is on. */
   surfaceActionId?: string | null;
@@ -1025,6 +1041,28 @@ export function DocumentWorkbench({
     activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
   const dirty = activeSection != null && editorDirty && !docSealed;
   const docScrollRef = useRef<HTMLDivElement | null>(null);
+
+  /* Embedded in the conversation, this workbench draws no AnA rail of its
+     own, and that rail held the one control that put AnA's text into the
+     section ("Insert into … as tracked suggestion"). So it hands the host the
+     same door instead: the open section, and an insert through the editor's
+     `insertSuggestion`, which refuses honestly when the section cannot take
+     it (2026-10-01, the canvas → editor work). */
+  const onEditorBridge = embedded?.onEditorBridge;
+  useEffect(() => {
+    if (!onEditorBridge) return undefined;
+    if (!activeSection || !activeDocId || docSealed) {
+      onEditorBridge(null);
+      return undefined;
+    }
+    onEditorBridge({
+      docId: activeDocId,
+      sectionCode: activeSection.code,
+      sectionTitle: activeSection.title,
+      insert: (text, author) => editorRef.current?.insertSuggestion(text, author) ?? false,
+    });
+    return () => onEditorBridge(null);
+  }, [onEditorBridge, activeDocId, activeSection, docSealed]);
 
   useEffect(() => {
     const pane = docScrollRef.current;
