@@ -21,6 +21,7 @@ import {
   BASE_SCHEMA_SENTINELS,
   verifyReadinessContract,
 } from '../../../scripts/db/readiness-contract.mjs';
+import { APPEND_ONLY_TABLES } from '../../../scripts/db/provision-app-role.mjs';
 import { CRITICAL_TABLES, REQUIRED_SCHEMAS } from '../ensureCoreTables';
 import { APPEND_ONLY_TABLES } from '../../../scripts/db/provision-app-role.mjs';
 import { SECURITY_CRITICAL_TABLES } from '../../startup/services';
@@ -57,10 +58,7 @@ describe('readiness-contract.mjs mirrors the server-side readiness lists', () =>
  */
 // Scripted client and full-contract fixtures shared by the verifier pins below.
 type Row = Record<string, unknown>;
-const APPEND_ONLY = new Set(
-  (APPEND_ONLY_TABLES as ReadonlyArray<{ schema: string; name: string }>).map((t) => `${t.schema}.${t.name}`),
-);
-
+const RECIPE_APPEND_ONLY = new Set(APPEND_ONLY_TABLES.map((t: { schema: string; name: string }) => `${t.schema}.${t.name}`));
 function scriptedClient(opts: {
   role?: Row;
   schemasPresent?: string[];
@@ -96,17 +94,22 @@ function scriptedClient(opts: {
         const rows = [...present].map((key) => {
           const [schema, name] = key.split('.');
           const canSelect = selectable.has(key);
-          // What the recipe grants: full DML, except SELECT/INSERT on the audit
-          // schema and on every append-only record table (P0-8).
-          const writable = schema !== 'audit' && !APPEND_ONLY.has(key);
-          return { schema, name, relkind: 'r', owned: false, schema_usage: true, can_select: canSelect, can_insert: true, can_update: writable, can_delete: writable };
+          // The recipe's shape: the audit schema and every append-only store
+          // (2026-10-01, P0-8: public.audit_logs is one) hold SELECT, INSERT.
+          const appendOnly = schema === 'audit' || RECIPE_APPEND_ONLY.has(key);
+          return { schema, name, relkind: 'r', owned: false, schema_usage: true, can_select: canSelect, can_insert: true, can_update: !appendOnly, can_delete: !appendOnly, can_truncate: false };
         });
         for (const r of opts.extraRelations ?? []) {
           const [schema, name] = r.relation.split('.');
           const held = new Set(r.held);
-          rows.push({ schema, name, relkind: 'r', owned: Boolean(r.owned), schema_usage: true, can_select: held.has('SELECT'), can_insert: held.has('INSERT'), can_update: held.has('UPDATE'), can_delete: held.has('DELETE') });
+          rows.push({ schema, name, relkind: 'r', owned: Boolean(r.owned), schema_usage: true, can_select: held.has('SELECT'), can_insert: held.has('INSERT'), can_update: held.has('UPDATE'), can_delete: held.has('DELETE'), can_truncate: held.has('TRUNCATE') });
         }
         return { rows, rowCount: rows.length };
+      }
+      // Column-level UPDATE on the append-only stores (the revocation carve-out):
+      // none scripted, so a store reads as table-level privileges only.
+      if (text.includes('has_column_privilege')) {
+        return { rows: [], rowCount: 0 };
       }
       if (text.includes('FROM pg_namespace WHERE nspname = s')) {
         const names = values![0] as string[];
@@ -243,6 +246,30 @@ describe('verifyReadinessContract — named runtime role (owner connection) and 
     // The store is present through extraRelations for the audit, but absent
     // from the contract tier above — so isolate the ceiling failure.
     expect(r.failures.join('\n')).toMatch(/holds privileges beyond the append-only ceiling on: audit\.tamper_proof_log \(UPDATE\)/);
+  });
+
+  /**
+   * 2026-10-01, P0-8 (DP-04). public.audit_logs is a contract table and an
+   * append-only store, and until this the ceiling was checked in the `audit`
+   * schema only: a runtime role holding DELETE on it verified green.
+   */
+  it('fails when a public append-only store is widened (DELETE on audit_logs, TRUNCATE on audit_events)', async () => {
+    const r = await verifyReadinessContract(
+      scriptedClient({
+        ...FULL,
+        knownRoles: { app_service: { rolsuper: false, rolbypassrls: false } },
+        tablesPresent: FULL_TABLES.filter((t) => t !== 'public.audit_logs'),
+        selectable: FULL_TABLES,
+        extraRelations: [
+          { relation: 'public.audit_logs', held: ['SELECT', 'INSERT', 'DELETE'] },
+          { relation: 'public.audit_events', held: ['SELECT', 'INSERT', 'TRUNCATE'] },
+        ],
+      }),
+      { runtimeRole: 'app_service' },
+    );
+    expect(r.failures.join('\n')).toMatch(
+      /holds privileges beyond the append-only ceiling on: public\.audit_logs \(DELETE\), public\.audit_events \(TRUNCATE\)/,
+    );
   });
 
   it('fails when the runtime role owns the audit store', async () => {
