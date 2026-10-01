@@ -57,24 +57,38 @@ export const searchVaultDocuments = defineTool({
   name: 'c2c_search_vault_documents',
   title: 'Search vault documents',
   description:
-    'Semantic search over the cataloged documents in your organisation’s Vault (kind, purpose, summary, ' +
-    'key data AnA recorded after a full read). Fails closed: when the embedding provider or pgvector is ' +
-    'unavailable the tool returns that refusal instead of an empty list. Uncataloged documents are absent by ' +
-    'construction and their count is reported.',
+    'Search your organisation’s Vault documents. Always available: matches the words of the query against ' +
+    'every current document’s title, file name and full extracted text, ranks documents matching more of the ' +
+    'words higher, and returns a snippet for a match in the body. When the organisation’s catalog and a ' +
+    'semantic index are available, documents matching by meaning are added (matchedBy "meaning", with the ' +
+    'summary and key data AnA recorded). A text match means the words appear, not that the document answers ' +
+    'the question.',
   inputSchema: {
     query: z.string().min(2).max(500),
+    project_id: z.string().uuid().optional().describe('A project id from c2c_list_projects.'),
     limit: z.number().int().min(1).max(25).default(8),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: READ,
   scope: MCP_SCOPES.read,
   governed: false,
-  implementation: 'server/services/vault/document-catalog-search.ts searchCatalog',
+  implementation: 'server/services/vault/vault-assistant-search.ts searchVaultForAssistant',
   async run(input, ctx) {
-    const { searchCatalog } = await import('../../services/vault/document-catalog-search');
+    const { pool } = await import('../../db');
+    const { searchVaultForAssistant } = await import('../../services/vault/vault-assistant-search');
+    const { isDocumentCatalogEnabled } = await import('../../services/vault/document-catalog.service');
     try {
-      const result = await searchCatalog(ctx.principal.organizationId, input.query, { limit: input.limit });
+      const orgId = ctx.principal.organizationId;
+      const result = await searchVaultForAssistant(pool, {
+        organizationId: orgId,
+        programId: input.project_id ?? null,
+        query: input.query,
+        limit: input.limit,
+        catalogEnabled: await isDocumentCatalogEnabled(orgId),
+      });
       return ok(
-        `${result.hits.length} hit(s) over ${result.searchedCount} cataloged document(s); ${result.unsearchableCount} not searchable yet.`,
+        result.hits.length === 0
+          ? 'No Vault document in scope uses the words of the query.'
+          : `${result.hits.length} document(s) matched (${result.textMatches} by text).`,
         { query: input.query, ...result },
       );
     } catch (err) {
