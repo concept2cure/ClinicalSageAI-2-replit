@@ -50,7 +50,7 @@ import {
   userB,
 } from './two-tenant-fixture';
 
-type Section = { key: string; rows: Record<string, unknown>[]; rowCount: number; truncated: boolean };
+type Section = { key: string; rows: Record<string, unknown>[]; rowCount: number; truncated: boolean; notes?: string[] };
 type Report = { organizationId: number; sections: Section[]; chain: { ok: boolean | null; scope: string } };
 /** Review round 1, item 10: every timestamp is ISO-8601 UTC text. */
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
@@ -393,5 +393,30 @@ describe('the integrity attestation and the record of a run', () => {
       data_hash: res.body.export.manifest.dataHash,
     });
     expect(row.rows[0].sha256_chain).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
+/*
+ * Reporting review 2026-10-01. HONEST-STATE-9: the access review printed
+ * 'emailed_code' as the second factor of an account created by single sign-on,
+ * which has no password here and is never asked for a code by the platform.
+ * HONEST-STATE-11: the retention policies section is the current state, printed
+ * under the chosen period with nothing saying so. Last in the file: the SSO
+ * member it provisions would change the member lists asserted above.
+ */
+describe('what the compliance reports say about what they cannot see', () => {
+  it('an account created by single sign-on is not reported as having the emailed code', async () => {
+    const ssoMember = await provisionMember(ORG_A, 'member', 'cr-sso-a');
+    await owner.query(`UPDATE users SET password_hash = 'saml:' || gen_random_uuid()::text WHERE id = $1`, [ssoMember]);
+    const data = JSON.parse((await run('access-review', `?to=${today}`)).body.export.data) as Report;
+    const members = section(data, 'members');
+    expect(members.rows.find((r) => r.user_id === ssoMember)?.mfa_posture).toBe('Identity provider (not verified by the platform)');
+    expect(members.rows.find((r) => r.user_id === userA)?.mfa_posture).toBe('Emailed code');
+    expect(members.notes?.join(' ')).toMatch(/has no password here and signs in through the organisation's identity provider/);
+  });
+
+  it('the retention policies section says it is as at generation, not as at the period', async () => {
+    const data = JSON.parse((await run('retention-legal-holds', `?from=${from}&to=${today}`)).body.export.data) as Report;
+    expect(section(data, 'policies').notes?.join(' ')).toMatch(/As at generation, not as at the period/);
   });
 });

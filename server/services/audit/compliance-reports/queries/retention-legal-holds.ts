@@ -121,6 +121,9 @@ async function run(ctx: RunContext): Promise<Record<string, SectionResult>> {
       ...(await cappedSection(ctx.client, POLICIES_SQL, [ctx.orgId])),
       notes: [
         'Documents that are not deleted, by the retention policy they name. A policy name with no definition is applied by the sweep as archive, then soft delete.',
+        // Reporting review 2026-10-01 (HONEST-STATE-11): this section printed
+        // under the chosen period's header with nothing saying it is not the period's.
+        'As at generation, not as at the period: the documents, their counts and the policy definitions are read as they are now, so this section includes documents created after the period and leaves out documents deleted since.',
       ],
     },
     holds: { ...(await cappedSection(ctx.client, HOLDS_SQL, period)), notes: ['Times are UTC.'] },
@@ -185,6 +188,7 @@ export const retentionLegalHolds: ReportDefinition = {
   ],
   notRecorded: [
     'Documents the retention sweep skipped because a legal hold covered them, and destructions it refused, are written to the server log and not kept as records, so they do not appear here.',
+    'Retention policies and the documents under them have no recorded history, so the policies section shows them as at generation, not as at the period.',
   ],
   run,
 };
