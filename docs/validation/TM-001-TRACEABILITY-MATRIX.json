@@ -1,6 +1,6 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-01T18:13:52.348Z",
+  "generatedAt": "2026-10-01T18:56:07.338Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
@@ -922,7 +922,7 @@
       "id": "URS-VAULT-020",
       "app": "Vault",
       "doc": "URS-002-VAULT.md",
-      "requirement": "Each version in a document's version list names every live submission leaf that carries it: the submission, the sequence and its status, the section, and the leaf's lifecycle operation. A version carried by none says so. A removed leaf, or a leaf in a removed sequence or submission, is not listed, and no other organisation's leaf is.",
+      "requirement": "Each version in a document's version list names every live submission leaf that carries it: the submission, the sequence and its status, the section, and the leaf's lifecycle operation. A version carried by none says so. A removed leaf, or a leaf in a removed sequence or submission, is not listed, and no other organisation's leaf is. The version also names each official eSTAR export whose record names it as an attachment's source, from the artifact registry or the export's audit row; an export whose record names no source is not inferred from a hash.",
       "part11": "§11.10(e)",
       "risk": "medium",
       "steps": [],
@@ -930,7 +930,7 @@
         "intendedUse": "List the live submission leaves that carry each Vault version",
         "risk": "medium: a read that informs a revision (replace, not new), and transmits nothing. A placement left off could lead to a wrong lifecycle operation in the next sequence; another organisation's placement shown would be a confidentiality failure",
         "assurance": "scripted",
-        "rationale": "OQ-VAULT-21. The removed leaf and removed sequence, another organisation's leaf, and the read's organisation filter with row security bypassed are in `tests/db/vault-where-used.dbtest.ts`"
+        "rationale": "OQ-VAULT-21. The removed leaf and removed sequence, another organisation's leaf, and the read's organisation filter with row security bypassed are in `tests/db/vault-where-used.dbtest.ts`, with the eSTAR exports written by both real export writers: the registry and the unplaced audit row, a record naming no source (not inferred), and another organisation's record"
       },
       "verdict": "uncovered"
     },

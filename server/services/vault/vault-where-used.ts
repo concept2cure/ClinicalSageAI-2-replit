@@ -15,10 +15,12 @@
  * sequence or submission, is not a placement. Every table is filtered to the
  * organisation.
  *
- * Not listed, by design. An eSTAR export records its attachments by file name
- * and SHA-256, not by Vault version, so a match would be inferred, not
- * recorded (handed on to the eSTAR lane). `vault.evidence_citations` holds
- * search hits, not uses.
+ * eSTAR exports (critique 15): since 2026-10-01 each attachment in an official
+ * eSTAR's record names its source, the Vault version (estar-fill.ts). The record
+ * is the artifact's metadata when the export was placed in the registry, or
+ * the export's EXPORT_GENERATED audit row when it was not; both are read here.
+ * Exports made before then name no source and are not inferred from a hash.
+ * `vault.evidence_citations` holds search hits, not uses, and is not listed.
  */
 
 export interface VaultPlacement {
@@ -81,6 +83,72 @@ export async function readVaultPlacements(
       operation: String(r.lifecycle_op),
     });
     out.set(r.vault_id, list);
+  }
+  return out;
+}
+
+/** An official eSTAR export that attached a Vault version. */
+export interface VaultEstarUse {
+  /** Where the export's record is kept: the artifact registry, or the audit row of an unplaced export. */
+  record: 'artifact' | 'audit';
+  recordId: string;
+  exportedAt: string;
+  slot: string | null;
+  chapter: string | null;
+  fileName: string | null;
+  /** The Vault version the exported eSTAR itself was retained as, when it was. */
+  retainedAs: { documentId: string; documentCode: string | null; version: string | null } | null;
+}
+
+/** The attachments of an export record that name one of `wanted` as their Vault source. */
+const ESTAR_ATTACHMENT_MATCH = (rec: string) => `EXISTS (
+         SELECT 1 FROM jsonb_array_elements(
+                  CASE WHEN jsonb_typeof(${rec} -> 'attachments') = 'array' THEN ${rec} -> 'attachments' ELSE '[]'::jsonb END) att
+          WHERE att -> 'source' ->> 'kind' = 'vault_document' AND att -> 'source' ->> 'documentId' = ANY($2::text[]))`;
+
+function usesFrom(record: VaultEstarUse['record'], recordId: string, at: unknown, rec: any, wanted: Set<string>) {
+  const kept = rec?.retention?.retained === true && rec.retention.documentId
+    ? { documentId: String(rec.retention.documentId), documentCode: rec.retention.documentCode ?? null, version: rec.retention.version ?? null }
+    : null;
+  const atts: any[] = Array.isArray(rec?.attachments) ? rec.attachments : [];
+  return atts
+    .filter((a) => a?.source?.kind === 'vault_document' && wanted.has(String(a.source.documentId)))
+    .map((a) => ({
+      vaultId: String(a.source.documentId),
+      use: {
+        record, recordId, exportedAt: new Date(at as string).toISOString(),
+        slot: a.slot ?? null, chapter: a.chapter ?? null, fileName: a.fileName ?? null, retainedAs: kept,
+      } satisfies VaultEstarUse,
+    }));
+}
+
+/** Each version's official eSTAR exports, by version id, oldest first; a version with none is absent. */
+export async function readVaultEstarUses(
+  q: PlacementQueryable,
+  organizationId: number,
+  vaultIds: string[],
+): Promise<Map<string, VaultEstarUse[]>> {
+  const out = new Map<string, VaultEstarUse[]>();
+  if (vaultIds.length === 0) return out;
+  const { rows } = await q.query(
+    `SELECT 'artifact' AS record, c.artifact_id AS record_id, c.created_at AS at, c.metadata::jsonb AS rec
+       FROM concept2cure_artifacts c
+      WHERE c.organization_id = $1 AND c.metadata::jsonb ->> 'source' = 'export_estar_pdf'
+        AND ${ESTAR_ATTACHMENT_MATCH('c.metadata::jsonb')}
+     UNION ALL
+     SELECT 'audit', a.id::text, a.created_at, a.new_values::jsonb
+       FROM audit_logs a
+      WHERE a.tenant_id = $1 AND a.action = 'EXPORT_GENERATED'
+        AND a.new_values::jsonb ->> 'sourceType' = 'export_estar_pdf'
+        AND ${ESTAR_ATTACHMENT_MATCH('a.new_values::jsonb')}
+      ORDER BY at, record_id`,
+    [organizationId, vaultIds],
+  );
+  const wanted = new Set(vaultIds);
+  for (const r of rows) {
+    for (const { vaultId, use } of usesFrom(r.record, String(r.record_id), r.at, r.rec, wanted)) {
+      out.set(vaultId, [...(out.get(vaultId) ?? []), use]);
+    }
   }
   return out;
 }

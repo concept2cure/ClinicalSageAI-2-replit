@@ -4,8 +4,10 @@
  * the list names the submission sequences and sections whose leaves carry it,
  * with the leaf's operation, so a person revising it knows the next sequence
  * needs a replace. A version the server says is placed nowhere says so. When
- * the server did not say, the row claims nothing. Server half:
- * tests/db/vault-where-used.dbtest.ts.
+ * the server did not say, the row claims nothing. An official eSTAR export whose
+ * record names the version as an attachment is listed too (VR-14c); none reads
+ * as nothing, because exports made before their records named a source are not
+ * known. Server half: tests/db/vault-where-used.dbtest.ts.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -17,7 +19,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-import { VaultVersions, placedInText } from '../surfaces/VaultVersions';
+import { VaultVersions, estarText, placedInText } from '../surfaces/VaultVersions';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 const V2 = '22222222-2222-4222-8222-222222222222';
@@ -65,6 +67,20 @@ describe('where each version is placed (VR-14a)', () => {
     mount();
     expect((await screen.findByTestId(`vault-version-placed-${V2}`)).textContent).toBe(' · not placed in any submission');
     expect(screen.getByTestId(`vault-version-placed-${V1}`).textContent).toBe('');
+  });
+
+  it('names each official eSTAR export that attached a version, and claims nothing when there is none', async () => {
+    const use = {
+      record: 'audit', recordId: '41', exportedAt: '2026-10-01T18:05:00.000Z', slot: 'root.CoverLetter',
+      chapter: '/CHAPTER 1/CH1.01/', fileName: 'Cover Letter.pdf',
+      retainedAs: { documentId: 'd-9', documentCode: 'eSTAR-510k-device', version: '1.0' },
+    };
+    onVersions = () => ok({ versions: [version(V2, '2.0', true, []), { ...version(V1, '1.0', false, []), estarUses: [use] }] });
+    mount();
+    expect((await screen.findByTestId(`vault-version-estar-${V1}`)).textContent)
+      .toBe(' · attached to the official eSTAR exported 2026-10-01 18:05 UTC, retained as eSTAR-510k-device v1.0 (/CHAPTER 1/CH1.01/)');
+    expect(screen.getByTestId(`vault-version-estar-${V2}`).textContent).toBe('');
+    expect(estarText([{ ...use, retainedAs: null, chapter: null }] as never)).toBe(' · attached to the official eSTAR exported 2026-10-01 18:05 UTC');
   });
 
   it('several placements read as one list', () => {
