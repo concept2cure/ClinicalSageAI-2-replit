@@ -46,7 +46,10 @@ async function runDocxPythonIsolated(intent: ComputeIntent): Promise<ComputeOutp
   );
 
   await new Promise<void>((resolve, reject) => {
-    const proc = spawn('python3', [runtimeScript, inputPath], {
+    // The image's document virtualenv (python-docx, lxml at the
+    // requirements.txt pins); plain python3 where it is not set (dev, CI).
+    const python = process.env.ANA_DOCX_PYTHON || 'python3';
+    const proc = spawn(python, [runtimeScript, inputPath], {
       cwd: workdir,
       // Deliberately NOT the whole server environment: this runtime exec()s
       // AnA-authored code, so the server's secrets must not be reachable from
