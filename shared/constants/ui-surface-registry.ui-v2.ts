@@ -841,7 +841,10 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'evidence',
     icon: 'barChart',
     uiKit: null,
-    apiPrefixes: ['/api/report-os', '/api/insights'],
+    // Launch-scope API (2026-09-30, ci:launch-scope-api): the canvas reads its
+    // bootstrap from /api/insights-canvas, which a path-boundary match on
+    // /api/insights does not cover; unclaimed, production refused it.
+    apiPrefixes: ['/api/report-os', '/api/insights', '/api/insights-canvas'],
     anaToolFamilies: ['list_report_types', 'generate_report', 'portfolio_readiness', 'compare_regions', 'get_prediction', 'explain_blockers'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -849,6 +852,26 @@ export const UI_V2_SURFACES: UiSurface[] = [
     compliance: [PART11, A11Y, TONE],
     notes: 'AnA Reporting Canvas — conversational governed reporting over the Report-OS render model, with a per-segment catalog, entitlement tiers and best-practice packs.',
     engineering: 'Contract ref (not yet a @shared file): server/services/report-os/taxonomy.ts.',
+  },
+  {
+    id: 'compliance-reports',
+    label: 'Audit & compliance reports',
+    navTier: 'project',
+    layoutMode: 'audit',
+    group: 'evidence',
+    icon: 'fileCheck',
+    uiKit: null,
+    // Launch-scope API (2026-09-30): the catalog and every run are under /api/audit,
+    // which is never gated (the audit trail is never switchable); the run is
+    // role-gated to organisation owners, admins and managers.
+    apiPrefixes: ['/api/audit'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'Reports an auditor or inspector asks an organisation for: user access review, sign-in and session events, administrative changes, the e-signature register, audit trail integrity, retention and legal holds, and the controlled document register. Each run is drawn from the organisation\'s own records, sealed, and recorded on the audit trail; what the platform does not record is listed with the report.',
+    engineering: 'server/services/audit/compliance-reports/ (catalog, queries, sealed generation); server/routes/audit-compliance-reports.ts; client/src/concept2cure/v2/surfaces/ComplianceReports.tsx.',
   },
   {
     id: 'pediatric',

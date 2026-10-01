@@ -1,0 +1,1600 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > there are routers to check (guards against an empty sweep) 6ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > a meaningful share of them are actually mounted 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/_ops-predicate-shadow.js imports without throwing 95ms
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > Compliance Routes > should define audit trail routes 2ms
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > Cognitive Ecosystem Routes > should define cognitive ecosystem routes 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > FHIR Routes > should define FHIR routes 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > Compatibility Facade Routes > should define compatibility facade contracts 1ms
+stdout | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+{
+  "timestamp": "2026-10-01T01:13:22.414Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:22.416Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+{
+  "timestamp": "2026-10-01T01:13:22.416Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/account-intelligence imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:22.471Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:22.473Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/account-intelligence imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:22.473Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/account-intelligence imports without throwing
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/account-intelligence imports without throwing
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/account-intelligence imports without throwing
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts
+{
+  "timestamp": "2026-10-01T01:13:22.630Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/admin-security imports without throwing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/admin-security imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:22.856Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/account-intelligence imports without throwing 1958ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/admin-security imports without throwing 85ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/admin/access-management imports without throwing 105ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/admin/business-center imports without throwing 143ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/admin/master-admin imports without throwing 277ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/agent-swarm.js imports without throwing 21ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ai-placement-policy.js imports without throwing 77ms
+stderr | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat
+{
+  "timestamp": "2026-10-01T01:13:23.700Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ana-cortex-ft.js imports without throwing 201ms
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time
+{
+  "timestamp": "2026-10-01T01:13:25.062Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:25.063Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "u1",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time
+{
+  "timestamp": "2026-10-01T01:13:25.065Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time
+{
+  "timestamp": "2026-10-01T01:13:25.066Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time
+{
+  "timestamp": "2026-10-01T01:13:25.067Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ana-mdx-context.js imports without throwing 1070ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ana-ri-inline-routes imports without throwing 15ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ana-tool-policy.js imports without throwing 11ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/analytics-routes.js imports without throwing 309ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/approval-workflow.js imports without throwing 68ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ask-ana-utils imports without throwing 12ms
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures
+{
+  "timestamp": "2026-10-01T01:13:25.349Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:25.349Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "u1",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures
+{
+  "timestamp": "2026-10-01T01:13:25.349Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures
+{
+  "timestamp": "2026-10-01T01:13:25.349Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures
+{
+  "timestamp": "2026-10-01T01:13:25.350Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes
+{
+  "timestamp": "2026-10-01T01:13:25.378Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:25.378Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "u1",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes
+{
+  "timestamp": "2026-10-01T01:13:25.378Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes
+{
+  "timestamp": "2026-10-01T01:13:25.379Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes
+{
+  "timestamp": "2026-10-01T01:13:25.379Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines
+{
+  "timestamp": "2026-10-01T01:13:25.416Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:25.416Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "u1",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines
+{
+  "timestamp": "2026-10-01T01:13:25.417Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines
+{
+  "timestamp": "2026-10-01T01:13:25.418Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines
+{
+  "timestamp": "2026-10-01T01:13:25.418Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did
+{
+  "timestamp": "2026-10-01T01:13:25.426Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:25.426Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "u1",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did
+{
+  "timestamp": "2026-10-01T01:13:25.427Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did
+{
+  "timestamp": "2026-10-01T01:13:25.427Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did
+{
+  "timestamp": "2026-10-01T01:13:25.427Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser
+{
+  "timestamp": "2026-10-01T01:13:25.455Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:25.455Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "u1",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser
+{
+  "timestamp": "2026-10-01T01:13:25.460Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser
+{
+  "timestamp": "2026-10-01T01:13:25.460Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser
+{
+  "timestamp": "2026-10-01T01:13:25.460Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time 315ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures 28ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes 40ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines 9ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did 11ms
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html
+{
+  "timestamp": "2026-10-01T01:13:25.501Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:25.501Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "u1",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html
+{
+  "timestamp": "2026-10-01T01:13:25.502Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html
+{
+  "timestamp": "2026-10-01T01:13:25.502Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html
+{
+  "timestamp": "2026-10-01T01:13:25.502Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/audit-compliance-reports imports without throwing 328ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/audit-services.js imports without throwing 29ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/audit-trail-routes imports without throwing 38ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/authoring-permissions imports without throwing 28ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser 67ms
+stdout | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat
+Loaded 0 academic documents
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content
+{
+  "timestamp": "2026-10-01T01:13:25.900Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:25.900Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "u1",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content
+{
+  "timestamp": "2026-10-01T01:13:25.900Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content
+{
+  "timestamp": "2026-10-01T01:13:25.901Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content
+{
+  "timestamp": "2026-10-01T01:13:25.901Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it
+{
+  "timestamp": "2026-10-01T01:13:25.929Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:25.929Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "u1",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it
+{
+  "timestamp": "2026-10-01T01:13:25.929Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it
+{
+  "timestamp": "2026-10-01T01:13:25.930Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it
+{
+  "timestamp": "2026-10-01T01:13:25.930Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse
+{
+  "timestamp": "2026-10-01T01:13:25.945Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:25.946Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "u1",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse
+{
+  "timestamp": "2026-10-01T01:13:25.946Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse
+{
+  "timestamp": "2026-10-01T01:13:25.946Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse
+{
+  "timestamp": "2026-10-01T01:13:25.946Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html 395ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > the dead renderer is gone > buildDocx no longer exists to be mistaken for the live path 3ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content 21ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > refuses the export when NO signature covers the content being filed 8ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it 17ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse 15ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/billing-dashboard.js imports without throwing 151ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/billing.js imports without throwing 49ms
+stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F2 — POST /docs/:id/sign auto-freezes when the final step approves the document > writes a frozen_documents row on the transaction client, between BEGIN and COMMIT
+{
+  "timestamp": "2026-10-01T01:13:27.593Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/ai-editing imports without throwing 958ms
+stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+{
+  "timestamp": "2026-10-01T01:13:27.614Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+{
+  "timestamp": "2026-10-01T01:13:27.615Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F2 — POST /docs/:id/sign auto-freezes when the final step approves the document > writes a frozen_documents row on the transaction client, between BEGIN and COMMIT 54ms
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > REFUSES with 409 when the document is a DRAFT — no unapproved artifact, no manifest 8ms
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash 66ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/artifacts imports without throwing 864ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/communication-center imports without throwing 106ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/context-intelligence imports without throwing 65ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/conversations imports without throwing 18ms
+ ✓ server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable 1637ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > protects /api/cortex/chat with requireAuth 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > protects /api/ana-cortex/regulatory-analysis with requireAuth 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > keeps /api/knowledge-base generation endpoints behind authenticateToken 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > mounts core workflow routes in server index 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/exports imports without throwing 73ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/governance-ops imports without throwing 12ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/haq-sessions imports without throwing 29ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/knowledge-sources imports without throwing 129ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/notifications imports without throwing 7ms
+stdout | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+{
+  "timestamp": "2026-10-01T01:13:28.132Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+{
+  "timestamp": "2026-10-01T01:13:28.132Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+{
+  "timestamp": "2026-10-01T01:13:28.186Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/program-twin imports without throwing 39ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/project-knowledge imports without throwing 41ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/reviews imports without throwing 59ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/c2c/tasks imports without throwing 28ms
+stdout | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+{
+  "timestamp": "2026-10-01T01:13:28.388Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /ana (AnA 1.0 RI integration)",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/capa-mdr.js imports without throwing 112ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/change-propagation.js imports without throwing 237ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/charters.js imports without throwing 58ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat 5408ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > enforces auth on POST /api/ana-cortex/regulatory-analysis 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx 889ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > enforces auth on GET /api/knowledge-base/search-connectors (DMS cross-repo search mount) 4ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > mounts beta-critical route families via bootstrap registrars 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > wires the ui-v2 backend gap closures (DMS search, rollup, registrations, validation-kit, HAQ, eTMF) 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps concept2cure router tenant-scoped and envelope-based 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps ana-ri core endpoints reachable via mount* functions 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps CERV2, document data center, and eCTD/IND entry routes visible 0ms
+stdout | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/logs scopes to the JWT org and ignores a spoofed query org_id
+{
+  "timestamp": "2026-10-01T01:13:30.150Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:30.152Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/logs scopes to the JWT org and ignores a spoofed query org_id
+{
+  "timestamp": "2026-10-01T01:13:30.152Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/logs scopes to the JWT org and ignores a spoofed query org_id
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/logs scopes to the JWT org and ignores a spoofed query org_id
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/logs scopes to the JWT org and ignores a spoofed query org_id
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/logs scopes to the JWT org and ignores a spoofed query org_id 1021ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/events and /audit are JWT-scoped too 24ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > signature verify is scoped by organization_id 6ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > returns 403 when there is no authenticated org context 20ms
+stderr | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F3: POST /audit/events attributes to the JWT principal, never the body
+[SECURITY] audit-trail: body user id (4242) differs from authenticated principal (1). Body value ignored. path=/audit/events
+
+stderr | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F4: POST /audit/signatures writes a non-authoritative marker attributed to the principal
+[SECURITY] audit-trail: body user id (4242) differs from authenticated principal (1). Body value ignored. path=/audit/signatures
+
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > POST /audit/events writes the JWT org, not body.organizationId 27ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > POST /audit/signatures writes the JWT org, not body.organizationId 6ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F3: POST /audit/events attributes to the JWT principal, never the body 3ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F10: POST /audit/events requires a reason when regulatory/GxP significant 14ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F10: batch skips regulatory/GxP events missing a reason 5ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F4: POST /audit/signatures rejects an attempt to forge a signed status 7ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F4: POST /audit/signatures writes a non-authoritative marker attributed to the principal 4ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > write endpoints 403 without an authenticated org 15ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/logs: a member is refused (403) 25ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit-logs: a member is refused (403) 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/events: a member is refused (403) 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit: a member is refused (403) 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > owner reads it 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > admin reads it 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > manager reads it 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > a viewer is refused 2ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a member is refused before the export starts 9ms
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself
+{
+  "timestamp": "2026-10-01T01:13:31.759Z",
+  "level": "error",
+  "message": "[audit-trail-routes] recording the audit export could not be run",
+  "context": {
+    "reason": "audit-export record could not be run: INSERT returned no row id",
+    "correlationId": null
+  }
+}
+
+stdout | server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > user: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written
+{
+  "timestamp": "2026-10-01T01:13:31.882Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:31.883Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > user: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written
+{
+  "timestamp": "2026-10-01T01:13:31.883Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself 813ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > an event type outside the vocabulary is refused (400) and nothing is written 16ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > the free-form default is not a type either: a body with no event type is refused 12ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > metadata must be an object, not a string of any length 52ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a vocabulary type with a reason is recorded, attributed to the caller 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > in a batch, an unknown type is skipped with the reason and the known one is written 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a member may not record events at all 7ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > viewer: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 4ms
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard
+{
+  "timestamp": "2026-10-01T01:13:31.933Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a failed check answers 500 without the caught error's text
+Chain integrity check failed: relation "audit_logs" does not exist
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > user: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 55ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > member: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 9ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard 11ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > owner: records the non-authoritative marker (201), one signature.create row 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > admin: records the non-authoritative marker (201), one signature.create row 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > manager: records the non-authoritative marker (201), one signature.create row 2ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > an owner still may not claim a binding signature here (forgery guard unchanged) 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > owner of an organisation cannot start the estate-wide check (403) or read its status 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > admin of an organisation cannot start the estate-wide check (403) or read its status 10ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > manager of an organisation cannot start the estate-wide check (403) or read its status 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > user of an organisation cannot start the estate-wide check (403) or read its status 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > viewer of an organisation cannot start the estate-wide check (403) or read its status 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a platform administrator runs the check and reads the status 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a failed check answers 500 without the caught error's text 3ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > POST /update-field with NO credential is rejected (401), not executed 31ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /completeness with NO credential is rejected (401) 4ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /subscribe with NO credential is rejected (401) 4ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > mounts the permissions router BEFORE the authoring router 2ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > the permissions router owns the path and never delegates 1ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > the authoring router no longer declares the shadowed pair 1ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > the surviving permission-management implementation writes an audit row 0ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > writes doc_permissions through the canonical grant writer, never with its own INSERT 2ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > drops the constant that only the deleted route used 0ms
+stderr | tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > POST /update-field against ANOTHER org's project returns 404, not a write
+{
+  "timestamp": "2026-10-01T01:13:32.574Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 7,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 7,1,1"
+  }
+}
+
+stderr | tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /completeness for ANOTHER org's project returns 404
+{
+  "timestamp": "2026-10-01T01:13:32.595Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 7,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 7,1,1"
+  }
+}
+
+stderr | tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > the caller's OWN project is still permitted (the fix is not a blanket deny)
+{
+  "timestamp": "2026-10-01T01:13:32.618Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 7,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 7,1,1"
+  }
+}
+
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > POST /update-field against ANOTHER org's project returns 404, not a write 404ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /completeness for ANOTHER org's project returns 404 16ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /subscribe for ANOTHER org's project returns 403 before any stream opens 7ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > a refresh token cannot open the SSE stream (non-access token rejected) 3ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > the caller's OWN project is still permitted (the fix is not a blanket deny) 11ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 403 with no organization context 70ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 403 for non-admin users 10ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > accepts admin role via roles array too 6ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 404 when org missing 5ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > emits tenant.export audit on success 11ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > passes the caller orgId through to the service (no override) 4ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > returns 503 when attestation key not configured 5ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > emits tenant.attestation.generate audit on success 4ms
+stderr | server/routes/__tests__/authoringExportDocx.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringExportDocx.test.ts
+{
+  "timestamp": "2026-10-01T01:13:33.832Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/chat imports without throwing
+Loaded 0 academic documents
+
+stdout | server/startup/__tests__/audit-chain-wiring.test.ts
+{
+  "timestamp": "2026-10-01T01:13:34.708Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:34.710Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts
+{
+  "timestamp": "2026-10-01T01:13:34.710Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/startup/__tests__/audit-chain-wiring.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks put mutations to append-only audit events
+[IMMUTABILITY] Blocked PUT /api/audit/events/123 — audit records are append-only
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks patch mutations to append-only audit events
+[IMMUTABILITY] Blocked PATCH /api/audit/events/123 — audit records are append-only
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks delete mutations to append-only audit events
+[IMMUTABILITY] Blocked DELETE /api/audit/events/123 — audit records are append-only
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks explicit bulk deletion
+[IMMUTABILITY] Blocked POST /api/audit/bulk-delete — audit records are append-only
+
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > audit-chain self-verification wiring > starts the chain monitor in initializeParallelServices 2ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > audit-chain self-verification wiring > gates the chain monitor by the same AUDIT_TRAIL_ENABLED flag as the audit middleware 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > audit-chain self-verification wiring > stops the chain monitor before closing the DB pool on shutdown 1ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > audit-chain self-verification wiring > uses a 5-minute monitor interval (matches §11.10(e) continuous-monitoring guidance) 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware composition order > mounts telemetry, health, core, debug, and audit middleware in order 1ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware composition order > never reads request body values in debug logging 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware guard helpers > detects Concept2Cure API routes from originalUrl/path/url 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware guard helpers > records body metadata only for methods that can carry payloads 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware guard helpers > blocks only destructive audit mutations and precise bulk-delete paths 1ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware guard helpers > matches immutable audit routes on path boundaries only 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware guard helpers > allowlists header metadata and excludes credentials 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware guard helpers > logs query shape without query values 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyDebugRequestLogging integration > omits request body values for /api/concept2cure routes 28ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyDebugRequestLogging integration > never logs non-concept2cure POST bodies and skips GET body metadata 8ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks put mutations to append-only audit events 3ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks patch mutations to append-only audit events 3ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks delete mutations to append-only audit events 2ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > allows appending a new audit event 2ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > does not block similarly named non-audit routes 12ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks explicit bulk deletion 5ms
+stdout | server/routes/__tests__/authoringExportDocx.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content
+{
+  "timestamp": "2026-10-01T01:13:35.110Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:35.110Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "u1",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content
+{
+  "timestamp": "2026-10-01T01:13:35.111Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content
+{
+  "timestamp": "2026-10-01T01:13:35.111Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content
+{
+  "timestamp": "2026-10-01T01:13:35.112Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content 235ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import('x') 2ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import(v) 1ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import('pdfkit' as any) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > /* prose mentioning /*) inside */ await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > const s = 'has /* inside'; await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > // await import(v)
+await import('y') 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import(`../routes/${n}`) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > sees the whole of the largest bootstrap file 7ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > no guarded file imports a module by computed specifier 19ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > the families that were missing are imported statically by name 1ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > every regional blueprint is imported statically by both catalogs 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/chat imports without throwing 6889ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/chat-actions.js imports without throwing 11ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/client-branding.js imports without throwing 43ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/client-intelligence imports without throwing 75ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/client-portal.js imports without throwing 26ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/clients-routes.js imports without throwing 54ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/cmc-agency-questions.routes imports without throwing 15ms
+ ✓ server/middleware/__tests__/audit-outcome-headers-exposed.test.ts > Access-Control-Expose-Headers covers the audit-outcome carriers > exposes every audit-outcome header 3ms
+ ✓ server/middleware/__tests__/audit-outcome-headers-exposed.test.ts > Access-Control-Expose-Headers covers the audit-outcome carriers > every audit-outcome header actually set by a route is in the list above 40ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/cmc-changes.routes.js imports without throwing 170ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/cmc-module3-board.routes imports without throwing 45ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/companion-diagnostics.js imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:36.050Z",
+  "level": "info",
+  "message": "[companion-diagnostics] Companion-diagnostics routes initialised",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/coauthor.js imports without throwing 85ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/companion-diagnostics.js imports without throwing 15ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/compute imports without throwing 121ms
+ ✓ server/routes/__tests__/part11-audit-actor-identity.test.ts > POST /api/part11/audit-trail: the actor is the authenticated principal, never the request body > writes the printed name from the authenticated identity, not from userName in the body 33ms
+ ✓ server/routes/__tests__/part11-audit-actor-identity.test.ts > POST /api/part11/audit-trail: the actor is the authenticated principal, never the request body > answers with the name it actually persisted, so the caller cannot read back its own claim 6ms
+ ✓ server/routes/__tests__/part11-audit-actor-identity.test.ts > POST /api/part11/audit-trail: the actor is the authenticated principal, never the request body > falls back through the same chain as audit-trail-routes when there is no email 3ms
+ ✓ server/routes/__tests__/part11-audit-actor-identity.test.ts > POST /api/part11/audit-trail: the actor is the authenticated principal, never the request body > records "system" rather than a caller-supplied name when the principal carries neither 3ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/concept2cure imports without throwing 149ms
+ ✓ server/bootstrap/__tests__/mdx-prefix-gate.test.ts > the shape that caused BP-02 > gates a route owned by a different router — this is the defect 26ms
+ ✓ server/bootstrap/__tests__/mdx-prefix-gate.test.ts > the shape in use now > leaves an unauthenticated route unauthenticated 8ms
+ ✓ server/bootstrap/__tests__/mdx-prefix-gate.test.ts > the shape in use now > still refuses the gated sub-tree without tenant context 4ms
+ ✓ server/bootstrap/__tests__/mdx-prefix-gate.test.ts > the shape in use now > admits the gated sub-tree once tenant context is present 4ms
+ ✓ server/bootstrap/__tests__/mdx-prefix-gate.test.ts > the real bootstrap keeps the gate off the shared prefix > binds requireTenantContext to sub-trees, never to bare /api/mdx 2ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/contentAssembly.routes imports without throwing 71ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/conversation-health.js imports without throwing 7ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > returns nothing for an intact single-org chain 4ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > flags a row whose previous_hash does not match the prior record_hash 0ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > validates each org chain independently (no cross-tenant break) 0ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > does not let one org's hash satisfy another org's link 0ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > treats a null previous_hash as "no claim" (genesis or unset writer) 0ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > reports every break, not just the first 0ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > returns [] for an empty chain 0ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/conversation-os.js imports without throwing 238ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/cro.js imports without throwing 22ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/csp-report imports without throwing 26ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/csr-analytics imports without throwing 15ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/csr-intelligence-routes imports without throwing 11ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/cybersecurity-524b.js imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:36.785Z",
+  "level": "info",
+  "message": "[cybersecurity-524b] Cybersecurity §524B routes initialised",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/csr-jobs.js imports without throwing 57ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/cybersecurity-524b.js imports without throwing 18ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/data-lineage.js imports without throwing 17ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/decision-lineage.js imports without throwing 37ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > records a failed resource read instead of returning it as empty 4ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > reports a failed audit-log count as null, never as zero 1ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > a clean export carries an empty failure list and a real count 1ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > bumps schemaVersion, because a 1.0 consumer cannot read a null count 1ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > collects every failure, not the first 0ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/device-classification.js imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:36.904Z",
+  "level": "info",
+  "message": "[device-classification] Device classification routes initialised",
+  "context": {}
+}
+
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/diagnostics-performance.js imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:36.977Z",
+  "level": "info",
+  "message": "[diagnostics-performance] Diagnostics performance routes initialised",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/deep-research.js imports without throwing 46ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/device-classification.js imports without throwing 20ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/device-cockpit.js imports without throwing 18ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/device-projects imports without throwing 15ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/diagnostics-performance.js imports without throwing 40ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/document-understanding.js imports without throwing 32ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/docx-factory.js imports without throwing 35ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/dossier-readiness imports without throwing 18ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ectd-compile.js imports without throwing 100ms
+stderr | server/routes/__tests__/authoringExportPdf.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringExportPdf.test.ts
+{
+  "timestamp": "2026-10-01T01:13:37.472Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ectd-documents.js imports without throwing 88ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ectd-export.js imports without throwing 370ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ectd-submission-agent.routes.js imports without throwing 30ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/escalate imports without throwing 18ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/esignature imports without throwing 22ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/evidence-ask imports without throwing 18ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/evidence-fabric.js imports without throwing 11ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/evidence-management.routes.js imports without throwing 40ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/evidence-search.js imports without throwing 8ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/evidence-sufficiency.js imports without throwing 10ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/evidence.js imports without throwing 35ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/fieldSync.routes imports without throwing
+✅ Smart Field Linking initialized with 10 field mappings
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/fda-forms.routes imports without throwing 87ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/fieldSync.routes imports without throwing 25ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/global-compliance.js imports without throwing 24ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/global-markets.js imports without throwing 8ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/graphrag.js imports without throwing 38ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/gspr-postmarket.js imports without throwing 46ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/harmonize imports without throwing 25ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/human-factors.js imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:38.103Z",
+  "level": "info",
+  "message": "[human-factors] Human factors routes initialised",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/human-factors.js imports without throwing 35ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ind-checklist.routes.js imports without throwing 87ms
+stdout | server/routes/__tests__/authoringExportPdf.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX)
+{
+  "timestamp": "2026-10-01T01:13:38.650Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:13:38.651Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "u1",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX)
+{
+  "timestamp": "2026-10-01T01:13:38.652Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX)
+{
+  "timestamp": "2026-10-01T01:13:38.652Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX)
+{
+  "timestamp": "2026-10-01T01:13:38.653Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX)
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX) 81ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ind-generation imports without throwing 414ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ind.js imports without throwing 74ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/inline-annotations.js imports without throwing 14ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/integration-test.js imports without throwing 11ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/intelligence.js imports without throwing 16ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/intelligent-reports.js imports without throwing 13ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/investigator-brochure.routes.js imports without throwing 39ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ivd-assessments.js imports without throwing 19ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ivd-knowledge.js imports without throwing 9ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ivd-lifecycle.js imports without throwing 274ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/k510-document-preview.js imports without throwing 13ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/knowledge-base.js imports without throwing 59ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/market-access.js imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:39.288Z",
+  "level": "info",
+  "message": "[market-access] Market access routes initialised",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/labeling-pi.routes.js imports without throwing 57ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/labeling-smpc.routes.js imports without throwing 21ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/licensing.js imports without throwing 35ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/maa-module1.routes.js imports without throwing 16ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/market-access.js imports without throwing 15ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/market-access.routes.js imports without throwing 18ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx imports without throwing 30ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-admin imports without throwing 40ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-ana-drafts imports without throwing 10ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-ana-memory imports without throwing 15ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-analytics imports without throwing 14ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-audit imports without throwing 12ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-cdx imports without throwing 17ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-clia imports without throwing 13ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-client-review imports without throwing 18ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-clinical-studies imports without throwing 26ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-engineering imports without throwing 24ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-imports imports without throwing 38ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-industry-context imports without throwing 25ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-ivd-performance imports without throwing 19ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-ivdr imports without throwing 17ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-labeling imports without throwing 17ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-ldt imports without throwing 24ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-notifications imports without throwing 19ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-postmarket imports without throwing 8ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-qms imports without throwing 89ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-rbm imports without throwing 119ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-rbm-data imports without throwing 69ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-risk-management imports without throwing 15ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-search imports without throwing 13ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-software imports without throwing 12ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-study-archetypes imports without throwing 22ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-submission-gateway imports without throwing 324ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-templates imports without throwing 8ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-udi imports without throwing 20ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-vault imports without throwing 12ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/mdx-work-packages imports without throwing 21ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/misc-inline-routes imports without throwing 33ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/module-access-requests.js imports without throwing 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/module-subscriptions.js imports without throwing 85ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/moduleIntegrationRoutes.js imports without throwing 79ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/nonclinical-summary.routes.js imports without throwing 62ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/onboarding-proposals.js imports without throwing 38ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/organizations-routes.js imports without throwing 24ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/pccp.js imports without throwing 42ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/postmarket-surveillance.js imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:40.915Z",
+  "level": "info",
+  "message": "[postmarket-surveillance] Post-market surveillance routes initialised",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/planner-routes.js imports without throwing 105ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/pma-workflow-routes imports without throwing 9ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/post-market.js imports without throwing 6ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/postmarket-surveillance.js imports without throwing 12ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/precedent-engine imports without throwing 16ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/predicate-intelligence.js imports without throwing 18ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/predictive-sections imports without throwing 23ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/program-journey.routes.js imports without throwing 21ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/project-hierarchy.js imports without throwing 27ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/project-modules.js imports without throwing 25ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/project-rules.js imports without throwing 61ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/project-schedule-of-events imports without throwing 94ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/protocol_routes.js imports without throwing 47ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/protocol-dev.routes.js imports without throwing 151ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/q-sub.js imports without throwing 14ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/qc.routes.js imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:41.530Z",
+  "level": "info",
+  "message": "[storage] Using database storage implementation",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/qc.routes.js imports without throwing 117ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/qms.js imports without throwing 27ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/quality-management-api.js imports without throwing
+Tenant Section Gating routes registered
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/quality-management-api.js imports without throwing 86ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/real-world-evidence.js imports without throwing 38ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/realtime-collab.js imports without throwing 36ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/region-profiles imports without throwing 7ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/registrations-standards imports without throwing 6ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/regulatory-correspondence imports without throwing 83ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/regulatory-digital-twin.js imports without throwing 36ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/regulatory-graph.js imports without throwing 74ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/regulatory-precedent-intelligence imports without throwing 232ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/regulatory-programs imports without throwing 39ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/regulatory-registry imports without throwing 11ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/regulatoryRoutes.js imports without throwing 30ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/regulatorySubmissions imports without throwing 25ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/report-os-insights.js imports without throwing 224ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/report-os.js imports without throwing 237ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/research-admin.routes.js imports without throwing 34ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/safety-narrative.js imports without throwing 60ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/spl-fhir.js imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:42.903Z",
+  "level": "info",
+  "message": "[spl-fhir] SPL/FHIR routes initialised",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/saved-precedent-queries imports without throwing 10ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/sentinel-routes.js imports without throwing 48ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/shadow-review.routes.js imports without throwing 14ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/spl-fhir.js imports without throwing 13ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/standards.js imports without throwing 29ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/statistical-defensibility.js imports without throwing 73ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/submission-readiness.js imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:43.255Z",
+  "level": "info",
+  "message": "[submission-readiness] Submission-readiness routes initialised",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/submission-ops imports without throwing 235ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/submission-readiness.js imports without throwing 15ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/submission-twin.js imports without throwing 17ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/submissionCenter.routes imports without throwing 16ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/substantial-equivalence.js imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:43.478Z",
+  "level": "info",
+  "message": "[substantial-equivalence] Substantial-equivalence routes initialised",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/submissions imports without throwing 175ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/substantial-equivalence.js imports without throwing 15ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/taskManagement.routes imports without throwing 123ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/taskManagement.routes.js imports without throwing 2ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-config.js imports without throwing 14ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-ctq-factors.js imports without throwing 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-export.js imports without throwing 18ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-quality-validation.js imports without throwing 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-section-gating.js imports without throwing 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-stats.js imports without throwing 9ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-traceability.js imports without throwing 16ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-users.js imports without throwing 82ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenants-simple.js imports without throwing 50ms
+stdout | server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/udi-ivdr.js imports without throwing
+{
+  "timestamp": "2026-10-01T01:13:43.869Z",
+  "level": "info",
+  "message": "[udi-ivdr] UDI/IVDR routes initialised",
+  "context": {}
+}
+
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/test-assembly imports without throwing 53ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/udi-ivdr.js imports without throwing 21ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/unifiedTasks.routes imports without throwing 22ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/unifiedTasks.routes.js imports without throwing 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/universal-packager imports without throwing 118ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/validate-completeness imports without throwing 12ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/validation-kit imports without throwing 8ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/workspace-config.routes.js imports without throwing 123ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/workspace-summary.js imports without throwing 11ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/_ops-predicate-shadow.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/agent-swarm.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ai-placement-policy.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ana-cortex-ft.js exports something app.use() can mount 2ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ana-mdx-context.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ana-tool-policy.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/analytics-routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/approval-workflow.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/audit-services.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/billing-dashboard.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/billing.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/capa-mdr.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/change-propagation.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/charters.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/chat-actions.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/client-branding.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/client-portal.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/clients-routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/cmc-changes.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/coauthor.js exports something app.use() can mount 4ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/companion-diagnostics.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/conversation-health.js exports something app.use() can mount 0ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/conversation-os.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/cro.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/csr-jobs.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/cybersecurity-524b.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/data-lineage.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/decision-lineage.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/deep-research.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/device-classification.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/device-cockpit.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/diagnostics-performance.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/document-understanding.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/docx-factory.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ectd-compile.js exports something app.use() can mount 2ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ectd-documents.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ectd-export.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ectd-submission-agent.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/evidence-fabric.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/evidence-management.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/evidence-search.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/evidence-sufficiency.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/evidence.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/global-compliance.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/global-markets.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/graphrag.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/gspr-postmarket.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/human-factors.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ind-checklist.routes.js exports something app.use() can mount 0ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ind.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/inline-annotations.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/integration-test.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/intelligence.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/intelligent-reports.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/investigator-brochure.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ivd-assessments.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ivd-knowledge.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/ivd-lifecycle.js exports something app.use() can mount 2ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/k510-document-preview.js exports something app.use() can mount 6ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/knowledge-base.js exports something app.use() can mount 2ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/labeling-pi.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/labeling-smpc.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/licensing.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/maa-module1.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/market-access.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/market-access.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/module-access-requests.js exports something app.use() can mount 0ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/module-subscriptions.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/moduleIntegrationRoutes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/nonclinical-summary.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/onboarding-proposals.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/organizations-routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/pccp.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/planner-routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/post-market.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/postmarket-surveillance.js exports something app.use() can mount 0ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/predicate-intelligence.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/program-journey.routes.js exports something app.use() can mount 0ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/project-hierarchy.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/project-modules.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/project-rules.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/protocol_routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/protocol-dev.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/q-sub.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/qc.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/qms.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/quality-management-api.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/real-world-evidence.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/realtime-collab.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/regulatory-digital-twin.js exports something app.use() can mount 2ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/regulatory-graph.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/regulatoryRoutes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/report-os-insights.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/report-os.js exports something app.use() can mount 2ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/research-admin.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/safety-narrative.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/sentinel-routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/shadow-review.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/spl-fhir.js exports something app.use() can mount 0ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/standards.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/statistical-defensibility.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/submission-readiness.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/submission-twin.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/substantial-equivalence.js exports something app.use() can mount 0ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/taskManagement.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-config.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-ctq-factors.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-export.js exports something app.use() can mount 0ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-quality-validation.js exports something app.use() can mount 0ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-section-gating.js exports something app.use() can mount 0ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-stats.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-traceability.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenant-users.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/tenants-simple.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/udi-ivdr.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/unifiedTasks.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/workspace-config.routes.js exports something app.use() can mount 1ms
+ ✓ server/bootstrap/__tests__/registered-routers-load.test.ts > every statically registered router loads > ../routes/workspace-summary.js exports something app.use() can mount 1ms
+
+ Test Files  18 passed (18)
+      Tests  488 passed (488)
+   Start at  01:13:20
+   Duration  24.13s (transform 24.89s, setup 552ms, import 14.97s, tests 39.53s, environment 2ms)
+
