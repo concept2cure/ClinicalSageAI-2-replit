@@ -34,3 +34,10 @@ So the key refuses nothing today's writer sends. It holds the next writer to the
 | `01-red-before-key.txt` | The extended contract test, run against `20261001` as pushed in `a7060f3e3`. A conversation under another organization's project is written (`'ok'`, not `23503`), the key is absent, and the preflight has no entry for the table. |
 | `02-real-postgres.txt` | PostgreSQL 16. The upgraded and fresh databases each hold no cross-organization conversation. Each applies the file twice and ends with one key: NOT VALID, CASCADE, NO ACTION. An own-organization conversation is written, and one under another organization's project is refused. Everything runs in a rolled-back transaction. |
 | `03-green.txt` | 80 files, 833 tests, all passing: the contract test (12 cases), every suite that touches conversations or the keys file, the 71 suites that use the PGlite harness, and the founder-path walk. |
+
+## Review
+
+The review was `wf_4eeb1d30-9a3`, with two lenses: writers and migration. Both returned no findings.
+
+- **Writers lens.** It looked for every insert into `concept2cure_conversations`, and every update of its `project_id` or `organization_id`, across `server/`, `scripts/` and `shared/`. It also looked for any path that moves a project to another organization. None can now fail where it succeeded before.
+- **Migration lens.** It checked fresh installs, upgraded databases, a missing unique index, project, organization and workspace deletes, the PGlite harness and the preflight's consumers. No case fails a deploy or a delete.

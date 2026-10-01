@@ -31,6 +31,7 @@ async function ensureChatTables(): Promise<void> {
         model TEXT,
         system_prompt TEXT,
         metadata JSONB,
+        program_id UUID,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
