@@ -1,0 +1,19 @@
+## RED: the filed-as checks with trunk's project-vault.ts and Vault.tsx (HEAD 9425147e4)
+ × client/src/concept2cure/v2/__tests__/vaultDataRoomFiledAs.test.ts > roomStageLabel (VR-16) > names the version, and what superseded it 4ms
+   → roomStageLabel is not a function
+ × client/src/concept2cure/v2/__tests__/vaultDataRoomFiledAs.test.ts > roomStageLabel (VR-16) > says only what it knows: an older server, or a stage before filing 1ms
+   → roomStageLabel is not a function
+ ✓ server/routes/__tests__/vault-data-room-counts.test.ts > data room — the window > asks for current sources only, one past the window 48ms
+ ✓ server/routes/__tests__/vault-data-room-counts.test.ts > data room — the window > a full window says so, and shows only the window 19ms
+ ✓ server/routes/__tests__/vault-data-room-counts.test.ts > data room — the window > a window with room to spare is not truncated 8ms
+ ✓ server/routes/__tests__/vault-data-room-counts.test.ts > data room — what "classified" means > a folder proposal is classified; the classifier's refusal is needs-review, not classified 8ms
+ × server/routes/__tests__/vault-data-room-counts.test.ts > data room — "filed" names the Vault version (VR-16) > a filed source says which version its bytes are, and which version replaced it 16ms
+   → expected { id: 1, title: 'Source 1', …(10) } to match object { stage: 'filed', filedAs: { …(2) } }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  3 failed | 4 passed (7)
+ × tests/db/vault-versions.dbtest.ts > the data room names the version its file became (VR-16) > a captured file holding v1.0's bytes reads 'filed as 1.0, superseded by 2.0' 69ms
+   → expected { id: 59, …(11) } to match object { stage: 'filed', filedAs: { …(2) } }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)

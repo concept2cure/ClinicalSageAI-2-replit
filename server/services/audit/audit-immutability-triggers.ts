@@ -72,6 +72,11 @@ export const EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS: readonly ExpectedImmutability
   { schema: 'vault', table: 'documents', trigger: 'vault_documents_truncate_guard', source: 'migrations/20260926_vault_documents_record_immutability.sql' },
   // ...and no DELETE but the tenant purge's owner-run function (VR-07, 2026-09-29, D5/D6).
   { schema: 'vault', table: 'documents', trigger: 'vault_documents_delete_guard', source: 'migrations/20260926_vault_documents_record_immutability.sql' },
+  // The data room's capture record: checksum and lineage write-once, retirement
+  // one-way, no TRUNCATE, DELETE only by the owner (VR-16, 2026-10-01, D2/D5).
+  { schema: 'public', table: 'cre_evidence_sources', trigger: 'cre_evidence_sources_capture_guard', source: 'migrations/20261001_cre_evidence_sources_capture_immutability.sql' },
+  { schema: 'public', table: 'cre_evidence_sources', trigger: 'cre_evidence_sources_truncate_guard', source: 'migrations/20261001_cre_evidence_sources_capture_immutability.sql' },
+  { schema: 'public', table: 'cre_evidence_sources', trigger: 'cre_evidence_sources_delete_guard', source: 'migrations/20261001_cre_evidence_sources_capture_immutability.sql' },
 ];
 
 /** Anything with a `.query` — a pg Pool, a PoolClient, a PGlite instance. */

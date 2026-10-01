@@ -50,6 +50,24 @@ export const versionCountLateral = (alias: string) => `LEFT JOIN LATERAL (
        SELECT count(*)::int AS version_count FROM back
      ) vc ON TRUE`;
 
+/**
+ * SQL: a LATERAL join giving `current_version`, the version label at the end of
+ * row `alias`'s valid successor chain (its own when nothing supersedes it).
+ * Bounded like versionCountLateral. What the data room names a filed file's
+ * successor by (VR-16).
+ */
+export const currentVersionLateral = (alias: string) => `LEFT JOIN LATERAL (
+       WITH RECURSIVE fwd AS (
+         SELECT ${alias}.id, ${alias}.version, ${alias}.program_id, ${alias}.document_code,
+                ${alias}.organization_id, ${alias}.deleted_at, 0 AS n
+         UNION ALL
+         SELECT x.id, x.version, x.program_id, x.document_code, x.organization_id, x.deleted_at, f.n + 1
+           FROM fwd f JOIN vault.documents x ON ${VALID_LINK('x', 'f')}
+          WHERE f.n < 1000
+       )
+       SELECT version AS current_version FROM fwd ORDER BY n DESC LIMIT 1
+     ) cv ON TRUE`;
+
 /** One version as the version list shows it. */
 export interface FamilyVersion {
   id: string;
