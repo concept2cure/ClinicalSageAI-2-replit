@@ -139,9 +139,12 @@ beforeAll(async () => {
 
   // The accounts, with the one column the connection reads of them: whether
   // each is in use (services/account-standing.ts, VSR-001 F-29), as
-  // migrations/0000_sweet_joseph.sql defines it.
-  await pglite.exec(`CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active', password_changed_at TIMESTAMP);
-    INSERT INTO users (id) VALUES (${USER_A}), (${USER_B});`);
+  // migrations/0000_sweet_joseph.sql defines it. And when each membership
+  // began, which the standing reads with it (P0-4b R1); whether the account is
+  // a member is the membership double's answer (membershipRows below).
+  await pglite.exec(`CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active', password_changed_at TIMESTAMP, sessions_ended_at TIMESTAMPTZ);
+    INSERT INTO users (id) VALUES (${USER_A}), (${USER_B});
+    CREATE TABLE organization_users (organization_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT now()); INSERT INTO organization_users (organization_id, user_id) VALUES (${ORG_A}, ${USER_A}), (${ORG_B}, ${USER_B});`);
 
   // Two tenants, one document each, one section each.
   for (const [doc, section, tenant] of [

@@ -1,0 +1,8 @@
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "manager" 1ms
+ × server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "manager" 9ms
+ × server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "owner" 1ms
+ × server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > a member is not offered Finalize; under the default signing policy an admin is and a manager is not 4ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > a signing policy that names managers offers them Finalize 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 23 passed (26)

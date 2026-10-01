@@ -12,6 +12,11 @@ otherwise.** A finding is not a defect until a skeptic has reproduced it at HEAD
 and tested its spec claim; several claims rest on the reviewers' recollection of
 ICH/FDA specifications that this sandbox cannot fetch (agency hosts are refused).
 
+Also in this folder: [`VERDICTS.md`](VERDICTS.md), every skeptic's return verbatim
+(probe output, the requirement and its confidence, scope, smallest fix, blast
+radius), and [`PLANS.md`](PLANS.md), the two planning passes the open work is
+built from (F19's agency-rejection action; F04, F05, F07, F08).
+
 ## How the sweep ran
 
 Six independent finder lenses over the spine: ICH backbone, FDA Module 1 regional
@@ -31,21 +36,21 @@ both finders, and every verifier, were cut off by account usage limits
 | F02 | backbone | high | `m3-2-s-drug-substance`, `m3-2-p-drug-product`, `m5-3-5-…` (and the 2.3.S/2.3.P/2.7.3 counterparts) are emitted without the attributes the DTD requires (substance, manufacturer, dosageform, indication); multiple substances/products/indications merge under one heading. | **partially confirmed** 2026-10-01 (high): Module 3/5 headings lack #REQUIRED attributes; the Module 2 ones are never emitted (F00); `product-name` is optional |
 | F03 | backbone | medium | This spine can never produce a Study Tagging File: `LeafBytes` has no study fields, so 4.2.x / 5.3.x study reports ship untagged. | **confirmed** 2026-10-01 (medium); the in-repo STF generator is not ICH STF 2.2 either |
 | F04 | m1-regional + lifecycle | high | Every follow-up is declared the Original of a new regulatory activity: `submission-id` is always the sequence's own number and sub-type always `fdasst1`; the assemble body has no field to say otherwise, and nothing checks submission type against application type (an IND accepts "Efficacy Supplement"). | **confirmed** 2026-10-01 (high) |
-| F05 | m1-regional | high | `<application-number>` is written exactly as entered; the product's own example is `IND123456`, while FDA application numbers are six digits. | **confirmed** 2026-10-01 (high; FDA reaction at medium confidence) |
+| F05 | m1-regional | high | `<application-number>` is written exactly as entered; the product's own example is `IND123456`, while FDA application numbers are six digits. | **confirmed** 2026-10-01 (high); **fixed** at the package-spine boundary (identifiers route, assemble gate, form) |
 | F06 | m1-regional | high | Module 1 headings are written flat under `<m1-regional>` in package order (no parent headings, not in section order), Form 1571 ships as a bare leaf with no `form-type`, and FDA is marked `regionConformant: true` by region alone. | **confirmed** 2026-10-01 (high); **partly fixed** (order, honest `regionConformant`); nesting blocked on the us-regional DTD |
-| F07 | m1-regional | high | `<applicant-info/>` is always empty on this spine although the recorded applicant id and name are required and described as carried by the backbone; `application-containing-files` is also absent. | **confirmed** 2026-10-01 (high); **markup fixed**; the contact itself is not yet recorded |
+| F07 | m1-regional | high | `<applicant-info/>` is always empty on this spine although the recorded applicant id and name are required and described as carried by the backbone; `application-containing-files` is also absent. | **confirmed** 2026-10-01 (high); **fixed** (markup, and the contact is recorded and passed) |
 | F08 | m1-regional | medium | Submission-type words are matched by loose substring, so `IND` files as IND Safety Reports (fdast9), `report` as Annual Report, `supplement` as Efficacy Supplement, instead of being refused. | **confirmed** 2026-10-01 (medium) |
 | F09 | lifecycle | high | `modified-file` names a content file, not a leaf (`../0000/index.xml#<leafId>`). | **fixed upstream** in `09c4c15d` (IND lane, 2026-09-29) |
 | F10 | lifecycle | high | A filed withdrawal never leaves the filed state: the delete entry carries no `leafKey`, so the fold keyed on `leafKey` drops nothing; the document can be withdrawn twice, replaced after withdrawal, and is refused ("already on file") when re-filed. | **confirmed** 2026-10-01; **fixed** — see "Fixed after verification" |
-| F11 | lifecycle | medium | An empty-section placeholder PDF ("[EMPTY SECTION] …") is filed to the agency and never superseded: the real document later files as `new` beside it. | **confirmed** 2026-10-01 (medium: lifecycle and content, not a validation error) |
-| F12 | lifecycle | medium | A document moved to another CTD section is filed `new` there while the filed copy stays current at the old section, with no finding. | **confirmed** 2026-10-01 (medium: a missing operator finding and a stale current copy, not a validation error) |
-| F13 | lifecycle | medium | Cover letters and forms are diffed like dossier content: an unchanged cover letter is left out of a follow-up, and an edited one replaces sequence 0000's. | **confirmed** 2026-10-01 (medium; the IND 1571 half is firm, the cover-letter half is an FDA "should") |
+| F11 | lifecycle | medium | An empty-section placeholder PDF ("[EMPTY SECTION] …") is filed to the agency and never superseded: the real document later files as `new` beside it. | **confirmed** 2026-10-01 (medium); **fixed** — an empty section files nothing |
+| F12 | lifecycle | medium | A document moved to another CTD section is filed `new` there while the filed copy stays current at the old section, with no finding. | **confirmed** 2026-10-01 (medium); **fixed** — a move names the withdrawal it needs |
+| F13 | lifecycle | medium | Cover letters and forms are diffed like dossier content: an unchanged cover letter is left out of a follow-up, and an edited one replaces sequence 0000's. | **confirmed** 2026-10-01 (medium); **fixed** — per-submission letters and forms file new; an IND follow-up without a 1571 blocks |
 | F14 | transmit | high | A send to FDA's ESG **test** environment (`staging`) is recorded as the package's real filed sequence. | **confirmed** 2026-10-01 (high); **fixed** — see "Fixed after verification" |
 | F15 | transmit | high | The duplicate-send lock is keyed on the bundle's bytes, not its sequence; re-assembling while an earlier send of 0000 is unconfirmed sends 0000 a second time. | **partially confirmed** 2026-10-01 (medium); **fixed** (sequence lock) |
 | F16 | transmit | medium | The AS2 message: `AS2-To` defaults to `FDA-CESUB`, no Center/submission-type routing, no S/MIME signing or encryption (a signature is computed and dropped), and the MDN is not verified. | **confirmed** 2026-10-01 (medium); **`FDA-CESUB` default removed**; S/MIME, routing and MDN verification open |
 | F17 | transmit | medium | The uploaded archive has no sequence folder: `index.xml` sits at the zip root and the payload is always `ectd.zip`. | **partially confirmed** 2026-10-01 (medium): no sequence folder; `ectd.zip` is not a defect |
 | F18 | transmit | low | Bundles over 1 GiB go to an SFTP path built from caller-typed sequence and application number, and a bare deposit is recorded as filed. | **partially confirmed** 2026-10-01 (low); **fixed** (identifier rule, descriptor-authoritative metadata) |
-| F19 | transmit + lifecycle | critical | A sequence is recorded FILED on the ESG's MDN (Ack1) or a bare SFTP deposit, and nothing un-files it when FDA rejects it at Ack3 or it is rolled back; a second bundle with the same sequence number also reports "recorded". | **partially confirmed** 2026-10-01: high, not critical — see "Verification round 1" |
+| F19 | transmit + lifecycle | critical | A sequence is recorded FILED on the ESG's MDN (Ack1) or a bare SFTP deposit, and nothing un-files it when FDA rejects it at Ack3 or it is rolled back; a second bundle with the same sequence number also reports "recorded". | **partially confirmed** 2026-10-01 (high); **fixed** — one bundle per filed sequence, and a governed action records an agency technical rejection; Ack3 ingestion remains procurement-blocked |
 | F20 | m1-regional | medium | The us-regional 3.3 admin block never carries `<form form-type="fdaft…">`; Form FDA 1571 ships only as an `m1-1-forms` leaf, sequence 0000 included (raised by the F13 skeptic). | unverified |
 
 ## Verification round 1 — 2026-10-01 (F10, F11, F12, F14, F19)
@@ -298,6 +303,121 @@ WITHOUT the fixes: 14 new tests failed (e.g. expected [] to deeply equal
 Mutation: restoring "FDA is conformant because it is FDA" fails 10 tests.
 WITH the fixes: server/services/submission-gateways + server/services/ectd and
   the route, transmit, AnA and ectd-compile suites: 132 files, 1732 tests passed
+```
+
+**F05 and F07b — FDA's forms for the identifiers, and the regulatory contact.**
+`fdaIdentifierProblems` (`regulatory-identifiers.ts`, additive; the shared
+charset rule is unchanged) is the one rule both boundaries apply to an FDA eCTD
+package (`fdaEctdApplicationType`: the build is FDA/ectd and the family has an
+`fdaat` code, so a 510(k)/eSTAR keeps its K-number and other regions are not
+judged): the six digits FDA assigned, a nine-digit D-U-N-S number, and a
+regulatory contact with name, telephone and e-mail. The identifiers route
+refuses anything else `400 REGULATORY_IDENTIFIER_INVALID` and never rewrites it
+(`IND123456` is not stored as `123456`); the assemble gate folds the same
+sentences into the one `REGULATORY-IDENTIFIER-MISSING` finding for stored
+values; the contact is recorded, passed to the packager as the us-regional
+applicant contact, part of the stale-bundle comparison and of the store-time
+drift check. The form's example is `e.g. 123456`, with the contact fields.
+Not fixed here (hand-off): `ectd-regional-rules.ts` FDA-ESG-002 requires the
+prefix this rule refuses; it is not on the package spine's path.
+
+**F11 — an empty section files nothing.** No `[EMPTY SECTION]` placeholder
+leaf is generated on the eCTD path; a `SECTION-EMPTY` warning names the section,
+the validator's summary still counts it, and the content fingerprint still
+changes when a section empties. A withdrawal of a section's only document files
+the withdrawal alone. Three route tests that pinned the placeholder were changed
+to the new behaviour (their mapped content is unchanged otherwise).
+
+**F19, first part — one bundle per filed sequence.** `recordFiledSequence` says
+what it did (`recorded` / `already-recorded` / `conflict` / `write-failed`)
+instead of answering `true` for a different bundle under a sequence on file; a
+production send of a different bundle under a filed sequence is refused before
+the bytes leave (`409 SEQUENCE_ALREADY_FILED`, the code now carried in the
+refusal's `details`); a conflict recorded during a send is reported as
+`sequence-conflict` with the bundle the history holds. Filed entries carry
+`state`; the reader skips `rejected` ones, so a rejected number can be reused —
+but the governed action that records an agency technical rejection (evidence,
+e-signature, latest-sequence-only) is not built yet.
+
+```
+WITHOUT the fixes (same tree, fixes absent): 8 failed
+  × assemble: BLOCKS an IND package whose recorded application number carries a prefix … → expected [] to have a length of 1
+  × assemble: hands the recorded regulatory contact to the packager … → expected undefined to deeply equal [ { type: 'Regulatory', … } ]
+  × assemble: BLOCKS an IND package that records no regulatory contact …
+  × assemble: a contact recorded while the bundle was being assembled makes it stale → expected 200 to be 409
+  × e2e: us-regional.xml carries the D-U-N-S number as <id>, … and the contact
+  × client: records regulatory identifiers … → expected 'e.g. IND123456' to be 'e.g. 123456'
+  × e2e F11: ships no leaf for it … → expected [ '1.2', '2.5', '3.2.P.1' ] to deeply equal [ '1.2', '2.5' ]
+  × e2e F11: withdrawing a section's only document … → expected { new: 1, … } to match object { new: 0, delete: 1 }
+WITH the fixes: 12 files, 367 tests passed (lifecycle unit, package-spine e2e,
+  assemble, identifiers, preflight, section and transmit-guard routes, gateway
+  routes, AnA handlers, structural validator, bundle-invalidation contract, client)
+```
+
+**F12 — a moved document left its old copy current with no finding.** The
+sequence plan now reports `staleOnFile`: each document this sequence leaves
+current although the package no longer files it there. A document whose artifact
+is placed at another CTD section now is `LEAF-RELOCATED-OLD-COPY-CURRENT`, an
+error that blocks transmit and names the exact `withdraw` entry; filing at two
+sections on purpose is not a move. A placeholder filed before F11 is
+`PLACEHOLDER-ON-FILE`, a warning naming its `withdraw` entry. The move done
+whole — new filing plus withdrawal in one sequence — carries neither.
+
+```
+WITHOUT the fix: 4 failed
+  × moving a document to a DIFFERENT CTD section … the copy left on file is named → expected undefined to deeply equal [ { reason: 'relocated', … } ]
+  × a document filed at TWO sections on purpose is not a move
+  × names an empty-section placeholder still on file …
+  × e2e: blocks the sequence that files it at the new section … → expected [] to have a length of 1
+WITH the fix: lifecycle unit, package-spine e2e and assemble routes: 106 passed
+```
+
+**F13 — cover letters and forms were diffed like dossier content.** For FDA,
+`planSequence` takes a `perSubmission` predicate (1.2, 1.1, 1.1.x): such a leaf
+is never a `replace` — it files `new` when it differs from the one on file, and
+is left out when it is that same document unchanged (the earlier submission's).
+On an FDA follow-up the route then names what the sequence lacks of its own
+Module 1: `M1-FORM-1571-MISSING` (error, IND packages — Form FDA 1571 accompanies
+every IND submission) and `M1-COVER-LETTER-MISSING` (warning — FDA expects one
+with every submission). Other regions are diffed as before. Sequence 0000's
+completeness (an IND original without a 1571) is the readiness engine's, not
+this check's. Three route tests that used the cover letter as their example of a
+replace now use a dossier document, and the cover letter has its own case.
+
+```
+WITHOUT the fix: 3 failed
+  × a new cover letter files as NEW, never as a replace … → expected [ { …(3) } ] to deeply equal [ { ctdSection: '1.2', …(2) } ]
+  × e2e: a revised cover letter files as NEW in the follow-up … → expected { new: 0, replace: 1, … } to match { new: 1, replace: 0 }
+  × e2e: an IND follow-up that carries no Form FDA 1571 is blocked … → expected [] to deeply equal [ ObjectContaining{…} ]
+WITH the fix: lifecycle unit, package-spine e2e, assemble, preflight, transmit-guard and
+  gateway routes, client: 247 passed
+```
+
+**F19, second part — recording an agency technical rejection.** `POST
+/api/mdx/gateways/transmittals/:id/technical-rejection` (same re-auth ceremony
+as rollback and transmit) runs `recordFiledSequenceRejection`
+(`server/services/ectd/filed-sequence-rejection.ts`): keyed on the transmittal,
+latest non-rejected filed sequence only, refused when the transmittal records
+agency acceptance, evidence read from the Vault (tenant-scoped, not deleted),
+and — in one transaction under the package lock — a governed `sign` ledger row
+and an electronic signature bound to the evidence's content hash; the
+transmittal moves to `validation_failed`, the filed entry is marked
+`state: 'rejected'` and kept, and a stored bundle above it is cleared. The next
+assembly reuses the number and diffs against what the agency holds. A rollback
+still does not un-file (pinned by a test). The Submission Center's transmittal
+log has the control; a transmit refused `SEQUENCE_ALREADY_FILED` shows the
+server's sentence. `ci:sign-ceremony` carries one "proof across a boundary"
+entry for the service, as it does for governed transmit and the eSTAR filing
+signature: the route re-authenticates, the service refuses without that proof.
+Ack3 ingestion does not exist (ESG procurement); there is no reinstate action.
+
+```
+Fail-first: the e2e cases could not import the module at HEAD; against a no-op
+stub 5 of 6 e2e, all 25 unit and 10 route cases failed, and 5 client cases
+(e.g. Unable to find role "button" and name /Technical rejection/). The
+rollback pin passes before and after by design; a mutation that un-files after
+a rollback makes it fail.
+WITH the fix: 10 suites, 333 tests passed; ci:sign-ceremony OK, selftest 17 passed
 ```
 
 ## What this sweep produced that is already fixed

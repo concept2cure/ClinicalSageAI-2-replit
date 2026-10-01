@@ -1,0 +1,250 @@
+# git HEAD: 0812a990; server/routes/tenant-config.ts as P1-49 left it (writer extracted), no P1-47 change
+# command: npx vitest run server/routes/__tests__/tenant-config-claude-connector.test.ts
+# (structured JSON log lines filtered out)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the owner is told they can change it 1634ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a admin sees the state and that they cannot change it 8ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a manager sees the state and that they cannot change it 6ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a member sees the state and that they cannot change it 5ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a viewer sees the state and that they cannot change it 6ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a stored value that is not exactly true reads as disabled 5ms
+   → Cannot read properties of undefined (reading 'enabled')
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > another organization's setting is not read 4ms
+   → expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > an administrator is refused with 403, and nothing is written or recorded 11ms
+   → {}: expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a manager is refused with 403, and nothing is written or recorded 5ms
+   → {}: expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a member is refused with 403, and nothing is written or recorded 3ms
+   → {}: expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > platform staff (super_admin) is refused with 403, and nothing is written or recorded 3ms
+   → {}: expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > another organization's owner is refused with 403, and nothing is written or recorded 2ms
+   → {}: expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > the owner enables it: one transaction, the setting and its chained audit row with the value before and after 2ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > the owner disables it, and the row records true → false 3ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {} is refused with 400 and nothing is written 6ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {"enabled":"yes"} is refused with 400 and nothing is written 3ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {"enabled":true,"extra":1} is refused with 400 and nothing is written 3ms
+   → expected 404 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of null is refused with 400 and nothing is written 5ms
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved 3ms
+   → expected 404 to be 500 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > PATCH /settings naming claudeConnector → 403, nothing written 8ms
+   → {"security":{"mfaRequired":true},"anaToolPolicy":{"deny":["x"]},"notifications":{"emailEnabled":true}}: expected 200 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > control: PATCH /settings without it still writes 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > PATCH /settings/claudeConnector is not a section the section door writes 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > a reset keeps the stored connector setting: it is not a default to restore 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the owner is told they can change it
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:123:50
+    121|   it('absent is disabled; the owner is told they can change it', async…
+    122|     const res = await request(app).get(PATH);
+    123|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    124|     expect(res.body).toEqual({ connector: { enabled: false, canChange:…
+    125|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a admin sees the state and that they cannot change it
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a manager sees the state and that they cannot change it
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a member sees the state and that they cannot change it
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a viewer sees the state and that they cannot change it
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:131:24
+    129|     as(role);
+    130|     const res = await request(app).get(PATH);
+    131|     expect(res.status).toBe(200);
+       |                        ^
+    132|     expect(res.body).toEqual({ connector: { enabled: true, canChange: …
+    133|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a stored value that is not exactly true reads as disabled
+TypeError: Cannot read properties of undefined (reading 'enabled')
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:137:58
+    135|   it('a stored value that is not exactly true reads as disabled', asyn…
+    136|     h.tenant!.settings = { claudeConnector: { enabled: 'true' } };
+    137|     expect((await request(app).get(PATH)).body.connector.enabled).toBe…
+       |                                                          ^
+    138|   });
+    139|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > another organization's setting is not read
+AssertionError: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:142:51
+    140|   it("another organization's setting is not read", async () => {
+    141|     as('owner', 901);
+    142|     expect((await request(app).get(PATH)).status).toBe(403);
+       |                                                   ^
+    143|   });
+    144| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > an administrator is refused with 403, and nothing is written or recorded
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a manager is refused with 403, and nothing is written or recorded
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a member is refused with 403, and nothing is written or recorded
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > platform staff (super_admin) is refused with 403, and nothing is written or recorded
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > another organization's owner is refused with 403, and nothing is written or recorded
+AssertionError: {}: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:156:50
+    154|     as(role, tenantId);
+    155|     const res = await request(app).put(PATH).send({ enabled: true });
+    156|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+    157|     expect(res.body.error).toMatch(/owner/i);
+    158|     expect(writes()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > the owner enables it: one transaction, the setting and its chained audit row with the value before and after
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:165:50
+    163|   it('the owner enables it: one transaction, the setting and its chain…
+    164|     const res = await request(app).put(PATH).send({ enabled: true });
+    165|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    166|     expect(res.body).toEqual({ connector: { enabled: true, canChange: …
+    167|     expect(writes()).toEqual(['BEGIN', 'SELECT FOR UPDATE', 'UPDATE', …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > the owner disables it, and the row records true → false
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:193:24
+    191|     h.tenant!.settings = { claudeConnector: { enabled: true } };
+    192|     const res = await request(app).put(PATH).send({ enabled: false });
+    193|     expect(res.status).toBe(200);
+       |                        ^
+    194|     expect(res.body).toEqual({ connector: { enabled: false, canChange:…
+    195|     expect((h.auditCalls[0].entry.details as any).values).toEqual({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {} is refused with 400 and nothing is written
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {"enabled":"yes"} is refused with 400 and nothing is written
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {"enabled":true,"extra":1} is refused with 400 and nothing is written
+AssertionError: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:202:24
+    200|   it.each([[{}], [{ enabled: 'yes' }], [{ enabled: true, extra: 1 }], …
+    201|     const res = await request(app).put(PATH).set('Content-Type', 'appl…
+    202|     expect(res.status).toBe(400);
+       |                        ^
+    203|     expect(writes()).toEqual([]);
+    204|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved
+AssertionError: expected 404 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 404
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:209:24
+    207|     h.auditFails = true;
+    208|     const res = await request(app).put(PATH).send({ enabled: true });
+    209|     expect(res.status).toBe(500);
+       |                        ^
+    210|     expect(writes()).toEqual(['BEGIN', 'SELECT FOR UPDATE', 'UPDATE', …
+    211|     expect(JSON.stringify(res.body)).not.toContain('serialize');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > PATCH /settings naming claudeConnector → 403, nothing written
+AssertionError: {"security":{"mfaRequired":true},"anaToolPolicy":{"deny":["x"]},"notifications":{"emailEnabled":true}}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:221:50
+    219|       .patch(`/api/tenant-config/${ORG}/settings`)
+    220|       .send({ claudeConnector: { enabled: true }, notifications: { ema…
+    221|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+    222|     expect(writes()).toEqual([]);
+    223|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  19 failed | 4 passed (23)
+   Start at  14:05:29
+   Duration  2.45s (transform 1.03s, setup 136ms, import 235ms, tests 1.74s, environment 0ms)
+

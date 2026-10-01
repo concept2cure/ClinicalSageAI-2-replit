@@ -62,7 +62,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from '../golden-journeys/harness';
 import { T, buildWorld, baselineProblems, type World } from './founder-path-lineage.world';
 import { hopProject, hopCapture, hopAnaDraft, hopEditSave, hopSeal, hopFileToVault, hopAdopt } from './founder-path-lineage.hops-authoring';
-import { hopPlace, hopTransmit, walkBack, walkForward, hopRetention } from './founder-path-lineage.hops-filing';
+import { hopVaultApproval, hopPlace, hopTransmit, walkBack, walkForward, hopRetention } from './founder-path-lineage.hops-filing';
 
 const h = vi.hoisted(() => ({
   db: null as unknown,
@@ -180,6 +180,10 @@ const MIGRATIONS = [
   // Identity, the chained audit ledger, and the Part 11 signing columns.
   'db/migrations/20260813_audit_tamper_proof_log.sql',
   'db/migrations/20260725_users_signing_lockout_columns.sql',
+  // The account standing every authenticator and the signer re-verify read
+  // gained users.sessions_ended_at (P0-4b); without it every signature is
+  // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
+  'migrations/20261001_users_sessions_ended_at.sql',
   'migrations/20260527_mutation_primitives.sql',
   'migrations/20260609_audit_hmac_seal.sql',
   'migrations/20260921_audit_logs_chain_seq.sql',
@@ -268,6 +272,7 @@ describe('LX-00 — the founder path: project → Data Room → AnA → editor �
   it('hop 4 · edit-save — a person edits the quoted section and saves it through the section save path', () => hopEditSave(world), T);
   it('hop 5 · seal — the document is frozen and approved under a Part 11 signature', () => hopSeal(world), T);
   it('hop 6 · file-to-vault — the sealed document is filed to the project’s Vault', () => hopFileToVault(world), T);
+  it('hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (a): an Authoring export is approved again in the Vault)', () => hopVaultApproval(world), T);
   it('hop 7 · place — the filing copy and the Vault copy are placed as submission leaves', () => hopPlace(world), T);
   it('hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)', () => hopTransmit(world), T);
   it('walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project', () => walkBack(world), T);

@@ -43,6 +43,36 @@ export interface VaultVersion {
   link: 'none' | 'verified' | 'unverified';
   /** Its review and approval (VR-13); null when nobody has started one. */
   lifecycle?: VaultVersionLifecycle | null;
+  /** The live submission leaves that name it (VR-14a). Absent when the server did not say. */
+  placements?: VaultPlacement[];
+  /** The official eSTAR exports whose record names it as an attachment (VR-14c). */
+  estarUses?: VaultEstarUse[];
+}
+
+/** An official eSTAR export that attached a version, as the server returns it (vault-where-used.ts). */
+export interface VaultEstarUse {
+  record: 'artifact' | 'audit';
+  recordId: string;
+  exportedAt: string;
+  slot: string | null;
+  chapter: string | null;
+  fileName: string | null;
+  retainedAs: { documentId: string; documentCode: string | null; version: string | null } | null;
+}
+
+/** One leaf that names a version, as the server returns it (vault-where-used.ts). */
+export interface VaultPlacement {
+  leafId: number;
+  submissionId: number;
+  submissionTitle: string | null;
+  applicationType: string | null;
+  sequenceId: number;
+  sequenceNumber: string | null;
+  region: string | null;
+  sequenceStatus: string | null;
+  sectionCode: string;
+  leafTitle: string;
+  operation: string;
 }
 
 interface VersionsShape {
@@ -67,6 +97,32 @@ function dateLabel(iso: string): string {
 function uploaderLabel(v: VaultVersion): string {
   if (v.uploader) return v.uploader;
   return v.uploaderId != null ? `user ${v.uploaderId}` : 'uploader not recorded';
+}
+
+/** Where a version is placed, in words: each submission sequence and section, with the leaf's operation. */
+export function placedInText(placements: VaultPlacement[] | undefined): string {
+  if (!placements) return '';
+  if (placements.length === 0) return ' · not placed in any submission';
+  const one = (p: VaultPlacement) =>
+    `${p.submissionTitle ?? `submission ${p.submissionId}`}, sequence ${p.sequenceNumber ?? 'not numbered'}, ` +
+    `${p.sectionCode} (${p.operation}; sequence ${p.sequenceStatus ?? 'status not recorded'})`;
+  return ` · placed in ${placements.map(one).join('; ')}`;
+}
+
+/**
+ * The official eSTAR exports that attached a version, in words. None reads as
+ * nothing at all: exports made before their record named its sources are not
+ * known here, so "attached to no eSTAR" would claim more than was read.
+ */
+export function estarText(uses: VaultEstarUse[] | undefined): string {
+  if (!uses || uses.length === 0) return '';
+  const one = (u: VaultEstarUse) => {
+    const kept = u.retainedAs
+      ? `, retained as ${u.retainedAs.documentCode ?? 'a Vault document'}${u.retainedAs.version ? ` v${u.retainedAs.version}` : ''}`
+      : '';
+    return `the official eSTAR exported ${dateLabel(u.exportedAt)}${kept}${u.chapter ? ` (${u.chapter})` : ''}`;
+  };
+  return ` · attached to ${uses.map(one).join('; ')}`;
 }
 
 const LINK_TEXT: Record<VaultVersion['link'], string> = {
@@ -185,6 +241,8 @@ function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleCh
               </>
             ) : null}
             {LINK_TEXT[v.link]}
+            <span data-testid={`vault-version-placed-${v.id}`}>{placedInText(v.placements)}</span>
+            <span data-testid={`vault-version-estar-${v.id}`}>{estarText(v.estarUses)}</span>
             <LifecycleSummary lifecycle={v.lifecycle} />
           </span>
           <button

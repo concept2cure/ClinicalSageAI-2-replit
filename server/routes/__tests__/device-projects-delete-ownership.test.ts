@@ -20,13 +20,14 @@ vi.hoisted(() => {
 const H = vi.hoisted(() => ({
   own: [] as unknown[],
   deleted: [] as unknown[],
+  deleteError: null as unknown,
   holds: vi.fn(async () => ({ anchoredPrograms: ['prog-of-another-org'], governedArtifacts: 0 })),
 }));
 
 vi.mock('../../db', () => {
   const tx = {
     select: () => ({ from: () => ({ where: () => ({ limit: async () => H.own }) }) }),
-    delete: () => ({ where: () => ({ returning: async () => H.deleted }) }),
+    delete: () => ({ where: () => ({ returning: async () => { if (H.deleteError) throw H.deleteError; return H.deleted; } }) }),
   };
   return { db: { transaction: async (fn: (t: unknown) => unknown) => fn(tx) } };
 });
@@ -57,6 +58,7 @@ beforeEach(() => {
   H.holds.mockClear();
   H.own = [];
   H.deleted = [];
+  H.deleteError = null;
 });
 
 describe('DELETE /api/device-projects/:id — ownership before holds', () => {
@@ -74,5 +76,27 @@ describe('DELETE /api/device-projects/:id — ownership before holds', () => {
     const res = await request(app).delete('/api/device-projects/5');
     expect(res.status).toBe(200);
     expect(H.holds).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('DELETE /api/device-projects/:id — a store keeps a record under it (PF-13 follow-up)', () => {
+  it('the database refusing the delete is 409 PROJECT_HOLDS_RECORDS, archive instead, not a 500', async () => {
+    H.own = [{ id: 5 }];
+    H.holds.mockResolvedValueOnce({ anchoredPrograms: [], governedArtifacts: 0 });
+    H.deleteError = Object.assign(new Error('Failed query'), {
+      cause: { code: '23503', table: 'fda_510k_projects', constraint: 'fda_510k_projects_project_id_projects_id_fk' },
+    });
+    const res = await request(app).delete('/api/device-projects/5');
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('PROJECT_HOLDS_RECORDS');
+    expect(res.body.message).toMatch(/Archive it instead/);
+    expect(JSON.stringify(res.body)).not.toContain('fda_510k_projects');
+  });
+
+  it('any other failure is still a 500', async () => {
+    H.own = [{ id: 5 }];
+    H.holds.mockResolvedValueOnce({ anchoredPrograms: [], governedArtifacts: 0 });
+    H.deleteError = new Error('connection reset');
+    expect((await request(app).delete('/api/device-projects/5')).status).toBe(500);
   });
 });

@@ -96,6 +96,9 @@ async function toReview(tierName: string) {
   fireEvent.click(tile);
   fireEvent.click(screen.getByText(/Continue/));                  // → invite personnel
   fireEvent.click(screen.getByText(/Continue/));                  // → modules
+  fireEvent.click(screen.getByText(/Continue/));                  // → agency accounts
+  // The gateway account choice is offered at onboarding and can wait (D7, 2026-10-01).
+  expect(screen.getByTestId('gateway-accounts-setting')).toBeTruthy();
   fireEvent.click(screen.getByText(/Continue/));                  // → review & activate
 }
 

@@ -17,6 +17,46 @@ import { Hop, ORG_A, AUTHOR, PASSWORD, SHA256_X, HEX64, sha256, json, asPrincipa
 type Row = Record<string, unknown>;
 
 /**
+ * 6b · The Vault copy is reviewed and approved (VR-13, VR-14; FD5 (a)).
+ *
+ * Since 2026-10-01 only an approved, current Vault version is transmitted
+ * (leaf-source-resolver.ts, vaultVersionNotTransmittable). No Authoring
+ * signature is bound to the exported PDF's bytes yet, so under FD5's shipped
+ * default the sealed export is approved again in the Vault: its filer starts
+ * the record and sends it for review, a reviewer signs, the approver approves.
+ * POST /api/regulatory/documents (document-lifecycle.ts) and /:id/advance, /:id/sign.
+ */
+export async function hopVaultApproval(w: World): Promise<void> {
+  const { k, q } = w;
+  const hop = new Hop('vault-approval');
+  const as = (user: number) => asPrincipal(ORG_A, user);
+  const lifecycle = (user: number, p: string, body: object) =>
+    as(user)(request(w.app).post(`/api/regulatory/documents${p}`)).send(body);
+  const signed = { password: PASSWORD, mfaToken: '000000' };
+
+  const start = await lifecycle(3, '', { sources: { vault_documents: { nativeId: k.vaultDocumentId, role: 'artifact' } } });
+  expect(start.status, JSON.stringify(start.body)).toBe(201);
+  const canonicalId = String(start.body.canonicalId);
+  const toReview = await lifecycle(3, `/${canonicalId}/advance`, { to: 'in_review', ...signed, reason: 'Send the sealed export for review' });
+  expect(toReview.status, JSON.stringify(toReview.body)).toBe(200);
+  const reviewed = await lifecycle(5, `/${canonicalId}/sign`, { meaning: 'reviewed', ...signed, reason: 'Reviewed against the sealed document' });
+  expect(reviewed.status, JSON.stringify(reviewed.body)).toBe(200);
+  const approved = await lifecycle(4, `/${canonicalId}/advance`, { to: 'approved', ...signed, reason: 'Approved for the C2C-101 IND original sequence' });
+  expect(approved.status, JSON.stringify(approved.body)).toBe(200);
+
+  await hop.check('vault-copy-approved-for-its-bytes', 'the Vault copy\'s lifecycle record is approved, for the bytes the Vault holds', async (observe) => {
+    const [row] = await q<{ stage: string; content_hash: string; vault_hash: string }>(
+      `SELECT c.stage, c.content_hash, d.content_hash AS vault_hash
+         FROM canonical_documents c JOIN vault.documents d ON d.id::text = c.source_refs -> 'vault_documents' ->> 'nativeId'
+        WHERE c.canonical_id = $1`, [canonicalId]);
+    observe(row?.stage);
+    expect(row).toMatchObject({ stage: 'approved' });
+    expect(row.content_hash).toBe(row.vault_hash);
+  });
+  hop.verdict();
+}
+
+/**
  * 7 · takeAuthoringSnapshot — the service behind POST /api/coauthor/documents
  * (coauthor.ts:200-208; coauthor-snapshot.ts:423) — then POST /api/submissions/:id/sequences
  * (submissions.ts:876) and PUT /sequences/:id/leaves ×2 (:928; submission-service.ts:1842, :2062).

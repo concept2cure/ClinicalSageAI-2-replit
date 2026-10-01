@@ -1,0 +1,35 @@
+# P1-49 fix round: the tripwire's recognisers, applied to the tree and to a mutant changeMemberRole that writes no row
+# 2026-10-01T15:15:11Z  node scratchpad/tripwire-mutant.mjs (script reproduced below)
+mutant removed the record call: true
+real tree : {"viaCanonical":true,"canonicalRecords":true,"recordsIt":true,"disclosureRequired":false}
+mutant    : {"viaCanonical":true,"canonicalRecords":false,"recordsIt":false,"disclosureRequired":true}
+
+## script
+// Applies review-round-1.test.ts's recognisers (copied verbatim) to the real
+// files and to a mutant of membership-change.ts whose changeMemberRole no
+// longer writes its row. Nothing in the working tree is modified.
+import { readFileSync } from 'node:fs';
+const scim = readFileSync('server/routes/scim.ts', 'utf8');
+const start = scim.indexOf("router.patch('/Groups/:id'");
+const end = scim.indexOf('\nrouter.', start + 1);
+const handler = scim.slice(start, end);
+function verdict(membership) {
+  const canonicalStart = membership.indexOf('export async function changeMemberRole(');
+  const canonical = membership.slice(canonicalStart, membership.indexOf('\nexport ', canonicalStart + 1));
+  const canonicalRecords =
+    canonicalStart > -1 &&
+    /UPDATE organization_users SET role/.test(canonical) &&
+    /recordMembershipChange\(|writeChainedAuditRow\(/.test(canonical) &&
+    /writeChainedAuditRow\(/.test(membership);
+  const viaCanonical = /changeMemberRole\(/.test(handler);
+  const recordsIt = /auditScim\(|writeChainedAuditRow\(|INSERT INTO audit_/.test(handler) || (viaCanonical && canonicalRecords);
+  return { viaCanonical, canonicalRecords, recordsIt, disclosureRequired: !recordsIt };
+}
+const real = readFileSync('server/services/tenant/membership-change.ts', 'utf8');
+const s = real.indexOf('export async function changeMemberRole(');
+const e = real.indexOf('\nexport ', s + 1);
+const body = real.slice(s, e).replace(/await recordMembershipChange\(client, actor, \{[\s\S]*?\}\);\n/, '');
+const mutant = real.slice(0, s) + body + real.slice(e);
+console.log('mutant removed the record call:', mutant !== real && !/recordMembershipChange\(/.test(body));
+console.log('real tree :', JSON.stringify(verdict(real)));
+console.log('mutant    :', JSON.stringify(verdict(mutant)));

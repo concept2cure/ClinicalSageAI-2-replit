@@ -1,0 +1,375 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx > Record review — who is offered it, and what it reads > a member who cannot run reports is not offered it 330ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx > Record review — who is offered it, and what it reads > reads nothing until opened, then states each kind as the server did, with no date for none 176ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx > Record review — who is offered it, and what it reads > says when the latest review is overdue 94ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx > Record review — who is offered it, and what it reads > a failed read is an error with a retry, never "no review recorded" 104ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx > Record review — who is offered it, and what it reads > a member whose role does not sign is told so, and offered no form 146ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx > Record review — an access review, signed > names the run, takes a decision per privileged account, and signs with meaning review 652ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx > Record review — an access review, signed > will not open the dialog until every account has a decision 293ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx > Record review — an access review, signed > a refused signature is shown in the dialog with nothing signed, and no success is claimed 395ms
+ × client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx > Record review — an audit trail review (fix round, DP-69) > is not signed until the integrity attestation has been run on this screen 214ms
+   → Unable to find an element with the text: Run the audit trail integrity attestation on this screen first. The review names that run.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner"
+    >
+      <div
+        class="ph"
+      >
+        <div>
+          <div
+            class="ph-eyebrow"
+          >
+            Reporting & analytics
+          </div>
+          <h1
+            class="ph-title"
+          >
+            Audit & compliance reports
+          </h1>
+          <div
+            class="ph-sub"
+          >
+            Deterministic reports drawn from the organisation's own records, sealed and recorded on the audit trail when run.
+          </div>
+        </div>
+      </div>
+      <div
+        aria-label="Reports"
+        role="group"
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 18px;"
+      >
+        <button
+          aria-pressed="false"
+          class="pj-card"
+          style="gap: 6px; cursor: pointer;"
+          type="button"
+        >
+          <span
+            class="pj-card-t"
+          >
+            User access review
+          </span>
+          <span
+            style="font-size: 12.5px; color: var(--text-300); line-height: 1.45;"
+          >
+            Every member who can sign in, with their role and second factor.
+          </span>
+          <span
+            style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;"
+          >
+            <span
+              style="display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-300); white-space: nowrap;"
+            >
+              21 CFR 11.10(d)
+            </span>
+            <span
+              style="display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-300); white-space: nowrap;"
+            >
+              SOC 2 CC6.2
+            </span>
+          </span>
+        </button>
+        <button
+          aria-pressed="false"
+          class="pj-card"
+          style="gap: 6px; cursor: pointer;"
+          type="button"
+        >
+          <span
+            class="pj-card-t"
+          >
+            Sign-in and session events
+          </span>
+          <span
+            style="font-size: 12.5px; color: var(--text-300); line-height: 1.45;"
+          >
+            Every sign-in, sign-out and second-factor event in the period.
+          </span>
+          <span
+            style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;"
+          >
+            <span
+              style="display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-300); white-space: nowrap;"
+            >
+              21 CFR 11.300(d)
+            </span>
+            <span
+              style="display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-300); white-space: nowrap;"
+            >
+              HIPAA 164.312(b)
+            </span>
+          </span>
+        </button>
+        <button
+          aria-pressed="false"
+          class="pj-card"
+          style="gap: 6px; cursor: pointer;"
+          type="button"
+        >
+          <span
+            class="pj-card-t"
+          >
+            Audit trail integrity attestation
+          </span>
+          <span
+            style="font-size: 12.5px; color: var(--text-300); line-height: 1.45;"
+          >
+            What each integrity check found when the report was run.
+          </span>
+          <span
+            style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;"
+          >
+            <span
+              style="display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-300); white-space: nowrap;"
+            >
+              21 CFR 11.10(e)
+            </span>
+          </span>
+        </button>
+        <button
+          aria-pressed="false"
+          class="pj-card"
+          style="gap: 6px; cursor: pointer;"
+          type="button"
+        >
+          <span
+            class="pj-card-t"
+          >
+            Full audit trail
+          </span>
+          <span
+            style="font-size: 12.5px; color: var(--text-300); line-height: 1.45;"
+          >
+            Every recorded event, as the signed export.
+          </span>
+          <span
+            style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;"
+          >
+            <span
+              style="display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-300); white-space: nowrap;"
+            >
+              21 CFR 11.10(e)
+            </span>
+          </span>
+        </button>
+      </div>
+      <div
+        style="font-size: 12px; color: var(--text-400);"
+      >
+        Choose a report to see what it covers
+         and run it for a period
+        .
+      </div>
+      <section
+        aria-labelledby="_r_1t_"
+        class="pj-card"
+        style[39...
+ × client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx > Record review — an audit trail review (fix round, DP-69) > names the attestation run, and starts the day after the last signed audit trail review ended 308ms
+   → expected '2026-07-03' to be '2026-10-01' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx > Record review — an audit trail review (fix round, DP-69) > is not signed until the integrity attestation has been run on this screen
+TestingLibraryElementError: Unable to find an element with the text: Run the audit trail integrity attestation on this screen first. The review names that run.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner"
+    >
+      <div
+        class="ph"
+      >
+        <div>
+          <div
+            class="ph-eyebrow"
+          >
+            Reporting & analytics
+          </div>
+          <h1
+            class="ph-title"
+          >
+            Audit & compliance reports
+          </h1>
+          <div
+            class="ph-sub"
+          >
+            Deterministic reports drawn from the organisation's own records, sealed and recorded on the audit trail when run.
+          </div>
+        </div>
+      </div>
+      <div
+        aria-label="Reports"
+        role="group"
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 18px;"
+      >
+        <button
+          aria-pressed="false"
+          class="pj-card"
+          style="gap: 6px; cursor: pointer;"
+          type="button"
+        >
+          <span
+            class="pj-card-t"
+          >
+            User access review
+          </span>
+          <span
+            style="font-size: 12.5px; color: var(--text-300); line-height: 1.45;"
+          >
+            Every member who can sign in, with their role and second factor.
+          </span>
+          <span
+            style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;"
+          >
+            <span
+              style="display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-300); white-space: nowrap;"
+            >
+              21 CFR 11.10(d)
+            </span>
+            <span
+              style="display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-300); white-space: nowrap;"
+            >
+              SOC 2 CC6.2
+            </span>
+          </span>
+        </button>
+        <button
+          aria-pressed="false"
+          class="pj-card"
+          style="gap: 6px; cursor: pointer;"
+          type="button"
+        >
+          <span
+            class="pj-card-t"
+          >
+            Sign-in and session events
+          </span>
+          <span
+            style="font-size: 12.5px; color: var(--text-300); line-height: 1.45;"
+          >
+            Every sign-in, sign-out and second-factor event in the period.
+          </span>
+          <span
+            style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;"
+          >
+            <span
+              style="display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-300); white-space: nowrap;"
+            >
+              21 CFR 11.300(d)
+            </span>
+            <span
+              style="display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-300); white-space: nowrap;"
+            >
+              HIPAA 164.312(b)
+            </span>
+          </span>
+        </button>
+        <button
+          aria-pressed="false"
+          class="pj-card"
+          style="gap: 6px; cursor: pointer;"
+          type="button"
+        >
+          <span
+            class="pj-card-t"
+          >
+            Audit trail integrity attestation
+          </span>
+          <span
+            style="font-size: 12.5px; color: var(--text-300); line-height: 1.45;"
+          >
+            What each integrity check found when the report was run.
+          </span>
+          <span
+            style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;"
+          >
+            <span
+              style="display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-300); white-space: nowrap;"
+            >
+              21 CFR 11.10(e)
+            </span>
+          </span>
+        </button>
+        <button
+          aria-pressed="false"
+          class="pj-card"
+          style="gap: 6px; cursor: pointer;"
+          type="button"
+        >
+          <span
+            class="pj-card-t"
+          >
+            Full audit trail
+          </span>
+          <span
+            style="font-size: 12.5px; color: var(--text-300); line-height: 1.45;"
+          >
+            Every recorded event, as the signed export.
+          </span>
+          <span
+            style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;"
+          >
+            <span
+              style="display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-300); white-space: nowrap;"
+            >
+              21 CFR 11.10(e)
+            </span>
+          </span>
+        </button>
+      </div>
+      <div
+        style="font-size: 12px; color: var(--text-400);"
+      >
+        Choose a report to see what it covers
+         and run it for a period
+        .
+      </div>
+      <section
+        aria-labelledby="_r_1t_"
+        class="pj-card"
+        style[39...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx:270:19
+    268|     fillTrailForm();
+    269|     fireEvent.click(screen.getByRole('button', { name: 'Sign review…' …
+    270|     expect(screen.getByText('Run the audit trail integrity attestation…
+       |                   ^
+    271|     expect(screen.queryByRole('dialog')).toBeNull();
+    272|     expect(calls.filter((c) => c.method === 'POST')).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx > Record review — an audit trail review (fix round, DP-69) > names the attestation run, and starts the day after the last signed audit trail review ended
+AssertionError: expected '2026-07-03' to be '2026-10-01' // Object.is equality
+
+Expected: "2026-10-01"
+Received: "2026-07-03"
+
+ ❯ client/src/concept2cure/v2/__tests__/complianceReviewRecords.test.tsx:283:80
+    281|     fillTrailForm();
+    282|     // The last signed audit trail review (CURRENT) covered up to 2026…
+    283|     expect((screen.getByLabelText('Reviewed from') as HTMLInputElement…
+       |                                                                                ^
+    284|     await signInDialog();
+    285|     await waitFor(() => expect(posted('/api/audit/reviews/12/sign')).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  15:09:55
+   Duration  4.56s (transform 609ms, setup 198ms, import 776ms, tests 2.72s, environment 668ms)
+

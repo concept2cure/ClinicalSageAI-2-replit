@@ -37,6 +37,10 @@
       "count": 1,
       "reason": "Approval stamp (2026-10-01): transition() stamps approved_at when action_state becomes 'approved'. At this head no caller reaches that state: the governed acts advance their decisions to confirmed/executed, and approveDecision (governed-decision-repository) has no caller. Unreachable, not unsigned. Revisit if anything starts approving decisions."
     },
+    "server/services/ectd/filed-sequence-rejection.ts": {
+      "count": 1,
+      "reason": "PROOF ACROSS A BOUNDARY, by contract, 2026-10-01 (W5/D7, sweep F19). signRejection writes the ledger pair AND the electronic_signatures row (persistGovernedActionSignature, bound to the agency notice's vault.documents content hash) on the package-lock transaction. recordFiledSequenceRejection throws before any query unless the caller hands in `reauthVerifiedAt`; its one caller, POST /api/mdx/gateways/transmittals/:id/technical-rejection (server/routes/mdx-submission-gateway.ts), runs verifyReauth before anything is read and captures it there. Re-verifying inside would spend a second credential attempt. Pinned by tests/mdx-submission-gateway-technical-rejection.test.ts (no re-auth => 401, nothing read) and server/services/ectd/__tests__/filed-sequence-rejection.test.ts (no proof => refused before any query)."
+    },
     "server/services/grants/grants-service.ts": {
       "count": 1,
       "reason": "Approval stamp (2026-10-01): approveNceTx, the no-cost-extension approval. Grants are outside the launch catalog. The AnA door already refuses (35794a160, 'AnA cannot sign'); the HTTP door is the grants module's own and has no ceremony. Recorded so it cannot grow."

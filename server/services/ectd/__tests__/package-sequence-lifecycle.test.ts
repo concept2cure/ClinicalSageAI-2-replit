@@ -11,6 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   foldFiledState,
+  isRejectedFiling,
   planSequence,
   readFiledSequences,
   SequenceLifecycleRefusal,
@@ -386,20 +387,110 @@ describe('planSequence', () => {
     expect(plan.summary).toMatchObject({ replace: 1, new: 0 });
   });
 
-  it('moving a document to a DIFFERENT CTD section is not a replace across sections', () => {
+  it('moving a document to a DIFFERENT CTD section is not a replace across sections — and the copy left on file is named', () => {
     // Identity is the document at a section. A corrected placement files at the
-    // new section and leaves the old copy on file — withdrawing it is an
-    // explicit act, which is the honest answer until withdrawal exists here.
+    // new section; the old copy stays on file until it is withdrawn, which is
+    // an explicit act. 2026-10-01 (W5/D7, sweep F12): nothing said so, so the
+    // agency kept a current copy at a heading the product no longer placed it
+    // at, and every later revision replaced only the new copy.
+    const filed: FiledSequence = {
+      ...SEQ_0000,
+      leaves: [leaf('2.5', 'a.pdf', 'm1', { leafKey: 'artifact:artifact_x@2.5' })],
+    };
+    const moved = [{ ctdSection: '2.7', fileName: 'a.pdf', md5: 'm1', title: 'x', leafKey: 'artifact:artifact_x@2.7' }];
+    const plan = planSequence({ sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed], desired: moved });
+    expect(plan.summary).toMatchObject({ new: 1, replace: 0 });
+    expect(plan.leaves[0]).not.toHaveProperty('modifiedFile');
+    expect(plan.staleOnFile).toEqual([{
+      reason: 'relocated', ctdSection: '2.5', fileName: 'a.pdf', sequenceNumber: '0000',
+      movedTo: { ctdSection: '2.7', fileName: 'a.pdf' },
+    }]);
+    // Withdrawing the old copy in the same sequence is the move done whole.
+    const whole = planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed], desired: moved,
+      withdraw: [{ ctdSection: '2.5', fileName: 'a.pdf' }],
+    });
+    expect(whole.summary).toMatchObject({ new: 1, delete: 1 });
+    expect(whole.staleOnFile).toEqual([]);
+  });
+
+  describe('per-submission documents (FDA cover letters and forms) — sweep F13', () => {
+    // Each FDA submission carries its OWN cover letter and forms. Diffed like
+    // dossier content, an edited letter was filed as a `replace` of 0000's —
+    // telling the agency the original IND's letter was superseded — and an
+    // unchanged one was silently left out.
+    const FDA_PER_SUBMISSION = (s: string) => s === '1.2' || s === '1.1' || s.startsWith('1.1.');
+    const filed: FiledSequence = {
+      ...SEQ_0000,
+      leaves: [
+        leaf('1.2', 'cover.pdf', 'md5-cover-0000', { leafKey: 'artifact:artifact_cover@1.2' }),
+        leaf('2.5', 'co.pdf', 'md5-co-v1', { leafKey: 'artifact:artifact_co@2.5' }),
+      ],
+    };
+    const cover = (md5: string) => ({ ctdSection: '1.2', fileName: 'cover.pdf', md5, title: 'Cover', leafKey: 'artifact:artifact_cover@1.2' });
+    const co = (md5: string) => ({ ctdSection: '2.5', fileName: 'co.pdf', md5, title: 'CO', leafKey: 'artifact:artifact_co@2.5' });
+
+    it('a new cover letter files as NEW, never as a replace of the one on file', () => {
+      const plan = planSequence({
+        sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
+        desired: [cover('md5-cover-0001'), co('md5-co-v1')], perSubmission: FDA_PER_SUBMISSION,
+      });
+      expect(plan.leaves).toEqual([{ ctdSection: '1.2', fileName: 'cover.pdf', operation: 'new' }]);
+      expect(plan.summary).toMatchObject({ new: 1, replace: 0, unchanged: 2 });
+    });
+
+    it('the letter on file, unchanged, is not filed again as this sequence\'s letter', () => {
+      const plan = planSequence({
+        sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
+        desired: [cover('md5-cover-0000'), co('md5-co-v2')], perSubmission: FDA_PER_SUBMISSION,
+      });
+      expect(plan.leaves.map((l) => [l.ctdSection, l.operation])).toEqual([['2.5', 'replace']]);
+      expect(plan.omitted).toEqual([{ ctdSection: '1.2', fileName: 'cover.pdf' }]);
+      expect(plan.summary).toMatchObject({ new: 0, replace: 1, unchanged: 1 });
+    });
+
+    it('without the predicate (every region but FDA) a letter is diffed like any document', () => {
+      const plan = planSequence({
+        sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
+        desired: [cover('md5-cover-0001'), co('md5-co-v1')],
+      });
+      expect(plan.leaves).toEqual([expect.objectContaining({ ctdSection: '1.2', operation: 'replace' })]);
+    });
+  });
+
+  it('a document filed at TWO sections on purpose is not a move', () => {
     const filed: FiledSequence = {
       ...SEQ_0000,
       leaves: [leaf('2.5', 'a.pdf', 'm1', { leafKey: 'artifact:artifact_x@2.5' })],
     };
     const plan = planSequence({
       sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
-      desired: [{ ctdSection: '2.7', fileName: 'a.pdf', md5: 'm1', title: 'x', leafKey: 'artifact:artifact_x@2.7' }],
+      desired: [
+        { ctdSection: '2.5', fileName: 'a.pdf', md5: 'm1', title: 'x', leafKey: 'artifact:artifact_x@2.5' },
+        { ctdSection: '2.7', fileName: 'a.pdf', md5: 'm1', title: 'x', leafKey: 'artifact:artifact_x@2.7' },
+      ],
     });
-    expect(plan.summary).toMatchObject({ new: 1, replace: 0 });
-    expect(plan.leaves[0]).not.toHaveProperty('modifiedFile');
+    expect(plan.staleOnFile).toEqual([]);
+  });
+
+  it('names an empty-section placeholder still on file from before placeholders stopped being filed', () => {
+    // Sweep F11: an empty section files nothing now, but a history written
+    // before that can hold a generated "[EMPTY SECTION]" leaf. It stays current
+    // until withdrawn, so the plan says where it is.
+    const filed: FiledSequence = {
+      ...SEQ_0000,
+      leaves: [
+        leaf('2.5', 'a.pdf', 'm1', { leafKey: 'artifact:artifact_x@2.5' }),
+        leaf('3.2.P.1', '3-2-p-1-s14.pdf', 'm-ph', { leafKey: 'section:14@3.2.P.1' }),
+      ],
+    };
+    const plan = planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
+      desired: [{ ctdSection: '2.5', fileName: 'a.pdf', md5: 'm2', title: 'x', leafKey: 'artifact:artifact_x@2.5' }],
+    });
+    expect(plan.staleOnFile).toEqual([
+      { reason: 'placeholder', ctdSection: '3.2.P.1', fileName: '3-2-p-1-s14.pdf', sequenceNumber: '0000' },
+    ]);
   });
 
   it('REFUSES a gap and a backfill alike — the only ordering this knows is the sequence number', () => {
@@ -457,5 +548,64 @@ describe('planSequence', () => {
     });
     expect(plan.summary).toMatchObject({ replace: 1, new: 0 });
     expect(plan.leaves[0].modifiedFile).toContain('0000'); // where that leaf still lives
+  });
+});
+
+/*
+ * 2026-10-01 (W5/D7, sweep F19). A sequence the agency did not load — a
+ * technical rejection, FDA's failed Ack3 — stayed on file for good: its number
+ * could not be reused (SEQUENCE_ALREADY_FILED), the next one was refused
+ * (SEQUENCE_OUT_OF_ORDER), and anything later diffed against content the agency
+ * never loaded. The governed rejection marks the entry; it stays in the
+ * metadata for audit and is read as not on file.
+ */
+describe('a filing the agency rejected is not on file (sweep F19)', () => {
+  const REJECTION = {
+    recordedAt: '2026-10-01T09:00:00.000Z', recordedBy: 777, reason: 'FDA Ack3 reports a technical rejection',
+    evidence: { vaultDocumentId: '0b6f8f3e-6c1d-4f43-9a63-2f1d0c9b7a51', contentSha256: 'e'.repeat(64) },
+    transmittalStatus: { previous: 'ack2_received', current: 'validation_failed' },
+    actionId: 'act_reject', signatureId: 31,
+  };
+  // What 0001 put on file before the agency rejected it: the overview, v2.
+  const SEQ_0001: FiledSequence = {
+    ...SEQ_0000, sequence: '0001', submissionType: 'Efficacy Supplement', sha256: 'b'.repeat(64), transmittalId: 2,
+    leaves: [leaf('2.5', 'clinical-overview.pdf', 'md5-co-v2', { operation: 'replace' })],
+  };
+  const rejected = { ...SEQ_0001, state: 'rejected', rejection: REJECTION };
+
+  it('the reader skips a rejected entry; an entry with no state, or "transmitted", is on file', () => {
+    expect(readFiledSequences({ filedSequences: [SEQ_0000, rejected] }).map((f) => f.sequence)).toEqual(['0000']);
+    expect(readFiledSequences({ filedSequences: [{ ...SEQ_0000, state: 'transmitted' }, SEQ_0001] }).map((f) => f.sequence))
+      .toEqual(['0000', '0001']);
+    expect(isRejectedFiling(rejected)).toBe(true);
+    expect(isRejectedFiling(SEQ_0001)).toBe(false);
+  });
+
+  it('a "rejected" state that carries no recorded evidence does not un-file anything', () => {
+    // Only the governed action, with the agency's evidence, takes a filing off file.
+    const bare = { ...SEQ_0001, state: 'rejected' };
+    const noEvidence = { ...SEQ_0001, state: 'rejected', rejection: { ...REJECTION, evidence: {} } };
+    for (const entry of [bare, noEvidence]) {
+      expect(isRejectedFiling(entry)).toBe(false);
+      expect(readFiledSequences({ filedSequences: [SEQ_0000, entry] }).map((f) => f.sequence)).toEqual(['0000', '0001']);
+    }
+  });
+
+  it('the rejected number is reused, diffed against the sequence before it, and the one after it is out of order', () => {
+    const filed = readFiledSequences({ filedSequences: [SEQ_0000, rejected] });
+    // The very content 0001 carried is NOT on file: it ships again, as a
+    // replace of the 0000 leaf — not refused as "nothing to file".
+    const plan = planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed,
+      desired: desired([['2.5', 'clinical-overview.pdf', 'md5-co-v2'], ['3.2.P.1', 'description.pdf', 'md5-desc-v1']]),
+    });
+    expect(plan.leaves).toEqual([expect.objectContaining({ fileName: 'clinical-overview.pdf', operation: 'replace' })]);
+    expect(plan.leaves[0].modifiedFile).toContain('0000');
+    try {
+      planSequence({ sequence: '0002', submissionType: 'Efficacy Supplement', filed, desired: desired([['2.5', 'clinical-overview.pdf', 'md5-co-v3']]) });
+      throw new Error('expected a refusal');
+    } catch (e) {
+      expect((e as SequenceLifecycleRefusal).code).toBe('SEQUENCE_OUT_OF_ORDER');
+    }
   });
 });

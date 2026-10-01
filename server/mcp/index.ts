@@ -18,6 +18,11 @@
  * below), security headers and rate limits. The /api default-deny auth
  * boundary is not bypassed — nothing here is under /api — and the MCP
  * endpoint requires a Bearer token verified by the platform's own verifier.
+ *
+ * MCP_ENABLED mounts the connector for the deployment (product decision P-2).
+ * Each organisation's members get through consent, /mcp and /token only once
+ * that organisation's owner has turned it on (ADR-0014 §10, P1-47;
+ * auth/connector-enablement.ts).
  */
 
 import express, { type Request, type Response, type NextFunction, type RequestHandler } from 'express';

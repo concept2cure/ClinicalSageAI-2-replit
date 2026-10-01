@@ -1,0 +1,64 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T15:09:42.991Z","pid":18302,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:09:42.993Z","pid":18302,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:09:42.993Z","pid":18302,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-review-reports.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-review-reports.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/compliance-review-reports.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:09:44.286Z', poolSize: 1 }
+
+ ✓ tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the user access review: "No access review recorded" 33ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the audit trail integrity attestation: "No audit trail review recorded" 32ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the review list says none for each kind 27ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the user access review as of today names the review signed today, current 28ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > as of yesterday the latest is the one signed four months ago, and it is overdue 25ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the audit trail integrity attestation names the audit-trail review, not the access review 37ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > organisation B's reports and list see none of A's reviews 50ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the review list names A's records and the status of each kind 40ms
+{"level":30,"time":"2026-10-01T15:09:46.263Z","pid":18368,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:09:46.266Z","pid":18368,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:09:46.266Z","pid":18368,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-review-records.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-review-records.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/compliance-review-records.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:09:46.751Z', poolSize: 1 }
+
+ ✓ tests/db/compliance-review-records.dbtest.ts > a review written through the ceremony > drafts, then signs: record, signature and ledger pair in one transaction, bound to the content hash 123ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a review written through the ceremony > an audit-trail review is the same record, of the other kind 71ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > no password, no meaning: 400, the record stays a draft, nothing is signed 51ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a meaning other than review is refused before the password is checked 48ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a wrong password is refused, and nothing is written 73ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > only the reviewer who drafted it signs it 58ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > an access review that leaves a privileged account without a decision is refused 21ms
+stdout | tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted
+[database] Database connection successful { timestamp: '2026-10-01T15:09:47.292Z', poolSize: 1 }
+
+stdout | tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted
+[database] Database connection successful { timestamp: '2026-10-01T15:09:47.294Z', poolSize: 1 }
+
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a member who is not an audit reader cannot draft one 12ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > as the runtime role, a bare UPDATE to signed is refused at COMMIT 28ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > as the runtime role, a bare INSERT of a signed row is refused at COMMIT 10ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its outcome is refused 8ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its decisions is refused 8ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its signature is refused 7ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: back to draft is refused 6ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: a delete is refused 8ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the table owner: an update, a delete and a truncate are refused 43ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > a second signature on the same record is refused 47ms
+
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  15:09:40
+   Duration  7.10s (transform 1.97s, setup 139ms, import 988ms, tests 5.41s, environment 0ms)
+

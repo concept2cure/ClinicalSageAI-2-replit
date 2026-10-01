@@ -148,6 +148,10 @@ const R = new JourneyRecorder(
     // create handler now writes; replayed here for the same reason 20260524 is.
     'migrations/20260907_regulatory_programs_application_number.sql',
     'db/migrations/20260725_users_signing_lockout_columns.sql',
+    // The account standing every authenticator and the signer re-verify read
+    // gained users.sessions_ended_at (P0-4b); without it every signature is
+    // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
+    'migrations/20261001_users_sessions_ended_at.sql',
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260529_phase9_backfill.sql',
     'migrations/20260604_shadow_review.sql',
@@ -195,6 +199,10 @@ beforeAll(async () => {
       // read failed and every freeze/dispatch signature answered
       // REAUTH_MFA_STATE_UNKNOWN. The real migration, not a hand copy.
       'db/migrations/20260725_users_signing_lockout_columns.sql',
+      // The account standing every authenticator and the signer re-verify read
+      // gained users.sessions_ended_at (P0-4b); without it every signature is
+      // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
+      'migrations/20261001_users_sessions_ended_at.sql',
       'migrations/20260527_mutation_primitives.sql',
       // public.actor_name (D3, 2026-09-29): the program list names its lead
       // through it since users took row-level security; after mutation
@@ -241,6 +249,10 @@ beforeAll(async () => {
       // with REAUTH_MFA_STATE_UNKNOWN when it cannot — so without the column the
       // freeze is refused before its own gate is reached.
       'db/migrations/20260725_users_signing_lockout_columns.sql',
+      // The account standing every authenticator and the signer re-verify read
+      // gained users.sessions_ended_at (P0-4b); without it every signature is
+      // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
+      'migrations/20261001_users_sessions_ended_at.sql',
     ],
   });
   h.db = jdb.db;

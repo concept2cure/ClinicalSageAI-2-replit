@@ -1,0 +1,288 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts
+{
+  "timestamp": "2026-10-01T14:06:57.998Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-delivery-recording.test.ts
+{
+  "timestamp": "2026-10-01T14:06:58.523Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:06:58.524Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts
+{
+  "timestamp": "2026-10-01T14:06:58.524Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > answers 'sent' only after the correspondence row, the delivery record and report_os.delivery_sent commit 56ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused correspondence write is not sent: 503, no chain row, nothing recorded 21ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused delivery record is not sent: 503, the letter rolls back with it, no chain row 19ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused chain row is not sent: 503, the letter and the record roll back with it 25ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > the learning memory is written inside the same transaction 19ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a delivery with a message at the schema limit is stored whole, so it can be listed again 15ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a delivery with no project is refused (422), not answered and stored nowhere 4ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a final report is sent inside the platform without an e-signature (the platform channel has no signature gate) 14ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries needs the finalize tier (DP-61) > a member cannot send an outbound letter or record an export: 403, nothing written 7ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > records 'exported' with report_os.delivery_exported on one transaction, and no letter 19ms
+ × server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a final run that carries no signature (409 E_SIGNATURE_REQUIRED) and records nothing 7ms
+   → expected 'A final report delivered outside the …' to match /run 41/
+ × server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a bundle holding a run that is final NOW and unsigned, whatever the bundle recorded when it was made 5ms
+   → expected 'A final report delivered outside the …' to match /run 42/
+ × server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signed final run is exported with no second ceremony: 201 'exported', and the record and chain row name the signature 6ms
+   → {"success":false,"error":{"code":"E_SIGNATURE_REQUIRED","message":"A final report delivered outside the platform requires an e-signature, and report runs cannot be e-signed yet. The delivery was refused. Nothing was recorded."}}: expected 409 to be 201 // Object.is equality
+ × server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > the read is scoped to this organization and these runs 4ms
+   → expected undefined to deeply equal [ 7, [ 41 ] ]
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signature over a different seal does not count: 409, nothing recorded 3ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signature that was revoked (superseded) does not count: 409, nothing recorded 3ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signature marked invalid does not count: 409, nothing recorded 3ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signature whose verification status is revoked does not count: 409, nothing recorded 6ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signed run whose seal is not on its snapshot does not count: 409, nothing recorded 2ms
+ × server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a live signature counts even when an older one on the run was revoked 3ms
+   → {"success":false,"error":{"code":"E_SIGNATURE_REQUIRED","message":"A final report delivered outside the platform requires an e-signature, and report runs cannot be e-signed yet. The delivery was refused. Nothing was recorded."}}: expected 409 to be 201 // Object.is equality
+ × server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a bundle of signed final runs is exported, naming each signature 3ms
+   → {"success":false,"error":{"code":"E_SIGNATURE_REQUIRED","message":"A final report delivered outside the platform requires an e-signature, and report runs cannot be e-signed yet. The delivery was refused. Nothing was recorded."}}: expected 409 to be 201 // Object.is equality
+ × server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a bundle with one unsigned final run is refused, naming that run only 3ms
+   → expected 'A final report delivered outside the …' to match /run 42/
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a non-final run needs no signature, and the delivery names none 14ms
+ × server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > when the correspondence write is refused, the log line carries the delivery id and the code, and no letter text 15ms
+   → the log must not carry "secret-detail-xyz": expected '[{"level":"error","message":"[report-…' not to contain 'secret-detail-xyz'
+ × server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > when the delivery record is refused, the log line carries the delivery id and the code, and no letter text 19ms
+   → the log must not carry "Transmittal of the readiness digest": expected '[{"level":"error","message":"[report-…' not to contain 'Transmittal of the readiness digest'
+ × server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > when the chain row is refused, the log line carries the delivery id and the code, and no letter text 18ms
+   → the log must not carry "secret-detail-xyz": expected '[{"level":"error","message":"[report-…' not to contain 'secret-detail-xyz'
+ × server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > a failure before the transaction is logged by its code, with no error text 4ms
+   → the log must not carry "secret-detail-xyz": expected '[{"level":"error","message":"[report-…' not to contain 'secret-detail-xyz'
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a final run that carries no signature (409 E_SIGNATURE_REQUIRED) and records nothing
+AssertionError: expected 'A final report delivered outside the …' to match /run 41/
+
+- Expected:
+/run 41/
+
++ Received:
+"A final report delivered outside the platform requires an e-signature, and report runs cannot be e-signed yet. The delivery was refused. Nothing was recorded."
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.test.ts:360:36
+    358|     expect(res.status).toBe(409);
+    359|     expect(res.body).toMatchObject({ success: false, error: { code: 'E…
+    360|     expect(res.body.error.message).toMatch(/run 41/);
+       |                                    ^
+    361|     expect(res.body.error.message).toMatch(/Nothing was recorded/);
+    362|     expect(h.statements).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a bundle holding a run that is final NOW and unsigned, whatever the bundle recorded when it was made
+AssertionError: expected 'A final report delivered outside the …' to match /run 42/
+
+- Expected:
+/run 42/
+
++ Received:
+"A final report delivered outside the platform requires an e-signature, and report runs cannot be e-signed yet. The delivery was refused. Nothing was recorded."
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.test.ts:374:36
+    372|     expect(res.status).toBe(409);
+    373|     expect(res.body.error.code).toBe('E_SIGNATURE_REQUIRED');
+    374|     expect(res.body.error.message).toMatch(/run 42/);
+       |                                    ^
+    375|     expect(h.statements).toEqual([]);
+    376|     expect(h.audit).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signed final run is exported with no second ceremony: 201 'exported', and the record and chain row name the signature
+AssertionError: {"success":false,"error":{"code":"E_SIGNATURE_REQUIRED","message":"A final report delivered outside the platform requires an e-signature, and report runs cannot be e-signed yet. The delivery was refused. Nothing was recorded."}}: expected 409 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 409
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.test.ts:417:50
+    415|     h.sealed.rows = [sealRow(41, 900)];
+    416|     const res = await deliver(EXPORT);
+    417|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    418|     expect(res.body.data).toMatchObject({ status: 'exported', signatur…
+    419|     expect(count(CORRESPONDENCE)).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > the read is scoped to this organization and these runs
+AssertionError: expected undefined to deeply equal [ 7, [ 41 ] ]
+
+- Expected:
+[
+  7,
+  [
+    41,
+  ],
+]
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.test.ts:445:38
+    443|     }
+    444|     const read = reads.find((r) => /electronic_signatures/.test(r.text…
+    445|     expect(read?.params.slice(0, 2)).toEqual([7, [41]]);
+       |                                      ^
+    446|     expect(read?.text).toMatch(/signed_target = 'report-run:' \|\| r\.…
+    447|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a live signature counts even when an older one on the run was revoked
+AssertionError: {"success":false,"error":{"code":"E_SIGNATURE_REQUIRED","message":"A final report delivered outside the platform requires an e-signature, and report runs cannot be e-signed yet. The delivery was refused. Nothing was recorded."}}: expected 409 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 409
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.test.ts:469:50
+    467|     h.sealed.rows = [sealRow(41, 902), sealRow(41, 900, { superseded_b…
+    468|     const res = await deliver(EXPORT);
+    469|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    470|     expect(res.body.data.signatureIds).toEqual([902]);
+    471|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a bundle of signed final runs is exported, naming each signature
+AssertionError: {"success":false,"error":{"code":"E_SIGNATURE_REQUIRED","message":"A final report delivered outside the platform requires an e-signature, and report runs cannot be e-signed yet. The delivery was refused. Nothing was recorded."}}: expected 409 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 409
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.test.ts:478:50
+    476|     h.sealed.rows = [sealRow(41, 900), sealRow(42, 901)];
+    477|     const res = await deliver({ ...EXPORT, runId: undefined, bundleId:…
+    478|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    479|     expect(res.body.data.signatureIds).toEqual([900, 901]);
+    480|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a bundle with one unsigned final run is refused, naming that run only
+AssertionError: expected 'A final report delivered outside the …' to match /run 42/
+
+- Expected:
+/run 42/
+
++ Received:
+"A final report delivered outside the platform requires an e-signature, and report runs cannot be e-signed yet. The delivery was refused. Nothing was recorded."
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.test.ts:488:36
+    486|     const res = await deliver({ ...EXPORT, runId: undefined, bundleId:…
+    487|     expect(res.status).toBe(409);
+    488|     expect(res.body.error.message).toMatch(/run 42/);
+       |                                    ^
+    489|     expect(res.body.error.message).not.toMatch(/run 41/);
+    490|     expect(h.audit).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > when the correspondence write is refused, the log line carries the delivery id and the code, and no letter text
+AssertionError: the log must not carry "secret-detail-xyz": expected '[{"level":"error","message":"[report-…' not to contain 'secret-detail-xyz'
+
+Expected: "secret-detail-xyz"
+Received: "[{"level":"error","message":"[report-os] report delivery not recorded; rolled back","context":{"deliveryId":"56f6fbbd-6081-4a79-b401-4032280513aa","channel":"platform_send","error":"statement refused: secret-detail-xyz"}}]"
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.test.ts:524:115
+    522|     const res = await deliver({ ...SEND, captureForLearning: true });
+    523|     expect(res.status).toBe(503);
+    524|     for (const text of [...LETTER, 'secret-detail-xyz']) expect(logged…
+       |                                                                                                                   ^
+    525|     const line = logs.find((l) => /report delivery not recorded/.test(…
+    526|     expect(line, 'the failure is logged').toBeDefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > when the delivery record is refused, the log line carries the delivery id and the code, and no letter text
+AssertionError: the log must not carry "Transmittal of the readiness digest": expected '[{"level":"error","message":"[report-…' not to contain 'Transmittal of the readiness digest'
+
+Expected: "Transmittal of the readiness digest"
+Received: "[{"level":"error","message":"[report-os] report delivery not recorded; rolled back","context":{"deliveryId":"c97a11ab-1f0f-4c26-9194-7c43d8df475f","channel":"platform_send","error":"Failed query: insert into \"project_memory_entries\" (\"id\", \"project_profile_id\", \"project_id\", \"organization_id\", \"category\", \"subcategory\", \"title\", \"content\", \"source_document_name\", \"source_document_type\", \"confidence_score\", \"importance_level\", \"is_verified_by_user\", \"embedding\", \"status\", \"extracted_by\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, $5, $6, $7, default, $8, $9, $10, default, default, default, $11, default, default)\nparams: 3,12,7,regulatory,report_delivery_record,delivery:c97a11ab-1f0f-4c26-9194-7c43d8df475f,{\"deliveryRecord\":{\"deliveryId\":\"c97a11ab-1f0f-4c26-9194-7c43d8df475f\",\"organizationId\":7,\"projectId\":12,\"runId\":41,\"submissionId\":\"00000000-0000-4000-8000-0000000000aa\",\"channel\":\"platform_send\",\"recipients\":[\"agency-contact\"],\"subject\":\"Transmittal of the readiness digest\",\"message\":\"Please find the readiness digest for the clarification requested.\",\"status\":\"sent\",\"requestedBy\":5,\"createdAt\":\"2026-10-01T14:06:59.207Z\",\"correspondenceId\":\"f04f60f7-b9cf-4d8f-b08f-2c27a3428a14\"}},report_os_state,0.92,high,report_os_delivery"}}]"
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.test.ts:524:115
+    522|     const res = await deliver({ ...SEND, captureForLearning: true });
+    523|     expect(res.status).toBe(503);
+    524|     for (const text of [...LETTER, 'secret-detail-xyz']) expect(logged…
+       |                                                                                                                   ^
+    525|     const line = logs.find((l) => /report delivery not recorded/.test(…
+    526|     expect(line, 'the failure is logged').toBeDefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > when the chain row is refused, the log line carries the delivery id and the code, and no letter text
+AssertionError: the log must not carry "secret-detail-xyz": expected '[{"level":"error","message":"[report-…' not to contain 'secret-detail-xyz'
+
+Expected: "secret-detail-xyz"
+Received: "[{"level":"error","message":"[report-os] report delivery not recorded; rolled back","context":{"deliveryId":"94cf7893-9dee-4b98-9ce5-499ec4e45cd0","channel":"platform_send","error":"audit_logs refused the row: secret-detail-xyz"}}]"
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.test.ts:524:115
+    522|     const res = await deliver({ ...SEND, captureForLearning: true });
+    523|     expect(res.status).toBe(503);
+    524|     for (const text of [...LETTER, 'secret-detail-xyz']) expect(logged…
+       |                                                                                                                   ^
+    525|     const line = logs.find((l) => /report delivery not recorded/.test(…
+    526|     expect(line, 'the failure is logged').toBeDefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > a failure before the transaction is logged by its code, with no error text
+AssertionError: the log must not carry "secret-detail-xyz": expected '[{"level":"error","message":"[report-…' not to contain 'secret-detail-xyz'
+
+Expected: "secret-detail-xyz"
+Received: "[{"level":"error","message":"[report-os] saving deliveries failed","context":{"err":"read of report_runs refused: secret-detail-xyz","correlationId":null,"code":"23514"}}]"
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.test.ts:538:115
+    536|     const res = await deliver(SEND);
+    537|     expect(res.status).toBe(500);
+    538|     for (const text of [...LETTER, 'secret-detail-xyz']) expect(logged…
+       |                                                                                                                   ^
+    539|     expect(logs.some((l) => /saving deliveries failed/.test(l.message)…
+    540|     expect(logged()).toContain('23514');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 16 passed (27)
+   Start at  14:06:54
+   Duration  4.54s (transform 2.20s, setup 98ms, import 3.76s, tests 330ms, environment 0ms)
+

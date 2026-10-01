@@ -370,6 +370,24 @@ function computeDocumentInventory(
 // Blockers
 // ---------------------------------------------------------------------------
 
+
+
+/**
+ * A task store that could not be read: the task list is then a floor, so "no
+ * blocked work" cannot be concluded from it (cross-object-resolver.ts,
+ * taskCountsPartial).
+ */
+function unreadTaskStoreBlocker(payload: CrossObjectReasoningPayload): ReadinessBlocker[] {
+  if (!payload.project.taskCountsPartial) return [];
+  return [{
+    severity: 'major',
+    category: 'blocked_task',
+    message: 'Not every task store could be read, so blocked or overdue work may be missing from this review',
+    targetType: 'project',
+    targetId: payload.scope.projectId,
+    suggestedResolution: 'Re-run the review; if it persists, the unread store is named in the server log',
+  }];
+}
 function computeBlockers(
   payload: CrossObjectReasoningPayload
 ): ReadinessBlocker[] {
@@ -440,6 +458,8 @@ function computeBlockers(
       suggestedResolution: 'Review approved documents for currency',
     });
   }
+
+  blockers.push(...unreadTaskStoreBlocker(payload));
 
   // Blocked tasks
   const blocked = payload.tasks.filter((t) => t.isBlocked);

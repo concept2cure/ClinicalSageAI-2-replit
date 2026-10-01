@@ -1,0 +1,77 @@
+# Fix round gates, 2026-10-01T14:24:54Z, working tree on HEAD 0812a990
+
+=== npm run -s check:security-patterns
+check-security-patterns: 0 violations across 2977 file(s).
+exit=0
+
+=== npm run -s ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+exit=0
+
+=== npm run -s ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 19 baselined site(s) remain, exactly as baselined.
+exit=0
+
+=== npm run -s ci:launch-scope-api
+ci:launch-scope-api: 1 API path(s) that launch or shell screens call are not attributed to the launch scope:
+"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the
+launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it
+whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.
+
+  [unmapped] /api/tenant-config/:p/claude-connector
+    called by admin-console
+    in client/src/concept2cure/v2/surfaces/ClaudeConnectorSetting.tsx
+exit=1
+
+=== npm run -s ci:unreferenced-modules
+Unreferenced modules: 82 (baseline 82)
+
+OK: no new unreachable modules.
+exit=0
+
+=== npm run -s ci:untracked-imports
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+exit=0
+
+=== npm run -s ci:migration-set-order
+[ci:migration-set-order] OK — 349 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit=0
+
+=== npm run -s ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 349 migrations, 35 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+
+=== npm run -s db:sync-manifest:check
+Manifest is in sync.
+exit=0
+
+=== npm run -s ci:column-reachability
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+exit=0
+
+=== npm run -s ci:model-migration-agreement
+[ci:model-migration] Drizzle models vs migration lineage
+  models parsed              : 702
+  tables CREATEd by both     : 394
+  divergent tables           : 12
+  baselined (known, unfixed) : 28
+
+✅ no new divergence. 28 baselined and awaiting burn-down.
+exit=0
+
+=== npm run -s ci:migration-reachability
+[ci:migration-reachability] 1350 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined
+[ci:migration-reachability] ✅ no new unreachable table references.
+exit=0
+
+=== npm run -s ci:insert-columns-declared
+[ci:insert-columns-declared] columns written vs columns declared
+  Drizzle models parsed        : 702
+  static INSERTs examined      : 705
+  skipped (unjudgeable)        : 7
+  migration lineage tables     : 1410
+  tables unknown to BOTH       : 9
+  baselined (known, unfixed)   : 47
+
+✅ no new violations. 47 baselined and awaiting burn-down.
+exit=0

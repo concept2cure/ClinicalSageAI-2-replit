@@ -1,0 +1,85 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer 99ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory 1ms
+ × client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says when the server did not end every session: a refusal is not swallowed 7ms
+   → expected undefined to deeply equal { everySessionEnded: false }
+ × client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says every session was ended when the server did 1ms
+   → expected undefined to deeply equal { everySessionEnded: true }
+ × client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout() asks nothing of the other sessions 1ms
+   → expected undefined to deeply equal { everySessionEnded: null }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says when the server did not end every session: a refusal is not swallowed
+AssertionError: expected undefined to deeply equal { everySessionEnded: false }
+
+- Expected:
+{
+  "everySessionEnded": false,
+}
+
++ Received:
+undefined
+
+ ❯ client/src/services/portal/__tests__/authService-logout.test.ts:112:20
+    110|     const result = await svc.logout(true);
+    111|
+    112|     expect(result).toEqual({ everySessionEnded: false });
+       |                    ^
+    113|     expect(localStorage.getItem(KEYS.refreshToken), 'this browser is s…
+    114|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says every session was ended when the server did
+AssertionError: expected undefined to deeply equal { everySessionEnded: true }
+
+- Expected:
+{
+  "everySessionEnded": true,
+}
+
++ Received:
+undefined
+
+ ❯ client/src/services/portal/__tests__/authService-logout.test.ts:121:36
+    119|     const svc = new AuthService('/api/v1/auth');
+    120|
+    121|     expect(await svc.logout(true)).toEqual({ everySessionEnded: true }…
+       |                                    ^
+    122|   });
+    123|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout() asks nothing of the other sessions
+AssertionError: expected undefined to deeply equal { everySessionEnded: null }
+
+- Expected:
+{
+  "everySessionEnded": null,
+}
+
++ Received:
+undefined
+
+ ❯ client/src/services/portal/__tests__/authService-logout.test.ts:129:32
+    127|     const svc = new AuthService('/api/v1/auth');
+    128|
+    129|     expect(await svc.logout()).toEqual({ everySessionEnded: null });
+       |                                ^
+    130|   });
+    131| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  19:39:07
+   Duration  1.08s (transform 169ms, setup 177ms, import 18ms, tests 114ms, environment 538ms)
+
+exit 1

@@ -21,6 +21,16 @@ import type { ReportDefinition, ReportSummary } from './types';
 
 export const FULL_AUDIT_TRAIL_ID = 'audit-trail';
 
+/**
+ * The chained audit row each run of a report leaves (routes/audit-compliance-reports.ts
+ * recordAndSend): this action and record type, the report id as the record id, and
+ * the sealed run's `exportId` and `dataHash` in its details. A periodic review names
+ * the run it read by those two, and the record checks them against this row
+ * (services/audit/compliance-reviews.ts).
+ */
+export const REPORT_RUN_ACTION = 'compliance.report_run';
+export const REPORT_RESOURCE_TYPE = 'compliance_report';
+
 /** The full audit trail: run by the signed export, listed here so a client finds it beside the rest. */
 const fullAuditTrail: ReportDefinition = {
   id: FULL_AUDIT_TRAIL_ID,

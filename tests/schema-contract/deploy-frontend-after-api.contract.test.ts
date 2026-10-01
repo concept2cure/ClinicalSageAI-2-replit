@@ -10,6 +10,13 @@
  * Authoring filing bar sending a password to an API that still demanded the
  * retired signing PIN ("PIN required for signature").
  *
+ * And only for a commit whose CI is green: since P1-12 (8060c28bc) the job also
+ * needs `ci-verdict`, the deploy-time check that the SHA's CI run passed
+ * (decision P-3). Every publishing scenario below therefore carries a green
+ * verdict, and a red one publishes nothing whatever else succeeded. Until
+ * 2026-10-01 these scenarios carried no verdict, which this model reads as
+ * `skipped`, so the two publishing cases were red from 08:02 that day.
+ *
  * This evaluates the job's real `if:` and `needs:` under the GitHub Actions
  * rule that a job with no status function in its condition runs only when
  * every job it needs succeeded, for the scenarios that matter.
@@ -52,12 +59,12 @@ function runs(job: string, s: Scenario): boolean {
   return Boolean(new Function(`return (${js});`)());
 }
 
-const GATES = { test: 'success', 'security-gate': 'success' } as const;
+const GATES = { 'ci-verdict': 'success', test: 'success', 'security-gate': 'success' } as const;
 
 describe('deploy-frontend publishes only behind a deployed API', () => {
-  it('needs deploy-api', () => {
+  it('needs deploy-api and the CI verdict', () => {
     const needs = workflow.jobs['deploy-frontend'].needs;
-    expect(Array.isArray(needs) ? needs : [needs]).toContain('deploy-api');
+    expect(Array.isArray(needs) ? needs : [needs]).toEqual(expect.arrayContaining(['deploy-api', 'ci-verdict']));
   });
 
   const cases: Array<[string, Scenario, boolean]> = [
@@ -66,7 +73,9 @@ describe('deploy-frontend publishes only behind a deployed API', () => {
     ['the API deploy failed or was rolled back', { results: { ...GATES, 'build-push': 'success', migrate: 'success', 'deploy-api': 'failure' }, inputs: { __tag: 'true' } }, false],
     ['a frontend-only dispatch (deploy_api=false)', { results: { ...GATES, 'build-push': 'skipped', migrate: 'skipped', 'deploy-api': 'skipped' }, inputs: { deploy_api: 'false', deploy_frontend: 'true' } }, true],
     ['an API-only dispatch (deploy_frontend=false)', { results: { ...GATES, 'build-push': 'success', migrate: 'success', 'deploy-api': 'success' }, inputs: { deploy_api: 'true', deploy_frontend: 'false' } }, false],
-    ['tests failed on a frontend-only dispatch', { results: { test: 'failure', 'security-gate': 'success', 'build-push': 'skipped', migrate: 'skipped', 'deploy-api': 'skipped' }, inputs: { deploy_api: 'false', deploy_frontend: 'true' } }, false],
+    ['tests failed on a frontend-only dispatch', { results: { ...GATES, test: 'failure', 'build-push': 'skipped', migrate: 'skipped', 'deploy-api': 'skipped' }, inputs: { deploy_api: 'false', deploy_frontend: 'true' } }, false],
+    ["the commit's CI is red, on a full release", { results: { ...GATES, 'ci-verdict': 'failure', 'build-push': 'success', migrate: 'success', 'deploy-api': 'success' }, inputs: { __tag: 'true' } }, false],
+    ["the commit's CI is red, on a frontend-only dispatch", { results: { ...GATES, 'ci-verdict': 'failure', 'build-push': 'skipped', migrate: 'skipped', 'deploy-api': 'skipped' }, inputs: { deploy_api: 'false', deploy_frontend: 'true' } }, false],
   ];
 
   for (const [label, scenario, expected] of cases) {

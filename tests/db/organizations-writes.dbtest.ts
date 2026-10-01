@@ -187,3 +187,78 @@ describe("an organization's row is written by that organization or the platform 
     }
   });
 });
+
+/*
+ * DP-73 (2026-10-01): PATCH /api/organizations/:id/settings was a second
+ * settings writer beside services/tenant/tenant-settings-writer.ts: a
+ * section-replacing merge, then a row naming sections only, written after the
+ * change committed (a refused row left the change in place). It now writes
+ * through the one writer: laid over the stored settings, its chained row with
+ * the reason in the change's own transaction.
+ */
+describe('the organisation settings door writes through the one settings writer (DP-73)', () => {
+  const REFUSE_FN = `dp73_refuse_settings_row_${process.pid}`;
+  const settingsRows = async (reason: string) =>
+    (
+      await owner.query(
+        `SELECT action, reason, new_values::jsonb AS details, sha256_chain IS NOT NULL AS chained FROM audit_logs
+          WHERE tenant_id = $1 AND table_name = 'organization_settings' AND reason = $2`,
+        [ORG_A, reason]
+      )
+    ).rows;
+
+  it('a change and its chained row, with the reason, commit together', async () => {
+    const reason = `${TAG} contract: DP-73 own-org edit`;
+    try {
+      const res = await request(app)
+        .patch(`/api/organizations/${ORG_A}/settings`)
+        .set(asAdminA())
+        .send({ settings: { wo03probe: `${TAG}-dp73` }, reason });
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect((await settingsOf(ORG_A)).wo03probe).toBe(`${TAG}-dp73`);
+      expect(await settingsRows(reason)).toEqual([
+        expect.objectContaining({ action: 'tenant_settings_changed', reason, chained: true, details: expect.objectContaining({ sections: ['wo03probe'] }) }),
+      ]);
+    } finally {
+      await restoreOrgs();
+    }
+  });
+
+  it('a change whose row is refused is not made', async () => {
+    await owner.query(
+      `CREATE FUNCTION ${REFUSE_FN}() RETURNS trigger LANGUAGE plpgsql AS $$
+       BEGIN IF NEW.table_name = 'organization_settings' THEN RAISE EXCEPTION 'refused by the DP-73 dbtest'; END IF; RETURN NEW; END $$`
+    );
+    await owner.query(`CREATE TRIGGER ${REFUSE_FN} BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION ${REFUSE_FN}()`);
+    try {
+      const res = await request(app)
+        .patch(`/api/organizations/${ORG_A}/settings`)
+        .set(asAdminA())
+        .send({ settings: { wo03probe: `${TAG}-unrecorded` }, reason: `${TAG} contract: DP-73 refused row` });
+      expect(res.status).toBe(500);
+      expect(JSON.stringify(res.body)).not.toContain('refused by the DP-73 dbtest');
+      expect((await settingsOf(ORG_A)).wo03probe, 'the change stood without its record').toBeUndefined();
+    } finally {
+      await owner.query(`DROP TRIGGER IF EXISTS ${REFUSE_FN} ON audit_logs`);
+      await owner.query(`DROP FUNCTION IF EXISTS ${REFUSE_FN}()`);
+      await restoreOrgs();
+    }
+  });
+
+  it('a partial section is laid over the stored one: a server-enforced key it does not name survives', async () => {
+    await owner.query(
+      `UPDATE organizations SET settings = jsonb_set(COALESCE(settings::jsonb, '{}'::jsonb), '{security}', '{"mfaRequired": true, "maxConcurrentSessions": 3}'::jsonb)::json WHERE id = $1`,
+      [ORG_A]
+    );
+    try {
+      const res = await request(app)
+        .patch(`/api/organizations/${ORG_A}/settings`)
+        .set(asAdminA())
+        .send({ settings: { security: { mfaRequired: false } }, reason: `${TAG} contract: DP-73 overlay` });
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect((await settingsOf(ORG_A)).security).toEqual({ mfaRequired: false, maxConcurrentSessions: 3 });
+    } finally {
+      await restoreOrgs();
+    }
+  });
+});

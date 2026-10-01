@@ -18,6 +18,7 @@ const h = vi.hoisted(() => ({
   holds: vi.fn(),
   audit: vi.fn(async () => ({ persisted: true, chained: true })),
   deletes: [] as string[],
+  deleteError: null as unknown,
   role: 'admin',
   workspace: { id: 5, organizationId: 7, name: 'Main' } as Record<string, unknown>,
 }));
@@ -52,6 +53,7 @@ function deleteChain(t: { __name: string }) {
   const c: any = {
     where: () => c,
     returning: () => {
+      if (h.deleteError && t.__name === 'projects') return Promise.reject(h.deleteError);
       h.deletes.push(t.__name);
       return Promise.resolve(t.__name === 'client_workspaces' ? [h.workspace] : []);
     },
@@ -86,6 +88,7 @@ beforeEach(() => {
   h.holds.mockReset();
   h.audit.mockClear();
   h.role = 'admin';
+  h.deleteError = null;
 });
 
 describe('DELETE /api/clients/:id — the workspace’s projects', () => {
@@ -131,5 +134,20 @@ describe('DELETE /api/clients/:id — the workspace’s projects', () => {
     const res = await request(app).delete('/api/clients/5');
     expect(res.status).toBe(500);
     expect(h.deletes).toEqual([]);
+  });
+});
+
+describe('DELETE /api/clients/:id — a store keeps a record under one of its projects (PF-13 follow-up)', () => {
+  it('the database refusing the delete is 409 PROJECT_HOLDS_RECORDS, archive instead, not a 500', async () => {
+    h.holds.mockResolvedValue({ anchoredPrograms: [], governedArtifacts: 0 });
+    h.deleteError = Object.assign(new Error('Failed query'), {
+      cause: { code: '23503', table: 'c2c_submissions', constraint: 'c2c_submissions_project_id_fkey' },
+    });
+    const res = await request(app).delete('/api/clients/5');
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ success: false, error: 'PROJECT_HOLDS_RECORDS' });
+    expect(res.body.message).toMatch(/^This workspace still has records .* Archive it instead/);
+    expect(JSON.stringify(res.body)).not.toContain('c2c_submissions');
+    expect(h.audit).not.toHaveBeenCalled();
   });
 });

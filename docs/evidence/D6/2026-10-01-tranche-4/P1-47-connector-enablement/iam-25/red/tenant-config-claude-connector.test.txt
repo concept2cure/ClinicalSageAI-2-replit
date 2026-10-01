@@ -1,0 +1,215 @@
+# IAM-25 RED, 2026-10-01T16:16:49Z: the tests updated to the decision (owner or administrator opens the connector), run on the unchanged code (CONNECTOR_OPENER_ROLE = 'owner').
+# command: npx vitest run server/routes/__tests__/tenant-config-claude-connector.test.ts
+# (structured JSON log lines filtered out)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the administrator is told they can change it 1573ms
+   → expected { connector: { enabled: false, …(1) } } to deeply equal { connector: { enabled: false, …(1) } }
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > the administrator of this organization is told they can change it 7ms
+   → expected { connector: { enabled: true, …(1) } } to deeply equal { connector: { enabled: true, …(1) } }
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > an owner of this organization is told they can change it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a manager sees the state and that they cannot change it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a member sees the state and that they cannot change it 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a viewer sees the state and that they cannot change it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a stored value that is not exactly true reads as disabled 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > another organization's setting is not read 4ms
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a manager is refused with 403, and nothing is written or recorded 17ms
+   → expected 'Only the organisation\'s owner can tu…' to match /owner or administrator/i
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a member is refused with 403, and nothing is written or recorded 5ms
+   → expected 'Only the organisation\'s owner can tu…' to match /owner or administrator/i
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a viewer is refused with 403, and nothing is written or recorded 4ms
+   → expected 'Only the organisation\'s owner can tu…' to match /owner or administrator/i
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > platform staff (super_admin) is refused with 403, and nothing is written or recorded 3ms
+   → expected 'Only the organisation\'s owner can tu…' to match /owner or administrator/i
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > another organization's administrator is refused with 403, and nothing is written or recorded 3ms
+   → expected 'Only the organisation\'s owner can tu…' to match /owner or administrator/i
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > another organization's owner is refused with 403, and nothing is written or recorded 3ms
+   → expected 'Only the organisation\'s owner can tu…' to match /owner or administrator/i
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > an owner, if one is ever provisioned, changes it too 7ms
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > the administrator enables it: one transaction, the setting and its chained audit row with the value before and after 5ms
+   → {"error":"Only the organisation's owner can turn the connector for Claude on or off."}: expected 403 to be 200 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > the administrator disables it, and the row records true → false 4ms
+   → expected 403 to be 200 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {} is refused with 400 and nothing is written 4ms
+   → expected 403 to be 400 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {"enabled":"yes"} is refused with 400 and nothing is written 3ms
+   → expected 403 to be 400 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {"enabled":true,"extra":1} is refused with 400 and nothing is written 3ms
+   → expected 403 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of null is refused with 400 and nothing is written 4ms
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved 3ms
+   → expected 403 to be 500 // Object.is equality
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role admin → 403, nothing written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role owner → 403, nothing written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role super_admin → 403, nothing written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role member → 403, nothing written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > control: PATCH /settings without it still writes 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings/claudeConnector is not a section the section door writes 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > a reset keeps the stored connector setting: it is not a default to restore 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it on is refused: rolled back before the UPDATE, nothing recorded 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it off is refused too: only its own door changes it, either way 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > nulling it is refused (a null reads as off, so it would turn it off) 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > erasing it is refused (a door that replaces the settings whole and leaves the key out) 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > control: a general write that leaves it as stored is written, and keeps it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > control: the connector's own door changes it 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the administrator is told they can change it
+AssertionError: expected { connector: { enabled: false, …(1) } } to deeply equal { connector: { enabled: false, …(1) } }
+
+- Expected
++ Received
+
+  {
+    "connector": {
+-     "canChange": true,
++     "canChange": false,
+      "enabled": false,
+    },
+  }
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:128:22
+    126|     const res = await request(app).get(PATH);
+    127|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    128|     expect(res.body).toEqual({ connector: { enabled: false, canChange:…
+       |                      ^
+    129|   });
+    130|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > the administrator of this organization is told they can change it
+AssertionError: expected { connector: { enabled: true, …(1) } } to deeply equal { connector: { enabled: true, …(1) } }
+
+- Expected
++ Received
+
+  {
+    "connector": {
+-     "canChange": true,
++     "canChange": false,
+      "enabled": true,
+    },
+  }
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:136:22
+    134|     const res = await request(app).get(PATH);
+    135|     expect(res.status).toBe(200);
+    136|     expect(res.body).toEqual({ connector: { enabled: true, canChange: …
+       |                      ^
+    137|   });
+    138|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a manager is refused with 403, and nothing is written or recorded
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a member is refused with 403, and nothing is written or recorded
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a viewer is refused with 403, and nothing is written or recorded
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > platform staff (super_admin) is refused with 403, and nothing is written or recorded
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > another organization's administrator is refused with 403, and nothing is written or recorded
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > another organization's owner is refused with 403, and nothing is written or recorded
+AssertionError: expected 'Only the organisation\'s owner can tu…' to match /owner or administrator/i
+
+- Expected:
+/owner or administrator/i
+
++ Received:
+"Only the organisation's owner can turn the connector for Claude on or off."
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:170:28
+    168|     const res = await request(app).put(PATH).send({ enabled: true });
+    169|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+    170|     expect(res.body.error).toMatch(/owner or administrator/i);
+       |                            ^
+    171|     expect(writes()).toEqual([]);
+    172|     expect(h.auditCalls).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > the administrator enables it: one transaction, the setting and its chained audit row with the value before and after
+AssertionError: {"error":"Only the organisation's owner can turn the connector for Claude on or off."}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:185:50
+    183|   it('the administrator enables it: one transaction, the setting and i…
+    184|     const res = await request(app).put(PATH).send({ enabled: true });
+    185|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    186|     expect(res.body).toEqual({ connector: { enabled: true, canChange: …
+    187|     expect(writes()).toEqual(['BEGIN', 'SELECT FOR UPDATE', 'UPDATE', …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > the administrator disables it, and the row records true → false
+AssertionError: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:213:24
+    211|     h.tenant!.settings = { claudeConnector: { enabled: true } };
+    212|     const res = await request(app).put(PATH).send({ enabled: false });
+    213|     expect(res.status).toBe(200);
+       |                        ^
+    214|     expect(res.body).toEqual({ connector: { enabled: false, canChange:…
+    215|     expect((h.auditCalls[0].entry.details as any).values).toEqual({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {} is refused with 400 and nothing is written
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {"enabled":"yes"} is refused with 400 and nothing is written
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {"enabled":true,"extra":1} is refused with 400 and nothing is written
+AssertionError: expected 403 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 403
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:222:24
+    220|   it.each([[{}], [{ enabled: 'yes' }], [{ enabled: true, extra: 1 }], …
+    221|     const res = await request(app).put(PATH).set('Content-Type', 'appl…
+    222|     expect(res.status).toBe(400);
+       |                        ^
+    223|     expect(writes()).toEqual([]);
+    224|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved
+AssertionError: expected 403 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 403
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:229:24
+    227|     h.auditFails = true;
+    228|     const res = await request(app).put(PATH).send({ enabled: true });
+    229|     expect(res.status).toBe(500);
+       |                        ^
+    230|     expect(writes()).toEqual(['BEGIN', 'SELECT FOR UPDATE', 'UPDATE', …
+    231|     expect(JSON.stringify(res.body)).not.toContain('serialize');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed | 21 passed (35)
+   Start at  16:16:50
+   Duration  2.35s (transform 946ms, setup 104ms, import 209ms, tests 1.72s, environment 0ms)
+

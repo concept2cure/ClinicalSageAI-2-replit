@@ -8,7 +8,9 @@ import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
 
-const { authState, audit, dbState } = vi.hoisted(() => ({
+const { authState, audit, dbState, writer } = vi.hoisted(() => ({
+  /** The one settings writer (services/tenant/tenant-settings-writer.ts), over dbState. */
+  writer: { calls: [] as Array<{ orgId: number; change: { action: string; sections: (a: any, b: any) => string[] } }> },
   authState: { user: null as Record<string, any> | null },
   audit: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
   dbState: {
@@ -43,6 +45,21 @@ vi.mock('../../db', () => ({
 
 vi.mock('../../services/auditService', () => ({ default: audit }));
 
+/* R7 (2026-10-01): the PUT read the whole settings object and wrote it all back
+   with no lock, so a change made between the two (the connector switch, a
+   session limit) was silently reverted. It writes through the one settings
+   writer now: a row lock, one transaction, the chained audit row. This fake
+   applies the change to dbState as the writer would. */
+vi.mock('../../services/tenant/tenant-settings-writer', () => ({
+  writeTenantSettings: vi.fn(async (_req: unknown, orgId: number, change: any) => {
+    if (dbState.failWith) throw dbState.failWith;
+    writer.calls.push({ orgId, change });
+    const current = (dbState.settings ?? {}) as Record<string, unknown>;
+    dbState.settings = change.next(current, 'standard');
+    return dbState.settings;
+  }),
+}));
+
 let app: express.Express;
 
 beforeEach(async () => {
@@ -50,6 +67,7 @@ beforeEach(async () => {
   authState.user = { id: 1, organizationId: '7', role: 'admin' };
   dbState.settings = null;
   dbState.failWith = null;
+  writer.calls = [];
   vi.resetModules();
   const mod = await import('../../routes/ana-tool-policy');
   app = express();
@@ -105,21 +123,34 @@ describe('PUT /api/ana-tool-policy', () => {
     expect(res.body.error).toMatch(/Unknown.*denylist/);
   });
 
-  it('persists and emits audit on success', async () => {
+  it('persists through the one settings writer, recorded as ana_tool_policy.update', async () => {
     const res = await request(app)
       .put('/api/ana-tool-policy')
       .send({ deny: ['k510_workflow.transmit'] });
     expect(res.status).toBe(200);
     expect(res.body.policy.deny).toEqual(['k510_workflow.transmit']);
-    expect(audit.logAction).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'ana_tool_policy.update',
-        tenantId: 7,
-        details: expect.objectContaining({
-          newPolicy: { deny: ['k510_workflow.transmit'] },
-        }),
-      }),
-    );
+    expect(writer.calls).toHaveLength(1);
+    expect(writer.calls[0].orgId).toBe(7);
+    expect(writer.calls[0].change.action).toBe('ana_tool_policy.update');
+    expect(writer.calls[0].change.sections({}, {})).toEqual(['anaToolPolicy']);
+  });
+
+  it('keeps every other setting as the writer read it under its lock (R7)', async () => {
+    dbState.settings = { claudeConnector: { enabled: false }, security: { maxConcurrentSessions: 3 } };
+    const res = await request(app).put('/api/ana-tool-policy').send({ deny: ['x.y'] });
+    expect(res.status).toBe(200);
+    expect(dbState.settings).toEqual({
+      claudeConnector: { enabled: false },
+      security: { maxConcurrentSessions: 3 },
+      anaToolPolicy: { deny: ['x.y'] },
+    });
+  });
+
+  it('never writes organizations.settings itself', async () => {
+    const { pool } = await import('../../db');
+    await request(app).put('/api/ana-tool-policy').send({ deny: ['x.y'] });
+    const sql = (pool.query as any).mock.calls.map((c: unknown[]) => String(c[0]));
+    expect(sql.filter((q: string) => /UPDATE organizations/i.test(q))).toEqual([]);
   });
 
   it('round-trips: PUT then GET returns the same shape', async () => {

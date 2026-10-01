@@ -15,9 +15,9 @@ import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
 import { enforceOrgMembership, invalidateOrgMembershipCache, parseFiniteInt } from './orgMembership';
 import {
   ACCOUNT_INACTIVE_MESSAGE,
-  issuedAtOfClaims,
+  organizationIdOfClaims,
   readAccountStandingBeforeTenant,
-  sessionPredatesPasswordChange,
+  sessionEndedByStanding,
   type AccountStanding,
 } from '../services/account-standing';
 import { establishRequestTenantScope } from './establishRequestTenantScope';
@@ -190,11 +190,20 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     // Security audit 2026-09-24, IAM-04: and so is the account's last password
     // change, read in the same statement. A reset or change stamps
     // users.password_changed_at; a token issued before the stamp is a session
-    // the holder meant to end, and is answered like a revoked one.
+    // the holder meant to end, and is answered like a revoked one. Plan P0-4b:
+    // so is a session begun before users.sessions_ended_at (a sign-out
+    // everywhere, the account leaving 'active'), measured from the session's
+    // start (account-standing.ts sessionEndedByStanding). And (R1) so is a
+    // session that began before the account's membership in the token's
+    // organisation did, read in the same statement: removing a member and
+    // adding them back does not hand them the session they held before.
     const accountId = parseFiniteInt(subject);
+    const claimedOrganizationId = organizationIdOfClaims(decoded);
     Promise.all([
       isTokenRevoked(token),
-      accountId === null ? Promise.resolve<AccountStanding | null>(null) : readAccountStandingBeforeTenant(accountId),
+      accountId === null
+        ? Promise.resolve<AccountStanding | null>(null)
+        : readAccountStandingBeforeTenant(accountId, claimedOrganizationId),
       sessionInactivityReason(token, decoded),
     ]).then(
       ([revoked, standing, inactivity]) => {
@@ -206,7 +215,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
           res.status(401).json({ error: { code: 'ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE } });
           return;
         }
-        if (standing && sessionPredatesPasswordChange(issuedAtOfClaims(decoded), standing.passwordChangedAtSeconds)) {
+        if (standing && sessionEndedByStanding(decoded, standing)) {
           res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
           return;
         }
@@ -292,21 +301,40 @@ function admitLiveSession(
 /**
  * The role a guard reads is the membership row's, read on this request, not
  * the one minted into the token at login (security audit 2026-09-24 IAM-10,
- * plan P1-4). enforceOrgMembership attaches `organizationRole` from the row it
- * just confirmed (cached 60 s; role changes invalidate the cache), and this
- * applies it: `role` and `roles` (expanded through the same functional grants
- * the token path used) now come from the database, so a demotion takes effect
- * on the next request and a promotion needs no new sign-in. server/auth.ts,
- * the other authenticator, has resolved its role from the same row since its
- * membership query was added; this brings authenticateToken level with it.
- * A membership without a role value (never the case: the column is NOT NULL
- * with a default) leaves the token's claims in place.
+ * plan P1-4): `role` and `roles` (expanded through the same functional grants
+ * the token path used) come from the database, so a demotion takes effect on
+ * the next request and a promotion needs no new sign-in.
+ *
+ * Which reading, in order:
+ *   1. The role the global /api gate (server/auth.ts authMiddleware) read from
+ *      organization_users on THIS request, uncached, for the same account and
+ *      organisation (req.identity). Every router gate behind /api has one.
+ *   2. Otherwise `organizationRole`, which enforceOrgMembership attaches from
+ *      its cache (60 s per server task; the role writers invalidate it on the
+ *      task that wrote).
+ * Plan P0-4b fix round, 2026-10-01: until then only (2) was read, so on any
+ * task but the writer's a demoted administrator kept the old role behind a
+ * router gate for up to a minute, and requireRole('admin') admitted them, while
+ * the global gate in front of it already served the new one. A membership
+ * without a role value (never the case: the column is NOT NULL with a
+ * default) leaves the token's claims in place.
  */
 function applyOrganizationRole(req: Request): void {
   const user = req.user as ({ organizationRole?: unknown } & NonNullable<Request['user']>) | undefined;
-  if (!user || typeof user.organizationRole !== 'string' || !user.organizationRole) return;
-  user.role = user.organizationRole;
-  user.roles = expandRoleClaims(user.organizationRole, undefined);
+  if (!user) return;
+  const role = roleReadOnThisRequest(req, user) ?? user.organizationRole;
+  if (typeof role !== 'string' || !role) return;
+  user.role = role;
+  user.roles = expandRoleClaims(role, undefined);
+}
+
+/** The global gate's uncached reading of this account's role in this organisation, on this request; else null. */
+function roleReadOnThisRequest(req: Request, user: NonNullable<Request['user']>): string | null {
+  const identity = (req as { identity?: { legacyUserId?: unknown; organizationId?: unknown; role?: unknown } }).identity;
+  if (!identity || typeof identity.role !== 'string' || !identity.role) return null;
+  const sameAccount = identity.legacyUserId === parseFiniteInt(user.userId);
+  const sameOrganisation = identity.organizationId === parseFiniteInt(user.organizationId);
+  return sameAccount && sameOrganisation ? identity.role : null;
 }
 
 /**

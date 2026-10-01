@@ -12,11 +12,17 @@
  *   user_invited                         services/tenant/invitation-delivery.ts
  *   member_role_changed, member_removed  services/tenant/membership-change.ts, for
  *                                        routes/tenant-users.ts PATCH and DELETE
- *                                        /:organizationId/:userId (writeChainedAuditRow;
- *                                        new_values: targetUserId, previousRole,
- *                                        newRole, reason)
+ *                                        /:organizationId/:userId and, for
+ *                                        member_role_changed, routes/scim.ts PATCH
+ *                                        /Groups/:id with no actor (P1-49)
+ *                                        (writeChainedAuditRow; new_values:
+ *                                        targetUserId, previousRole, newRole, reason)
  *   tenant_settings_changed, tenant_settings_reset
- *                                        routes/tenant-config.ts writeTenantSettings
+ *                                        services/tenant/tenant-settings-writer.ts
+ *                                        writeTenantSettings, for routes/tenant-config.ts,
+ *                                        services/ana-platform-controller.ts (P1-49) and
+ *                                        routes/organizations-routes.ts PATCH /:id/settings
+ *                                        (DP-73, with the reason on the row)
  *                                        (writeChainedAuditRow; new_values: sections,
  *                                        changedFields, and values before/after for
  *                                        security and qmp.auditTrailRetentionDays only)
@@ -28,15 +34,24 @@
  *   tenant_impersonation_attempt         middleware/enterprise-security.ts
  *   data_modify on organization / organization_settings
  *                                        routes/organizations-routes.ts (orgAdminAction
- *                                        in new_values names the change)
- *   audit_events scim.user.*             routes/scim.ts auditScim
+ *                                        in new_values names the change): the profile,
+ *                                        and settings rows written before DP-73
+ *   audit_events scim.user.*             routes/scim.ts auditScim, in the write's own
+ *                                        transaction since P1-49
+ *
+ * SCIM group role changes (P1-49, 2026-10-01): until then the Groups PATCH
+ * wrote each role with a bare UPDATE and no record, and notRecorded said so.
+ * It now goes through changeMemberRole and writes member_role_changed in the
+ * change's transaction; the actor is the identity provider, so the row has no
+ * user id and the LEFT JOIN LATERAL in actorJoin (section.ts) keeps it.
  *
  * Settings (verified 2026-10-01, P1-41): routes/tenant-config.ts PATCH
  * /:tenantId/settings, PATCH /:tenantId/settings/:section and POST
  * /:tenantId/settings/reset each write one chained row in the write's own
- * transaction (above); routes/organizations-routes.ts PATCH /:id/settings
- * records data_modify on organization_settings with the section names only
- * (`sections`), never values.
+ * transaction (above), and since DP-73 (2026-10-01) so does
+ * routes/organizations-routes.ts PATCH /:id/settings, through the same writer.
+ * Before that it recorded data_modify on organization_settings, section names
+ * only, after the change had committed; those rows are still read.
  *
  * @module server/services/audit/compliance-reports/queries/administrative-changes
  */
@@ -149,7 +164,7 @@ export const administrativeChanges: ReportDefinition = {
   ],
   notRecorded: [
     'Acceptance of an invitation is not recorded.',
-    'A role change that arrives through a SCIM group is not recorded.',
+    'A role change that arrives through a SCIM group is listed with the role before and after; it has no person as actor, and its reason names the group. Those made before the product began recording them were not recorded.',
     'Tenant configuration changes and resets are recorded by section and by the names of the fields changed. Values before and after are recorded only for the security settings (the second-factor requirement, password policy, session timeout and IP restrictions) and the audit-trail retention period; other values, which include webhook addresses, are not recorded.',
     'Member role changes and removals made by an administrator, and tenant configuration changes, made before the product began recording them were not recorded.',
     'Changes to the organisation settings are recorded by section name only, without the values before or after the change.',
