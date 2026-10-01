@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-002 |
-| Version | 0.5 |
+| Version | 0.6 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-002 (`tests/validation/oq/vault/run.mjs`) |
@@ -19,6 +19,7 @@
 | 0.3 | 2026-10-01 | `…01DiJJAk` (VR-09) | URS-VAULT-012, a document's versions, verified by OQ-VAULT-12. URS-VAULT-004 now says a document's versions count once. Not yet executed (W3). |
 | 0.4 | 2026-10-01 | `…01DiJJAk` (VR-13) | URS-VAULT-013, review and approval of a Vault version with an e-signature, verified by OQ-VAULT-13 and OQ-VAULT-14. Not yet executed (W3). |
 | 0.5 | 2026-10-01 | `…01DiJJAk` (VR-11) | URS-VAULT-014, filing captured sources from the data room into the Vault with a result for each, verified by OQ-VAULT-15. Not yet executed (W3). |
+| 0.6 | 2026-10-01 | `…01DiJJAk` (VR-11b) | URS-VAULT-015, confirming suggested filings together with one reason, and the count awaiting confirmation, verified by OQ-VAULT-16. Not yet executed (W3). |
 
 ## 1. Intended use
 
@@ -42,6 +43,7 @@ The Vault is the program's document store: the regulatory user uploads source do
 | URS-VAULT-012 | A document is listed once, at its current version, with how many versions it has. Every version of a document is listed newest first with its version, SHA-256, size, uploader and date, and each downloads hash-verified. The document's history carries the events of every version, each naming its version. Search lists current versions unless earlier ones are asked for. A predecessor link the lineage rule would refuse is shown as not linked, never as lineage. | §11.10(e) | high | `server/services/vault/vault-version-family.ts`, `server/routes/c2c/project-vault.ts` (`GET /:id/documents/:documentId/versions`), `client/src/concept2cure/v2/surfaces/VaultVersions.tsx` |
 | URS-VAULT-013 | A Vault version is reviewed and approved on the document lifecycle, apart from its filing. Sending it for review starts one record per version, taking title, type and content hash from the stored version. The review and the approval are electronic signatures: the signer re-authenticates, states a reason, and the record holds the printed name, meaning and time, bound to the version's SHA-256. The uploader and whoever sent the version for review may neither review nor approve it, the reviewer does not approve it, and only the current version is approved. Approving a version supersedes the earlier approved versions of the same document in the same transaction. An approved version's details cannot be edited. A version counts as settled only when approved. | §11.10(e), §11.50, §11.70, §11.200 | high | `server/services/regulatory/vault-lifecycle-record.ts`, `server/routes/document-lifecycle.ts`, `server/services/vault/vault-lifecycle.ts`, `client/src/concept2cure/v2/surfaces/VaultLifecycle.tsx`, `migrations/20261001_canonical_documents_vault_version.sql` |
 | URS-VAULT-014 | A person files captured sources from the project's data room into the Vault. Each source goes through the same governed ingest as a Vault upload and lands suggested or unfiled, never confirmed by the system. The answer names each source as filed (with its version and where it landed), already in the Vault (with its version), or refused with the reason. One source's refusal does not undo another's filing, and the batch reports that it is not complete. A source whose stored bytes no longer match the checksum recorded at capture is refused and nothing is stored. A viewer is refused. Another organisation's or another project's source is refused as not found. | §11.10(c), §11.10(d), §11.10(e) | high | `server/services/vault/vault-data-room-filing.ts`, `server/services/vault/vault-file-upload-to-vault.ts`, `server/routes/c2c/project-vault.ts` (`POST /:id/data-room/file`), `client/src/concept2cure/v2/surfaces/VaultDataRoomFiling.tsx` |
+| URS-VAULT-015 | A person confirms the suggested filings in one folder together, with one reason for change that is required, and is recorded on each document's filing and in its own audit row. Each document is confirmed on its own. A document whose folder or status changed since the person loaded the list is refused, and not touched. The answer names each document, and the batch reports when not every filing was confirmed. The Vault shows how many suggested filings await confirmation, counted over the whole program. | §11.10(e) | high | `server/services/vault/vault-placement-batch.ts`, `vault-placement.service.ts` (`expected`), `server/routes/c2c/project-vault.ts` (`POST /:id/file-batch`, `awaitingConfirmationCount`), `client/src/concept2cure/v2/surfaces/VaultConfirmSuggested.tsx` |
 
 ## 3. Assumptions and constraints
 
