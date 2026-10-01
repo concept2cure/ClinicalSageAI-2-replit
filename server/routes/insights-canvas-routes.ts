@@ -93,7 +93,8 @@ interface CanvasReportType {
 }
 
 interface CanvasLeadProgram {
-  scope: 'program';
+  /** The canvas's "program" is a project: its readiness is computed at project scope. */
+  scope: 'project';
   scopeId: string;
   projectId: number;
   code: string | null;
@@ -188,8 +189,16 @@ function pickFlagship(members: ProgramMemberInsight[]): ProgramMemberInsight | n
 
 /** PURE: single-program lead context. filing/agency/pdufa are unsourced → null. */
 function toLeadProgram(insight: ProgramMemberInsight): CanvasLeadProgram {
+  /* L189 (reporting review 2026-10-01). This said 'program' with a PROJECT id,
+     and the canvas runs every report over the scope it is given: POST /runs
+     read 'program' as a report program group and looked up the group whose
+     serial id equalled the project id. So a report titled for the project
+     the opener named was computed over an unrelated group, or over nothing
+     ("No governed artifacts discovered"), and half the standard-pack tiles
+     were refused because their types do not run at program scope. The lead
+     is a project, and its readiness above is computed at project scope. */
   return {
-    scope: 'program',
+    scope: 'project',
     scopeId: String(insight.projectId),
     projectId: insight.projectId,
     code: insight.code ?? null,
