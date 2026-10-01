@@ -10,8 +10,11 @@ import {
 } from '../services/compute/computeService';
 import { startGovernedWorkflow } from '../services/workflow/temporalBridge';
 import { createPolicyGuard } from '../services/policy/opaMiddleware';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('compute-routes');
 
 const limiter = createRedisRateLimiter({
   rules: {
@@ -92,10 +95,8 @@ router.post(
       });
 
       res.status(201).json({ success: true, data: result });
-    } catch (error: any) {
-      res
-        .status(500)
-        .json({ success: false, error: error?.message || 'Failed to execute compute job' });
+    } catch (error) {
+      return serverError(res, log, 'executing the compute job', error);
     }
   }
 );
@@ -128,8 +129,8 @@ router.post('/projects/:projectId/workflows', async (req, res) => {
     });
 
     return res.status(202).json({ success: true, data: workflow });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error?.message || 'Failed to start workflow' });
+  } catch (error) {
+    return serverError(res, log, 'starting the workflow', error);
   }
 });
 

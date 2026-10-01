@@ -1,0 +1,48 @@
+$ node scripts/ci/check-env-var-docs.mjs --strict-no-regression
+[ci:env-var-docs] 20 baseline var(s) now documented or removed: APP_VERSION, AUTH_JWT_SECRET, CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW, CONNECTOR_ENCRYPTION_KEY
+[ci:env-var-docs] FAIL — 27 NEW undocumented env var(s) above baseline of 243:
+  [... the 27 names follow; listed with their files below]
+exit=1
+
+# Attribution of that exit=1 (--json, findings not in docs/reports/env-var-docs-baseline.json): 27 names, every one read by another
+# file already modified or added in the working tree by other lanes before this item. None is AUDIT_EXPORT_*:
+summary {"referenced":412,"documented":240,"ambientIgnored":4,"undocumented":250}
+findings not in baseline (27):
+  ANA_DIGEST_HEARTBEAT_DISABLED <- server/services/digest/digest-heartbeat.ts
+  ANA_DIGEST_HEARTBEAT_INTERVAL_MS <- server/services/digest/digest-heartbeat.ts
+  ANA_DOCUMENT_CATALOG_FORCE_ON <- server/services/vault/document-catalog.service.ts,server/startup/document-catalog-bootstrap.ts
+  ANA_VAULT_CHUNKING_FORCE_ON <- server/services/vault/document-chunking.service.ts,server/startup/document-catalog-bootstrap.ts
+  AUTH_BOUNDARY_MODE <- server/startup/env.ts
+  AUTHORING_SUBSYSTEM_OPTIONAL <- server/db/ensureCoreTables.ts,server/startup/authoringAuthorizationInvariant.ts
+  BUILD_COMMIT <- server/buildStamp.ts
+  CHROMIUM_PATH <- server/export/renderers.ts
+  DEMO_USER_EMAIL <- server/db/bootstrap/seed-default-org.ts
+  DEMO_USER_PASSWORD <- server/db/bootstrap/seed-default-org.ts
+  ENABLE_CLINICAL_REGULATORY_GRAPH <- server/routes/clinical-regulatory-evidence-routes.ts
+  EVALIDATOR_ARGS <- server/services/ectd/external-validator/lorenz-adapter.ts
+  GIT_SHA <- server/buildStamp.ts
+  MCP_DEV_EMAIL <- server/mcp/client-transcript.ts
+  MCP_ENABLED <- server/index.ts
+  MCP_TOKEN <- server/mcp/client-transcript.ts
+  MCP_URL <- server/mcp/client-transcript.ts
+  PDFA_SRGB_ICC <- server/services/ectd/pdfa-pipeline.ts
+  PGOPTIONS <- server/db/runtime.ts
+  PGSSLMODE <- server/scripts/run-sql.js
+  PUPPETEER_EXECUTABLE_PATH <- server/export/renderers.ts
+  RETENTION_SWEEP_CRON <- server/jobs/retentionCron.ts
+  SEQUENCE_ID <- server/mcp/client-transcript.ts
+  SOCKET_SESSION_RECHECK_MS <- server/socketServer.ts
+  TASK_DUE_SWEEP_DISABLED <- server/jobs/taskDueSweep.ts
+  TASK_DUE_SWEEP_INTERVAL_MS <- server/jobs/taskDueSweep.ts
+  VAULT_TREE_MAX_DOCS <- server/routes/c2c/project-vault.ts
+AUDIT_EXPORT_* among all findings: []
+
+# Why the scan does not list AUDIT_EXPORT_SIGNING_KEY_ID / _PREV / _PREV_ID: the module reads them off an injected `env`
+# (the auditSealPosture.ts pattern, which is what makes the posture testable without mutating process.env), and the gate
+# matches `process.env.NAME` literals only. Documenting the three names in .env.example is the deferred half (12:15 UTC 09-27).
+$ grep -n "process.env" server/services/audit/auditExportKeyPosture.ts server/services/audit/signedAuditExport.ts
+server/services/audit/auditExportKeyPosture.ts:105:export function configuredExportKeyIds(env: NodeJS.ProcessEnv = process.env): {
+server/services/audit/auditExportKeyPosture.ts:131:export function assertAuditExportKeyPostureForProduction(env: NodeJS.ProcessEnv = process.env): string {
+server/services/audit/auditExportKeyPosture.ts:247:  env: NodeJS.ProcessEnv = process.env,
+server/services/audit/auditExportKeyPosture.ts:262:export function resolveLegacyExportSigningKey(env: NodeJS.ProcessEnv = process.env): string {
+exit=0

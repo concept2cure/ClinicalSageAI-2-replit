@@ -358,13 +358,26 @@ function norm(s: string): string {
   return s.trim().toLowerCase();
 }
 
-/** Does a fact match the given topic substring (over topic + keywords + id)? */
+/** Is `needle` in `haystack` as whole words, not inside another word? */
+function containsWords(haystack: string, needle: string): boolean {
+  if (!needle) return false;
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z0-9])${escaped}($|[^a-z0-9])`).test(haystack);
+}
+
+/**
+ * Does a fact match the given topic (over topic + keywords + id)?
+ *
+ * Whole words only in the topic-contains-keyword direction: it used to be a
+ * substring test, so any topic with "ai" inside a word ("training",
+ * "maintain", "certain") matched the EU AI Act fact's keyword "AI".
+ */
 function matchesTopic(fact: RegulatoryFact, topic: string): boolean {
   const t = norm(topic);
   if (!t) return true;
   if (norm(fact.topic).includes(t)) return true;
   if (norm(fact.id).includes(t)) return true;
-  return fact.keywords.some((k) => norm(k).includes(t) || t.includes(norm(k)));
+  return fact.keywords.some((k) => norm(k).includes(t) || containsWords(t, norm(k)));
 }
 
 /** Filters for {@link findFacts}. All optional; omitted filters do not constrain. */

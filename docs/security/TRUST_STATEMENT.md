@@ -56,8 +56,10 @@ until the founder signs it and the production environment is live.
 ## Not yet done — and we will not claim otherwise
 - **SOC 2 Type II:** no observation window is open. We publish this statement
   and the policy set (`docs/security/policies/`) instead of a report we do not have.
-- **Penetration test:** none performed. The first will be scheduled before the
-  first production tenant files, and findings will be closed before launch.
+- **Penetration test:** none performed. The GA scope is written
+  (`docs/security/PEN_TEST_SCOPE_2026-09-26.md`); the first engagement will be
+  scheduled before the first production tenant files, and findings will be closed
+  before launch.
 - **Anthropic BAA:** not signed. It is required before any tenant places PHI in
   the platform; the default posture is that submission content is de-identified.
 - **Incident tabletop, access reviews, restore timing on production-size data.**

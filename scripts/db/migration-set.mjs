@@ -2789,6 +2789,21 @@ export const C2C_MIGRATION_FILES = [
   // (cdisc_prm_studies.program_id) to an existing table. No DROP.
   'migrations/20260926b_program_same_org_keys.sql',
 
+  // ── RBQM: signed records stay signed; QTLs bite in their direction; a
+  //    duplicate metric load is refused (2026-09-30) ─────────────────────────
+  // Ported from the abandoned #1120 / #1123 / #1130 (+ #1166's UNIQUE replay
+  // index). Each ALTERs a table 20260629 / 20260630 / 20260726 above create
+  // with CREATE TABLE IF NOT EXISTS, so each ships as its own additive file
+  // (the 20260918 note explains why an in-place amendment would reach no
+  // deployed tenant). All ADD COLUMN / CREATE INDEX IF NOT EXISTS, constraints
+  // added only when absent, to_regclass-guarded, no DROP; the plan-version
+  // backfill runs only on the apply that adds the column, so a replay never
+  // renumbers. Create no table, so the sweep has nothing new to policy. Above
+  // the final pair because ci:migration-set-order pins those two last.
+  'migrations/20260930_rbm_qtl_direction.sql',
+  'migrations/20260930_rbm_plan_versioning.sql',
+  'migrations/20260930_rbm_ingest_idempotency.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

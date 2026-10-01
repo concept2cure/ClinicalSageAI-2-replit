@@ -536,6 +536,13 @@ router.patch('/:organizationId/:userId', async (req, res) => {
 
     const verifiedRole = await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }); if (!verifiedRole) return;
 
+    // PR #973 port: an admin re-roling THEMSELVES can leave an organization
+    // with no administrator and no one able to undo it. Checked after authZ so
+    // a non-member still gets 403, not a disclosure.
+    if (getCallerId(req) === userId) {
+      return res.status(400).json({ error: 'You cannot change your own role', code: 'SELF_ROLE_CHANGE' });
+    }
+
     const validatedData = updateUserRoleSchema.parse(req.body);
 
     const updateQuery = `
@@ -581,6 +588,11 @@ router.delete('/:organizationId/:userId', async (req, res) => {
     }
 
     const verifiedRole = await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }); if (!verifiedRole) return;
+
+    // PR #973 port: self-removal — same lockout as a self re-role above.
+    if (getCallerId(req) === userId) {
+      return res.status(400).json({ error: 'You cannot remove yourself from an organization', code: 'SELF_REMOVAL' });
+    }
 
     const deleteQuery = `
       DELETE FROM organization_users

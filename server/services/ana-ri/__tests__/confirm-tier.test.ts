@@ -25,7 +25,9 @@ import {
   PART11_ESIGN_COMMANDS,
   PART11_GOVERNED_COMMANDS,
 } from '../part11-governance';
-import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../../ana/governed-tool-gate';
+import { classifyToolCall, PLATFORM_COMMAND_TOOL, registeredToolTier } from '../../ana/governed-tool-gate';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const WRITES = Object.entries(COMMAND_AUTHORIZATION)
   .filter(([, a]) => a.effect === 'write')
@@ -92,6 +94,24 @@ describe('what the agent is told', () => {
     const reason = [...PART11_GOVERNED_COMMANDS].find((c) => !PART11_ESIGN_COMMANDS.has(c))!;
     expect(buildHumanConfirmationRequiredResult(reason).data).toMatchObject({ tier: 'reason', reasonRequired: true, signatureRequired: false });
     expect(buildHumanConfirmationRequiredResult('erase_personal_data').data).toMatchObject({ tier: 'esignature', reasonRequired: true, signatureRequired: true });
+  });
+});
+
+describe('a tool that records a reason for change is proposed at the reason tier (D5)', () => {
+  it('the proposal carries the tier the gate decided, not the command tier of the tool\'s name', () => {
+    // governedTierOf knows commands; for a tool name it answers confirm. The
+    // card opens on data.tier, so a reason tool proposed at "confirm" would be
+    // a click the confirmation route then refuses.
+    expect(governedTierOf('seed_tmf')).toBe('confirm');
+    const out = buildHumanConfirmationRequiredResult('seed_tmf', { reason: 'x' }, registeredToolTier('seed_tmf'));
+    expect(out.data).toMatchObject({ tier: 'reason', reasonRequired: true, signatureRequired: false });
+    expect(out.message).toMatch(/your reason for the change is recorded/);
+  });
+
+  it('the stream holds a tool with the verdict\'s tier (source check: there is no other seam)', () => {
+    const src = fs.readFileSync(path.resolve(__dirname, '../../../routes/ana-ri/stream.ts'), 'utf8');
+    const calls = src.match(/buildHumanConfirmationRequiredResult\([^)]*\)/g) ?? [];
+    expect(calls).toEqual(['buildHumanConfirmationRequiredResult(verdict.command, verdict.params, verdict.tier)']);
   });
 });
 

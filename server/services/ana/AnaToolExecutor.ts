@@ -16,6 +16,7 @@
 
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
+import { registeredToolTier } from './governed-tool-gate.js';
 import { foreignProgramRefusal, foreignRecordRefusal } from './tool-record-scope.js';
 import { buildHumanConfirmationRequiredResult } from '../ana-ri/part11-governance.js';
 import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
@@ -112,6 +113,12 @@ import {
 import { lookupIcd10 } from '../integrations/icd10-client.js';
 import { composeSafetyNarrative } from './safety-narrative.js';
 import { screenPromotionalLanguage } from './promotional-screening.js';
+import {
+  critiqueDraft,
+  critiqueDocument,
+  verifyRevision,
+  buildRevisionBrief,
+} from './writing-precision-gate.js';
 import { narrateStatisticalResult, type AnalysisType, type EffectMeasure } from './statistical-narrator.js';
 import { composeValueDossierGuidance, listValueDossierCatalog } from './value-dossier.js';
 import { adviseRegulatoryPathway, listRegulatoryPathways } from './regulatory-pathway.js';
@@ -201,14 +208,10 @@ import { launchScopeEnforced } from '../entitlements/launch-scope';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
-import {
-  GOVERNED_REASON_MIN,
-  ReasonNotStatedError,
-  gatedReason,
-  reasonFieldOf,
-  statedReason,
-  type StatedReasonField,
-} from './stated-reason-input.js';
+import { GOVERNED_REASON_MIN, ReasonNotStatedError, gatedReason, reasonFieldOf, statedReason, type StatedReasonField, REASON_REQUIRED_TOOLS } from './stated-reason-input.js';
+// Re-exported: the set's home is the pure module, so the tool gate and the
+// confirmation route read it without loading this executor.
+export { REASON_REQUIRED_TOOLS };
 import {
   anaScratchDir,
   assertWithinDocumentWorkspace,
@@ -398,116 +401,7 @@ function reasonNotStated(tool: string, field: StatedReasonField = reasonFieldOf(
   });
 }
 
-/**
- * Every tool whose handler records a reason for change on a ledger row — a
- * governed action (recordGovernedAction -> audit_logs.reason), an audit row
- * (recordAuditRow), or through a service that records the reason it is handed
- * (commit_document_revision's document spine, the governed-fact orchestrator,
- * the change-control register): the person is asked for their reason before
- * they are asked to confirm. governed-reason-not-invented.test.ts holds this
- * list to the source of every module that registers a handler: a handler whose
- * path carries a reason to a write and is missing here fails it.
- */
-export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
-  'add_amendment_change',
-  'add_biological_agent',
-  'add_capa_action',
-  'add_committee_agenda_item',
-  'add_coverage_item',
-  'add_disclosure_interest',
-  'add_effort_line',
-  'add_eligibility_criterion',
-  'add_grant_budget_line',
-  'add_irb_site',
-  'add_other_support_entry',
-  'add_personnel_training',
-  'add_protocol_budget_item',
-  'add_protocol_milestone',
-  'add_protocol_objective',
-  'add_protocol_review_comment',
-  'add_protocol_risk',
-  'add_soa_assessment',
-  'apply_fact_change',
-  'apply_protocol_design_derivation',
-  'assign_committee_member',
-  'assign_protocol_reviewer',
-  'bind_protocol_to_study_design',
-  'cast_committee_vote',
-  'classify_coverage_item',
-  'classify_tmf_artifact',
-  'clone_protocol_template',
-  'commit_document_revision',
-  'convene_committee_meeting',
-  'create_biosketch',
-  'create_clinical_investigator',
-  'create_coi_disclosure',
-  'create_consent_form',
-  'create_coverage_analysis',
-  'create_dms_plan',
-  'create_effort_certification',
-  'create_export_control_review',
-  'create_financial_disclosure',
-  'create_grant_proposal',
-  'create_ha_interaction',
-  'create_iacuc_protocol',
-  'create_ibc_registration',
-  'create_inspection',
-  'create_invention_disclosure',
-  'create_irb_submission',
-  'create_lifecycle_obligation',
-  'create_nonclinical_study',
-  'create_other_support',
-  'create_protocol_amendment',
-  'create_protocol_document',
-  'create_protocol_template',
-  'create_qms_document',
-  'create_regulatory_commitment',
-  'create_research_agreement',
-  'create_rim_product',
-  'create_tmf',
-  'establish_governed_fact',
-  'fulfill_regulatory_commitment',
-  'import_citi_records',
-  'log_cs_transaction',
-  'log_inspection_finding',
-  'open_grant_closeout',
-  'qms_change_create',
-  'qms_change_transition',
-  'record_cost_share_contribution',
-  'record_grant_award',
-  'record_grant_expenditure',
-  'record_grant_opportunity',
-  'record_subaward',
-  'register_animal_cohort',
-  'register_controlled_substance',
-  'register_dea',
-  'report_protocol_deviation',
-  'request_no_cost_extension',
-  'revise_qms_document',
-  'save_document_as_template',
-  'save_document_to_vault',
-  'screen_subaward',
-  'seed_tmf',
-  'set_coverage_qualifying_determination',
-  'set_funding_profile',
-  'set_grant_milestone_status',
-  'set_protocol_budget_params',
-  'set_protocol_milestone_status',
-  'set_registration_status',
-  'set_soa_cell',
-  'submit_invention_disclosure',
-  'triage_compliance_attention',
-  'update_biosketch_section',
-  'update_consent_element',
-  'update_dms_plan_element',
-  'update_export_control_review',
-  'update_grant_closeout',
-  'update_invention_disclosure',
-  'update_protocol_section',
-  'update_research_agreement',
-  'update_tmf_artifact_status',
-  'update_vault_document',
-]);
+
 
 /**
  * Register a handler for a named tool. Every handler is wrapped with execution
@@ -591,7 +485,7 @@ function preHandlerRefusal(
     }
     return {
       code: 'HUMAN_CONFIRMATION_REQUIRED',
-      result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {})),
+      result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {}, registeredToolTier(name))),
     };
   }
   return null;
@@ -3296,11 +3190,26 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
   if (orgId == null) {
     return JSON.stringify({ source: 'AnA RBM', error: 'Organization context required.' });
   }
-  const { recomputeSiteRisk } = await import('../rbm/site-risk-engine.js');
+  const { recomputeSiteRisk, SITE_READ_MESSAGE } = await import('../rbm/site-risk-engine.js');
   const { getPool } = await import('../../db.js');
+  // recomputeSiteRisk reports WHY it produced nothing (#1128): the study is not
+  // this org's, Site Intelligence is unavailable, or the read failed. Handed an
+  // empty array instead, the model would tell the user the study has no site
+  // data — a clean bill of health it has no evidence for. Return the reason.
+  const recompute = async (): Promise<any[] | string> => {
+    const out = await recomputeSiteRisk(orgId, programId);
+    if (!out.ok) {
+      return JSON.stringify({
+        source: 'AnA RBM Site Risk', error: SITE_READ_MESSAGE[out.reason], reason: out.reason,
+      });
+    }
+    return out.snapshots;
+  };
   let sites: any[];
   if (input.persist === true) {
-    sites = await recomputeSiteRisk(orgId, programId);
+    const r = await recompute();
+    if (typeof r === 'string') return r;
+    sites = r;
   } else {
     const { rows } = await getPool().query(
       `SELECT site_number, site_name, composite_risk, monitoring_tier, drivers FROM rbm_site_risk_scores
@@ -3308,7 +3217,11 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
       [orgId, programId],
     );
     sites = rows;
-    if (sites.length === 0) sites = await recomputeSiteRisk(orgId, programId);
+    if (sites.length === 0) {
+      const r = await recompute();
+      if (typeof r === 'string') return r;
+      sites = r;
+    }
   }
   const tiers = { reduced: 0, standard: 0, enhanced: 0 } as Record<string, number>;
   for (const s of sites) tiers[s.monitoringTier ?? s.monitoring_tier] = (tiers[s.monitoringTier ?? s.monitoring_tier] ?? 0) + 1;
@@ -3318,7 +3231,11 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
     siteCount: sites.length,
     tierCounts: tiers,
     sites,
-    note: sites.length === 0 ? 'No Site Intelligence data found for this program.' : undefined,
+    // Only reachable on a SUCCESSFUL read that found nothing, so it now means
+    // what it says instead of standing in for every failure mode.
+    note: sites.length === 0
+      ? 'Site Intelligence was read successfully and holds no sites for this program.'
+      : undefined,
   });
 });
 
@@ -3694,7 +3611,9 @@ registerToolHandler('create_monitoring_action', async (input, ctx) => {
     signalId: rbmNum(input.signalId) ?? null,
     owner: rbmNum(input.owner) ?? null,
   });
-  if (!out.created) return rbmErr('Monitoring plan not found in this tenant.');
+  // An approved plan's actions are frozen under its signature (#1166): say so,
+  // rather than reporting a plan that exists as "not found".
+  if (!out.created) return rbmErr(out.reason === 'plan_not_draft' ? out.message : 'Monitoring plan not found in this tenant.');
   return JSON.stringify({ source: 'AnA RBM · create_monitoring_action', ...out });
 });
 
@@ -3883,6 +3802,93 @@ registerToolHandler('medical_writing_review', async (input) => {
   const draftText = typeof input.draft_text === 'string' ? input.draft_text : undefined;
   const review = reviewMedicalWriting(documentType, draftText);
   return JSON.stringify({ source: 'AnA Medical-Writing QC', ...review });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Writing Precision Gate (PR #1003 port) — composes the checkers above
+// (grounding, readability, abbreviations, promotional screening, structure) plus
+// in-document terminology consistency into one deterministic score + verdict +
+// revision brief. The model revises; the gate decides. No DB, no org context.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function precisionAudience(v: unknown): ReadabilityAudience | undefined {
+  return typeof v === 'string' && ['patient', 'clinician', 'regulator', 'general'].includes(v)
+    ? (v as ReadabilityAudience)
+    : undefined;
+}
+
+registerToolHandler('critique_draft', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'text (the draft to critique) is required' });
+  }
+  const report = critiqueDraft({
+    text,
+    audience: precisionAudience(input.audience),
+    documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
+  });
+  return JSON.stringify({
+    status: 'computed',
+    engine: 'deterministic',
+    score: report.score,
+    verdict: report.verdict,
+    metrics: report.metrics,
+    findings: report.findings,
+    revisionBrief: buildRevisionBrief(report),
+    instruction:
+      report.verdict === 'pass'
+        ? 'The draft passes the deterministic precision gate. You may still improve prose, but no machine-checkable defect remains.'
+        : 'Revise the draft against the revisionBrief (most severe first), preserving every value that is already correct and cited, then re-run critique_draft until the verdict is pass.',
+  });
+});
+
+registerToolHandler('verify_revision', async (input) => {
+  const originalText = typeof input.originalText === 'string' ? input.originalText : '';
+  const revisedText = typeof input.revisedText === 'string' ? input.revisedText : '';
+  if (!originalText.trim() || !revisedText.trim()) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'originalText and revisedText are both required' });
+  }
+  const audience = precisionAudience(input.audience);
+  const documentType = typeof input.documentType === 'string' ? input.documentType : undefined;
+  const result = verifyRevision(
+    { text: originalText, audience, documentType },
+    { text: revisedText, audience, documentType },
+  );
+  return JSON.stringify({
+    status: 'computed',
+    engine: 'deterministic',
+    result,
+    instruction: result.passesNow
+      ? 'The revision passes the precision gate. Confirm the improvement and proceed.'
+      : result.improved
+        ? 'The revision improved but has not fully passed; re-critique and continue revising the remaining findings.'
+        : 'The revision did not improve (or introduced regressions). Re-read the original critique and try again.',
+  });
+});
+
+registerToolHandler('critique_document', async (input) => {
+  const sections = Array.isArray(input.sections) ? input.sections : [];
+  const clean = sections
+    .filter((s): s is { title: string; text: string } =>
+      !!s && typeof (s as any).title === 'string' && typeof (s as any).text === 'string')
+    .map((s) => ({ title: s.title, text: s.text }));
+  if (clean.length === 0) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'sections[] with {title, text} is required' });
+  }
+  const result = critiqueDocument(clean, {
+    audience: precisionAudience(input.audience),
+    documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
+  });
+  return JSON.stringify({
+    status: 'computed',
+    engine: 'deterministic',
+    documentScore: result.documentScore,
+    verdict: result.verdict,
+    crossSectionFindings: result.crossSectionFindings,
+    sections: result.sections.map((s) => ({ title: s.title, score: s.score, verdict: s.verdict, findings: s.report.findings })),
+    instruction:
+      'Report the document score and, first, any cross-section findings (a value stated inconsistently across sections is a reviewer blocker). Then list per-section findings for the sections that need revision.',
+  });
 });
 
 // Describe Capabilities — AnA's deterministic self-knowledge: registered tools
@@ -4433,67 +4439,42 @@ registerToolHandler('search_medicare_coverage', async (input) => {
 
 // Lookup FDA Guidance
 registerToolHandler('lookup_fda_guidance', async (input) => {
-  const topic = input.topic as string;
-  const regulationType = input.regulation_type as string || 'any';
-
-  // FDA guidance database lookup via openFDA or internal knowledge
-  const guidanceMap: Record<string, any> = {
-    '510(k)': {
-      title: 'The 510(k) Program: Evaluating Substantial Equivalence in Premarket Notifications',
-      documentNumber: 'FDA-2013-D-0718',
-      url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents',
-      keyRequirements: [
-        'Identify predicate device(s)',
-        'Compare intended use and technological characteristics',
-        'Demonstrate substantial equivalence',
-        'Include performance data if different technology',
-      ],
-    },
-    'biocompatibility': {
-      title: 'Use of International Standard ISO 10993-1, Biological evaluation of medical devices',
-      documentNumber: 'FDA-2013-D-0350',
-      regulations: ['21 CFR 820.30(g)', 'ISO 10993-1:2018'],
-      keyRequirements: [
-        'Material characterization',
-        'Biological evaluation plan',
-        'Risk-based approach to testing',
-        'Chemical characterization per ISO 10993-18',
-      ],
-    },
-    'software': {
-      title: 'Content of Premarket Submissions for Device Software Functions',
-      documentNumber: 'FDA-2018-D-3241',
-      regulations: ['21 CFR 820', 'IEC 62304'],
-      keyRequirements: [
-        'Software level of concern determination',
-        'Software requirements specification',
-        'Architecture design chart',
-        'Software testing (verification & validation)',
-      ],
-    },
-  };
-
-  // Find best match
-  const topicLower = topic.toLowerCase();
-  let bestMatch = null;
-  for (const [key, value] of Object.entries(guidanceMap)) {
-    if (topicLower.includes(key.toLowerCase())) {
-      bestMatch = { keyword: key, ...value };
-      break;
-    }
-  }
-
-  if (bestMatch) {
-    return JSON.stringify({ source: 'FDA Guidance Database', match: bestMatch });
-  }
-
+  /* No FDA guidance index is connected (plan open decision 11), so this names
+     no guidance, docket number or requirement. It used to answer from a
+     three-entry map ("510(k)", "biocompatibility", "software") whose docket
+     numbers nothing verified and whose requirements were typed from memory —
+     "software level of concern", which the 2023 device-software guidance
+     replaced, and 21 CFR 820.30(g), which the QMSR superseded — and returned a
+     fixed list of CFR parts for anything else. What it can stand behind is the
+     dated US facts in the verified currency registry, each with its source. */
+  const topic = typeof input.topic === 'string' ? input.topic.trim() : '';
+  if (!topic) return JSON.stringify({ error: 'lookup_fda_guidance requires a topic.' });
+  const { findFacts, verificationAgeDays, isVerificationStale } = await import(
+    '../regulatory-currency/currency-registry.js'
+  );
+  const asOf = new Date().toISOString().slice(0, 10);
+  const facts = findFacts({ topic, jurisdiction: 'US', asOf }).map((f) => ({
+    id: f.id,
+    topic: f.topic,
+    status: f.status,
+    effectiveDate: f.effectiveDate,
+    note: f.note,
+    sourceUrl: f.sourceUrl,
+    lastVerified: f.lastVerified,
+    verificationAgeDays: verificationAgeDays(f, asOf),
+    verificationStale: isVerificationStale(f, asOf),
+  }));
   return JSON.stringify({
-    source: 'FDA Guidance Database',
     topic,
-    note: `No exact match found. Search FDA guidance at https://www.fda.gov/regulatory-information/search-fda-guidance-documents for: "${topic}"`,
-    relatedRegulations: regulationType === '21cfr'
-      ? ['21 CFR Part 807 (510k)', '21 CFR Part 814 (PMA)', '21 CFR Part 820 (QSR)', '21 CFR Part 11 (Electronic Records)']
-      : undefined,
+    status: facts.length > 0 ? 'registry_facts' : 'not_indexed',
+    guidanceIndex: 'not_connected',
+    asOf,
+    facts,
+    note:
+      'No FDA guidance index is connected, so this cannot name an FDA guidance, its docket number or its ' +
+      'requirements. Any facts listed are dated entries from the verified regulatory currency registry. Name an ' +
+      'FDA guidance only from a document the user supplied, or say it needs confirming at ' +
+      'https://www.fda.gov/regulatory-information/search-fda-guidance-documents.',
   });
 });
 

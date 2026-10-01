@@ -696,8 +696,11 @@ export function createAuditTrailRoutes(pool: Pool): Router {
           manifest: signedExport.manifest,
           signature: signedExport.signature,
           verification: {
+            // The manifest names the key that sealed it (P1-19b); a rotated-out
+            // key stays verifiable under its own id.
+            signingKeyId: signedExport.manifest.signingKeyId ?? null,
             instruction:
-              'To verify: compute HMAC-SHA256 of the canonical manifest JSON using the server signing key, then compare to the signature field. Also verify SHA-256(data) === manifest.dataHash.',
+              'To verify: compute HMAC-SHA256 of the canonical manifest JSON using the audit export key named by manifest.signingKeyId, then compare to the signature field. Also verify SHA-256(data) === manifest.dataHash. POST /api/audit/export/verify performs both checks with the named key.',
             algorithm: 'HMAC-SHA256',
             hashAlgorithm: 'SHA-256',
           },
@@ -735,6 +738,8 @@ export function createAuditTrailRoutes(pool: Pool): Router {
         verification: {
           valid: result.valid,
           errors: result.errors,
+          // Which key vouched (P1-19b); null for a manifest from before key ids.
+          signingKeyId: result.signingKeyId,
           verifiedAt: new Date().toISOString(),
           compliance: {
             standard: '21 CFR Part 11 §11.10(e)',

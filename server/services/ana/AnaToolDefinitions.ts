@@ -485,6 +485,7 @@ import { CHANGE_PROPAGATION_TOOLS } from './changePropagationTools';
 import { IVD_LIFECYCLE_TOOLS } from './ivdLifecycleTools';
 import { CAPA_MDR_TOOLS } from './capaMdrTools';
 import { PREDICATE_INTELLIGENCE_TOOLS } from './predicateIntelligenceTools';
+import { WRITING_QUALITY_TOOLS } from './writingQualityTools';
 import { REGULATORY_CURRENCY_TOOLS } from './regulatoryCurrencyTools';
 import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
 import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
@@ -624,23 +625,13 @@ export const SEARCH_DRUG_ADVERSE_EVENTS: AnaTool = {
 export const LOOKUP_FDA_GUIDANCE: AnaTool = {
   name: 'lookup_fda_guidance',
   description:
-    'Look up FDA guidance documents, regulations (21 CFR), and draft/final guidance relevant to a topic. Returns guidance title, document number, key requirements, and citation-ready references.',
+    'Return the dated US regulatory facts the verified currency registry holds for a topic (for example the eSTAR mandates), each with its status, effective date and source. No FDA guidance index is connected, so this does not name guidance documents, docket numbers or their requirements; say an FDA guidance needs confirming unless the user supplied it.',
   input_schema: {
     type: 'object',
     properties: {
       topic: {
         type: 'string',
-        description: 'Regulatory topic to look up (e.g., "510(k) predicate comparison", "biocompatibility testing")',
-      },
-      regulation_type: {
-        type: 'string',
-        enum: ['guidance', '21cfr', 'federal_register', 'any'],
-        description: 'Type of regulatory document',
-      },
-      device_class: {
-        type: 'string',
-        enum: ['I', 'II', 'III', 'any'],
-        description: 'FDA device classification',
+        description: 'Regulatory topic to look up (e.g., "510(k)", "eSTAR", "De Novo")',
       },
     },
     required: ['topic'],
@@ -2647,6 +2638,11 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   // substantial-equivalence matrix, and read the defense preview (shadow-service
   // proxy with org→program ownership).
   ...PREDICATE_INTELLIGENCE_TOOLS,
+  // Writing Precision Gate — deterministic critique (grounding, in-document
+  // consistency, readability, abbreviations, claims, structure) + revision brief
+  // that closes the draft->critique->revise loop for long-form medical writing.
+  // See docs/architecture/WRITING_PRECISION_GATE.md.
+  ...WRITING_QUALITY_TOOLS,
   // Regulatory Currency Engine: curated, freshness-stamped registry of DATED facts
   // (vacated/superseded/upcoming-mandatory rules) so AnA never advises on a VOID
   // rule from its static knowledge. See regulatoryCurrencyTools.ts.

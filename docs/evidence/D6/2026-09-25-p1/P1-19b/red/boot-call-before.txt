@@ -1,0 +1,59 @@
+# P1-19b boot call, red: environment.test.ts with the export-key block, against environment.ts that does not call the posture (merge commit c2b7f6f7)
+ ✓ server/config/__tests__/environment.test.ts > getJwtSecret > throws when no secret is set 168ms
+ ✓ server/config/__tests__/environment.test.ts > getJwtSecret > throws when the env-specific secret is too short 8ms
+ ✓ server/config/__tests__/environment.test.ts > getJwtSecret > throws when the generic fallback secret is too short 5ms
+ ✓ server/config/__tests__/environment.test.ts > getJwtSecret > loads when the env-specific secret has sufficient length 4ms
+ ✓ server/config/__tests__/environment.test.ts > getJwtSecret > prefers the env-specific secret over the generic fallback 15ms
+ ✓ server/config/__tests__/environment.test.ts > getJwtSecret > error message does not echo the secret value 2ms
+ ✓ server/config/__tests__/environment.test.ts > getRefreshTokenSecret > falls back to the JWT secret in development (no enforcement) 2ms
+ ✓ server/config/__tests__/environment.test.ts > getRefreshTokenSecret > falls back to the JWT secret in test (no enforcement) 2ms
+ ✓ server/config/__tests__/environment.test.ts > getRefreshTokenSecret > requires a dedicated refresh secret in production 3ms
+ ✓ server/config/__tests__/environment.test.ts > getRefreshTokenSecret > requires a dedicated refresh secret in staging 6ms
+ ✓ server/config/__tests__/environment.test.ts > getRefreshTokenSecret > rejects a refresh secret identical to the JWT secret in production 7ms
+ ✓ server/config/__tests__/environment.test.ts > getRefreshTokenSecret > rejects a too-short refresh secret in production 9ms
+ ✓ server/config/__tests__/environment.test.ts > getRefreshTokenSecret > loads in production with a distinct, sufficiently long refresh secret 7ms
+ ✓ server/config/__tests__/environment.test.ts > assertMfaKeyPosture > requires a dedicated MFA key in production 7ms
+ ✓ server/config/__tests__/environment.test.ts > assertMfaKeyPosture > rejects a too-short MFA key in production 3ms
+ ✓ server/config/__tests__/environment.test.ts > assertMfaKeyPosture > does not require an MFA key in development 2ms
+ ✓ server/config/__tests__/environment.test.ts > assertMfaKeyPosture > does not require an MFA key in test 2ms
+ ✓ server/config/__tests__/environment.test.ts > assertMfaKeyPosture > loads in production when a dedicated MFA key is present 2ms
+ ✓ server/config/__tests__/environment.test.ts > getCurrentEnvironment > refuses to load on a set-but-unrecognized NODE_ENV 5ms
+ ✓ server/config/__tests__/environment.test.ts > getCurrentEnvironment > defaults to development when NODE_ENV is unset 6ms
+ ✓ server/config/__tests__/environment.test.ts > getCurrentEnvironment > recognizes production 6ms
+ ✓ server/config/__tests__/environment.test.ts > getCurrentEnvironment > recognizes test 6ms
+ × server/config/__tests__/environment.test.ts > production audit export key posture (fires on config import) > refuses to load in production without a dedicated export key 30ms
+   → promise resolved "{ default: { …(13) }, …(1), …(1) }" instead of rejecting
+ × server/config/__tests__/environment.test.ts > production audit export key posture (fires on config import) > refuses to load in production when the export key is the JWT secret 4ms
+   → promise resolved "{ default: { …(13) }, …(1), …(1) }" instead of rejecting
+ × server/config/__tests__/environment.test.ts > production audit export key posture (fires on config import) > refuses to load in production on a short export key, without echoing it 2ms
+ ✓ server/config/__tests__/environment.test.ts > production audit export key posture (fires on config import) > loads in production with a dedicated export key 2ms
+ ✓ server/config/__tests__/environment.test.ts > production audit export key posture (fires on config import) > does not require an export key in development 2ms
+ ✓ server/config/__tests__/environment.test.ts > production RLS enforcement posture (fires on config import) > refuses to load in production when RLS_ENFORCE is unset 2ms
+ ✓ server/config/__tests__/environment.test.ts > production RLS enforcement posture (fires on config import) > refuses to load in production on an unrecognized RLS_ENFORCE value 1ms
+ ✓ server/config/__tests__/environment.test.ts > production RLS enforcement posture (fires on config import) > loads in production with RLS_ENFORCE=on 1ms
+ ✓ server/config/__tests__/environment.test.ts > production RLS enforcement posture (fires on config import) > refuses production when the operator explicitly sets off 4ms
+ ✓ server/config/__tests__/environment.test.ts > production RLS enforcement posture (fires on config import) > refuses production when the operator explicitly sets shadow 4ms
+ ✓ server/config/__tests__/environment.test.ts > production RLS enforcement posture (fires on config import) > fail-closes in production under RLS_REQUIRE_ENFORCE=true unless on 2ms
+ ✓ server/config/__tests__/environment.test.ts > production RLS enforcement posture (fires on config import) > does not require RLS_ENFORCE outside production 2ms
+ ✓ server/config/__tests__/environment.test.ts > production audit-seal posture (fires on config import) > refuses to load in production when AUDIT_HMAC_KEY is unset 2ms
+ ✓ server/config/__tests__/environment.test.ts > production audit-seal posture (fires on config import) > refuses to load in production when AUDIT_HMAC_KEY is too short 1ms
+ ✓ server/config/__tests__/environment.test.ts > production audit-seal posture (fires on config import) > loads in production with a sufficiently long AUDIT_HMAC_KEY 1ms
+ ✓ server/config/__tests__/environment.test.ts > production audit-seal posture (fires on config import) > refuses to load in production when AUDIT_HMAC_SECRET is unset 1ms
+ ✓ server/config/__tests__/environment.test.ts > production audit-seal posture (fires on config import) > refuses to load in production when AUDIT_HMAC_SECRET is too short 2ms
+ ✓ server/config/__tests__/environment.test.ts > production audit-seal posture (fires on config import) > AUDIT_SEAL_ACCEPT_UNSEALED does NOT excuse a missing chain secret 4ms
+ ✓ server/config/__tests__/environment.test.ts > production audit-seal posture (fires on config import) > loads (with a warning) when the operator explicitly accepts an unsealed ledger 4ms
+ ✓ server/config/__tests__/environment.test.ts > production audit-seal posture (fires on config import) > does not require AUDIT_HMAC_KEY outside production 2ms
+ ✓ server/config/__tests__/environment.test.ts > assertDeterministicModePostureForProduction (wired into config load) > control: the production posture loads with deterministic mode off 1ms
+ ✓ server/config/__tests__/environment.test.ts > assertDeterministicModePostureForProduction (wired into config load) > refuses to boot with AI_GATEWAY_DETERMINISTIC=true and no acceptance 1ms
+ ✓ server/config/__tests__/environment.test.ts > assertDeterministicModePostureForProduction (wired into config load) > refuses the legacy alias DETERMINISTIC_MODE=true the same way 1ms
+ ✓ server/config/__tests__/environment.test.ts > assertDeterministicModePostureForProduction (wired into config load) > is not accepted by AI_GOVERNANCE_ACCEPT_PERMISSIVE, which accepts a different risk 1ms
+ ✓ server/config/__tests__/environment.test.ts > assertDeterministicModePostureForProduction (wired into config load) > boots with the written acceptance (the CI boot job posture) 2ms
+ ✓ server/config/__tests__/environment.test.ts > assertDeterministicModePostureForProduction (wired into config load) > AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses it even when accepted 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/config/__tests__/environment.test.ts > production audit export key posture (fires on config import) > refuses to load in production without a dedicated export key
+AssertionError: promise resolved "{ default: { …(13) }, …(1), …(1) }" instead of rejecting
+ FAIL  server/config/__tests__/environment.test.ts > production audit export key posture (fires on config import) > refuses to load in production when the export key is the JWT secret
+AssertionError: promise resolved "{ default: { …(13) }, …(1), …(1) }" instead of rejecting
+ FAIL  server/config/__tests__/environment.test.ts > production audit export key posture (fires on config import) > refuses to load in production on a short export key, without echoing it
+ Test Files  1 failed (1)
+      Tests  3 failed | 45 passed (48)

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-30T23:50:59.729Z",
+  "generatedAt": "2026-10-01T00:11:42.051Z",
   "git": {
-    "sha": "8e3d5f95e32366fd5734596c3425b93045f55ab8",
+    "sha": "f2e5b99ed993c6653a3b9d03ad284c828333ca65",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 45,
-    "largeFilesByLines": 108
+    "largeFilesByLines": 109
   },
   "findings": {
     "duplicateBasenames": [
@@ -1977,11 +1977,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1104294
+        "bytes": 1106410
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 860282
+        "bytes": 860506
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2025,7 +2025,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "bytes": 166186
+        "bytes": 166243
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2033,7 +2033,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 156464
+        "bytes": 156478
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2077,11 +2077,11 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 132309
+        "bytes": 132508
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
-        "bytes": 131820
+        "bytes": 131912
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2159,11 +2159,11 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21376
+        "lines": 21357
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20212
+        "lines": 20215
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2203,7 +2203,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3786
+        "lines": 3789
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2259,7 +2259,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2868
+        "lines": 2864
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2570,6 +2570,10 @@
         "lines": 1602
       },
       {
+        "file": "server/routes/mdx-rbm.ts",
+        "lines": 1600
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
         "lines": 1577
       },
@@ -2597,7 +2601,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 405,
       "largeByBytes": 35,
-      "largeByLines": 85
+      "largeByLines": 86
     },
     {
       "owner": "Unassigned (TBD)",
