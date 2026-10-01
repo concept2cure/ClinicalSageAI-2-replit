@@ -9,10 +9,11 @@
  * @module server/routes/ibc
  */
 
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type RequestHandler, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signGovernedAct, signedActAttempts } from './governed-signed-act';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import {
   createRegistrationTx,
@@ -157,16 +158,31 @@ const reviewSchema = z.object({
   reason,
 });
 
-router.post('/registrations/:id/reviews', async (req, res) => {
+/*
+ * An approval is an electronic signature (21 CFR 11.50, 11.200): it runs the
+ * platform's one signing ceremony (governed-signed-act.ts): password, enrolled
+ * second factor, declared meaning and reason, then the act, the ledger `sign`
+ * and the electronic_signatures row on one transaction. A request without them
+ * writes nothing. Any other outcome is a determination recorded under
+ * 'resolve' and asks for no password. It used to write a 'sign' ledger row
+ * with neither (P0-10b, DP-02).
+ */
+/** The signing-attempt limit, for the requests that sign. */
+const whenApproving: RequestHandler = (req, res, next) =>
+  req.body?.outcome === 'approved' ? signedActAttempts(req, res, next) : next();
+
+router.post('/registrations/:id/reviews', whenApproving, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = reviewSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, parsed.data.outcome === 'approved' ? 'sign' : 'resolve', parsed.data.reason, async (client, orgId, userId) => {
+  const record = async (client: any, orgId: number, userId: number) => {
     const result = await recordReviewTx(client, orgId, userId, id, parsed.data);
     if (parsed.data.outcome === 'approved') recordIbcApproval();
     return { target: `ibc-registration:${id}`, payload: { outcome: parsed.data.outcome, expirationDate: result.expirationDate, provenanceLinkId: result.provenanceLinkId }, body: { id, ...result } };
-  });
+  };
+  if (parsed.data.outcome !== 'approved') return governed(req, res, 'resolve', parsed.data.reason, record);
+  await signGovernedAct(req, res, { domain: 'ibc', codeStatus: CODE_STATUS, run: record });
 });
 
 router.get('/registrations/:id/containment', async (req, res) => {

@@ -103,12 +103,21 @@ vi.mock('../../server/services/cmc-write-through', () => ({
   // `.ok` off it, so `undefined` here 500s the route under test.
   writeThroughSpecification: async () => ({ ok: true }),
 }));
-const gov = vi.hoisted(() => ({ signatures: 0 }));
+const gov = vi.hoisted(() => ({ signatures: 0, signatureRows: 0 }));
 vi.mock('../../server/routes/c2c/actions', () => ({
   verifyReauth: async () => ({ ok: true }),
   recordGovernedAction: async () => {
     gov.signatures += 1;
     return { actionId: 'a', sha256Chain: 'h' };
+  },
+}));
+// The electronic_signatures row the approval writes beside its ledger sign
+// (P0-10b): counted, so a refused act is shown to have written neither.
+vi.mock('../../server/services/part11/signature-persistence', async (orig) => ({
+  ...(await orig<Record<string, unknown>>()),
+  persistGovernedActionSignature: async () => {
+    gov.signatureRows += 1;
+    return { id: 1, signedAt: new Date() };
   },
 }));
 
@@ -151,6 +160,7 @@ beforeEach(async () => {
   h.holder.pg = pg;
   h.holder.afterQuery = null;
   gov.signatures = 0;
+  gov.signatureRows = 0;
   currentTenant = 1;
 
   const owned = await pg.query<{ id: string }>(
@@ -349,6 +359,7 @@ describe('approve fails closed when the record vanishes mid-transaction', () => 
     expect(res.body.success).toBe(false);
     // No e-signature may be attributed to a record that is not there.
     expect(gov.signatures, 'a governed signature was recorded for a nonexistent specification').toBe(0);
+    expect(gov.signatureRows).toBe(0);
   }, 60_000);
 
   it('writes no audit-log row attesting the phantom approval', async () => {
@@ -380,5 +391,6 @@ describe('approve fails closed when the record vanishes mid-transaction', () => 
     expect(res.status).toBe(200);
     expect((await specRow(ownedId)).approval_status).toBe('approved');
     expect(gov.signatures).toBe(1);
+    expect(gov.signatureRows).toBe(1);
   }, 60_000);
 });

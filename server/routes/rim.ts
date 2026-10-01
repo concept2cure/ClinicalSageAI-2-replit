@@ -9,11 +9,12 @@
  * @module server/routes/rim
  */
 
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type RequestHandler, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import { recordGovernedAction } from './c2c/actions';
+import { signGovernedAct, signedActAttempts } from './governed-signed-act';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import {
   createProductTx,
@@ -174,16 +175,31 @@ const labelSchema = z.object({
   approvedDate: dateStr.optional(),
   reason,
 });
-router.post('/products/:id/labels', async (req, res) => {
+/*
+ * Recording a label as approved is an electronic signature (21 CFR 11.50,
+ * 11.200): it runs the platform's one signing ceremony (governed-signed-act.ts):
+ * password, enrolled second factor, declared meaning and reason, then the
+ * label, the ledger `sign` and the electronic_signatures row on one
+ * transaction. A request without them writes nothing. A draft or in-review
+ * label is an 'update' and asks for no password. It used to write a 'sign'
+ * ledger row with neither (P0-10b, DP-02).
+ */
+/** The signing-attempt limit, for the requests that sign. */
+const whenApproving: RequestHandler = (req, res, next) =>
+  req.body?.status === 'approved' ? signedActAttempts(req, res, next) : next();
+
+router.post('/products/:id/labels', whenApproving, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = labelSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, parsed.data.status === 'approved' ? 'sign' : 'update', parsed.data.reason, async (client, orgId, userId) => {
+  const record = async (client: any, orgId: number, userId: number) => {
     const { id: lid, supersededCount } = await addLabelTx(client, orgId, userId, id, parsed.data);
     if (parsed.data.status === 'approved') recordRimLabelApproved(parsed.data.labelType);
     return { target: `rim-product:${id}`, payload: { labelId: lid, labelType: parsed.data.labelType, supersededCount }, body: { productId: id, labelId: lid, supersededCount } };
-  });
+  };
+  if (parsed.data.status !== 'approved') return governed(req, res, 'update', parsed.data.reason, record);
+  await signGovernedAct(req, res, { domain: 'rim', codeStatus: CODE_STATUS, run: record });
 });
 
 router.get('/products/:id/label-currency', async (req, res) => {

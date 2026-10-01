@@ -8,6 +8,8 @@ import { writeThroughBatchRecord } from '../../services/cmc-write-through';
    request body's, so no request is handed to it here. */
 import { linkToModule3 } from '../../services/cmc/link-to-module3';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
+import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/part11/signature-persistence';
+import { clientIpOf } from '../../utils/client-ip';
 import { resolveActorUserId } from './governance';
 /* The CANONICAL org resolver. This module defined its own, reading two of the
    four places the canonical one reads, in its own order — and a second answer
@@ -304,9 +306,10 @@ router.put('/:id', async (req, res) => {
 });
 
 // POST /api/cmc/batch-records/:id/release - Release testing and batch disposition.
-// High-risk governed sign: re-auth gate, then UPDATE + ledger write in one
-// transaction (audit_logs + c2c_ana_actions). The governed ledger is the
-// signature of record for batch release (no document-scoped electronic_signatures).
+// High-risk governed sign: re-auth gate, then UPDATE + ledger write + the
+// electronic_signatures row in one transaction. Until 2026-10-01 the ledger was
+// the only record, so an inspector querying electronic_signatures found no
+// release signature at all (P0-10b, DP-02).
 router.post('/:id/release', async (req, res) => {
   const { id } = req.params;
   const validationResult = releaseSchema.safeParse(req.body);
@@ -438,6 +441,27 @@ router.post('/:id/release', async (req, res) => {
       domain: 'biopharma',
       surface: 'cmc-batch',
       idempotencyKey: data.idempotencyKey ?? null,
+    });
+
+    // 21 CFR Part 11 signature row, same transaction as the ledger pair: the
+    // signer's printed name, time and meaning (11.50) bound to the act (11.70).
+    // The factors are the ones verifyReauth verified above.
+    await persistGovernedActionSignature(client, {
+      orgId,
+      userId,
+      target: `batch:${id}`,
+      reason: data.reason,
+      payload: { meaning: 'release' },
+      actionId: governance.actionId,
+      auditId: governance.auditId,
+      sha256Chain: governance.sha256Chain,
+      authenticationMethod: data.reauth?.totp ? 'password+totp' : 'password',
+      secondFactorVerified: Boolean(data.reauth?.totp),
+      ipAddress: clientIpOf(req),
+      occurredAt: new Date(),
+      binding: { digest: null, basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER, note: 'No content digest is registered for a batch record, so none is claimed: bound_payload_digest is the governed action audit sha256 chain hash (target, payload hash, actor, time), not a content hash.' },
+      extraManifest: { act: { decision: data.decision, releaseStatus } },
+      complianceStatement: 'Batch release disposition applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
     });
 
     await client.query('COMMIT');

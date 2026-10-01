@@ -9,19 +9,20 @@
  *   POST /api/biopharma/bla/immunogenicity          run + optionally persist
  *   GET  /api/biopharma/bla/assessments             list (filter by program/kind)
  *   GET  /api/biopharma/bla/assessments/:id         single assessment
- *   POST /api/biopharma/bla/assessments/:id/sign    governed Part 11 sign-off
+ *   POST /api/biopharma/bla/assessments/:id/sign    Part 11 sign-off (the signing ceremony)
  *
  * Compute is a pure function of the request body (the engines are stateless);
  * persistence and sign-off are org-scoped and program-scoped against
- * c2c_bla_assessments. The sign-off writes the SHA-256-chained audit_logs +
- * c2c_ana_actions ledger via the shared recordGovernedAction primitive.
+ * c2c_bla_assessments. The sign-off runs the platform's one signing ceremony
+ * (governed-signed-act.ts): re-authentication, then the SHA-256-chained ledger
+ * pair and the electronic_signatures row on one transaction.
  *
  * @module server/routes/biopharma/bla-workbench
  */
 
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
-import { recordGovernedAction } from '../c2c/actions.js';
+import { signGovernedAct, signedActAttempts } from '../governed-signed-act.js';
 import { assessAnalyticalSimilarity, type SimilarityAssessmentInput } from '../../services/biologics/analytical-similarity.js';
 import { assessComparability, type ComparabilityInput } from '../../services/biologics/comparability.js';
 import { assessImmunogenicity, type ImmunogenicityInput } from '../../services/biologics/immunogenicity.js';
@@ -273,67 +274,42 @@ router.get('/assessments/:id', async (req: Request, res: Response) => {
 
 // ── POST /assessments/:id/sign ────────────────────────────────────────────────
 //
-// Governed Part 11 sign-off. Records the SHA-256-chained audit_logs +
-// c2c_ana_actions ledger inside the same transaction as the status flip.
-// (The full re-authenticated e-signature meaning is captured by the universal
-// /api/c2c/actions/sign path the design's EsignModal drives; this endpoint
-// governs the assessment-level write in place.)
+// Signing off an assessment is an electronic signature (21 CFR 11.50, 11.200).
+// It runs the platform's one signing ceremony (governed-signed-act.ts):
+// password, enrolled second factor, declared meaning and reason, then the
+// status flip, the ledger `sign` and the electronic_signatures row on one
+// transaction. A request without them writes nothing. It used to write a
+// 'sign' ledger row and set signed_by with none of them, on the word of a
+// comment that the universal EsignModal path captured the ceremony; nothing
+// connected the two (P0-10b, DP-02).
 
-router.post('/assessments/:id/sign', async (req: Request, res: Response) => {
-  const orgId = resolveOrgId(req);
-  const userId = resolveUserId(req);
-  if (!orgId || !userId) return send(res, 403, { error: 'FORBIDDEN' });
+/** The assessment's own refusals; nothing was written. */
+const SIGN_CODE_STATUS = { NOT_FOUND: 404, ALREADY_SIGNED: 409 } as const;
+const signRefusal = (code: keyof typeof SIGN_CODE_STATUS, message: string) => Object.assign(new Error(message), { code });
 
-  const reason: string = (req.body?.reason ?? '').trim();
-  if (reason.length < 5) {
-    return send(res, 400, { error: 'BAD_REQUEST', message: 'A reason for sign-off (≥5 chars) is required' });
-  }
-
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-
-    const existing = await client.query(
-      `SELECT id, status FROM c2c_bla_assessments WHERE id = $1 AND org_id = $2 FOR UPDATE`,
-      [req.params.id, orgId],
-    );
-    if (existing.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return send(res, 404, { error: 'NOT_FOUND' });
-    }
-    if (existing.rows[0].status === 'signed') {
-      await client.query('ROLLBACK');
-      return send(res, 409, { error: 'ALREADY_SIGNED' });
-    }
-
-    await client.query(
-      `UPDATE c2c_bla_assessments
-          SET status = 'signed', signed_by = $1, signed_at = now(),
-              signature_reason = $2, updated_at = now()
-        WHERE id = $3 AND org_id = $4`,
-      [userId, reason, req.params.id, orgId],
-    );
-
-    const ledger = await recordGovernedAction(client, {
-      orgId,
-      userId,
-      command: 'sign',
-      target: `bla_assessment:${req.params.id}`,
-      reason,
-      payload: { kind: 'bla_assessment' },
-      domain: 'biopharma',
-      surface: 'bla',
-    });
-
-    await client.query('COMMIT');
-    return send(res, 200, { id: req.params.id, status: 'signed', ledger });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
-    console.error('[bla/assessments] POST /:id/sign', err);
-    return send(res, 500, { error: 'INTERNAL_ERROR' });
-  } finally {
-    client.release();
-  }
+router.post('/assessments/:id/sign', signedActAttempts, async (req: Request, res: Response) => {
+  await signGovernedAct(req, res, {
+    domain: 'biopharma',
+    codeStatus: SIGN_CODE_STATUS,
+    run: async (client, orgId, userId) => {
+      const existing = await client.query(
+        `SELECT id, status FROM c2c_bla_assessments WHERE id = $1 AND org_id = $2 FOR UPDATE`,
+        [req.params.id, orgId],
+      );
+      if (existing.rows.length === 0) throw signRefusal('NOT_FOUND', 'Assessment not found.');
+      if (existing.rows[0].status === 'signed') throw signRefusal('ALREADY_SIGNED', 'This assessment is already signed.');
+      // The reason signGovernedAct validated (governedReason trims it).
+      const reason = String(req.body?.reason ?? '').trim();
+      await client.query(
+        `UPDATE c2c_bla_assessments
+            SET status = 'signed', signed_by = $1, signed_at = now(),
+                signature_reason = $2, updated_at = now()
+          WHERE id = $3 AND org_id = $4`,
+        [userId, reason, req.params.id, orgId],
+      );
+      return { target: `bla_assessment:${req.params.id}`, payload: { kind: 'bla_assessment' }, body: { id: req.params.id, status: 'signed' } };
+    },
+  });
 });
 
 export default router;

@@ -8,6 +8,8 @@ import { writeThroughSpecification } from '../../services/cmc-write-through';
    request body's, so no request is handed to it here. */
 import { linkToModule3 } from '../../services/cmc/link-to-module3';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
+import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/part11/signature-persistence';
+import { clientIpOf } from '../../utils/client-ip';
 import { governedSignatureSchema, resolveActorUserId } from './governance';
 
 const router = express.Router();
@@ -286,6 +288,17 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+/** The §11.200 factors verifyReauth checked, as the signature row records them. */
+function verifiedFactors(reauth: { totp?: string } | undefined): { authenticationMethod: string; secondFactorVerified: boolean } {
+  return reauth?.totp
+    ? { authenticationMethod: 'password+totp', secondFactorVerified: true }
+    : { authenticationMethod: 'password', secondFactorVerified: false };
+}
+
+/** No content basis is registered for a specification, and none is claimed (signature-persistence BINDING_BASIS). */
+const LEDGER_BINDING_NOTE =
+  'No content digest is registered for a quality specification, so none is claimed: bound_payload_digest is the governed action audit sha256 chain hash (target, payload hash, actor, time), not a content hash.';
+
 // POST /api/cmc/specifications/:id/approve - Governed e-signature approval
 // (high-risk sign). The ONLY path to approval; routed through the
 // mutation-primitives ledger (audit_logs + c2c_ana_actions).
@@ -366,6 +379,16 @@ router.post('/:id/approve', async (req, res) => {
       domain: 'biopharma',
       surface: 'cmc-specifications',
       idempotencyKey: idempotencyKey ?? null,
+    });
+
+    // 21 CFR Part 11 signature row, same transaction as the ledger pair; none
+    // was written until 2026-10-01 (P0-10b, DP-02).
+    await persistGovernedActionSignature(client, {
+      orgId, userId, target: `specification:${id}`, reason, payload: { meaning },
+      actionId: governance.actionId, auditId: governance.auditId, sha256Chain: governance.sha256Chain,
+      ...verifiedFactors(reauth), ipAddress: clientIpOf(req), occurredAt: new Date(),
+      binding: { digest: null, basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER, note: LEDGER_BINDING_NOTE },
+      complianceStatement: 'Specification approval applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
     });
 
     // Keep the existing specification_audit_log trail.

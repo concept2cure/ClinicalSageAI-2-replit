@@ -105,7 +105,7 @@ vi.mock('../../server/db', () => ({
 // The canonical write-through and the governance gate are stubbed so that a 404
 // is attributable to tenant scope and nothing else. The signature counter is
 // what proves no e-signature was recorded for a refused release.
-const gov = vi.hoisted(() => ({ signatures: 0 }));
+const gov = vi.hoisted(() => ({ signatures: 0, signatureRows: 0 }));
 vi.mock('../../server/services/cmc-write-through', () => ({
   // The real signature returns a WriteThroughOutcome; linkToModule3 reads
   // `.ok` off it, so `undefined` here 500s the route under test.
@@ -116,6 +116,15 @@ vi.mock('../../server/routes/c2c/actions', () => ({
   recordGovernedAction: async () => {
     gov.signatures += 1;
     return { actionId: 'a', sha256Chain: 'h' };
+  },
+}));
+// The electronic_signatures row the approval writes beside its ledger sign
+// (P0-10b): counted, so a refused act is shown to have written neither.
+vi.mock('../../server/services/part11/signature-persistence', async (orig) => ({
+  ...(await orig<Record<string, unknown>>()),
+  persistGovernedActionSignature: async () => {
+    gov.signatureRows += 1;
+    return { id: 1, signedAt: new Date() };
   },
 }));
 
@@ -197,6 +206,7 @@ beforeEach(async () => {
   h.holder.pg = pg;
   h.holder.afterQuery = null;
   gov.signatures = 0;
+  gov.signatureRows = 0;
   currentTenant = 1;
 
   const owned = await pg.query<{ id: string }>(
@@ -259,6 +269,7 @@ describe('cmc_batch_records is scoped to the caller organization, and only to it
     expect(row.release_status ?? null).toBeNull();
     expect(row.released_by ?? null).toBeNull();
     expect(gov.signatures, 'a release signature was recorded against a foreign batch').toBe(0);
+    expect(gov.signatureRows).toBe(0);
   }, 60_000);
 
   // ── Positive controls: the fix must not be "scope everything to nothing" ──
@@ -280,6 +291,7 @@ describe('cmc_batch_records is scoped to the caller organization, and only to it
     expect(res.status).toBe(200);
     expect((await batchRow(legacyId)).release_status).toBe('released');
     expect(gov.signatures).toBe(1);
+    expect(gov.signatureRows).toBe(1);
   }, 60_000);
 
   it('lets the owning organization update its own row', async () => {
@@ -334,5 +346,6 @@ describe('the writes are tenant-scoped in their own right', () => {
     const row = await batchRow(ownedId);
     expect(row.release_status ?? null).toBeNull();
     expect(gov.signatures, 'a 21 CFR 11.50 release signature was manifested over a record the UPDATE did not write').toBe(0);
+    expect(gov.signatureRows).toBe(0);
   }, 60_000);
 });
