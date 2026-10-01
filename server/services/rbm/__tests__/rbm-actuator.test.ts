@@ -11,7 +11,7 @@ import { describe, it, expect } from 'vitest';
 import {
   addCtqFactor, defineKri, recordKriReading, setQtl, raiseSignal, triageSignal,
   draftPlan, generatePlanFromAssessment, amendAssessment, createAction, updateAction, approveAssessment, approvePlan,
-  amendMonitoringPlan, nextPlanVersion, inferSecondaryLimit, type Exec,
+  amendMonitoringPlan, nextPlanVersion, inferSecondaryLimit, governingPlanId, type Exec,
 } from '../rbm-actuator';
 
 function mockExec(script: any[][]) {
@@ -401,13 +401,15 @@ describe('monitoring plan versioning — a signed plan stops being editable', ()
     expect(calls.some(c => c.sql.includes('INSERT INTO rbm_monitoring_plans'))).toBe(false);
   });
 
-  it('amend opens the next version as an unsigned draft and carries unfinished actions forward at open', async () => {
+  it('amend opens the next version as an unsigned draft and copies no actions', async () => {
+    // Monitoring actions are execution records under the plan in force, not
+    // signed plan content. They stay with the active version until the
+    // amendment is approved (approvePlan moves the unfinished ones then).
     const { exec, calls } = mockExec([
       [active],                 // load
       [],                       // no open draft
       [{ v: 2 }],               // max version
       [{ id: 12, version: 3, status: 'draft' }], // insert
-      [{ id: 90 }, { id: 91 }], // copied actions
     ]);
     const out = await amendMonitoringPlan(exec, ORG, { planId: 11, reason: 'Add a central-monitoring review', openedBy: 5 });
     expect(out.amended).toBe(true);
@@ -417,10 +419,9 @@ describe('monitoring plan versioning — a signed plan stops being editable', ()
     expect(insert.sql).not.toContain('approved_by');
     expect(insert.args).toContain(3);
     expect(insert.args).toContain(5);           // created_by — the amendment's author
-    const copy = calls[4];
-    expect(copy.sql).toContain("status <> 'done'");
-    expect(copy.sql).toContain("'open'");
-    expect(copy.args).toEqual([12, ORG, 11]);
+    expect(calls).toHaveLength(4);
+    expect(calls.some(c => /rbm_monitoring_actions/.test(c.sql))).toBe(false);
+    expect(out).not.toHaveProperty('actions');
     for (const c of calls) expect(c.args).toContain(ORG);
   });
 
@@ -439,19 +440,103 @@ describe('monitoring plan versioning — a signed plan stops being editable', ()
   });
 
   it('approvePlan archives the version it supersedes in the same executor', async () => {
-    const { exec, calls } = mockExec([[{ id: 12, status: 'active', program_id: 'p', version: 3 }], [{ version: 2 }]]);
+    const { exec, calls } = mockExec([[{ id: 12, status: 'active', program_id: 'p', version: 3 }], [{ id: 11, version: 2 }], []]);
     const row = await approvePlan(exec, ORG, 7, 12, 'v3 approved');
     expect(row).toMatchObject({ id: 12 });
-    expect(calls).toHaveLength(2);
     expect(calls[1].sql).toMatch(/status = 'archived'/);
     expect(calls[1].sql).toContain("status = 'active'");
+    expect(calls[1].sql).toContain('RETURNING id, version');
     expect(calls[1].args).toEqual([ORG, 'p', 12]);
   });
 
-  it('createAction refuses a plan that is not a draft — its actions are signed', async () => {
-    const { exec, calls } = mockExec([[{ status: 'active' }]]);
-    const out = await createAction(exec, ORG, { planId: 11, description: 'late addition' });
-    expect(out).toMatchObject({ created: false, reason: 'plan_not_draft' });
-    expect(calls).toHaveLength(1);
+  it('approvePlan moves the superseded version\'s unfinished actions to the new version, with provenance', async () => {
+    const { exec, calls } = mockExec([
+      [{ id: 12, status: 'active', program_id: 'p', version: 3 }],
+      [{ id: 11, version: 2 }],          // archived
+      [{ id: 90 }, { id: 91 }],          // moved
+    ]);
+    await approvePlan(exec, ORG, 7, 12, 'v3 approved');
+    expect(calls).toHaveLength(3);
+    const move = calls[2];
+    expect(move.sql).toMatch(/UPDATE rbm_monitoring_actions\s+SET plan_id = \$1/);
+    // Completed actions stay with the archived version as its history.
+    expect(move.sql).toContain("status <> 'done'");
+    expect(move.sql).toContain('carriedFromPlanId');
+    expect(move.sql).toContain('carriedFromVersion');
+    expect(move.sql).toContain('organization_id = $2');
+    expect(move.args).toEqual([12, ORG, 11, 2]);
+  });
+
+  it('approvePlan moves nothing when no version was superseded', async () => {
+    const { exec, calls } = mockExec([[{ id: 12, status: 'active', program_id: 'p', version: 1 }], []]);
+    await approvePlan(exec, ORG, 7, 12, 'v1 approved');
+    expect(calls).toHaveLength(2);
+    expect(calls.some(c => /UPDATE rbm_monitoring_actions/.test(c.sql))).toBe(false);
+  });
+});
+
+describe('monitoring actions are execution records under the plan in force', () => {
+  it('createAction logs an action against the active (approved) plan', async () => {
+    const { exec, calls } = mockExec([
+      [{ id: 11, status: 'active', version: 2, program_id: 'p' }],
+      [{ id: 50, plan_id: 11 }],
+    ]);
+    const out = await createAction(exec, ORG, { planId: 11, description: 'Escalate site 5' });
+    expect(out).toMatchObject({ created: true, action: { id: 50 } });
+    const ins = calls.find(c => /INSERT INTO rbm_monitoring_actions/.test(c.sql))!;
+    expect(ins.args.slice(0, 2)).toEqual([ORG, 11]);
+  });
+
+  it('createAction logs an action on a study\'s first plan while it is still a draft', async () => {
+    const { exec, calls } = mockExec([
+      [{ id: 12, status: 'draft', version: 1, program_id: 'p' }],
+      [],                               // no plan in force
+      [{ id: 51, plan_id: 12 }],
+    ]);
+    const out = await createAction(exec, ORG, { planId: 12, description: 'Confirm SAE control' });
+    expect(out).toMatchObject({ created: true });
+    expect(calls.some(c => /INSERT INTO rbm_monitoring_actions/.test(c.sql))).toBe(true);
+  });
+
+  it('createAction refuses a superseded (archived) version and names the plan in force', async () => {
+    const { exec, calls } = mockExec([
+      [{ id: 10, status: 'archived', version: 1, program_id: 'p' }],
+      [{ id: 11, version: 2 }],          // the active plan
+    ]);
+    const out = await createAction(exec, ORG, { planId: 10, description: 'late' });
+    expect(out).toMatchObject({ created: false, reason: 'plan_superseded', governingPlanId: 11 });
+    expect((out as { message: string }).message).toContain('v2');
+    expect(calls.some(c => /INSERT INTO rbm_monitoring_actions/.test(c.sql))).toBe(false);
+    // the plan-in-force lookup is tenant- and study-scoped
+    expect(calls[1].sql).toContain("status = 'active'");
+    expect(calls[1].sql).toContain('deleted_at IS NULL');
+    expect(calls[1].args).toEqual([ORG, 'p']);
+  });
+
+  it('createAction refuses an open amendment draft — it governs nothing until approved', async () => {
+    const { exec, calls } = mockExec([
+      [{ id: 12, status: 'draft', version: 3, program_id: 'p' }],
+      [{ id: 11, version: 2 }],          // the active plan
+    ]);
+    const out = await createAction(exec, ORG, { planId: 12, description: 'new visit' });
+    expect(out).toMatchObject({ created: false, reason: 'amendment_not_in_force', governingPlanId: 11 });
+    expect(calls.some(c => /INSERT INTO rbm_monitoring_actions/.test(c.sql))).toBe(false);
+  });
+});
+
+describe('governingPlanId — the plan new actions are logged against', () => {
+  it('is the active plan, even while a higher draft amendment is open', () => {
+    expect(governingPlanId([
+      { id: 12, status: 'draft', version: 3 },
+      { id: 11, status: 'active', version: 2 },
+      { id: 10, status: 'archived', version: 1 },
+    ])).toBe(11);
+  });
+  it('is the first draft when the study has no approved plan', () => {
+    expect(governingPlanId([{ id: 12, status: 'draft', version: 1 }])).toBe(12);
+  });
+  it('is null when only archived versions remain', () => {
+    expect(governingPlanId([{ id: 10, status: 'archived', version: 1 }])).toBeNull();
+    expect(governingPlanId([])).toBeNull();
   });
 });

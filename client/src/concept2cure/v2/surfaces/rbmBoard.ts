@@ -223,6 +223,12 @@ export interface RbmBoard {
   sites: RbmBoardSite[];
   oversight: Record<string, { open: number; high: number }>;
   plan: RbmBoardPlan | null;
+  /** The plan new monitoring actions are logged against — the plan in force:
+   *  the active version, else the study's first draft, else null. Differs from
+   *  `plan.id` while an amendment draft is open: `plan` is that draft (shown
+   *  for editing), which governs nothing until approved. Every action write
+   *  uses this id; the server refuses others with 409. */
+  governingPlanId: number | null;
   actions: RbmBoardAction[];
   freshness: RbmBoardFreshness[];
   pendingStore?: boolean;

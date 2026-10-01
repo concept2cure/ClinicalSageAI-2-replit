@@ -40,6 +40,7 @@ import {
   type RiskReviewInput, type AttentionItem,
 } from '../services/rbm/risk-report';
 import { freshnessFromRun, type SourceFreshness } from '../services/rbm/metric-ingestion';
+import { governingPlanId as governingPlanIdOf } from '../services/rbm/rbm-actuator';
 import { actorLabel, resolveActorNames } from '../services/tenant/actor-names';
 
 const log = createScopedLogger('mdx-rbm-board');
@@ -338,6 +339,14 @@ export default function createRbmBoardRoutes(): Router {
       // An archived version (superseded, or an abandoned draft) is never the
       // plan on screen while a live one exists.
       const chosenPlan = sortedPlans.find(r => r.p.status !== 'archived') ?? sortedPlans[0] ?? null;
+      // The plan new monitoring actions are logged against — NOT always the
+      // plan on screen. While an amendment draft is open, chosenPlan is that
+      // draft (for editing), but actions are execution records under the plan
+      // in force: the active version, else a study's first draft, else none.
+      // Same rule as createAction, which refuses anything else with 409.
+      const governingPlanId = governingPlanIdOf(
+        planRows.map(r => ({ id: r.p.id, status: r.p.status, version: r.p.version })),
+      );
 
       // ── Derived aggregates for the summary + the report/attention builders. ─
       const criticalItems = itemRows.filter(r => r.it.isCritical);
@@ -620,6 +629,7 @@ export default function createRbmBoardRoutes(): Router {
           sites,
           oversight,
           plan,
+          governingPlanId,
           actions,
           freshness,
         },
@@ -643,7 +653,7 @@ export default function createRbmBoardRoutes(): Router {
             },
             attention: [], report: null, reportMarkdown: null,
             assessment: null, items: [], kris: [], qtls: [], signals: [],
-            patients: [], sites: [], oversight: {}, plan: null, actions: [],
+            patients: [], sites: [], oversight: {}, plan: null, governingPlanId: null, actions: [],
             freshness: [],
             pendingStore: true,
           },
