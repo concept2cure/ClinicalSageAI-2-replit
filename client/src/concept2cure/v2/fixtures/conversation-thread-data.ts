@@ -158,6 +158,8 @@ export interface CtArtifact {
   version?: number;
   /** The draft body. What `POST /api/concept2cure/artifacts/export-docx` renders. */
   content?: string;
+  /** The message that drafted it, so the card can open that draft as a document. */
+  messageId?: string;
 }
 
 /* ---- Link maps ---- */
