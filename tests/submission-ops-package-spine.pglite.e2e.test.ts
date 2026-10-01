@@ -453,3 +453,158 @@ describe('the us-regional backbone names the applicant and its regulatory contac
     );
   });
 });
+
+/*
+ * 2026-10-01 (W5/D7, sweep F19, part 2). A sequence is recorded filed when the
+ * gateway accepts the bytes. When the agency then did not load it (a technical
+ * rejection), nothing took it off file: its number could never be reused, and
+ * the next sequence was planned against content the agency does not hold. The
+ * governed action that records the rejection, through the real SQL: the record
+ * the assembler then honours, the one transaction a failed write rolls back,
+ * the refusals that write nothing, and the rollback that must NOT un-file. Its
+ * keying and refusal rules are pinned in
+ * server/services/ectd/__tests__/filed-sequence-rejection.test.ts.
+ */
+const { persistSignature } = vi.hoisted(() => ({ persistSignature: vi.fn() }));
+// The signer lookup and the electronic_signatures INSERT are the shared writer's
+// own, pinned in its suites; what is asserted here is what it is handed.
+vi.mock('../server/services/part11/signature-persistence', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../server/services/part11/signature-persistence')>()),
+  persistGovernedActionSignature: persistSignature,
+}));
+
+const NOTICE = '5f0c2d7a-0b6f-4d1e-9c39-4f0e9a516f10';
+const NOTICE_SHA = 'ab'.repeat(32);
+const REJECTION_DDL = `
+  DROP TABLE IF EXISTS submission_transmittals CASCADE; DROP SCHEMA IF EXISTS vault CASCADE; CREATE SCHEMA vault;
+  CREATE TABLE vault.documents (id UUID PRIMARY KEY, organization_id INTEGER NOT NULL, content_hash TEXT NOT NULL, created_by INTEGER, deleted_at TIMESTAMPTZ);
+  CREATE TABLE submission_transmittals (
+    id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, program_id UUID, package_id INTEGER, parent_transmittal_id INTEGER,
+    region TEXT NOT NULL, gateway TEXT NOT NULL, format TEXT NOT NULL, submission_type TEXT, transport TEXT, bundle_path TEXT,
+    bundle_sha256 TEXT, bundle_size_bytes BIGINT, transmission_id TEXT, mdn_raw TEXT, status TEXT NOT NULL DEFAULT 'pending',
+    http_status INTEGER, error_class TEXT, error_message TEXT, submitted_by INTEGER, submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ack_received_at TIMESTAMPTZ, completed_at TIMESTAMPTZ, metadata JSONB DEFAULT '{}'::jsonb, audit_trail_ref TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+  CREATE UNIQUE INDEX sub_trans_active_lock_idx ON submission_transmittals (organization_id, package_id, bundle_sha256)
+    WHERE status IN ('pending', 'in_transit', 'received');`;
+const rejection = {
+  svc: undefined as unknown as typeof import('../server/services/ectd/filed-sequence-rejection'),
+  ledger: undefined as unknown as ReturnType<typeof vi.fn>,
+};
+/** The tables the action reads and writes, the agency's notice in the Vault, and fresh mocks. */
+async function setUpRejection() {
+  rejection.svc = await import('../server/services/ectd/filed-sequence-rejection');
+  rejection.ledger = vi.mocked((await import('../server/routes/c2c/actions')).recordGovernedAction) as unknown as ReturnType<typeof vi.fn>;
+  await pg.exec(REJECTION_DDL);
+  await pg.query(`INSERT INTO vault.documents (id, organization_id, content_hash) VALUES ($1, $2, $3)`, [NOTICE, ORG, NOTICE_SHA]);
+  rejection.ledger.mockReset();
+  rejection.ledger.mockImplementation(async () => ({ actionId: 'act_x', auditId: 'aud_x', sha256Chain: 'c' }));
+  persistSignature.mockReset();
+  persistSignature.mockImplementation(async () => ({ id: 4242, signedAt: new Date('2026-10-01T00:00:00Z') }));
+}
+/** A production send the gateway accepted: the history entry governed transmit writes, and its transmittal row. */
+async function send(id: number, submissionType: string) {
+  const filed = await fileTheStoredBundle(submissionType, id);
+  await pg.query(
+    `INSERT INTO submission_transmittals (id, organization_id, package_id, region, gateway, format, bundle_sha256, status)
+     VALUES ($1, $2, $3, 'fda', 'esg', 'ectd', $4, 'received') ON CONFLICT (id) DO UPDATE SET bundle_sha256 = EXCLUDED.bundle_sha256`,
+    [id, ORG, PKG, filed.sha256],
+  );
+  return filed;
+}
+const revise = (version: number) => pg.query(
+  `UPDATE concept2cure_artifacts SET content = $1, version = $2, approved_version_id = $2, updated_at = $3 WHERE id = 2`,
+  [`The overview, version ${version}.`, version, `2026-02-0${version}T04:05:06Z`],
+);
+/** 0000 filed by transmittal 1, then 0001 (a revised overview) by transmittal 2. */
+async function fileTwoSequences() {
+  expect((await assemble()).status).toBe(200);
+  await send(1, 'original');
+  await revise(2);
+  expect((await assemble({ sequence: '0001', submissionType: 'Efficacy Supplement' })).status).toBe(200);
+  const sent = await send(2, 'Efficacy Supplement');
+  rejection.ledger.mockClear(); // the assemblies' own ledger rows are not the action's
+  return sent;
+}
+const reject = (transmittalId: number, over: Record<string, unknown> = {}) => rejection.svc.recordFiledSequenceRejection({
+  orgId: ORG, transmittalId, actorUserId: 777, meaning: 'responsibility', reason: 'FDA technical rejection notice: Ack3 failed',
+  evidenceDocumentId: NOTICE, authenticationMethod: 'password', secondFactorVerified: false, ipAddress: '127.0.0.1',
+  reauthVerifiedAt: new Date(), ...over,
+});
+/** Everything the action may write: the package's metadata and every transmittal row. */
+const everything = async () => ({
+  metadata: await storedMetadata(),
+  transmittals: (await pg.query(`SELECT id, status, error_class, error_message, metadata FROM submission_transmittals ORDER BY id`)).rows,
+});
+
+describe('an agency technical rejection takes a filed sequence off file (sweep F19)', () => {
+  beforeEach(setUpRejection);
+
+  it('records it with the notice and a signature bound to it; the number is reused, planned against 0000', async () => {
+    const sent = await fileTwoSequences();
+    expect(await reject(2)).toMatchObject({
+      sequence: '0001', transmittalId: 2, bundleSha256: sent.sha256, staleBundleCleared: null, actionId: 'act_x', signatureId: 4242,
+      transmittalStatus: { previous: 'received', current: 'validation_failed' }, evidence: { vaultDocumentId: NOTICE, contentSha256: NOTICE_SHA },
+    });
+    const { metadata, transmittals } = await everything();
+    expect(metadata.filedSequences.map((e: any) => [e.sequence, e.transmittalId, e.state])).toEqual([['0000', 1, 'transmitted'], ['0001', 2, 'rejected']]);
+    expect(metadata.filedSequences[1].rejection).toMatchObject({ recordedBy: 777, signatureId: 4242, evidence: { contentSha256: NOTICE_SHA } });
+    expect(transmittals[1]).toMatchObject({
+      status: 'validation_failed', error_class: 'validation', metadata: { technicalRejection: { sequence: '0001', actionId: 'act_x' } },
+    });
+    expect(rejection.ledger).toHaveBeenCalledTimes(1);
+    expect(persistSignature).toHaveBeenCalledTimes(1);
+    // 0001 is free again, and its replace names what the agency holds: 0000.
+    const res = await assemble({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ replace: 1, unchanged: 2 });
+    const pointer = String(/modified-file="([^"]+)"/.exec(await (await storedBundle()).zip.file('index.xml')!.async('string'))?.[1]);
+    expect(path.posix.normalize(path.posix.join('0001', pointer.split('#')[0])).startsWith('0000/'), pointer).toBe(true);
+  });
+
+  it.each(['signature', 'ledger'] as const)('when the %s write fails, nothing is un-filed', async (which) => {
+    await fileTwoSequences();
+    const before = await everything();
+    (which === 'signature' ? persistSignature : rejection.ledger).mockRejectedValueOnce(new Error(`${which} write failed`));
+    await expect(reject(2)).rejects.toThrow(`${which} write failed`);
+    expect(await everything()).toEqual(before);
+  });
+
+  it('clears a stored bundle planned on top of the rejected sequence, with its preflight', async () => {
+    await fileTwoSequences();
+    await revise(3);
+    expect((await assemble({ sequence: '0002', submissionType: 'Efficacy Supplement' })).status).toBe(200);
+    await pg.query(`UPDATE c2c_submission_packages SET metadata = (metadata::jsonb || '{"preflight":{"errorCount":0}}')::json WHERE id = $1`, [PKG]);
+    const stale = (await storedMetadata()).bundle;
+    expect((await reject(2)).staleBundleCleared).toEqual({ sequence: '0002', sha256: stale.sha256 });
+    const after = await storedMetadata();
+    expect([after.bundle, after.preflight]).toEqual([undefined, undefined]);
+  });
+
+  it('refuses an earlier sequence, and a notice not in this organization’s Vault, writing nothing', async () => {
+    await fileTwoSequences();
+    const [other, deleted] = ['6a1d3e8b-1c7a-4e2f-8d40-5a1f0b627e21', '7b2e4f9c-2d8b-4f30-9e51-6b2a1c738f32'];
+    await pg.query(`INSERT INTO vault.documents (id, organization_id, content_hash, deleted_at) VALUES ($1, 100, $3, NULL), ($2, $4, $3, NOW())`, [other, deleted, NOTICE_SHA, ORG]);
+    const before = await everything();
+    await expect(reject(1)).rejects.toMatchObject({ code: 'NOT_LATEST_FILED_SEQUENCE' });
+    await expect(reject(2, { evidenceDocumentId: other })).rejects.toMatchObject({ code: 'EVIDENCE_NOT_FOUND' });
+    await expect(reject(2, { evidenceDocumentId: deleted })).rejects.toMatchObject({ code: 'EVIDENCE_NOT_FOUND' });
+    expect(await everything()).toEqual(before);
+    expect(persistSignature).not.toHaveBeenCalled();
+  });
+
+  it('a rollback does NOT un-file: the agency still holds rolled-back bytes (pinned)', async () => {
+    await fileTwoSequences();
+    const { rollbackTransmittal } = await import('../server/services/submission-gateways/fda-esg');
+    await rollbackTransmittal({
+      transmittalId: 2, organizationId: ORG, actorUserId: 777,
+      reason: 'Wrong sequence shipped; retracting at the agency', recordGovernedAction: rejection.ledger as any,
+    });
+    const { metadata, transmittals } = await everything();
+    expect(transmittals[1].status).toBe('rolled_back');
+    expect(metadata.filedSequences.map((e: any) => [e.sequence, e.state])).toEqual([['0000', 'transmitted'], ['0001', 'transmitted']]);
+    const res = await assemble({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.code).toBe('SEQUENCE_ALREADY_FILED');
+  });
+});
