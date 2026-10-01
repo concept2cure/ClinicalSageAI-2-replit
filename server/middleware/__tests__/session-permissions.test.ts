@@ -4,6 +4,7 @@
  * disagreed, the client would hide a control the server allows or offer one it
  * refuses (T2's UI half; shared/constants/permissions.ts).
  */
+import { isSigningAuthorized } from '../../services/part11/signing-authority';
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,12 +25,16 @@ function serverAllows(role: string): boolean {
   return allowed;
 }
 
-/** What the finalize route's guard (requireRole(...REPORT_FINALIZE_ROLES)) does with a session of `role`. */
+/**
+ * What the finalize route does with a session of `role`: its guard
+ * (requireRole(...REPORT_FINALIZE_ROLES)), then signing authority (P1-44b:
+ * finalize is a signature, refused 403 ESIGNATURE_NO_AUTHORITY without it).
+ */
 function finalizeAllows(role: string): boolean {
   let allowed = false;
   const res = { status: () => ({ json: () => undefined }) };
   requireRole(...REPORT_FINALIZE_ROLES)({ user: { role, organizationId: 7 } } as never, res as never, () => { allowed = true; });
-  return allowed;
+  return allowed && isSigningAuthorized(role);
 }
 
 describe('sessionPermissions', () => {
@@ -61,8 +66,22 @@ describe('sessionPermissions', () => {
     expect(canFinalizeReport({ permissions: sessionPermissions(role) })).toBe(finalizeAllows(role));
   });
 
-  it('a member writes reports and is not offered Finalize; a manager is', () => {
+  it('a member is not offered Finalize; under the default signing policy an admin is and a manager is not', () => {
     expect(sessionPermissions('member')).not.toContain(REPORT_FINALIZE_PERMISSION);
-    expect(sessionPermissions('manager')).toEqual([GOVERNED_WRITE_PERMISSION, REPORT_FINALIZE_PERMISSION]);
+    expect(sessionPermissions('admin')).toEqual([GOVERNED_WRITE_PERMISSION, REPORT_FINALIZE_PERMISSION]);
+    // The server refuses a manager's finalize with ESIGNATURE_NO_AUTHORITY unless the
+    // signing policy names managers, so the canvas must not offer it (P1-44b R2).
+    expect(sessionPermissions('manager')).toEqual([GOVERNED_WRITE_PERMISSION]);
+  });
+
+  it('a signing policy that names managers offers them Finalize', () => {
+    const before = process.env.ESIGNATURE_SIGNING_ROLES;
+    process.env.ESIGNATURE_SIGNING_ROLES = 'admin,manager';
+    try {
+      expect(sessionPermissions('manager')).toContain(REPORT_FINALIZE_PERMISSION);
+    } finally {
+      if (before === undefined) delete process.env.ESIGNATURE_SIGNING_ROLES;
+      else process.env.ESIGNATURE_SIGNING_ROLES = before;
+    }
   });
 });

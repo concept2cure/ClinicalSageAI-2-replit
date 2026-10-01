@@ -111,3 +111,12 @@ No migration, so the migration gates do not apply.
 fallback only when no seal exists at signing time (which the finalize now refuses). `red/R1-binding-columns.txt` is
 the unfixed binding; `green/R1-seal-binding-dbtest.txt`: `report-os-registry-seed.dbtest.ts` 11/11 on PostgreSQL
 with the binding assertion, Part 11 suites 110/110.
+
+## R2 applied by the control tower (2026-10-01)
+
+`sessionPermissions` (`server/middleware/orgMembership.ts`) offers `report:finalize` only to a role in
+`REPORT_FINALIZE_ROLES` that the signing policy also authorises (`isSigningAuthorized`), so the canvas no longer
+offers Finalize to an owner or a manager the server refuses with `ESIGNATURE_NO_AUTHORITY`. The session-permissions
+test now defines the finalize route as its guard plus signing authority. `R2/red/`: 3 of 26 failing on the unchanged
+derivation (manager, owner, and the default-policy case); `R2/green/`: 26/26; middleware and report neighbours
+523/523.
