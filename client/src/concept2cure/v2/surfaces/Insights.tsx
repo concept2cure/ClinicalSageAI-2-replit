@@ -28,6 +28,11 @@ const RO_TIERS: Tier[] = [
   { id: 'enterprise', label: 'Enterprise', rank: 2 },
 ];
 
+/** A tier's display name. */
+function tierLabel(id: string): string {
+  return (RO_TIERS.find(t => t.id === id) || { label: id }).label;
+}
+
 const RO_FEATURE_TIER: Record<string, string> = {
   report_families: 'standard',
   scheduled_reports: 'professional',
@@ -495,7 +500,12 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
 
   if (name === 'portfolio_readiness') {
     const dec = roDecide('portfolio_rollup', 'portfolio', tier);
-    if (!dec.entitled) return lockMsg('portfolio_rollup', 'Portfolio readiness rollup');
+    /* The organisation's real entitlement, not the previewed tier: previewing
+       Enterprise on a Standard plan answered "Your plan unlocks the portfolio
+       rollup, but there are no governed programs", false twice (reporting
+       review 2026-10-01). The server withholds the programs from an org it
+       does not entitle. */
+    if (!dec.entitled || !ctx.portfolio.entitled) return lockMsg('portfolio_rollup', 'Portfolio readiness rollup');
     // Live, enterprise-gated rollup — programs is null when the org isn't
     // entitled or has none; show an honest empty, never a fabricated board.
     const rows = ctx.portfolio.programs ? roPortfolioFrom(ctx.portfolio.programs) : [];
@@ -534,7 +544,7 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
   }
   const dec = entitledFor(resolved);
   if (!dec.entitled) return lockMsg(dec.feature, resolved.label);
-  return { tool: 'generate_report', text: `Running the ${resolved.label} for ${p.code} against the governed record. Every value is provenance-linked to its governed source; none is originated here.`, report: null, reportType: resolved, dashboard: null };
+  return { tool: 'generate_report', text: `Running the ${resolved.label} for ${p.code} against the governed record. Every value is computed from the governed record; none is originated here.`, report: null, reportType: resolved, dashboard: null };
 }
 
 /* ── Inline helpers ── */
@@ -740,7 +750,7 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope }: { dashboard: Das
             </div>
           ))}
         </div>
-        <div className="ro-dash-note">{I.info} Readiness values are the governed scores per program — AnA ranks and frames them, it does not recompute them.</div>
+        <div className="ro-dash-note">{I.info} Readiness values are the governed scores per program, in the order the server ranked them. The average is taken here, over the programs that have one.</div>
       </div>
     );
   }
@@ -1065,7 +1075,9 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   // Real subscription tier comes from the overview; `tierOverride` is the local
   // "preview on another plan" control (canonical entitlement UX), not persisted.
   const [tierOverride, setTierOverride] = useState<string | null>(null);
-  const tier = tierOverride ?? data?.tier ?? 'standard';
+  const realTier = data?.tier ?? 'standard';
+  const tier = tierOverride ?? realTier;
+  const previewing = tierOverride != null && tierOverride !== realTier;
   const [thread, setThread] = useState<ThreadMsg[]>([]);
   const [draft, setDraft] = useState('');
   const [report, setReport] = useState<RenderedReport | null>(null);
@@ -1215,7 +1227,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
           <EmptyState
             icon={I.barChart || I.fileText}
             title="No program readiness yet"
-            hint="Once a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, all provenance-linked. Nothing is estimated."
+            hint="Once a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, computed from the governed record. Nothing is estimated."
             /* Audit and compliance reports read the organisation's own records,
                not a program, so they stay reachable before any program exists. */
             action={{ label: 'Audit & compliance reports', onAct: () => onNav && onNav('compliance-reports') }}
@@ -1301,8 +1313,16 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
         <div className="rc-composer">
           <div className="rc-tier" role="group" aria-label="Subscription tier">
             <span className="rc-tier-lbl">Plan</span>
-            {RO_TIERS.map(t => (<button key={t.id} className={'rc-tier-b' + (tier === t.id ? ' on' : '')} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
+            {RO_TIERS.map(t => (<button key={t.id} className={'rc-tier-b' + (tier === t.id ? ' on' : '')} aria-pressed={tier === t.id} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
           </div>
+          {/* A preview looked exactly like the organisation's plan (reporting
+              review 2026-10-01). It says it is one, and names the real plan. */}
+          {previewing && (
+            <div className="ro-dash-note" role="status" data-testid="rc-tier-preview">
+              {I.info} Previewing {tierLabel(tier)}. Your organization's plan is {tierLabel(realTier)}.{' '}
+              <button type="button" className="rc-chip" onClick={() => setTierOverride(null)}>Back to {tierLabel(realTier)}</button>
+            </div>
+          )}
           <div className="rc-input">
             <textarea rows={1} aria-label="Describe the report or dashboard you need" value={draft} placeholder={`Describe the report or dashboard you need for ${p.code}...`}
               onChange={e => setDraft(e.target.value)}
@@ -1331,7 +1351,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
                   recommendation for `roPresetsForSeg(seg)`, which reads neither
                   the portfolio nor the program. */}
               <h2 className="rc-empty-h">Governed reports, built to order.</h2>
-              <p className="rc-empty-s">Describe what you need on the left, or start from one of the standard packs for {p.code}. Every value is provenance-linked to a governed source; nothing is estimated.</p>
+              <p className="rc-empty-s">Describe what you need on the left, or start from one of the standard packs for {p.code}. Every value is computed from the governed record; nothing is estimated.</p>
               <div className="rc-empty-presets">
                 {roPresetsForSeg(seg).map(pr => (
                   <button key={pr.id} className="rc-empty-preset" onClick={() => buildPreset(pr)}>
