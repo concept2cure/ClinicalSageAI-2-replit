@@ -15,7 +15,7 @@ running infrastructure say so.
 | A.2 | Named security officer? | The founder holds the role; no independent officer. | Partial | `POLICY-IS-001` §2 |
 | A.3 | SOC 2 Type II report available? | No. No observation window is open; no compliance platform contracted. | Planned | `TRUST_STATEMENT.md` |
 | A.4 | ISO 27001 certified? | No. | Planned | — |
-| A.5 | Third-party penetration test in the last 12 months? | No. None has been performed. | Planned | — |
+| A.5 | Third-party penetration test in the last 12 months? | No. None has been performed. The GA scope is written and verified against the tree (`PEN_TEST_SCOPE_2026-09-26.md`, 2026-09-26): the launch catalog by mount, 48 closed audit ids to retest, 43 known open. The engagement is the founder's (plan P1-15); the report and retest letter will be filed under `docs/evidence/D6/`. | Planned — scope written 2026-09-26 | `PEN_TEST_SCOPE_2026-09-26.md` |
 | A.6 | Security awareness training for staff? | Single operator; formal training begins with the first hire. | Planned | — |
 | A.7 | Cyber-insurance? | Not held. | Planned | — |
 

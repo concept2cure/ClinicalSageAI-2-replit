@@ -1,0 +1,246 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/__tests__/routes/ana-mdx-context.test.ts > GET /api/ana/mdx-context-snapshot > returns 403 when no organization context 58ms
+ ✓ server/__tests__/routes/ana-mdx-context.test.ts > GET /api/ana/mdx-context-snapshot > returns the resolver payload (without the systemPromptBlock) 8ms
+ ✓ server/__tests__/routes/ana-mdx-context.test.ts > GET /api/ana/mdx-context-snapshot > emits an audit row for the snapshot read 7ms
+ ✓ server/__tests__/routes/ana-mdx-context.test.ts > GET /api/ana/mdx-context-snapshot > honors includeProactive=false to skip the snapshot 9ms
+ × server/__tests__/routes/ana-mdx-context.test.ts > GET /api/ana/mdx-context-snapshot > a resolver failure answers 500 with the envelope, never the thrower's text 25ms
+   → expected 'Failed to build MDX context snapshot' to be 'INTERNAL_ERROR' // Object.is equality
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns 403 when no organization context 213ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns 403 for non-admin 7ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns empty policy when none configured 6ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns existing policy when configured 5ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects allow as non-array 19ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects deny with non-string entries 6ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects unknown keys (typo defense) 15ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > persists and emits audit on success 12ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > round-trips: PUT then GET returns the same shape 17ms
+ × server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: the relation name stays in the log, the client gets the envelope 10ms
+   → expected 200 to be 500 // Object.is equality
+ × server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > PUT: the relation name stays in the log, the client gets the envelope 6ms
+   → expected 'Failed to update policy' to be 'INTERNAL_ERROR' // Object.is equality
+{
+  "timestamp": "2026-09-26T19:05:39.911Z",
+  "level": "warn",
+  "message": "[cerv2-documents] Refused a literature screening decision",
+  "context": {
+    "code": "ENTRY_NOT_IN_CORPUS",
+    "reason": "PMID 38012345 — that article is not in this organization's literature corpus"
+  }
+}
+{
+  "timestamp": "2026-09-26T19:05:39.914Z",
+  "level": "error",
+  "message": "[cerv2-documents] Failed to record literature screening decision",
+  "context": {
+    "error": "deadlock detected"
+  }
+}
+{
+  "timestamp": "2026-09-26T19:05:39.910Z",
+  "level": "error",
+  "message": "[cerv2-documents] Failed to record literature entries",
+  "context": {
+    "error": "relation \"literature_entries\" does not exist"
+  }
+}
+{
+  "timestamp": "2026-09-26T19:05:39.926Z",
+  "level": "error",
+  "message": "[cerv2-documents] Failed to read literature screening decisions",
+  "context": {
+    "error": "connection terminated"
+  }
+}
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > records the decision org-scoped from the request, on the request-scoped client 15ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > ignores an org id smuggled in the body — org is request-derived only 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 400s without an organization context 2ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 400s without a named reviewer — an unattributed decision is not Part 11 evidence 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 400s an exclusion with no reason (MEDDEV 2.7/1 Rev 4 §8) 6ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 400s a reason attached to a non-exclusion — no stale rationale is stored 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 400s an unknown stage or decision 5ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 404s a programId outside the caller org without screening anything 17ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > accepts an org-visible programId and passes it through as the scope key 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > audits through the canonical auditService path, carrying old→new 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > audits a first decision as a create with a null superseded value 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 422s a service refusal with its real reason, and does not audit a non-event 2ms
+ × tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 500s with the envelope, never the driver text, when the write genuinely fails 9ms
+   → expected 'Failed to record the screening decisi…' to be 'INTERNAL_ERROR' // Object.is equality
+ ✓ tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > reads the trail org-scoped from the request, on the request-scoped client 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > splits the pmids query into a list the service can filter on 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > 400s without an organization context 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > 404s a programId outside the caller org without reading anything 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > passes the honest unavailable payload through untouched 0ms
+ × tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > 500s with the envelope, never the driver text, rather than an empty trail on a genuine failure 4ms
+   → expected 'Failed to read screening decisions — …' to be 'INTERNAL_ERROR' // Object.is equality
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > records entries org-scoped from the request, on the request-scoped client 5ms
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > ignores any org id smuggled in the body — org is request-derived only 1ms
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > 400s without an organization context 1ms
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > 400s an invalid payload (no entries / malformed pmid) 2ms
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > 404s a programId outside the caller org without recording anything 30ms
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > accepts an org-visible programId 3ms
+ × tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > answers 500 with the envelope, never the relation name, when the write fails 22ms
+   → expected 'Failed to record literature entries —…' to be 'INTERNAL_ERROR' // Object.is equality
+stdout | tests/routes/cerv2-export-governance.test.ts
+{
+  "timestamp": "2026-09-26T19:05:40.259Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T19:05:40.261Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+{
+  "timestamp": "2026-09-26T19:05:40.261Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+stdout | tests/routes/cerv2-export-governance.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+{
+  "timestamp": "2026-09-26T19:05:40.467Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T19:05:40.980Z",
+  "level": "error",
+  "message": "[cerv2-export-routes] PDF error",
+  "context": {
+    "err": "db writeback failed"
+  }
+}
+ ✓ tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > refuses a projectId that is not in the caller org, and registers nothing 7ms
+ ✓ tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > returns 403 when strict mode is enabled and governance approval is missing 3ms
+ ✓ tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > adds governance headers and exports in non-strict mode 3ms
+ ✓ tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > allows strict mode export when governance approval exists and includes reviewer headers 3ms
+ × tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > fails closed when governed persistence fails and does not stream a download 7ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+Received:
+  1st vi.fn() call:
+  [
+-   ObjectContaining {
++   {
+      "error": "GOVERNED_EXPORT_FAILED",
+-     "message": "Governed PDF export failed before consequence persistence",
++     "message": "db writeback failed",
+    },
+  ]
+Number of calls: 1
+ ✓ tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > returns governed consequence for ZIP export (no direct attachment streaming) 24ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > fails closed when governed persistence fails and does not stream a download
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+Received:
+  1st vi.fn() call:
+  [
+-   ObjectContaining {
++   {
+      "error": "GOVERNED_EXPORT_FAILED",
+-     "message": "Governed PDF export failed before consequence persistence",
++     "message": "db writeback failed",
+    },
+  ]
+Number of calls: 1
+ ❯ tests/routes/cerv2-export-governance.test.ts:266:22
+    264|     // D6 / IAM-18 (1), P1-17 paydown 2: the code stays machine-readab…
+    265|     // sentence is static, and the thrown text is in the log — not in …
+    266|     expect(res.json).toHaveBeenCalledWith(
+       |                      ^
+    267|       expect.objectContaining({
+    268|         error: 'GOVERNED_EXPORT_FAILED',
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+ FAIL  tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > answers 500 with the envelope, never the relation name, when the write fails
+AssertionError: expected 'Failed to record literature entries —…' to be 'INTERNAL_ERROR' // Object.is equality
+Expected: "INTERNAL_ERROR"
+Received: "Failed to record literature entries — relation "literature_entries" does not exist"
+ ❯ tests/routes/cerv2-literature-record.test.ts:181:27
+    179|     expect(res.status).toHaveBeenCalledWith(500);
+    180|     const payload = res.json.mock.calls[0][0];
+    181|     expect(payload.error).toBe('INTERNAL_ERROR');
+       |                           ^
+    182|     expect(payload.correlationId).toBe('req-p1-17-2');
+    183|     const body = JSON.stringify(payload);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+ FAIL  tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 500s with the envelope, never the driver text, when the write genuinely fails
+AssertionError: expected 'Failed to record the screening decisi…' to be 'INTERNAL_ERROR' // Object.is equality
+Expected: "INTERNAL_ERROR"
+Received: "Failed to record the screening decision — deadlock detected"
+ ❯ tests/routes/cerv2-literature-screening.test.ts:316:27
+    314|     expect(res.status).toHaveBeenCalledWith(500);
+    315|     const payload = res.json.mock.calls[0][0];
+    316|     expect(payload.error).toBe('INTERNAL_ERROR');
+       |                           ^
+    317|     expect(payload.correlationId).toBe('req-p1-17-2');
+    318|     expect(JSON.stringify(payload)).not.toMatch(/deadlock/i);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+ FAIL  tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > 500s with the envelope, never the driver text, rather than an empty trail on a genuine failure
+AssertionError: expected 'Failed to read screening decisions — …' to be 'INTERNAL_ERROR' // Object.is equality
+Expected: "INTERNAL_ERROR"
+Received: "Failed to read screening decisions — connection terminated"
+ ❯ tests/routes/cerv2-literature-screening.test.ts:397:27
+    395|     expect(res.status).toHaveBeenCalledWith(500);
+    396|     const payload = res.json.mock.calls[0][0];
+    397|     expect(payload.error).toBe('INTERNAL_ERROR');
+       |                           ^
+    398|     expect(payload.correlationId).toBe('req-p1-17-2');
+    399|     expect(payload.decisions).toBeUndefined();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+ FAIL  server/__tests__/routes/ana-mdx-context.test.ts > GET /api/ana/mdx-context-snapshot > a resolver failure answers 500 with the envelope, never the thrower's text
+AssertionError: expected 'Failed to build MDX context snapshot' to be 'INTERNAL_ERROR' // Object.is equality
+Expected: "INTERNAL_ERROR"
+Received: "Failed to build MDX context snapshot"
+ ❯ server/__tests__/routes/ana-mdx-context.test.ts:127:28
+    125|
+    126|     expect(res.status).toBe(500);
+    127|     expect(res.body.error).toBe('INTERNAL_ERROR');
+       |                            ^
+    128|     expect(res.body.correlationId).toBe('req-p1-17-2');
+    129|     expect(res.body.detail).toBeUndefined();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+ FAIL  server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: the relation name stays in the log, the client gets the envelope
+AssertionError: expected 200 to be 500 // Object.is equality
+- Expected
++ Received
+- 500
++ 200
+ ❯ expectContained server/__tests__/routes/ana-tool-policy.test.ts:160:24
+    158|   }
+    159|   function expectContained(res: request.Response) {
+    160|     expect(res.status).toBe(500);
+       |                        ^
+    161|     expect(res.body.error).toBe('INTERNAL_ERROR');
+    162|     expect(res.body.correlationId).toBe('req-p1-17-2');
+ ❯ server/__tests__/routes/ana-tool-policy.test.ts:171:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+ FAIL  server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > PUT: the relation name stays in the log, the client gets the envelope
+AssertionError: expected 'Failed to update policy' to be 'INTERNAL_ERROR' // Object.is equality
+Expected: "INTERNAL_ERROR"
+Received: "Failed to update policy"
+ ❯ expectContained server/__tests__/routes/ana-tool-policy.test.ts:161:28
+    159|   function expectContained(res: request.Response) {
+    160|     expect(res.status).toBe(500);
+    161|     expect(res.body.error).toBe('INTERNAL_ERROR');
+       |                            ^
+    162|     expect(res.body.correlationId).toBe('req-p1-17-2');
+    163|     expect(res.body.detail).toBeUndefined();
+ ❯ server/__tests__/routes/ana-tool-policy.test.ts:176:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+ Test Files  5 failed (5)
+      Tests  7 failed | 41 passed (48)
+   Start at  19:05:37
+   Duration  3.93s (transform 2.35s, setup 304ms, import 7.41s, tests 627ms, environment 1ms)

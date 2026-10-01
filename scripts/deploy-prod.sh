@@ -47,6 +47,8 @@ npm audit --production
 #   MFA_ENCRYPTION_KEY       server/config/environment.ts (>=32 chars).
 #   AUDIT_HMAC_KEY           server/services/audit/auditSealPosture.ts.
 #   AUDIT_HMAC_SECRET        server/lib/tamper-proof-audit.ts.
+#   AUDIT_EXPORT_SIGNING_KEY server/services/audit/auditExportKeyPosture.ts (>=32,
+#                            never the JWT secret, no accept flag).
 #   CONNECTOR_ENCRYPTION_KEY server/services/connectors/connector-registry.ts.
 #
 # Values come from the operator's environment / secret manager — never from this
@@ -71,7 +73,7 @@ resolve_prod_env() {
 MISSING_ENV=0
 for REQUIRED_VAR in DATABASE_URL APP_DATABASE_URL JWT_SECRET SESSION_SECRET \
                     REFRESH_TOKEN_SECRET MFA_ENCRYPTION_KEY AUDIT_HMAC_KEY \
-                    AUDIT_HMAC_SECRET CONNECTOR_ENCRYPTION_KEY; do
+                    AUDIT_HMAC_SECRET AUDIT_EXPORT_SIGNING_KEY CONNECTOR_ENCRYPTION_KEY; do
   resolve_prod_env "$REQUIRED_VAR" || MISSING_ENV=1
 done
 

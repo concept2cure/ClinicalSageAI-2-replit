@@ -211,7 +211,7 @@ export async function recordCerLiterature(
       return {
         recorded: false,
         error:
-          body?.error ??
+          serverMessage(body) ??
           `Recording failed — the server answered ${res.status}`,
       };
     }
@@ -393,7 +393,7 @@ export async function fetchCerScreening(
         available: false,
         decisions: [],
         error:
-          (body as { error?: string } | null)?.error ??
+          serverMessage(body) ??
           `Screening trail unavailable — the server answered ${res.status}`,
       };
     }

@@ -107,6 +107,11 @@ variable "audit_hmac_secret" {
   sensitive = true
 }
 
+variable "audit_export_signing_key" {
+  type      = string
+  sensitive = true
+}
+
 variable "connector_encryption_key" {
   type      = string
   sensitive = true

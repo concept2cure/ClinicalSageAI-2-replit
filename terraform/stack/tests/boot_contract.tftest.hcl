@@ -105,6 +105,7 @@ variables {
   mfa_encryption_key              = "mfa-0123456789abcdef0123456789abcdef"
   audit_hmac_key                  = "audkey-0123456789abcdef0123456789abcdef"
   audit_hmac_secret               = "audsec-0123456789abcdef0123456789abcdef"
+  audit_export_signing_key        = "audexp-0123456789abcdef0123456789abcdef"
   connector_encryption_key        = "conn-0123456789abcdef0123456789abcdef"
   smtp_host                       = "email-smtp.us-east-1.amazonaws.com"
   smtp_user                       = "test-smtp-user"
@@ -249,7 +250,7 @@ run "renders_the_boot_contract" {
           for secret in [
             random_password.db_master.result, random_password.db_app_service.result,
             var.jwt_secret, var.refresh_token_secret, var.mfa_encryption_key, var.audit_hmac_key,
-            var.audit_hmac_secret, var.connector_encryption_key, var.openai_api_key,
+            var.audit_hmac_secret, var.audit_export_signing_key, var.connector_encryption_key, var.openai_api_key,
             var.smtp_user, var.smtp_pass,
           ] : !strcontains(e.value, secret)
         ]
@@ -503,6 +504,33 @@ run "refuses_equal_audit_seal_and_chain_keys" {
   command = plan
   variables {
     audit_hmac_secret = "audkey-0123456789abcdef0123456789abcdef"
+  }
+  expect_failures = [terraform_data.boot_contract]
+}
+
+# The audit export key (P1-19b): the app refuses to boot on a short one, or one
+# equal to the JWT secret (server/services/audit/auditExportKeyPosture.ts). It must
+# also differ from both audit HMAC keys: each seals a different record.
+run "refuses_a_short_audit_export_key" {
+  command = plan
+  variables {
+    audit_export_signing_key = "too-short"
+  }
+  expect_failures = [var.audit_export_signing_key]
+}
+
+run "refuses_an_audit_export_key_equal_to_the_jwt_secret" {
+  command = plan
+  variables {
+    audit_export_signing_key = "jwt-0123456789abcdef0123456789abcdef"
+  }
+  expect_failures = [terraform_data.boot_contract]
+}
+
+run "refuses_an_audit_export_key_equal_to_an_audit_seal_key" {
+  command = plan
+  variables {
+    audit_export_signing_key = "audkey-0123456789abcdef0123456789abcdef"
   }
   expect_failures = [terraform_data.boot_contract]
 }
