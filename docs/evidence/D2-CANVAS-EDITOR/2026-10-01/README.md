@@ -201,3 +201,130 @@ canvas, the workbench or the card list, plus the editor's own suites, pass
 - Reachability is proven by "every AnA draft opens as a document" in
   `conversationThreadCanvas.test.tsx`.
 - No file was deleted.
+
+## 5. AnA knows the document open beside the conversation
+
+**Before.**
+- The thread runs on the shell's chat, which is created with no authoring
+  context, because the shell does not know a document is open beside the
+  conversation.
+- So every turn sent while the person built a document reached AnA naming
+  no document, no section and no module. "Draft this section" named nothing
+  she could resolve.
+- The section-specific ICH M4 guidance that the stream route adds for an
+  open section (`buildSectionSpecificPrompt`) never applied.
+
+**Now.**
+- The embedded workbench's bridge (step 3) carries the workbench's own
+  `authoringContext`: the same object its own chat sends, built once, not
+  rebuilt by the thread.
+- `useAnaChat`'s `send(text, files, { authoringContext })` puts it on that one
+  turn. A turn without it sends the host's own context, never an earlier
+  turn's, and the turn's context wins over the host's.
+- While the editor is open, every turn from the thread carries it: the
+  composer, Refine and Continue. With nothing open, a turn is sent exactly as
+  before.
+- It travels through `authoring_context`, which the stream route already
+  renders as "Current Authoring Context", inside the fence labelled
+  untrusted. It also reaches `document_context` and the route block's
+  section code.
+- A sealed (frozen or approved) document is still open, so it is still named
+  to AnA, but it is reported `editable: false` and no insert is offered into
+  it. In step 3 the bridge reported nothing for a sealed document; that is
+  corrected here.
+
+**Failing first.**
+- `5-hook-red.txt`: with `useAnaChat.ts` stashed, the per-turn context was not
+  sent. Two of three cases fail. The third is a guard that the context does
+  not stick to later turns, and it passes either way.
+- `5-thread-red.txt`: with the thread stashed, the turn carried no context.
+- `5-mutation-sealed-red.txt`: an insert offer that ignores `editable` puts
+  the frozen document up as a target, and the sealed case fails.
+- One existing suite, `anaContinueHosts`, failed on the first green attempt.
+  It asserts that Continue is sent with exactly one argument. Now nothing
+  extra is passed when no document is open.
+
+**Green:** `5-context-green.txt`. Every suite that mounts the thread, the
+canvas or the workbench, plus the editor's suites and every `useAnaChat`
+suite: 56 files, 554/554.
+
+**Also run.**
+- `tsc`: clean.
+- `ci:canvas-path`, `ci:check-phantom-tokens`, `ci:undefined-css-classes`: OK.
+- The ESLint ratchet `--since HEAD --gate`: unchanged.
+
+**Not done here, and why.** AnA now knows which section is open but cannot
+read what it says. Both ways to give her the text are in files that sessions
+holding claimed rows changed in the last 24 hours, so they are written up,
+not edited:
+- **Board hand-off item 14, still open at this commit.**
+  - `server/routes/ana-ri/stream.ts` reads no `module_context`, so the fenced
+    "OBSERVED SCREEN STATE" block, which could carry a section excerpt as
+    data, reaches no model.
+  - `stream.ts` was changed today by `…01KnUGoX` (`720965433f`) and by
+    `…01T2wooC` (`c7691741a3`).
+- **No AnA tool reads an authoring document.**
+  - `draft_authoring_document` writes one. `read_governed_document` reads a
+    different store (`doc_…` ids).
+  - A read-only `read_authoring_document` (outline, then a section's
+    content, tenant-scoped) beside the draft tool would let AnA revise the
+    document she built.
+  - `AnaToolExecutor.ts` and the tool definitions were changed today by
+    several claimed lanes (`…01SuVLo2`, `…01GCu8tc`, `…0194UQPx`,
+    `…01KnUGoX`).
+  - This is proposed for whichever lane next holds those files.
+
+## 6. A section not yet drafted is one ask away
+
+**Before.** The outline (step 2) said "Not drafted" and stopped there. To get
+AnA to draft one section, the person had to:
+- type the request,
+- open the editor,
+- find the section,
+- and hope the turn and the insert agreed on which section was meant.
+
+**Now.**
+- A section with no text shows "Ask AnA to draft 2.5.2" beside "Not drafted
+  yet". It works the same in the card and once chosen from the outline.
+- The ask opens the editor beside the conversation at that section. The
+  canvas passes `embedded.focusSection` (one request per nonce). The
+  workbench applies it once, through its own `requestLeave`, so unsaved text
+  in the open section is held for the author to decide, never saved or
+  dropped for them.
+- The ask lands in the composer for the person to send: "Draft the text for
+  section 2.5.2 … of "<document>" here in the conversation, so I can insert
+  it into the document." It asks for the text in the conversation because
+  the document already exists, and a second draft of it would be a
+  duplicate.
+- With the editor open at 2.5.2, that turn carries 2.5.2 (step 5), and AnA's
+  answer offers "Insert into 2.5.2 as tracked suggestion" (step 3).
+- When the window is too narrow for two columns, the existing `canvasAsk`
+  rule closes the editor so that the prefilled ask is on screen.
+
+**Failing first.**
+- `6-ask-red.txt`: the new thread case failed against the unchanged canvas,
+  which had no ask.
+- `6-mutation-no-focus-red.txt`: with the canvas not passing `focusSection`,
+  the editor opens at its first section, and the case fails on "Insert into
+  2.5.2".
+
+**Green:** `6-ask-green.txt`. The thread suite (18/18) and both canvas
+suites. The 56 files that mount the thread, the canvas or the workbench, plus
+the editor's and `useAnaChat`'s suites, pass 555/555.
+
+**Also run.**
+- `tsc`: clean.
+- `ci:canvas-path`, `ci:check-phantom-tokens`, `ci:undefined-css-classes`,
+  `ci:check-css-selector-shadowing`, `ci:check-shell-css-collisions`: OK.
+- The ESLint ratchet `--since HEAD --gate`: unchanged.
+- One rule was added in `authoring-v2.css`
+  (`.dcv-sec-empty .nda-open`), using existing tokens only.
+
+**A process note.**
+- Step 5's first push ran its hook while step 6 was still uncommitted in the
+  working tree. The hook's typecheck reads the working tree, so it refused
+  step 5 for step 6's unfinished line (`doc` possibly null). That was
+  correct, and nothing was pushed.
+- Interrupting that loop left the ESLint ratchet's temporary
+  `__eslint_ratchet_prev__.*` copies behind. They were removed.
+- Steps 5 and 6 are pushed together from a clean tree.

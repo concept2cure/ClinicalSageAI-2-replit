@@ -1,0 +1,5 @@
+# 5. The thread sends the open document with each turn — RED, ConversationThread.tsx without step 5 (git stash of that file)
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA knows the document open beside the conversation (2026-10-01) > sends the open document and section with the turn, and nothing once the editor closes 1606ms
+   → expected undefined to match object { …(5) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 15 skipped (16)

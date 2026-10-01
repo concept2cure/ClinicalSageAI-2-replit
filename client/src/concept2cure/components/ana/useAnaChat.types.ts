@@ -714,6 +714,14 @@ export interface AnaSendOptions {
   toolsOverride?: string[];
   liveDrive?: boolean;
   driveMode?: 'assist' | 'demo';
+  /**
+   * The document the person has open, for THIS turn only. For a host whose
+   * chat was created without one: the conversation thread runs on the shell's
+   * chat, and the document open beside it is known only to the thread
+   * (2026-10-01). Wins over `UseAnaChatOptions.authoringContext`; a turn
+   * without it sends the host's, never an earlier turn's.
+   */
+  authoringContext?: AuthoringContextPack | null;
 }
 
 /** Control status of an in-flight AnA run (null when no run is active). */
