@@ -275,7 +275,13 @@ describe('AnA memory consolidation', () => {
     const nightly = hoisted.cronCallbacks.at(-1);
     expect(nightly, 'the scheduler registered a nightly callback').toBeTypeOf('function');
 
-    const outcomes = (await Promise.all([nightly!(), nightly!()])) as Array<{ ran?: boolean } | undefined>;
+    // What that callback fires, fired on two processes at once. The callback
+    // itself returns nothing since 3947cc453 (node-cron's type is void), so
+    // the outcome is read from the function it runs.
+    const outcomes = (await Promise.all([
+      consolidation.runScheduledConsolidation(),
+      consolidation.runScheduledConsolidation(),
+    ])) as Array<{ ran?: boolean } | undefined>;
 
     expect(outcomes.filter(o => o?.ran === true)).toHaveLength(1);
     expect(outcomes.filter(o => o?.ran === false)).toHaveLength(1);

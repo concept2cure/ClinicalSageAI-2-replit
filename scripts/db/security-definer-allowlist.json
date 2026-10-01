@@ -87,6 +87,10 @@
       "status": "reviewed",
       "reason": "Called by tenant-users GET /invitations/mine; returns the caller's own invitations and only while the scope is an organization the caller belongs to (checked in the body). Owned by the invitations lane (\u202601YZFCXR)."
     },
+    "public.purge_tenant_turn_records(p_org integer)": {
+      "status": "reviewed-risk",
+      "reason": "The tenant purge's one door to erase AnA turn records and their texts (rows D5/D6, migrations/20260926_ana_turn_records.sql amended 2026-10-01). Called only by purgeTurnRecords in server/services/tenant/tenant-offboarding.ts, behind requirePlatformAdmin and the purge's code preconditions (a complete export receipt among them). It takes the organization as an argument and deletes as ana_record_purger, a NOLOGIN role the append-only trigger alone lets through, so it is safe only because of who calls it; the body refuses unless the session is in the platform scope (app_super_admin, or RLS enforcement off), the organization is pending_deletion, and no legal hold on it is active. Each turn's chained audit_logs row is not touched. Owned by the D5 AnA-record lane (\u202601T2wooC)."
+    },
     "public.purge_tenant_vault_records(p_org integer)": {
       "status": "reviewed-risk",
       "reason": "The tenant purge's one door to delete Vault versions (VR-07, migrations/20260926_vault_documents_record_immutability.sql). Called only by purgeVaultVersions in server/services/tenant/tenant-offboarding.ts, behind requirePlatformAdmin and the purge's code preconditions. It takes the organization as an argument and deletes past RLS, so it is safe only because of who calls it; the body refuses unless the session is in the platform scope (app_super_admin, or RLS enforcement off), the organization is pending_deletion, and no legal hold on it is active. Owned by the AnA client-files lane (\u202601DiJJAk)."

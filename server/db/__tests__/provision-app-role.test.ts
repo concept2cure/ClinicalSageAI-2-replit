@@ -488,6 +488,7 @@ describe('auditRuntimeRoleGrants', () => {
                 can_insert: held.has('INSERT'),
                 can_update: held.has('UPDATE'),
                 can_delete: held.has('DELETE'),
+                can_truncate: held.has('TRUNCATE'),
               };
             }),
             rowCount: rels.length,
@@ -498,8 +499,8 @@ describe('auditRuntimeRoleGrants', () => {
     };
   }
 
-  it('names the append-only store', () => {
-    expect([...APPEND_ONLY_TABLES]).toEqual([{ schema: 'audit', name: 'tamper_proof_log' }]);
+  it('names the append-only store (the full list: provision-app-role-append-only.test.ts)', () => {
+    expect(APPEND_ONLY_TABLES[0]).toEqual({ schema: 'audit', name: 'tamper_proof_log' });
   });
 
   it('passes a recipe-shaped estate', async () => {
