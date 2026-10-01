@@ -14,6 +14,7 @@
  *
  * @module server/services/integrations/integration-status
  */
+import { isPlatformIntegrationsOwner, PLATFORM_INTEGRATIONS_ORG_ENV } from './platform-integration-owner.js';
 
 export type IntegrationKind = 'public_api' | 'env_gated' | 'org_connector';
 
@@ -37,6 +38,16 @@ export interface IntegrationStatusDeps {
   ) => Promise<Array<{ id: string; configured: boolean; healthy: boolean }>>;
 }
 
+/** Why a deployment account that is configured is not live for this organisation. */
+const NOT_THE_OWNER =
+  `This deployment's own account, for the organisation ${PLATFORM_INTEGRATIONS_ORG_ENV} names only`;
+
+/** A deployment account is live only when it is configured and this organisation is its owner. */
+function deploymentAccount(set: boolean, owns: boolean, missing: string): Pick<IntegrationStatus, 'configured' | 'requires'> {
+  if (!set) return { configured: false, requires: missing };
+  return owns ? { configured: true, requires: undefined } : { configured: false, requires: NOT_THE_OWNER };
+}
+
 const defaultDeps: IntegrationStatusDeps = {
   env: process.env,
   getConnectorCatalog: async (orgId: number) => {
@@ -57,6 +68,10 @@ export async function getIntegrationStatuses(
   deps: IntegrationStatusDeps = defaultDeps
 ): Promise<IntegrationStatus[]> {
   const env = deps.env;
+  /* 2026-10-01 (D6, decision P-8): the mailbox, calendar and CRM are the
+     deployment's own accounts and serve only the organisation they belong to
+     (platform-integration-owner.ts), so they are live only for it. */
+  const ownsDeploymentAccounts = isPlatformIntegrationsOwner(organizationId, env);
 
   const statuses: IntegrationStatus[] = [
     {
@@ -114,28 +129,26 @@ export async function getIntegrationStatuses(
       id: 'gmail',
       label: 'Regulatory mailbox (Gmail, read-only)',
       kind: 'env_gated',
-      configured: !!env.GMAIL_OAUTH_JSON,
+      ...deploymentAccount(!!env.GMAIL_OAUTH_JSON, ownsDeploymentAccounts, 'GMAIL_OAUTH_JSON'),
       tools: ['search_regulatory_correspondence'],
-      requires: env.GMAIL_OAUTH_JSON ? undefined : 'GMAIL_OAUTH_JSON',
     },
     {
       id: 'google_calendar',
       label: 'Team calendar (Google Calendar)',
       kind: 'env_gated',
-      configured: !!(env.GOOGLE_CALENDAR_ID && env.GOOGLE_SERVICE_ACCOUNT),
+      ...deploymentAccount(
+        !!(env.GOOGLE_CALENDAR_ID && env.GOOGLE_SERVICE_ACCOUNT),
+        ownsDeploymentAccounts,
+        'GOOGLE_CALENDAR_ID + GOOGLE_SERVICE_ACCOUNT',
+      ),
       tools: ['create_calendar_event'],
-      requires:
-        env.GOOGLE_CALENDAR_ID && env.GOOGLE_SERVICE_ACCOUNT
-          ? undefined
-          : 'GOOGLE_CALENDAR_ID + GOOGLE_SERVICE_ACCOUNT',
     },
     {
       id: 'hubspot',
       label: 'HubSpot CRM (read-only)',
       kind: 'env_gated',
-      configured: !!env.HUBSPOT_ACCESS_TOKEN,
+      ...deploymentAccount(!!env.HUBSPOT_ACCESS_TOKEN, ownsDeploymentAccounts, 'HUBSPOT_ACCESS_TOKEN'),
       tools: ['search_crm'],
-      requires: env.HUBSPOT_ACCESS_TOKEN ? undefined : 'HUBSPOT_ACCESS_TOKEN',
     },
   ];
 
