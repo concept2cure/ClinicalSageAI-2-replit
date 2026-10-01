@@ -84,6 +84,7 @@
 import { promises as fs } from 'fs';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db';
+import { resolveGatewayAccount, type ResolvedGatewayAccount } from './gateway-accounts';
 import { readVerifiedBundle } from './bundle-integrity';
 import { platformTransmittalRecord } from './acknowledgement';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
@@ -119,6 +120,56 @@ function envFor(env: 'staging' | 'production', key: string): string | undefined 
      so the platform knows which env var to read. */
   const prefix = env === 'production' ? 'FDA_ESG_' : 'FDA_ESG_STAGING_';
   return process.env[prefix + key];
+}
+
+/**
+ * The credentials a transmit goes out under. `account` is the organisation's
+ * choice (gateway-accounts.ts, founder decision 2026-10-01): in client mode the
+ * sponsor side — the AS2 identifier FDA assigned the client, and the client's
+ * own certificate and key — is the client's; FDA's side (endpoint, FDA's AS2
+ * identifier, FDA's public certificate) is the same for every sponsor and stays
+ * the platform's configuration. Platform mode is the server's env, as before.
+ */
+async function credentialsFor(
+  organizationId: number,
+  environment: 'staging' | 'production',
+  account: ResolvedGatewayAccount | null,
+): Promise<FdaEsgCredentials> {
+  return account?.mode === 'client'
+    ? loadFdaClientCredentials(environment, account)
+    : loadFdaCredentials(organizationId, environment);
+}
+
+/** The organisation's own FDA account: its AS2 identity, certificate and key, with FDA's side from the platform. */
+async function loadFdaClientCredentials(
+  environment: 'staging' | 'production',
+  account: ResolvedGatewayAccount,
+): Promise<FdaEsgCredentials> {
+  const own = "(your organisation's own account)";
+  const endpointUrl = envFor(environment, 'URL');
+  const as2To = envFor(environment, 'AS2_TO');
+  const fdaCertPath = envFor(environment, 'FDA_CERT_PATH');
+  const cert = account.credentials?.clientCertPem;
+  const key = account.credentials?.clientKeyPem;
+  const missing = [
+    !endpointUrl && envVarName(environment, 'URL'),
+    !account.senderIdentifier && `AS2 identifier assigned by FDA ${own}`,
+    !as2To && envVarName(environment, 'AS2_TO'),
+    !cert && `Your ESG certificate (PEM) ${own}`,
+    !key && `Its private key (PEM) ${own}`,
+    !fdaCertPath && envVarName(environment, 'FDA_CERT_PATH'),
+  ].filter((m): m is string => Boolean(m));
+  if (missing.length > 0) throw new CredentialError('fda', 'esg', environment, missing);
+  // The organisation's own account is recorded in organization_gateway_accounts;
+  // the platform's identity is not written against it.
+  return {
+    endpointUrl: endpointUrl!,
+    as2From: account.senderIdentifier!,
+    as2To: as2To!,
+    clientCertPem: cert!,
+    clientKeyPem: key!,
+    fdaCertPem: await fs.readFile(fdaCertPath!, 'utf8'),
+  };
 }
 
 async function loadFdaCredentials(
@@ -587,7 +638,11 @@ export class FdaEsgGateway implements SubmissionGateway {
         loadFdaRestCredentials(environment);
         return true;
       }
-      await loadFdaCredentials(organizationId, environment);
+      await credentialsFor(
+        organizationId,
+        environment,
+        await resolveGatewayAccount(pool, organizationId, 'fda', 'esg', environment),
+      );
       return true;
     } catch {
       // Any failure to load the credentials — a missing variable, or a cert
@@ -633,7 +688,11 @@ export class FdaEsgGateway implements SubmissionGateway {
     let sent: SentBundle | null = null;
 
     try {
-      const creds = await loadFdaCredentials(req.organizationId, req.environment);
+      // The guard resolved the organisation's account; resolved here again only
+      // when a caller reached this implementation without it (tests drive it
+      // unguarded), so no path sends under an account nobody chose.
+      const account = req.account ?? await resolveGatewayAccount(pool, req.organizationId, 'fda', 'esg', req.environment);
+      const creds = await credentialsFor(req.organizationId, req.environment, account);
       await updateTransmittal(transmittalId, { status: 'in_transit' });
 
       if (sftpTarget) {
