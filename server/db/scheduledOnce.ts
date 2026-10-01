@@ -36,9 +36,10 @@
  * withTenantConnection) exactly as it did before.
  *
  * Not a replacement for idempotent writes: the lease stops CONCURRENT runs;
- * two processes whose timers fire hours apart both run. Jobs that must not
- * repeat within a window also need a durable guard (see scheduleOfEventsSweep's
- * per-plan claim, the digest heartbeat's per-day notification check).
+ * two processes whose ticks do not overlap both run — a cron tick a few
+ * milliseconds later on another task, or a boot-relative setInterval minutes
+ * later. A job that must run once per window uses runScheduledOncePerWindow
+ * below, which adds a durable claim (scheduled_job_claims) under the lease.
  *
  * The one pre-existing lock helper (services/ai-actions/distributed-lock.ts) is
  * Redis-backed with an in-memory fallback — on a Redis-less deploy it
@@ -110,4 +111,94 @@ async function unlock(
     });
     return err instanceof Error ? err : new Error(String(err));
   }
+}
+
+// ── Once per window ─────────────────────────────────────────────────────────
+
+/**
+ * The window a timestamp falls in, for a job that runs every `intervalMs`.
+ * Aligned to the epoch, not to the process's boot, so the three processes'
+ * setInterval timers (which start whenever each task booted) agree on it.
+ */
+export function windowKeyOf(intervalMs: number, now: number = Date.now()): string {
+  if (!Number.isInteger(intervalMs) || intervalMs <= 0) {
+    throw new Error(`windowKeyOf: a positive integer interval is required (got ${intervalMs})`);
+  }
+  return `${intervalMs}:${Math.floor(now / intervalMs)}`;
+}
+
+/** Claims older than this are pruned when the same job claims again. */
+const CLAIM_RETENTION_DAYS = 30;
+
+export type ScheduledOncePerWindowResult<T> =
+  | { ran: true; value: T }
+  | { ran: false; reason: 'held_elsewhere' | 'already_ran_this_window' };
+
+/**
+ * Run `fn` at most once per (organization, job, window) across every server
+ * process: under the lease (no overlap), the first process to INSERT the claim
+ * row runs it, and every later tick in that window skips.
+ *
+ * A run that throws deletes its claim and rethrows, so a later tick in the
+ * same window retries: a failed nightly sweep is not silently "done".
+ *
+ * Estate-wide jobs claim as organization 0; a per-organization job passes its
+ * organization, so each organization's window is claimed independently.
+ */
+export async function runScheduledOncePerWindow<T>(
+  jobName: string,
+  windowKey: string,
+  fn: () => Promise<T>,
+  opts: { organizationId?: number } = {},
+): Promise<ScheduledOncePerWindowResult<T>> {
+  if (!windowKey.trim()) throw new Error('runScheduledOncePerWindow: windowKey is required');
+  const organizationId = opts.organizationId ?? 0;
+  if (!Number.isInteger(organizationId) || organizationId < 0) {
+    throw new Error(`runScheduledOncePerWindow: organizationId must be a non-negative integer (got ${organizationId})`);
+  }
+  const leaseName = organizationId === 0 ? jobName : `${jobName}:org:${organizationId}`;
+  const outcome = await runScheduledOnce(leaseName, async () => {
+    const pool = getPool();
+    const claimed = await pool.query(
+      `INSERT INTO scheduled_job_claims (organization_id, job_name, window_key)
+       VALUES ($1, $2, $3)
+       ON CONFLICT DO NOTHING
+       RETURNING 1`,
+      [organizationId, jobName, windowKey],
+    );
+    if (claimed.rowCount === 0) return { claimed: false as const };
+    await pool.query(
+      `DELETE FROM scheduled_job_claims
+        WHERE organization_id = $1 AND job_name = $2
+          AND claimed_at < NOW() - make_interval(days => $3)`,
+      [organizationId, jobName, CLAIM_RETENTION_DAYS],
+    );
+    let value: T;
+    try {
+      value = await fn();
+    } catch (err) {
+      await pool
+        .query('DELETE FROM scheduled_job_claims WHERE organization_id = $1 AND job_name = $2 AND window_key = $3', [
+          organizationId,
+          jobName,
+          windowKey,
+        ])
+        .catch((releaseErr: unknown) =>
+          logger.warn('could not give back the claim of a failed run; the window stays claimed', {
+            jobName,
+            windowKey,
+            error: releaseErr instanceof Error ? releaseErr.message : String(releaseErr),
+          }),
+        );
+      throw err;
+    }
+    await pool.query(
+      'UPDATE scheduled_job_claims SET finished_at = NOW() WHERE organization_id = $1 AND job_name = $2 AND window_key = $3',
+      [organizationId, jobName, windowKey],
+    );
+    return { claimed: true as const, value };
+  });
+  if (!outcome.ran) return outcome;
+  if (!outcome.value.claimed) return { ran: false, reason: 'already_ran_this_window' };
+  return { ran: true, value: outcome.value.value };
 }

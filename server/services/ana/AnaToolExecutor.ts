@@ -287,10 +287,12 @@ export interface ToolContext {
    */
   projectRef?: string | null;
   /**
-   * The conversation this turn belongs to, its turn id and the model the
-   * gateway is answering with — recorded as provenance by tools that create a
-   * document (draft_authoring_document). Optional: the stream's dispatch does
-   * not pass them yet, and a tool never claims a model it was not told about.
+   * The conversation this turn belongs to, its turn id (the run id) and the
+   * model the gateway is answering with — recorded as provenance by tools that
+   * create a document (draft_authoring_document). Built once for dispatch,
+   * hold and confirm by services/ana/turn-tool-context.ts (PF-10 S5). Null
+   * when unknown (no thread persisted, a run held before S5): a tool never
+   * claims a model it was not told about.
    */
   threadId?: string | null;
   turnId?: string | null;

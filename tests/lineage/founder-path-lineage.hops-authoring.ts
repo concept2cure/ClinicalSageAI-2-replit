@@ -107,11 +107,19 @@ export async function hopCapture(w: World): Promise<void> {
 }
 
 /**
- * The call stream.ts:1731-1744 makes, field for field: the registered (gated)
- * handler, with the stream's ctx. projectId is Number(uuid) || null — null for a
- * UUID program — and the stream passes no threadId, turnId or model
- * (AnaToolExecutor.ts:228-236).
+ * The path draft_authoring_document takes in production, field for field: it is
+ * confirm-class, so the stream holds it with heldToolContext and the
+ * governed-action route runs it, once the person says yes, with
+ * confirmedToolContext (routes/ana-ri/utility.ts runConfirmedTool). Both come
+ * from services/ana/turn-tool-context.ts, the builders the stream uses (PF-10
+ * S5), so the builders cannot drift; what the stream hands the hold is pinned
+ * by stream-run-hold.test.ts. projectId is null for a UUID program; the
+ * conversation, the turn (the run id) and the model are named.
  */
+/** The conversation and the run (its turn) the walk's draft is proposed in. */
+const WALK_THREAD_ID = 'ana-ri_walk_thread';
+const WALK_RUN_ID = 'run_walk_draft';
+
 async function draftUnderStreamCtx(w: World): Promise<Record<string, unknown>> {
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
   const handler = getToolHandler('draft_authoring_document');
@@ -131,20 +139,15 @@ async function draftUnderStreamCtx(w: World): Promise<Record<string, unknown>> {
        LX-06 adds it — if it lands under another name, this input follows it. */
     sources: [{ evidence_source_id: w.k.sourceId, excerpt: QUOTE }],
   };
-  const ctx = {
+  const { heldToolContext, confirmedToolContext } = await import('../../server/services/ana/turn-tool-context');
+  const held = heldToolContext('draft_authoring_document', streamProjectId, {
+    threadId: WALK_THREAD_ID,
+    turnId: WALK_RUN_ID,
     servingModel: SERVED_MODEL,
-    organizationId: ORG_A,
-    userId: 3,
-    projectId: streamProjectId ? Number(streamProjectId) || null : null,
-    projectRef: streamProjectId ? String(streamProjectId) : null,
-    liveDrive: false,
-    lockedScreens: [],
-    turnState: {},
-    signal: new AbortController().signal,
-    // draft_authoring_document is a write in the tool register (P1-34): on the
-    // founder path it runs when the person confirms the draft AnA proposed.
-    humanConfirmed: true,
-  };
+  });
+  // As the run row stores it, then as the person's yes runs it (the route
+  // stamps humanConfirmed; utility.ts runConfirmedTool).
+  const ctx = { ...confirmedToolContext(JSON.parse(JSON.stringify(held)), ORG_A, 3), humanConfirmed: true };
   return JSON.parse(await handler!(input, ctx as never));
 }
 

@@ -24,3 +24,21 @@ export function canGovernedWrite(user: { permissions?: unknown } | null | undefi
   const perms = user?.permissions;
   return !Array.isArray(perms) || perms.includes(GOVERNED_WRITE_PERMISSION);
 }
+
+/**
+ * The organisation roles that may finalize (sign and seal) a report: the
+ * `requireRole` on POST /api/report-os/runs/:id/finalize (review round 1,
+ * DP-47). The server's guard reads this list, and the session derives
+ * REPORT_FINALIZE_PERMISSION from it, so the canvas offers Finalize to exactly
+ * the roles the server admits (reporting review 2026-10-01). A member writes
+ * reports and cannot finalize them; `roles: ['user']` could not tell the two
+ * apart.
+ */
+export const REPORT_FINALIZE_ROLES = ['owner', 'admin', 'manager'] as const;
+export const REPORT_FINALIZE_PERMISSION = 'report:finalize';
+
+/** Whether to offer Finalize to `user`. Unknown permissions offer it, as canGovernedWrite does; the server decides. */
+export function canFinalizeReport(user: { permissions?: unknown } | null | undefined): boolean {
+  const perms = user?.permissions;
+  return !Array.isArray(perms) || perms.includes(REPORT_FINALIZE_PERMISSION);
+}

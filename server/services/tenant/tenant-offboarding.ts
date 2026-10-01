@@ -788,6 +788,16 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      on 2026-10-01 (CI run 12751), as the one new org-keyed table the purge
      could not reach. */
   'governed_decision_transitions',
+  /* The co-authoring roster (af217590c, 2026-10-01): who is in which
+     document, with their display name and e-mail. Personal data, so an
+     erasure must remove it. Org-keyed with no foreign key in either direction,
+     so no cascade reaches it and only this list does. */
+  'collab_presence',
+  /* AnA Command's project readiness snapshots (af217590c, 2026-10-01): the
+     tenant's readiness score and state per project, over time. Tenant content,
+     and a leaf for the same reason. Both were found by ci:purge-coverage on the
+     blank-database job of CI run 12756. */
+  'project_continuity_snapshots',
   /* The CMC workflow subsystem. All five are org-keyed with organization_id
      NOT NULL, so every row belongs to exactly one tenant — there is no
      platform-template population here for a purge to spare. What they hold is

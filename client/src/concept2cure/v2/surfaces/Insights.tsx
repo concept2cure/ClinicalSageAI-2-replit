@@ -5,7 +5,10 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
 import { getOrgId } from '@/utils/authToken';
 import { useAuthUser } from '@/services/portal/authService';
-import { canGovernedWrite } from '@shared/constants/permissions';
+import { canFinalizeReport, canGovernedWrite } from '@shared/constants/permissions';
+import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
+import type { EsigMeaning } from '../../hooks/useEsignature';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/insights-v2.css';
@@ -677,7 +680,14 @@ function ROBlock({ block }: { block: ROBlockData }) {
    it to final", which is the `truthfulness.reasons` list rendered by the
    `.ro-truth` band a few lines below, straight from the server's gate. Nothing
    was lost by removing it; something would have been invented by keeping it. */
-function ROReport({ report, onExport, compact }: { report: RenderedReport; onExport: (r: RenderedReport) => void; compact?: boolean }) {
+function ROReport({ report, onExport, onFinalize, seal, compact }: {
+  report: RenderedReport;
+  onExport: (r: RenderedReport) => void;
+  /** Offered only to a role that may finalize, on a run that is not final. */
+  onFinalize?: () => void;
+  seal?: ReportSeal | null;
+  compact?: boolean;
+}) {
   if (!report) return null;
   const fam = RO_FAMILY[(RO_TYPES.find(t => t.typeId === report.reportTypeId) || { family: '' }).family] || {};
   const stTone = report.status === 'final' ? 'ok' : report.status === 'partial' ? 'warn' : 'idle';
@@ -694,6 +704,7 @@ function ROReport({ report, onExport, compact }: { report: RenderedReport; onExp
         </div>
         {report.truthfulness && report.truthfulness.reasons && report.truthfulness.reasons.length ?
           <div className="ro-truth">{I.shieldCheck} Truthfulness gate — held at <b>{report.status}</b>: {report.truthfulness.reasons.join('; ')}.</div> : null}
+        {seal ? <ROSealLine seal={seal} /> : null}
       </div>
       {sections.map(sec => (
         <section key={sec.id} className="ro-sec">
@@ -701,11 +712,7 @@ function ROReport({ report, onExport, compact }: { report: RenderedReport; onExp
           <div className="ro-sec-body">{sec.blocks.map((b, i) => <ROBlock key={i} block={b} />)}</div>
         </section>
       ))}
-      {!compact && (
-        <div className="ro-rep-actions">
-          <button className="sp-primary" onClick={() => onExport && onExport(report)}>{I.download || I.fileText} Export report</button>
-        </div>
-      )}
+      {!compact && <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} />}
     </div>
   );
 }
@@ -820,20 +827,218 @@ function RODashboard({ dashboard, tier, onRun, canRun }: { dashboard: DashboardD
 
 /* ════ Insights -- AnA Reporting Canvas ════ */
 
-/** The seal line for a finalize the server refused, from the refusal's own
- *  status and code. A 409 is either the truthfulness gate (its reasons) or a run
- *  that is already final (RUN_ALREADY_FINAL: its seal stands); a 403 is a role
- *  the server does not let finalize. Null when the refusal is none of these. */
+/** Why a finalize was refused, from the refusal's own status and code. A 409 is
+ *  the truthfulness gate (its reasons) or a run already final (its seal stands);
+ *  a bare 403 is a role the server does not let finalize. Anything else is the
+ *  signature ceremony's own sentence (reason, meaning, password, separation of
+ *  duties). Null when the refusal carries nothing readable. */
 function finalizeRefusalNote(status: unknown, payload: unknown): string | null {
   const p = (payload ?? {}) as { reasons?: unknown; error?: { code?: unknown } };
   if (status === 409 && p.error?.code === 'RUN_ALREADY_FINAL') {
     // The message goes through the canonical reader, which keeps infrastructure
     // text and enum tokens off the screen (ci:error-envelope).
-    return `Already sealed — ${serverMessage(payload) ?? 'this run was finalized earlier.'}`;
+    return `Already final — ${serverMessage(payload) ?? 'this run was finalized earlier.'}`;
   }
-  if (status === 409 && Array.isArray(p.reasons)) return `Not sealed — held below final: ${p.reasons.join('; ')}`;
-  if (status === 403) return 'Not sealed — finalizing a report is for organisation owners, admins and managers.';
-  return null;
+  if (status === 409 && Array.isArray(p.reasons)) return `Not finalized — held below final: ${p.reasons.join('; ')}`;
+  if (status === 403 && (p.error?.code == null || p.error.code === 'AUTH_004')) {
+    return 'Not finalized — finalizing a report is for organisation owners, admins and managers.';
+  }
+  return serverMessage(payload);
+}
+
+/** What the canvas says when POST /runs refuses. A plan refusal carries
+ *  requiredTier; the write gate's does not. Every 403 read as "needs a higher
+ *  plan" before the write gate existed, and would have told a viewer to upgrade. */
+function runRefusalNote(label: string, status: unknown, payload: unknown): string {
+  const tier = (payload as { requiredTier?: unknown } | null)?.requiredTier;
+  if (status === 403 && tier) {
+    return `"${label}" needs a higher plan (${String(tier)}). No estimated result is shown on a plan that has not unlocked the governed model.`;
+  }
+  if (status === 403) {
+    return `"${label}" wasn't run — ${serverMessage(payload) ?? 'the server refused it'}. Running a report needs an editor role in this organization.`;
+  }
+  if (status === 404) return `"${label}" isn't in your governed report registry, so it can't be run against real data. None is fabricated.`;
+  return `Couldn't run "${label}" — ${serverMessage(payload) ?? 'the server did not say why'}.`;
+}
+
+/** POST /api/report-os/runs: the new run's id, or the sentence to show. */
+async function requestRun(type: ReportType, program: ProgramCtx): Promise<{ runId: number } | { note: string }> {
+  let res: Response;
+  try {
+    res = await apiRequest('POST', '/api/report-os/runs', {
+      organizationId: Number(getOrgId()) || 0,
+      scopeType: program.scope,
+      scopeId: program.scopeId,
+      reportTypeId: type.typeId,
+    });
+  } catch (e) {
+    // apiRequest throws for every non-OK status but 401. Read the refusal
+    // structurally, not by instanceof (see finalizeRefusalNote's callers).
+    const err = e as { status?: unknown; payload?: unknown } | null;
+    if (typeof err?.status === 'number') return { note: runRefusalNote(type.label, err.status, err.payload) };
+    return { note: `Couldn't reach the report engine — ${e instanceof Error ? e.message : String(e)}.` };
+  }
+  const body = await res.json().catch(() => null);
+  if (!res.ok) return { note: runRefusalNote(type.label, res.status, body) };
+  const runId = body?.data?.run?.id;
+  return runId == null ? { note: 'The run started but returned no id — reload and retry.' } : { runId: Number(runId) };
+}
+
+/** GET /runs/:id/rendered, adopted as the canvas's report; null when it did not come back. */
+async function fetchRenderedRun(runId: number, type: ReportType, program: ProgramCtx): Promise<RenderedReport | null> {
+  try {
+    const res = await apiRequest('GET', `/api/report-os/runs/${runId}/rendered`);
+    const rendered = (await res.json().catch(() => null))?.data;
+    if (!res.ok || !rendered || !Array.isArray(rendered.sections)) return null;
+    const status = typeof rendered.status === 'string' ? rendered.status : 'partial';
+    return {
+      reportTypeId: rendered.reportTypeId ?? type.typeId,
+      reportTypeLabel: type.label,
+      scopeType: rendered.scopeType ?? program.scope,
+      scopeId: rendered.scopeId ?? program.scopeId,
+      generatedAt: rendered.generatedAt ?? new Date().toISOString(),
+      status,
+      truthfulness: (rendered.truthfulness && Array.isArray(rendered.truthfulness.reasons))
+        ? rendered.truthfulness
+        : { allowedStatus: status, downgradedFrom: 'final', reasons: [] },
+      sections: rendered.sections,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** GET /runs/:id/export.pdf through the canonical downloadBlob: what was saved, or why nothing was. */
+async function downloadRunPdf(runId: number, rep: RenderedReport): Promise<{ ok: boolean; text: string }> {
+  try {
+    const res = await apiRequest('GET', `/api/report-os/runs/${runId}/export.pdf`);
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      return { ok: false, text: `No file saved — ${serverMessage(body) ?? 'the export service did not say why'}.` };
+    }
+    const blob = await res.blob();
+    const filename = `${safeFileName(rep.reportTypeLabel || rep.reportTypeId, 'report')}_run${runId}.pdf`;
+    return downloadBlob(filename, blob)
+      ? { ok: true, text: `Saved ${filename}.` }
+      : { ok: false, text: 'No file saved — this browser refused the download.' };
+  } catch (e) {
+    return { ok: false, text: `No file saved — ${e instanceof Error ? e.message : String(e)}.` };
+  }
+}
+
+/** A finalized run's signature and seal, as the server returned them. */
+export interface ReportSeal {
+  signer: string | null;
+  signedAt: string;
+  meaning: string;
+  algorithm: string;
+  hash: string;
+  atomCount: number;
+}
+
+const REPORT_FINALIZE_MEANINGS: ReadonlyArray<EsigMeaning> = ['authorship', 'approval', 'responsibility'];
+const SEAL_MEANING_LABEL: Record<string, string> = { authorship: 'authorship', approval: 'approval', responsibility: 'responsibility' };
+
+const textOr = (v: unknown, fallback: string): string => (typeof v === 'string' ? v : fallback);
+
+/** The signature and seal a finalize answered with. */
+function sealFromResponse(body: { data?: { seal?: Record<string, unknown>; signature?: Record<string, unknown> } } | null, meaning: string): Omit<ReportSeal, 'signer'> {
+  const seal = body?.data?.seal ?? {};
+  const signature = body?.data?.signature ?? {};
+  return {
+    signedAt: textOr(signature.signedAt, ''),
+    meaning: textOr(signature.meaning, meaning),
+    algorithm: textOr(seal.algorithm, 'sha256'),
+    hash: textOr(seal.contentHash, ''),
+    atomCount: typeof seal.atomCount === 'number' ? seal.atomCount : 0,
+  };
+}
+
+/** POST /runs/:id/finalize with the signature; the seal, or a thrown sentence the dialog shows. */
+async function finalizeRun(
+  runId: number,
+  input: { meaning: EsigMeaning; reason: string; password: string; totp?: string },
+): Promise<Omit<ReportSeal, 'signer'>> {
+  let res: Response;
+  try {
+    res = await apiRequest('POST', `/api/report-os/runs/${runId}/finalize`, {
+      reason: input.reason,
+      meaning: input.meaning,
+      reauth: { password: input.password, ...(input.totp ? { totp: input.totp } : {}) },
+    });
+  } catch (e) {
+    const err = e as { status?: unknown; payload?: unknown } | null;
+    const note = err ? finalizeRefusalNote(err.status, err.payload) : null;
+    throw new Error(note ?? (e instanceof Error ? e.message : String(e)), { cause: e });
+  }
+  const body = await res.json().catch(() => null);
+  // apiRequest RETURNS a 401: the ceremony's re-authentication refusals are 401s.
+  if (!res.ok) throw new Error(serverMessage(body) ?? 'Your session is not signed in any more. Sign in again; nothing was finalized.');
+  return sealFromResponse(body, input.meaning);
+}
+
+/* ── Finalize is an electronic signature ──────────────────────────────────────
+   Until 2026-10-01 the canvas finalized as a side effect of "Export report":
+   one click sealed the run final with no reason, no meaning and no
+   re-authentication (reporting review, Part 11 lens). Finalizing is now its own
+   act, in the product's one signing dialog (the shared EsignModal): meaning,
+   reason, the account password and the authenticator code when one is
+   enrolled. The server re-verifies them inside the transaction that seals the
+   run (services/part11/governed-signature-ceremony.ts). Export only reads. */
+function ReportFinalizeModal({ runId, report, onClose, onSealed }: {
+  runId: number;
+  report: RenderedReport;
+  onClose: () => void;
+  onSealed: (seal: ReportSeal) => void;
+}) {
+  const authUser = useAuthUser();
+  const signer = esignSignerOf(authUser);
+  const onSign = async (input: { meaning: EsigMeaning; reason: string; password: string; totp?: string }): Promise<EsigSignedManifest> => {
+    const sealed = await finalizeRun(runId, input);
+    onSealed({ ...sealed, signer: signer?.name ?? null });
+    return { meaning: input.meaning, reason: input.reason, signedAt: sealed.signedAt, ...(sealed.hash ? { hash: sealed.hash } : {}) };
+  };
+  return (
+    <EsignModal
+      open
+      action="Finalize report"
+      target={report.reportTypeLabel || report.reportTypeId}
+      targetMeta="Finalizing seals the report's content and provenance under your signature and locks the run final. A final report is not changed afterwards."
+      defaultMeaning="authorship"
+      meanings={REPORT_FINALIZE_MEANINGS}
+      signer={signer}
+      requireMfa={authUser?.mfaEnabled === true}
+      onClose={onClose}
+      onSign={onSign}
+    />
+  );
+}
+
+/** The signature manifestation on a finalized report (21 CFR 11.50): who, when, what it means, and the seal. */
+function ROSealLine({ seal }: { seal: ReportSeal }) {
+  return (
+    <div className="ro-truth" role="note" data-testid="ro-seal">
+      {I.shieldCheck}
+      <span>
+        Final. Signed{seal.signer ? ` by ${seal.signer}` : ''} as {SEAL_MEANING_LABEL[seal.meaning] ?? seal.meaning},{' '}
+        <GovernedTimestamp value={seal.signedAt} layout="inline" />. Sealed {seal.algorithm} {seal.hash.slice(0, 12)}… over {seal.atomCount} provenance atoms.
+      </span>
+    </div>
+  );
+}
+
+/** Export reads; Finalize, when offered, signs. */
+function ROReportActions({ report, onExport, onFinalize }: {
+  report: RenderedReport;
+  onExport: (r: RenderedReport) => void;
+  onFinalize?: () => void;
+}) {
+  return (
+    <div className="ro-rep-actions">
+      <button className="sp-primary" onClick={() => onExport(report)}>{I.download || I.fileText} Export PDF</button>
+      {onFinalize && <button type="button" className="btn ghost" onClick={onFinalize}>{I.shieldCheck} Finalize…</button>}
+    </div>
+  );
 }
 
 export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
@@ -865,84 +1070,44 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   /* Every write under /api/report-os and /api/insights needs a writing role
      (requireEditorAccessForWrites). A viewer reads the canvas and is told,
      rather than offered runs the server will refuse. */
-  const canWrite = canGovernedWrite(useAuthUser());
+  const authUser = useAuthUser();
+  const canWrite = canGovernedWrite(authUser);
+  const canFinalize = canFinalizeReport(authUser);
+  // The displayed run's signature and seal once finalized here, and whether the signing dialog is open.
+  const [seal, setSeal] = useState<ReportSeal | null>(null);
+  const [signing, setSigning] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setThread([]); setReport(null); setReportRunId(null); setDashboard(null); }, [seg]);
+  useEffect(() => { setThread([]); setReport(null); setReportRunId(null); setSeal(null); setDashboard(null); }, [seg]);
   useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [thread, busy]);
 
   const pushCanvasTop = () => { const el = canvasRef.current; if (el) el.scrollTop = 0; };
 
   /* Generate a report from the REAL governed backend. POST /api/report-os/runs
      computes + persists the run synchronously (no polling); GET /runs/:id/rendered
-     returns the section/block document with the truthfulness gate applied. The
-     server's RenderedReport is adopted directly (the display renders every server
-     block kind); only the display label is filled from the type and a
-     truthfulness default supplied. The run id is tracked so the report can be
-     sealed. Any failure surfaces as an honest AnA message — nothing is
-     fabricated, and an unentitled/unknown type is stated, never estimated. */
+     returns the section/block document with the truthfulness gate applied
+     (requestRun, fetchRenderedRun). The run id is tracked so the report can be
+     exported and finalized. Any failure surfaces as an honest message — nothing
+     is fabricated, and an unentitled/unknown type is stated, never estimated. */
   const runReport = async (type: ReportType): Promise<void> => {
     if (!program) return;
+    const say = (text: string) => setThread(t => [...t, { role: 'ana', text, tool: 'generate_report' }]);
     if (!canWrite) {
-      setThread(t => [...t, { role: 'ana', text: `"${type.label}" wasn't run. Running a report creates a governed record, which needs an editor role in this organization.`, tool: 'generate_report' }]);
+      say(`"${type.label}" wasn't run. Running a report creates a governed record, which needs an editor role in this organization.`);
       return;
     }
     setBusy(true);
     setDashboard(null);
     try {
-      const orgId = Number(getOrgId()) || 0;
-      const res = await apiRequest('POST', '/api/report-os/runs', {
-        organizationId: orgId,
-        scopeType: program.scope,
-        scopeId: program.scopeId,
-        reportTypeId: type.typeId,
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) {
-        /* A plan refusal carries requiredTier; the write gate's does not. Every
-           403 read as "needs a higher plan" before the write gate existed, and
-           would have told a viewer to upgrade. */
-        const msg = res.status === 403 && body?.requiredTier
-          ? `"${type.label}" needs a higher plan${body?.requiredTier ? ` (${body.requiredTier})` : ''} — I won't show an estimated result on a plan that hasn't unlocked the governed model.`
-          : res.status === 403
-            ? `"${type.label}" wasn't run — ${serverMessage(body) ?? 'the server refused it'}. Running a report needs an editor role in this organization.`
-          : res.status === 404
-            ? `"${type.label}" isn't in your governed report registry, so I can't run it against real data — I won't fabricate one.`
-            : `Couldn't run "${type.label}" — ${serverMessage(body) ?? 'the server did not say why'}.`;
-        setThread(t => [...t, { role: 'ana', text: msg, tool: 'generate_report' }]);
-        return;
-      }
-      const runId: number | null = body?.data?.run?.id ?? null;
-      if (runId == null) {
-        setThread(t => [...t, { role: 'ana', text: 'The run started but returned no id — reload and retry.', tool: 'generate_report' }]);
-        return;
-      }
-      const rres = await apiRequest('GET', `/api/report-os/runs/${runId}/rendered`);
-      const rbody = await rres.json().catch(() => null);
-      const rendered = rbody?.data;
-      if (!rres.ok || !rendered || !Array.isArray(rendered.sections)) {
-        setThread(t => [...t, { role: 'ana', text: "The run completed but its rendered document didn't come back — reload and retry.", tool: 'generate_report' }]);
-        return;
-      }
-      const status = typeof rendered.status === 'string' ? rendered.status : 'partial';
-      const adopted: RenderedReport = {
-        reportTypeId: rendered.reportTypeId ?? type.typeId,
-        reportTypeLabel: type.label,
-        scopeType: rendered.scopeType ?? program.scope,
-        scopeId: rendered.scopeId ?? program.scopeId,
-        generatedAt: rendered.generatedAt ?? new Date().toISOString(),
-        status,
-        truthfulness: (rendered.truthfulness && Array.isArray(rendered.truthfulness.reasons))
-          ? rendered.truthfulness
-          : { allowedStatus: status, downgradedFrom: 'final', reasons: [] },
-        sections: rendered.sections,
-      };
+      const started = await requestRun(type, program);
+      if ('note' in started) { say(started.note); return; }
+      const adopted = await fetchRenderedRun(started.runId, type, program);
+      if (!adopted) { say("The run completed but its rendered document didn't come back — reload and retry."); return; }
       setReport(adopted);
-      setReportRunId(runId);
+      setReportRunId(started.runId);
+      setSeal(null);
       pushCanvasTop();
-    } catch (e) {
-      setThread(t => [...t, { role: 'ana', text: `Couldn't reach the report engine — ${e instanceof Error ? e.message : String(e)}.`, tool: 'generate_report' }]);
     } finally {
       setBusy(false);
     }
@@ -986,91 +1151,23 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     void runReport(type);
   };
 
-  /* ── "Export report" now exports a report ─────────────────────────────────
-     The control carries a download icon and the word Export, and its entire
-     effect was POST /runs/:id/finalize plus a toast. The run was sealed; no
-     file was ever produced, so the one thing the word Export promises — a
-     document the user can keep, attach or file — could not be done from this
-     surface at all.
-
-     Two acts, in order, both real:
-       1. POST /api/report-os/runs/:id/finalize — the run's integrity seal
-          (sha256 content hash + provenance atoms). A report the truthfulness
-          gate holds below final returns 409 and is NOT sealed.
-       2. GET  /api/report-os/runs/:id/export.pdf — the governed PDF the server
-          renders from the STORED run (createRunPdf: type, scope, status,
-          confidence, dependency providers, blockers). It is entitlement-gated
-          server-side exactly like the run itself, so a downgraded plan is
-          refused there rather than handed a document it has not paid for.
-
-     The seal is attempted first because sealing changes what the PDF states
-     (the run's status), and the download runs EVEN WHEN the seal is refused: a
-     partial report is still a real report, and withholding the file over a
-     status the gate is entitled to hold would be a second, invented refusal.
-     The toast states both outcomes separately — sealed or held, saved or not —
-     so neither is ever implied by the other. The file itself goes through the
-     canonical `downloadBlob` (v2/download.ts); its `false` return (no DOM, a
-     sandboxed frame) is reported as a failure to save, never swallowed. */
+  /* ── Export is a read ───────────────────────────────────────────────────────
+     "Export report" once only sealed the run and produced no file; then it
+     sealed AND downloaded, so a click that read as "save a copy" finalized the
+     run with no reason, meaning or re-authentication (reporting review
+     2026-10-01). Export now does one thing: GET /runs/:id/export.pdf, the
+     governed PDF of the STORED run (audited server-side as run_exported), saved
+     through the canonical downloadBlob, whose false return is reported, never
+     swallowed. Finalizing is its own signed act (ReportFinalizeModal). */
   const exportRep = async (rep: RenderedReport) => {
     if (reportRunId == null) { fireToast('Only a freshly-run governed report can be exported — run one first.', 'error'); return; }
-    const runId = reportRunId;
+    const saved = await downloadRunPdf(reportRunId, rep);
+    fireToast(saved.text, saved.ok ? undefined : 'error');
+  };
 
-    // ── 1. Seal ──
-    let sealNote: string;
-    try {
-      const res = await apiRequest('POST', `/api/report-os/runs/${runId}/finalize`);
-      const body = await res.json().catch(() => null);
-      const refused = res.ok ? null : finalizeRefusalNote(res.status, body);
-      if (refused) {
-        sealNote = refused;
-      } else if (res.status === 409) {
-        const reasons = Array.isArray(body?.reasons)
-          ? body.reasons.join('; ')
-          : (serverMessage(body) || 'the truthfulness gate holds it below final');
-        sealNote = `Not sealed — held below final: ${reasons}`;
-      } else if (!res.ok) {
-        sealNote = `Not sealed — ${serverMessage(body) ?? 'the server did not say why'}`;
-      } else {
-        const seal = body?.data?.seal;
-        const hash = typeof seal?.contentHash === 'string' ? seal.contentHash.slice(0, 12) : null;
-        setReport(r => (r ? { ...r, status: 'final' } : r));
-        sealNote = `Sealed · ${seal?.algorithm || 'sha256'}${hash ? ' ' + hash + '…' : ''} · ${seal?.atomCount ?? 0} provenance atoms · run locked final`;
-      }
-    } catch (e) {
-      // `apiRequest` THROWS for every non-OK status except 401, so in the real
-      // app the 409 above is reached HERE, not by the `res.status` branch. The
-      // gate's own reasons live on the thrown error's payload; read
-      // STRUCTURALLY rather than via `instanceof ApiRequestError` — several
-      // suites mock '@/lib/queryClient' with a factory exporting only
-      // `apiRequest`, which binds the class to undefined and makes
-      // `e instanceof undefined` throw inside the catch (dataConnect's
-      // `failureFrom` documents the same hazard and takes the same precaution).
-      const err = e as { status?: unknown; payload?: unknown } | null;
-      sealNote =
-        (err ? finalizeRefusalNote(err.status, err.payload) : null) ??
-        `Not sealed — ${e instanceof Error ? e.message : String(e)}`;
-    }
-
-    // ── 2. The file ──
-    let fileNote: string;
-    try {
-      const res = await apiRequest('GET', `/api/report-os/runs/${runId}/export.pdf`);
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        fileNote = `no file saved — ${serverMessage(body) ?? 'the export service did not say why'}`;
-      } else {
-        const blob = await res.blob();
-        const filename = `${safeFileName(rep.reportTypeLabel || rep.reportTypeId, 'report')}_run${runId}.pdf`;
-        fileNote = downloadBlob(filename, blob)
-          ? `saved ${filename}`
-          : 'no file saved — this browser refused the download';
-      }
-    } catch (e) {
-      fileNote = `no file saved — ${e instanceof Error ? e.message : String(e)}`;
-    }
-
-    const failed = fileNote.startsWith('no file saved') || sealNote.startsWith('Not sealed');
-    fireToast(`${sealNote} · ${fileNote}.`, failed ? 'error' : undefined);
+  const onSealed = (sealed: ReportSeal) => {
+    setSeal(sealed);
+    setReport(r => (r ? { ...r, status: 'final' } : r));
   };
 
   // Four-state render: loading → honest error → honest empty (no flagship
@@ -1149,7 +1246,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
         <div className="rc-ana-scroll" ref={scrollRef}>
           {!canWrite && (
             <div className="ro-dash-note" role="note" data-testid="rc-view-only">
-              {I.lock} View only. Running or exporting a governed report needs an editor role in this organization.
+              {I.lock} View only. Running a governed report needs an editor role in this organization.
             </div>
           )}
           {/* Opener. The program facts below are live; the preset is a static
@@ -1210,7 +1307,12 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
 
       {/* -- Right: the report / dashboard artifact -- */}
       <div className="rc-canvas" ref={canvasRef}>
-        {report ? <ROReport report={report} onExport={exportRep} />
+        {report ? <ROReport
+            report={report}
+            onExport={exportRep}
+            onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => setSigning(true) : undefined}
+            seal={seal}
+          />
           : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} />
           : (
             <div className="rc-empty">
@@ -1234,6 +1336,9 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             </div>
           )}
       </div>
+      {signing && report && reportRunId != null && (
+        <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={onSealed} />
+      )}
       <C2CToast msg={toast} />
     </div>
   );
