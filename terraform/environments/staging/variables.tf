@@ -172,3 +172,8 @@ variable "sentry_dsn" {
   type    = string
   default = ""
 }
+
+variable "platform_owner_emails" {
+  description = "The platform owner(s), by password sign-in address, lower case (the stack's variable says what they are given)."
+  type        = list(string)
+}

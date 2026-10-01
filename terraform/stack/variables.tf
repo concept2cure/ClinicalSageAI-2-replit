@@ -300,6 +300,27 @@ variable "smtp_from" {
 
 # Vault search embeds with OpenAI by default. An empty key used to deploy, and
 # the Vault then searched nothing (D1, docs/evidence/W2/2026-10-01-inventory-gaps/).
+variable "platform_owner_emails" {
+  description = <<-EOT
+    The platform owner(s), by the address each signs in with by password: named
+    in PLATFORM_ADMIN_EMAILS and BUSINESS_CENTER_EMAILS on the API (main.tf,
+    owner_environment). At least one, or nobody can reach Master Administration
+    or designate anyone. The first account itself is created through first-run
+    setup with the deployment's setup token (outputs.tf, first_run_setup).
+  EOT
+  type        = list(string)
+  validation {
+    condition     = length(var.platform_owner_emails) > 0
+    error_message = "platform_owner_emails must name at least one owner."
+  }
+  validation {
+    condition = alltrue([
+      for e in var.platform_owner_emails : can(regex("^[a-z0-9._%+-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", e))
+    ])
+    error_message = "Each platform_owner_emails entry must be a lower-case e-mail address: the allowlists compare lower-cased addresses, so any other entry could never match."
+  }
+}
+
 variable "openai_api_key" {
   type      = string
   sensitive = true
