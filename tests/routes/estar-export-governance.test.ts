@@ -113,7 +113,11 @@ vi.mock('../../server/services/pathway-engines/estar/estar-content-leaves', () =
 
 fakeDb.select = vi.fn(() => ({
   from: vi.fn(() => ({
-    where: vi.fn(() => ({ limit: vi.fn(async () => mockResolveRows()) })),
+    where: vi.fn(() => {
+      // readProgramAnchorRow (fa00d6392) orders the anchor read: .where().orderBy().limit().
+      const limit = vi.fn(async () => mockResolveRows());
+      return { limit, orderBy: vi.fn(() => ({ limit })) };
+    }),
   })),
 }));
 

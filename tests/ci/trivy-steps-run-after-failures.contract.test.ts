@@ -57,7 +57,8 @@ describe('Trivy scans are not skipped by an earlier failure', () => {
 const ALLOWED_SKIP_DIRS = ['node_modules'];
 const ALLOWED_SKIP_FILES = [
   '.claude/skills/gstack/.github/docker/Dockerfile.ci',
-  // Evidence for 2eda0ed0f: built once, as root, to prove the document-runtime step; never deployed.
+  // An evidence record of the D1 image build (2eda0ed0f): never built or
+  // deployed, and editing it would falsify what it records.
   'docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green',
 ];
 
