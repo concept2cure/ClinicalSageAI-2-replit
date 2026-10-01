@@ -233,6 +233,8 @@ const MIGRATIONS = [
   // that names a project. After 20260727_prm_program_link, whose unchecked
   // backfill must never run with the key present.
   'migrations/20260926b_program_same_org_keys.sql',
+  // And the integer project key (PF-03) over concept2cure_artifacts and the package spine.
+  'migrations/20261001_integer_project_same_org_keys.sql',
 ] as const;
 /**
  * Columns the walk's database cannot get from a migration file:

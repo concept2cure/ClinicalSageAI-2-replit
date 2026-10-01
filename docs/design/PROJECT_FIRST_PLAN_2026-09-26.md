@@ -813,7 +813,10 @@ The founder chose the plan's recommended option in each case:
 - **LX-22 part 1** landed as `041976f2`: `submissions.program_id`, the same-organization key (`ON DELETE SET NULL (program_id)`, so a tenant purge is not blocked) and the one-to-one backfill.
 - **The LX-20 red test (§5 item 5)** is fixed in `c0a95ede`, with a second suite the same sweep found.
 - **PF-05 and PF-06 (LX-22 part 2)** landed as `1706c05b` and `99862840`: every writer anchors a submission to its project, and readers take the anchored one; a name match is only for unanchored legacy rows.
-- **PF-11**, placement half, and LX-11: `39dfd9b7`. A cross-project placement is refused 409 `CROSS_PROJECT`, and the ledger names the document, its pin and both projects. Citations, pins, comments and the protocol→design binding are still open.
+- **PF-11**, placement half, and LX-11: `39dfd9b7`. A cross-project placement is refused 409 `CROSS_PROJECT`, and the ledger names the document, its pin and both projects.
+  - Comments: fixed in `63b43274` (SEC-A-2): a comment's `doc_id` must be its section's document.
+  - Citations, the source-change scope, Module 3 placement and the re-point ledger: done (`docs/evidence/D2-PLACEMENT-STAYS-IN-PROJECT/2026-10-01-citation-module3-repoint/`).
+  - Pins (`stream.ts`, handed to `…01KZK3jg`) and the protocol→design binding (needs a project column on `protocol_documents`) are still open.
 - **PF-02**: the upload route landed as `25ee228e`, and `/docs/from-draft` in `824f699c`. The AnA tool's legacy branch (precondition P2 of PF-04) goes with PF-04.
 - **PF-14**: `2564895a`. A study design is anchored to a live project of its organization, and never moved or overwritten across organizations.
 - **PF-17**: done.
@@ -828,6 +831,7 @@ The founder chose the plan's recommended option in each case:
   - Handed to W1 (`…01T2wooC`): the chat message shown for an upload made with no project open.
 - **PF-04**: done, `f8c32f28` (precondition P2: `b4b218bd`). The same-organization keys cover five stores, with a pre-flight for legacy rows, proven on real PostgreSQL 16 (`docs/evidence/D3/2026-09-26-program-same-org-keys/`). `vault.documents` and `submission_transmittals` are deliberately left out (see the migration header), and handed to D6 and PF-12.
 - **PF-08**: the anchor-delete half is done (`docs/evidence/D5-PROJECT-RETENTION/2026-09-30-legacy-hard-delete/`). `DELETE /api/projects/:id` and `DELETE /api/clients/:id` refuse to hard-delete a program's anchor row, or a project holding documents past draft. The unique anchor index, the anchor reader's `.limit(1)`, and the founder decision on auto-linking same-named legacy projects are still open.
+- **PF-03**: done. The writers check the `projects` row is the caller's (`docs/evidence/D3/2026-10-01-integer-space-writers/`). The database holds the integer project id to the row's organization on `concept2cure_artifacts` and `c2c_submission_packages` (`docs/evidence/D3/2026-10-01-integer-project-same-org-keys/`). Handed on: `approve_import` and `save_document_to_vault` to the D6 lane; `concept2cure_conversations` goes with the stream's project check.
 - **PF-15**: the CMC and eSTAR halves are done. LX-26 (the device filing path) waits on its founder decision.
   - `652e0947`: the Module 3 routes and `POST /api/cmc-changes` write only under a project of the caller's organization.
   - `369cc698`: one membership check for CMC, `project-membership.ts` `projectBelongsToTenant`, which no longer admits a deleted program.

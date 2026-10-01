@@ -999,6 +999,9 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
           .status(409)
           .json({ success: false, error: result.error, vocabulary: result.vocabulary });
       }
+      if (result.refusedBy === 'cross-project') {
+        return res.status(409).json({ success: false, code: 'CROSS_PROJECT', error: result.error });
+      }
       return res.status(409).json({ success: false, error: result.error, skipped: result.skipped });
     }
     return res.json({ success: true, data: result });
