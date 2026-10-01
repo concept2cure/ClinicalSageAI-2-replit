@@ -77,7 +77,11 @@ export async function projectDeletionHolds(q: Queryable, target: ProjectDeletion
        (SELECT count(*)::int FROM arts a
          WHERE a.status <> 'draft'
             OR EXISTS (SELECT 1 FROM concept2cure_signatures s WHERE s.artifact_id = a.id)
-            OR EXISTS (SELECT 1 FROM concept2cure_submission_snapshots ss WHERE ss.artifact_id = a.id)) AS governed_artifacts`,
+            OR EXISTS (SELECT 1 FROM concept2cure_submission_snapshots ss WHERE ss.artifact_id = a.id)
+            -- Review comments are part of the artifact's review record (D5, 2026-10-01;
+            -- migrations/20261001_review_comments_record.sql): an artifact that has any
+            -- holds records, as a signed one does.
+            OR EXISTS (SELECT 1 FROM concept2cure_thread_comments tc WHERE tc.artifact_id = a.id)) AS governed_artifacts`,
     [param],
   );
   const row = (rows[0] ?? {}) as { anchored_programs?: string[] | null; governed_artifacts?: number | null };
