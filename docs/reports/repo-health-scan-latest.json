@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T07:46:51.320Z",
+  "generatedAt": "2026-10-01T07:58:15.550Z",
   "git": {
-    "sha": "1eb04ec53be78b5c07c0e1def23f7e297a83c87c",
+    "sha": "82a5672d97b47a3b9342e252a8161e7050571595",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2134,7 +2134,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 119840
+        "bytes": 119982
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2300,7 +2300,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2796
+        "lines": 2798
       },
       {
         "file": "server/routes/auth.ts",
