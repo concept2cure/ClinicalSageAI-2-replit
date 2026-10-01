@@ -32,6 +32,11 @@ mock_provider "aws" {
   mock_data "aws_region" {
     defaults = { name = "us-east-1" }
   }
+  # The evidence module builds its bucket ARN from the partition, so its
+  # policies are asserted against production's real ARN below.
+  mock_data "aws_partition" {
+    defaults = { partition = "aws" }
+  }
   # A mock invents random strings for computed attributes. These resources'
   # ARNs are given ARN-shaped values because the IAM policy documents that
   # consume them are rendered into assertions below; nothing else is implied.
@@ -113,6 +118,7 @@ variables {
   smtp_user                       = "test-smtp-user"
   smtp_pass                       = "test-smtp-pass-0123456789"
   smtp_from                       = "noreply@example.com"
+  platform_owner_emails           = ["owner@example.com"]
   ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
 }
 
@@ -160,6 +166,44 @@ run "renders_the_boot_contract" {
   assert {
     condition     = one([for e in module.ecs.api_container.environment : e.value if e.name == "APP_URL"]) == "https://${var.domain_aliases[0]}"
     error_message = "APP_URL must be the https origin of the first CloudFront alias, in the API environment."
+  }
+
+  # The deployment has an owner from its first boot (D1, 2026-10-01). The
+  # e-mail allowlists are the documented bootstrap: Master Administration
+  # (PLATFORM_ADMIN_EMAILS) and the Business Center (BUSINESS_CENTER_EMAILS),
+  # whose holder can then designate a super_admin in the audited in-app console,
+  # after which the lists can shrink. Both apply to a password sign-in only.
+  # MASTER_ADMIN_EMAILS stays unset: that grant follows a designation. API only;
+  # the worker serves no requests.
+  assert {
+    condition = alltrue([
+      for n in ["PLATFORM_ADMIN_EMAILS", "BUSINESS_CENTER_EMAILS"] :
+      one([for e in module.ecs.api_container.environment : e.value if e.name == n]) == "owner@example.com"
+    ])
+    error_message = "The API must name the platform owner in PLATFORM_ADMIN_EMAILS and BUSINESS_CENTER_EMAILS."
+  }
+
+  assert {
+    condition = length([
+      for e in concat(module.ecs.api_container.environment, module.ecs.worker_container.environment) : e.name
+      if e.name == "MASTER_ADMIN_EMAILS"
+      ]) == 0 && length([
+      for e in module.ecs.worker_container.environment : e.name
+      if contains(["PLATFORM_ADMIN_EMAILS", "BUSINESS_CENTER_EMAILS"], e.name)
+    ]) == 0
+    error_message = "MASTER_ADMIN_EMAILS stays unset, and the worker carries no owner allowlist."
+  }
+
+  # First-run setup takes the deployment's own secret in production
+  # (server/routes/setup.ts). Generated here, held in Secrets Manager, given to
+  # the API alone, and never a plain environment value.
+  assert {
+    condition = (
+      one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == "SETUP_TOKEN"]) == module.secrets.secret_arns["setup_token"] &&
+      length([for s in module.ecs.worker_container.secrets : s.name if s.name == "SETUP_TOKEN"]) == 0 &&
+      length([for e in module.ecs.api_container.environment : e.name if e.name == "SETUP_TOKEN"]) == 0
+    )
+    error_message = "SETUP_TOKEN must reach the API (only) from the setup_token secret."
   }
 
   # Every upload is scanned before it is stored, and production refuses one the
@@ -433,6 +477,87 @@ run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use" {
   }
 }
 
+# The audit chain's head, anchored outside the database (security plan P0-8,
+# finding DP-04). Nothing outside the database recorded it, so deleting or
+# rewriting the newest audit rows left a valid, shorter chain. The daily sweep
+# (server/jobs/auditChainIntegritySweep.ts) now verifies the database against
+# the latest anchor in the object-locked evidence bucket, then writes the next
+# one under anchors/. Both containers run the sweep, so both name the bucket.
+# The task role reaches anchors/ and nothing else there: put and get anchor
+# objects, list that prefix, use the evidence key only through S3, and never
+# delete or unlock what it wrote. The module's policies name the bucket by the
+# ARN AWS gives it, arn:aws:s3:::<name>; the mock invents aws_s3_bucket's arn,
+# so the bucket policy is checked against production's literal ARN.
+run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket" {
+  command = apply
+
+  assert {
+    condition = alltrue([
+      for c in [module.ecs.api_container, module.ecs.worker_container] :
+      contains([for e in c.environment : "${e.name}=${e.value}"], "AUDIT_ANCHOR_BUCKET=${module.evidence.evidence_bucket}")
+    ])
+    error_message = "Both containers must name the evidence bucket in AUDIT_ANCHOR_BUCKET; without it the sweep reports the anchor not configured."
+  }
+  assert {
+    condition     = module.evidence.evidence_bucket == "c2c-prod-part11-evidence" && module.evidence.object_lock.mode == "COMPLIANCE" && module.evidence.object_lock.days >= 2555
+    error_message = "Production's anchors go to c2c-prod-part11-evidence, under COMPLIANCE object lock for at least seven years."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(module.evidence.bucket_policy).Statement :
+      st.Effect == "Allow" && try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
+      st.Resource == "arn:aws:s3:::c2c-prod-part11-evidence/anchors/*" &&
+      length(setsubtract(toset(["s3:PutObject", "s3:GetObject"]), toset(flatten([st.Action])))) == 0
+    ])
+    error_message = "The task role must put and get objects under anchors/ in the evidence bucket."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(module.evidence.bucket_policy).Statement :
+      st.Effect == "Allow" && try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
+      st.Resource == "arn:aws:s3:::c2c-prod-part11-evidence" && contains(flatten([st.Action]), "s3:ListBucket") &&
+      try(st.Condition.StringLike["s3:prefix"], "") == "anchors/*"
+    ])
+    error_message = "The verifier must list the anchors/ prefix, and only it, to find the latest anchor."
+  }
+  assert {
+    condition = alltrue([
+      for st in jsondecode(module.evidence.bucket_policy).Statement :
+      alltrue([for r in flatten([st.Resource]) : r == "arn:aws:s3:::c2c-prod-part11-evidence" || startswith(r, "arn:aws:s3:::c2c-prod-part11-evidence/anchors/")]) &&
+      length(setintersection(toset(flatten([st.Action])), toset(["s3:*", "s3:DeleteObject", "s3:DeleteObjectVersion", "s3:PutObjectRetention", "s3:BypassGovernanceRetention", "s3:PutObjectLegalHold"]))) == 0
+      if st.Effect == "Allow" && try(st.Principal.AWS, "") == module.ecs.task_role_arn
+    ])
+    error_message = "The bucket policy may let the task role reach only anchors/, and never delete or unlock an object."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(module.evidence.bucket_policy).Statement :
+      st.Effect == "Deny" && try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
+      length(setsubtract(toset(["s3:DeleteObject", "s3:DeleteObjectVersion", "s3:PutObjectRetention", "s3:BypassGovernanceRetention"]), toset(flatten([st.Action])))) == 0
+    ])
+    error_message = "The bucket policy must deny the task role deleting or unlocking evidence, whatever IAM grants it later."
+  }
+  # The task role's own S3 grant on the evidence bucket used to be the bucket
+  # ARN: object actions there match nothing, and ListBucket listed every key,
+  # CloudTrail's included. It is anchors/ now, and never the bucket as a whole.
+  assert {
+    condition = alltrue([
+      for r in flatten([for st in jsondecode(module.ecs.task_s3_policy).Statement : st.Resource]) :
+      startswith(r, "${module.evidence.evidence_bucket_arn}/anchors/")
+    ])
+    error_message = "The task role's identity grant on the evidence bucket must be anchors/ only."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(module.evidence.key_policy).Statement :
+      try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
+      length(setsubtract(toset(["kms:GenerateDataKey", "kms:Decrypt"]), toset(flatten([st.Action])))) == 0 &&
+      try(st.Condition.StringEquals["kms:ViaService"], "") == "s3.${var.region}.amazonaws.com"
+    ])
+    error_message = "The task role must use the evidence key through S3 only, to write and read an anchor (the bucket encrypts under it)."
+  }
+}
+
 # The SPA comes straight from S3 through CloudFront, so the server's security
 # headers never reach it; the distribution has to add them (security plan
 # P0-15, INF-04).
@@ -537,6 +662,26 @@ run "provision_workflow_names_are_the_ones_terraform_creates" {
 
 # The virus scanner's memory comes out of the API task's; a task sized as it
 # was before the scanner (2048) would starve one or the other.
+# A deployment with no named owner has nobody who can reach Master
+# Administration or designate anyone.
+run "refuses_a_deployment_without_an_owner" {
+  command = plan
+  variables {
+    platform_owner_emails = []
+  }
+  expect_failures = [var.platform_owner_emails]
+}
+
+# The allowlists compare lower-cased addresses; an upper-case entry would never
+# match and the owner would be locked out without a word.
+run "refuses_an_owner_address_that_could_never_match" {
+  command = plan
+  variables {
+    platform_owner_emails = ["Owner@Example.com"]
+  }
+  expect_failures = [var.platform_owner_emails]
+}
+
 run "refuses_an_api_task_too_small_for_the_scanner" {
   command = plan
   variables {

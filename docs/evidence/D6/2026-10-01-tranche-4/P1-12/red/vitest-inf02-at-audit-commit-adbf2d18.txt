@@ -1,0 +1,285 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:server-error-leaks runs on a trunk push, in a step that can fail the run 12ms
+   → ci:server-error-leaks runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > check:compliance-claims runs on a trunk push, in a step that can fail the run 2ms
+   → check:compliance-claims runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:discarded-audit-write:self-test runs on a trunk push, in a step that can fail the run 2ms
+   → ci:discarded-audit-write:self-test runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:discarded-audit-write runs on a trunk push, in a step that can fail the run 2ms
+   → ci:discarded-audit-write runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:session-scoped-rls-bypass runs on a trunk push, in a step that can fail the run 2ms
+   → ci:session-scoped-rls-bypass runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:unauthenticated-fetch:selftest runs on a trunk push, in a step that can fail the run 2ms
+   → ci:unauthenticated-fetch:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:unauthenticated-fetch runs on a trunk push, in a step that can fail the run 2ms
+   → ci:unauthenticated-fetch runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:drizzle-tenant-scope:selftest runs on a trunk push, in a step that can fail the run 2ms
+   → ci:drizzle-tenant-scope:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:drizzle-tenant-scope runs on a trunk push, in a step that can fail the run 5ms
+   → ci:drizzle-tenant-scope runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:migration-drop-safety:selftest runs on a trunk push, in a step that can fail the run 2ms
+   → ci:migration-drop-safety:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:migration-drop-safety runs on a trunk push, in a step that can fail the run 2ms
+   → ci:migration-drop-safety runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:upload-guards:selftest runs on a trunk push, in a step that can fail the run 1ms
+   → ci:upload-guards:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:upload-guards runs on a trunk push, in a step that can fail the run 2ms
+   → ci:upload-guards runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > no npm gate in pr-checks.yml is pull-request-only 28ms
+   → these run on pull requests only: expected [ 'check:compliance-claims', …(21) ] to deeply equal []
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > Semgrep p/ci runs on a trunk push, with --error 2ms
+   → expected '' to match /--config=p\/ci\b/ci\b
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > keeps the job name the release-evidence policy requires
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > has no job-level continue-on-error, and its scan steps none either
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > runs a pinned image: a version and a sha256 digest, never :latest
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > scans p/default and p/ci in both scans, and the shell is sh -e
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > checks out full history, so the baseline commit exists locally
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > is the only Semgrep: no other workflow runs one
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > passes when Semgrep reports nothing new over the baseline
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails when Semgrep finds something the baseline did not have (exit 1)
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails when Semgrep does not finish (exit 2, 7): an unfinished scan is not a pass
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails without scanning when no baseline was resolved
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: the full scan for the Security tab fails when it does not finish > exit 0 passes; exit 2 fails
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: the full scan for the Security tab fails when it does not finish > runs after a red blocking scan, so the Security tab is still fed
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > is a github-script step whose sha output the blocking scan reads
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > skips a failed run, a pull-request run and a fork run to reach the last green trunk commit
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > a pull request compares against its base
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > fails closed when the run history cannot be read
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > fails closed when no run ever passed
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > no workflow step installs the dependency tree with npm install
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › lint installs with npm ci
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › build installs with npm ci
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › security installs with npm ci
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › nightly-governance installs with npm ci
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > db-schema-validation.yml › schema-push installs with npm ci
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > neon-preview-db.yml › preview_db_test installs with npm ci
+ ↓ tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > .npmrc carries legacy-peer-deps, which npm ci reads in place of the flag
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:server-error-leaks runs on a trunk push, in a step that can fail the run
+AssertionError: ci:server-error-leaks runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > check:compliance-claims runs on a trunk push, in a step that can fail the run
+AssertionError: check:compliance-claims runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:discarded-audit-write:self-test runs on a trunk push, in a step that can fail the run
+AssertionError: ci:discarded-audit-write:self-test runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:discarded-audit-write runs on a trunk push, in a step that can fail the run
+AssertionError: ci:discarded-audit-write runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:session-scoped-rls-bypass runs on a trunk push, in a step that can fail the run
+AssertionError: ci:session-scoped-rls-bypass runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:unauthenticated-fetch:selftest runs on a trunk push, in a step that can fail the run
+AssertionError: ci:unauthenticated-fetch:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:unauthenticated-fetch runs on a trunk push, in a step that can fail the run
+AssertionError: ci:unauthenticated-fetch runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:drizzle-tenant-scope:selftest runs on a trunk push, in a step that can fail the run
+AssertionError: ci:drizzle-tenant-scope:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:drizzle-tenant-scope runs on a trunk push, in a step that can fail the run
+AssertionError: ci:drizzle-tenant-scope runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:migration-drop-safety:selftest runs on a trunk push, in a step that can fail the run
+AssertionError: ci:migration-drop-safety:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:migration-drop-safety runs on a trunk push, in a step that can fail the run
+AssertionError: ci:migration-drop-safety runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:upload-guards:selftest runs on a trunk push, in a step that can fail the run
+AssertionError: ci:upload-guards:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:upload-guards runs on a trunk push, in a step that can fail the run
+AssertionError: ci:upload-guards runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > no npm gate in pr-checks.yml is pull-request-only
+AssertionError: these run on pull requests only: expected [ 'check:compliance-claims', …(21) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "check:compliance-claims",
++   "check:microcopy",
++   "check:ledger",
++   "ci:server-error-leaks",
++   "ci:error-envelope",
++   "check:catalog-copy",
++   "ci:insert-columns-declared",
++   "ci:unverified-verdicts",
++   "ci:discarded-audit-write:self-test",
++   "ci:discarded-audit-write",
++   "ci:canonicalizers",
++   "ci:commonjs-require",
++   "ci:governed-export-consequence-shape",
++   "ci:governed-export-consequence-shape:selftest",
++   "ci:governed-export-routes",
++   "ci:migration-set-order",
++   "ci:model-migration-agreement",
++   "ci:node-runtime",
++   "ci:orm-reachability",
++   "ci:reasoning-tier-ga-readiness",
++   "ci:reasoning-tier-uat-evidence",
++   "ci:session-scoped-rls-bypass",
++ ]
+
+ ❯ tests/ci/ci-honesty.contract.test.ts:90:56
+     88|     expect(gates.length).toBeGreaterThan(0);
+     89|     const missing = gates.filter((g) => !steps.some(({ step }) => runs…
+     90|     expect(missing, 'these run on pull requests only').toEqual([]);
+       |                                                        ^
+     91|   });
+     92|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > Semgrep p/ci runs on a trunk push, with --error
+AssertionError: expected '' to match /--config=p\/ci\b/ci\b
+
+- Expected:
+/--config=p\/ci\b/
+
++ Received:
+""
+
+ ❯ tests/ci/ci-honesty.contract.test.ts:96:65
+     94|     const wf = readWorkflow('semgrep.yml');
+     95|     expect(triggersOnTrunkPush(wf)).toBe(true);
+     96|     expect(String(wf.jobs.semgrep?.env?.SEMGREP_CONFIGS ?? '')).toMatc…
+       |                                                                 ^
+     97|     expect(stepNamed(wf, 'semgrep', 'Blocking scan').run).toMatch(/--e…
+     98|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed | 25 skipped (40)
+   Start at  06:33:25
+   Duration  797ms (transform 153ms, setup 111ms, import 148ms, tests 74ms, environment 0ms)
+

@@ -1,0 +1,25 @@
+        "blockAllMedia": true,
+        "maskAllInputs": true,
+        "maskAllText": true,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ client/src/utils/__tests__/sentry-init.test.ts:72:27
+     70|     expect(initSpy).toHaveBeenCalledTimes(1);
+     71|     const options = initSpy.mock.calls[0][0] as Record<string, unknown…
+     72|     expect(replaySpy).not.toHaveBeenCalled();
+       |                           ^
+     73|     const integrations = (options.integrations ?? []) as Array<{ name?…
+     74|     expect(integrations.map((i) => i.name)).not.toContain('Replay');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  03:12:36
+   Duration  855ms (transform 189ms, setup 134ms, import 31ms, tests 71ms, environment 0ms)
+

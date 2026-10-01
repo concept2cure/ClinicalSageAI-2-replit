@@ -1,0 +1,269 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:30:29.901Z","pid":20468,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:30:29.904Z","pid":20468,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:30:29.904Z","pid":20468,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/org-retention-period.dbtest.ts > the runtime posture this suite proves under > serves as app_service, not a superuser, without BYPASSRLS, with enforcement on 11ms
+ ✓ tests/db/org-retention-period.dbtest.ts > the runtime posture this suite proves under > the setting table is tenant-isolated by the sweep: RLS enabled and forced, tenant_isolation_policy present 6ms
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+[database] Database connection successful
+
+stderr | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T06:30:31.221Z","pid":20468,"hostname":"vm","context":{"filename":"DBTEST-P122ORG-1.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+Warning: Indexing all PDF objects
+
+(node:20468) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-10-01T06:30:31.635Z","pid":20468,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:30:31.752Z","pid":20468,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+{
+  "timestamp": "2026-10-01T06:30:31.885Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "9ea231aa-eda9-4a31-9e0f-dbd908a9a5df",
+    "code": "DBTEST-P122ORG-1",
+    "type": "OTHER",
+    "size": 88,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:30:31.940Z","pid":20468,"hostname":"vm","context":{"filename":"DBTEST-P122ORG-2.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:30:31.945Z","pid":20468,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:30:31.946Z","pid":20468,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > the next admission is dated from the organisation's 30 years
+{
+  "timestamp": "2026-10-01T06:30:31.971Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ae8f7f14-f4e4-4f80-baab-03f41c59c5e4",
+    "code": "DBTEST-P122ORG-2",
+    "type": "OTHER",
+    "size": 88,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:30:31.982Z","pid":20468,"hostname":"vm","context":{"filename":"DBTEST-P122ORG-3.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:30:31.985Z","pid":20468,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:30:31.986Z","pid":20468,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+ × tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated 1846ms
+   → expected null to be '2051-10-01' // Object.is equality
+ × tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > reads 25 years, the default, for an organisation that has set nothing 13ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > an administrator sets 30 years; the change and its chained audit row are one transaction 16ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > the next admission is dated from the organisation's 30 years 43ms
+   → expected null to be '2056-10-01' // Object.is equality
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > another organisation's setting does not apply, cannot be read, and is invisible under RLS
+{
+  "timestamp": "2026-10-01T06:30:32.011Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "7ade144b-c058-4e00-9a9a-955be7bfe9d8",
+    "code": "DBTEST-P122ORG-3",
+    "type": "OTHER",
+    "size": 88,
+    "hasText": false
+  }
+}
+
+ × tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > another organisation's setting does not apply, cannot be read, and is invisible under RLS 40ms
+   → expected null to be '2051-10-01' // Object.is equality
+ × tests/db/org-retention-period.dbtest.ts > shortening is a governed act > below 25 years without a reason and the governing rule: 400, and nothing changes 21ms
+   → {"years":10}: expected 404 to be 400 // Object.is equality
+ ✓ tests/db/org-retention-period.dbtest.ts > shortening is a governed act > the database refuses a shorter period with no reason, whatever path writes it 7ms
+ × tests/db/org-retention-period.dbtest.ts > shortening is a governed act > with a reason naming the governing rule it is recorded; a named policy that is longer still wins 5ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/org-retention-period.dbtest.ts > authority and atomicity > a member can neither read nor set the period: 403, and nothing changes 12ms
+   → expected 404 to be 403 // Object.is equality
+ × tests/db/org-retention-period.dbtest.ts > authority and atomicity > a refused audit row takes the change down with it, and the 500 carries no error text 9ms
+   → expected 404 to be 500 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+AssertionError: expected null to be '2051-10-01' // Object.is equality
+
+- Expected:
+"2051-10-01"
+
++ Received:
+null
+
+ ❯ tests/db/org-retention-period.dbtest.ts:221:21
+    219|   it('with no setting, a document is kept 25 years from admission — ne…
+    220|     const d = await admit(mine);
+    221|     expect(d.until).toBe(d.y25);
+       |                     ^
+    222|   });
+    223|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > reads 25 years, the default, for an organisation that has set nothing
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/org-retention-period.dbtest.ts:226:50
+    224|   it('reads 25 years, the default, for an organisation that has set no…
+    225|     const res = await get(mine, admin, 'admin');
+    226|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    227|     expect(res.body.retention).toMatchObject({ years: 25, defaultYears…
+    228|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > an administrator sets 30 years; the change and its chained audit row are one transaction
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/org-retention-period.dbtest.ts:232:50
+    230|   it('an administrator sets 30 years; the change and its chained audit…
+    231|     const res = await put(mine, admin, 'admin', { years: 30, reason: '…
+    232|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    233|     expect(res.body.retention).toMatchObject({ years: 30, isDefault: f…
+    234|     const setting = await settingOf(mine);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > the next admission is dated from the organisation's 30 years
+AssertionError: expected null to be '2056-10-01' // Object.is equality
+
+- Expected:
+"2056-10-01"
+
++ Received:
+null
+
+ ❯ tests/db/org-retention-period.dbtest.ts:249:21
+    247|   it("the next admission is dated from the organisation's 30 years", a…
+    248|     const d = await admit(mine);
+    249|     expect(d.until).toBe(d.y30);
+       |                     ^
+    250|   });
+    251|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > another organisation's setting does not apply, cannot be read, and is invisible under RLS
+AssertionError: expected null to be '2051-10-01' // Object.is equality
+
+- Expected:
+"2051-10-01"
+
++ Received:
+null
+
+ ❯ tests/db/org-retention-period.dbtest.ts:254:21
+    252|   it("another organisation's setting does not apply, cannot be read, a…
+    253|     const d = await admit(theirs);
+    254|     expect(d.until).toBe(d.y25);
+       |                     ^
+    255|     const res = await get(theirs, admin, 'admin');
+    256|     expect(res.body.retention).toMatchObject({ years: 25, isDefault: t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  tests/db/org-retention-period.dbtest.ts > shortening is a governed act > below 25 years without a reason and the governing rule: 400, and nothing changes
+AssertionError: {"years":10}: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ tests/db/org-retention-period.dbtest.ts:271:48
+    269|     for (const body of [{ years: 10 }, { years: 10, reason: 'shorter p…
+    270|       const res = await put(mine, admin, 'admin', body);
+    271|       expect(res.status, JSON.stringify(body)).toBe(400);
+       |                                                ^
+    272|       expect(res.body.error).toBe('RETENTION_REASON_REQUIRED');
+    273|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  tests/db/org-retention-period.dbtest.ts > shortening is a governed act > with a reason naming the governing rule it is recorded; a named policy that is longer still wins
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/org-retention-period.dbtest.ts:291:50
+    289|     const body = { years: 10, reason: 'IND records: 2 years after appr…
+    290|     const res = await put(mine, admin, 'admin', body);
+    291|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    292|     expect(res.body.retention).toMatchObject({ years: 10, governingRul…
+    293|     const last = (await auditRows(mine)).at(-1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  tests/db/org-retention-period.dbtest.ts > authority and atomicity > a member can neither read nor set the period: 403, and nothing changes
+AssertionError: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ tests/db/org-retention-period.dbtest.ts:305:56
+    303|   it('a member can neither read nor set the period: 403, and nothing c…
+    304|     const before = await settingOf(mine);
+    305|     expect((await get(mine, member, 'member')).status).toBe(403);
+       |                                                        ^
+    306|     expect((await put(mine, member, 'member', { years: 40 })).status).…
+    307|     expect(await settingOf(mine)).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  tests/db/org-retention-period.dbtest.ts > authority and atomicity > a refused audit row takes the change down with it, and the 500 carries no error text
+AssertionError: expected 404 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 404
+
+ ❯ tests/db/org-retention-period.dbtest.ts:316:26
+    314|     try {
+    315|       const res = await put(mine, admin, 'admin', { years: 50 });
+    316|       expect(res.status).toBe(500);
+       |                          ^
+    317|       expect(JSON.stringify(res.body)).not.toMatch(/probe|audit store|…
+    318|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 3 passed (12)
+   Start at  06:30:26
+   Duration  5.94s (transform 2.64s, setup 105ms, import 2.95s, tests 2.13s, environment 0ms)
+

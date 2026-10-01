@@ -1,0 +1,36 @@
+2026-10-01T08:28:38Z
+# knowledge-base.ts AFTER the fix-round edit (sha256 below)
+f3cb67c33d4edbe37b2655615ff7bd4bcffc2055741cd4caadf091f2f7d42832  server/routes/knowledge-base.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > GET /search-connectors 23ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > POST /upload 54ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > GET /context/:projectId 5ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > leaves the 422 answer unchanged 4ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > GET /context/:projectId (JSON 500) 8ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > POST /generate-ind-section (plain-text 503) 4ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > POST /upload (JSON 500) 6ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > POST /generate-docx (binary relay, plain-text 500) 4ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > POST /generate-ind-package (binary relay, plain-text 500) 6ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > still relays a shadow 4xx answer with its status and body (intended behaviour) 5ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > still relays a successful binary render unchanged 4ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  08:28:39
+   Duration  5.55s (transform 2.79s, setup 172ms, import 4.47s, tests 127ms, environment 0ms)
+

@@ -701,8 +701,12 @@ async function readChainRows(
   return rows;
 }
 
-/** app.rls_enforce=on without app_super_admin: the connection sees one tenant. */
-async function connectionIsTenantScoped(client: PoolClient): Promise<boolean> {
+/**
+ * app.rls_enforce=on without app_super_admin: the connection sees one tenant.
+ * Exported for the chain-head anchor (chain-anchor.ts), which must refuse a
+ * partial view for the same reason the cross-tenant walk does.
+ */
+export async function connectionIsTenantScoped(client: PoolClient): Promise<boolean> {
   const view = await client.query(
     `SELECT NULLIF(current_setting('app.rls_enforce', true), '') AS rls_enforce,
             NULLIF(current_setting('app.current_user_role', true), '') AS role`,

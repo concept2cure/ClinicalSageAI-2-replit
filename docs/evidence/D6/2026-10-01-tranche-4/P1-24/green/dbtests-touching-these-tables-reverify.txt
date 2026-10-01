@@ -1,0 +1,86 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T05:57:09.385Z","pid":11396,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T05:57:09.386Z","pid":11396,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T05:57:09.386Z","pid":11396,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/domain-history-append-only.dbtest.ts > the probe runs as the runtime role, under RLS > is app_service-shaped: not the owner, not a superuser, no BYPASSRLS, RLS enforced 1799ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 13ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > refuses an UPDATE from the runtime role 11ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > refuses a DELETE from the runtime role 9ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > refuses a TRUNCATE, even by the owner 3ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > is installed under its own names, enabled 2ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 12ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > refuses an UPDATE from the runtime role 18ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > refuses a DELETE from the runtime role 11ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > refuses a TRUNCATE, even by the owner 3ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > is installed under its own names, enabled 1ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 9ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > refuses an UPDATE from the runtime role 9ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > refuses a DELETE from the runtime role 10ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > refuses a TRUNCATE, even by the owner 2ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > is installed under its own names, enabled 1ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 9ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > refuses an UPDATE from the runtime role 7ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > refuses a DELETE from the runtime role 6ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > refuses a TRUNCATE, even by the owner 2ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > is installed under its own names, enabled 1ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 6ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > refuses an UPDATE from the runtime role 6ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > refuses a DELETE from the runtime role 9ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > refuses a TRUNCATE, even by the owner 2ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > is installed under its own names, enabled 2ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > deleting a unified document with an audit row and a workflow history is refused 12ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > deleting a document workflow with history is refused 7ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > deleting an AnA conversation that governed actions name is refused (its SET NULL is an UPDATE) 6ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > a parent with no history is still deleted — the guard is on the history, not the parent 6ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > replay (CLAUDE.md Rule 1: the file re-runs on every deploy) > re-applies cleanly and re-arms a trigger someone disabled 7ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd 14ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every non-public child the chained list names that exists ends up policied, enabled and FORCEd 11ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > chat_messages: each tenant sees its own row and not the other's 18ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_details: each tenant sees its own row and not the other's 14ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_sections: each tenant sees its own row and not the other's 13ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > rag_chunks: each tenant sees its own row and not the other's 11ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > complaints: each tenant sees its own row and not the other's 13ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > drafting_tasks: each tenant sees its own row and not the other's 9ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's 11ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's 13ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > c2c_document_section_versions: each tenant sees its own row and not the other's 20ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > leaves the three chained tables deny-all, deliberately and visibly 2ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > the policy is inert when enforcement is off, exactly like its siblings 2ms
+{"level":30,"time":"2026-10-01T05:57:12.654Z","pid":11526,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T05:57:12.656Z","pid":11526,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T05:57:12.656Z","pid":11526,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an organisation member (not owner/admin/manager) is refused and the document stays 89ms
+{"level":30,"time":"2026-10-01T05:57:15.450Z","pid":11526,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3688b69c-3a36-4e89-9c15-2b378e3ff789 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T05:57:15.451Z","pid":11526,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"a5f27569-a4cd-449f-a90a-d90d29fbb51c"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an admin deletes an empty document of their organisation; the chained row names the actor and the reason 48ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a document with a section (so a revision) answers 409 and stays — the ledger is append-only 66ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > another organisation's admin gets 404 for this organisation's document, and it stays 32ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin freezing without the password is refused by the ceremony; the document stays a draft 130ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > a member without a signing role is refused before any credential is read 32ms
+{"level":30,"time":"2026-10-01T05:57:15.736Z","pid":11526,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc d58e46f6-0572-4428-bd8c-51b3b360fe75 by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed 75ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > workflow_templates is present 3ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > workflow_steps is present 1ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > document_workflows is present 1ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > workflow_approvals is present 1ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > workflow_history is present 1ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > document_workflows carries every column the pending-approvals read projects 8ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > answers the pending-approvals predicate instead of raising 4ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > enforces the foreign keys the workflow chain depends on 4ms
+
+ Test Files  4 passed (4)
+      Tests  59 passed (59)
+   Start at  05:57:07
+   Duration  8.89s (transform 2.74s, setup 204ms, import 324ms, tests 7.54s, environment 0ms)
+

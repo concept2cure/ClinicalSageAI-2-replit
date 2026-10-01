@@ -1,0 +1,3162 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > freezes through the shared signing dialog: meaning, reason and password go to the real endpoint 5271ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > offers only the meanings a freeze carries — approval is E-sign 5038ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > sends the authenticator code with the freeze when one is enrolled, and a review meaning as REVIEWER 5034ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > a 401 on freeze is shown in the dialog as not sealed — never as "frozen and sealed" 5035ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > re-asks, naming what is outstanding, instead of reporting a failure 5021ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > sends the acknowledgement only when the user deliberately chooses to seal, under a fresh signature 5021ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > sends nothing at all when the user chooses to go back and resolve 5024ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > a settled document goes straight to the signature, with nothing to acknowledge 5021ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > signs through the shared dialog: the password and meaning go to the real endpoint (approves + freezes) 137ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > asks for the authenticator code when one is enrolled, and sends it with the signature 114ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > offers only the meanings the authoring store takes 51ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > a refused credential is shown in the dialog, and nothing is signed or claimed 67ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > disables Freeze once the document is already frozen 10ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > disables Freeze and E-sign with the reason as visible, described text 16ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > leaves both enabled when the permission is unknown 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > freezes through the shared signing dialog: meaning, reason and password go to the real endpoint
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ signFreeze client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:85:31
+     83| async function signFreeze(opts: { password?: string; meaning?: RegExp …
+     84|   fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+     85|   const dialog = await screen.findByRole('dialog');
+       |                               ^
+     86|   if (opts.meaning) fireEvent.click(within(dialog).getByRole('radio', …
+     87|   fireEvent.change(within(dialog).getByLabelText(/Reason for this acti…
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:106:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > offers only the meanings a freeze carries — approval is E-sign
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:120:33
+    118|     renderBar('draft');
+    119|     fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+    120|     const dialog = await screen.findByRole('dialog');
+       |                                 ^
+    121|     const offered = within(dialog).getAllByRole('radio').map((r) => (r…
+    122|     expect(offered).toEqual(['Authorship', 'Review']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > sends the authenticator code with the freeze when one is enrolled, and a review meaning as REVIEWER
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ signFreeze client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:85:31
+     83| async function signFreeze(opts: { password?: string; meaning?: RegExp …
+     84|   fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+     85|   const dialog = await screen.findByRole('dialog');
+       |                               ^
+     86|   if (opts.meaning) fireEvent.click(within(dialog).getByRole('radio', …
+     87|   fireEvent.change(within(dialog).getByLabelText(/Reason for this acti…
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:130:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > a 401 on freeze is shown in the dialog as not sealed — never as "frozen and sealed"
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ signFreeze client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:85:31
+     83| async function signFreeze(opts: { password?: string; meaning?: RegExp …
+     84|   fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+     85|   const dialog = await screen.findByRole('dialog');
+       |                               ^
+     86|   if (opts.meaning) fireEvent.click(within(dialog).getByRole('radio', …
+     87|   fireEvent.change(within(dialog).getByLabelText(/Reason for this acti…
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:149:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > re-asks, naming what is outstanding, instead of reporting a failure
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ signFreeze client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:85:31
+     83| async function signFreeze(opts: { password?: string; meaning?: RegExp …
+     84|   fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+     85|   const dialog = await screen.findByRole('dialog');
+       |                               ^
+     86|   if (opts.meaning) fireEvent.click(within(dialog).getByRole('radio', …
+     87|   fireEvent.change(within(dialog).getByLabelText(/Reason for this acti…
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:176:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > sends the acknowledgement only when the user deliberately chooses to seal, under a fresh signature
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ signFreeze client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:85:31
+     83| async function signFreeze(opts: { password?: string; meaning?: RegExp …
+     84|   fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+     85|   const dialog = await screen.findByRole('dialog');
+       |                               ^
+     86|   if (opts.meaning) fireEvent.click(within(dialog).getByRole('radio', …
+     87|   fireEvent.change(within(dialog).getByLabelText(/Reason for this acti…
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:196:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > sends nothing at all when the user chooses to go back and resolve
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ signFreeze client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:85:31
+     83| async function signFreeze(opts: { password?: string; meaning?: RegExp …
+     84|   fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+     85|   const dialog = await screen.findByRole('dialog');
+       |                               ^
+     86|   if (opts.meaning) fireEvent.click(within(dialog).getByRole('radio', …
+     87|   fireEvent.change(within(dialog).getByLabelText(/Reason for this acti…
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:222:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > a settled document goes straight to the signature, with nothing to acknowledge
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+      [33mtitle[39m=[32m"Snapshot and seal this document"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFreeze[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn ghost"[39m
+      [33mstyle[39m=[32m"height: 30px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 20h9"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m E-sign[0m
+    [36m</button>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-title"[39m
+      [36m>[39m
+        [0mFreeze document[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-sub"[39m
+      [36m>[39m
+        [0mSnapshot “M2.3 QOS” into an immutable, hash-sealed version before signing or filing.[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"form-fields"[39m
+      [36m>[39m
+        [0mreason,version[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-submit"[39m
+      [36m>[39m
+        [0mFreeze and seal[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdata-testid[39m=[32m"form-cancel"[39m
+      [36m>[39m
+        [0mcancel[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:237:35
+    235|       renderBar('draft');
+    236|       fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+    237|       const dialog = await screen.findByRole('dialog');
+       |                                   ^
+    238|       expect(dialog.textContent).not.toMatch(/as it stands/);
+    239|       expect(screen.queryByTestId('form-title')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 7 passed (15)
+   Start at  03:21:32
+   Duration  42.67s (transform 418ms, setup 213ms, import 542ms, tests 40.88s, environment 763ms)
+

@@ -1,0 +1,6 @@
+2026-10-01T08:29:32Z
+# ESLint problem counts: HEAD content (stdin) vs working tree
+server/routes/se-matrix.ts  HEAD=2  working-tree=2
+server/routes/knowledge-base.ts  HEAD=47  working-tree=46
+server/routes/__tests__/se-matrix-5xx-containment.test.ts  (new, untracked)  working-tree=0
+server/routes/__tests__/knowledge-base-5xx-containment.test.ts  (new, untracked)  working-tree=0

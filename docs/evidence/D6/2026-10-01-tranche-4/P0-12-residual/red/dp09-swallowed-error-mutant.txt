@@ -1,0 +1,114 @@
+# DP-09 mutant: server/services/ana-ri/command-executor.ts at 66e82a6d with the pre-dc48d926 swallow reinstated
+# (runIfTablePresent -> client.query(...).catch(() => ({ rows: [] })), no SAVEPOINT; request INSERT .catch(() => undefined)).
+# Built by scratchpad dp09_mutant.py as a temporary sibling file, run with the erasure describe of
+# ana-governed-command-signature.pglite.integration.test.ts pointed at it, then both temporary files deleted.
+# NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts -t erase_personal_data
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:30:00.760Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > place_in_dossier signs the placement it makes > writes the signature with the artifact target, meaning, content binding and verified factors
+ ↓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > place_in_dossier signs the placement it makes > without a verified sign-off it places nothing and signs nothing
+ ↓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > place_in_dossier signs the placement it makes > a failed signature write rolls the placement back
+ ↓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > place_in_dossier signs the placement it makes > refuses an artifact outside the caller's organization, writing nothing
+ ↓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > create_submission_package signs the creation decision > writes the signature over the ledger, claiming no content hash
+ ↓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > create_submission_package signs the creation decision > another organization's project is refused before anything is written, signature included (PF-03)
+ ↓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > create_submission_package signs the creation decision > without a verified sign-off creates no package
+ ↓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > create_submission_package signs the creation decision > a failed signature write rolls the package back
+ ↓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > writes the reverted content as a new version, bound to that content and version
+ ↓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > without a verified sign-off writes no version
+ ↓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > a failed signature write rolls the new version back
+stderr | server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > erase_personal_data > signs first: a self-erasure is signed under the pre-erasure name, bound to the ledger
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > erase_personal_data > signs first: a self-erasure is signed under the pre-erasure name, bound to the ledger 548ms
+ ✓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > erase_personal_data > retains regulated artifact content and reports it with the legal basis 35ms
+ ✓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > erase_personal_data > without a verified sign-off erases nothing 40ms
+ ✓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > erase_personal_data > a failed signature write rolls the whole erasure back 30ms
+ × server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > erase_personal_data > a failing redaction statement returns failure with nothing committed 62ms
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > erase_personal_data > an absent table is reported as not applicable, not as zero, and the erasure completes 53ms
+   → expected +0 to be null
+ × server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > erase_personal_data > the erasure record is not optional: a missing request table fails the erasure 21ms
+   → expected true to be false // Object.is equality
+ ↓ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > tagArtifact into a section that already has an artifact > updates that artifact, merging its metadata
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > erase_personal_data > a failing redaction statement returns failure with nothing committed
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts:468:23
+    466|     await pg.exec(`ALTER TABLE concept2cure_thread_comments RENAME COL…
+    467|     const r = await erase(signoff());
+    468|     expect(r.success).toBe(false);
+       |                       ^
+    469|     expect((await userRow()).name).toBe(SIGNER_NAME);
+    470|     expect((await q(`SELECT summary FROM concept2cure_conversations`))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > erase_personal_data > an absent table is reported as not applicable, not as zero, and the erasure completes
+AssertionError: expected +0 to be null
+
+- Expected:
+null
+
++ Received:
+0
+
+ ❯ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts:480:38
+    478|     const r = await erase(signoff());
+    479|     expect(r.success).toBe(true);
+    480|     expect(r.data?.redactedComments).toBeNull();
+       |                                      ^
+    481|     expect(r.data?.notApplicable).toEqual(['concept2cure_thread_commen…
+    482|     expect((await userRow()).name).toBe(`[ERASED USER ${SIGNER}]`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts > erase_personal_data > the erasure record is not optional: a missing request table fails the erasure
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/dp09-mutant.pglite.integration.test.ts:491:25
+    489|     try {
+    490|       const r = await erase(signoff());
+    491|       expect(r.success).toBe(false);
+       |                         ^
+    492|       expect((await userRow()).name).toBe(SIGNER_NAME);
+    493|       expect(await signatures()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed | 12 skipped (19)
+   Start at  03:29:48
+   Duration  15.91s (transform 6.88s, setup 167ms, import 875ms, tests 14.46s, environment 0ms)
+

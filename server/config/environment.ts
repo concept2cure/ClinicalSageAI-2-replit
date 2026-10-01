@@ -16,6 +16,7 @@ import {
 import { assertAuditExportKeyPostureForProduction } from '../services/audit/auditExportKeyPosture';
 import {
   assertAiGovernancePostureForProduction,
+  assertAiProviderElectionPostureForProduction,
   assertDeterministicModePostureForProduction,
 } from '../startup/ai-governance-posture';
 import { assertSensitivePlacementConfiguration } from '../services/ai-gateway/sensitive-placement-policy';
@@ -332,6 +333,10 @@ assertAiGovernancePostureForProduction();
 // that risk, and AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses it regardless. The
 // gateway enforces the same rule per request. No-op outside production.
 assertDeterministicModePostureForProduction();
+// Provider election (ADR-0014 §1, P1-45): Moonshot (Kimi) is not a production
+// lane for any organization, so KIMI_API_KEY / MOONSHOT_API_KEY refuse to boot.
+// No acceptance flag. No-op outside production.
+assertAiProviderElectionPostureForProduction();
 assertSensitivePlacementConfiguration();
 // Private-cloud residency (D6, 2026-09-25): a declared AI_BEDROCK_RESIDENCY /
 // AI_VERTEX_RESIDENCY that the region the client calls does not serve refuses

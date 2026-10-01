@@ -169,21 +169,17 @@ const errorTrackerMiddleware = logger => {
       Sentry.captureException(err);
     }
 
-    // Don't expose error details in production
-    if (config.isProduction) {
-      res.status(500).json({
-        status: 'error',
-        message: 'An unexpected error occurred',
-        errorId, // Return error ID for support reference
-      });
-    } else {
-      res.status(500).json({
-        status: 'error',
-        message: err.message,
-        stack: err.stack,
-        errorId,
-      });
-    }
+    // Don't expose error details in ANY environment. This used to send
+    // `message: err.message` and `stack: err.stack` whenever NODE_ENV was not
+    // production, but a staging, demo or preview deployment is still one people
+    // sign into, and an error handler answers whoever can make a request fail.
+    // The message and stack are logged above (and sent to Sentry) under the
+    // errorId the body carries (P1-17, IAM-18 (1)).
+    res.status(500).json({
+      status: 'error',
+      message: 'An unexpected error occurred',
+      errorId, // Return error ID for support reference
+    });
   };
 };
 

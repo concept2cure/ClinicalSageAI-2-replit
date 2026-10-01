@@ -1,0 +1,2 @@
+check-route-collisions: 10 prefixes carry more than one router; 57 routers read.
+✅ no route is defined twice under a shared prefix.

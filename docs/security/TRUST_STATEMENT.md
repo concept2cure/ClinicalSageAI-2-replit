@@ -65,10 +65,15 @@ until the founder signs it and the production environment is live.
 - **Incident tabletop, access reviews, restore timing on production-size data.**
 
 ## Sub-processors (planned for launch)
-Amazon Web Services (hosting, storage, keys); Anthropic (Claude models);
-GitHub (source control and CI). Additional model lanes (OpenAI, Moonshot,
-Google Vertex, Azure OpenAI, AWS Bedrock) are disabled unless a tenant's
-placement approval names them.
+Amazon Web Services (hosting, storage, keys; and Claude on Amazon Bedrock
+where deployed); Anthropic (Claude models); GitHub (source control and CI).
+OpenAI, Google Vertex and Azure OpenAI receive a tenant's content only when
+that tenant's placement policy names them, as its Order Form records; in
+production the AI gateway enforces this for generation, fallback and
+embeddings, and a tenant that has not elected a second provider gets an error
+when Anthropic is unavailable, never another vendor's answer. Moonshot (Kimi)
+is not used in production for any tenant: a production server configured with
+a Moonshot key refuses to start.
 
 ## Contact
 Security questions and vulnerability reports: security@concept2cure.pro

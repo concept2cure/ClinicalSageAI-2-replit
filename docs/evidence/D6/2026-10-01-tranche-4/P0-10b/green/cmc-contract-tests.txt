@@ -1,0 +1,44 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > does not list a legacy NULL-tenant row to a foreign organization 6038ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > does not list a NULL-tenant row to a foreign tenant 6016ms
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > refuses a foreign-organization PUT on a legacy row, and leaves the row untouched 5319ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > refuses a foreign tenant PUT on a NULL-tenant row, and leaves the row untouched 5950ms
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > refuses a foreign-organization RELEASE on a legacy row, and signs nothing 3724ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > refuses a foreign tenant approve on a NULL-tenant row, and leaves it in draft 4707ms
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > still lists the owning organization BOTH its rows, legacy included 6153ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > does not return the audit history of a NULL-tenant row to a foreign tenant 7192ms
+stdout | tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > lets the owning organization release its own legacy row
+[CMC Batch] Release testing for batch 30537d24-5b64-4d61-a4b7-a0642de20fac: released
+
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > lets the owning organization release its own legacy row 6572ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > still lists the owning tenant its own row 7528ms
+stdout | tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > lets the owning organization update its own row
+[CMC Batch] Updated batch record 5abfa35e-a7c8-4c99-993c-bb4a11a88015
+
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > lets the owning organization update its own row 6853ms
+stdout | tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > lets the owning tenant update its own row
+[CMC Specs] Updated specification e4a43099-9fe7-4979-b5a5-62338e7db12f
+
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > lets the owning tenant update its own row 7259ms
+stdout | tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > the writes are tenant-scoped in their own right > PUT does not write a row that stopped being the caller's between SELECT and UPDATE
+[CMC Batch] Updated batch record 6975eb48-0913-476c-9748-2b169ccaacc3
+
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > the writes are tenant-scoped in their own right > PUT does not write a row that stopped being the caller's between SELECT and UPDATE 8154ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > lets the owning tenant approve its own row 7357ms
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > the writes are tenant-scoped in their own right > RELEASE does not disposition a row that stopped being the caller's, and signs nothing 5984ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > returns the owning tenant its own audit history 5032ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > the store refuses a tenant-less specification > ships a migration that requires tenant_id 3697ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > the store refuses a tenant-less specification > rejects an INSERT with no tenant_id 7070ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > the store refuses a tenant-less specification > leaves legacy NULL rows in place rather than deleting them 7322ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > approve fails closed when the record vanishes mid-transaction > returns 404 and records no signature when the UPDATE matches no row 3189ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > approve fails closed when the record vanishes mid-transaction > writes no audit-log row attesting the phantom approval 3150ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > approve fails closed when the record vanishes mid-transaction > still approves normally while the seam is armed for another row 3887ms
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  03:26:19
+   Duration  81.21s (transform 945ms, setup 336ms, import 2.13s, tests 128.29s, environment 0ms)
+

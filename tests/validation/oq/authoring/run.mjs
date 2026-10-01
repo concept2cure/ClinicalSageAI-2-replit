@@ -323,13 +323,14 @@ await step(
     id: 'OQ-AUTH-11a',
     urs: ['URS-AUTH-009', 'URS-AUTH-007'],
     title: 'Freeze is refused while a review comment is unresolved (negative case)',
-    action: 'POST /api/authoring/docs/:id/freeze {reason, version:"1.0"} while the OQ-AUTH-09 comment is open; GET /docs/:id/frozen',
+    action: 'POST /api/authoring/docs/:id/freeze {reason, version:"1.0", meaning:"AUTHOR"} while the OQ-AUTH-09 comment is open; GET /docs/:id/frozen',
     expected: 'HTTP 409 DOCUMENT_NOT_SETTLED naming 1 unresolved comment; nothing frozen (no content hash retrievable)',
     dependsOn: ['OQ-AUTH-09'],
     note: 'VSR-001 §8.3 P-1: the baseline protocol froze over an open comment and recorded the refusal as a failure. The refusal is the required fail-closed behaviour; this step keeps it as the negative case. The "acknowledgeUnresolved" confirm flag is deliberately NOT used as the happy path.',
   },
   async ({ api, expect }) => {
-    const r = await api('POST', `/api/authoring/docs/${state.docId}/freeze`, { reason: 'OQ-003 step 11a: freeze attempted over an open comment', version: '1.0' });
+    // DP-35: the settled-document check answers before the re-verification, so no credential is spent here.
+    const r = await api('POST', `/api/authoring/docs/${state.docId}/freeze`, { reason: 'OQ-003 step 11a: freeze attempted over an open comment', version: '1.0', meaning: 'AUTHOR' });
     expect(r.status === 409 && r.json?.error?.code === 'DOCUMENT_NOT_SETTLED', `expected 409 DOCUMENT_NOT_SETTLED, got ${r.status}`, r.json);
     expect((r.json?.unresolved?.openComments ?? 0) >= 1, 'refusal does not count the open comment', r.json);
     const f = await api('GET', `/api/authoring/docs/${state.docId}/frozen`);
@@ -370,19 +371,28 @@ await step(
   {
     id: 'OQ-AUTH-11',
     urs: ['URS-AUTH-009'],
-    title: 'Freeze the settled document into an immutable snapshot',
-    action: 'POST /api/authoring/docs/:id/freeze {reason, version:"1.0"} after the comment is resolved; GET /docs/:id/frozen',
-    expected: 'HTTP 200; a frozen record with content_hash is retrievable; a second freeze is refused',
+    title: 'Freeze the settled document into an immutable snapshot, signed by the ceremony',
+    action: 'POST /api/authoring/docs/:id/freeze {reason, version:"1.0", meaning:"AUTHOR", password, mfaToken (current code)} after the comment is resolved; GET /docs/:id/frozen',
+    expected: 'HTTP 200 with a signatureId; a frozen record with content_hash is retrievable; a second freeze is refused',
     dependsOn: ['OQ-AUTH-04', 'OQ-AUTH-11b'],
   },
-  async ({ api, expect }) => {
-    const r = await api('POST', `/api/authoring/docs/${state.docId}/freeze`, { reason: 'OQ-003 step 11 freeze', version: '1.0' });
-    expect(r.status === 200, `expected 200, got ${r.status}`, r.json);
+  async ({ api, expect, deviation }) => {
+    // DP-35 (2026-10-01): a freeze is a signature — signing authority, a meaning and the re-verified signer.
+    if (!signerCredential) deviation(CREDENTIAL_NOT_SUPPLIED);
+    const mfaToken = signerCredential.totpSecret ? await freshTotp(signerCredential.email, signerCredential.totpSecret) : undefined;
+    const r = await api('POST', `/api/authoring/docs/${state.docId}/freeze`, {
+      reason: 'OQ-003 step 11 freeze',
+      version: '1.0',
+      meaning: 'AUTHOR',
+      password: signerCredential.password,
+      ...(mfaToken ? { mfaToken } : {}),
+    });
+    expect(r.status === 200 && r.json?.signatureId, `expected 200 with a signatureId, got ${r.status}`, r.json);
     const f = await api('GET', `/api/authoring/docs/${state.docId}/frozen`);
     expect(f.status === 200, `frozen expected 200, got ${f.status}`, f.json);
     const txt = JSON.stringify(f.json);
     expect(/content_hash|contentHash/.test(txt), 'frozen record has no content hash', f.json);
-    const again = await api('POST', `/api/authoring/docs/${state.docId}/freeze`, { reason: 'second freeze', version: '1.1' });
+    const again = await api('POST', `/api/authoring/docs/${state.docId}/freeze`, { reason: 'second freeze', version: '1.1', meaning: 'AUTHOR' });
     expect(again.status === 400, `second freeze expected 400, got ${again.status}`, again.json);
     return `frozen; ${txt.slice(0, 160)}`;
   },
@@ -394,7 +404,7 @@ await step(
     urs: ['URS-AUTH-010'],
     title: 'A signing PIN signs nothing, and no route sets one',
     action: 'POST /api/authoring/users/pin {pin}; POST /docs/:id/e-sign {pin, meaning:"REVIEWER", intent} with no password',
-    expected: '404 for the PIN route; 400 PASSWORD_REQUIRED for the PIN-only signature; no signature stored',
+    expected: '404 for the PIN route; 400 PASSWORD_REQUIRED for the PIN-only signature; no signature stored beyond the OQ-AUTH-11 freeze\'s own',
     dependsOn: ['OQ-AUTH-11'],
   },
   async ({ api, expect }) => {
@@ -403,7 +413,8 @@ await step(
     const sign = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { pin: '246813', meaning: 'REVIEWER', intent: 'OQ PIN only' });
     expect(sign.status === 400 && sign.json?.code === 'PASSWORD_REQUIRED', `a PIN-only signature expected 400 PASSWORD_REQUIRED, got ${sign.status}`, sign.json);
     const s = await api('GET', `/api/authoring/docs/${state.docId}/signatures`);
-    expect((s.json?.signatures ?? []).length === 0, 'a signature was stored for a PIN', s.json);
+    // The one signature on record is the OQ-AUTH-11 freeze's own (DP-35); the PIN added none.
+    expect((s.json?.signatures ?? []).length === 1, 'a signature was stored for a PIN', s.json);
     return 'PIN route → 404; PIN-only signature → 400 PASSWORD_REQUIRED; no signature stored';
   },
 );
@@ -414,7 +425,7 @@ await step(
     urs: ['URS-AUTH-010'],
     title: 'E-signature refuses a wrong password, a missing code and an invalid meaning',
     action: 'POST /docs/:id/e-sign with (a) a wrong password, (b) the right password and no code (identity with an authenticator enrolled), (c) meaning "WHATEVER"',
-    expected: '(a) 401 PASSWORD_VERIFICATION_FAILED; (b) 400 MFA_TOKEN_REQUIRED; (c) 400 Invalid signature meaning; no signature stored',
+    expected: '(a) 401 PASSWORD_VERIFICATION_FAILED; (b) 400 MFA_TOKEN_REQUIRED; (c) 400 Invalid signature meaning; no signature stored beyond the OQ-AUTH-11 freeze\'s own',
     dependsOn: ['OQ-AUTH-12'],
   },
   async ({ api, expect, deviation }) => {
@@ -430,7 +441,8 @@ await step(
     const c = await api('POST', `/api/authoring/docs/${state.docId}/e-sign`, { password: signerCredential.password, meaning: 'WHATEVER', intent: 'OQ bad meaning' });
     expect(c.status === 400, `bad meaning expected 400, got ${c.status}`, c.json);
     const s = await api('GET', `/api/authoring/docs/${state.docId}/signatures`);
-    expect((s.json?.signatures ?? []).length === 0, 'a signature was stored despite refusal', s.json);
+    // The one signature on record is the OQ-AUTH-11 freeze's own (DP-35); the refusals added none.
+    expect((s.json?.signatures ?? []).length === 1, 'a signature was stored despite refusal', s.json);
     return `wrong password → 401; ${b ? 'no code → 400 MFA_TOKEN_REQUIRED; ' : 'no authenticator enrolled for this identity, so (b) does not apply; '}bad meaning → 400; no signature stored`;
   },
 );
@@ -441,7 +453,7 @@ await step(
     urs: ['URS-AUTH-010', 'URS-AUTH-011'],
     title: 'Apply a REVIEWER e-signature, re-verified by the ceremony and bound to the frozen snapshot',
     action: 'POST /docs/:id/e-sign {password, mfaToken (current code), meaning:"REVIEWER", intent}; GET /docs/:id/signatures',
-    expected: 'HTTP 200; one signature with signer_email = actor, meaning REVIEWER, method password+mfa (password for an identity with no authenticator), pin_verified false, signature_digest and covered_content_hash present',
+    expected: 'HTTP 200; two signatures — the OQ-AUTH-11 freeze (AUTHOR) and this one, with signer_email = actor, meaning REVIEWER, method password+mfa (password for an identity with no authenticator), pin_verified false, signature_digest and covered_content_hash present',
     dependsOn: ['OQ-AUTH-13'],
   },
   async ({ api, expect, auth, deviation }) => {
@@ -456,8 +468,9 @@ await step(
     expect(r.status === 200, `expected 200, got ${r.status}`, r.json);
     const s = await api('GET', `/api/authoring/docs/${state.docId}/signatures`);
     const sigs = s.json?.signatures ?? [];
-    expect(sigs.length === 1, `expected 1 signature, got ${sigs.length}`, sigs);
-    const sig = sigs[0];
+    // DP-35: the freeze in OQ-AUTH-11 is itself a signature (AUTHOR), so this one is the second.
+    expect(sigs.length === 2 && sigs.some((x) => x.meaning === 'AUTHOR'), `expected the freeze's AUTHOR signature and this one, got ${sigs.length}`, sigs);
+    const sig = sigs.find((x) => x.meaning === 'REVIEWER') ?? {};
     const method = mfaToken ? 'password+mfa' : 'password';
     expect(sig.signer_email === auth.user.email && sig.meaning === 'REVIEWER', 'signature attributes wrong', sig);
     expect(sig.method === method && sig.pin_verified === false, `the signature records method ${sig.method} (pin_verified ${sig.pin_verified}); expected ${method}, false`, sig);

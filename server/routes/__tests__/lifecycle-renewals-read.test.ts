@@ -113,7 +113,11 @@ describe('GET /api/lifecycle/renewals', () => {
     listObligations.mockRejectedValueOnce(new Error('connection reset'));
     const res = await request(appWith(7)).get('/api/lifecycle/renewals');
     expect(res.status).toBe(500);
-    expect(res.body.error.code).toBe('INTERNAL');
+    // The 500 answers through serverError() (P1-17, IAM-18 (1)): a static
+    // INTERNAL_ERROR envelope, never the driver's text. It used to be
+    // `{ error: { code: 'INTERNAL', message: err.message } }`.
+    expect(res.body.error).toBe('INTERNAL_ERROR');
+    expect(JSON.stringify(res.body)).not.toContain('connection reset');
     expect(res.body.data).toBeUndefined();
   });
 });

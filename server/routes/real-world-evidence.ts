@@ -323,8 +323,18 @@ export interface FAERSResult {
  * an outage. Routes translate this to 503; they must never absorb it.
  */
 export class FAERSUnavailableError extends Error {
-  constructor(readonly detail: string) {
-    super(`FAERS could not be consulted: ${detail}`);
+  /**
+   * @param publicDetail What the caller is told: openFDA's own HTTP status and error
+   *   code, public facts about a public API. Never the transport's text.
+   * @param transportDetail Log-only. A transport failure's own message names the proxy,
+   *   resolver or address this server dials, so it is kept off `publicDetail`
+   *   (IAM-18 (1), P1-17) and logged by `respondFaersUnavailable`.
+   */
+  constructor(
+    readonly publicDetail: string,
+    readonly transportDetail?: string
+  ) {
+    super(`FAERS could not be consulted: ${publicDetail}`);
     this.name = 'FAERSUnavailableError';
   }
 }
@@ -529,7 +539,8 @@ async function faersFetch(search: string, limit: number): Promise<any> {
     response = await fetch(url);
   } catch (err) {
     throw new FAERSUnavailableError(
-      `openFDA request failed: ${err instanceof Error ? err.message : 'unknown transport error'}`
+      'openFDA request failed',
+      err instanceof Error ? err.message : 'unknown transport error'
     );
   }
 
@@ -663,13 +674,16 @@ async function queryFAERS(query: FAERSQuery): Promise<FAERSResult> {
  * `signals.length === 0` cannot tell it from a real negative result.
  */
 function respondFaersUnavailable(res: Response, err: FAERSUnavailableError) {
-  console.error('[RWE] FAERS unavailable:', err.detail);
+  log.error('FAERS unavailable', {
+    detail: err.publicDetail,
+    transportDetail: err.transportDetail ?? null,
+  });
   return res.status(503).json({
     success: false,
     error: {
       code: 'FAERS_UNAVAILABLE',
       source: 'FDA openFDA drug/event',
-      detail: err.detail,
+      detail: err.publicDetail,
       message:
         'FDA FAERS could not be consulted, so no adverse-event analysis was performed. ' +
         'This is not a finding of no signal.',
@@ -792,6 +806,17 @@ router.get('/sources/:sourceId/status', (req: Request, res: Response) => {
 });
 
 /**
+ * The 501 sentence for a study source that is not configured, built from the
+ * source's id. The thrower's own sentence names the deployment's environment
+ * variable, which is not the caller's business.
+ */
+function sourceNotConfiguredMessage(dataSource: string): string {
+  return dataSource === 'fhir'
+    ? 'No FHIR data source is connected: the FHIR source is not configured for this deployment.'
+    : `Real-world data source "${dataSource}" is not configured. It requires licensed credentials.`;
+}
+
+/**
  * POST /query
  * Execute a real-world evidence study query.
  *
@@ -835,9 +860,14 @@ router.post('/query', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (err) {
     if (err instanceof RWESourceNotConfiguredError) {
+      // Not err.message: it names the deployment's env variable (IAM-18 (1), P1-17).
       return res.status(501).json({
         success: false,
-        error: { code: 'source_not_configured', message: err.message, dataSource: err.dataSource },
+        error: {
+          code: 'source_not_configured',
+          message: sourceNotConfiguredMessage(err.dataSource),
+          dataSource: err.dataSource,
+        },
       });
     }
     /* `runRWEStudy` reaches EHR/FHIR endpoints, registries and this service's

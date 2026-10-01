@@ -1,0 +1,32 @@
+# Mutant: the fixed gate (AUDIT_RE includes writeChainedAuditRow), copied to a scratch root with server/routes copied
+# from the working tree, and the writeChainedAuditRow(...) call after the governed DELETE removed from authoring.router.ts.
+# diff of the mutation:
+5545,5562d5544
+<     await writeChainedAuditRow(client, {
+<       tenantId,
+<       userId: getActorId(req) ?? undefined,
+<       action: 'authoring.document.delete',
+<       resourceType: 'authoring_document',
+<       resourceId: docId,
+<       ipAddress: (req.ip ?? undefined) as string | undefined,
+<       userAgent: req.headers['user-agent'] as string | undefined,
+<       details: {
+<         reason,
+<         actorEmail: getActorEmail(req),
+<         title: doc.title ?? null,
+<         productCode: doc.product_code ?? null,
+<         status: doc.status ?? null,
+<         version: doc.version ?? null,
+<         contentHash,
+<       },
+<     });
+# node <scratch>/scripts/ci/check-regulated-delete-audit.mjs
+[regulated-delete-audit] FAIL — 1 unaudited regulated delete(s):
+
+  server/routes/authoring.router.ts:5544
+    await client.query('DELETE FROM authoring_documents WHERE id = $1 AND tenant_id = $2', [docId, tenantId]);
+
+21 CFR Part 11 §11.10(e): a delete of a regulated record must write an audit-trail entry.
+Add an audit call (writeMutation / logAuditEntry / recordGovernedAction) before the delete,
+or, if intentional, allow-list it with a justification in this script.
+exit=1

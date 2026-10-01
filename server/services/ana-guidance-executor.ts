@@ -1,38 +1,59 @@
 /**
- * @fileoverview AnA 1.0 RI Guidance-to-Action Executor
+ * @fileoverview AnA's `ana-action` blocks, as proposals a person confirms.
  * @module server/services/ana-guidance-executor
- * @version 2.0.0
  *
- * Converts AnA's high-confidence guidance into real governed actions.
- * Creates real artifacts in concept2cureArtifacts with version tracking,
- * content hashing, and audit trail — or review threads with comments.
+ * The persona tells AnA to end a substantive deliverable — a memo, a strategy
+ * note, a reviewer brief, a risk-log entry, a rewrite — with a fenced
+ * ```ana-action JSON block. Both chat paths hand her reply here: the live
+ * stream's post-processing (server/routes/ana-ri/post-processing.ts) and
+ * POST /api/chat (server/routes/chat/send-message.ts).
  *
- * Confidence gating:
- *   strong      → auto-execute
- *   moderate    → auto-execute (user can undo via lifecycle)
- *   provisional → prepare payload only (no DB mutation)
- *   uncertain   → recommendation only (no execution, no payload)
+ * ── What changed, and why (2026-10-01, P0-12 residual; audit DP-08) ─────────
+ * Until today a block at "strong" or "moderate" confidence was EXECUTED here:
+ * a governed artifact created in the project, and for `review_thread` a review
+ * thread opened with a comment written in the person's name. Nobody was asked.
+ * It was a third write door beside the command partition (command-rbac.ts)
+ * and the tool register (ana/tool-authorization.ts) — the two places that
+ * make every other AnA write a proposal — with writes of its own that neither
+ * saw.
  *
- * @compliance FDA 21 CFR Part 11 — all executions audit-trailed
+ * Now a block is translated into the canonical platform command it asks for,
+ * `create_artifact`, and put through executeCommands with no person's
+ * confirmation on the context. The partition decides, exactly as it does for
+ * a ```command block: create_artifact is a write, so the answer is the
+ * HUMAN_CONFIRMATION_REQUIRED proposal (confirm tier), which the client
+ * renders as the sign-off prompt (extractPendingSignoffs). A person's yes goes
+ * to POST /api/ana-ri/governed-action, which runs the same command's handler
+ * (createArtifact in ana-ri/command-executor.ts) — the one write path, with
+ * its quality gate and governed persistence. RBAC answers first: someone who
+ * may not create the artifact is told so, not asked to confirm it.
+ *
+ * What a person can no longer get by AnA's word alone, and where it is now:
+ *   - the artifact → the create_artifact proposal on the same turn;
+ *   - the review thread and its opening comment → once the backing memo
+ *     exists, `create_review_thread` and `add_review_comment` (both proposals
+ *     through the same partition), on the artifact the person created.
+ *
+ * Provisional and uncertain blocks propose nothing, as before: the persona
+ * tells AnA to recommend, not act, at those levels.
+ *
+ * Every block leaves a line in the answer saying what became of it — proposed
+ * and not yet saved, or not saved and why — taken from the partition's answer
+ * (fix round, 2026-10-01). Both chat paths store what settleActionBlocks
+ * answers, so neither can say a block ran when nothing did.
+ *
+ * POST /api/chat cannot hold a turn to ask, as the live stream does, so it
+ * also returns the platform-command proposals its tool loop produced
+ * (pendingSignoffFromToolResult) in the same envelope; until then those
+ * reached only the model and the person had nothing to confirm.
+ *
+ * This module writes nothing and stamps nothing. It must not: the governed
+ * route is the one writer of `humanConfirmed`.
  */
 
-import {
-  concept2cureReviewThreads,
-  concept2cureThreadComments,
-  concept2cureProvenanceEvents,
-} from '../../shared/schema.js';
-import { eq } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
-import { executeGovernedAnaOperation } from './governed-ana-execution.js';
-import { validateArtifactQuality } from './ana-ri/enforcement.js';
-import { recordCommentPosted } from '../routes/c2c/review-comment-record';
-import { ANA_REVIEW_COMMENT_ROLE } from '../../shared/constants/review-comment';
-import { queryableFromDrizzle } from '../db/drizzle-queryable';
-
-async function getDbClient() {
-  const mod = await import('../db.js');
-  return mod.db;
-}
+import type { CommandContext, CommandResult } from './ana-ri/command-executor.js';
+import { PLATFORM_COMMAND_TOOL } from './ana/governed-tool-gate.js';
+import { parseIntegerProjectId } from '../lib/project-id.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -47,54 +68,6 @@ export type AnaActionType =
   | 'review_thread';
 
 export type AnaConfidenceLevel = 'strong' | 'moderate' | 'provisional' | 'uncertain';
-
-export interface AnaActionPayload {
-  type: AnaActionType;
-  projectId: number;
-  organizationId: number;
-  userId: number;
-  userName: string;
-  /** Existing artifact integer ID (for review_thread linking) */
-  existingArtifactId?: number;
-  /** CTD section code if applicable */
-  sectionCode?: string;
-  /** The generated content */
-  content: string;
-  /** Title for the artifact */
-  title: string;
-  metadata: {
-    runId: string;
-    source: 'ana_guidance';
-    confidence: AnaConfidenceLevel;
-    threadId?: string;
-    conversationId?: string;
-    decisionContext?: string;
-    guidanceSummary?: string;
-  };
-}
-
-export interface AnaActionResult {
-  success: boolean;
-  /** Whether DB mutation occurred */
-  executed: boolean;
-  actionType: AnaActionType;
-  confidence: AnaConfidenceLevel;
-  /** External artifact_id string (e.g. ana_memo_a1b2c3d4) */
-  artifactId: string | null;
-  /** Integer PK of the created artifact (for FK linking) */
-  artifactPk: number | null;
-  /** Thread external ID */
-  threadId: string | null;
-  /** The payload that was/would be executed */
-  payload: AnaActionPayload;
-  error: string | null;
-  provenance: {
-    runId: string;
-    executedAt: string;
-    executedBy: number;
-    source: 'ana_guidance';
-  };
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SIGNAL DETECTION
@@ -197,399 +170,265 @@ export function stripActionSignals(responseText: string): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CONFIDENCE GATING
+// CONFIDENCE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function shouldAutoExecute(confidence: AnaConfidenceLevel): boolean {
+/**
+ * Whether a block is put to the person at all. Strong and moderate: AnA has a
+ * deliverable ready and proposes filing it. Provisional and uncertain: she
+ * recommends only, as the persona instructs, and nothing is proposed.
+ */
+export function shouldPropose(confidence: AnaConfidenceLevel): boolean {
   return confidence === 'strong' || confidence === 'moderate';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// HELPERS
+// TRANSLATION TO THE CANONICAL COMMAND
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function makeProvenance(payload: AnaActionPayload) {
-  return {
-    runId: payload.metadata.runId,
-    executedAt: new Date().toISOString(),
-    executedBy: payload.userId,
-    source: 'ana_guidance' as const,
+type DispatchedCommand = Parameters<typeof import('./ana-ri/command-executor.js').executeCommands>[0][number];
+
+/** Where the block came from, recorded on the artifact's provenance. */
+export interface ActionBlockProvenance {
+  threadId?: string;
+  conversationId?: string;
+}
+
+/**
+ * The `create_artifact` command an ana-action block asks for. A review_thread
+ * block asks first for the memo the thread would hang on — a thread needs an
+ * artifact — under the title the old executor gave it.
+ */
+export function actionSignalToCommand(
+  signal: DetectedActionSignal,
+  projectId: number,
+  provenance: ActionBlockProvenance = {},
+): DispatchedCommand {
+  const isThread = signal.type === 'review_thread';
+  const metadata: Record<string, unknown> = {
+    source: 'ana_guidance',
+    anaGenerated: true,
+    anaActionType: signal.type,
+    confidence: signal.confidence,
   };
-}
-
-function failResult(payload: AnaActionPayload, error: string): AnaActionResult {
+  for (const [k, v] of Object.entries({
+    decisionContext: signal.decisionContext,
+    guidanceSummary: signal.guidanceSummary,
+    threadId: provenance.threadId,
+    conversationId: provenance.conversationId,
+  })) {
+    if (v) metadata[k] = v;
+  }
   return {
-    success: false,
-    executed: false,
-    actionType: payload.type,
-    confidence: payload.metadata.confidence,
-    artifactId: null,
-    artifactPk: null,
-    threadId: null,
-    payload,
-    error,
-    provenance: makeProvenance(payload),
+    command: 'create_artifact',
+    params: {
+      projectId,
+      title: isThread ? `[Review Context] ${signal.title}` : signal.title,
+      content: signal.content,
+      type: isThread ? 'memo' : signal.type,
+      ...(signal.sectionCode ? { ctdSection: signal.sectionCode } : {}),
+      metadata,
+    },
   };
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// EXECUTOR — ARTIFACT CREATION
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Creates a real artifact in concept2cureArtifacts with:
- * - Unique external artifactId
- * - Content hash (SHA-256) for integrity
- * - Version 1 snapshot in concept2cureArtifactVersions
- * - Metadata linking back to AnA guidance run
- * - Draft status (lifecycle starting point)
- */
-async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaActionResult> {
-  // Pre-flight validation
-  if (!payload.content || payload.content.trim().length === 0) {
-    return failResult(payload, 'Artifact content is empty');
-  }
-  if (!payload.title || payload.title.trim().length === 0) {
-    return failResult(payload, 'Artifact title is empty');
-  }
-
-  // Real content-quality grade — replaces the naive confidence-derived
-  // letter grade. Runs the existing validateArtifactQuality gate (length,
-  // filler patterns, structure, evidence labels, intent alignment,
-  // semantic depth) so the persisted qualityGate reflects the actual
-  // artifact content, not AnA's self-report of her own confidence.
-  const contentQuality = validateArtifactQuality(payload.content, payload.type);
-
-  // AnA grading herself hard: if her own output rates 'rejected', refuse
-  // to persist. Prevents low-quality AI artifacts from polluting the
-  // dossier even when AnA self-reports 'strong' confidence.
-  if (contentQuality.grade === 'rejected') {
-    return failResult(
-      payload,
-      `Artifact quality gate rejected (score ${contentQuality.score}/${contentQuality.maxScore}): ${contentQuality.issues.join('; ')}`,
-    );
-  }
-
-  try {
-    const execution = await executeGovernedAnaOperation({
-      evaluationInput: {
-        context: {
-          organizationId: String(payload.organizationId),
-          projectId: String(payload.projectId),
-          actorId: String(payload.userId),
-          actorRole: payload.userName || 'ana_guidance',
-          intendedAction: 'create',
-          documentType: payload.type,
-          sectionCode: payload.sectionCode,
-          ctdSection: payload.sectionCode,
-          originSurface: 'ri_copilot',
-        },
-        documentState: {
-          hasContent: Boolean(payload.content?.trim()),
-          hasEvidence: /\[(KNOWN|INFERRED|MISSING)\]/.test(payload.content),
-          hasBeenReviewed: false,
-          hasApproval: false,
-          hasPlacement: Boolean(payload.sectionCode),
-          placementValid: true,
-          hasProvenance: true,
-          unresolvedContradictionCount: 0,
-          criticalContradictionCount: 0,
-        },
-      },
-      artifactMutation: {
-        projectId: payload.projectId,
-        organizationId: payload.organizationId,
-        documentType: payload.type,
-        artifactClass: 'ana_guidance_generated_artifact',
-        sectionCode: payload.sectionCode,
-        title: payload.title,
-        content: payload.content,
-        status: 'draft',
-        source: 'AnA',
-        intentLens: payload.metadata.decisionContext || 'guidance',
-        originSurface: 'ri_copilot',
-        provenance: {
-          anaGenerated: true,
-          anaActionType: payload.type,
-          confidence: payload.metadata.confidence,
-          runId: payload.metadata.runId,
-          source: 'ana_guidance',
-          decisionContext: payload.metadata.decisionContext,
-          guidanceSummary: payload.metadata.guidanceSummary,
-          threadId: payload.metadata.threadId,
-          conversationId: payload.metadata.conversationId,
-        },
-        structureSections: [],
-        qualityGate: {
-          grade: contentQuality.grade,
-          pass: contentQuality.pass,
-          issues: contentQuality.issues,
-          score: contentQuality.score,
-        },
-        versioningMode: 'create',
-      },
-    });
-
-    if (execution.persistenceStatus !== 'persisted' || !execution.artifactMutation) {
-      return failResult(payload, `governed persistence rejected: ${execution.persistenceStatus}`);
-    }
-
-    console.log(
-      `[AnA Executor] Created ${payload.type}: id=${execution.artifactMutation.artifactId}, project=${payload.projectId}, org=${payload.organizationId}`
-    );
-
-    return {
-      success: true,
-      executed: true,
-      actionType: payload.type,
-      confidence: payload.metadata.confidence,
-      artifactId: String(execution.artifactMutation.artifactId),
-      artifactPk: Number(execution.artifactMutation.artifactId),
-      threadId: null,
-      payload,
-      error: null,
-      provenance: makeProvenance(payload),
-    };
-  } catch (err: any) {
-    console.error(`[AnA Executor] Artifact creation failed (org=${payload.organizationId}, project=${payload.projectId}):`, err?.message);
-    return failResult(payload, err?.message || 'Artifact creation failed');
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// EXECUTOR — REVIEW THREAD CREATION
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Creates a review thread with an initial comment. Review threads REQUIRE
- * an artifact FK (integer), so this first creates a memo artifact, then
- * attaches the thread to it. Uses Drizzle ORM — no raw SQL.
- */
-async function executeReviewThreadCreation(payload: AnaActionPayload): Promise<AnaActionResult> {
-  const threadExtId = uuidv4();
-  const commentExtId = uuidv4();
-
-  try {
-    const db = await getDbClient();
-    // Review threads require an artifact. If none provided, create a memo artifact first.
-    let artifactPk = payload.existingArtifactId || null;
-    let createdArtifactId: string | null = null;
-
-    if (!artifactPk) {
-      const memoPayload: AnaActionPayload = {
-        ...payload,
-        type: 'memo',
-        title: `[Review Context] ${payload.title}`,
-      };
-      const memoResult = await executeArtifactCreation(memoPayload);
-      if (!memoResult.success || !memoResult.artifactPk) {
-        return failResult(payload, `Could not create backing artifact for review thread: ${memoResult.error}`);
-      }
-      artifactPk = memoResult.artifactPk;
-      createdArtifactId = memoResult.artifactId;
-    }
-
-    // Transaction: thread + comment + provenance must all succeed together
-    const threadPk = await db.transaction(async (tx) => {
-      // Insert review thread via Drizzle ORM
-      const [thread] = await tx.insert(concept2cureReviewThreads).values({
-        threadId: threadExtId,
-        orgId: payload.organizationId,
-        projectId: payload.projectId,
-        artifactId: artifactPk,
-        createdById: payload.userId,
-        createdByName: payload.userName,
-        title: payload.title,
-        status: 'open',
-        priority: 'high',
-      }).returning();
-
-      const pk = thread.id;
-
-      // Insert initial comment via Drizzle ORM, with its chained record. AnA
-      // wrote these words for the person, and the record says so (D5).
-      const [comment] = await tx.insert(concept2cureThreadComments).values({
-        commentId: commentExtId,
-        orgId: payload.organizationId,
-        threadId: pk,
-        artifactId: artifactPk,
-        authorId: payload.userId,
-        authorName: payload.userName,
-        authorRole: ANA_REVIEW_COMMENT_ROLE,
-        body: payload.content,
-        kind: 'comment',
-      }).returning();
-      await recordCommentPosted(queryableFromDrizzle(tx), comment, 'ana');
-
-      // Provenance event — 21 CFR Part 11 § 11.10(e) audit trail
-      await tx.insert(concept2cureProvenanceEvents).values({
-        eventId: uuidv4(),
-        artifactId: artifactPk!,
-        organizationId: payload.organizationId,
-        eventType: 'generation',
-        eventAction: 'ai_generate',
-        actorId: payload.userId,
-        actorName: payload.userName,
-        sourceDescription: `AnA 1.0 RI created review thread for ${payload.title}`,
-        backendRoute: 'POST /api/chat',
-        backendService: 'ana-guidance-executor',
-        details: {
-          confidence: payload.metadata.confidence,
-          runId: payload.metadata.runId,
-          source: 'ana_guidance',
-          threadExtId,
-          commentExtId,
-        },
-      });
-
-      return pk;
-    });
-
-    console.log(
-      `[AnA Executor] Created review thread: threadId=${threadExtId}, artifactPk=${artifactPk}, project=${payload.projectId}, org=${payload.organizationId}`
-    );
-
-    return {
-      success: true,
-      executed: true,
-      actionType: 'review_thread',
-      confidence: payload.metadata.confidence,
-      artifactId: createdArtifactId,
-      artifactPk,
-      threadId: threadExtId,
-      payload,
-      error: null,
-      provenance: makeProvenance(payload),
-    };
-  } catch (err: any) {
-    console.error(`[AnA Executor] Review thread creation failed (org=${payload.organizationId}, project=${payload.projectId}):`, err?.message);
-    return failResult(payload, err?.message || 'Review thread creation failed');
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// MAIN EXECUTOR
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Execute an AnA guidance action with confidence gating.
- * Routes to artifact creation or review thread creation.
- * Returns prepared-only payload for provisional/uncertain confidence.
- */
-export async function executeGuidanceAction(payload: AnaActionPayload): Promise<AnaActionResult> {
-  if (!payload.type || !payload.projectId || !payload.organizationId || !payload.userId) {
-    return failResult(payload, 'Missing required fields: type, projectId, organizationId, userId');
-  }
-
-  if (payload.organizationId <= 0 || payload.projectId <= 0 || payload.userId <= 0) {
-    return failResult(payload, 'Invalid IDs: organizationId, projectId, and userId must be positive integers');
-  }
-
-  if (!VALID_ACTION_TYPES.has(payload.type)) {
-    return failResult(payload, `Unknown action type: ${payload.type}`);
-  }
-
-  // Confidence gating — provisional and uncertain do NOT execute
-  if (!shouldAutoExecute(payload.metadata.confidence)) {
-    console.log(
-      `[AnA Executor] confidence=${payload.metadata.confidence} — no execution for ${payload.type}`
-    );
-    return {
-      success: true,
-      executed: false,
-      actionType: payload.type,
-      confidence: payload.metadata.confidence,
-      artifactId: null,
-      artifactPk: null,
-      threadId: null,
-      payload,
-      error: null,
-      provenance: makeProvenance(payload),
-    };
-  }
-
-  // Route to executor
-  if (payload.type === 'review_thread') {
-    return executeReviewThreadCreation(payload);
-  }
-
-  return executeArtifactCreation(payload);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHAT PIPELINE INTEGRATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** The turn a reply belongs to: the verified principal, never the model's text. */
+export interface ActionBlockTurn extends ActionBlockProvenance {
+  /** The project the chat is scoped to. Parsed fail-closed: a program UUID is not a project. */
+  projectId: number | string | null | undefined;
+  organizationId: number;
+  userId: number;
+  userName?: string;
+  userRole?: string;
+  /** The model call whose reply carried the blocks. */
+  servingModel?: CommandContext['servingModel'];
+}
+
 /**
- * Process AnA's response for action signals and execute them.
- * Called from the chat pipeline after AI generation.
+ * Take the ana-action blocks out of AnA's reply and turn each one she is
+ * confident in into a proposal, through the command partition.
  *
- * Returns cleaned text (action blocks stripped) and action results.
+ * Returns the reply without the blocks, followed by one line per block saying
+ * what became of it, and the command results — one per proposed block: a
+ * HUMAN_CONFIRMATION_REQUIRED proposal, or the refusal that came first (RBAC,
+ * tenant policy, an unreadable governance configuration). Callers put the
+ * results in the turn's `executedCommands`, beside the results of the reply's
+ * ```command blocks, which is what the sign-off prompt reads.
+ *
+ * The line per block (fix round, 2026-10-01): a block that proposed nothing —
+ * provisional, no project in scope, refused — used to leave no trace, and a
+ * reply of nothing but such blocks was answered "Action executed
+ * successfully." Now the line says it was not saved, and why. When the reply
+ * was nothing but blocks, the draft itself is kept above that line: it exists
+ * nowhere else, and the sign-off card shows 77 characters of it.
+ *
+ * Never throws for a reply it cannot act on. A dispatch error propagates: both
+ * callers then keep the reply exactly as AnA wrote it, blocks included, so the
+ * deliverable stays on screen, nothing is written and nothing claims it was.
  */
 export async function processResponseActions(
   responseText: string,
-  context: {
-    /**
-     * The turn's integer project, or null when it has none (no project open, a
-     * program with no anchor row). Null still strips the blocks: this is the
-     * one place that does, and a raw ```ana-action block must never be saved
-     * as the answer. Nothing is created, and each action says why.
-     */
-    projectId: number | null;
-    organizationId: number;
-    userId: number;
-    userName: string;
-    threadId?: string;
-    conversationId?: string;
-  }
-): Promise<{
-  cleanedText: string;
-  actions: AnaActionResult[];
-}> {
+  turn: ActionBlockTurn,
+): Promise<{ cleanedText: string; proposals: CommandResult[] }> {
   const signals = detectActionSignals(responseText);
+  if (signals.length === 0) return { cleanedText: responseText, proposals: [] };
+  const prose = stripActionSignals(responseText);
 
-  if (signals.length === 0) {
-    return { cleanedText: responseText, actions: [] };
-  }
+  // No integer project, no proposal: parseInt('7abb1c22-…') is 7, a valid and
+  // wrong project (ADR-0011), and a person would be asked to file into it.
+  const projectId = parseIntegerProjectId(turn.projectId);
+  const proposable = projectId === null ? [] : signals.filter((s) => shouldPropose(s.confidence));
+  const proposals = projectId === null ? [] : await proposeBlocks(proposable, projectId, turn);
 
-  const cleanedText = stripActionSignals(responseText);
-  const actions: AnaActionResult[] = [];
-
-  for (const signal of signals) {
-    const payload: AnaActionPayload = {
-      type: signal.type,
-      projectId: context.projectId ?? 0,
-      organizationId: context.organizationId,
-      userId: context.userId,
-      userName: context.userName,
-      content: signal.content,
-      title: signal.title,
-      sectionCode: signal.sectionCode,
-      metadata: {
-        runId: uuidv4(),
-        source: 'ana_guidance',
-        confidence: signal.confidence,
-        threadId: context.threadId,
-        conversationId: context.conversationId,
-        decisionContext: signal.decisionContext,
-        guidanceSummary: signal.guidanceSummary,
-      },
-    };
-
-    // No project: nothing to create it under. Said, never attempted.
-    const result =
-      context.projectId === null
-        ? failResult(payload, 'No project is linked to this conversation, so it was not created. Open the project and ask again.')
-        : await executeGuidanceAction(payload);
-    actions.push(result);
-  }
-
-  const executed = actions.filter(a => a.executed).length;
-  const prepared = actions.filter(a => !a.executed && !a.error).length;
-  const failed = actions.filter(a => a.error).length;
-  console.log(
-    `[AnA Executor] ${signals.length} signals → ${executed} executed, ${prepared} prepared, ${failed} failed`
+  const receipts = signals.map((s) =>
+    blockReceipt(s, blockStatus(s, projectId, proposals[proposable.indexOf(s)]), prose === ''),
   );
+  console.info(
+    `[AnA action blocks] ${signals.length} block(s) → ${proposals.filter(isPendingSignoff).length} put to the person`,
+  );
+  return { cleanedText: [prose, ...receipts].filter(Boolean).join('\n\n'), proposals };
+}
 
-  return { cleanedText, actions };
+/** The partition's answer to each block: with no person's confirmation, a proposal or a refusal. */
+async function proposeBlocks(
+  signals: DetectedActionSignal[],
+  projectId: number,
+  turn: ActionBlockTurn,
+): Promise<CommandResult[]> {
+  if (signals.length === 0) return [];
+  const commands = signals.map((s) => actionSignalToCommand(s, projectId, turn));
+  // The context carries no person's confirmation: it is the model's proposal,
+  // so every write the partition knows comes back as a proposal and nothing runs.
+  const ctx: CommandContext = {
+    userId: turn.userId,
+    organizationId: turn.organizationId,
+    activeProjectId: projectId,
+    userName: turn.userName,
+    userRole: turn.userRole,
+    threadId: turn.threadId,
+    servingModel: turn.servingModel ?? null,
+  };
+  const { executeCommands } = await import('./ana-ri/command-executor.js');
+  return executeCommands(commands, ctx);
+}
+
+/** What became of one block, as the person reads it. Taken from the partition's answer, never assumed. */
+function blockStatus(
+  signal: DetectedActionSignal,
+  projectId: number | null,
+  result: CommandResult | undefined,
+): string {
+  if (!shouldPropose(signal.confidence)) {
+    return `Not saved. AnA marked it ${signal.confidence}, so it was not proposed for saving.`;
+  }
+  if (projectId === null) {
+    return 'Not saved. This conversation is not scoped to a project, so it could not be proposed for saving.';
+  }
+  if (isPendingSignoff(result)) {
+    return 'Proposed for saving as a project artifact. Nothing is saved until you confirm it.';
+  }
+  const message = typeof result?.message === 'string' ? result.message.trim() : '';
+  // Unreachable by construction (create_artifact is propose-only and the
+  // context carries no confirmation); if it ever ran, say what the handler said.
+  if (result?.success === true) return message || 'Saved as a project artifact.';
+  return `Not saved. ${message || 'It could not be proposed for saving.'}`;
+}
+
+/** The block's line in the answer, with the draft above it when the reply had nothing else. */
+function blockReceipt(signal: DetectedActionSignal, status: string, withDraft: boolean): string {
+  return withDraft ? `**${signal.title}**\n\n${signal.content}\n\n> ${status}` : `**${signal.title}**: ${status}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WHAT THE TURN TELLS THE PERSON
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * The two answers the executor gives instead of running a command a person
+ * must take: the propose-only gate's, and the Part 11 gate's. Exactly the set
+ * the client's sign-off prompt reads (PENDING_SIGNOFF_ERRORS in
+ * client/src/concept2cure/components/ana/useGovernedAction.ts).
+ */
+const PENDING_SIGNOFF_ERRORS: ReadonlySet<string> = new Set(['HUMAN_CONFIRMATION_REQUIRED', 'PART11_SIGNATURE_REQUIRED']);
+
+type ResultLike = { success?: unknown; error?: unknown; message?: unknown } | null | undefined;
+
+/** Is this command result a proposal waiting on a person? */
+export function isPendingSignoff(result: ResultLike): boolean {
+  return typeof result?.error === 'string' && PENDING_SIGNOFF_ERRORS.has(result.error);
+}
+
+/**
+ * The stored answer when a turn's reply was empty once its blocks were taken
+ * out. It said "Action executed successfully." whatever happened — over a
+ * proposal nobody had confirmed, over a refusal where nothing ran, and (until
+ * the fix round of 2026-10-01) over nothing at all: an empty list, which is
+ * what the live stream passes for a turn that only offered a navigation chip.
+ * Now it says which, and claims a run only when every result reports one.
+ */
+export function blocksOnlyAnswer(executedCommands: ResultLike[]): string {
+  if (executedCommands.some(isPendingSignoff)) {
+    return 'AnA proposed an action. Nothing has changed yet: review it below and confirm it to proceed.';
+  }
+  const refusedAt = executedCommands.findIndex((c) => c?.success !== true);
+  if (refusedAt !== -1) {
+    const message = executedCommands[refusedAt]?.message;
+    const why = typeof message === 'string' && message.trim() ? ` ${message.trim()}` : '';
+    return `Nothing was changed.${why}`;
+  }
+  return executedCommands.length > 0 ? 'Action executed successfully.' : 'Nothing was changed.';
+}
+
+/**
+ * The answer a chat turn stores and shows once AnA's ana-action blocks are
+ * settled, and the proposals they came back as — for both chat paths (the live
+ * stream's post-processing and POST /api/chat), so the two cannot tell the
+ * person different things. A reply without blocks is returned as written.
+ * `loopProposals` are the turn's other proposals (POST /api/chat's
+ * pendingSignoffFromToolResult), which an otherwise empty answer accounts for.
+ */
+export async function settleActionBlocks(
+  reply: string,
+  turn: ActionBlockTurn,
+  loopProposals: readonly CommandResult[] = [],
+): Promise<{ answer: string; proposals: CommandResult[] }> {
+  const { cleanedText, proposals } = await processResponseActions(reply, turn);
+  if (cleanedText === reply) return { answer: reply, proposals };
+  const answer = cleanedText.trim() ? cleanedText : blocksOnlyAnswer([...loopProposals, ...proposals]);
+  return { answer, proposals };
+}
+
+/**
+ * The proposal a platform command came back as, from one agentic-loop tool
+ * result, or null.
+ *
+ * For the paths that cannot hold a turn and ask (POST /api/chat). The loop's
+ * `execute_platform_command` hands a write to executeCommands, which answers
+ * with a proposal and runs nothing; until this, that proposal reached only the
+ * model, and the person had nothing to confirm. Lifted as the executor built
+ * it, so the client's sign-off prompt reads it as it reads a ```command
+ * block's, and a person's yes goes to POST /api/ana-ri/governed-action.
+ *
+ * Only the command carrier's: a tool that writes on its own handler answers
+ * with the same shape, but the route runs one only from a held run
+ * (TOOL_NEEDS_HELD_RUN), so a prompt for it could never be completed. This
+ * reads the partition's answer; it classifies nothing.
+ */
+export function pendingSignoffFromToolResult(toolName: string, rawResult: string): CommandResult | null {
+  if (toolName !== PLATFORM_COMMAND_TOOL) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawResult);
+  } catch {
+    return null;
+  }
+  const result = (parsed as { result?: unknown } | null)?.result as
+    | (CommandResult & { data?: { retry?: { command?: unknown } } })
+    | undefined;
+  if (!isPendingSignoff(result)) return null;
+  return typeof result?.data?.retry?.command === 'string' && result.data.retry.command ? result : null;
 }

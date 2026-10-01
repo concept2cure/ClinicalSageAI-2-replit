@@ -10,18 +10,18 @@
  *
  *   1. the AnA tool `approve_qms_document` (ana-cannot-sign.test.ts and
  *      qms-vault-audit-atomicity.contract.test.ts);
- *   2. `POST /api/qms/documents/:id/transition {to:'effective'}`, which stamps
- *      the caller as approver;
+ *   2. `POST /api/qms/documents/:id/transition {to:'effective'}`, which stamped
+ *      the caller as approver (the router is deleted: P1-31 / DP-34, below);
  *   3. `POST` and `PATCH /api/mdx/qms/documents`, whose schemas admitted every
  *      status. PATCH could also rewrite the title or version of a document
  *      already signed, so the stored row stopped matching the digest its
  *      signature is bound to while it stayed effective.
  *
- * This file covers 2 and 3. The pool fakes are SQL-aware over one document
- * row: an UPDATE without a status guard really does change an effective
- * document, so a route that lacks the guard fails here for the right reason.
+ * This file covers 3. The pool fakes are SQL-aware over one document row: an
+ * UPDATE without a status guard really does change an effective document, so a
+ * route that lacks the guard fails here for the right reason.
  *
- * P1-29 / DP-32 (security review 2026-09-24): the same legacy door also reached
+ * P1-29 / DP-32 (security review 2026-09-24): door 2 also reached
  * `status = 'retired'` with no reason, no role gate and no ceremony, while the
  * canonical `POST /api/mdx/qms/documents/:id/retire` became a signed
  * transition. Door 2 then refused `to=retired` as it refused `to=effective`.
@@ -32,6 +32,8 @@
  * an effective document, requalify a supplier and disposition nonconforming
  * product, most of it with no audit row. Its block here now proves it stays
  * gone; every capability is served at `/api/mdx/qms/*`.
+ * What door 2 was tested for is now also asked of the canonical edit: PATCH
+ * cannot reach effective, retired or superseded.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -77,13 +79,6 @@ vi.mock('../../middleware/orgMembership', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../middleware/orgMembership')>()),
   requireEditorAccess: (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
-// /api/qms authenticates itself; the harness below stands in for the session.
-vi.mock('../../middleware/auth', () => ({
-  authenticateToken: (_req: Request, _res: Response, next: NextFunction) => next(),
-}));
-vi.mock('../../services/auditService', () => ({
-  default: { logAction: async () => ({ persisted: true, chained: true }) },
-}));
 
 import mdxQmsRouter from '../mdx-qms';
 
@@ -116,6 +111,27 @@ const wrote = () => H.sql.some((s) => /^\s*(UPDATE|INSERT)/i.test(s));
 beforeEach(() => {
   H.doc = null;
   H.sql = [];
+});
+
+describe('PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state', () => {
+  for (const to of ['effective', 'retired', 'superseded']) {
+    it(`refuses status=${to} on a document in review and changes nothing`, async () => {
+      H.doc = docInState('in_review');
+      const res = await request(app()).patch('/api/mdx/qms/documents/11').send({ status: to });
+      expect(res.status).toBe(422);
+      expect(H.doc?.status).toBe('in_review');
+      expect(H.doc?.approver_id).toBeNull();
+      expect(wrote()).toBe(false);
+    });
+  }
+
+  it('refuses status=retired on an effective document: retirement is the signed retire route', async () => {
+    H.doc = docInState('effective');
+    const res = await request(app()).patch('/api/mdx/qms/documents/11').send({ status: 'retired' });
+    expect(res.status).toBe(422);
+    expect(H.doc?.status).toBe('effective');
+    expect(wrote()).toBe(false);
+  });
 });
 
 describe('the second QMS write door (/api/qms) stays gone — DP-34', () => {

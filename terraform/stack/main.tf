@@ -69,6 +69,16 @@ resource "random_password" "db_master" {
   special = false
 }
 
+# First-run setup's secret (server/routes/setup.ts): in production
+# POST /api/setup/initialize creates the first administrator only for a request
+# carrying it in X-Setup-Token. Read it from Secrets Manager once, for that one
+# call (outputs.tf, first_run_setup); the route closes itself once any account
+# exists.
+resource "random_password" "setup_token" {
+  length  = 48
+  special = false
+}
+
 resource "random_password" "db_app_service" {
   length  = 40
   special = false
@@ -105,6 +115,10 @@ module "secrets" {
     app_database_url = {
       description = "app_service connection URL (runtime, RLS enforced)"
       value       = local.app_database_url
+    }
+    setup_token = {
+      description = "First-run setup token: POST /api/setup/initialize requires it in X-Setup-Token in production"
+      value       = random_password.setup_token.result
     }
     app_service_db_password = {
       description = "app_service password, for deploy-migrate to mint the role"
@@ -230,6 +244,24 @@ locals {
     { name = "SMTP_HOST", value = var.smtp_host },
     { name = "SMTP_PORT", value = tostring(var.smtp_port) },
     { name = "SMTP_FROM", value = var.smtp_from },
+    # The audit chain's head, anchored outside the database (security plan P0-8,
+    # DP-04): the daily integrity sweep verifies every organisation's chain
+    # against the latest anchor in the object-locked evidence bucket, then
+    # writes the next one under anchors/. Unset, the sweep reports the anchor
+    # "not configured" and never verified. The grant is the evidence module's.
+    { name = "AUDIT_ANCHOR_BUCKET", value = module.evidence.evidence_bucket },
+  ]
+
+  # The platform owner, by the address of their own password sign-in. The
+  # documented bootstrap (server/middleware/requirePlatformAdmin.ts,
+  # requireBusinessAdmin.ts): Master Administration, and the Business Center,
+  # whose holder can designate a super_admin in the audited Access Management
+  # console, after which these lists can shrink. A federated (SAML) session
+  # gets nothing from either. MASTER_ADMIN_EMAILS is left unset: that grant
+  # follows a designation (services/entitlements/master-admin.ts). API only.
+  owner_environment = [
+    { name = "PLATFORM_ADMIN_EMAILS", value = join(",", var.platform_owner_emails) },
+    { name = "BUSINESS_CENTER_EMAILS", value = join(",", var.platform_owner_emails) },
   ]
 
   # The deployment's public origin: the first CloudFront alias. One input, so
@@ -335,9 +367,12 @@ module "ecs" {
   # Not the frontend bucket: CloudFront serves the SPA from it and the deploy
   # role publishes it. A task that could write it could rewrite the site every
   # user loads (security plan P0-15, INF-03; tests/boot_contract.tftest.hcl).
-  # Vault documents have their own grant (vault_storage.tf).
+  # Vault documents have their own grant (vault_storage.tf). In the evidence
+  # bucket the task needs the audit-chain anchors and nothing else (P0-8). This
+  # was the bucket's ARN: object actions there matched no object, and
+  # s3:ListBucket listed every key, CloudTrail's deliveries included.
   s3_bucket_arns = [
-    module.evidence.evidence_bucket_arn,
+    "${module.evidence.evidence_bucket_arn}/${module.evidence.anchor_prefix}*",
   ]
 
   # Every name deploy-aws.yml's preflight requires, so the task definition this
@@ -348,6 +383,8 @@ module "ecs" {
   # verifier). The API never mints; APP_DATABASE_URL already holds the password.
   api_secrets = concat(local.boot_secrets, [
     { name = "APP_SERVICE_DB_PASSWORD", value_from = module.secrets.secret_arns["app_service_db_password"] },
+    # First-run setup (setup_token above). Only the API serves the route.
+    { name = "SETUP_TOKEN", value_from = module.secrets.secret_arns["setup_token"] },
   ])
 
   # The worker runs the same image, so the same import-time refusals: with less
@@ -356,7 +393,7 @@ module "ecs" {
   worker_secrets = local.boot_secrets
 
   # The release signer (release_signing.tf) and the boot contract's plain values.
-  api_environment    = concat(local.signer_environment, local.boot_environment, local.observability_environment)
+  api_environment    = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.owner_environment)
   worker_environment = concat(local.signer_environment, local.boot_environment, local.observability_environment)
 
   tags = var.tags
@@ -370,7 +407,9 @@ module "evidence" {
   name_prefix      = local.short
   object_lock_mode = var.evidence_object_lock_mode
   retention_days   = var.evidence_retention_days
-  tags             = var.tags
+  # The task role writes and reads the audit-chain anchors (P0-8).
+  anchor_writer_role_arn = module.ecs.task_role_arn
+  tags                   = var.tags
 }
 
 # ── CDN (CloudFront + S3) ───────────────────────────────────────────────────

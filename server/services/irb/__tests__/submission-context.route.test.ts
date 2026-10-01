@@ -74,7 +74,8 @@ CREATE TABLE irb_submissions (
 const app = express();
 app.use(express.json());
 app.use((req: Request, _res: Response, next: NextFunction) => {
-  (req as unknown as { user: unknown }).user = { id: USER, organizationId: ORG };
+  // A writing role: the IRB router refuses a viewer's writes (2026-10-01).
+  (req as unknown as { user: unknown }).user = { id: USER, organizationId: ORG, role: 'member' };
   next();
 });
 app.use('/api/irb', irbRouter);

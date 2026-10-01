@@ -1,0 +1,24 @@
+MUTANT H-head_missing-never-excused: over-correction: a head is never the archive's
+diff against the fix:
+337c337
+<     const oldHead = b.kind === 'head_missing' && headTime < before;
+---
+>     const oldHead = false && headTime < before;
+
+$ npx vitest run --config vitest.db.config.ts server/services/audit/__tests__/chain-anchor.dbtest.ts
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 1. the chain walk alone passes a chain whose newest rows were removed (the defect) 74ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 2. an intact chain verifies against its anchor, and rows appended after it are fine 285ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 3. removing the anchored head (truncation after an anchor) is reported broken 57ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 4. a head rewritten and re-chained, so the walk still passes, is reported broken 26ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 5. a row removed before an intact head is reported by the anchored row count 28ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 6. with no anchor written the chain head is not verified, never ok 21ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 7. rows the archive door removed since the anchor are unverifiable, not tampering; truncation still breaks 64ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 8. a tenant-scoped connection refuses to anchor or verify a subset of the chain 12ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 9. a forged ledger row with a cutoff in the hot window (the reported forgery: cutoff 2100-01-01) cannot turn a truncated head into "archived" 50ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 9. a forged ledger row with an archived_at in the future, its cutoff 24 months before it cannot turn a truncated head into "archived" 64ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 10. a forged ledger row with a cutoff in the hot window (the reported forgery: cutoff 2100-01-01) cannot excuse rows removed before an intact head 52ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 10. a forged ledger row with an archived_at in the future, its cutoff 24 months before it cannot excuse rows removed before an intact head 45ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 11. a ledger row that keeps the door's own rules still never excuses a head inside the 24-month window 58ms
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 12. a head older than the 24-month floor, removed through the door, is archived: not tampering, not verified 42ms
+      Tests  1 failed | 13 passed (14)
+exit=1
