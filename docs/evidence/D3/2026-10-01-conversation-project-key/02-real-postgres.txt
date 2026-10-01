@@ -1,0 +1,52 @@
+PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+== c2c_dbtest: legacy cross-organization conversations before the key
+0
+== c2c_dbtest: apply 20261001 twice (replay)
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+                    conname                     | convalidated | confdeltype | confupdtype |                                              pg_get_constraintdef                                              
+------------------------------------------------+--------------+-------------+-------------+----------------------------------------------------------------------------------------------------------------
+ c2c_documents_project_same_org_fk              | f            | a           | a           | FOREIGN KEY (project_id, org_id) REFERENCES regulatory_programs(id, organization_id) NOT VALID
+ c2c_submission_packages_project_same_org_fk    | f            | c           | a           | FOREIGN KEY (project_id, org_id) REFERENCES projects(id, organization_id) ON DELETE CASCADE NOT VALID
+ concept2cure_artifacts_project_same_org_fk     | f            | c           | a           | FOREIGN KEY (project_id, organization_id) REFERENCES projects(id, organization_id) ON DELETE CASCADE NOT VALID
+ concept2cure_conversations_project_same_org_fk | f            | c           | a           | FOREIGN KEY (project_id, organization_id) REFERENCES projects(id, organization_id) ON DELETE CASCADE NOT VALID
+(4 rows)
+
+== c2c_pf03: legacy cross-organization conversations before the key
+0
+== c2c_pf03: apply 20261001 twice (replay)
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+                    conname                     | convalidated | confdeltype | confupdtype |                                              pg_get_constraintdef                                              
+------------------------------------------------+--------------+-------------+-------------+----------------------------------------------------------------------------------------------------------------
+ c2c_documents_project_same_org_fk              | f            | a           | a           | FOREIGN KEY (project_id, org_id) REFERENCES regulatory_programs(id, organization_id) NOT VALID
+ c2c_submission_packages_project_same_org_fk    | f            | c           | a           | FOREIGN KEY (project_id, org_id) REFERENCES projects(id, organization_id) ON DELETE CASCADE NOT VALID
+ concept2cure_artifacts_project_same_org_fk     | f            | c           | a           | FOREIGN KEY (project_id, organization_id) REFERENCES projects(id, organization_id) ON DELETE CASCADE NOT VALID
+ concept2cure_conversations_project_same_org_fk | f            | c           | a           | FOREIGN KEY (project_id, organization_id) REFERENCES projects(id, organization_id) ON DELETE CASCADE NOT VALID
+(4 rows)
+
+== c2c_dbtest: own-organization conversation written; another organization's project refused 23503; rolled back
+BEGIN
+INSERT 0 2
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+SAVEPOINT
+ERROR:  insert or update on table "concept2cure_conversations" violates foreign key constraint "concept2cure_conversations_project_same_org_fk"
+DETAIL:  Key (project_id, organization_id)=(187, 990011) is not present in table "projects".
+ROLLBACK
+ROLLBACK

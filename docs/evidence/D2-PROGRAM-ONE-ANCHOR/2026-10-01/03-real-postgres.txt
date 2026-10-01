@@ -1,0 +1,154 @@
+psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+== c2c_dbtest: apply 20261001b twice (replay), then the index
+DO
+DO
+                                                                       indexdef                                                                       
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE UNIQUE INDEX projects_one_anchor_per_program ON public.projects USING btree (regulatory_program_id) WHERE (regulatory_program_id IS NOT NULL)
+(1 row)
+
+== c2c_pf03: apply 20261001b twice (replay), then the index
+DO
+DO
+                                                                       indexdef                                                                       
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE UNIQUE INDEX projects_one_anchor_per_program ON public.projects USING btree (regulatory_program_id) WHERE (regulatory_program_id IS NOT NULL)
+(1 row)
+
+== c2c_dbtest: duplicates (same-org pair, cross-org pair) -> NOTICE and skip; resolved -> created; a second anchor -> 23505. One transaction, rolled back.
+BEGIN;
+BEGIN
+DROP INDEX projects_one_anchor_per_program;
+DROP INDEX
+INSERT INTO organizations (id, name, slug) VALUES (990001, 'pf08-proof-a', 'pf08-proof-a'), (990002, 'pf08-proof-b', 'pf08-proof-b');
+INSERT 0 2
+INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_type, primary_agency, product_name) VALUES
+ ('0d000000-0000-4000-8000-000000000008', 990001, 'PF08 same-org', 'PF08A', 'ind', 'drug', 'FDA', 'x'),
+ ('0d000000-0000-4000-8000-000000000009', 990001, 'PF08 cross-org', 'PF08B', 'ind', 'drug', 'FDA', 'x');
+INSERT 0 2
+INSERT INTO client_workspaces (organization_id, name, slug) VALUES (990001, 'pf08-ws-a', 'pf08-ws-a') RETURNING id 
+INSERT 0 1
+INSERT INTO client_workspaces (organization_id, name, slug) VALUES (990002, 'pf08-ws-b', 'pf08-ws-b') RETURNING id 
+INSERT 0 1
+SET session_replication_role = replica;
+SET
+INSERT INTO projects (organization_id, client_workspace_id, name, type, regulatory_program_id) VALUES
+ (990001, 203, 'a1', 'regulatory', '0d000000-0000-4000-8000-000000000008'),
+ (990001, 203, 'a2', 'regulatory', '0d000000-0000-4000-8000-000000000008'),
+ (990001, 203, 'b1', 'regulatory', '0d000000-0000-4000-8000-000000000009'),
+ (990002, 204, 'b-foreign', 'regulatory', '0d000000-0000-4000-8000-000000000009');
+INSERT 0 4
+SET session_replication_role = origin;
+SET
+DO $mig$
+DECLARE
+  dup RECORD;
+  found boolean := false;
+BEGIN
+  IF to_regclass('public.projects') IS NULL THEN
+    RAISE NOTICE 'projects absent - PF-08 one-anchor index skipped';
+    RETURN;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'public.projects'::regclass
+                    AND attname = 'regulatory_program_id' AND NOT attisdropped) THEN
+    RAISE NOTICE 'projects.regulatory_program_id absent - PF-08 one-anchor index skipped';
+    RETURN;
+  END IF;
+  IF to_regclass('public.projects_one_anchor_per_program') IS NOT NULL THEN
+    RETURN;
+  END IF;
+  FOR dup IN
+    SELECT regulatory_program_id AS program_id, count(*) AS n,
+           string_agg(id::text || '@' || organization_id::text, ', ' ORDER BY id) AS anchor_rows
+      FROM public.projects
+     WHERE regulatory_program_id IS NOT NULL
+     GROUP BY regulatory_program_id
+    HAVING count(*) > 1
+  LOOP
+    found := true;
+    RAISE NOTICE 'PF-08: program % has % anchor rows (project@organization: %); one-anchor index not created',
+      dup.program_id, dup.n, dup.anchor_rows;
+  END LOOP;
+  IF found THEN
+    RETURN;
+  END IF;
+  CREATE UNIQUE INDEX IF NOT EXISTS projects_one_anchor_per_program
+    ON public.projects (regulatory_program_id) WHERE regulatory_program_id IS NOT NULL;
+END
+$mig$;
+psql:migrations/20261001b_projects_one_anchor_per_program.sql:99: NOTICE:  PF-08: program 0d000000-0000-4000-8000-000000000008 has 2 anchor rows (project@organization: 182@990001, 183@990001); one-anchor index not created
+psql:migrations/20261001b_projects_one_anchor_per_program.sql:99: NOTICE:  PF-08: program 0d000000-0000-4000-8000-000000000009 has 2 anchor rows (project@organization: 184@990001, 185@990002); one-anchor index not created
+DO
+SELECT count(*) AS index_present FROM pg_indexes WHERE indexname='projects_one_anchor_per_program';
+ index_present 
+---------------
+             0
+(1 row)
+
+UPDATE projects SET regulatory_program_id = NULL WHERE name IN ('a2', 'b-foreign') AND organization_id IN (990001, 990002);
+UPDATE 2
+DO $mig$
+DECLARE
+  dup RECORD;
+  found boolean := false;
+BEGIN
+  IF to_regclass('public.projects') IS NULL THEN
+    RAISE NOTICE 'projects absent - PF-08 one-anchor index skipped';
+    RETURN;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'public.projects'::regclass
+                    AND attname = 'regulatory_program_id' AND NOT attisdropped) THEN
+    RAISE NOTICE 'projects.regulatory_program_id absent - PF-08 one-anchor index skipped';
+    RETURN;
+  END IF;
+  IF to_regclass('public.projects_one_anchor_per_program') IS NOT NULL THEN
+    RETURN;
+  END IF;
+  FOR dup IN
+    SELECT regulatory_program_id AS program_id, count(*) AS n,
+           string_agg(id::text || '@' || organization_id::text, ', ' ORDER BY id) AS anchor_rows
+      FROM public.projects
+     WHERE regulatory_program_id IS NOT NULL
+     GROUP BY regulatory_program_id
+    HAVING count(*) > 1
+  LOOP
+    found := true;
+    RAISE NOTICE 'PF-08: program % has % anchor rows (project@organization: %); one-anchor index not created',
+      dup.program_id, dup.n, dup.anchor_rows;
+  END LOOP;
+  IF found THEN
+    RETURN;
+  END IF;
+  CREATE UNIQUE INDEX IF NOT EXISTS projects_one_anchor_per_program
+    ON public.projects (regulatory_program_id) WHERE regulatory_program_id IS NOT NULL;
+END
+$mig$;
+DO
+SELECT count(*) AS index_present FROM pg_indexes WHERE indexname='projects_one_anchor_per_program';
+ index_present 
+---------------
+             1
+(1 row)
+
+UPDATE projects SET regulatory_program_id = '0d000000-0000-4000-8000-000000000008' WHERE name = 'a2' AND organization_id = 990001;
+ERROR:  duplicate key value violates unique constraint "projects_one_anchor_per_program"
+DETAIL:  Key (regulatory_program_id)=(0d000000-0000-4000-8000-000000000008) already exists.
+ROLLBACK;
+ROLLBACK
+SELECT count(*) AS proof_rows_left FROM organizations WHERE id IN (990001, 990002);
+ proof_rows_left 
+-----------------
+               0
+(1 row)
+
+== Full deploy-migrate replay on c2c_dbtest at 8d97ca9e0 (the whole set, with the index already present)
+exit=0
+  ✓ applied: migrations/20260814_projects_regulatory_program_anchor.sql
+      [NOTICE] vault.legal_holds ready (RLS: tenant_isolation_policy)
+      [NOTICE] [ivdr-history-rls] parent-scoped tenant_isolation_policy applied to 0 table(s)
+  ✓ applied: migrations/20261001b_projects_one_anchor_per_program.sql
+      [NOTICE] [uuid-rls] tenant_isolation_policy applied to 0 non-public uuid-tenant table(s); 2 skipped (unprovisioned/drift). federated_ml.federation_participants and audit.event_log are intentionally EXEMPT (cross-tenant by design).
+      [NOTICE] [rls-sweep] tenant_isolation_policy applied to 0 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+  tenant_isolation_policy: 19/19 tables policied
+✅ Schema migration complete — safe to roll services.

@@ -18,6 +18,16 @@
 -- =============================================================================
 -- 20261001_integer_project_same_org_keys.sql
 --
+-- AMENDED IN PLACE 2026-10-01 (PF-03 rest; CLAUDE.md Rule 1). Added the third
+-- key, concept2cure_conversations (project_id, organization_id), and replaced
+-- the "NOT KEYED HERE" note below, which was wrong: it named the AnA stream as
+-- an unchecked writer of concept2cure_conversations.project_id. The stream does
+-- not write that table. Its one production writer is POST
+-- /api/concept2cure/projects/:projectId/conversations (server/routes/c2c/
+-- conversations.ts), which runs verifyProjectAccess, an organization-scoped
+-- project read, before the insert. The other statements are unchanged; the
+-- journal records drift for this file, and that is this amendment.
+--
 -- WHY. concept2cure_artifacts.project_id and c2c_submission_packages.project_id
 -- are integer keys to projects(id). Each proves the project exists, not that it
 -- is the row's organization's. PF-03 (2026-10-01) made five writers check
@@ -50,10 +60,10 @@
 --   * ON UPDATE NO ACTION (the default): a project with another
 --     organization's records under it cannot be moved to another organization.
 --
--- NOT KEYED HERE: concept2cure_conversations.project_id (same shape). Its
--- writer, the AnA stream, has no project check yet, so a key now would turn
--- such a turn into a failed write mid-conversation. It goes with that writer's
--- fix.
+-- concept2cure_conversations (project_id, organization_id) is the third key
+-- (amended 2026-10-01, above). Its one writer checks the project's organization
+-- first, so the key refuses nothing that writer sends; it holds the next writer.
+-- ON DELETE CASCADE, as its existing key (0000_sweet_joseph.sql:6493).
 --
 -- RULE 1: replayed on every deploy. Each statement runs only when its object
 -- is absent (to_regclass / pg_constraint), so a replay executes no DDL and takes
@@ -106,6 +116,25 @@ BEGIN
     ALTER TABLE public.c2c_submission_packages
       ADD CONSTRAINT c2c_submission_packages_project_same_org_fk
       FOREIGN KEY (project_id, org_id)
+      REFERENCES public.projects (id, organization_id)
+      ON DELETE CASCADE
+      NOT VALID;
+  END IF;
+END
+$mig$;
+
+-- concept2cure_conversations (project_id, organization_id) — amended 2026-10-01
+DO $mig$
+BEGIN
+  IF to_regclass('public.concept2cure_conversations') IS NULL OR to_regclass('public.projects_id_org_uq') IS NULL THEN
+    RAISE NOTICE 'concept2cure_conversations or projects_id_org_uq absent - conversations key skipped';
+    RETURN;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'concept2cure_conversations_project_same_org_fk'
+                    AND conrelid = 'public.concept2cure_conversations'::regclass) THEN
+    ALTER TABLE public.concept2cure_conversations
+      ADD CONSTRAINT concept2cure_conversations_project_same_org_fk
+      FOREIGN KEY (project_id, organization_id)
       REFERENCES public.projects (id, organization_id)
       ON DELETE CASCADE
       NOT VALID;

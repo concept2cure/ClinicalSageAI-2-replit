@@ -55,27 +55,40 @@ export interface AuditTaskActionParams {
   taskId: string;
   /** Before/after or descriptive context, hashed into the ledger. */
   payload?: Record<string, unknown>;
-  /** Optional reason-for-change captured from the request. */
-  reason?: string;
+  /**
+   * The reason a PERSON stated for this change (the request body, or a
+   * verified sign-off), passed on as given. Recorded trimmed, or as null when
+   * none was stated — never a sentence the code composes (21 CFR 11.10(e),
+   * D5). Until 2026-10-01 a missing reason was recorded as `defaultReason`
+   * ("Task created via tasking API", …), and ten call sites wrote their own.
+   */
+  reason?: string | null;
+  /**
+   * What happened, in the system's words ("Unblocked: predecessor TASK-A
+   * completed"). Recorded in the payload as `summary`, never as the reason.
+   */
+  summary?: string;
 }
 
-function defaultReason(command: TaskAuditCommand): string {
-  switch (command) {
-    case 'task.create':
-      return 'Task created via tasking API';
-    case 'task.transition':
-      return 'Task status changed via tasking API';
-    case 'task.link':
-      return 'Task linked via tasking API';
-    case 'task.assign':
-      return 'Task assigned via tasking API';
-    case 'task.notify':
-      return 'Task notification sent via tasking API';
-    case 'task.delete':
-      return 'Task archived (soft delete) via tasking API';
-    default:
-      return 'Task mutation via tasking API';
-  }
+/** A person's stated reason, trimmed, or null when none was stated. */
+export function statedTaskReason(value: unknown): string | null {
+  const reason = typeof value === 'string' ? value.trim() : '';
+  return reason || null;
+}
+
+/** The ledger row for an attributable task event: the stated reason or null, the summary in the payload. */
+function lineageRow(params: AuditTaskActionParams & { userId: number }): RecordGovernedActionParams {
+  const { orgId, userId, command, taskId, payload = {}, reason, summary } = params;
+  return {
+    orgId,
+    userId,
+    command,
+    target: `task:${taskId}`,
+    reason: statedTaskReason(reason),
+    payload: summary ? { ...payload, summary } : payload,
+    domain: 'tasking',
+    surface: 'tasking-api',
+  };
 }
 
 /**
@@ -122,7 +135,7 @@ export async function auditTaskAction(
    */
   executor?: Queryable,
 ): Promise<TaskAuditOutcome> {
-  const { orgId, userId, command, taskId, payload = {}, reason } = params;
+  const { orgId, userId, command, taskId } = params;
 
   /* Lineage requires a real tenant + actor + target, and an attributionless row is
      worse than none — that policy is unchanged. What changed is that the skip is
@@ -147,16 +160,7 @@ export async function auditTaskAction(
     return { recorded: false, reason: 'NOT_ATTRIBUTABLE', enlisted };
   }
 
-  const row = {
-    orgId,
-    userId,
-    command,
-    target: `task:${taskId}`,
-    reason: reason && reason.trim() ? reason.trim() : defaultReason(command),
-    payload,
-    domain: 'tasking' as const,
-    surface: 'tasking-api',
-  };
+  const row = lineageRow({ ...params, userId });
 
   /* THE HASH CHAIN NEEDS A TRANSACTION, and this used to pass `pool`.
      recordGovernedAction runs three statements: computeAuditChainSealed issues

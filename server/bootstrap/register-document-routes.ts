@@ -37,7 +37,6 @@ import postMarket from '../routes/post-market.js';
 import evidenceSufficiency from '../routes/evidence-sufficiency.js';
 import qSub from '../routes/q-sub.js';
 import capaMdr from '../routes/capa-mdr.js';
-import qms from '../routes/qms.js';
 import ivdLifecycle from '../routes/ivd-lifecycle.js';
 import ivdKnowledge from '../routes/ivd-knowledge.js';
 import ivdAssessments from '../routes/ivd-assessments.js';
@@ -268,7 +267,13 @@ export async function registerDocumentRoutes({
     { path: '/api/evidence-sufficiency', router: evidenceSufficiency, name: 'Evidence Sufficiency' },
     { path: '/api/q-sub', router: qSub, name: 'Q-Submissions (Pre-Sub / SIR / SRD)' },
     { path: '/api/capa-mdr', router: capaMdr, name: 'CAPA + complaint + MDR / vigilance triage' },
-    { path: '/api/qms', router: qms, name: 'Quality Management System (document control, training, suppliers, audits)' },
+    /* `/api/qms` (routes/qms.ts) was removed 2026-10-01 (DP-34, plan P1-31): a
+       second QMS write API no client called, guarded only by authentication.
+       A viewer could supersede an effective SOP, requalify a supplier or
+       disposition nonconforming product, most of it with no audit row. Every
+       capability is served, role-gated and audited, at `/api/mdx/qms/*`
+       (routes/mdx-qms.ts, mounted in register-inline-routes.ts), which the
+       launch QMS surfaces call. */
     { path: '/api/ivd-lifecycle', router: ivdLifecycle, name: 'IVD lifecycle calculators (analytical, software, change, registration)' },
     { path: '/api/ivd-knowledge', router: ivdKnowledge, name: 'IVD knowledge base (scientific / legal / regulatory intelligence corpus)' },
     { path: '/api/ivd-assessments', router: ivdAssessments, name: 'IVD assessment persistence (saved calculator results + generated documents)' },

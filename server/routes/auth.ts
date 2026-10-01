@@ -29,6 +29,7 @@ import {
   unregisterSession,
 } from '../services/session-inactivity';
 import { requireAccessTokenReason } from '../middleware/tokenType';
+import { sessionPermissions } from '../middleware/orgMembership';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import { auditOrganizationOf, membershipsOf, signInMembership } from '../services/sign-in-organisation';
 import { PASSWORD_HASH_COST, padUnknownEmailTiming } from '../services/login-timing-pad';
@@ -337,7 +338,7 @@ router.get('/session', async (req: Request, res: Response) => {
         lastName: sessionLastName,
         displayName: sessionDisplayName,
         roles: sessionRoles,
-        permissions: [],
+        permissions: sessionPermissions(sessionRole),
         organizationId: decoded.organizationId,
         organizationName: orgName,
         // The account as it is. These were the literals false / [] / false for
@@ -634,7 +635,7 @@ router.post('/login', signInLimits.login, async (req: Request, res: Response) =>
           lastName,
           displayName,
           roles,
-          permissions: [],
+          permissions: sessionPermissions(jwtRole),
           organizationId: organizationId.toString(),
           organizationName: organization?.name || 'Organization',
           organizationUuid: organization?.uuid || null,
@@ -825,7 +826,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         lastName,
         displayName,
         roles,
-        permissions: [],
+        permissions: sessionPermissions(jwtRole),
         organizationId: organizationId.toString(),
         organizationName: organization?.name || 'Organization',
         organizationUuid: organization?.uuid || null,
@@ -1590,7 +1591,7 @@ router.get('/me', async (req: Request, res: Response) => {
       lastName: meLastName,
       displayName: meDisplayName,
       roles: meRoles,
-      permissions: [],
+      permissions: sessionPermissions(meRole),
       organizationId: meOrgId,
       organizationName: meOrgName,
     });
@@ -1794,7 +1795,7 @@ router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: 
         lastName: mfaLastName,
         displayName: mfaDisplayName,
         roles: mfaRoles,
-        permissions: [],
+        permissions: sessionPermissions(mfaRole),
         organizationId: challenge.organizationId,
         organizationName: mfaOrgName,
         organizationUuid: challenge.organizationUuid,
