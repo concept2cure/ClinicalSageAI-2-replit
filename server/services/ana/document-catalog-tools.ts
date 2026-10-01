@@ -50,7 +50,7 @@ import {
 import { registerDocumentPlacementHandlers } from './document-placement-tools.js';
 import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 import { vaultWriteRefusal } from '../vault/vault-write-authority.js';
-import { catalogScope } from './catalog-scope.js';
+import { catalogScope, documentScopeRefusal } from './catalog-scope.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handlers
@@ -293,6 +293,9 @@ async function handleReadProjectDocument(
   if (!doc) {
     return unknownDocumentRefusal(documentId, 'read_project_document');
   }
+  // The open project's documents only (PF-10 S7): checked before any text is served or receipt written.
+  const outOfScope = await documentScopeRefusal(ctx, orgId, doc.programId);
+  if (outOfScope) return outOfScope;
 
   const text = doc.extractedText ?? '';
   const unreadable = await ensureReadable(svc, doc, text);
@@ -408,6 +411,12 @@ async function handleCatalogProjectDocument(
   if (CHAT_UPLOAD_ID.test(parsed.documentId)) {
     return unknownDocumentRefusal(parsed.documentId, 'catalog_project_document');
   }
+  // The open project's documents only (PF-10 S7), before the shared record is written.
+  const target = await svc.loadDocumentForOrg(parsed.documentId, orgId);
+  if (target) {
+    const outOfScope = await documentScopeRefusal(ctx, orgId, target.programId);
+    if (outOfScope) return outOfScope;
+  }
   const result = await svc.completeCatalog({
     ...parsed,
     organizationId: orgId,
@@ -448,12 +457,16 @@ async function handleSearchProjectDocuments(
   if (query.length < 3) {
     return JSON.stringify({ error: 'search_project_documents requires a query of at least 3 characters.' });
   }
+  // The open project's documents only (PF-10 S7); the organization's with no project open.
+  const scope = await catalogScope(ctx, orgId, null, 'read');
+  if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
   const { searchCatalog, CatalogSearchUnavailableError } = await import(
     '../vault/document-catalog-search.js'
   );
   try {
     const result = await searchCatalog(orgId, query, {
       limit: typeof input.limit === 'number' ? input.limit : undefined,
+      programId: scope.programId,
     });
     const unsearchable =
       result.unsearchableCount > 0

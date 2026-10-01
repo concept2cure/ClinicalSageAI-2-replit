@@ -139,12 +139,7 @@ export interface RetrievalOptions {
   useCompression?: boolean;
   organizationUuid?: string;
   persistCitations?: boolean;
-  filters?: {
-    atomType?: string;
-    domain?: string;
-    source?: string;
-    dateRange?: { start: Date; end: Date };
-  };
+  filters?: QueryFilters;
   /**
    * Constrain initial retrieval to atoms belonging to artifacts under a
    * specific Concept2Cure project. When set, the pipeline routes through

@@ -843,6 +843,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           organizationId: numericOrgId,
           userId: numericUserId || null,
           projectId: turnProjectId,
+          // The project as the client sent it: a v2 program's UUID, which the
+          // tools that resolve the open project read (PF-10 S7, as the stream).
+          projectRef: project_id ? String(project_id).replace(/^proj_/, '') : null,
           // Tenant UUID so the project_knowledge_search tool can scope retrieval.
           organizationUuid: orgUuid,
           // Situational context (surface/project/document type) — same signal the

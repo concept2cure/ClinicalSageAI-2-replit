@@ -28,3 +28,22 @@ A third copy of the project → program lookup, `document-catalog.service.ts` `r
 |---|---|
 | `01-red.txt` | `document-catalog-tools-project-scope.test.ts` against HEAD, 7 failures. A v2 project lists the organization. Another program is listed and filed into. With no project open, a filing goes ahead. Filing into the open v2 project fails for want of a program. |
 | `02-green.txt` | The new suite, the id-space suite (updated: filing needs an open project; with none, `NO_PROJECT`), the catalog-gated and placement/passage suites, the authoring and c2c services and the walk: 352 tests. The real-PostgreSQL catalog and vault dbtests: 52/52. `tsc` and the lint ratchet pass. |
+
+## Review (wf_0b1c1dfc-069): four findings, all fixed
+
+The adversarial review of the change above found four ways a conversation held in one project still reached another project's documents.
+
+1. **The by-id tools.** `read_project_document`, `catalog_project_document` and `place_project_document` loaded a document checked against the organization only. Search hands the model document ids, so a conversation in project A could read, catalog and place project B's documents. Now `catalog-scope.ts` `documentScopeRefusal` refuses a document of another project with `CROSS_PROJECT` before anything is read or written. With no project open, any document of the organization is allowed, as before (F5).
+2. **Both searches were organization-wide.**
+   - **`search_project_documents`:** `searchCatalog` takes `programId`, applied in its count and its results.
+   - **`search_document_passages`:** the program filter is pushed into the vault SQL. `rag-filters.ts` `QueryFilters.programId` becomes `AND d.program_id = $n::uuid` on both arms of the vault reader, and the coverage figure is the open project's.
+   - **Fail closed:** a corpus with no program column refuses the scope instead of searching wider, and `mergeFilters` keeps the scope through self-query.
+   - **No post-filter:** the first fix, filtering the organization's top 25, silently missed an open-project passage ranked below that cutoff. The pushdown replaced it, and the post-filter is deleted.
+3. **An open project with no program read the organization.** That is every project's documents, from a conversation that belongs to one. It is now refused `NO_PROJECT`.
+4. **The non-stream chat path** (`routes/chat/send-message.ts`) passed only the integer `projectId`. A v2 project therefore looked like no project, and every catalog tool ran organization-wide. It now passes `projectRef` as the stream does (`turn-tool-context.ts`).
+
+| File | Shows |
+|---|---|
+| `03-red-review.txt` | The project-scope suite with the review cases, run against 453593bad: 6 failures. The three by-id tools are not refused, neither search is scoped, and the unanchored project reads the organization. The passage case shown there ("keeps the open project's passages and drops another's") was written for the first, post-filter fix. It was rewritten for the pushdown to assert that the program reaches the search, and the pushdown's own red is in `04`. |
+| `04-red-mutations.txt` | **Pushdown removed:** with `filters:` taken out of `searchDocumentPassages`, real PostgreSQL fails exactly the two scoped cases. The organization-wide control, which finds both projects' near-identical studies, passes either way, so the scope (not ranking) is what keeps the other project out. **Filter-builder mutations:** `mergeFilters` forgetting `programId`, and a corpus ignoring the scope, each fail their `rag-filters` case. |
+| `05-green-review.txt` | **Unit and PGlite:** catalog, passage and placement tools, the RAG pipeline, router and filters, the vault services, the walk and the send-message suites, 670 tests. The two exact-argument passage assertions now expect `programId: null`. **Real PostgreSQL 16:** 9 files and 80 tests, covering catalog, placement, passages (three new two-project cases) and RAG tenant scope, on a database migrated to trunk. The lint ratchet and `tsc` both pass. |

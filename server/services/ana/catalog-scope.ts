@@ -71,14 +71,45 @@ async function noProgramScope(
         'use "Add to this project".',
     };
   }
-  if (!named) return { programId: null };
   if (projectOpen) {
+    // Not the organization either: that would be every project's documents
+    // from a conversation that belongs to one (review wf_0b1c1dfc-069).
     return {
-      code: 'CROSS_PROJECT',
-      error: 'The open project has no program, so another program\u2019s documents are not listed from it.',
+      code: 'NO_PROJECT',
+      error: 'The open project has no program, so it has no Vault documents, and another project\u2019s are not read from it.',
     };
   }
+  if (!named) return { programId: null };
   return (await programInOrganization(pool, named, orgId))
     ? { programId: named }
     : { code: 'PROGRAM_NOT_FOUND', error: 'That program is not one of your organization\u2019s projects.' };
+}
+
+/**
+ * For a tool that acts on one document by id (read, catalog, place): the
+ * document must be the open project's. The JSON refusal to return, or null.
+ *
+ * search_project_documents is organization-wide by nature, so the model can
+ * hold another project's document id; every by-id tool loaded the document
+ * org-checked only, so a conversation held in project A read, cataloged and
+ * placed project B's documents (review wf_0b1c1dfc-069). No project open: any
+ * document of the organization, as today (F5).
+ */
+export async function documentScopeRefusal(
+  ctx: ToolContext | undefined,
+  orgId: number,
+  documentProgramId: string | null | undefined,
+): Promise<string | null> {
+  const scope = await catalogScope(ctx, orgId, null, 'read');
+  if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
+  if (scope.programId && String(documentProgramId ?? '').toLowerCase() !== scope.programId.toLowerCase()) {
+    return JSON.stringify({
+      ok: false,
+      code: 'CROSS_PROJECT',
+      error:
+        'That document belongs to another project. This conversation is held in its own project; open the ' +
+        'document\u2019s project to work with it.',
+    });
+  }
+  return null;
 }
