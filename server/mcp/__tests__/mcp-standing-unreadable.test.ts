@@ -41,7 +41,11 @@ vi.mock('../../services/account-standing', async (importOriginal) => {
 
 vi.mock('../auth/store', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../auth/store')>();
-  const membership = { membershipId: 11, organizationId: 7, userId: 3, role: 'admin', organizationUuid: null, email: null };
+  // The organisation has the connector turned on (P1-47), so the controls below exercise the standing alone.
+  const membership = {
+    membershipId: 11, organizationId: 7, userId: 3, role: 'admin', organizationUuid: null, email: null,
+    organizationSettings: { claudeConnector: { enabled: true } },
+  };
   const grant = {
     clientId: 'client-1',
     organizationId: 7,

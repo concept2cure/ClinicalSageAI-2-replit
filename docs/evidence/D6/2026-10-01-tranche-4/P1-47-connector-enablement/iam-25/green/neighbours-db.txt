@@ -1,0 +1,164 @@
+# IAM-25/INF-35 GREEN neighbours (PostgreSQL, NOBYPASSRLS runtime role, RLS on), 2026-10-01T16:21:45Z. Shared working tree, HEAD f8d40474.
+# Re-run after a test-only compaction of mcp-connector-enablement.dbtest.ts for max-lines (an insertOrg helper, one-line expects); no assertion changed.
+# command: TEST_DATABASE_URL=postgres(owner) APP_DATABASE_URL=app_service RLS_ENFORCE=on npx vitest run --config vitest.db.config.ts server/mcp/__tests__/mcp-connector.dbtest.ts server/mcp/__tests__/mcp-consent-delegated.dbtest.ts server/mcp/__tests__/mcp-connector-enablement.dbtest.ts server/mcp/__tests__/mcp-account-standing.dbtest.ts tests/db/role-config-change-audit.dbtest.ts
+# (structured JSON log lines filtered out)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T16:21:49.509Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 6ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 166ms
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 381ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 11ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page, and is told why 12ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page, and is told why 10ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 10ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use 2407ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use 2386ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a password change ends the connector grants authorised before it > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 2365ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a sign-out of every session ends the connector grants authorised before it (R2) > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 2359ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 24ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 51ms
+stdout | server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client
+[database] Database connection successful { timestamp: '2026-10-01T16:22:02.261Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 16ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > discovery and authentication over HTTP > 401 + resource_metadata without a bearer; metadata documents resolve 38ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client 117ms
+stderr | server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s 175ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document 208ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_assess_sequence_readiness: A gets the engine verdict; B is refused for A’s sequence 2358ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > is denied to a connector token without c2c:file 76ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org 107ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer) 59ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > returns the gateway refusal verbatim, never demo-mode text 55ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > a deterministic reference tool (ICH corpus) answers through the AnA handler 4446ms
+stderr | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > a member is refused at consent: 403, no code, no code row
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > a member is refused at consent: 403, no code, no code row
+[database] Database connection successful { timestamp: '2026-10-01T16:22:12.822Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 6ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > the organization starts with no connector setting (absent means disabled) 2ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > a member is refused at consent: 403, no code, no code row 45ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > a connector token minted for the organization is refused at /mcp 12ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > the member's own session is refused at /mcp too 19ms
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > every member sees it is off; only the administrator is told they can change it
+[database] Database connection successful { timestamp: '2026-10-01T16:22:12.929Z', poolSize: 2 }
+
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > every member sees it is off; only the administrator is told they can change it 127ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > no one else enables it, and the administrator not through tenant-config's general doors > PUT /api/tenant-config/:id/claude-connector as manager → 403 16ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > no one else enables it, and the administrator not through tenant-config's general doors > PUT /api/tenant-config/:id/claude-connector as member → 403 13ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > no one else enables it, and the administrator not through tenant-config's general doors > PUT /api/tenant-config/:id/claude-connector as otherAdmin → 403 23ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > no one else enables it, and the administrator not through tenant-config's general doors > PATCH /api/tenant-config/:id/settings naming the connector, as the administrator → 403 21ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > no one else enables it, and the administrator not through tenant-config's general doors > PATCH /api/tenant-config/:id/settings/claudeConnector → refused 20ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > no one else enables it, and the administrator not through tenant-config's general doors > nothing was stored and nothing was recorded as a change 16ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator enables it, through its own door > PUT by the administrator: 200, stored, and one chained audit row naming them, the value before and after 44ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator enables it, through its own door > the same connector token is now admitted at /mcp 25ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator enables it, through its own door > a member can now consent, and the grant opens /mcp 62ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator disables it: tokens already issued are cut > PUT {enabled:false} by the administrator: 200 and a second audit row 30ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator disables it: tokens already issued are cut > the same connector token is refused at /mcp again 10ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator disables it: tokens already issued are cut > the refresh token of a grant made while it was enabled is refused at /token 12ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator disables it: tokens already issued are cut > a member is refused at consent again 14ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config refuse the administrator the key too > control: the AnA settings door is open to this administrator for another setting 31ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config refuse the administrator the key too > PATCH /api/ana/platform/settings naming the connector → 403, nothing stored, the token still refused 26ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config refuse the administrator the key too > control: the organizations settings door is open to this administrator for another setting 32ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config refuse the administrator the key too > PATCH /api/organizations/:id/settings naming the connector → 403, nothing stored, the token still refused 20ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config refuse the administrator the key too > control: a door with no connector check of its own writes another setting through the one writer 23ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config refuse the administrator the key too > that door cannot turn it on: the one writer refuses, nothing stored, nothing recorded, the token still refused 35ms
+stderr | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25 (decided 2026-10-01): the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25 (decided 2026-10-01): the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's
+✅ Platform health/auth routes mounted
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25 (decided 2026-10-01): the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's
+  "timestamp": "2026-10-01T16:22:14.783Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 467,
+    "granted": 20
+  }
+}
+
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25 (decided 2026-10-01): the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's 1351ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25 (decided 2026-10-01): the organisation a sign-up creates has someone who can open the connector > that creator, its administrator, is told they can change it, and turns it on 76ms
+stdout | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read
+[database] Database connection successful { timestamp: '2026-10-01T16:22:17.545Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 7ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read 114ms
+stderr | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > that token opens /mcp and is refused the governed write there
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > that token opens /mcp and is refused the governed write there 124ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for another client: no code, no code row, and nothing for /mcp 17ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for its own client: no code, no code row, and nothing for /mcp 16ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for another client: no code, no code row, and nothing for /mcp 11ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for its own client: no code, no code row, and nothing for /mcp 9ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the c2c:read connector token still opens /mcp for a read 101ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > a refresh cannot widen the grant either 10ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the user's own session still consents to all three scopes, and that grant files the draft 220ms
+stderr | tests/db/role-config-change-audit.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > when its audit row cannot be written, the role stays as it was 62ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > an added member: one chained row on the organisation's chain, written by the change's own transaction 33ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a member already in the group: nothing changes, nothing is recorded 15ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a removed member is set to member, with the role it held recorded 21ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > removal from a group the member is not in changes nothing and records nothing 13ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > DELETE: a refused event leaves the account active; otherwise status and event share a transaction 40ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PUT active=false: a refused event leaves the account active 38ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PATCH active=false on a shared account: a refused event leaves this organisation's membership 29ms
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful
+
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful { timestamp: '2026-10-01T16:22:20.456Z', poolSize: 1 }
+
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful { timestamp: '2026-10-01T16:22:20.457Z', poolSize: 2 }
+
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > POST: a refused event provisions nobody; otherwise membership and event share a transaction 29ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were 117ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a settings change writes the record the tenant configuration route writes, and keeps what it does not name 101ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a module toggle is recorded by the same writer 45ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/ana/platform/settings naming the connector: 403, nothing stored, no row written 13ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/ana/platform/settings, beside another key naming the connector: 403, nothing stored, no row written 14ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/ana/platform/ai-config naming the connector: 403, nothing stored, no row written 13ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > POST /api/ana/platform/execute (settings) naming the connector: 403, nothing stored, no row written 15ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > POST /api/ana/platform/execute (ai_config) naming the connector: 403, nothing stored, no row written 15ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/organizations/:id/settings (with a reason) naming the connector: 403, nothing stored, no row written 22ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/organizations/:id/settings (bare) naming the connector: 403, nothing stored, no row written 22ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > control: the same administrator, on the same doors, still changes another setting 109ms
+
+ Test Files  5 passed (5)
+      Tests  84 passed (84)
+   Start at  16:21:46
+   Duration  35.15s (transform 7.62s, setup 235ms, import 2.22s, tests 31.67s, environment 1ms)
+

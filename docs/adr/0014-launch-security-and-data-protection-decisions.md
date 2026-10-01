@@ -176,14 +176,18 @@ known-compromised values; it does not require that comparison to be made online.
 
 ### 10. The connector for Claude (D8)
 
-The connector stays in the launch catalog. **An organization's owner enables it for that
-organization**; until then consent and token use are refused for its members (P1-47). A connector is
-a new path for tenant content to leave the platform to a client the customer controls, and the
-customer, not the vendor, decides to open it. The two switches compose: product decision P-2
+The connector stays in the launch catalog. **An organization's owner or administrator enables it for
+that organization**; until then consent and token use are refused for its members (P1-47). The
+administrator is named because the product has no separate owner role in `organization_users` (sign-up
+and first-run setup make an organization's creator its administrator), and the administrator is the
+customer's highest in-product role, so the customer still decides (amended 2026-10-01, IAM-25). A
+connector is a new path for tenant content to leave the platform to a client the customer controls, and
+the customer, not the vendor, decides to open it. The two switches compose: product decision P-2
 (`docs/LAUNCH_DEFINITION_OF_DONE.md`) turns the connector on for the deployment, with
 `MCP_ENABLED=true` and Claude's origins as the only registration origins, and each organization stays
-closed until its owner turns it on at `PUT /api/tenant-config/:id/claude-connector`, a change that is
-audited and is read on every request, so turning it off also refuses tokens already issued.
+closed until its owner or administrator turns it on at `PUT /api/tenant-config/:id/claude-connector`, a
+change that is audited and is read on every request, so turning it off also refuses tokens already
+issued.
 
 ## Consequences
 

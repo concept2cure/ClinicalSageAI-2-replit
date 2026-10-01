@@ -1322,7 +1322,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     uiKit: null,
     // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminAccess invites members.
     // '/api/mdx/admin' (2026-09-26): AdminAccess.tsx.
-    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin'],
+    // '/api/tenant-config' (2026-10-01, INF-35, P1-47): the organisation settings API is the
+    // admin console's. Admin → Settings reads and changes the connector for Claude there
+    // (ClaudeConnectorSetting.tsx). Its writes are admin-gated and audited through the one
+    // settings writer (server/services/tenant/tenant-settings-writer.ts).
+    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

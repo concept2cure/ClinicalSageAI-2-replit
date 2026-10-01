@@ -33,7 +33,7 @@ import {
 } from '../../services/account-standing';
 import { ALL_MCP_SCOPES, type McpConfig } from '../config';
 import * as store from './store';
-import { mintAccessToken, signPendingAuthorization, verifyPlatformBearer } from './platform-token';
+import { findGrantMembership, mintAccessToken, signPendingAuthorization, verifyPlatformBearer } from './platform-token';
 import { renderConsentPage } from './consent';
 
 export class ConceptToCureOAuthProvider implements OAuthServerProvider {
@@ -190,7 +190,9 @@ export class ConceptToCureOAuthProvider implements OAuthServerProvider {
           'the account was taken out of use, or its membership changed. Connect Concept2Cure again.',
       );
     }
-    const membership = await store.findMembership(grant.userId, grant.organizationId);
+    // P1-47: refused while the organisation has the connector off, and a
+    // ServerError when it cannot be read (platform-token.ts).
+    const membership = await findGrantMembership(grant.userId, grant.organizationId);
     if (!membership || membership.membershipId !== grant.membershipId) {
       throw new InvalidGrantError('The authorising membership no longer exists');
     }

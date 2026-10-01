@@ -31,17 +31,26 @@
  * authorised a new grant of every scope, for any registered client, with no
  * user present: a 30-day refresh token and the governed write (IAM-02 part b,
  * reopened; P0-2 residual fix round; mcp-consent-delegated.dbtest.ts).
+ *
+ * Both populations, for every purpose, are admitted only while the token's
+ * organisation has the connector turned on (ADR-0014 §10, P1-47;
+ * connector-enablement.ts). The setting is read with the membership, on every
+ * call and uncached, so turning it off refuses tokens already issued; a read
+ * that fails refuses as an outage. The /token exchanges apply the same rule
+ * through findGrantMembership below (mcp-connector-enablement.test.ts,
+ * mcp-connector-enablement.dbtest.ts).
  */
 
 import jwt from 'jsonwebtoken';
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
-import { InvalidTokenError, ServerError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import { InvalidGrantError, InvalidTokenError, ServerError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
 import { verifyJwtWithRotation, activeJwtSecret } from '../../utils/jwtVerify';
 import { verifyLiveToken } from '../../services/token-revocation';
 import { requireAccessTokenReason } from '../../middleware/tokenType';
 import { CONNECTOR_TOKEN_USE, openConnectorSession } from '../../services/session-inactivity';
 import { ALL_MCP_SCOPES, type McpConfig } from '../config';
 import { findMembership, type Membership } from './store';
+import { CONNECTOR_NOT_ENABLED, claudeConnectorEnabled } from './connector-enablement';
 
 /** The session registry knows connector tokens by this claim (services/session-inactivity.ts). */
 export const MCP_TOKEN_USE = CONNECTOR_TOKEN_USE;
@@ -160,6 +169,47 @@ function resolveScopes(claims: PlatformClaims, tokenUse: McpPrincipal['tokenUse'
   return (claims.scope ?? '').split(' ').filter((s) => known.has(s));
 }
 
+/**
+ * The bearer is fine, and its organisation has not turned the connector on.
+ * An InvalidTokenError, so /mcp answers 401 `invalid_token` with this reason
+ * (the SDK's bearer middleware); the consent POST answers it as 403
+ * `access_denied`, since signing in again cannot help.
+ */
+export class ConnectorNotEnabledError extends InvalidTokenError {}
+
+/**
+ * The live membership of `userId` in `organizationId` (null when there is
+ * none), and whether that organisation has the connector turned on: one read,
+ * on every call, never cached. A read that fails is a ServerError, never a
+ * pass and never "your token is bad", as decodeAccessClaims treats an
+ * unreadable revocation list.
+ */
+async function readConnectorMembership(
+  userId: number,
+  organizationId: number,
+): Promise<{ membership: Membership | null; enabled: boolean }> {
+  let membership: Membership | null;
+  try {
+    membership = await findMembership(userId, organizationId);
+  } catch {
+    throw new ServerError('The organisation could not be checked. Try again.');
+  }
+  return { membership, enabled: membership !== null && claudeConnectorEnabled(membership.organizationSettings) };
+}
+
+/**
+ * For the /token exchanges (provider.ts, liveGrantorMembership): the grant's
+ * membership, or null when there is none. A grant of an organisation that has
+ * the connector turned off is refused with `invalid_grant` and left as it was,
+ * so turning the connector back on restores it; a read that fails is a
+ * ServerError, and nothing is rotated or issued.
+ */
+export async function findGrantMembership(userId: number, organizationId: number): Promise<Membership | null> {
+  const { membership, enabled } = await readConnectorMembership(userId, organizationId);
+  if (membership && !enabled) throw new InvalidGrantError(CONNECTOR_NOT_ENABLED);
+  return membership;
+}
+
 export async function verifyPlatformBearer(
   token: string,
   config: McpConfig,
@@ -169,8 +219,9 @@ export async function verifyPlatformBearer(
   const { userId, organizationId } = resolveSubject(claims);
   checkAudience(claims, config);
 
-  const membership: Membership | null = await findMembership(userId, organizationId);
+  const { membership, enabled } = await readConnectorMembership(userId, organizationId);
   if (!membership) throw new InvalidTokenError('The token subject is no longer a member of the organisation');
+  if (!enabled) throw new ConnectorNotEnabledError(CONNECTOR_NOT_ENABLED);
 
   const tokenUse: McpPrincipal['tokenUse'] = claims.token_use === MCP_TOKEN_USE ? 'mcp' : 'platform';
   const scopes = resolveScopes(claims, tokenUse);
