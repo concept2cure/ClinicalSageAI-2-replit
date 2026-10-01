@@ -18,6 +18,14 @@
 -- =============================================================================
 -- 20261001b_projects_one_anchor_per_program.sql
 --
+-- AMENDED IN PLACE 2026-10-01 (review wf_6f56bbd0-de6; CLAUDE.md Rule 1). The
+-- NOTICE now names each anchor row's organization, and the remedy below
+-- separates a same-organization duplicate from a cross-organization one. As
+-- first pushed, it named only project ids and gave one remedy, which for a
+-- cross-organization pair would have moved one tenant's records onto another
+-- tenant's project. No schema object changed; the journal records drift for
+-- this file, and that is this amendment.
+--
 -- WHY. projects.regulatory_program_id (20260814) is the anchor from a program to
 -- the integer projects row its artifacts, packages and tasks hang from. Nothing
 -- held it unique: 20260814 created a plain index, and its backfill linked by
@@ -29,11 +37,19 @@
 -- WHAT. A partial unique index projects_one_anchor_per_program on
 -- (regulatory_program_id) WHERE regulatory_program_id IS NOT NULL.
 --   * Created only when no program has two anchor rows. Otherwise a NOTICE names
---     each program and its project ids, and the index is not created: a unique
---     index over duplicate rows fails CREATE, and an unguarded one would fail
---     every deploy (Rule 1). Resolve the duplicates, by re-pointing the
---     artifacts of the higher id onto the lowest and clearing its anchor, and
---     the next deploy creates the index.
+--     each program and its anchor rows as project@organization, and the index is
+--     not created: a unique index over duplicate rows fails CREATE, and an
+--     unguarded one would fail every deploy (Rule 1). The index is global, not
+--     per organization: a program belongs to one organization, so it has one
+--     anchor row in all of projects. Resolve the duplicates and the next deploy
+--     creates the index:
+--       - A row whose organization is not the program's is a cross-tenant
+--         anchor, written unchecked 2026-08-14..09-24 (20260926b's header).
+--         scripts/db/program-same-org-preflight.mjs lists it. Clear that row's
+--         regulatory_program_id; move nothing between organizations.
+--       - Rows of the program's own organization: re-point the higher ids'
+--         records onto the lowest id (the row every reader reads) and clear
+--         the higher ids' anchors.
 --   * The intake writer runs inside the program's creating transaction. A
 --     second anchor insert is refused 23505, and the program's creation rolls
 --     back: fail closed. The program id is minted in that same uncommitted
@@ -63,15 +79,16 @@ BEGIN
     RETURN;
   END IF;
   FOR dup IN
-    SELECT regulatory_program_id AS program_id, array_agg(id ORDER BY id) AS project_ids
+    SELECT regulatory_program_id AS program_id, count(*) AS n,
+           string_agg(id::text || '@' || organization_id::text, ', ' ORDER BY id) AS anchor_rows
       FROM public.projects
      WHERE regulatory_program_id IS NOT NULL
      GROUP BY regulatory_program_id
     HAVING count(*) > 1
   LOOP
     found := true;
-    RAISE NOTICE 'PF-08: program % has % anchor rows (projects %); one-anchor index not created',
-      dup.program_id, array_length(dup.project_ids, 1), dup.project_ids;
+    RAISE NOTICE 'PF-08: program % has % anchor rows (project@organization: %); one-anchor index not created',
+      dup.program_id, dup.n, dup.anchor_rows;
   END LOOP;
   IF found THEN
     RETURN;
