@@ -25,6 +25,8 @@ import request from 'supertest';
 
 import { createAuthBoundary } from '../../server/middleware/authBoundary';
 import { createComplianceReportRoutes } from '../../server/routes/audit-compliance-reports';
+import tenantUsers from '../../server/routes/tenant-users';
+import tenantConfig from '../../server/routes/tenant-config';
 import { getPool } from '../../server/db/runtime';
 import { verifySignedAuditExport } from '../../server/services/audit/signedAuditExport';
 import { runWithTenantScope } from '../../server/db/tenantStore';
@@ -218,6 +220,11 @@ afterAll(async () => {
         "DELETE FROM audit_logs WHERE tenant_id = ANY($1::int[]) AND action = 'compliance.report_run'",
         [FIXTURE_ORGS],
       );
+      // The administrator changes this run made through the real writers (P1-41).
+      await c.query(
+        'DELETE FROM audit_logs WHERE tenant_id = ANY($1::int[]) AND action = ANY($2::text[]) AND actor_id = $3',
+        [FIXTURE_ORGS, ['member_role_changed', 'member_removed', 'tenant_settings_changed'], adminA],
+      );
       await c.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
       await c.query('COMMIT');
     } catch (err) {
@@ -355,6 +362,58 @@ describe('each report as organisation A, section by section', () => {
     expect(changes[0].closed_at).toMatch(ISO_UTC);
   });
 
+});
+
+describe('administrator changes, as their writers record them, appear in the administrative changes report (P1-41)', () => {
+  /** The routes an administrator changes access and configuration through, mounted as production mounts them. */
+  function adminStack(): express.Express {
+    const a = express();
+    a.use(express.json());
+    a.use('/api', createAuthBoundary());
+    a.use('/api/tenant-users', tenantUsers);
+    a.use('/api/tenant-config', tenantConfig);
+    return a;
+  }
+
+  it('a role change, a removal and a security settings change each appear, with what changed and why', async () => {
+    const member = await provisionMember(ORG_A, 'member', 'cr-rerole');
+    const saved = (await owner.query('SELECT settings FROM organizations WHERE id = $1', [ORG_A])).rows[0]?.settings;
+    const reason = `${TAG} periodic access review`;
+    try {
+      const admin = adminStack();
+      const reroled = await request(admin)
+        .patch(`/api/tenant-users/${ORG_A}/${member}`)
+        .set(auth(tokenAdminA))
+        .send({ role: 'viewer', reason });
+      expect(reroled.status, JSON.stringify(reroled.body)).toBe(200);
+      const removed = await request(admin).delete(`/api/tenant-users/${ORG_A}/${member}`).set(auth(tokenAdminA)).send({ reason });
+      expect(removed.status, JSON.stringify(removed.body)).toBe(200);
+      const configured = await request(admin)
+        .patch(`/api/tenant-config/${ORG_A}/settings/security`)
+        .set(auth(tokenAdminA))
+        .send({ sessionTimeoutMinutes: 25 });
+      expect(configured.status, JSON.stringify(configured.body)).toBe(200);
+
+      const data = JSON.parse((await run('administrative-changes', `?from=${today}&to=${today}`)).body.export.data) as Report;
+      const mine = section(data, 'changes').rows.filter((r) => r.actor_user_id === adminA);
+      const role = mine.find((r) => r.action === 'member_role_changed' && r.target_id === String(member));
+      expect(role, 'the role change is in the report').toMatchObject({ target_type: 'organization_users', reason });
+      expect(JSON.parse(String(role!.detail))).toMatchObject({ targetUserId: member, previousRole: 'member', newRole: 'viewer' });
+      const removal = mine.find((r) => r.action === 'member_removed' && r.target_id === String(member));
+      expect(removal, 'the removal is in the report').toMatchObject({ reason });
+      expect(JSON.parse(String(removal!.detail))).toMatchObject({ previousRole: 'viewer', newRole: null });
+      const settings = mine.find((r) => r.action === 'tenant_settings_changed');
+      expect(settings, 'the settings change is in the report').toMatchObject({ target_id: String(ORG_A) });
+      expect(JSON.parse(String(settings!.detail))).toMatchObject({
+        sections: ['security'],
+        values: { security: { after: { sessionTimeoutMinutes: 25 } } },
+      });
+      for (const r of mine) expect(r.occurred_at).toMatch(ISO_UTC);
+    } finally {
+      await owner.query('UPDATE organizations SET settings = $2 WHERE id = $1', [ORG_A, saved == null ? null : JSON.stringify(saved)]);
+      await owner.query('DELETE FROM organization_users WHERE user_id = $1', [member]);
+    }
+  });
 });
 
 describe('the integrity attestation and the record of a run', () => {

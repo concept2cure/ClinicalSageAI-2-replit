@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { findReport } from '../catalog';
 import { summarizeIntegrityChecks } from '../queries/audit-trail-integrity';
+import { ADMINISTRATIVE_ACTIONS } from '../queries/administrative-changes';
 import { VERIFY_INSTRUCTION, buildSignedReport } from '../signed-report';
 import type { ReportData } from '../types';
 
@@ -69,25 +70,41 @@ describe('item 3 — what the seal is, and who verifies it, said plainly', () =>
 
 describe('item 4 — the access review says what it cannot show', () => {
   const r = findReport('access-review')!;
-  it('role history and the review decision are stated as not recorded', () => {
-    expect(r.notRecorded).toContain("A member's role on a past date cannot be reported: role changes are not recorded.");
+  it('the past role and the review decision are stated as not shown; role changes are where they are recorded', () => {
+    expect(r.notRecorded).toContain(
+      "A member's role on a past date is not reconstructed: the role shown is the current one. Role changes, with the role before and after, are listed in the administrative changes report.",
+    );
     expect(r.notRecorded).toContain(
       'This report records no review decision, reviewer or sign-off. POLICY-AC-002 §4a keeps those in the access-review record.',
     );
-    expect(r.notRecorded.join(' ')).toMatch(/role change made by an administrator/);
+  });
+  it('P1-41: no longer says an administrator\'s role change or removal goes unrecorded', () => {
+    const text = r.notRecorded.join(' ');
+    expect(text).not.toMatch(/role changes are not recorded/);
+    expect(text).not.toMatch(/not written to the audit trail/);
+    expect(text).toMatch(/Removals and role changes made by an administrator in the product, and removals made through SCIM provisioning, are recorded/);
   });
 });
 
 describe('item 5 — administrative changes: which settings changes are recorded, exactly', () => {
   const text = findReport('administrative-changes')!.notRecorded.join(' ');
-  it('tenant configuration changes are not recorded; organisation settings are recorded by section name only', () => {
-    expect(text).toMatch(/tenant configuration/);
+  it('tenant configuration is recorded by section and field name, with values only for security and audit-trail retention', () => {
+    expect(text).toMatch(/Tenant configuration changes and resets are recorded by section and by the names of the fields changed/);
     expect(text).toMatch(/second-factor requirement/);
     expect(text).toMatch(/session timeout/);
     expect(text).toMatch(/IP restrictions/);
     expect(text).toMatch(/audit-trail retention/);
-    expect(text).toMatch(/integrations/);
+    expect(text).toMatch(/webhook addresses, are not recorded/);
     expect(text).toMatch(/organisation settings are recorded by section name only/);
+  });
+  it('P1-41: no longer says a role change, a removal or a tenant configuration change goes unrecorded', () => {
+    expect(text).not.toMatch(/organisation role, and a member's removal by an administrator, are not recorded/);
+    expect(text).not.toMatch(/Settings changed through the tenant configuration are not recorded/);
+  });
+  it('P1-41: reads the actions the membership and tenant configuration writers store', () => {
+    for (const action of ['member_role_changed', 'member_removed', 'tenant_settings_changed', 'tenant_settings_reset']) {
+      expect(ADMINISTRATIVE_ACTIONS).toContain(action);
+    }
   });
 });
 

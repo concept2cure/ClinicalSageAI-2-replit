@@ -1,14 +1,25 @@
 /**
  * Administrative and privileged changes — the security-relevant changes an
  * administrator (or an automated provisioner) made to this organisation in the
- * period: API keys, invitations, second-factor changes, lifecycle overrides,
- * cross-tenant attempts, organisation profile and settings, and SCIM account
+ * period: API keys, invitations, member role changes and removals,
+ * second-factor changes, lifecycle overrides, cross-tenant attempts,
+ * organisation profile and settings, tenant configuration, and SCIM account
  * provisioning.
  *
  * Each action name is the one its writer stores, verified at the writer:
  *   api_key_created, api_key_revoked     routes/api-keys.ts (auditService.logAction)
  *   api_key_expired                      services/api-key-service.ts
  *   user_invited                         services/tenant/invitation-delivery.ts
+ *   member_role_changed, member_removed  services/tenant/membership-change.ts, for
+ *                                        routes/tenant-users.ts PATCH and DELETE
+ *                                        /:organizationId/:userId (writeChainedAuditRow;
+ *                                        new_values: targetUserId, previousRole,
+ *                                        newRole, reason)
+ *   tenant_settings_changed, tenant_settings_reset
+ *                                        routes/tenant-config.ts writeTenantSettings
+ *                                        (writeChainedAuditRow; new_values: sections,
+ *                                        changedFields, and values before/after for
+ *                                        security and qmp.auditTrailRetentionDays only)
  *   user_mfa_enable, user_mfa_disable    routes/auth.ts recordSecondFactorChange
  *   authorization.tenant_lifecycle_override
  *                                        middleware/tenantLifecycleGuard.ts — through
@@ -20,11 +31,12 @@
  *                                        in new_values names the change)
  *   audit_events scim.user.*             routes/scim.ts auditScim
  *
- * Settings (verified 2026-10-01): routes/tenant-config.ts PATCH
+ * Settings (verified 2026-10-01, P1-41): routes/tenant-config.ts PATCH
  * /:tenantId/settings, PATCH /:tenantId/settings/:section and POST
- * /:tenantId/settings/reset write organizations.settings with no audit row;
- * routes/organizations-routes.ts PATCH /:id/settings records data_modify on
- * organization_settings with the section names only (`sections`), never values.
+ * /:tenantId/settings/reset each write one chained row in the write's own
+ * transaction (above); routes/organizations-routes.ts PATCH /:id/settings
+ * records data_modify on organization_settings with the section names only
+ * (`sections`), never values.
  *
  * @module server/services/audit/compliance-reports/queries/administrative-changes
  */
@@ -36,6 +48,10 @@ export const ADMINISTRATIVE_ACTIONS: readonly string[] = [
   'api_key_revoked',
   'api_key_expired',
   'user_invited',
+  'member_role_changed',
+  'member_removed',
+  'tenant_settings_changed',
+  'tenant_settings_reset',
   'user_mfa_enable',
   'user_mfa_disable',
   'authorization.tenant_lifecycle_override',
@@ -108,7 +124,7 @@ async function run(ctx: RunContext): Promise<Record<string, SectionResult>> {
 export const administrativeChanges: ReportDefinition = {
   id: 'administrative-changes',
   title: 'Administrative and privileged changes',
-  purpose: 'Lists the security-relevant changes made to this organisation in the period: API keys, invitations, second-factor changes, lifecycle overrides, cross-organisation access attempts, organisation profile and settings, and SCIM account provisioning.',
+  purpose: 'Lists the security-relevant changes made to this organisation in the period: API keys, invitations, member role changes and removals, second-factor changes, lifecycle overrides, cross-organisation access attempts, organisation profile, settings and configuration, and SCIM account provisioning.',
   basis: ['21 CFR 11.10(d)', '21 CFR 11.10(e)', '21 CFR 11.10(g)', 'SOC 2 CC6.2', 'SOC 2 CC8.1', 'EU GMP Annex 11 §12'],
   period: 'range',
   sections: [
@@ -132,10 +148,10 @@ export const administrativeChanges: ReportDefinition = {
     },
   ],
   notRecorded: [
-    "A change to a member's organisation role, and a member's removal by an administrator, are not recorded.",
     'Acceptance of an invitation is not recorded.',
     'A role change that arrives through a SCIM group is not recorded.',
-    'Settings changed through the tenant configuration are not recorded: branding; security (the second-factor requirement, password policy, session timeout and IP restrictions); notifications; workflow; clinical evaluation and quality-plan settings, including audit-trail retention; and integrations. Resetting them to their defaults is not recorded either.',
+    'Tenant configuration changes and resets are recorded by section and by the names of the fields changed. Values before and after are recorded only for the security settings (the second-factor requirement, password policy, session timeout and IP restrictions) and the audit-trail retention period; other values, which include webhook addresses, are not recorded.',
+    'Member role changes and removals made by an administrator, and tenant configuration changes, made before the product began recording them were not recorded.',
     'Changes to the organisation settings are recorded by section name only, without the values before or after the change.',
     'Administration of SCIM tokens and of the IP allow-list is not recorded.',
     'SAML single sign-on is configured from the server environment, so its configuration has no change record.',

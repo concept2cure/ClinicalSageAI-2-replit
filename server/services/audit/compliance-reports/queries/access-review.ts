@@ -9,6 +9,11 @@
  * audit rows only: users.last_login is stamped when the password alone is
  * accepted, before the second factor, so it is not reported.
  *
+ * A role change or removal an administrator makes (routes/tenant-users.ts,
+ * through services/tenant/membership-change.ts) writes a chained audit row
+ * since P1-41 (2026-10-01); those rows are listed in the administrative
+ * changes report, not reconstructed into this as-of list.
+ *
  * @module server/services/audit/compliance-reports/queries/access-review
  */
 import type { ReportDefinition, RunContext, SectionResult } from '../types';
@@ -108,8 +113,8 @@ export const accessReview: ReportDefinition = {
     { key: 'privileged', title: 'Privileged accounts', columns: MEMBER_COLUMNS },
   ],
   notRecorded: [
-    'A member who was removed leaves no membership record, so removed members do not appear. A removal or a role change made by an administrator in the product is not written to the audit trail; a removal made through SCIM provisioning is recorded and appears in the administrative changes report.',
-    "A member's role on a past date cannot be reported: role changes are not recorded.",
+    'A member who was removed leaves no membership record, so removed members do not appear. Removals and role changes made by an administrator in the product, and removals made through SCIM provisioning, are recorded and appear in the administrative changes report. Those an administrator made before the product began recording them were not recorded.',
+    "A member's role on a past date is not reconstructed: the role shown is the current one. Role changes, with the role before and after, are listed in the administrative changes report.",
     'This report records no review decision, reviewer or sign-off. POLICY-AC-002 §4a keeps those in the access-review record.',
     'The account sign-in timestamp is set when the password alone is accepted, before the second factor, so it is not reported; the last sign-in shown is read from successful sign-in audit records only.',
   ],
