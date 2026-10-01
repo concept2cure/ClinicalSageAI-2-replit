@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { signGovernedAct, signedActAttempts } from './governed-signed-act';
+import { SIGN_OFF_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import {
   createDeviationTx,
   addCapaActionTx,
@@ -231,6 +232,8 @@ router.post('/deviations/:id/close', signedActAttempts, async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   await signGovernedAct(req, res, {
     domain: 'protocol_development',
+    target: `protocol-deviation:${id}`,
+    meanings: SIGN_OFF_ACT_MEANINGS,
     codeStatus: CODE_STATUS,
     run: async (client, orgId) => {
       const result = await closeDeviationTx(client, orgId, id);

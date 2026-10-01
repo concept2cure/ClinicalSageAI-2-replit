@@ -23,6 +23,7 @@
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
 import { signGovernedAct, signedActAttempts } from '../governed-signed-act.js';
+import { SIGN_OFF_ACT_MEANINGS } from '../../services/part11/signature-meanings.js';
 import { requireEditorAccessForWrites } from '../../middleware/orgMembership.js';
 import { assessAnalyticalSimilarity, type SimilarityAssessmentInput } from '../../services/biologics/analytical-similarity.js';
 import { assessComparability, type ComparabilityInput } from '../../services/biologics/comparability.js';
@@ -306,6 +307,8 @@ const signRefusal = (code: keyof typeof SIGN_CODE_STATUS, message: string) => Ob
 router.post('/assessments/:id/sign', signedActAttempts, async (req: Request, res: Response) => {
   await signGovernedAct(req, res, {
     domain: 'biopharma',
+    target: `bla_assessment:${req.params.id}`,
+    meanings: SIGN_OFF_ACT_MEANINGS,
     codeStatus: SIGN_CODE_STATUS,
     run: async (client, orgId, userId) => {
       const existing = await client.query(

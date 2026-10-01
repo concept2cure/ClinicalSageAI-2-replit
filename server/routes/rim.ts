@@ -15,6 +15,7 @@ import { pool } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import { recordGovernedAction } from './c2c/actions';
 import { signGovernedAct, signedActAttempts } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import {
@@ -204,7 +205,7 @@ router.post('/products/:id/labels', whenApproving, async (req, res) => {
     return { target: `rim-product:${id}`, payload: { labelId: lid, labelType: parsed.data.labelType, supersededCount }, body: { productId: id, labelId: lid, supersededCount } };
   };
   if (parsed.data.status !== 'approved') return governed(req, res, 'update', parsed.data.reason, record);
-  await signGovernedAct(req, res, { domain: 'rim', codeStatus: CODE_STATUS, run: record });
+  await signGovernedAct(req, res, { domain: 'rim', target: `rim-product:${id}`, meanings: DECISION_ACT_MEANINGS, codeStatus: CODE_STATUS, run: record });
 });
 
 router.get('/products/:id/label-currency', async (req, res) => {

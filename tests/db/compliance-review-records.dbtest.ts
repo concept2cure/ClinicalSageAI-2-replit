@@ -163,7 +163,8 @@ describe('signing without the ceremony is refused', () => {
     const id = await newDraft();
     const res = await sign(id, { meaning: 'approval', password: 'not-the-password' });
     expect(res.status).toBe(400);
-    expect(res.body.error?.code).toBe('SIGNATURE_MEANING_NOT_REVIEW');
+    // The ceremony's refusal since P1-51 (DP-64): a review record carries the meaning "review" only.
+    expect(res.body.error?.code).toBe('MEANING_NOT_ALLOWED');
     const { rows } = await owner.query('SELECT failed_login_attempts FROM users WHERE id = $1', [people.reviewer.id]);
     expect(Number(rows[0].failed_login_attempts ?? 0)).toBe(0);
     expect(await signaturesOn(id)).toEqual([]);
