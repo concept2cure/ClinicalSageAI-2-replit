@@ -53,6 +53,7 @@ module "stack" {
   # Production: Multi-AZ, 35-day backups, protected from deletion, Part 11
   # evidence under COMPLIANCE object lock for seven years.
   rds_engine_version        = "15" # major only; RDS patches the minor (B10)
+  db_credentials_rotation   = var.db_credentials_rotation
   rds_allocated_storage     = 50
   rds_max_allocated_storage = 500
   rds_multi_az              = true
