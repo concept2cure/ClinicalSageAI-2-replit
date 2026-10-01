@@ -23,6 +23,7 @@ import { resolveDriveState } from '../../services/ana-ri/live-drive.js';
 import { executeCommands, type CommandContext } from '../../services/ana-ri/command-executor.js';
 import {
   governedTierOf,
+  requiredSignatureMeaning,
   MIN_REASON_FOR_CHANGE_LEN,
 } from '../../services/ana-ri/part11-governance.js';
 import { isProposeOnlyCommand } from '../../services/ana-ri/command-rbac.js';
@@ -588,7 +589,7 @@ export function mountUtilityRoutes(router: Router): void {
     if (!command || !(isProposeOnlyCommand(command) || isTool)) {
       return sendError(res, 400, 'A governed command name is required', null, 'NOT_A_GOVERNED_COMMAND');
     }
-    const tier = isTool ? registeredToolTier(command) : governedTierOf(command);
+    const tier = isTool ? registeredToolTier(command) : governedTierOf(command, params);
     if (tier === 'confirm') {
       if (body.confirm !== true) {
         return sendError(res, 400, 'Confirm the proposed action to run it', null, 'CONFIRMATION_REQUIRED');
@@ -609,8 +610,10 @@ export function mountUtilityRoutes(router: Router): void {
     const eSignRequired = tier === 'esignature';
 
     // The signer's declared §11.50 meaning, then re-verification (§11.200), in
-    // that order and before the audit row — see governed-esignature.ts.
-    const esign = eSignRequired ? await verifyGovernedESignature(userId, body) : undefined;
+    // that order and before the audit row — see governed-esignature.ts. An act
+    // that fixes its meaning (approving or locking an artifact) refuses any
+    // other before the password is checked.
+    const esign = eSignRequired ? await verifyGovernedESignature(userId, body, isTool ? null : requiredSignatureMeaning(command, params)) : undefined;
     if (esign && !esign.ok) return sendError(res, esign.status, esign.error, esign.details, esign.code);
     const signatureMeaning = esign?.meaning;
     const secondFactorVerified = esign?.secondFactorVerified ?? false;

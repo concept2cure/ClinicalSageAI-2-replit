@@ -25,6 +25,20 @@ import { getAuthHeaders } from '../../../utils/authToken';
  */
 export type GovernedTier = 'confirm' | 'reason' | 'esignature';
 
+/** A §11.50 meaning as the sign-off dialog spells it (server GOVERNED_ACTION_DECLARED_MEANINGS). */
+export type DeclaredMeaning = 'AUTHOR' | 'REVIEWER' | 'APPROVER' | 'RELEASE';
+const DECLARED_MEANINGS: ReadonlySet<string> = new Set<DeclaredMeaning>(['AUTHOR', 'REVIEWER', 'APPROVER', 'RELEASE']);
+
+/**
+ * The meaning the act fixes, when the envelope names one the dialog has
+ * (server part11-governance.ts requiredSignatureMeaning: approving an artifact
+ * is 'APPROVER', locking it 'RELEASE'). Anything else is dropped, never offered.
+ */
+export function fixedMeaningOf(data: { signatureMeaning?: unknown } | undefined | null): DeclaredMeaning | undefined {
+  const m = data?.signatureMeaning;
+  return typeof m === 'string' && DECLARED_MEANINGS.has(m) ? (m as DeclaredMeaning) : undefined;
+}
+
 /** The tier a server envelope names, or the one its signature flag implies (older servers). */
 export function tierOf(data: { tier?: unknown; signatureRequired?: unknown } | undefined | null): GovernedTier {
   const t = data?.tier;
@@ -40,6 +54,11 @@ export interface PendingSignoff {
   signatureRequired: boolean;
   /** Which of the three tiers; absent on older fixtures, derived from signatureRequired then. */
   tier?: GovernedTier;
+  /**
+   * The §11.50 meaning the act fixes, when it fixes one: the dialog offers
+   * that meaning only, already chosen, since the server refuses any other.
+   */
+  signatureMeaning?: DeclaredMeaning;
   /** Server's human-readable explanation of what is being signed off. */
   message: string;
   /**
@@ -66,6 +85,7 @@ interface ApprovalRequiredEvent {
     tier?: unknown;
     reasonRequired?: boolean;
     signatureRequired?: boolean;
+    signatureMeaning?: unknown;
     retry?: { command?: string; params?: Record<string, unknown> };
   };
 }
@@ -88,11 +108,13 @@ export function pendingSignoffFromApproval(event: ApprovalRequiredEvent): Pendin
   if (typeof runId !== 'string' || !runId) return null;
   if (typeof toolUseId !== 'string' || !toolUseId) return null;
   const tier = tierOf(event.data);
+  const signatureMeaning = fixedMeaningOf(event.data);
   return {
     command,
     params: event.data?.retry?.params ?? {},
     signatureRequired: tier === 'esignature',
     tier,
+    ...(signatureMeaning && { signatureMeaning }),
     message: typeof event.message === 'string' ? event.message : defaultMessageFor(tier),
     runId,
     toolUseId,
@@ -115,6 +137,7 @@ interface ExecutedCommandResult {
     tier?: unknown;
     reasonRequired?: boolean;
     signatureRequired?: boolean;
+    signatureMeaning?: unknown;
     retry?: { command?: string; params?: Record<string, unknown> };
   };
 }
@@ -140,11 +163,13 @@ export function extractPendingSignoffs(
     const command = r.data?.retry?.command;
     if (typeof command !== 'string' || command.length === 0) continue;
     const tier = tierOf(r.data);
+    const signatureMeaning = fixedMeaningOf(r.data);
     out.push({
       command,
       params: r.data?.retry?.params ?? {},
       signatureRequired: tier === 'esignature',
       tier,
+      ...(signatureMeaning && { signatureMeaning }),
       message: typeof r.message === 'string' ? r.message : defaultMessageFor(tier),
     });
   }
