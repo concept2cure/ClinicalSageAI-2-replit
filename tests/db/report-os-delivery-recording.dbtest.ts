@@ -23,6 +23,8 @@ import {
   tokenB,
   ids,
   auth,
+  accessToken,
+  provisionMember,
   provisionTwoTenantFixture,
   teardownTwoTenantFixture,
 } from './two-tenant-fixture';
@@ -37,8 +39,13 @@ let openRun: number;
 let finalRun: number;
 let submission: string;
 
+/* A delivery carries finalize's tier (DP-61): owner, admin or manager. tokenB
+   is a plain member, which is now refused (pinned below). */
+let managerToken: string;
+
 beforeAll(async () => {
   await provisionTwoTenantFixture();
+  managerToken = accessToken(await provisionMember(ORG_B, 'manager', 'report-manager'), ORG_B, 'manager');
   await owner.query(
     `INSERT INTO report_type_registry (type_id,label,family,allowed_scopes)
      VALUES ($1,$2,'readiness','["project"]'::json)`,
@@ -125,10 +132,21 @@ async function refuseOn(table: 'c2c_correspondence' | 'audit_logs', when: string
 const send = (subject: string, runId = openRun) =>
   request(ro)
     .post('/api/report-os/deliveries')
-    .set(auth(tokenB))
+    .set(auth(managerToken))
     .send({ runId, channel: 'platform_send', submissionId: submission, subject, recipients: ['agency-contact'], captureForLearning: false });
 
 describe('POST /api/report-os/deliveries on the record (P1-44)', () => {
+  it('a plain member cannot deliver: 403, no letter and no chain row (DP-61)', async () => {
+    const subject = `${TAG} member refused`;
+    const res = await request(ro)
+      .post('/api/report-os/deliveries')
+      .set(auth(tokenB))
+      .send({ runId: openRun, channel: 'platform_send', submissionId: submission, subject, recipients: ['agency-contact'], captureForLearning: false });
+    expect(res.status).toBe(403);
+    const letters = await owner.query('SELECT count(*)::int AS n FROM c2c_correspondence WHERE organization_id = $1 AND subject = $2', [ORG_B, subject]);
+    expect(letters.rows[0].n).toBe(0);
+  });
+
   it("platform_send as app_service under RLS: 'sent', with the letter, the record and one chained row", async () => {
     const subject = `${TAG} sent`;
     const res = await send(subject);
@@ -174,7 +192,7 @@ describe('POST /api/report-os/deliveries on the record (P1-44)', () => {
     const subject = `${TAG} final external`;
     const res = await request(ro)
       .post('/api/report-os/deliveries')
-      .set(auth(tokenB))
+      .set(auth(managerToken))
       .send({ runId: finalRun, channel: 'external_pdf_export', subject, recipients: ['partner'], captureForLearning: false });
     expect(res.status, JSON.stringify(res.body)).toBe(409);
     expect(res.body.error.code).toBe('E_SIGNATURE_REQUIRED');

@@ -114,8 +114,10 @@ import reportOsRouter from '../report-os';
 
 const app = express();
 app.use(express.json());
+/* The caller's role; finalize's tier (owner, admin, manager) since DP-61. */
+const caller = { role: 'manager' };
 app.use((req, _res, next) => {
-  (req as unknown as { user: { id: number; role: string } }).user = { id: 5, role: 'member' };
+  (req as unknown as { user: { id: number; role: string; roles: string[] } }).user = { id: 5, role: caller.role, roles: [caller.role] };
   next();
 });
 app.use('/api/report-os', reportOsRouter);
@@ -275,6 +277,24 @@ describe('POST /deliveries platform_send: the letter, the record and the chain r
     const res = await deliver(SEND);
     expect(res.status).toBe(201);
     expect(res.body.data.status).toBe('sent');
+  });
+});
+
+describe('POST /deliveries needs the finalize tier (DP-61)', () => {
+  beforeEach(() => {
+    h.tables.report_runs = [[run('completed')]];
+  });
+
+  it('a member cannot send an outbound letter or record an export: 403, nothing written', async () => {
+    caller.role = 'member';
+    try {
+      const res = await deliver(SEND);
+      expect(res.status).toBe(403);
+      expect(count(CORRESPONDENCE)).toBe(0);
+      expect(h.audit).not.toHaveBeenCalled();
+    } finally {
+      caller.role = 'manager';
+    }
   });
 });
 

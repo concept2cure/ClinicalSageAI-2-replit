@@ -2386,7 +2386,9 @@ async function recordDelivery(
   }
 }
 
-router.post('/deliveries', async (req: Request, res: Response) => {
+// DP-61 (2026-10-01): a delivery writes an outbound regulatory letter or
+// records an external export, so it carries finalize's tier, not membership.
+router.post('/deliveries', requireRole('owner', 'admin', 'manager'), async (req: Request, res: Response) => {
   try {
     const organizationId = requireSessionOrg(req, res);
     if (organizationId == null) return;
