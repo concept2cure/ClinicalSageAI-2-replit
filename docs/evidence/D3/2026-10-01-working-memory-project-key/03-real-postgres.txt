@@ -1,0 +1,26 @@
+# real PostgreSQL 16, c2c_dbtest: two deploys of the amended set
+deploy 1: exit 0 — 0 skip notice(s); ✅ Schema migration complete — safe to roll services.
+deploy 2: exit 0 — 0 skip notice(s); ✅ Schema migration complete — safe to roll services.
+# the key after two deploys:
+conversation_working_memory_project_same_org_fk|f|a|a|FOREIGN KEY (project_id, organization_id) REFERENCES projects(id, organization_id) NOT VALID
+# the key's behaviour on real PostgreSQL (one transaction, rolled back)
+BEGIN
+INSERT 0 2
+INSERT 0 2
+INSERT 0 2
+SAVEPOINT
+INSERT 0 1
+own row: written
+SAVEPOINT
+ERROR:  insert or update on table "conversation_working_memory" violates foreign key constraint "conversation_working_memory_project_same_org_fk"
+DETAIL:  Key (project_id, organization_id)=(200, 192) is not present in table "projects".
+ROLLBACK
+ROLLBACK
+# preflight against c2c_dbtest
+  ✓ public.projects: 0 record(s) name a foreign or missing project
+  ✓ public.authoring_documents: 0 record(s) name a foreign or missing project
+  ✓ public.cre_evidence_sources: 0 record(s) name a foreign or missing project
+  ✓ public.c2c_documents: 0 record(s) name a foreign or missing project
+  ✓ public.cdisc_prm_studies: 0 record(s) name a foreign or missing project
+  ✓ public.conversation_working_memory: 0 record(s) name a foreign or missing project
+# journal: migrations/20261001_integer_project_same_org_keys.sql applied, apply_count 10 on this database

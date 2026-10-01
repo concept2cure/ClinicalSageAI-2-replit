@@ -1,0 +1,6 @@
+# gates
+[ci:migration-drop-safety] OK — 349 migrations, 35 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+[ci:migration-set-order] OK — 349 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+# suites
+ Test Files  18 passed (18)
+      Tests  184 passed (184)
