@@ -8,8 +8,14 @@
  * unit-testable without googleapis, and a deployment without the calendar
  * configured degrades gracefully instead of throwing.
  *
+ * 2026-10-01 (D6, decision P-8): the calendar is the deployment's own account,
+ * and it is written only for the organisation PLATFORM_INTEGRATIONS_ORGANIZATION_ID
+ * names (platform-integration-owner.ts). It was written for every
+ * organisation that asked.
+ *
  * @module server/services/integrations/calendar-event
  */
+import { callerOwnsPlatformIntegrations, notYourIntegrationNote } from './platform-integration-owner.js';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -77,6 +83,10 @@ export async function createCalendarEvent(
       created: false,
       note: 'Google Calendar is not connected (GOOGLE_CALENDAR_ID / GOOGLE_SERVICE_ACCOUNT unset). Ask an admin to connect it in Settings → Integrations.',
     };
+  }
+
+  if (!callerOwnsPlatformIntegrations()) {
+    return { source: 'Google Calendar', configured: false, created: false, note: notYourIntegrationNote('team calendar') };
   }
 
   const res = await deps.insertAllDayEvent({
