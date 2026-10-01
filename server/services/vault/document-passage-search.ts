@@ -118,7 +118,11 @@ export interface PassageSearchResult {
 /** How many unfiled uploads the coverage line probes for before saying "more". */
 const UNFILED_UPLOAD_PROBE = 20;
 
-export async function getPassageCoverage(organizationId: number): Promise<PassageCoverage> {
+export async function getPassageCoverage(
+  organizationId: number,
+  /** One program's documents (the open project, PF-10 S7); null = the organization's. */
+  programId: string | null = null,
+): Promise<PassageCoverage> {
   const { rows } = await pool.query(
     `SELECT COUNT(*)::int AS total,
             COUNT(*) FILTER (WHERE c.chunk_status = 'chunked' AND COALESCE(c.chunk_count, 0) > 0)::int AS indexed,
@@ -133,8 +137,9 @@ export async function getPassageCoverage(organizationId: number): Promise<Passag
        FROM vault.documents d
        JOIN regulatory_programs p ON p.id = d.program_id
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE p.organization_id = $1 AND d.deleted_at IS NULL`,
-    [organizationId],
+      WHERE p.organization_id = $1 AND d.deleted_at IS NULL
+        AND ($2::uuid IS NULL OR d.program_id = $2::uuid)`,
+    [organizationId, programId],
   );
   const r = rows[0] ?? {};
   /* The uploads outside the corpus, through the one definition of "the chat
@@ -165,8 +170,25 @@ export async function getPassageCoverage(organizationId: number): Promise<Passag
   };
 }
 
+/* Coverage is context for the answer, not the answer. A ledger read that
+   fails must not take the search down with it — but it must not quietly
+   become "all indexed" either, so it becomes null and the caller says so. */
+async function coverageOrUnknown(organizationId: number, programId: string | null): Promise<PassageCoverage | null> {
+  try {
+    return await getPassageCoverage(organizationId, programId);
+  } catch {
+    return null;
+  }
+}
+
 export interface PassageSearchOptions {
   limit?: number;
+  /**
+   * One program's passages only: the open project (PF-10 S7). Pushed into the
+   * vault SQL, so a passage of the open project that ranks below another
+   * project's is still found; null = the organization's.
+   */
+  programId?: string | null;
 }
 
 /**
@@ -201,15 +223,8 @@ export async function searchDocumentPassages(
   }
   const limit = Math.min(25, Math.max(1, opts.limit ?? 8));
 
-  /* Coverage is context for the answer, not the answer. A ledger read that
-     fails must not take the search down with it — but it must not quietly
-     become "all indexed" either, so it becomes null and the caller says so. */
-  let coverage: PassageCoverage | null;
-  try {
-    coverage = await getPassageCoverage(args.organizationId);
-  } catch {
-    coverage = null;
-  }
+  const programId = opts.programId ?? null;
+  const coverage = await coverageOrUnknown(args.organizationId, programId);
 
   /* NOTHING IS INDEXED — answer without embedding anything.
      The two feature flags are independent, and catalog-on/chunking-off is the
@@ -236,6 +251,7 @@ export async function searchDocumentPassages(
       corpus: 'vault',
       organizationUuid: args.organizationUuid,
       limit,
+      filters: programId ? { programId } : undefined,
       /* Two deliberate departures from the regulatory_qa defaults, both because
          this runs INSIDE an agent turn rather than behind a request a person is
          waiting on once.

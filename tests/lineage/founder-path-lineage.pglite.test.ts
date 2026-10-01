@@ -201,6 +201,8 @@ const MIGRATIONS = [
   'db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
   'migrations/20260726_cre_source_program_scope.sql',
   'migrations/20260829_cre_source_versioning.sql',
+  // Who captured it, and the capture record's write-once guard (VR-16, VR-16b).
+  'migrations/20261001_cre_evidence_sources_capture_immutability.sql',
   'migrations/20260726_file_uploads_tenancy.sql',
   'db/migrations/20260828_file_uploads_checksum.sql',
   // Authoring: the document loop, its ledger, seal, signatures, span lineage, aliases, provenance.

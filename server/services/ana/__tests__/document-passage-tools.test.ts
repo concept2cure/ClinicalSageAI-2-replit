@@ -92,7 +92,8 @@ describe('what it returns on a hit', () => {
     expect(out.message).toContain('All 4 document(s) are in the passage index');
     expect(searchDocumentPassages).toHaveBeenCalledWith(
       { organizationId: 42, organizationUuid: CTX.organizationUuid, query: 'mortality at the high dose' },
-      { limit: 8 },
+      // No project open: the organization's passages (PF-10 S7).
+      { limit: 8, programId: null },
     );
   });
 
@@ -102,7 +103,7 @@ describe('what it returns on a hit', () => {
       coverage: { total: 1, indexed: 1, pending: 0, failed: 0 },
     });
     await call({ query: 'anything', limit: 500 });
-    expect(searchDocumentPassages.mock.calls[0][1]).toEqual({ limit: 25 });
+    expect(searchDocumentPassages.mock.calls[0][1]).toEqual({ limit: 25, programId: null });
   });
 });
 

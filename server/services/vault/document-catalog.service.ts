@@ -519,20 +519,6 @@ export async function listProjectDocuments(
   };
 }
 
-/** Resolve the program UUID a numeric workspace project is anchored to, org-checked. */
-export async function resolveProgramForProject(
-  projectId: number,
-  organizationId: number,
-): Promise<string | null> {
-  const res = await pool.query(
-    `SELECT regulatory_program_id FROM projects
-      WHERE id = $1 AND organization_id = $2 AND regulatory_program_id IS NOT NULL
-      LIMIT 1`,
-    [projectId, organizationId],
-  );
-  return res.rows[0]?.regulatory_program_id ?? null;
-}
-
 export interface VaultDocDigest {
   fileName: string;
   documentTitle: string;
