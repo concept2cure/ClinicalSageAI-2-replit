@@ -9,6 +9,13 @@
  * audit rows only: users.last_login is stamped when the password alone is
  * accepted, before the second factor, so it is not reported.
  *
+ * A role change or removal an administrator makes (routes/tenant-users.ts,
+ * through services/tenant/membership-change.ts) writes a chained audit row
+ * since P1-41 (2026-10-01); those rows are listed in the administrative
+ * changes report, not reconstructed into this as-of list. A role change made
+ * through a SCIM group (routes/scim.ts PATCH /Groups/:id) writes no row, and
+ * notRecorded says so (pinned against that handler by review-round-1.test.ts).
+ *
  * @module server/services/audit/compliance-reports/queries/access-review
  */
 import type { ReportDefinition, RunContext, SectionResult } from '../types';
@@ -108,8 +115,8 @@ export const accessReview: ReportDefinition = {
     { key: 'privileged', title: 'Privileged accounts', columns: MEMBER_COLUMNS },
   ],
   notRecorded: [
-    'A member who was removed leaves no membership record, so removed members do not appear. A removal or a role change made by an administrator in the product is not written to the audit trail; a removal made through SCIM provisioning is recorded and appears in the administrative changes report.',
-    "A member's role on a past date cannot be reported: role changes are not recorded.",
+    'A member who was removed leaves no membership record, so removed members do not appear. A removal made by an administrator in the product or through SCIM provisioning is recorded and appears in the administrative changes report. Removals and role changes an administrator made before the product began recording them were not recorded.',
+    "A member's role on a past date is not reconstructed: the role shown is the current one. A role change made by an administrator in the product is listed, with the role before and after, in the administrative changes report. A role change made through a SCIM group, which is how an identity provider assigns roles, is not recorded, so a role the identity provider assigned has no record of when it was assigned or what it replaced.",
     'This report records no review decision, reviewer or sign-off. POLICY-AC-002 §4a keeps those in the access-review record.',
     'The account sign-in timestamp is set when the password alone is accepted, before the second factor, so it is not reported; the last sign-in shown is read from successful sign-in audit records only.',
   ],

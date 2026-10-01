@@ -1,0 +1,23 @@
+# 2026-10-01T07:24:58Z. Two parts, both against the CURRENT (stale) scripts/ci/upload-guards-baseline.json.
+
+## 1. npm run -s ci:upload-guards on the working tree: the gate itself reports the stale entries as notices, exit 0
+[ci:upload-guards] server/routes/authoring.router.ts: no unguarded site remains (drop the entry)
+[ci:upload-guards] server/routes/chat.ts: no unguarded site remains (drop the entry)
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 19 file(s) build uploads.
+exit=0
+
+## 2. Mutant: the gate and the stale baseline copied to <scratch>, server/**/*.ts copied from the working tree,
+##    and one NEW multer site with no limits.fileSize and no fileFilter appended to each of authoring.router.ts and chat.ts:
+##      export const regressionUpload = multer({ storage: multer.memoryStorage() });
+## --list (mutant):
+server/routes/authoring.router.ts:7193 guarded
+server/routes/authoring.router.ts:7357 guarded
+server/routes/authoring.router.ts:7416 lacks limits.fileSize, fileFilter
+server/routes/chat.ts:54 guarded
+server/routes/chat.ts:131 lacks limits.fileSize, fileFilter
+server/routes/vault-ingest.ts:70 lacks assertUploadSafe
+## gate (mutant, stale baseline). Expected of a working gate: exit 1. Observed:
+[ci:upload-guards] server/routes/authoring.router.ts: 1 site(s) guarded since the baseline
+[ci:upload-guards] OK — 3 unguarded multer site(s) across 3 file(s), none new; 19 file(s) build uploads.
+exit=0
+# RED: both regressions are absorbed by the stale allowances (authoring.router.ts 2, chat.ts 1).

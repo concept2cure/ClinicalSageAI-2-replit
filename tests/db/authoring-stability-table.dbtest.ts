@@ -41,6 +41,7 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { Pool } from 'pg';
+import bcrypt from 'bcryptjs';
 import { databaseUrl } from '../setup.db';
 
 /**
@@ -61,6 +62,8 @@ import { databaseUrl } from '../setup.db';
  * cleanup still matches on the prefix, so it only ever sees its own rows.
  */
 const PROBE_TITLE = `dbtest-w11 Module 3 stability ${process.pid}-${Date.now().toString(36)}`;
+/** The actor's password: a freeze is signed and re-verified (DP-35). */
+const SIGNER_PASSWORD = 'dbtest-w11-signer-password';
 
 const CONDITIONS = ['25°C / 60% RH', '30°C / 65% RH', '40°C / 75% RH'];
 const TIMEPOINTS = ['0 M', '3 M', '6 M', '9 M', '12 M'];
@@ -195,11 +198,14 @@ beforeAll(async () => {
 
   // Columns match the provisioned schema, not the Drizzle barrel: `users` here
   // is (email, name, password_hash), which is what the sibling W0-1 suite uses.
+  /* DP-35 (2026-10-01): a freeze is signed, and the platform ceremony
+     re-verifies the signer's password against this row, so the actor carries a
+     real hash of SIGNER_PASSWORD (refreshed on a re-run). */
   const usr = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
+       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, password_hash = EXCLUDED.password_hash
      RETURNING id`,
-    ['dbtest-w11@c2c.test', 'dbtest-w11 actor', 'not-a-real-hash'],
+    ['dbtest-w11@c2c.test', 'dbtest-w11 actor', bcrypt.hashSync(SIGNER_PASSWORD, 4)],
   );
   userId = Number(usr.rows[0].id);
 
@@ -283,7 +289,7 @@ describe('BP-W1-1 wave gate — a stability table reaches Word as a table', () =
     const frozen = await request(app)
       .post(`/api/authoring/docs/${docId}/freeze`)
       .set('Authorization', auth)
-      .send({ reason: 'dbtest: sealing the record so it can be exported' });
+      .send({ reason: 'dbtest: sealing the record so it can be exported', meaning: 'AUTHOR', password: SIGNER_PASSWORD });
     expect(frozen.status, `freeze: ${JSON.stringify(frozen.body)}`).toBe(200);
 
     const res = await request(app)

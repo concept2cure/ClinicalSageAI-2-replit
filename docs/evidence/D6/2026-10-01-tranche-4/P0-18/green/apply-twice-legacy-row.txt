@@ -1,0 +1,48 @@
+# 2026-10-01T06:42:10Z, PostgreSQL 16.13 c2c_testdb; applyMigrationFiles (scripts/db/migration-set.mjs) on one file, twice
+--- 1. a legacy document, effective with NO signature, stored before the file is applied
+ id |  status   
+----+-----------
+ 52 | effective
+(1 row)
+
+INSERT 0 1
+triggers on qms_documents before: 0
+--- 2. apply through applyMigrationFiles (the deploy's applier), first run
+    [NOTICE] trigger "trg_qms_documents_signed_status_ins" for relation "public.qms_documents" does not exist, skipping
+    [NOTICE] trigger "trg_qms_documents_signed_status_upd" for relation "public.qms_documents" does not exist, skipping
+✓ applied: migrations/20261001_qms_document_signature_required.sql
+{"applied":["migrations/20261001_qms_document_signature_required.sql"],"failures":[]}
+exit 0
+--- 3. replay (CLAUDE.md Rule 1: every deploy re-runs it)
+✓ applied: migrations/20261001_qms_document_signature_required.sql
+{"applied":["migrations/20261001_qms_document_signature_required.sql"],"failures":[]}
+exit 0
+               tgname                | tgenabled | tgdeferrable | tginitdeferred |                                                                                                                                                           def                                                                                                                                                           
+-------------------------------------+-----------+--------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ trg_qms_documents_signed_status_ins | O         | t            | t              | CREATE CONSTRAINT TRIGGER trg_qms_documents_signed_status_ins AFTER INSERT ON public.qms_documents DEFERRABLE INITIALLY DEFERRED FOR EACH ROW WHEN ((new.status = ANY (ARRAY['effective'::text, 'retired'::text]))) EXECUTE FUNCTION qms_documents_signed_status_guard()
+ trg_qms_documents_signed_status_upd | O         | t            | t              | CREATE CONSTRAINT TRIGGER trg_qms_documents_signed_status_upd AFTER UPDATE ON public.qms_documents DEFERRABLE INITIALLY DEFERRED FOR EACH ROW WHEN (((new.status = ANY (ARRAY['effective'::text, 'retired'::text])) AND (old.status IS DISTINCT FROM new.status))) EXECUTE FUNCTION qms_documents_signed_status_guard()
+(2 rows)
+
+--- 4. the legacy row is untouched, and as the runtime role an edit that leaves its status alone commits
+BEGIN;
+BEGIN
+SELECT set_config('app.rls_enforce','on',true) AS rls, set_config('app.current_tenant_id','93180',true) AS tenant, current_user;
+ rls | tenant | current_user 
+-----+--------+--------------
+ on  | 93180  | app_service
+(1 row)
+
+UPDATE qms_documents SET next_review_date = DATE '2027-10-01', updated_at = now() WHERE doc_number = 'dbqsr-legacy-effective' RETURNING doc_number, status, next_review_date;
+       doc_number       |  status   | next_review_date 
+------------------------+-----------+------------------
+ dbqsr-legacy-effective | effective | 2027-10-01
+(1 row)
+
+UPDATE 1
+COMMIT;
+COMMIT
+       doc_number       |  status   | next_review_date 
+------------------------+-----------+------------------
+ dbqsr-legacy-effective | effective | 2027-10-01
+(1 row)
+

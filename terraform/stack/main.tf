@@ -247,6 +247,12 @@ locals {
     { name = "SMTP_HOST", value = var.smtp_host },
     { name = "SMTP_PORT", value = tostring(var.smtp_port) },
     { name = "SMTP_FROM", value = var.smtp_from },
+    # The audit chain's head, anchored outside the database (security plan P0-8,
+    # DP-04): the daily integrity sweep verifies every organisation's chain
+    # against the latest anchor in the object-locked evidence bucket, then
+    # writes the next one under anchors/. Unset, the sweep reports the anchor
+    # "not configured" and never verified. The grant is the evidence module's.
+    { name = "AUDIT_ANCHOR_BUCKET", value = module.evidence.evidence_bucket },
   ]
 
   # The platform owner, by the address of their own password sign-in. The
@@ -364,9 +370,12 @@ module "ecs" {
   # Not the frontend bucket: CloudFront serves the SPA from it and the deploy
   # role publishes it. A task that could write it could rewrite the site every
   # user loads (security plan P0-15, INF-03; tests/boot_contract.tftest.hcl).
-  # Vault documents have their own grant (vault_storage.tf).
+  # Vault documents have their own grant (vault_storage.tf). In the evidence
+  # bucket the task needs the audit-chain anchors and nothing else (P0-8). This
+  # was the bucket's ARN: object actions there matched no object, and
+  # s3:ListBucket listed every key, CloudTrail's deliveries included.
   s3_bucket_arns = [
-    module.evidence.evidence_bucket_arn,
+    "${module.evidence.evidence_bucket_arn}/${module.evidence.anchor_prefix}*",
   ]
 
   # Every name deploy-aws.yml's preflight requires, so the task definition this
@@ -401,7 +410,9 @@ module "evidence" {
   name_prefix      = local.short
   object_lock_mode = var.evidence_object_lock_mode
   retention_days   = var.evidence_retention_days
-  tags             = var.tags
+  # The task role writes and reads the audit-chain anchors (P0-8).
+  anchor_writer_role_arn = module.ecs.task_role_arn
+  tags                   = var.tags
 }
 
 # ── CDN (CloudFront + S3) ───────────────────────────────────────────────────

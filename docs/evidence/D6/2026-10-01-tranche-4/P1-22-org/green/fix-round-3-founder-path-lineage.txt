@@ -1,0 +1,547 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts
+{
+  "timestamp": "2026-10-01T07:17:10.612Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T07:17:10.614Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts
+{
+  "timestamp": "2026-10-01T07:17:10.614Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts
+✅ Template tables initialized
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+[founder-path] project
+  green  program-recorded — regulatory_programs holds the project, owned by org A
+  green  creation-audited-with-its-keys — the chained c2c.project.create row names the project and the submission spine it created
+  green  submission-anchored-to-project — the submission spine intake created carries the project as a column (submissions.program_id), not only in the audit JSON
+  green  filing-scaffolded-in-project — the project’s governed filing (c2c_documents) is keyed to the project
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it 200ms
+(node:1406) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-01T07:17:15.570Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790839035420_variit",
+    "method": "utf8",
+    "chars": 208
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-01T07:17:15.615Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790839035420_variit",
+    "sourceId": 1,
+    "supersededId": null
+  }
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-01T07:17:15.626Z",
+  "level": "warn",
+  "message": "[upload-retrieval-atom] Upload atom written but not embedded — it is not retrievable yet",
+  "context": {
+    "sourceId": "cre_source:1",
+    "atomId": 1,
+    "err": "no embedding provider in the lineage test"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-01T07:17:15.627Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1790839035420_variit",
+    "sourceId": 1,
+    "atomId": 1,
+    "programId": "b9d799c4-12a8-4fd4-930f-5643d02d1b76",
+    "embeddedChars": 208,
+    "extractedChars": 208,
+    "truncated": false
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+[founder-path] capture
+  green  source-recorded — cre_evidence_sources holds X under checksum = sha256(X), in org A
+  green  source-in-project — the source carries the project’s key
+  green  data-room-lists-source — the project’s Data Room (GET /api/c2c/projects/:id/sources) lists it by id and checksum
+  RED    bytes-durable — baselined DR-ANA-11 → LX-02; observed null
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+{
+  "timestamp": "2026-10-01T07:17:15.917Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 250d634d-af4d-4056-8918-01314359cad3 by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+{
+  "timestamp": "2026-10-01T07:17:15.945Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 250d634d-af4d-4056-8918-01314359cad3 by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+[founder-path] ana-draft
+  RED    tool-accepts-sources — baselined AC-02, DR-ANA-13 → LX-06; observed false
+  green  document-in-project — the authoring document carries the project’s key
+  green  genesis-revision-per-section — every section has a genesis doc_revisions row hashing its content
+  RED    model-recorded — baselined AC-01, DR-ANA-13 → LX-06; observed undefined
+  RED    turn-recorded — baselined AC-01, DR-ANA-13 → LX-06; observed [null,null]
+  RED    source-span — baselined AC-02, DR-ANA-13 → LX-06; observed 0
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route 258ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+{
+  "timestamp": "2026-10-01T07:17:16.035Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 250d634d-af4d-4056-8918-01314359cad3 by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+[founder-path] edit-save
+  green  save-accepted — the save is accepted
+  green  revision-chained — doc_revisions grows by the edit, chained to the genesis row and hashing the saved text
+  RED    source-span-survives — baselined AC-02, AC-03 → LX-06 then LX-08; observed 0
+  RED    spans-bound-to-revision — baselined AC-04 → LX-08; observed [null]
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx 330ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path 64ms
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+[part11] account status check failed during sign: column "sessions_ended_at" does not exist
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-01T07:17:16.455Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Module_2_5_Clinical_Overview___C2C_101.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-01T07:17:16.457Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 3376,
+    "wordCount": 540,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-01T07:17:16.480Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "003445b9-df0d-4297-8140-9e103d276dee",
+    "code": "authoring-250d634d-af4d-4056-8918-01314359cad3",
+    "type": "MODULE_2",
+    "size": 3925,
+    "hasText": true
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-01T07:17:16.512Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 250d634d-af4d-4056-8918-01314359cad3 by a***@founder.example",
+  "context": {}
+}
+
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature 308ms
+   → {"error":"Signature rejected: unable to verify the account (§11.200).","code":"ACCOUNT_STATE_UNKNOWN"}: expected 401 to be 200 // Object.is equality
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+[founder-path] file-to-vault
+  green  filing-names-document — the chained file_to_vault audit row links the vault row to the authoring document
+  RED    filing-names-sealed-version — baselined SUB-7, AC-14 → LX-10; observed false
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-01T07:17:16.620Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-01T07:17:16.651Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 177ms
+   → file-to-vault/vault-row-in-project FAILS and is not baselined — vault.documents holds the filed bytes in the same project, under their content hash
+    observed true
+    AssertionError: expected { …(7) } to match object { sealed: true, …(1) }
+(13 matching properties omitted from actual)
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-01T07:17:16.688Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+[founder-path] place
+  green  coauthor-leaf-pins-copy — the coauthor leaf pins the filing copy and the sha256 of its text
+  green  vault-leaf-pins-bytes — the vault leaf pins the Vault document and its content hash
+  green  placement-audit-names-document-and-pin — each LEAF_CREATED ledger row names the document it placed and the pin it took
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-01T07:17:16.731Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-01T07:17:16.754Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+[part11] account status check failed during sign: column "sessions_ended_at" does not exist
+
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 170ms
+   → place/filing-copy-names-seal FAILS and is not baselined — the filing copy is aliased to the authoring document and names the seal it was taken under
+    observed "draft"
+    AssertionError: expected 'draft' to be 'approved' // Object.is equality
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+[founder-path] walk-back
+  green  audit-ledger-verifies — the tenant’s chained audit ledger — which several steps below read keys from — verifies
+  RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+[founder-path] walk-forward
+  green  project-to-its-records — from the project: its Data Room source, its authoring document, its Vault copy and its submission
+  green  project-read-lists-its-records — one read from the project (GET /api/c2c/projects/:id/records) lists its submission, source, authoring document, Vault copy and filing document, by their project keys
+  green  project-activity-shows-its-records — the project activity feed shows the governed actions on its own records, not only rows keyed to the project id
+  RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
+  RED    data-room-shows-use — baselined DR-ANA-14 → LX-06 then LX-08 then LX-14; observed 0
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+{
+  "timestamp": "2026-10-01T07:17:16.845Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790839036842_dynztn",
+    "method": "utf8",
+    "chars": 56
+  }
+}
+
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 67ms
+   → {"error":"REAUTH_ACCOUNT_STATE_UNKNOWN"}: expected 401 to be 200 // Object.is equality
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 15ms
+   → walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+    observed 0
+    AssertionError: expected [] to have a length of 1 but got +0
+walk-back/sequence-to-pinned-leaves FAILS and is not baselined — the sequence’s leaves each name a document and pin its digest
+    observed []
+    AssertionError: expected [] to have a length of 2 but got +0
+walk-back/leaves-to-project FAILS and is not baselined — each leaf reaches the project: the filing copy through its alias, the Vault copy through its program
+    observed []
+    AssertionError: expected [] to deeply equal [ Array(1) ]
+walk-back/sequence-to-project FAILS and is not baselined — the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees
+    observed not observed
+    TypeError: Cannot read properties of undefined (reading 'program_id')
+walk-back/filing-copy-leaf-to-seal FAILS and is not baselined — the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy
+    observed not observed
+    TypeError: Cannot read properties of undefined (reading 'document_id')
+walk-back/vault-leaf-to-seal is baselined, but it did not fail its assertion — it threw TypeError: Cannot read properties of undefined (reading 'document_uuid'). A baseline entry excuses a recorded gap, never a walk that could not run.
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal 45ms
+   → walk-forward/document-to-transmittal FAILS and is not baselined — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+    observed {"leaves":2,"sequences":1,"transmittals":0}
+    AssertionError: expected [] to deeply equal [ undefined ]
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+[founder-path] adopt
+  green  unscoped-upload-is-a-conversation-file — an upload with no project open records no Data Room source
+  green  project-offers-the-conversation-file — the project lists the caller's conversation file for adoption, and only the caller's
+  green  adopt-makes-it-the-projects-source — one audited adopt makes the file a source of the project, keyed to it
+  green  adopt-is-once — adopting the same file again is not a second source and writes no second audit row
+  green  adopted-file-is-no-longer-offered — once in a project's Data Room, the file is not offered as a conversation file
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt 57ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+[founder-path] retention
+  green  anchor-row-not-hard-deleted — the legacy project delete cannot remove the program's anchor row: refused 409, and the row and every document under it survive
+  green  legacy-delete-needs-writing-role — the legacy project delete answers 403 to a viewer, and deletes nothing
+  green  legacy-draft-project-deleted — a legacy project holding only drafts is still deleted by the same route
+  green  filed-project-archived — the same project can be archived, and its records still read from it
+  green  draft-project-deleted — a project that holds only drafts can be deleted, and the deletion is audited
+  green  source-changes-of-a-deleted-or-malformed-project — a deleted project's source changes, and a malformed id's, are not found
+
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 303ms
+   → retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+    observed {"status":409,"holds":["filed"],"deleted":false}
+    AssertionError: expected [ 'filed' ] to deeply equal { Object ($$typeof, sample, ...) }
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for 4ms
+   → This journey ran against a database missing 1 relation(s)/column(s) its own subject asked for, and still reached its assertions:
+
+  [42703] column "sessions_ended_at" does not exist
+      SELECT (SELECT status FROM users WHERE id = $1 LIMIT 1) AS status, (SELECT floor(date_part('epoch', password_changed_at))::bigint FROM users WHERE id = $1 LIMIT
+
+Add the missing table(s) to this journey's extractTableDdl list, or the missing column(s) via the ALTER the real migration performs. A journey whose database is smaller than the code under test proves less than it says it does.
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows 3ms
+   → seal/seal-binds-revision-and-lineage: no such check ran
+transmit/reachable-from-the-product: no such check ran
+transmit/bytes-retained: no such check ran
+transmit/transmittal-names-sequence: no such check ran
+transmit/transmit-record-names-bundle: no such check ran: expected [ …(5) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+AssertionError: {"error":"Signature rejected: unable to verify the account (§11.200).","code":"ACCOUNT_STATE_UNKNOWN"}: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ Module.hopSeal tests/lineage/founder-path-lineage.hops-authoring.ts:264:46
+    262|     reason: 'Sealed for the C2C-101 IND original sequence.', meaning: …
+    263|   });
+    264|   expect(fr.status, JSON.stringify(fr.body)).toBe(200);
+       |                                              ^
+    265|   k.freezeHash = String(fr.body.contentHash);
+    266|   const es = await w.asApprover(request(w.app).post(`/api/authoring/do…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+Error: file-to-vault/vault-row-in-project FAILS and is not baselined — vault.documents holds the filed bytes in the same project, under their content hash
+    observed true
+    AssertionError: expected { …(7) } to match object { sealed: true, …(1) }
+(13 matching properties omitted from actual)
+ ❯ Hop.verdict tests/lineage/founder-path-lineage.world.ts:107:32
+    105|     }
+    106|     console.info(`[founder-path] ${this.id}\n${judged.flatMap((j) => (…
+    107|     if (problems.length) throw new Error(problems.join('\n'));
+       |                                ^
+    108|   }
+    109| }
+ ❯ Module.hopFileToVault tests/lineage/founder-path-lineage.hops-authoring.ts:338:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+Error: place/filing-copy-names-seal FAILS and is not baselined — the filing copy is aliased to the authoring document and names the seal it was taken under
+    observed "draft"
+    AssertionError: expected 'draft' to be 'approved' // Object.is equality
+ ❯ Hop.verdict tests/lineage/founder-path-lineage.world.ts:107:32
+    105|     }
+    106|     console.info(`[founder-path] ${this.id}\n${judged.flatMap((j) => (…
+    107|     if (problems.length) throw new Error(problems.join('\n'));
+       |                                ^
+    108|   }
+    109| }
+ ❯ Module.hopPlace tests/lineage/founder-path-lineage.hops-filing.ts:83:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+AssertionError: {"error":"REAUTH_ACCOUNT_STATE_UNKNOWN"}: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ sign tests/lineage/founder-path-lineage.hops-filing.ts:130:46
+    128|       reauth: { password: PASSWORD },
+    129|     });
+    130|     expect(s.status, JSON.stringify(s.body)).toBe(200);
+       |                                              ^
+    131|     return String(s.body.actionId);
+    132|   };
+ ❯ freezeDispatchTransmit tests/lineage/founder-path-lineage.hops-filing.ts:134:121
+ ❯ Module.hopTransmit tests/lineage/founder-path-lineage.hops-filing.ts:164:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+Error: walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+    observed 0
+    AssertionError: expected [] to have a length of 1 but got +0
+walk-back/sequence-to-pinned-leaves FAILS and is not baselined — the sequence’s leaves each name a document and pin its digest
+    observed []
+    AssertionError: expected [] to have a length of 2 but got +0
+walk-back/leaves-to-project FAILS and is not baselined — each leaf reaches the project: the filing copy through its alias, the Vault copy through its program
+    observed []
+    AssertionError: expected [] to deeply equal [ Array(1) ]
+walk-back/sequence-to-project FAILS and is not baselined — the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees
+    observed not observed
+    TypeError: Cannot read properties of undefined (reading 'program_id')
+walk-back/filing-copy-leaf-to-seal FAILS and is not baselined — the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy
+    observed not observed
+    TypeError: Cannot read properties of undefined (reading 'document_id')
+walk-back/vault-leaf-to-seal is baselined, but it did not fail its assertion — it threw TypeError: Cannot read properties of undefined (reading 'document_uuid'). A baseline entry excuses a recorded gap, never a walk that could not run.
+ ❯ Hop.verdict tests/lineage/founder-path-lineage.world.ts:107:32
+    105|     }
+    106|     console.info(`[founder-path] ${this.id}\n${judged.flatMap((j) => (…
+    107|     if (problems.length) throw new Error(problems.join('\n'));
+       |                                ^
+    108|   }
+    109| }
+ ❯ Module.walkBack tests/lineage/founder-path-lineage.hops-filing.ts:290:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+Error: walk-forward/document-to-transmittal FAILS and is not baselined — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+    observed {"leaves":2,"sequences":1,"transmittals":0}
+    AssertionError: expected [] to deeply equal [ undefined ]
+ ❯ Hop.verdict tests/lineage/founder-path-lineage.world.ts:107:32
+    105|     }
+    106|     console.info(`[founder-path] ${this.id}\n${judged.flatMap((j) => (…
+    107|     if (problems.length) throw new Error(problems.join('\n'));
+       |                                ^
+    108|   }
+    109| }
+ ❯ Module.walkForward tests/lineage/founder-path-lineage.hops-filing.ts:371:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+Error: retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+    observed {"status":409,"holds":["filed"],"deleted":false}
+    AssertionError: expected [ 'filed' ] to deeply equal { Object ($$typeof, sample, ...) }
+ ❯ Hop.verdict tests/lineage/founder-path-lineage.world.ts:107:32
+    105|     }
+    106|     console.info(`[founder-path] ${this.id}\n${judged.flatMap((j) => (…
+    107|     if (problems.length) throw new Error(problems.join('\n'));
+       |                                ^
+    108|   }
+    109| }
+ ❯ Module.hopRetention tests/lineage/founder-path-lineage.hops-filing.ts:473:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+Error: This journey ran against a database missing 1 relation(s)/column(s) its own subject asked for, and still reached its assertions:
+
+  [42703] column "sessions_ended_at" does not exist
+      SELECT (SELECT status FROM users WHERE id = $1 LIMIT 1) AS status, (SELECT floor(date_part('epoch', password_changed_at))::bigint FROM users WHERE id = $1 LIMIT
+
+Add the missing table(s) to this journey's extractTableDdl list, or the missing column(s) via the ALTER the real migration performs. A journey whose database is smaller than the code under test proves less than it says it does.
+ ❯ Module.assertNoSchemaGaps tests/golden-journeys/harness.ts:213:9
+    211|     })
+    212|     .map((g) => `  [${g.code}] ${g.message}\n      ${g.sql}`);
+    213|   throw new Error(
+       |         ^
+    214|     `This journey ran against a database missing ${seen.size} relation…
+    215|       `subject asked for, and still reached its assertions:\n\n${lines…
+ ❯ tests/lineage/founder-path-lineage.pglite.test.ts:278:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+AssertionError: seal/seal-binds-revision-and-lineage: no such check ran
+transmit/reachable-from-the-product: no such check ran
+transmit/bytes-retained: no such check ran
+transmit/transmittal-names-sequence: no such check ran
+transmit/transmit-record-names-bundle: no such check ran: expected [ …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "seal/seal-binds-revision-and-lineage: no such check ran",
++   "transmit/reachable-from-the-product: no such check ran",
++   "transmit/bytes-retained: no such check ran",
++   "transmit/transmittal-names-sequence: no such check ran",
++   "transmit/transmit-record-names-bundle: no such check ran",
++ ]
+
+ ❯ tests/lineage/founder-path-lineage.pglite.test.ts:282:43
+    280|   it('the baseline names only real checks, each with its verified find…
+    281|     const problems = baselineProblems();
+    282|     expect(problems, problems.join('\n')).toEqual([]);
+       |                                           ^
+    283|   });
+    284| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 5 passed (14)
+   Start at  07:16:51
+   Duration  25.50s (transform 11.22s, setup 137ms, import 10.50s, tests 14.33s, environment 0ms)
+

@@ -71,7 +71,9 @@ import {
 } from './providers/placement';
 import {
   getOrgPlacementResolver,
+  isProviderExcludedInEnvironment,
   mergeOrgPolicyDefaults,
+  providerElectionRefusal,
 } from './providers/org-placement';
 import { governServerTools, webToolsForModel } from './server-tool-policy';
 import { isTerminalGatewayError } from './gateway-outcome';
@@ -1272,7 +1274,7 @@ export class AIGateway {
   private roundRobinIndex = 0;
 
   constructor(config?: Partial<GatewayConfig>) {
-    this.config = this.buildConfig(config);
+    this.config = withoutExcludedProviders(this.buildConfig(config));
     this.models = this.buildModelRegistry();
     this.providerHealth = new Map();
     this.auditLogger = new GatewayAuditLogger(this.config.dbPool);
@@ -3365,14 +3367,17 @@ export class AIGateway {
    * Order matters and is fail-closed:
    *  1. An unknown tenant policy (lookup failed, or nothing bound the call to a
    *     tenant) refuses a non-public payload wherever placement is enforced.
-   *  2. A request residency that contradicts the tenant's refuses.
-   *  3. The tenant's vendor and substrate allow-lists — for EVERY data class.
+   *  2. In production, the provider election (ADR-0014 §1, P1-45): Moonshot
+   *     never; OpenAI, Azure and Vertex only when the tenant's policy names
+   *     them. Every payload, public included; no organization = default set.
+   *  3. A request residency that contradicts the tenant's refuses.
+   *  4. The tenant's vendor and substrate allow-lists — for EVERY data class.
    *     Content the PHI/PII screen classes `none` (CMC, unpublished efficacy)
    *     is exactly what these lists exist to keep off a shared frontier API.
-   *  4. The request's residency / zero retention, with the tenant's floor
+   *  5. The request's residency / zero retention, with the tenant's floor
    *     already merged in by applyOrgPlacementDefaults.
-   * A `public` payload skips 1, and skips 2–3 when the tenant opted in to
-   * public-source frontier use.
+   * A `public` payload skips 1, and skips 3–4 when the tenant opted in to
+   * public-source frontier use. Nothing skips 2.
    */
   private tenantPlacementVerdict(
     provider: ProviderName,
@@ -3381,6 +3386,7 @@ export class AIGateway {
     const placement = resolvePlacement(provider);
     return (
       unknownTenantPolicyDenial(request, this.isPlacementEnforced()) ??
+      providerElectionDenial(provider, request) ??
       tenantAllowListDenial(provider, placement, request) ??
       requestPlacementDenial(provider, placement, request) ?? { allowed: true }
     );
@@ -4263,6 +4269,41 @@ function unknownTenantPolicyDenial(request: GatewayRequest, enforced: boolean): 
       ? 'the request is not bound to an organization'
       : "the organization's placement policy could not be read",
   );
+}
+
+/**
+ * The production provider election (ADR-0014 §1, P1-45): which vendors may
+ * receive anything of this organization's at all. Read from the resolved
+ * policy's stored list; an absent, unreadable or unbound policy elects nothing
+ * beyond the default set. Not lifted by a public-source opt-in. Allows
+ * everything outside production (org-placement.ts::providerElectionRefusal).
+ */
+function providerElectionDenial(provider: ProviderName, request: GatewayRequest): PlacementDenial | null {
+  const tenant = request.sensitiveTenantPolicy;
+  const elected = tenant?.resolution === 'resolved' ? tenant.allowedProviders : undefined;
+  const refusal = providerElectionRefusal(provider, elected);
+  return refusal ? placementDenial('DENY_TENANT_POLICY', refusal) : null;
+}
+
+/**
+ * Moonshot is not a production lane (ADR-0014 §1.3): in production its
+ * provider entry is switched off whatever the key or the override says, so no
+ * client is built and no model is enabled. The dispatch predicate refuses it
+ * again (providerElectionDenial), in case anything enables a model later.
+ */
+function withoutExcludedProviders(config: GatewayConfig): GatewayConfig {
+  const excluded = config.providers.filter(p => p.enabled && isProviderExcludedInEnvironment(p.name));
+  if (excluded.length === 0) return config;
+  log.warn(
+    `[AI Gateway] ${excluded.map(p => p.name).join(', ')} is not a production AI service (ADR-0014 §1); ` +
+      'its lane is disabled and its key is not used',
+  );
+  return {
+    ...config,
+    providers: config.providers.map(p =>
+      isProviderExcludedInEnvironment(p.name) ? { ...p, enabled: false, apiKey: undefined } : p,
+    ),
+  };
 }
 
 /**

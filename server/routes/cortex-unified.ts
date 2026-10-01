@@ -30,6 +30,7 @@ import {
 } from '../services/chat-thread-helpers.js';
 import { pool } from '../db.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { requireAccessTokenReason } from '../middleware/tokenType';
 import { getTool, toOpenAITools, fromOpenAIName, logToolRun } from '../services/toolRegistry';
 import '../services/tools/index'; // ensure tools are registered
 import { ai } from '../lib/unified-ai-client';
@@ -123,13 +124,32 @@ const rateLimiter = (req: Request, res: Response, next: NextFunction) => {
 // MIDDLEWARE
 // ══════════════════════════════════════════════════════════════════════════════
 
+/*
+ * The router's tenant context is the session's, extended — never replaced, and
+ * never read from the request.
+ *
+ * This REPLACED req.tenantContext — the verified one the auth boundary publishes
+ * (middleware/establishRequestTenantScope.ts) — with { organizationId,
+ * clientWorkspaceId, module }: the organisation uuid was dropped and the
+ * workspace was the caller's x-client-workspace-id header, unverified. Every
+ * /api/cortex request passes through here, including those that fall through to
+ * /api/cortex/management, mounted after this router. A dropped uuid is exactly
+ * the state in which the `tenantContext?.organizationUuid || x-org-uuid`
+ * fallbacks (b1618c69) keyed tenant data on a header (IAM-15 residual, P1-7;
+ * docs/evidence/D6/2026-10-01-tranche-4/P1-7-P1-27-residuals/).
+ *
+ * The tenant keys stay the boundary's. A route that needs the uuid takes it from
+ * server/db/currentTenant.ts (currentTenantOrgUuid) and answers 403 when there is
+ * none, as /query does. A workspace, when a route needs one, is a claim verified
+ * against the session's organisation (FeatureToggleService.workspaceInOrganization).
+ */
 const extractTenantContext = (req: Request, _res: Response, next: NextFunction) => {
-  const organizationId = String((req as any).user?.organizationId || '') || null;
-  const clientWorkspaceId = (req.headers['x-client-workspace-id'] as string) || null;
-
+  const verified = (req as any).tenantContext ?? {};
+  const sessionOrgId = (req as any).user?.organizationId;
   (req as any).tenantContext = {
-    organizationId,
-    clientWorkspaceId,
+    ...verified,
+    organizationId:
+      verified.organizationId ?? (sessionOrgId != null ? String(sessionOrgId) : null),
     module: 'cortex',
   };
   next();
@@ -1197,6 +1217,8 @@ function extractUserId(req: Request): number | null {
     const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!token) return null;
     const decoded = verifyJwtWithRotation(token) as any;
+    // IAM-23: only an access token names the thread's owner.
+    if (requireAccessTokenReason(decoded)) return null;
     return decoded?.userId ? Number(decoded.userId) : null;
   } catch {
     return null;

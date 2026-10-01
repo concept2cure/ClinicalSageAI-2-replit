@@ -15,6 +15,7 @@ import { validateCompletenessEngine } from '../services/validate-completeness-en
 import { authMiddleware } from '../auth.js';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
+import { serverError } from '../lib/api-response';
 
 const router = Router();
 const log = createScopedLogger('validate-completeness-routes');
@@ -79,9 +80,8 @@ router.post('/validate', async (req: Request, res: Response) => {
 
     const result = await validateCompletenessEngine.validate(parsed.data);
     res.json({ success: true, data: result });
-  } catch (err: any) {
-    log.error(`VALIDATE-COMPLETENESS failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+  } catch (err) {
+    serverError(res, log, 'validating submission completeness', err);
   }
 });
 

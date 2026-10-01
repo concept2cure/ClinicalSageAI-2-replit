@@ -2854,6 +2854,9 @@ export const C2C_MIGRATION_FILES = [
   // final pair because ci:migration-set-order pins those last.
   // Evidence docs/evidence/D2-REPORTING-LAUNCH-APP/2026-09-30/report-os/.
   'migrations/20260930_report_type_registry_seed.sql',
+  'migrations/20261001_organization_retention_settings.sql', // P1-22-org (ADR-0014 §6): one public org-keyed table, no DROP; above the pair so the sweep gives it RLS
+  'migrations/20261001_domain_history_append_only.sql', // P1-24 (DP-15/16): append-only triggers on workflow_history, document_audit_logs, regulatory_audit_logs, c2c_ana_actions, authoring_signatures; after every creator; no table, no DROP
+  'migrations/20261001_qms_document_signature_required.sql', // P0-18 (DP-01 residual): deferred constraint triggers refusing qms_documents → effective/retired without a same-transaction signature; after 20260813d (signed_target); no table, no DROP
 
   // ── IND lifecycle and assessment tables reach every deployed database (2026-10-01, D1) ─
   // Five tables existed only on databases installed after their 20260615

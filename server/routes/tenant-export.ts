@@ -49,8 +49,11 @@ import {
   recordExportReceipt,
   TenantNotFoundError as FullExportTenantNotFoundError,
 } from '../services/tenant-export/tenant-full-export.service';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('tenant-export');
 router.use(authenticateToken);
 
 function getOrgId(req: Request): number | null {
@@ -135,8 +138,7 @@ router.get('/', async (req: Request, res: Response) => {
     if (err instanceof TenantNotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    const detail = err instanceof Error ? err.message : 'unknown';
-    res.status(500).json({ error: 'Tenant export failed', detail });
+    return serverError(res, log, 'exporting the tenant data', err, { organizationId: orgId });
   }
 });
 
@@ -225,8 +227,7 @@ router.get('/full', async (req: Request, res: Response) => {
     if (err instanceof FullExportTenantNotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    const detail = err instanceof Error ? err.message : 'unknown';
-    res.status(500).json({ error: 'Tenant full export failed', detail });
+    return serverError(res, log, 'exporting the full tenant data', err, { organizationId: orgId });
   }
 });
 
@@ -281,8 +282,7 @@ router.get('/attestation', async (req: Request, res: Response) => {
         detail: 'AUDIT_ATTESTATION_KEY env var is required',
       });
     }
-    const detail = err instanceof Error ? err.message : 'unknown';
-    res.status(500).json({ error: 'Attestation failed', detail });
+    return serverError(res, log, 'generating the attestation report', err, { organizationId: orgId });
   }
 });
 

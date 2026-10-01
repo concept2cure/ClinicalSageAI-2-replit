@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:06:11.474Z","pid":30189,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:06:11.484Z","pid":30189,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:06:11.484Z","pid":30189,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-stability-table.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-stability-table.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-stability-table.dbtest.ts
+✅ Template tables initialized
+
+{"level":30,"time":"2026-10-01T06:06:15.143Z","pid":30189,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 009a1221-5d24-4381-b9f7-8c7a9cd51436 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T06:06:15.144Z","pid":30189,"hostname":"vm","context":{"userId":"82","tenantId":22,"resourceId":"5fd4eb71-096d-481b-af56-e03201c8de10"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ ✓ tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > authors the table into a governed section 152ms
+ ✓ tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > survives the hard reload — the grid is re-read from the store, not from memory 8ms
+{"level":30,"time":"2026-10-01T06:06:15.317Z","pid":30189,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 009a1221-5d24-4381-b9f7-8c7a9cd51436 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T06:06:15.335Z","pid":30189,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: EXPORT on doc 009a1221-5d24-4381-b9f7-8c7a9cd51436 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T06:06:15.336Z","pid":30189,"hostname":"vm","context":{"userId":"82","tenantId":22,"resourceId":"009a1221-5d24-4381-b9f7-8c7a9cd51436"},"msg":"[audit-service] [AUDIT] authoring.section.EXPORT authoring_document"}
+ ✓ tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > exports to Word as a REAL table — <w:tbl>, 10 rows, 70 cells 407ms
+{"level":30,"time":"2026-10-01T06:06:17.438Z","pid":30421,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:06:17.550Z","pid":30421,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:06:17.550Z","pid":30421,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T06:06:17.682Z', poolSize: 1 }
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T06:06:17.704Z', poolSize: 2 }
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an organisation member (not owner/admin/manager) is refused and the document stays 72ms
+{"level":30,"time":"2026-10-01T06:06:20.048Z","pid":30421,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f21e4c80-8f41-45c7-ad12-76b7e1e3ae88 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T06:06:20.049Z","pid":30421,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"4b909a0c-592e-4323-957a-3e25bd1a7101"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an admin deletes an empty document of their organisation; the chained row names the actor and the reason 77ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a document with a section (so a revision) answers 409 and stays — the ledger is append-only 98ms
+{"level":30,"time":"2026-10-01T06:06:20.134Z","pid":30421,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc c13a3291-5aaa-4a7b-b3c6-bbcc5a1f08d4 by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a draft that carries a signature answers 409 and stays — the signature keeps its record 93ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > another organisation's admin gets 404 for this organisation's document, and it stays 71ms
+{"level":30,"time":"2026-10-01T06:06:20.423Z","pid":30421,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 6ac087de-466f-4606-afd9-f84c29f984d9 by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin freezing without the password is refused by the ceremony; the document stays a draft 111ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > a member without a signing role is refused before any credential is read 22ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed 60ms
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  06:06:07
+   Duration  13.34s (transform 3.97s, setup 242ms, import 606ms, tests 11.31s, environment 0ms)
+

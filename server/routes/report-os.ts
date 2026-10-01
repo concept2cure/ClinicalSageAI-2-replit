@@ -14,6 +14,8 @@ import {
   type ReportScope,
 } from '@shared/schema/report-os';
 import { projectIntelligenceProfiles, projectMemoryEntries, projects } from '@shared/schema';
+import * as schema from '@shared/schema';
+import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { createHash, randomUUID } from 'crypto';
 import { z } from 'zod';
 import { resolveScope } from '../services/report-os/scope-model';
@@ -35,6 +37,7 @@ import { renderReport, gapsWereEvaluated, type RenderInput } from '../services/r
 import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
 import type { SealedRecord } from '../services/report-os/sealing/types';
+import { decideDelivery } from '../services/report-os/scheduling/delivery';
 import {
   evaluateTruthfulness,
   type TruthfulnessRules,
@@ -315,17 +318,21 @@ function requireSessionOrg(req: Request, res: Response): number | null {
  * none of them wrote an audit row. Each is now one chained audit_logs row on
  * the organization's chain, written on a transaction stamped with the
  * organization (setTenantContextTx), so it is written under row-level security.
+ * A delivery joined them on 2026-10-01 (P1-44): its row is written on the same
+ * transaction as the letter and the delivery record (recordDelivery).
  */
 type ReportAuditAction =
   | 'report_os.run_created'
   | 'report_os.run_finalized'
   | 'report_os.run_exported'
-  | 'report_os.bundle_exported';
+  | 'report_os.bundle_exported'
+  | 'report_os.delivery_sent'
+  | 'report_os.delivery_exported';
 
 interface ReportAuditEvent {
   organizationId: number;
   action: ReportAuditAction;
-  resourceType: 'report_run' | 'report_bundle';
+  resourceType: 'report_run' | 'report_bundle' | 'report_delivery';
   resourceId: string;
   details: Record<string, unknown>;
 }
@@ -632,12 +639,25 @@ function resolveProjectIdForRun(run: {
   return Number.isFinite(projectId) && projectId > 0 ? projectId : undefined;
 }
 
+/**
+ * The two writes the memory-entry helpers below need. The pool-bound `db` by
+ * default; a delivery or a capture passes drizzle bound to its transaction's
+ * connection, so its entries commit or roll back with the rest of it (P1-44).
+ */
+type ReportDb = Pick<NodePgDatabase<typeof schema>, 'select' | 'insert'>;
+
+/** Drizzle on `client`, so a helper's writes join the open transaction. */
+function onTransaction(client: PoolClient): ReportDb {
+  return drizzle(client, { schema });
+}
+
 async function ensureProjectProfileId(
   organizationId: number,
   projectId: number,
-  userId?: number
+  userId?: number,
+  executor: ReportDb = db
 ): Promise<number> {
-  const existing = await db
+  const existing = await executor
     .select({ id: projectIntelligenceProfiles.id })
     .from(projectIntelligenceProfiles)
     .where(
@@ -650,7 +670,7 @@ async function ensureProjectProfileId(
 
   if (existing[0]?.id) return existing[0].id;
 
-  const inserted = await db
+  const inserted = await executor
     .insert(projectIntelligenceProfiles)
     .values({
       organizationId,
@@ -664,17 +684,20 @@ async function ensureProjectProfileId(
   return inserted[0].id;
 }
 
-async function captureLearningMemory(params: {
-  organizationId: number;
-  projectId: number;
-  userId?: number;
-  title: string;
-  content: string;
-  subcategory: string;
-  confidenceScore?: number;
-}) {
-  const profileId = await ensureProjectProfileId(params.organizationId, params.projectId, params.userId);
-  await db.insert(projectMemoryEntries).values({
+async function captureLearningMemory(
+  params: {
+    organizationId: number;
+    projectId: number;
+    userId?: number;
+    title: string;
+    content: string;
+    subcategory: string;
+    confidenceScore?: number;
+  },
+  executor: ReportDb
+) {
+  const profileId = await ensureProjectProfileId(params.organizationId, params.projectId, params.userId, executor);
+  await executor.insert(projectMemoryEntries).values({
     projectProfileId: profileId,
     projectId: params.projectId,
     organizationId: params.organizationId,
@@ -687,16 +710,6 @@ async function captureLearningMemory(params: {
     importanceLevel: 'high',
     extractedBy: 'report_os_delivery',
   });
-}
-
-async function isTableReady(tableName: string): Promise<boolean> {
-  try {
-    const pool = getPool();
-    const result = await pool.query(`SELECT to_regclass($1) AS table_name`, [`public.${tableName}`]);
-    return !!result.rows[0]?.table_name;
-  } catch {
-    return false;
-  }
 }
 
 async function getReportTypeLabelMap(typeIds: string[]) {
@@ -906,17 +919,22 @@ async function loadBundleById(
   return bundles.find(bundle => bundle.bundleId === bundleId);
 }
 
-async function persistDeliveryRecord(delivery: DeliveryRecord) {
-  if (!delivery.projectId) return;
-  const profileId = await ensureProjectProfileId(delivery.organizationId, delivery.projectId, delivery.requestedBy);
-  await db.insert(projectMemoryEntries).values({
+/**
+ * The delivery record, through `executor` (the delivery's transaction). Stored
+ * whole: it was cut at 20,000 characters, which a 20,000-character message
+ * (the schema's own limit) passes, leaving JSON that loadDeliveriesForOrg could
+ * not parse — the delivery was answered and then never listed (P1-44).
+ */
+async function persistDeliveryRecord(delivery: DeliveryRecord & { projectId: number }, executor: ReportDb) {
+  const profileId = await ensureProjectProfileId(delivery.organizationId, delivery.projectId, delivery.requestedBy, executor);
+  await executor.insert(projectMemoryEntries).values({
     projectProfileId: profileId,
     projectId: delivery.projectId,
     organizationId: delivery.organizationId,
     category: 'regulatory',
     subcategory: REPORT_OS_DELIVERY_SUBCATEGORY,
     title: `delivery:${delivery.deliveryId}`,
-    content: JSON.stringify({ deliveryRecord: delivery }).slice(0, 20000),
+    content: JSON.stringify({ deliveryRecord: delivery }),
     sourceDocumentType: REPORT_OS_RECORD_SOURCE,
     confidenceScore: 0.92,
     importanceLevel: 'high',
@@ -954,10 +972,10 @@ async function loadDeliveriesForOrg(organizationId: number): Promise<DeliveryRec
   return deduped;
 }
 
-async function persistCorrespondenceToPlatform(params: {
+type CorrespondenceInput = {
   organizationId: number;
   projectId: number;
-  submissionId?: string;
+  submissionId: string;
   direction: 'inbound' | 'outbound' | 'internal';
   sourceChannel: 'manual_upload' | 'mailbox_sync' | 'api_import';
   communicationType: string;
@@ -968,75 +986,80 @@ async function persistCorrespondenceToPlatform(params: {
   urgency: 'low' | 'medium' | 'high' | 'critical';
   responseRequired: boolean;
   userId?: number;
-}): Promise<{ correspondenceId?: string; issues: ReturnType<typeof parseKeywordIssues>; persisted: boolean }> {
-  const issues = parseKeywordIssues(params.body);
-  if (!params.submissionId) return { issues, persisted: false };
-  const correspondenceReady = await isTableReady('c2c_correspondence');
-  const issuesReady = await isTableReady('c2c_correspondence_issues');
-  if (!correspondenceReady || !issuesReady) return { issues, persisted: false };
+};
 
-  try {
-    const pool = getPool();
-    const correspondenceId = randomUUID();
-    await pool.query(
-      `INSERT INTO c2c_correspondence
-        (id, organization_id, project_id, submission_id, direction, source_channel, communication_type,
-         subject, sender, recipients, received_at, urgency, response_required, status,
-         parser_metadata, attachment_refs, parsed_text, summary)
+/**
+ * A letter and the issues its text raises, on `client`'s open transaction;
+ * returns the letter's id. Throws when either insert is refused, so the
+ * caller's transaction rolls back and nothing is claimed.
+ *
+ * Replaces persistCorrespondenceToPlatform (P1-44, 2026-10-01), which caught
+ * its own error and returned `persisted: false`: POST /deliveries then answered
+ * 'sent' for a letter that did not exist, and POST /correspondence/capture
+ * (since removed) answered 201 for one. Its table-readiness probe went with it — a missing
+ * table is a refused insert like any other.
+ */
+async function writeCorrespondence(
+  client: PoolClient,
+  input: CorrespondenceInput,
+  issues: ReturnType<typeof parseKeywordIssues>
+): Promise<string> {
+  const correspondenceId = randomUUID();
+  await client.query(
+    `INSERT INTO c2c_correspondence
+      (id, organization_id, project_id, submission_id, direction, source_channel, communication_type,
+       subject, sender, recipients, received_at, urgency, response_required, status,
+       parser_metadata, attachment_refs, parsed_text, summary)
+     VALUES
+      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,NOW(),$11,$12,$13,$14::jsonb,$15::jsonb,$16,$17)`,
+    [
+      correspondenceId,
+      input.organizationId,
+      input.projectId,
+      input.submissionId,
+      input.direction,
+      input.sourceChannel,
+      input.communicationType,
+      input.subject,
+      input.sender || null,
+      JSON.stringify(input.recipients || []),
+      input.urgency,
+      input.responseRequired,
+      input.direction === 'outbound' ? 'responded' : 'new',
+      JSON.stringify({
+        parserVersion: 'report-os-v1',
+        extractionVersion: '2026-04-01',
+        importedByUserId: input.userId || null,
+      }),
+      JSON.stringify([]),
+      input.body,
+      input.body.slice(0, 200),
+    ]
+  );
+  for (const issue of issues) {
+    await client.query(
+      `INSERT INTO c2c_correspondence_issues
+        (id, correspondence_id, category, severity, blocker, response_required, source_excerpt,
+         confidence, human_review_status, mapped_ctd_sections, mapped_artifact_ids, resolution_status)
        VALUES
-        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,NOW(),$11,$12,$13,$14::jsonb,$15::jsonb,$16,$17)`,
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11::jsonb,$12)`,
       [
+        randomUUID(),
         correspondenceId,
-        params.organizationId,
-        params.projectId,
-        params.submissionId,
-        params.direction,
-        params.sourceChannel,
-        params.communicationType,
-        params.subject,
-        params.sender || null,
-        JSON.stringify(params.recipients || []),
-        params.urgency,
-        params.responseRequired,
-        params.direction === 'outbound' ? 'responded' : 'new',
-        JSON.stringify({
-          parserVersion: 'report-os-v1',
-          extractionVersion: '2026-04-01',
-          importedByUserId: params.userId || null,
-        }),
+        issue.category,
+        issue.severity,
+        issue.blocker,
+        true,
+        input.body.slice(0, 280),
+        0.72,
+        'pending',
         JSON.stringify([]),
-        params.body,
-        params.body.slice(0, 200),
+        JSON.stringify([]),
+        'open',
       ]
     );
-
-    for (const issue of issues) {
-      await pool.query(
-        `INSERT INTO c2c_correspondence_issues
-          (id, correspondence_id, category, severity, blocker, response_required, source_excerpt,
-           confidence, human_review_status, mapped_ctd_sections, mapped_artifact_ids, resolution_status)
-         VALUES
-          ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11::jsonb,$12)`,
-        [
-          randomUUID(),
-          correspondenceId,
-          issue.category,
-          issue.severity,
-          issue.blocker,
-          true,
-          params.body.slice(0, 280),
-          0.72,
-          'pending',
-          JSON.stringify([]),
-          JSON.stringify([]),
-          'open',
-        ]
-      );
-    }
-    return { correspondenceId, issues, persisted: true };
-  } catch {
-    return { issues, persisted: false };
   }
+  return correspondenceId;
 }
 
 router.get('/scopes', (_req: Request, res: Response) => {
@@ -2207,122 +2230,248 @@ router.get('/deliveries', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/deliveries', async (req: Request, res: Response) => {
+/*
+ * POST /deliveries (P1-44, DP-50 second half). A delivery used to write its
+ * letter through a helper that swallowed its own error, then answered 'sent'
+ * whether or not the letter existed, with no chain row; a delivery whose
+ * project could not be resolved was answered and stored nowhere. Now the
+ * target is resolved and checked first, then the letter (platform_send), the
+ * delivery record, the learning memory and the chained row are ONE
+ * tenant-stamped transaction, and 'sent' is answered only after it commits.
+ */
+type DeliveryPayload = z.infer<typeof createDeliverySchema>;
+type DeliveryRefusal = { refusal: { status: number; body: Record<string, unknown> } };
+type DeliveryReports = { projectId?: number; statuses: string[] };
+
+function refuseDelivery(status: number, body: Record<string, unknown>): DeliveryRefusal {
+  return { refusal: { status, body } };
+}
+
+/**
+ * The reports a delivery carries — the run, the bundle's runs as they stand
+ * NOW (a run finalized after it was bundled counts as final) — their statuses,
+ * and the project the first of them is scoped to.
+ */
+async function loadDeliveryReports(
+  organizationId: number,
+  payload: DeliveryPayload
+): Promise<DeliveryReports | DeliveryRefusal> {
+  const found: DeliveryReports = { statuses: [] };
+  if (payload.runId) {
+    const [run] = await db
+      .select()
+      .from(reportRuns)
+      .where(and(eq(reportRuns.id, payload.runId), eq(reportRuns.organizationId, organizationId)))
+      .limit(1);
+    if (!run) return refuseDelivery(404, { error: 'Run not found' });
+    found.projectId = resolveProjectIdForRun(run);
+    found.statuses.push(run.status);
+  }
+  if (payload.bundleId) {
+    const bundle = await loadBundleById(organizationId, payload.bundleId);
+    if (!bundle || bundle.organizationId !== organizationId) return refuseDelivery(404, { error: 'Bundle not found' });
+    const runs = bundle.runIds.length
+      ? await db
+          .select()
+          .from(reportRuns)
+          .where(and(eq(reportRuns.organizationId, organizationId), inArray(reportRuns.id, bundle.runIds)))
+      : [];
+    const first = runs.find(run => run.id === bundle.items[0]?.runId);
+    if (!found.projectId && first) found.projectId = resolveProjectIdForRun(first);
+    found.statuses.push(...runs.map(run => run.status));
+  }
+  return found;
+}
+
+/**
+ * The e-signature rule of services/report-os/scheduling/delivery.ts, over every
+ * report the delivery carries: a final report delivered on the external
+ * channel needs one. A report run has no signing ceremony yet, so the
+ * requirement cannot be met and the delivery is refused — fail closed, rather
+ * than recorded as sent unsigned.
+ */
+function signatureRefusal(payload: DeliveryPayload, statuses: string[]): DeliveryRefusal | null {
+  const channel = payload.channel === 'external_pdf_export' ? 'external' : 'platform';
+  const unsigned = statuses.some(
+    status => decideDelivery({ status: status as ReportRunStatus }, channel).requiresESignature
+  );
+  if (!unsigned) return null;
+  return refuseDelivery(409, {
+    success: false,
+    error: {
+      code: 'E_SIGNATURE_REQUIRED',
+      message:
+        'A final report delivered outside the platform requires an e-signature, and report runs ' +
+        'cannot be e-signed yet. The delivery was refused. Nothing was recorded.',
+    },
+  });
+}
+
+/** Where the delivery is recorded, checked against the session's organization, or the refusal. */
+async function resolveDeliveryTarget(
+  organizationId: number,
+  payload: DeliveryPayload
+): Promise<{ projectId: number } | DeliveryRefusal> {
+  const reports = await loadDeliveryReports(organizationId, payload);
+  if ('refusal' in reports) return reports;
+  // Whether it came from the body or from a run's scope, the project the
+  // delivery is recorded under must be this org's.
+  const projectId = payload.projectId ?? reports.projectId;
+  if (!projectId) {
+    return refuseDelivery(422, {
+      error: 'This delivery belongs to no project, so it has nowhere to be recorded. Name the project it belongs to.',
+    });
+  }
+  if (!(await projectsInOrg(organizationId, [projectId])).has(projectId)) {
+    return refuseDelivery(404, { error: 'Project not found' });
+  }
+  if (
+    payload.channel === 'platform_send' &&
+    payload.submissionId &&
+    !(await submissionInProject(organizationId, projectId, payload.submissionId))
+  ) {
+    return refuseDelivery(404, { error: 'Submission not found' });
+  }
+  return signatureRefusal(payload, reports.statuses) ?? { projectId };
+}
+
+function newDeliveryRecord(
+  organizationId: number,
+  projectId: number,
+  payload: DeliveryPayload,
+  requestedBy: number | undefined
+): DeliveryRecord & { projectId: number } {
+  return {
+    deliveryId: randomUUID(),
+    organizationId,
+    projectId,
+    runId: payload.runId,
+    bundleId: payload.bundleId,
+    submissionId: payload.submissionId,
+    channel: payload.channel,
+    correspondenceType: payload.correspondenceType,
+    recipients: payload.recipients,
+    subject: payload.subject,
+    message: payload.message,
+    status: payload.channel === 'platform_send' ? 'sent' : 'exported',
+    requestedBy,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function deliveryLearningMemory(delivery: DeliveryRecord & { projectId: number }) {
+  const sourceRef = delivery.runId ? `run:${delivery.runId}` : delivery.bundleId ? `bundle:${delivery.bundleId}` : 'unspecified';
+  return {
+    organizationId: delivery.organizationId,
+    projectId: delivery.projectId,
+    userId: delivery.requestedBy,
+    title: `Outbound correspondence — ${delivery.subject}`,
+    subcategory: 'outbound_regulatory_correspondence',
+    content: [
+      `channel=${delivery.channel}`,
+      `source=${sourceRef}`,
+      `subject=${delivery.subject}`,
+      `correspondenceType=${delivery.correspondenceType || 'unspecified'}`,
+      `recipients=${delivery.recipients.join(', ') || 'none'}`,
+      `message=${(delivery.message || '').slice(0, 4000)}`,
+    ].join('\n'),
+  };
+}
+
+/** The delivery's chained row. Recipients are counted, not copied: the record holds them. */
+function deliveryEvent(delivery: DeliveryRecord): ReportAuditEvent {
+  return {
+    organizationId: delivery.organizationId,
+    action: delivery.channel === 'platform_send' ? 'report_os.delivery_sent' : 'report_os.delivery_exported',
+    resourceType: 'report_delivery',
+    resourceId: delivery.deliveryId,
+    details: {
+      channel: delivery.channel,
+      status: delivery.status,
+      runId: delivery.runId,
+      bundleId: delivery.bundleId,
+      projectId: delivery.projectId,
+      submissionId: delivery.submissionId,
+      correspondenceId: delivery.correspondenceId,
+      correspondenceType: delivery.correspondenceType,
+      subject: delivery.subject,
+      recipientCount: delivery.recipients.length,
+    },
+  };
+}
+
+/**
+ * Every write of a delivery on ONE tenant-stamped transaction: the letter and
+ * its issues (platform_send), the delivery record, the learning memory when
+ * asked for, then the chained row. Returns the delivery once all of it
+ * committed; null when any write was refused — all of it rolled back, the
+ * reason logged and never sent to the client.
+ */
+async function recordDelivery(
+  req: Request,
+  payload: DeliveryPayload,
+  delivery: DeliveryRecord & { projectId: number }
+): Promise<DeliveryRecord | null> {
+  try {
+    return await inTenantTransaction(delivery.organizationId, async (client) => {
+      const executor = onTransaction(client);
+      const recorded = { ...delivery };
+      if (payload.channel === 'platform_send' && payload.submissionId) {
+        const letter: CorrespondenceInput = {
+          organizationId: delivery.organizationId,
+          projectId: delivery.projectId,
+          submissionId: payload.submissionId,
+          direction: 'outbound',
+          sourceChannel: 'api_import',
+          communicationType: payload.correspondenceType || 'transmittal',
+          subject: payload.subject,
+          body: payload.message || payload.subject,
+          recipients: payload.recipients,
+          urgency: payload.urgency || 'medium',
+          responseRequired: false,
+          userId: delivery.requestedBy,
+        };
+        recorded.correspondenceId = await writeCorrespondence(client, letter, parseKeywordIssues(letter.body));
+      }
+      await persistDeliveryRecord(recorded, executor);
+      if (payload.captureForLearning) await captureLearningMemory(deliveryLearningMemory(recorded), executor);
+      await writeReportEvent(client, req, deliveryEvent(recorded));
+      return recorded;
+    });
+  } catch (error) {
+    logger.error('report delivery not recorded; rolled back', {
+      deliveryId: delivery.deliveryId,
+      channel: delivery.channel,
+      error: (error as Error)?.message,
+    });
+    return null;
+  }
+}
+
+// DP-61 (2026-10-01): a delivery writes an outbound regulatory letter or
+// records an external export, so it carries finalize's tier, not membership.
+router.post('/deliveries', requireRole('owner', 'admin', 'manager'), async (req: Request, res: Response) => {
   try {
     const organizationId = requireSessionOrg(req, res);
     if (organizationId == null) return;
     const parsed = createDeliverySchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const payload = parsed.data;
-    const userId = getUserId(req);
-    let projectId = payload.projectId;
-    let runRecord: any | undefined;
-    let bundleRecord: ReportBundleRecord | undefined;
-
-    if (payload.runId) {
-      [runRecord] = await db
-        .select()
-        .from(reportRuns)
-        .where(and(eq(reportRuns.id, payload.runId), eq(reportRuns.organizationId, organizationId)))
-        .limit(1);
-      if (!runRecord) return res.status(404).json({ error: 'Run not found' });
-      if (!projectId) projectId = resolveProjectIdForRun(runRecord);
+    const target = await resolveDeliveryTarget(organizationId, payload);
+    if ('refusal' in target) return res.status(target.refusal.status).json(target.refusal.body);
+    const recorded = await recordDelivery(
+      req,
+      payload,
+      newDeliveryRecord(organizationId, target.projectId, payload, getUserId(req))
+    );
+    if (!recorded) {
+      return refuseUnrecorded(
+        res,
+        'REPORT_DELIVERY_NOT_RECORDED',
+        'The delivery could not be recorded with its audit trail, so it was not sent. Nothing was recorded.'
+      );
     }
-    if (payload.bundleId) {
-      bundleRecord = await loadBundleById(organizationId, payload.bundleId);
-      if (!bundleRecord || bundleRecord.organizationId !== organizationId) {
-        return res.status(404).json({ error: 'Bundle not found' });
-      }
-      if (!projectId && bundleRecord.items.length > 0) {
-        const firstRun = await db
-          .select()
-          .from(reportRuns)
-          .where(
-            and(
-              eq(reportRuns.id, bundleRecord.items[0].runId),
-              eq(reportRuns.organizationId, organizationId)
-            )
-          )
-          .limit(1);
-        if (firstRun[0]) projectId = resolveProjectIdForRun(firstRun[0]);
-      }
-    }
-    // Whether it came from the body or from a run's scope, the project the
-    // delivery is recorded under must be this org's.
-    if (projectId && !(await projectsInOrg(organizationId, [projectId])).has(projectId)) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-    if (
-      payload.channel === 'platform_send' &&
-      projectId &&
-      payload.submissionId &&
-      !(await submissionInProject(organizationId, projectId, payload.submissionId))
-    ) {
-      return res.status(404).json({ error: 'Submission not found' });
-    }
-
-    let correspondenceId: string | undefined;
-    if (payload.channel === 'platform_send' && projectId) {
-      const persisted = await persistCorrespondenceToPlatform({
-        organizationId,
-        projectId,
-        submissionId: payload.submissionId,
-        direction: 'outbound',
-        sourceChannel: 'api_import',
-        communicationType: payload.correspondenceType || 'transmittal',
-        subject: payload.subject,
-        body: payload.message || payload.subject,
-        recipients: payload.recipients,
-        urgency: payload.urgency || 'medium',
-        responseRequired: false,
-        userId,
-      });
-      correspondenceId = persisted.correspondenceId;
-    }
-
-    const delivery: DeliveryRecord = {
-      deliveryId: randomUUID(),
-      organizationId,
-      projectId,
-      runId: payload.runId,
-      bundleId: payload.bundleId,
-      submissionId: payload.submissionId,
-      channel: payload.channel,
-      correspondenceType: payload.correspondenceType,
-      recipients: payload.recipients,
-      subject: payload.subject,
-      message: payload.message,
-      status: payload.channel === 'platform_send' ? 'sent' : 'exported',
-      requestedBy: userId,
-      createdAt: new Date().toISOString(),
-      correspondenceId,
-    };
-    await persistDeliveryRecord(delivery);
-
-    if (payload.captureForLearning && projectId) {
-      const sourceRef = payload.runId
-        ? `run:${payload.runId}`
-        : payload.bundleId
-          ? `bundle:${payload.bundleId}`
-          : 'unspecified';
-      await captureLearningMemory({
-        organizationId,
-        projectId,
-        userId,
-        title: `Outbound correspondence — ${payload.subject}`,
-        subcategory: 'outbound_regulatory_correspondence',
-        content: [
-          `channel=${payload.channel}`,
-          `source=${sourceRef}`,
-          `subject=${payload.subject}`,
-          `correspondenceType=${payload.correspondenceType || 'unspecified'}`,
-          `recipients=${payload.recipients.join(', ') || 'none'}`,
-          `message=${(payload.message || '').slice(0, 4000)}`,
-        ].join('\n'),
-      });
-    }
-
-    return res.status(201).json({ data: delivery });
+    return res.status(201).json({ data: recorded });
   } catch (error: any) {
     return serverError(res, logger, 'saving deliveries', error);
   }

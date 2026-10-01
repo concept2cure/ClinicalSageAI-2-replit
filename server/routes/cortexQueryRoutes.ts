@@ -26,6 +26,8 @@ import type { RoutingStrategy } from '../services/ai-gateway/types.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 import { ragRouter } from '../services/ragRouter.js';
 import { currentTenantOrgUuid } from '../db/currentTenant.js';
+import { serverError } from '../lib/api-response.js';
+import { createScopedLogger } from '../utils/logger.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -95,6 +97,7 @@ interface CortexQueryResponse {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const router = Router();
+const log = createScopedLogger('cortex-query');
 
 // Lazy-initialize pool (to be injected)
 let pool: pg.Pool | null = null;
@@ -178,12 +181,7 @@ router.post('/query', async (req: Request, res: Response) => {
     response.metadata.processingTimeMs = Date.now() - startTime;
     res.json(response);
   } catch (error) {
-    console.error('Cortex query error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Internal error',
-      metadata: { processingTimeMs: Date.now() - startTime },
-    });
+    serverError(res, log, 'answering the Cortex query', error, { processingTimeMs: Date.now() - startTime });
   }
 });
 

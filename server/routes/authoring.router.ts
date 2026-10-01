@@ -14,13 +14,15 @@ import { getTenantScope } from '../db/tenantStore';
 import { vaultWriteRefusal } from '../services/vault/vault-write-authority';
 import { getPool } from '../db';
 import { currentTenantOrgUuid, TenantKeyRequiredError } from '../db/currentTenant';
-import auditService, { writeChainedAuditRow } from '../services/auditService';
+import { writeChainedAuditRow } from '../services/auditService';
 import { isSigningAuthorized, signingAuthorityRoles } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
+import { makeUploadFileFilter } from '../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 // c2c_documents is the system of record for a filing; this router is the
 // editing layer over it. This resolves which governed document an authored
 // document belongs to. See server/services/c2c/governed-document-binding.ts.
@@ -1508,7 +1510,8 @@ router.post('/docs/from-draft', async (req: Request, res: Response) => {
 
      freeze        authoringObjectAuthorization classifies /freeze as
                    'approve' → decideAuthoringPermission (OWNER or APPROVER
-                   grant, or a global admin role).
+                   grant, or a global admin role), then — a freeze is signed
+                   (DP-35) — the same §11.10(g) check as esign.
      esign         the same 'approve' decision, then assertSigningAuthority's
                    §11.10(g) check: resolveSignerOrgRole + isSigningAuthorized.
      fileToVault   authoringObjectAuthorization classifies /file-to-vault as
@@ -1631,7 +1634,8 @@ async function callerDocumentAccess(req: Request, tenantId: number, docId: strin
   });
 
   return {
-    freeze: approveGate('Freezing'),
+    // A freeze is signed (DP-35): the same two decisions as E-sign.
+    freeze: bothGates(approveGate('Freezing'), signingGate),
     esign: bothGates(approveGate('Signing'), signingGate),
     fileToVault: bothGates(
       produce ? objectGate(produce, 'Filing to the vault', 'an Owner, Author or Approver grant') : null,
@@ -4086,11 +4090,157 @@ router.get('/stats', async (req: Request, res: Response) => {
  */
 
 
-// POST /api/authoring/docs/:docId/freeze - Freeze document with immutable snapshot
+/* ── A freeze is a signature (DP-35, plan P1-32) ─────────────────────────────
+ *
+ * FROZEN is a locked state, and a frozen document counts as `finalized` for
+ * eCTD leaf completeness and COMPLETE on the IND checklist
+ * (coauthor-snapshot.ts snapshotStatusFor, leaf-source-resolver.ts,
+ * ind-checklist-view-assembler.ts). Freeze asked for neither signing authority
+ * nor re-authentication, so one session — a stolen one included — could move
+ * any document its holder owned into a state that satisfies the per-leaf
+ * approval checks, permanently (there is no unfreeze).
+ *
+ * So freezing is now the platform's one signing ceremony, as /e-sign and /sign
+ * are: §11.10(g) authority before anything else, a §11.50 meaning, the §11.200
+ * re-verification last (a code is spent only on a freeze otherwise ready), and
+ * an authoring_signatures row bound to the snapshot it seals — its
+ * covered_freeze_version / covered_content_hash are that snapshot's — written
+ * in the freeze's own transaction with the chained audit row that names it.
+ *
+ * The meanings: the signer sealed it as its AUTHOR, or as a REVIEWER locking
+ * it for approval. APPROVER is not a freeze meaning: an approval is /e-sign,
+ * which approves AND freezes in one act, and a second approval path that
+ * froze without approving would be two answers to one question. */
+const FREEZE_SIGNATURE_MEANINGS = ['AUTHOR', 'REVIEWER'] as const;
+type FreezeMeaning = (typeof FREEZE_SIGNATURE_MEANINGS)[number];
+const isFreezeMeaning = (v: unknown): v is FreezeMeaning =>
+  typeof v === 'string' && (FREEZE_SIGNATURE_MEANINGS as readonly string[]).includes(v);
+
+/** The authoring_signatures row, written on the caller's transaction client. */
+async function insertAuthoringSignature(
+  client: Queryable,
+  req: Request,
+  row: {
+    id: string;
+    docId: string | string[] | undefined;
+    signerEmail: string;
+    signerName: string | null;
+    meaning: string;
+    reason: string;
+    method: string;
+    contentHash: string;
+    signatureDigest: string;
+    covered: { version: string; contentHash: string } | null;
+    tenantId: number;
+  },
+): Promise<void> {
+  // `method` is what the ceremony verified ('password' or 'password+mfa'),
+  // never a claim from the request. `pin_verified` stays false: no PIN is
+  // involved, and rows signed with one keep 'PIN' and true.
+  await client.query(
+    `INSERT INTO authoring_signatures
+     (id, doc_id, signer_email, signer_name, meaning, reason, method,
+      content_hash, signature_digest, covered_freeze_version, covered_content_hash,
+      pin_verified, ip_address, user_agent, tenant_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, FALSE, $12, $13, $14)`,
+    [
+      row.id,
+      row.docId,
+      row.signerEmail,
+      row.signerName,
+      row.meaning,
+      row.reason,
+      row.method,
+      row.contentHash,
+      row.signatureDigest,
+      row.covered?.version ?? null,
+      row.covered?.contentHash ?? null,
+      req.ip,
+      req.headers['user-agent'],
+      row.tenantId,
+    ],
+  );
+}
+
+/* ── A FROZEN DOCUMENT IS NOT ALLOWED TO STILL BE ASKING QUESTIONS ──
+ *
+ * Freeze is the seal: after it the content is seseal-hashed, signed under
+ * §11.50 and filed. Nothing here checked whether the document was actually
+ * finished, so a section carrying forty open reviewer comments and a dozen
+ * unaccepted tracked changes could be frozen, signed and submitted.
+ *
+ * Both then disappear in a way nobody can see downstream. Comments are not
+ * part of the exported content at all, so the questions simply do not
+ * travel — the filed document looks settled and the forty unanswered
+ * queries exist only in a UI nobody opens after the seal. Unresolved
+ * suggestions do travel, and now travel visibly (they render as
+ * `[-old-][+new+]`), which means an unfinished sentence reaches a reviewer
+ * mid-argument.
+ *
+ * So the refusal is the honest default: a document with outstanding work is
+ * not ready to be sealed, and the seal is exactly the wrong moment to
+ * discover that.
+ *
+ * It is a refusal, not a prohibition. Freezing a draft with open comments
+ * is legitimate — an internal baseline before a review round is a real
+ * thing to want — so the caller may proceed by SAYING SO, and what they
+ * acknowledged is recorded in the audit trail and in the freeze reason.
+ * That is the Part 11 shape: you may act, but you must state that you know,
+ * and the record keeps it. Silently sealing an unfinished document is the
+ * only option removed. */
+async function freezeCensus(
+  docId: string | string[] | undefined,
+  tenantId: number,
+  sections: ReadonlyArray<{ content: string | null }>,
+): Promise<{ openCommentCount: number; pendingEdits: number }> {
+  const openComments = await pool.query<{ n: string }>(
+    `SELECT COUNT(*)::text AS n FROM authoring_comments
+      WHERE doc_id = $1 AND tenant_id = $2 AND status = 'open'`,
+    [docId, tenantId]
+  );
+  const openCommentCount = Number(openComments.rows[0]?.n ?? 0);
+
+  /* The same census the export takes, from the same parser, so the two can
+     never disagree about whether a document has unsettled edits. */
+  const { sectionContentToBlocks: toBlocks, countPendingSuggestions: countPending } =
+    await import('../export/authoring-section-content.js');
+  let pendingEdits = 0;
+  for (const section of sections) {
+    const p = countPending(toBlocks(section.content));
+    pendingEdits += p.insertions + p.deletions;
+  }
+  return { openCommentCount, pendingEdits };
+}
+
+/** The 409 a freeze answers while work is outstanding — naming it, never a status code. */
+function notSettledRefusal(openCommentCount: number, pendingEdits: number) {
+  const parts: string[] = [];
+  if (openCommentCount > 0) {
+    parts.push(`${openCommentCount} unresolved comment${openCommentCount === 1 ? '' : 's'}`);
+  }
+  if (pendingEdits > 0) {
+    parts.push(`${pendingEdits} tracked change${pendingEdits === 1 ? '' : 's'} nobody has accepted or rejected`);
+  }
+  return {
+    success: false,
+    error: {
+      code: 'DOCUMENT_NOT_SETTLED',
+      message:
+        `Not frozen — this document still has ${parts.join(' and ')}. ` +
+        'Freezing seals the content for signature and filing, so the questions ' +
+        'would go unanswered and the proposed edits would reach a reviewer ' +
+        'undecided. Resolve them, or freeze again confirming you intend to ' +
+        'seal it as it stands.',
+    },
+    unresolved: { openComments: openCommentCount, pendingEdits },
+  };
+}
+
+// POST /api/authoring/docs/:docId/freeze - Freeze document with immutable snapshot, signed
 router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
-    const { reason, version } = req.body;
+    const { reason, version, meaning } = req.body;
     // §11.10(e): the reason is validated here and recorded as given — never
     // replaced by a placeholder in the ledger.
     const reasonVerdict = requireGovernedReason(reason);
@@ -4103,6 +4253,16 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
     const tenantId = getTenantId(req);
+
+    // §11.10(g) authority, before the credentials (see /e-sign for the order).
+    if (!(await assertSigningAuthority(req, res))) return;
+    if (!isFreezeMeaning(meaning)) {
+      return res.status(400).json({
+        error:
+          'A freeze is signed: state its meaning, AUTHOR or REVIEWER. An approval is applied with E-sign, which approves and freezes the document in one act.',
+        field: 'meaning',
+      });
+    }
 
     // Get current document content
     const docResult = await pool.query(
@@ -4131,73 +4291,10 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
-    /* ── A FROZEN DOCUMENT IS NOT ALLOWED TO STILL BE ASKING QUESTIONS ──
-     *
-     * Freeze is the seal: after it the content is seseal-hashed, signed under
-     * §11.50 and filed. Nothing here checked whether the document was actually
-     * finished, so a section carrying forty open reviewer comments and a dozen
-     * unaccepted tracked changes could be frozen, signed and submitted.
-     *
-     * Both then disappear in a way nobody can see downstream. Comments are not
-     * part of the exported content at all, so the questions simply do not
-     * travel — the filed document looks settled and the forty unanswered
-     * queries exist only in a UI nobody opens after the seal. Unresolved
-     * suggestions do travel, and now travel visibly (they render as
-     * `[-old-][+new+]`), which means an unfinished sentence reaches a reviewer
-     * mid-argument.
-     *
-     * So the refusal is the honest default: a document with outstanding work is
-     * not ready to be sealed, and the seal is exactly the wrong moment to
-     * discover that.
-     *
-     * It is a refusal, not a prohibition. Freezing a draft with open comments
-     * is legitimate — an internal baseline before a review round is a real
-     * thing to want — so the caller may proceed by SAYING SO, and what they
-     * acknowledged is recorded in the audit trail and in the freeze reason.
-     * That is the Part 11 shape: you may act, but you must state that you know,
-     * and the record keeps it. Silently sealing an unfinished document is the
-     * only option removed. */
-    const openComments = await pool.query<{ n: string }>(
-      `SELECT COUNT(*)::text AS n FROM authoring_comments
-        WHERE doc_id = $1 AND tenant_id = $2 AND status = 'open'`,
-      [docId, tenantId]
-    );
-    const openCommentCount = Number(openComments.rows[0]?.n ?? 0);
-
-    /* The same census the export takes, from the same parser, so the two can
-       never disagree about whether a document has unsettled edits. */
-    const { sectionContentToBlocks: toBlocks, countPendingSuggestions: countPending } =
-      await import('../export/authoring-section-content.js');
-    let pendingEdits = 0;
-    for (const section of sectionsResult.rows) {
-      const p = countPending(toBlocks(section.content));
-      pendingEdits += p.insertions + p.deletions;
-    }
-
+    const { openCommentCount, pendingEdits } = await freezeCensus(docId, tenantId, sectionsResult.rows);
     const acknowledged = req.body?.acknowledgeUnresolved === true;
     if ((openCommentCount > 0 || pendingEdits > 0) && !acknowledged) {
-      const parts: string[] = [];
-      if (openCommentCount > 0) {
-        parts.push(
-          `${openCommentCount} unresolved comment${openCommentCount === 1 ? '' : 's'}`
-        );
-      }
-      if (pendingEdits > 0) {
-        parts.push(`${pendingEdits} tracked change${pendingEdits === 1 ? '' : 's'} nobody has accepted or rejected`);
-      }
-      return res.status(409).json({
-        success: false,
-        error: {
-          code: 'DOCUMENT_NOT_SETTLED',
-          message:
-            `Not frozen — this document still has ${parts.join(' and ')}. ` +
-            'Freezing seals the content for signature and filing, so the questions ' +
-            'would go unanswered and the proposed edits would reach a reviewer ' +
-            'undecided. Resolve them, or freeze again confirming you intend to ' +
-            'seal it as it stands.',
-        },
-        unresolved: { openComments: openCommentCount, pendingEdits },
-      });
+      return res.status(409).json(notSettledRefusal(openCommentCount, pendingEdits));
     }
 
     /* What was sealed over is part of why it was sealed, so it goes into the
@@ -4208,6 +4305,14 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
           `${pendingEdits} undecided tracked change(s), acknowledged by ${email}.]`
         : '';
 
+    // §11.200(a)(1): the signer re-verified by the platform ceremony, LAST —
+    // after every refusal above — so a code is spent only on a freeze that is
+    // otherwise ready to seal.
+    const signer = await reverifyAuthoringSigner(req, res);
+    if (!signer) return;
+    const signerName = await resolveSignerName(email);
+    const docHash = await computeDocHash(docId, tenantId);
+
     // Create frozen content snapshot
     const frozenContent = JSON.stringify({
       document: doc,
@@ -4217,8 +4322,16 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
 
     const contentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
     const versionNumber = version || `v${doc.version || '1.0'}.frozen`;
+    // §11.70: the signature names the snapshot it seals, inside a recomputable digest.
+    const signatureId = crypto.randomUUID();
+    const signatureDigest = computeSignatureDigest({
+      signerEmail: email,
+      meaning,
+      contentHash: docHash,
+      coveredContentHash: contentHash,
+    });
 
-    // Frozen-snapshot insert + status flip + audit are ONE atomic unit. Run as
+    // Frozen-snapshot insert + status flip + signature + audit are ONE atomic unit. Run as
     // separate pool commits, a failure after the snapshot but before the status
     // update left a frozen_documents row for a document still marked editable
     // (or the reverse), and a failure before the audit left a freeze with no
@@ -4243,6 +4356,21 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         ['FROZEN', docId, tenantId]
       );
 
+      // The freeze's signature, bound to the snapshot just written (DP-35).
+      await insertAuthoringSignature(client, req, {
+        id: signatureId,
+        docId,
+        signerEmail: email,
+        signerName,
+        meaning,
+        reason: freezeReason,
+        method: signer.authenticationMethod,
+        contentHash: docHash,
+        signatureDigest,
+        covered: { version: versionNumber, contentHash },
+        tenantId,
+      });
+
       // Create audit trail
       await createAuditTrail(
         req,
@@ -4252,7 +4380,7 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         null,
         frozenContent,
         `${freezeReason}${acknowledgedNote}`,
-        { contentHash, version: versionNumber, openCommentCount, pendingEdits, acknowledged },
+        { contentHash, version: versionNumber, openCommentCount, pendingEdits, acknowledged, signatureId, meaning },
         client,
         // This handler writes its own richer chained row below.
         { chainedRowWrittenByCaller: true },
@@ -4279,7 +4407,9 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         resourceId: String(docId ?? ''),
         ipAddress: (req.ip ?? undefined) as string | undefined,
         userAgent: req.headers['user-agent'] as string | undefined,
-        details: { contentHash, version: versionNumber, reason: reason ?? null },
+        // signatureId: the §11.70 link the audit-trail ledger joins on to show
+        // this freeze as signed, with its meaning.
+        details: { contentHash, version: versionNumber, reason: reason ?? null, signatureId, meaning, signer: email },
       });
 
       await client.query('COMMIT');
@@ -4294,6 +4424,8 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
       success: true,
       contentHash,
       version: versionNumber,
+      signatureId,
+      documentHash: docHash,
       frozenAt: new Date().toISOString(),
     });
   } catch (error) {
@@ -4377,32 +4509,19 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
     try {
       await client.query('BEGIN');
 
-      // `method` is what the ceremony verified ('password' or 'password+mfa'),
-      // never a claim from the request. `pin_verified` stays false: no PIN is
-      // involved, and rows signed with one keep 'PIN' and true.
-      await client.query(
-        `INSERT INTO authoring_signatures
-         (id, doc_id, signer_email, signer_name, meaning, reason, method,
-          content_hash, signature_digest, covered_freeze_version, covered_content_hash,
-          pin_verified, ip_address, user_agent, tenant_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, FALSE, $12, $13, $14)`,
-        [
-          signatureId,
-          docId,
-          email,
-          name,
-          meaning,
-          intent,
-          signer.authenticationMethod,
-          docHash,
-          signatureDigest,
-          covered?.version ?? null,
-          covered?.contentHash ?? null,
-          req.ip,
-          req.headers['user-agent'],
-          tenantId,
-        ]
-      );
+      await insertAuthoringSignature(client, req, {
+        id: signatureId,
+        docId,
+        signerEmail: email,
+        signerName: name,
+        meaning,
+        reason: intent,
+        method: signer.authenticationMethod,
+        contentHash: docHash,
+        signatureDigest,
+        covered,
+        tenantId,
+      });
 
       // Create audit trail
       await createAuditTrail(req, docId, null, 'E_SIGN', null, null, intent, {
@@ -5342,45 +5461,175 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
  */
 
 
-// DELETE /docs/:docId (UAT-only; admin-guarded) - Step 12: Fixture Cleanup
+/* ── DELETE /docs/:docId — the governed delete (DP-33, plan P1-30) ──────────
+ *
+ * This stood here as "UAT-only; admin-guarded": a static `x-admin-token`
+ * header compared with the ADMIN_TOKEN environment variable authorised it, not the session;
+ * the read and the DELETE carried no tenant predicate; and the record was an
+ * auditService.logAction call with no actor and no organisation, best-effort,
+ * on the pool, before a DELETE it could not roll back with. Whoever held the
+ * one shared string was nobody the ledger could name (§11.10(d), (e), (g)).
+ *
+ * Now, like every other governed act in this router:
+ *   - the session is the authority (this router's own JWT gate, then the
+ *     object gate in front of it, which already resolves the document inside
+ *     the caller's organisation);
+ *   - the caller's role in THIS organisation, read from organization_users
+ *     (resolveSignerOrgRole — the persisted membership, never the token's
+ *     claim), is owner, admin or manager;
+ *   - a reason is stated, and recorded as given;
+ *   - the organisation's own document only, read FOR UPDATE: a foreign or
+ *     unknown id is 404, saying nothing about other organisations;
+ *   - a sealed record (FROZEN / APPROVED) is not deleted — its seal and any
+ *     signature over it are evidence (§11.10(c)); nor is one with revision
+ *     history, which the append-only ledger keeps; nor a draft that carries a
+ *     signature (an AUTHOR or REVIEWER e-sign does not freeze), which would
+ *     otherwise be left naming a record that is gone (§11.70) — so, in
+ *     practice, what can be deleted is a document that never had a section or
+ *     a signature: a mistaken create, a bare fixture;
+ *   - the DELETE and the chained audit row naming the actor commit in one
+ *     transaction, so neither can exist without the other.
+ *
+ * The x-admin-token path is removed, not kept beside this: two doors to one
+ * act is the parallel path CLAUDE.md rules out. Its one caller,
+ * scripts/cleanup-fixtures.mjs, now signs in like any other client. */
+const DOCUMENT_DELETE_ROLES: ReadonlySet<string> = new Set(['owner', 'admin', 'manager']);
+
+type GovernedDeleteOutcome =
+  | { kind: 'deleted' }
+  | { kind: 'not-found' }
+  | { kind: 'sealed'; status: string }
+  | { kind: 'has-history' }
+  | { kind: 'signed' };
+
+async function deleteAuthoringDocument(
+  req: Request,
+  docId: string,
+  tenantId: number,
+  reason: string,
+): Promise<GovernedDeleteOutcome> {
+  return inTransaction<GovernedDeleteOutcome>(async (client) => {
+    const found = await client.query(
+      `SELECT id, title, product_code, status, version FROM authoring_documents
+        WHERE id = $1 AND tenant_id = $2 FOR UPDATE`,
+      [docId, tenantId],
+    );
+    const doc = found.rows?.[0];
+    if (!doc) return { kind: 'not-found' };
+    const status = String(doc.status ?? '').toUpperCase();
+    if (LOCKED_DOCUMENT_STATUSES.has(status)) return { kind: 'sealed', status };
+    /* The revision ledger is append-only, enforced by a trigger
+       (20260817_doc_revisions_immutable_ledger.sql), and the section cascade
+       reaches it — every section has at least its genesis revision. Asked
+       first, so the answer is an honest 409 rather than the trigger's
+       exception surfacing as a 500 after the DELETE was attempted. */
+    const history = await client.query(
+      `SELECT 1 FROM doc_revisions r
+         JOIN authoring_sections s ON s.id = r.section_id AND s.tenant_id = r.tenant_id
+        WHERE s.doc_id = $1 AND s.tenant_id = $2 LIMIT 1`,
+      [docId, tenantId],
+    );
+    if ((history.rowCount ?? 0) > 0) return { kind: 'has-history' };
+    /* authoring_signatures has no foreign key to the document, so the DELETE
+       would succeed and leave each signature bound to nothing. */
+    const signed = await client.query(
+      'SELECT 1 FROM authoring_signatures WHERE doc_id = $1 AND tenant_id = $2 LIMIT 1',
+      [docId, tenantId],
+    );
+    if ((signed.rowCount ?? 0) > 0) return { kind: 'signed' };
+
+    // What was removed, so the record outlives the row: the same section
+    // digest the signatures store as content_hash.
+    const contentHash = await computeDocHashOn(client, docId, tenantId);
+    await client.query('DELETE FROM authoring_documents WHERE id = $1 AND tenant_id = $2', [docId, tenantId]);
+    await writeChainedAuditRow(client, {
+      tenantId,
+      userId: getActorId(req) ?? undefined,
+      action: 'authoring.document.delete',
+      resourceType: 'authoring_document',
+      resourceId: docId,
+      ipAddress: (req.ip ?? undefined) as string | undefined,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        reason,
+        actorEmail: getActorEmail(req),
+        title: doc.title ?? null,
+        productCode: doc.product_code ?? null,
+        status: doc.status ?? null,
+        version: doc.version ?? null,
+        contentHash,
+      },
+    });
+    return { kind: 'deleted' };
+  });
+}
+
+/** The answer to a delete that did not happen — what is kept, and why. */
+function governedDeleteRefusal(
+  outcome: Exclude<GovernedDeleteOutcome, { kind: 'deleted' }>,
+): { status: number; body: { error: string; code?: string } } {
+  switch (outcome.kind) {
+    case 'not-found':
+      return { status: 404, body: { error: 'Document not found' } };
+    case 'sealed':
+      return {
+        status: 409,
+        body: {
+          error: `Not deleted — the document is ${outcome.status}. A sealed record and the signatures over it are kept.`,
+          code: 'AUTHORING_DOCUMENT_SEALED',
+        },
+      };
+    case 'has-history':
+      return {
+        status: 409,
+        body: {
+          error:
+            'Not deleted — the document has revision history, and the revision ledger is append-only (21 CFR Part 11 §11.10(e)). Only a document with no sections can be deleted.',
+          code: 'AUTHORING_DOCUMENT_HAS_HISTORY',
+        },
+      };
+    case 'signed':
+      return {
+        status: 409,
+        body: {
+          error:
+            'Not deleted — the document carries an electronic signature, and a signature is kept with the record it signs (21 CFR Part 11 §11.70).',
+          code: 'AUTHORING_DOCUMENT_SIGNED',
+        },
+      };
+  }
+}
+
 router.delete('/docs/:docId', async (req: Request, res: Response) => {
   try {
-    const adminHeader = req.headers['x-admin-token'];
-    if (!process.env.ADMIN_TOKEN || adminHeader !== process.env.ADMIN_TOKEN) {
-      return res.status(401).json({ error: 'admin token required' });
+    const docId = String(req.params.docId ?? '');
+    const actorId = getActorId(req);
+    if (!actorId || !getActorEmail(req)) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
+    const tenantId = getTenantId(req);
 
-    const doc = (
-      await getPool().query(
-        `SELECT id as doc_id, product_code FROM authoring_documents WHERE id = $1`,
-        [req.params.docId]
-      )
-    ).rows[0];
-
-    if (!doc) return res.status(404).json({ error: 'document not found' });
-
-    // UAT naming convention guard
-    if (!doc.product_code || !/^UAT-/i.test(doc.product_code)) {
-      return res.status(409).json({
-        error: "document not UAT-scoped (product_code must start with 'UAT-')",
+    // The role first: a caller who may not delete learns nothing about the
+    // document, and is not asked for a reason it cannot use.
+    const role = await resolveSignerOrgRole(Number(actorId), tenantId);
+    if (!role || !DOCUMENT_DELETE_ROLES.has(role)) {
+      return res.status(403).json({
+        error: 'Deleting an authoring document needs the owner, admin or manager role in this organization.',
+        code: 'AUTHORING_DELETE_NOT_PERMITTED',
       });
     }
 
-    // 21 CFR Part 11 §11.10(e): record the deletion before removing the
-    // document. auditService persists to audit_logs + the tamper-proof
-    // hash-chain log (best-effort by design — it never throws).
-    await auditService.logAction({
-      action: 'authoring_document.deleted',
-      resourceType: 'authoring_document',
-      resourceId: String(req.params.docId),
-      details: { productCode: doc.product_code, via: 'admin-uat-cleanup' },
-    });
+    const reasonVerdict = requireGovernedReason(req.body?.reason);
+    if (!reasonVerdict.ok) return res.status(400).json({ error: reasonVerdict.error, field: 'reason' });
 
-    await getPool().query(`DELETE FROM authoring_documents WHERE id = $1`, [req.params.docId]);
-    res.json({ ok: true, deleted: req.params.docId });
+    if (!isUuid(docId)) return res.status(404).json({ error: 'Document not found' });
+
+    const outcome = await deleteAuthoringDocument(req, docId, tenantId, reasonVerdict.reason);
+    if (outcome.kind === 'deleted') return res.json({ ok: true, deleted: docId });
+    const refusal = governedDeleteRefusal(outcome);
+    return res.status(refusal.status).json(refusal.body);
   } catch (error) {
-    console.error('DELETE /docs/:id', error);
-    res.status(500).json({ error: 'Failed to delete document' });
+    return serverError(res, logger, 'deleting the authoring document', error);
   }
 });
 
@@ -6937,16 +7186,18 @@ router.post('/docs/:docId/sections/reorder', async (req: Request, res: Response)
 
 const AUTHORING_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
 
+/* The canonical allowlist (middleware/uploadAllowlist.ts), narrowed to the
+   three formats: admitted by extension or by declared type, never by an
+   `image/` prefix — SVG and WebP declare one. What gets through is then held to
+   its bytes and its name by assertUploadSafe in the handler (IAM-14). */
 const imageUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: AUTHORING_IMAGE_MAX_BYTES, files: 1 },
-  fileFilter: (_req, file, cb) => {
-    if (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg' || file.mimetype === 'image/gif') {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PNG, JPEG and GIF images are accepted — they are the formats a Word export can embed.'));
-    }
-  },
+  fileFilter: makeUploadFileFilter({
+    extensions: ['png', 'jpg', 'jpeg', 'gif'],
+    mimeTypes: ['image/png', 'image/jpeg', 'image/gif'],
+    allowMimePrefixes: [],
+  }),
 });
 
 /** Multer refusals (size, type) arrive as errors; they are client mistakes,
@@ -6956,11 +7207,35 @@ const imageUploadErrors = (err: unknown, _req: Request, res: Response, next: (e?
   const message =
     (err as { code?: string })?.code === 'LIMIT_FILE_SIZE'
       ? 'The image is larger than 8 MB. Nothing was uploaded.'
-      : err instanceof Error
+      : err instanceof multer.MulterError
         ? err.message
-        : 'Upload refused';
+        : 'Only PNG, JPEG and GIF images are accepted — they are the formats a Word export can embed.';
   return res.status(400).json({ success: false, error: message });
 };
+
+/**
+ * assertUploadSafe (middleware/uploadSafety.ts) on the bytes in hand: the
+ * signature matches the declared type, the name binds the type, and the content
+ * scan — fail-CLOSED in production — ran clean. Answers the refusal itself and
+ * returns false when the file must not be used.
+ */
+async function refuseUnsafeUpload(
+  res: Response,
+  file: { buffer: Buffer; originalname?: string },
+  verifyAs: string,
+): Promise<boolean> {
+  try {
+    await assertUploadSafe(file.buffer, verifyAs, file.originalname || 'upload');
+    return false;
+  } catch (err) {
+    if (err instanceof UploadSafetyError) {
+      const said = /[.!?]$/.test(err.body.error) ? err.body.error : `${err.body.error}.`;
+      res.status(err.status).json({ success: false, error: `${said} Nothing was uploaded.`, code: err.code });
+      return true;
+    }
+    throw err;
+  }
+}
 
 router.post(
   '/images',
@@ -6981,24 +7256,13 @@ router.post(
         });
       }
 
-      // Magic-number check: an executable or HTML payload uploaded under an
-      // image mime is refused on its bytes, not its label.
-      const { verifyFileSignature } = await import('../utils/fileSignature');
-      const sig = verifyFileSignature(file.buffer, file.mimetype ?? '');
-      if (!sig.ok) {
-        return res.status(400).json({
-          success: false,
-          error: 'The file content does not match its declared image type. Nothing was uploaded.',
-        });
-      }
-      const { scanBuffer } = await import('../utils/virusScan');
-      const scan = await scanBuffer(file.buffer);
-      if (!scan.clean) {
-        logger.warn('authoring image rejected by content scan', { tenantId });
-        return res.status(400).json({
-          success: false,
-          error: 'The file was rejected by the content scan. Nothing was uploaded.',
-        });
+      // The bytes, the name and the scan (IAM-14). This ran the signature
+      // check and the scan by hand and read only `scan.clean`, which the
+      // scanner reports true when it did not run at all — so a production
+      // deployment with no reachable scanner stored every figure unscanned,
+      // and `figure.gif` with PNG bytes declared image/png was stored as is.
+      if (await refuseUnsafeUpload(res, { buffer: file.buffer, originalname: file.originalname }, file.mimetype ?? '')) {
+        return;
       }
 
       /* Multer's busboy parse breaks the AsyncLocalStorage tenant scope the
@@ -7088,16 +7352,13 @@ export default router;
  * Importing straight into a document would put un-reviewed content into the
  * governed record on the strength of a drag-and-drop.
  */
+const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
 const docxImport = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024, files: 1 },
-  fileFilter: (_req, file, cb) => {
-    const isDocx =
-      file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-      /\.docx$/i.test(file.originalname ?? '');
-    if (isDocx) return cb(null, true);
-    cb(new Error('Only .docx files can be imported. A .doc (Word 97-2003) must be saved as .docx first.'));
-  },
+  // A .docx name or the .docx type; the bytes are held to it in the handler.
+  fileFilter: makeUploadFileFilter({ extensions: ['docx'], mimeTypes: [DOCX_MIME], allowMimePrefixes: [] }),
 });
 
 const docxImportErrors = (err: unknown, _req: Request, res: Response, next: (e?: unknown) => void) => {
@@ -7105,9 +7366,9 @@ const docxImportErrors = (err: unknown, _req: Request, res: Response, next: (e?:
   const message =
     (err as { code?: string })?.code === 'LIMIT_FILE_SIZE'
       ? 'The document is larger than 25 MB. Nothing was imported.'
-      : err instanceof Error
+      : err instanceof multer.MulterError
         ? err.message
-        : 'Upload refused';
+        : 'Only .docx files can be imported. A .doc (Word 97-2003) must be saved as .docx first.';
   return res.status(400).json({ success: false, error: message });
 };
 
@@ -7120,9 +7381,18 @@ router.post(
       if (!getActorId(req)) {
         return res.status(401).json({ success: false, error: 'Authentication required' });
       }
-      const file = (req as Request & { file?: { buffer?: Buffer } }).file;
+      const file = (req as Request & { file?: { buffer?: Buffer; originalname?: string } }).file;
       if (!file?.buffer?.length) {
         return res.status(400).json({ success: false, error: 'No document was uploaded.' });
+      }
+      /* Verified as the one format this route parses (IAM-14): a Word
+         container, scanned, before mammoth opens it. Verifying against the
+         .docx type rather than the declared one is deliberate — a browser on a
+         machine without Office may declare application/octet-stream for a
+         .docx, and the route never stores or serves the file, it only reads
+         it as Word. */
+      if (await refuseUnsafeUpload(res, { buffer: file.buffer, originalname: file.originalname }, DOCX_MIME)) {
+        return;
       }
 
       const { importDocx } = await import('../import/docx-to-authoring.js');

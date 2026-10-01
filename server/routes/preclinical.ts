@@ -24,6 +24,7 @@ import {
   PreclinicalIngestDisabledError,
 } from '../services/preclinical/preclinical-ingest-service';
 import { createScopedLogger } from '../utils/logger';
+import { serverError } from '../lib/api-response';
 
 const log = createScopedLogger('preclinical-routes');
 
@@ -146,19 +147,27 @@ router.post(
       });
     } catch (err) {
       if (err instanceof PreclinicalIngestDisabledError) {
+        // The thrown text names the deployment's flag. The 503 keeps its code
+        // and says the pre-check's own sentence above; the text is logged.
+        log.warn('Preclinical ingest refused: disabled', { sourcePdfId, err: err.message });
         return res.status(503).json({
           success: false,
-          error: err.message,
+          error: 'Preclinical ingest is disabled',
           code: 'PRECLINICAL_INGEST_DISABLED',
         });
       }
       const message = err instanceof Error ? err.message : 'unknown error';
       const isZodLike = /Invalid|expected|failed to parse/i.test(message);
+      if (!isZodLike) {
+        // A server failure (driver, model provider): the detail goes to the log
+        // against the request id, never into the body (P1-17, IAM-18 (1)).
+        return serverError(res, log, 'ingesting the preclinical study', err, { sourcePdfId });
+      }
       log.error('Preclinical ingest failed', { sourcePdfId, message });
-      return res.status(isZodLike ? 422 : 500).json({
+      return res.status(422).json({
         success: false,
         error: message,
-        code: isZodLike ? 'PRECLINICAL_INGEST_VALIDATION' : 'PRECLINICAL_INGEST_ERROR',
+        code: 'PRECLINICAL_INGEST_VALIDATION',
       });
     }
   },

@@ -1,0 +1,33 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupClientTypeGoverned.test.tsx > the client type chips > are named in words, not keys 101ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupClientTypeGoverned.test.tsx > the client type chips > write nothing on click — the choice is pending until saved 79ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > shows the organization’s real name, not an invented default 162ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > seeds the translation policy from the persisted section 58ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > addresses the org from the token claim, never the stale localStorage id 69ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupClientTypeGoverned.test.tsx > the client type chips > are saved by "Save to organization" with the page’s reason for change 75ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupClientTypeGoverned.test.tsx > the client type chips > are not saved without a reason 119ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > reads the period from the server and says when it is the 25-year default 141ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > writes nothing to the browser-local settings blob it replaced 146ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a failed read is an error, never the default presented as this organisation’s period 304ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a member is told who sets the period and is offered no control 47ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > sends nothing until something has changed 90ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > shortening sends the reason and the governing rule; a refusal leaves the period in force and says why 105ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a lengthened period is shown from the server’s answer, and only then reported as saved 123ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > refuses to write without a reason, because the route audits one 136ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > PATCHes both governed routes with the reason and the token’s org id 117ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > never carries a stale record’s “guardrail off” claim back to the server 74ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > leaves a refused section dirty, and re-sends only that section 96ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > reports an unreachable server as unreachable, not as a refusal 68ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > has no switch for anything enforced elsewhere or per user 80ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > states the approval guardrails as always enforced 50ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > discloses that the editable translation preferences are not yet read 49ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > does not offer edits it cannot persist when the record fails to load 23ms
+
+ Test Files  3 passed (3)
+      Tests  23 passed (23)
+   Start at  06:35:04
+   Duration  3.49s (transform 2.27s, setup 480ms, import 3.30s, tests 2.33s, environment 2.22s)
+

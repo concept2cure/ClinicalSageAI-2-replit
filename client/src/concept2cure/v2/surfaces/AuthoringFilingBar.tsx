@@ -3,10 +3,14 @@
  * selected authoring document, wired to the real authoring store
  * (server/routes/authoring.router.ts, uuid authoring_documents):
  *
- *   • Freeze — POST /api/authoring/docs/:docId/freeze {reason}: snapshots the
- *     whole document into frozen_documents with a sha256 content hash and an
- *     audit-trail entry, flipping the document to FROZEN. The returned hash is
- *     shown so the signer/regulator can re-derive it.
+ *   • Freeze — POST /api/authoring/docs/:docId/freeze
+ *     {reason, meaning, password, mfaToken?}: snapshots the whole document
+ *     into frozen_documents with a sha256 content hash, flips it to FROZEN and
+ *     records the freezer's signature bound to that snapshot. A frozen document
+ *     counts as finalized for eCTD leaf completeness and the IND checklist, so
+ *     the freeze is a signature (DP-35): it runs through the same EsignModal
+ *     ceremony as E-sign, re-verified server-side. The returned hash is shown
+ *     so the signer/regulator can re-derive it.
  *   • E-sign — POST /api/authoring/docs/:docId/e-sign
  *     {password, mfaToken?, meaning, intent}: records a 21 CFR Part 11
  *     electronic signature against the document's content hash with an audit
@@ -61,7 +65,7 @@ export interface AuthoringFilingBarProps {
   esignRefusal?: string | null;
 }
 
-type Dialog = 'freeze' | 'esign' | null;
+type Dialog = 'freeze' | 'freeze-unsettled' | 'esign' | null;
 
 const FROZEN_STATES = new Set(['FROZEN', 'APPROVED']);
 
@@ -81,42 +85,45 @@ function describeUnresolved(u: Unresolved): string {
   return parts.join(' and ');
 }
 
-/* The freeze dialog has two shapes. Ordinarily it asks for a reason.
- *
- * When the server has REFUSED because the document is not settled, it asks
- * again — naming exactly what is outstanding and making the choice explicit.
- * That refusal is not a dead end and must not read like one: freezing a draft
- * with open comments is a real thing to want, so the way forward is offered
- * here rather than left for the user to guess. What it is NOT is a button that
+/* The freeze is a signature (DP-35), so it is asked for by the shared
+ * EsignModal: meaning, reason, password and code. When the server has REFUSED
+ * because the document is not settled, this form asks first — naming exactly
+ * what is outstanding and making the choice explicit — and the signature
+ * dialog opens again only if the user chooses to seal it as it stands. That
+ * refusal is not a dead end and must not read like one: freezing a draft with
+ * open comments is a real thing to want. What it is NOT is a button that
  * quietly proceeds: the acknowledgement is a deliberate selection, and the
  * server records what was sealed over. */
-const FREEZE_FORM = (title: string, unresolved: Unresolved | null): C2CFormConfig => ({
+const UNSETTLED_FORM = (title: string, unresolved: Unresolved): C2CFormConfig => ({
   eyebrow: 'Part 11 · content freeze',
-  title: unresolved ? 'This document is not settled' : 'Freeze document',
-  sub: unresolved
-    ? `“${title}” still has ${describeUnresolved(unresolved)}. Freezing seals the ` +
-      'content for signature and filing, so the questions would go unanswered and the ' +
-      'proposed edits would reach a reviewer undecided.'
-    : `Snapshot “${title}” into an immutable, hash-sealed version before signing or filing.`,
+  title: 'This document is not settled',
+  sub:
+    `“${title}” still has ${describeUnresolved(unresolved)}. Freezing seals the ` +
+    'content for signature and filing, so the questions would go unanswered and the ' +
+    'proposed edits would reach a reviewer undecided.',
   governed: true,
-  submitLabel: unresolved ? 'Continue' : 'Freeze and seal',
+  submitLabel: 'Continue',
   fields: [
-    ...(unresolved
-      ? [{
-          key: 'acknowledge',
-          label: 'How do you want to proceed?',
-          type: 'seg' as const,
-          required: true,
-          options: [
-            { value: 'resolve', label: 'Go back and resolve them' },
-            { value: 'seal', label: 'Seal it as it stands' },
-          ],
-        }]
-      : []),
-    { key: 'reason', label: 'Reason for freeze (at least 8 characters)', type: 'textarea', required: true, placeholder: 'e.g. Locking for QA review prior to approval' },
-    { key: 'version', label: 'Version label (optional)', type: 'text', placeholder: 'e.g. v1.0.frozen' },
+    {
+      key: 'acknowledge',
+      label: 'How do you want to proceed?',
+      type: 'seg' as const,
+      required: true,
+      options: [
+        { value: 'resolve', label: 'Go back and resolve them' },
+        { value: 'seal', label: 'Seal it as it stands' },
+      ],
+    },
   ],
 });
+
+/** The meanings a freeze carries (FREEZE_SIGNATURE_MEANINGS in authoring.router.ts).
+ *  Approval is not one: it is E-sign, which approves and freezes in one act. */
+const FREEZE_MEANING: Partial<Record<EsigMeaning, 'AUTHOR' | 'REVIEWER'>> = {
+  authorship: 'AUTHOR',
+  review: 'REVIEWER',
+};
+const FREEZE_MEANINGS: ReadonlyArray<EsigMeaning> = ['authorship', 'review'];
 
 /** The authoring store's §11.50 vocabulary (SIGNATURE_MEANINGS in
  *  authoring.router.ts), as the shared dialog names the same three meanings. */
@@ -161,6 +168,77 @@ async function postAuthoringSignature(
   return { meaning, hash: json?.documentHash, signedAt: json?.signedAt };
 }
 
+/** What the freeze endpoint answered: sealed, or refused as not settled. */
+type FreezeOutcome =
+  | { kind: 'sealed'; hash?: string; frozenAt?: string }
+  | { kind: 'not-settled'; unresolved: Unresolved };
+
+/** The outstanding work the server named when it refused, or null for any other failure. */
+function notSettledCounts(e: unknown): Unresolved | null {
+  const err = e as Partial<ApiRequestError>;
+  if (err?.code !== 'DOCUMENT_NOT_SETTLED') return null;
+  const counts = (err.payload as { unresolved?: Unresolved } | undefined)?.unresolved;
+  return { openComments: Number(counts?.openComments ?? 0), pendingEdits: Number(counts?.pendingEdits ?? 0) };
+}
+
+/**
+ * POST the signed freeze. The credentials the dialog checked go with it and
+ * the server re-verifies them inside the freeze's transaction. A refusal is
+ * thrown as the sentence to show; "not settled" is returned, because it is a
+ * question for the user rather than a failure.
+ */
+async function postFreeze(docId: string, input: SignInput, acknowledge: boolean): Promise<FreezeOutcome> {
+  const meaning = FREEZE_MEANING[input.meaning];
+  if (!meaning) throw new Error('A freeze is signed as its author or a reviewer. Nothing was sealed.');
+  let res: Response;
+  try {
+    res = await apiRequest('POST', `/api/authoring/docs/${docId}/freeze`, {
+      reason: input.reason,
+      meaning,
+      password: input.password,
+      ...(input.totp ? { mfaToken: input.totp } : {}),
+      ...(acknowledge ? { acknowledgeUnresolved: true } : {}),
+    });
+  } catch (e) {
+    const unresolved = notSettledCounts(e);
+    if (unresolved) return { kind: 'not-settled', unresolved };
+    /* `apiRequest` THROWS on a non-2xx and the server answers `{ code,
+       message }`, so the sentence is read from it — never "[object Object]". */
+    const err = e as Partial<ApiRequestError> & { message?: string };
+    const why = redactInternals(err?.message, 'the server did not accept it');
+    throw new Error(
+      'Couldn’t freeze the document — ' + why + ' Nothing was sealed.' +
+        (err?.correlationId ? ` Reference ${err.correlationId}.` : ''),
+      { cause: e },
+    );
+  }
+  const json = (await res.json().catch(() => null)) as { contentHash?: string; frozenAt?: string } | null;
+  /* apiRequest RETURNS a 401 rather than throwing it. Here a 401 is the
+     signing ceremony refusing the password or code, not a lost session; it
+     used to fall through to "Document frozen and sealed" — a seal claim over
+     a freeze the server refused. */
+  if (res.status === 401) {
+    throw new Error('Not frozen — ' + (serverMessage(json) ?? 'your password or code was not verified.') + ' Nothing was sealed.');
+  }
+  if (!res.ok) {
+    throw new Error('Couldn’t freeze the document — ' + extractApiError(json, res.status).message + '. Nothing was sealed.');
+  }
+  return { kind: 'sealed', hash: json?.contentHash, frozenAt: json?.frozenAt };
+}
+
+/** The line under the freeze dialog's target: what the signature records. */
+function freezeTargetMeta(unresolved: Unresolved | null): string {
+  return unresolved
+    ? `Sealing it as it stands, with ${describeUnresolved(unresolved)}. Your signature records that you sealed it.`
+    : 'Freezing seals the content for signature and filing. Your signature records that you sealed it.';
+}
+
+/** The Freeze control's title: why it is unavailable, or what it does. */
+function freezeTitle(frozen: boolean, refusal: string | null | undefined): string {
+  if (frozen) return 'Document is already frozen';
+  return refusal ?? 'Sign, snapshot and seal this document';
+}
+
 /** The server's refusal of a governed act, as visible text the disabled control is described by (GE-P-3). */
 function RefusalNote({ id, testId, text }: { id: string; testId: string; text: string }) {
   return (
@@ -178,60 +256,40 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
   const [unresolved, setUnresolved] = useState<Unresolved | null>(null);
   const frozen = FROZEN_STATES.has(docStatus);
 
-  const doFreeze = async (v: Record<string, string>) => {
-    /* The user chose "go back and resolve them" — close and let them work.
-       Offering the choice and then ignoring half of it would be worse than not
-       offering it. */
-    if (unresolved && v.acknowledge === 'resolve') {
-      setUnresolved(null);
-      setDialog(null);
+  /** The not-settled form's answer: go back, or reopen the signature to seal it as it stands. */
+  const onUnsettledChoice = (v: Record<string, string>) => {
+    /* "Go back and resolve them" closes and lets them work. Offering the choice
+       and then ignoring half of it would be worse than not offering it. */
+    if (v.acknowledge === 'seal') {
+      setDialog('freeze');
       return;
     }
-    try {
-      const res = await apiRequest('POST', `/api/authoring/docs/${docId}/freeze`, {
-        reason: v.reason,
-        version: v.version || undefined,
-        /* Only ever sent after the server refused AND the user deliberately
-           chose to seal it anyway. Never a default, never inferred. */
-        ...(unresolved && v.acknowledge === 'seal' ? { acknowledgeUnresolved: true } : {}),
-      });
-      const json = await res.json().catch(() => null);
-      /* apiRequest throws on every non-2xx EXCEPT 401, which it returns so
-         callers can say "sign in" rather than "server error". This handler
-         relied on the throw alone, so an expired session fell straight through
-         to "Document frozen and sealed" — a seal claim, plus a refresh, over a
-         freeze the server refused. Same guard the e-sign handler below has. */
-      if (res.status === 401) { fireToast('Not frozen — your session isn’t authenticated. Sign in and try again; nothing was sealed.', 'error'); return; }
-      if (!res.ok) { fireToast('Couldn’t freeze the document — ' + (extractApiError(json, res.status).message) + '. Nothing was sealed.', 'error'); return; }
-      const hash = (json as { contentHash?: string })?.contentHash;
-      fireToast('Document frozen and sealed' + (hash ? ' · ' + String(hash).slice(0, 12) + '…' : '') + '.');
-      setUnresolved(null);
-      setDialog(null);
-      onChanged();
-    } catch (e) {
-      /* `apiRequest` THROWS on a non-2xx, so the old `if (!res.ok)` branch above
-         was unreachable and every failure fell to this catch — where
-         `(json as any)?.error` would in any case have rendered "[object Object]"
-         now that the server answers with `{ code, message }`. */
-      const err = e as Partial<ApiRequestError> & { message?: string };
-      if (err?.code === 'DOCUMENT_NOT_SETTLED') {
-        const counts = (err.payload as { unresolved?: Unresolved } | undefined)?.unresolved;
-        /* Re-ask rather than report a failure: the document is not broken, it is
-           unfinished, and the dialog can say so and offer both ways forward. */
-        setUnresolved({
-          openComments: Number(counts?.openComments ?? 0),
-          pendingEdits: Number(counts?.pendingEdits ?? 0),
-        });
-        setDialog('freeze');
-        return;
-      }
-      const why = redactInternals(err?.message, 'the server did not accept it');
-      fireToast(
-        'Couldn’t freeze the document — ' + why + ' Nothing was sealed.' +
-          (err?.correlationId ? ` Reference ${err.correlationId}.` : ''),
-        'error',
-      );
+    setUnresolved(null);
+    setDialog(null);
+  };
+
+  /* Runs after the dialog has checked the password (and code) with the server.
+     A throw is shown in the dialog, which stays open; nothing is sealed. */
+  const doFreeze = async (input: SignInput): Promise<EsigSignedManifest> => {
+    /* The acknowledgement is only ever sent after the server refused AND the
+       user deliberately chose to seal it anyway. Never a default, never inferred. */
+    const out = await postFreeze(docId, input, unresolved !== null);
+    if (out.kind === 'not-settled') {
+      /* Re-ask rather than report a failure: the document is not broken, it
+         is unfinished, and the form says so and offers both ways forward. */
+      setUnresolved(out.unresolved);
+      setDialog('freeze-unsettled');
+      throw new Error('Not frozen — the document is not settled. Nothing was sealed.');
     }
+    fireToast('Document frozen and sealed' + (out.hash ? ' · ' + String(out.hash).slice(0, 12) + '…' : '') + '.');
+    setUnresolved(null);
+    onChanged();
+    return {
+      meaning: input.meaning,
+      reason: input.reason,
+      signedAt: out.frozenAt ?? new Date().toISOString(),
+      ...(out.hash ? { hash: out.hash } : {}),
+    };
   };
 
   /* Runs after the dialog has checked the password (and code) with the server.
@@ -253,7 +311,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
     <>
       <button className="btn ghost" style={{ height: 30 }} onClick={() => setDialog('freeze')} disabled={frozen || !!freezeRefusal}
         aria-describedby={!frozen && freezeRefusal ? freezeNoteId : undefined}
-        title={frozen ? 'Document is already frozen' : freezeRefusal ?? 'Snapshot and seal this document'}>
+        title={freezeTitle(frozen, freezeRefusal)}>
         {I.lock} {frozen ? 'Frozen' : 'Freeze'}
       </button>
       {!frozen && freezeRefusal && <RefusalNote id={freezeNoteId} testId="freeze-refusal" text={freezeRefusal} />}
@@ -265,10 +323,23 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       {esignRefusal && <RefusalNote id={esignNoteId} testId="esign-refusal" text={esignRefusal} />}
 
       {dialog === 'freeze' && (
+        <EsignModal
+          open
+          action="Freeze and seal"
+          target={docTitle}
+          targetMeta={freezeTargetMeta(unresolved)}
+          defaultMeaning="authorship"
+          meanings={FREEZE_MEANINGS}
+          signer={signer}
+          onClose={() => { setUnresolved(null); setDialog(null); }}
+          onSign={doFreeze}
+        />
+      )}
+      {dialog === 'freeze-unsettled' && unresolved && (
         <C2CForm
-          config={FREEZE_FORM(docTitle, unresolved)}
+          config={UNSETTLED_FORM(docTitle, unresolved)}
           onCancel={() => { setUnresolved(null); setDialog(null); }}
-          onSubmit={doFreeze}
+          onSubmit={onUnsettledChoice}
         />
       )}
       {dialog === 'esign' && (

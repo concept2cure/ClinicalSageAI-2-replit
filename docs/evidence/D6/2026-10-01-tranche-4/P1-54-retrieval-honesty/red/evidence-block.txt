@@ -1,0 +1,5 @@
+ × server/routes/chat/__tests__/retrieval-evidence-block.test.ts > the evidence block of the chat prompt > a search that could not run is stated as unavailable, never as no sources found 5ms
+ ✓ server/routes/chat/__tests__/retrieval-evidence-block.test.ts > the evidence block of the chat prompt > a search that ran and found nothing adds no block (the model answers from training and says so) 1ms
+ ✓ server/routes/chat/__tests__/retrieval-evidence-block.test.ts > the evidence block of the chat prompt > retrieved sources are listed for citation as before 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)

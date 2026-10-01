@@ -57,6 +57,7 @@ import {
   GovernedConfirmDialog,
   type ConfirmConfig,
 } from '../../_shared/components/GovernedConfirmDialog';
+import { RetentionPeriodCard } from './RetentionPeriodCard';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
@@ -900,6 +901,11 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           )}
         </div>
+
+        {/* -- Records retention (P1-22; ADR-0014 §6) -- its own read and its
+            own governed save, because the period has its own route and its own
+            chained audit row; see RetentionPeriodCard.tsx. */}
+        <RetentionPeriodCard describeFailure={saveFailure} />
       </div>
     </div>
   );

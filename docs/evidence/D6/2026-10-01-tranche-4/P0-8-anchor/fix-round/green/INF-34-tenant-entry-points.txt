@@ -1,0 +1,19 @@
+$ git rev-parse HEAD
+55518c70dfae0c55a9a7884dec74fa4f5ab86b79
+$ npm run ci:tenant-entry-points
+
+> concept2cure-riai@1.0.0 ci:tenant-entry-points
+> node scripts/ci/check-tenant-entry-points.mjs
+
+[ci:tenant-entry-points] 14 entry point(s); 5 consider tenant entitlement, 9 do not (baseline 9)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+exit=0
+
+digest of the worktree sweep file (the gate's recipe: sha256 of the LF text, first 16 hex):
+503f4b7993f678cf
+baseline digest:
+503f4b7993f678cf
+
+$ git diff --stat -- docs/reports/tenant-entry-points-baseline.json
+ docs/reports/tenant-entry-points-baseline.json | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
