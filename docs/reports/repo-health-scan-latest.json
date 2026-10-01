@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T06:52:05.459Z",
+  "generatedAt": "2026-10-01T07:20:54.283Z",
   "git": {
-    "sha": "85f5ee8ec46e78605379fff8ec2b2903b0f342a6",
+    "sha": "9425147e4f6bc567963642ab9cb5615e4098c43a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2323,10 +2323,6 @@
         "lines": 2419
       },
       {
-        "file": "server/routes/report-os.ts",
-        "lines": 2396
-      },
-      {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
         "lines": 2386
       },
@@ -2349,6 +2345,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "lines": 2327
+      },
+      {
+        "file": "server/routes/report-os.ts",
+        "lines": 2324
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
@@ -2439,6 +2439,10 @@
         "lines": 1944
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 1938
+      },
+      {
         "file": "server/routes/ectd-compile.ts",
         "lines": 1931
       },
@@ -2449,10 +2453,6 @@
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1927
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1903
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",

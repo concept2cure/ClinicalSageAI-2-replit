@@ -100,7 +100,7 @@ const start = (who: Who, vaultId: string, extra: object = {}) =>
 const advance = (who: Who, id: string, to: string, opts = {}) =>
   lifecycle(who, `/${id}/advance`, { to, password: 'x', mfaToken: '000000', reason: `To ${to}` }, opts);
 const review = (who: Who, id: string) =>
-  lifecycle(who, `/${id}/sign`, { meaning: 'reviewed', password: 'x', mfaToken: '000000' });
+  lifecycle(who, `/${id}/sign`, { meaning: 'reviewed', password: 'x', mfaToken: '000000', reason: 'Reviewed against the protocol' });
 const vault = async (who: Who, path: string) =>
   request(await appFor(mine, who)).get(`/api/c2c/project-vault/${mine.programId}${path}`);
 
@@ -193,6 +193,13 @@ describe('starting a Vault version\'s lifecycle (VR-13)', () => {
     )).rows[0];
     expect(row).toMatchObject({ stage: 'authoring', content_hash: sha(pdf('start')), title: 'Clinical overview START', has_content: true });
     expect(Number(row.created_by)).toBe(users.uploader);
+    // Who started it is on the org-wide chain: the creator is an author for separation of duties.
+    const created = await owner.query(
+      `SELECT user_id FROM audit_logs WHERE tenant_id = $1 AND table_name = 'canonical_document'
+         AND record_id = $2 AND action = 'regulated_document.created'`,
+      [mine.orgId, res.body.canonicalId],
+    );
+    expect(created.rows.map((r) => Number(r.user_id))).toEqual([users.uploader]);
 
     const again = await start('approver', v);
     expect(again.status).toBe(200);
@@ -266,7 +273,7 @@ describe('review and approval of a Vault version (VR-13)', () => {
     const list = await vault('viewer', `/documents/${v2}/versions`);
     expect(list.status, JSON.stringify(list.body)).toBe(200);
     const [first, second] = list.body.data.versions;
-    expect(first.lifecycle).toMatchObject({ canonicalId: c2, stage: 'approved' });
+    expect(first.lifecycle).toMatchObject({ canonicalId: c2, stage: 'approved', creatorId: users.uploader });
     expect(first.lifecycle.approval).toMatchObject({ printedName: 'Vera Approver', meaning: 'APPROVED' });
     expect(first.lifecycle.review).toMatchObject({ printedName: 'Vera Reviewer', meaning: 'REVIEWED' });
     expect(second.lifecycle).toMatchObject({ canonicalId: c1, stage: 'superseded' });

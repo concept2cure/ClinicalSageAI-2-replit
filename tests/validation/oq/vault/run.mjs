@@ -4,6 +4,7 @@
  */
 import { createRun, helpers } from '../../lib/harness.mjs';
 import { createProgram, ingestPdf, makePdfBuffer, sha256 } from '../../lib/fixtures.mjs';
+import { requireApprover, requireSigner, signerCode } from '../../lib/credentials.mjs';
 
 const run = await createRun({
   app: 'VAULT',
@@ -344,6 +345,107 @@ await step(
     expect(ids(plain).includes(v2) && !ids(plain).includes(v1), 'search does not list the current version alone', ids(plain));
     expect(ids(all).includes(v1) && ids(all).includes(v2), 'search with includeSuperseded does not list both versions', ids(all));
     return `one leaf (2.0, 2 versions); versions [2.0, 1.0]; 1.0 downloads with sha256 ${got.slice(0, 12)}…; history spans ${[...seen].join(', ')}; search 1 / ${ids(all).length}`;
+  },
+);
+
+/** Start a version's lifecycle record (or find it), and send it for review, as the run identity. */
+async function sendForReview(api, expect, vaultId) {
+  const start = await api('POST', '/api/regulatory/documents', { sources: { vault_documents: { nativeId: vaultId, role: 'artifact' } } });
+  expect([200, 201].includes(start.status), `start: expected 201, got ${start.status}`, start.json);
+  const cid = start.json.canonicalId;
+  const sent = await api('POST', `/api/regulatory/documents/${cid}/advance`, { to: 'in_review' });
+  expect(sent.status === 200 && sent.json.stage === 'in_review', `send for review: expected 200 in_review, got ${sent.status}`, sent.json);
+  return cid;
+}
+
+/** Sign as `who` (a credentialed identity): its password, and its code when a factor is enrolled. */
+async function signAs(apiAs, who, path, body) {
+  const code = await signerCode(who);
+  return apiAs(who.session)('POST', path, { ...body, password: who.password, ...(code ? { mfaToken: code } : {}) });
+}
+
+await step(
+  {
+    id: 'OQ-VAULT-13',
+    urs: ['URS-VAULT-013'],
+    title: 'CREDENTIALED: a version is sent for review; the uploader may not review it; a second identity signs the review over its bytes; the reviewer may not approve it',
+    action:
+      'POST /api/regulatory/documents naming the OQ-VAULT-11 version, twice; POST …/:id/advance {to:"in_review"}; as the run identity (the uploader) POST …/:id/sign {meaning:"reviewed", reason}; ' +
+      'as OQ_SIGNER POST …/:id/sign {meaning:"reviewed", reason, password, mfaToken?}; as OQ_SIGNER POST …/:id/advance {to:"approved", reason, password, mfaToken?}; GET …/documents/:id/versions',
+    expected:
+      'One lifecycle record (the second start returns it, created:false), in_review; the uploader\'s review 403 SELF_APPROVAL; the signer\'s review 200 with boundContentHash equal to the version\'s SHA-256; ' +
+      'the signer\'s approval 403 SELF_APPROVAL; the versions list shows the version In review with the review\'s printed name. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded "not executed — credential not supplied".',
+    dependsOn: ['OQ-VAULT-11'],
+  },
+  async (ctx) => {
+    const { api, apiAs, expect, auth, baseUrl } = ctx;
+    const v2 = state.v2;
+    const cid = await sendForReview(api, expect, v2.id);
+    const again = await api('POST', '/api/regulatory/documents', { sources: { vault_documents: { nativeId: v2.id, role: 'artifact' } } });
+    expect(again.status === 200 && again.json.canonicalId === cid && again.json.created === false, 'a second start made a second record', again.json);
+    const self = await api('POST', `/api/regulatory/documents/${cid}/sign`, { meaning: 'reviewed', reason: 'OQ-002 step 13: the uploader must not review' });
+    expect(self.status === 403 && self.json?.error === 'SELF_APPROVAL', `the uploader's review: expected 403 SELF_APPROVAL, got ${self.status}`, self.json);
+    const signer = await requireSigner(ctx, baseUrl, auth.user.email);
+    state.signer = signer;
+    const review = await signAs(apiAs, signer, `/api/regulatory/documents/${cid}/sign`, { meaning: 'reviewed', reason: 'OQ-002 step 13: reviewed for validation' });
+    expect(review.status === 200, `the signer's review: expected 200, got ${review.status}`, review.json);
+    expect(review.json.signature.boundContentHash === v2.contentHash, 'the review is not bound to the version\'s SHA-256', review.json.signature);
+    const own = await signAs(apiAs, signer, `/api/regulatory/documents/${cid}/advance`, { to: 'approved', reason: 'OQ-002 step 13: the reviewer must not approve' });
+    expect(own.status === 403 && own.json?.error === 'SELF_APPROVAL', `the reviewer's approval: expected 403 SELF_APPROVAL, got ${own.status}`, own.json);
+    const vs = await api('GET', `/api/c2c/project-vault/${state.programId}/documents/${v2.id}/versions`);
+    const lc = (vs.json?.data?.versions ?? []).find((v) => v.id === v2.id)?.lifecycle;
+    expect(lc?.stage === 'in_review' && Boolean(lc?.review?.printedName), 'the versions list does not show the review', lc);
+    return `record ${cid}: uploader refused; reviewed by ${lc.review.printedName}, bound to ${v2.contentHash.slice(0, 12)}…; reviewer's approval refused`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-VAULT-14',
+    urs: ['URS-VAULT-013'],
+    title: 'CREDENTIALED: a third identity approves v1, then v2; approving v2 supersedes v1; the approved version\'s details cannot be edited',
+    action:
+      'Ingest a new document (v1.0); send it for review; OQ_SIGNER signs the review; OQ_APPROVER advances it to approved. Check in v2.0 and repeat. GET …/documents/:v2/versions. ' +
+      'POST …/documents/:v2/details {documentTitle, reason}',
+    expected:
+      'Each approval 200, bound to that version\'s SHA-256; v2\'s approval answers superseded:[v1\'s record]; the versions list shows v2.0 Approved (the approver\'s printed name) and v1.0 Superseded; ' +
+      'the edit 409 APPROVED_VERSION_IMMUTABLE. Without OQ_APPROVER_EMAIL / OQ_APPROVER_PASSWORD (a third identity) the step is recorded "not executed — credential not supplied".',
+    dependsOn: ['OQ-VAULT-13'],
+  },
+  async (ctx) => {
+    const { api, apiAs, expect, auth, baseUrl, attach } = ctx;
+    const approver = await requireApprover(ctx, baseUrl, [auth.user.email, state.signer.email]);
+    const title = `OQ-002 Approval family ${stamp}`;
+    const first = await ingestPdf(api, expect, { programId: state.programId, title });
+    const approveVersion = async (vaultId) => {
+      const cid = await sendForReview(api, expect, vaultId);
+      const r = await signAs(apiAs, state.signer, `/api/regulatory/documents/${cid}/sign`, { meaning: 'reviewed', reason: 'OQ-002 step 14: reviewed for validation' });
+      expect(r.status === 200, `review: expected 200, got ${r.status}`, r.json);
+      const a = await signAs(apiAs, approver, `/api/regulatory/documents/${cid}/advance`, { to: 'approved', reason: 'OQ-002 step 14: approved for validation' });
+      expect(a.status === 200 && a.json.stage === 'approved', `approval: expected 200 approved, got ${a.status}`, a.json);
+      return { cid, approval: a.json };
+    };
+    const one = await approveVersion(first.document.id);
+    const form = new FormData();
+    form.append('file', new Blob([makePdfBuffer(`${title} revision 2`)], { type: 'application/pdf' }), 'approval-v2.pdf');
+    form.append('programId', state.programId);
+    form.append('documentTitle', title);
+    form.append('documentType', 'PROTOCOL');
+    form.append('supersedesDocumentId', first.document.id);
+    const next = await api('POST', '/api/vault/ingest', form);
+    expect(next.status === 201, `check-in: expected 201, got ${next.status}`, next.json);
+    const two = await approveVersion(next.json.document.id);
+    expect(JSON.stringify(two.approval.superseded) === JSON.stringify([one.cid]), 'approving v2.0 did not supersede v1.0', two.approval);
+    const vs = await api('GET', `/api/c2c/project-vault/${state.programId}/documents/${next.json.document.id}/versions`);
+    const list = vs.json?.data?.versions ?? [];
+    attach('versions.json', list);
+    expect(list[0]?.lifecycle?.stage === 'approved' && Boolean(list[0]?.lifecycle?.approval?.printedName), 'v2.0 is not shown approved', list[0]);
+    expect(list[1]?.lifecycle?.stage === 'superseded', 'v1.0 is not shown superseded', list[1]);
+    const edit = await api('POST', `/api/c2c/project-vault/${state.programId}/documents/${next.json.document.id}/details`, {
+      documentTitle: `${title} renamed`, reason: 'OQ-002 step 14: an approved version must not change',
+    });
+    expect(edit.status === 409 && JSON.stringify(edit.json).includes('APPROVED_VERSION_IMMUTABLE'), `edit: expected 409 APPROVED_VERSION_IMMUTABLE, got ${edit.status}`, edit.json);
+    return `v1.0 approved, then superseded by v2.0 (approved by ${list[0].lifecycle.approval.printedName}); the approved version's edit refused`;
   },
 );
 

@@ -107,3 +107,34 @@ export function standingCredentials() {
   const subject = credentialFromEnv('OQ_STANDING');
   return admin && subject ? { admin, subject } : null;
 }
+
+/**
+ * The third identity a Vault approval needs (OQ-VAULT-14, URS-VAULT-013): under
+ * FD4's strict default the uploader may neither review nor approve, and the
+ * reviewer does not approve, so an approval needs a person who is neither the
+ * run identity (the uploader) nor the signer (the reviewer).
+ *
+ *   OQ_APPROVER_EMAIL / _PASSWORD / _TOTP_SECRET
+ *       a member of the run identity's organisation with signing authority,
+ *       distinct from VALIDATION_USER_EMAIL and OQ_SIGNER_EMAIL.
+ *
+ * Without it the step is recorded as not executed. Nothing is simulated.
+ */
+export const APPROVER_NOT_SUPPLIED =
+  'not executed — credential not supplied: set OQ_APPROVER_EMAIL and OQ_APPROVER_PASSWORD to a third identity (neither the run identity nor OQ_SIGNER_EMAIL) that holds signing authority, to execute this credentialed step.';
+
+/** The approver for a step, with a session opened by its password; a deviation when absent or not distinct. */
+export async function requireApprover({ deviation, expect }, baseUrl, excludedEmails) {
+  const cred = credentialFromEnv('OQ_APPROVER');
+  if (!cred) deviation(APPROVER_NOT_SUPPLIED);
+  if (excludedEmails.map((e) => String(e).toLowerCase()).includes(cred.email)) {
+    deviation(`not executed — OQ_APPROVER_EMAIL (${cred.email}) is the uploader or the reviewer; an approval needs a third person.`);
+  }
+  let session;
+  try {
+    session = await passwordLogin(baseUrl, cred);
+  } catch (e) {
+    expect(false, `approver identity ${cred.email} could not open a session: ${e.message}`);
+  }
+  return { ...cred, session };
+}

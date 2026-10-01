@@ -138,17 +138,22 @@ export interface SignOffManifestation {
   meaning: string;
   signedAt: string;
   signatureRef: string;
+  /** The signer's user id: lets the page say, before anyone signs, who may not approve. */
+  signerId: number | null;
 }
 
 /** A version's lifecycle, as the Vault shows it. */
 export interface VaultVersionLifecycle {
   canonicalId: string;
   stage: string;
+  /** Who started the record (sent the version for review): an author for separation of duties. */
+  creatorId: number | null;
   review: SignOffManifestation | null;
   approval: SignOffManifestation | null;
 }
 
 interface StoredSignOff {
+  actor?: string;
   signatureRef?: string;
   signedAt?: string;
   meaning?: string;
@@ -174,7 +179,7 @@ export async function readVaultLifecycles(
   if (vaultIds.length === 0) return out;
   const { rows } = await q.query(
     `SELECT DISTINCT ON (source_refs -> 'vault_documents' ->> 'nativeId')
-            canonical_id, stage, review_signature, approval_signature,
+            canonical_id, stage, review_signature, approval_signature, created_by,
             source_refs -> 'vault_documents' ->> 'nativeId' AS vault_id
        FROM canonical_documents
       WHERE organization_id = $1 AND source_refs ? 'vault_documents'
@@ -201,12 +206,14 @@ export async function readVaultLifecycles(
       meaning: rec?.meaning ?? String(s.meaning ?? '').toUpperCase(),
       signedAt: s.signedAt,
       signatureRef: s.signatureRef,
+      signerId: /^\d+$/.test(String(s.actor ?? '')) ? Number(s.actor) : null,
     };
   };
   for (const r of rows) {
     out.set(r.vault_id, {
       canonicalId: r.canonical_id,
       stage: r.stage,
+      creatorId: r.created_by == null ? null : Number(r.created_by),
       review: manifest(r.review_signature),
       approval: manifest(r.approval_signature),
     });
