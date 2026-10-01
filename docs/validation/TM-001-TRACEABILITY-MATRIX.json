@@ -1,15 +1,15 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-01T15:06:19.582Z",
+  "generatedAt": "2026-10-01T15:35:08.184Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 78,
+    "requirements": 79,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 7
+    "uncovered": 8
   },
   "byApp": {
     "Projects": {
@@ -21,12 +21,12 @@
       "uncovered": 0
     },
     "Vault": {
-      "requirements": 17,
+      "requirements": 18,
       "pass": 10,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 7
+      "uncovered": 8
     },
     "Authoring": {
       "requirements": 15,
@@ -883,6 +883,22 @@
         "risk": "medium: the risk is disclosure across tenants, which RLS and the statement's own organisation predicate each prevent; a missed hit misleads but changes no record",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-18. The cross-tenant, version and empty-query cases are in `tests/db/vault-library-search.dbtest.ts`, and the predicate itself in `server/services/vault/__tests__/vault-search.test.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-018",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person can re-prove every stored version of a program: each is re-read through the verifier downloads use and checked against the SHA-256 recorded at ingest. Each verdict (verified, altered, missing, unreadable, or unverifiable when no SHA-256 was recorded) is written to the audit chain against that version, naming the person. The answer gives the counts and names every version that was not verified, and says when the program has more versions than one check covers. A viewer is refused.",
+      "part11": "§11.10(c), §11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Re-prove every stored version against its recorded SHA-256, each verdict chained",
+        "risk": "high: undetected alteration or loss of a stored record defeats ALCOA \"original\"; a check that called a changed file intact would be worse than none",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-19 on an untampered installation. The altered and missing cases, with real files changed on disk, and the chained verdicts are in `tests/db/vault-fixity.dbtest.ts`; unreadable, unverifiable and the batch limit in `server/services/vault/__tests__/vault-fixity.test.ts`"
       },
       "verdict": "uncovered"
     },

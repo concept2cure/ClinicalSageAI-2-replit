@@ -29,6 +29,7 @@ import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
 import { VaultLibraryResults } from './VaultLibraryResults';
+import { VaultFixityCheck } from './VaultFixityCheck';
 import { downloadBlob, safeFileName } from '../download';
 import {
   EDITOR_TARGET_DOC_TYPES,
@@ -1483,6 +1484,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               onOpen={openUpload}
             />
           )}
+          {/* Fixity (plan critique 15): re-prove every stored version on demand. */}
+          {!searching && vault ? <VaultFixityCheck projectId={projectId ?? null} /> : null}
           {filingNote && (
             <div
               className="scaf-note"
