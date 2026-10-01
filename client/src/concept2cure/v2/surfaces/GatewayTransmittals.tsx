@@ -71,8 +71,19 @@ interface Transmittal {
   metadata?: {
     signature?: { meaning?: string | null; signatureId?: number | null } | null;
     technicalRejection?: { sequence?: string | null; recordedAt?: string | null } | null;
+    /** 2026-10-01 (D7): whose account the transmit went out under, stamped by the
+     *  guarded transmit. Absent on rows transmitted before the choice existed. */
+    gatewayAccount?: { mode?: string | null; senderIdentifier?: string | null } | null;
     [k: string]: unknown;
   } | null;
+}
+
+/** Whose account a transmittal went out under, as recorded on it; nothing when it was not recorded. */
+export function accountLine(t: Pick<Transmittal, 'metadata'>): string | null {
+  const a = t.metadata?.gatewayAccount;
+  if (a?.mode === 'platform') return 'via the platform account';
+  if (a?.mode === 'client') return a.senderIdentifier ? `via your account (${a.senderIdentifier})` : 'via your account';
+  return null;
 }
 
 interface RefusalFinding { ruleId?: string; severity?: string; message?: string }
@@ -852,7 +863,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                   <td className="mono">#{t.id}</td>
                   {/* region is nullable on partially-migrated transmittal rows; the gateways
                       table above already renders the same field the same way when it is absent. */}
-                  <td>{String(t.region ?? '—').toUpperCase()} / {gatewayLabel(t.gateway)}{t.submission_type ? ' · ' + t.submission_type : ''}</td>
+                  <td>{String(t.region ?? '—').toUpperCase()} / {gatewayLabel(t.gateway)}{t.submission_type ? ' · ' + t.submission_type : ''}
+                    {accountLine(t) && <div style={{ fontSize: 11, color: 'var(--muted, inherit)' }}>{accountLine(t)}</div>}</td>
                   <td className="mono" style={{ fontSize: 12 }}>{t.transmission_id ?? '—'}</td>
                   {/* status is likewise nullable (a row written before its gateway replied);
                       no chip is honest, an invented tone is not — same guard as error_message below. */}
