@@ -205,6 +205,42 @@ describe('AnA approving an artifact is an electronic signature', () => {
   );
 });
 
+describe('the status is read the one way, by the tier and by the handler', () => {
+  it.each([['Approved'], [' approved '], ['APPROVED']])('unsigned %j: refused as needing a signature, nothing written', async status => {
+    await seed('review');
+    const result = await updateArtifactStatus(reasonOnly, { ...params('approved'), status } as never);
+
+    expect(result.success, result.message).toBe(false);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+  });
+
+  it('signed "Approved": approved at the version, recorded as approved', async () => {
+    await seed('review');
+    const result = await updateArtifactStatus(signed('approval'), { ...params('approved'), status: 'Approved' } as never);
+
+    expect(result.success, result.message).toBe(true);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 2 });
+  });
+
+  it.each([['archived'], ['effective'], ['published']])('unsigned %j: not a status this command writes; nothing changed', async status => {
+    await seed('review');
+    const result = await updateArtifactStatus(reasonOnly, { ...params('approved'), status } as never);
+
+    expect(result.success, result.message).toBe(false);
+    expect((await artifactRow()).status).toBe('review');
+  });
+
+  it('the ledger row names the door the act was taken through, and the signature the moment the signer was verified', async () => {
+    await seed('review');
+    const verifiedAt = new Date('2026-10-01T09:00:00.000Z');
+    await updateArtifactStatus(signed('approval', { verifiedAt }), params('approved'));
+
+    expect((await run(`SELECT surface FROM c2c_ana_actions`)).rows).toEqual([{ surface: 'ana-governed-action' }]);
+    const [sig] = (await run(`SELECT authentication_timestamp FROM concept2cure_signatures`)).rows;
+    expect(new Date(sig.authentication_timestamp).toISOString()).toBe(verifiedAt.toISOString());
+  });
+});
+
 describe('a signature does not make an unlawful step lawful', () => {
   it.each([
     ['draft', 'approved', 'approval'],

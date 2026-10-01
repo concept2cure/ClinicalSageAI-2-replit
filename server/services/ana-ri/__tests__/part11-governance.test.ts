@@ -147,6 +147,13 @@ describe('a command whose tier follows the call: update_artifact_status', () => 
     ).toMatchObject({ tier: 'esignature', signatureRequired: true, signatureMeaning: token });
   });
 
+  it.each([['Approved'], [' approved '], ['APPROVED'], ['Locked'], ['LOCKED ']])(
+    'to %j: the same act, read the way the handler reads it — the e-signature tier',
+    status => {
+      expect(governedTierOf('update_artifact_status', call(status))).toBe('esignature');
+    },
+  );
+
   it('read without its params, it is the reason tier — the params decide, and every caller passes them', () => {
     expect(governedTierOf('update_artifact_status')).toBe('reason');
   });

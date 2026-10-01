@@ -56,6 +56,18 @@ export async function verifyGovernedESignature(
   if (!declared.ok) {
     return { ok: false, status: 400, error: declared.error, code: declared.code, details: { code: declared.code } };
   }
+  // Release is offered for the act that is signed with it (locking an
+  // artifact) and is not a meaning any other action took before 2026-10-01.
+  if (!requiredMeaning && declared.meaning === 'release') {
+    const code = 'SIGNATURE_MEANING_UNKNOWN';
+    return {
+      ok: false,
+      status: 400,
+      error: "Release is the meaning of locking a document; this action is not signed with it. Nothing was run.",
+      code,
+      details: { code },
+    };
+  }
   if (requiredMeaning && declared.meaning !== requiredMeaning) {
     const code = 'SIGNATURE_MEANING_MISMATCH';
     return {
