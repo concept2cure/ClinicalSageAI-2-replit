@@ -26,6 +26,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { executeGovernedAnaOperation } from './governed-ana-execution.js';
 import { validateArtifactQuality } from './ana-ri/enforcement.js';
 import { recordCommentPosted } from '../routes/c2c/review-comment-record';
+import { ANA_REVIEW_COMMENT_ROLE } from '../../shared/constants/review-comment';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 
 async function getDbClient() {
@@ -414,6 +415,7 @@ async function executeReviewThreadCreation(payload: AnaActionPayload): Promise<A
         artifactId: artifactPk,
         authorId: payload.userId,
         authorName: payload.userName,
+        authorRole: ANA_REVIEW_COMMENT_ROLE,
         body: payload.content,
         kind: 'comment',
       }).returning();
@@ -527,7 +529,13 @@ export async function executeGuidanceAction(payload: AnaActionPayload): Promise<
 export async function processResponseActions(
   responseText: string,
   context: {
-    projectId: number;
+    /**
+     * The turn's integer project, or null when it has none (no project open, a
+     * program with no anchor row). Null still strips the blocks: this is the
+     * one place that does, and a raw ```ana-action block must never be saved
+     * as the answer. Nothing is created, and each action says why.
+     */
+    projectId: number | null;
     organizationId: number;
     userId: number;
     userName: string;
@@ -550,7 +558,7 @@ export async function processResponseActions(
   for (const signal of signals) {
     const payload: AnaActionPayload = {
       type: signal.type,
-      projectId: context.projectId,
+      projectId: context.projectId ?? 0,
       organizationId: context.organizationId,
       userId: context.userId,
       userName: context.userName,
@@ -568,7 +576,11 @@ export async function processResponseActions(
       },
     };
 
-    const result = await executeGuidanceAction(payload);
+    // No project: nothing to create it under. Said, never attempted.
+    const result =
+      context.projectId === null
+        ? failResult(payload, 'No project is linked to this conversation, so it was not created. Open the project and ask again.')
+        : await executeGuidanceAction(payload);
     actions.push(result);
   }
 

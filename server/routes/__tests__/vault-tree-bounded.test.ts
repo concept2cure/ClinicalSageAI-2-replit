@@ -98,6 +98,8 @@ function filedRow(n: number) {
 function dispatch(opts: {
   total: number;
   unfiled: number;
+  /** Documents awaiting a person's confirmation, program-wide (VR-11b). */
+  suggested?: number;
   filedHashes: string[];
   page: Record<string, unknown>[];
 }) {
@@ -107,7 +109,7 @@ function dispatch(opts: {
       return { rows: opts.filedHashes.map(h => ({ content_hash: h })) };
     }
     if (/COUNT\(\*\)::int AS total/.test(q)) {
-      return { rows: [{ total: opts.total, unfiled: opts.unfiled }] };
+      return { rows: [{ total: opts.total, unfiled: opts.unfiled, suggested: opts.suggested ?? 0 }] };
     }
     if (/d\.document_code/.test(q)) return { rows: opts.page };
     if (/SELECT id, name, product_type/.test(q)) {
@@ -118,7 +120,7 @@ function dispatch(opts: {
   };
 }
 
-function wireStore(opts: { total: number; unfiled: number; filedHashes: string[] }) {
+function wireStore(opts: { total: number; unfiled: number; suggested?: number; filedHashes: string[] }) {
   // cap + 1 rows, so the handler sees the overflow. All of them filed.
   query.mockImplementation(
     dispatch({ ...opts, page: [filedRow(1), filedRow(2), filedRow(3)] }),
@@ -183,6 +185,15 @@ describe('the unfiled queue counts the program, not the page', () => {
     expect(sql).toMatch(/d\.program_id = \$1/);
     expect(sql).toMatch(/d\.deleted_at IS NULL/);
     expect(sql).toMatch(/rp\.organization_id = \$2/);
+  });
+
+  it('counts the suggestions awaiting confirmation over the program, not the page (VR-11b)', async () => {
+    // Every row the page carries is filed, so a page-derived count would be 0.
+    wireStore({ total: 500, unfiled: 137, suggested: 42, filedHashes: [] });
+    const res = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
+    expect(res.body.data.awaitingConfirmationCount).toBe(42);
+    const counts = query.mock.calls.find(([sql]) => /COUNT\(\*\)::int AS total/.test(String(sql)));
+    expect(String(counts![0])).toMatch(/d\.folder_id IS NOT NULL AND d\.placement_status = 'suggested'/);
   });
 });
 

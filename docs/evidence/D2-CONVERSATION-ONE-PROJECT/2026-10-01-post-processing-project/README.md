@@ -42,3 +42,19 @@ The draft writer already had its own inline resolution, from the PF-08 review.
 ## Still to come in S6a
 
 The stream's own readers (`stream.ts`: memory, enrichment and the session bootstrap) still take the raw project. They go with S3, which resolves the turn's project once at thread resolution.
+
+## Review
+
+The review was `wf_2358b437-4c8`. It upheld one finding 2/2 for post-processing and raised the same finding for `send-message`. The remaining verifiers hit a session limit, and the finding was fixed on the post-processing evidence.
+
+**A program with no anchor row now skipped the guidance executor**, which is the one place AnA's ` ```ana-action ` blocks are stripped. The raw JSON block was saved as the answer, shown to the person and replayed to the model, and the action's "not created" was never said. The old code ran the executor with `NaN`: the block was stripped and a failure reported.
+
+The fix:
+- **`processResponseActions` takes a null project.** It strips the blocks, creates nothing, and reports each action as not created: "No project is linked to this conversation…".
+- **Post-processing and `send-message` always call it.** This also strips blocks in a conversation with no project at all, which showed them before this work too.
+
+Tests:
+- `server/services/__tests__/guidance-executor-no-project.test.ts`: the real executor strips the block and reports the action.
+- `post-processing-project.test.ts`: the executor now runs with `projectId: null` for an unanchored or malformed project.
+
+`03-red-review-fence.txt` shows both failing against HEAD. Green: the 28 files that touch the executor or its callers (350 tests), the AnA route suites and the walk.

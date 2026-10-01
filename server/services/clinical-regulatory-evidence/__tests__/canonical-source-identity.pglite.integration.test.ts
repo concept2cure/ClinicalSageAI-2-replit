@@ -76,6 +76,10 @@ beforeAll(async () => {
     '../../../../migrations/20260726_cre_source_program_scope.sql',
   );
   await pglite.exec(fs.readFileSync(programScope, 'utf8'));
+  // Revision columns (is_current, previous_version_id): resolveSourceUploadIds
+  // reads them through readSourceUploads, as every deployed database has them.
+  const versioning = path.resolve(here, '../../../../migrations/20260829_cre_source_versioning.sql');
+  await pglite.exec(fs.readFileSync(versioning, 'utf8'));
 }, 90_000);
 afterAll(async () => {
   await pglite.close();

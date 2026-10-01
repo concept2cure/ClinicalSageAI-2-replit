@@ -449,5 +449,84 @@ await step(
   },
 );
 
+await step(
+  {
+    id: 'OQ-VAULT-15',
+    urs: ['URS-VAULT-014'],
+    title: 'A file captured in the project\'s data room is filed into the Vault from the room, with a result for every source',
+    action:
+      'POST /api/chat/upload {file, projectId} (a capture into the program\'s data room); POST /api/c2c/project-vault/:id/data-room/file {sourceIds:[that source, 999999999]}; ' +
+      'POST it again with the captured source alone; GET /api/c2c/project-vault/:id',
+    expected:
+      'The capture answers a sourceId with dataRoom.recorded. The filing answers 200 complete:false with [filed (a new document, suggested or unfiled, never confirmed), refused NOT_FOUND]. ' +
+      'The second filing answers complete:true, already_filed with the same document. The data room shows the source as filed, as version 1.0.',
+    dependsOn: ['OQ-VAULT-00'],
+  },
+  async ({ api, expect }) => {
+    const name = `oq-002-data-room-${stamp}.pdf`;
+    const form = new FormData();
+    form.append('file', new Blob([makePdfBuffer(`OQ-002 data room capture ${stamp}`)], { type: 'application/pdf' }), name);
+    form.append('projectId', state.programId);
+    const cap = await api('POST', '/api/chat/upload', form);
+    expect(cap.status === 200 && Number.isInteger(cap.json?.sourceId) && cap.json?.dataRoom?.recorded === true,
+      `capture: expected 200 with a data-room source, got ${cap.status}`, cap.json);
+    const sourceId = cap.json.sourceId;
+    const path = `/api/c2c/project-vault/${state.programId}/data-room/file`;
+    const first = await api('POST', path, { sourceIds: [sourceId, 999999999] });
+    const [filed, missing] = first.json?.items ?? [];
+    expect(first.status === 200 && first.json.complete === false, `filing: expected 200 complete:false, got ${first.status}`, first.json);
+    expect(filed?.outcome === 'filed' && ['suggested', 'unfiled'].includes(filed.placementStatus),
+      'the captured source was not filed as suggested or unfiled', filed);
+    expect(missing?.outcome === 'refused' && missing.code === 'NOT_FOUND', 'an unknown source was not refused NOT_FOUND', missing);
+    const again = await api('POST', path, { sourceIds: [sourceId] });
+    const repeat = again.json?.items?.[0];
+    expect(again.status === 200 && again.json.complete === true && repeat?.outcome === 'already_filed' && repeat.documentId === filed.documentId,
+      'filing it again did not answer already_filed with the same document', again.json);
+    const room = await api('GET', `/api/c2c/project-vault/${state.programId}`);
+    const row = (room.json?.data?.dataRoom?.sources ?? []).find((r) => r.id === sourceId);
+    expect(row?.stage === 'filed' && row?.filedAs?.version === '1.0', 'the data room does not show the source filed as 1.0', row);
+    return `source ${sourceId} filed as document ${filed.documentId} (${filed.placementStatus}); unknown source refused NOT_FOUND; second filing already_filed; room shows "filed as 1.0"`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-VAULT-16',
+    urs: ['URS-VAULT-015'],
+    title: 'Suggested filings in one folder are confirmed together with one reason, each answered; a second confirmation is refused',
+    action:
+      'Ingest two PDFs (each suggested a folder by the classifier); GET /api/c2c/project-vault/:id; POST /api/c2c/project-vault/:id/file-batch {folderId, documentIds} without a note, then with a note; ' +
+      'POST the same again; GET /api/c2c/project-vault/:id',
+    expected:
+      'Both ingests answer placementStatus "suggested" in the same folder, and awaitingConfirmationCount counts them. Without a note: 422 REASON_REQUIRED. With one: 200 complete:true, both confirmed. ' +
+      'The repeat: 200 complete:false, both refused CONFLICT. awaitingConfirmationCount is two lower than before.',
+    dependsOn: ['OQ-VAULT-00'],
+  },
+  async ({ api, expect }) => {
+    const a = await ingestPdf(api, expect, { programId: state.programId, title: `OQ-002 Confirm set A ${stamp}` });
+    const b = await ingestPdf(api, expect, { programId: state.programId, title: `OQ-002 Confirm set B ${stamp}` });
+    const folderId = a.filing?.folderId;
+    expect(a.filing?.placementStatus === 'suggested' && b.filing?.placementStatus === 'suggested' && folderId && b.filing.folderId === folderId,
+      'the two ingests were not suggested into the same folder', [a.filing, b.filing]);
+    const read = async () => (await api('GET', `/api/c2c/project-vault/${state.programId}`)).json?.data?.awaitingConfirmationCount;
+    const waiting = await read();
+    expect(Number.isInteger(waiting) && waiting >= 2, `awaitingConfirmationCount: expected at least 2, got ${waiting}`);
+    const path = `/api/c2c/project-vault/${state.programId}/file-batch`;
+    const documentIds = [a.document.id, b.document.id];
+    const bare = await api('POST', path, { folderId, documentIds });
+    expect(bare.status === 422 && bare.json?.error === 'REASON_REQUIRED', `without a note: expected 422 REASON_REQUIRED, got ${bare.status}`, bare.json);
+    const note = 'OQ-002 step 16: confirmed for validation';
+    const done = await api('POST', path, { folderId, documentIds, note });
+    expect(done.status === 200 && done.json.complete === true && done.json.items.every((i) => i.outcome === 'confirmed'),
+      'the two suggestions were not both confirmed', done.json);
+    const again = await api('POST', path, { folderId, documentIds, note });
+    expect(again.status === 200 && again.json.complete === false && again.json.items.every((i) => i.code === 'CONFLICT'),
+      'a second confirmation was not refused CONFLICT for each document', again.json);
+    const after = await read();
+    expect(after === waiting - 2, `awaitingConfirmationCount: expected ${waiting - 2}, got ${after}`);
+    return `2 suggested in ${folderId} (awaiting ${waiting}); no note → 422; confirmed both; repeat → CONFLICT ×2; awaiting ${after}`;
+  },
+);
+
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);

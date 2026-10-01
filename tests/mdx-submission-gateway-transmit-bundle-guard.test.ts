@@ -147,9 +147,26 @@ function makeApp(orgId = CALLER_ORG) {
  * BOTH the id and the org_id bind params match, mirroring the tenant-scoped
  * WHERE clause the route issues.
  */
-type StoredPackage = { id: number; orgId: number; bundle: unknown };
+type StoredPackage = { id: number; orgId: number; bundle: unknown; regulatory?: Record<string, unknown> };
 let packages: StoredPackage[] = [];
 const packageSelects: Array<unknown[]> = [];
+
+/**
+ * Transmittal rows the duplicate-send lock reads. The stub answers its two
+ * statements — by the bundle's bytes, and by the sequence + environment a row
+ * was sent under — as the SQL states them; the SQL itself runs against the
+ * real table in active-transmittal-sequence-lock.pglite.test.ts.
+ */
+type TransmittalRow = { id: number; orgId: number; packageId: number; sha256: string; status: string; metadata: Record<string, unknown> };
+let transmittals: TransmittalRow[] = [];
+const ACTIVE_STATUSES = ['pending', 'in_transit', 'received'];
+function activeTransmittalRows(sql: string, params: unknown[]) {
+  const [orgId, packageId, key, environment] = params as [number, number, string, string | undefined];
+  const bySequence = /metadata->>'sequence'/.test(sql);
+  const hit = transmittals.find((t) => t.orgId === orgId && t.packageId === packageId && ACTIVE_STATUSES.includes(t.status) &&
+    (bySequence ? t.metadata.sequence === key && t.metadata.environment === environment : t.sha256 === key));
+  return hit ? { rows: [{ id: hit.id, status: hit.status }], rowCount: 1 } : { rows: [], rowCount: 0 };
+}
 
 /** The package's content as the transmit gate re-reads it. A good descriptor
  *  carries the fingerprint of CONTENT; a test edits `contentRows` to drift it. */
@@ -193,8 +210,11 @@ function installDb() {
       const [id, orgId] = params as [number, number];
       const row = packages.find((p) => p.id === id && p.orgId === orgId);
       return row
-        ? Promise.resolve({ rows: [{ metadata: { bundle: row.bundle } }], rowCount: 1 })
+        ? Promise.resolve({ rows: [{ metadata: { bundle: row.bundle, regulatory: row.regulatory } }], rowCount: 1 })
         : Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    if (typeof sql === 'string' && /SELECT\s+id,\s+status\s+FROM submission_transmittals/.test(sql)) {
+      return Promise.resolve(activeTransmittalRows(sql, params));
     }
     if (typeof sql === 'string' && sql.includes('FROM c2c_package_sections')) {
       contentSelects.push(params);
@@ -262,6 +282,7 @@ beforeEach(() => {
 
   packages = [];
   packageSelects.length = 0;
+  transmittals = [];
   contentRows = CONTENT;
   contentSelects.length = 0;
   installDb();
@@ -700,6 +721,112 @@ describe('POST transmit — the sequence it filed (C2C-SUB-003)', () => {
     const manifest = transmitManifest();
     expect(manifest, 'the transmit signature manifest was persisted').toBeDefined();
     expect(manifest).toMatchObject({ sequence: '0000', filedSequenceRecorded: true });
+  });
+});
+
+/*
+ * 2026-10-01 (W5/D7, sweep F15). The duplicate-send lock was keyed on the
+ * bundle's BYTES. Re-assembling a sequence produces new bytes (JSZip stamps
+ * entry dates), so while the first send of 0000 was still in flight, or was
+ * delivered but unconfirmed (the gateway threw after the bytes left: the row
+ * stays in_transit and nothing is on file), a re-assembled 0000 passed the
+ * lock and the same sequence went to the agency twice. The lock now also
+ * holds the sequence a row was sent under, per environment.
+ */
+describe('POST transmit — one active send per sequence, per environment (sweep F15)', () => {
+  const sequenceZero = () => goodDescriptor({ sequence: '0000', submissionType: 'original' });
+  /** The first send of 0000 — other bytes — as the gateway left its row. */
+  const firstSend = (status: string, environment: string): TransmittalRow => ({
+    id: 4300, orgId: CALLER_ORG, packageId: 5, sha256: 'f'.repeat(64), status, metadata: { sequence: '0000', environment },
+  });
+
+  it.each(['pending', 'in_transit', 'received'])('refuses a re-assembled bundle of a sequence whose send is still %s in the same environment, before the gateway', async (status) => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceZero() }];
+    transmittals = [firstSend(status, 'production')];
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/Sequence 0000 of this package/);
+    expect(res.body.error).toMatch(/id=4300/);
+    expect(res.body.error).toMatch(/confirm receipt at the agency/i);
+    expect(res.body.error).toMatch(/transmittals\/4300\/rollback before sending sequence 0000 again/);
+    expect(res.body.details).toMatchObject({ transmittalId: 4300, status, sequence: '0000', environment: 'production' });
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
+  it.each([['staging', 'production'], ['production', 'staging']])('a %s send of the sequence does not hold it in %s', async (heldIn, sendTo) => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceZero() }];
+    transmittals = [firstSend('in_transit', heldIn)];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4301, transmissionId: 'mdn-other-env', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: sendTo, ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(transmitFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('the row is written under the sequence and environment the lock reads, taken from the stored descriptor', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceZero(), regulatory: { applicationNumber: 'IND123456' } }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4302, transmissionId: 'mdn-keys', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', metadata: { note: 'kept' }, ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(transmitFn.mock.calls[0][0].metadata).toEqual({ note: 'kept', sequence: '0000', applicationId: 'IND123456', environment: 'staging' });
+  });
+});
+
+/*
+ * 2026-10-01 (W5/D7, sweep F18). The caller's free-form metadata reached the
+ * gateway as-is, so a body naming another sequence or application number than
+ * the assembled descriptor and the package record deposited the bytes under
+ * one identity (the SFTP path, the transmittal row) and filed them under
+ * another (the filed history). For a package bundle the descriptor decides.
+ */
+describe('POST transmit — agency metadata comes from the assembled descriptor (sweep F18)', () => {
+  const withNumber = (): StoredPackage => ({
+    id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({ sequence: '0000', submissionType: 'original' }),
+    regulatory: { applicationNumber: 'IND123456' },
+  });
+  const send = (metadata: Record<string, unknown>) => request(makeApp())
+    .post('/api/mdx/gateways/fda/esg/transmit')
+    .send({ packageId: 5, environment: 'production', metadata, ...REAUTH });
+
+  it.each([
+    ['another sequence', { sequence: '0001' }, /metadata\.sequence/],
+    ['another application number', { applicationId: 'IND999999' }, /metadata\.applicationId/],
+    ['an application number that is not an identifier', { applicationId: '../IND123456' }, /metadata\.applicationId/],
+  ])('refuses a body naming %s, before the gateway', async (_label, metadata, names) => {
+    packages = [withNumber()];
+    const res = await send(metadata);
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(names);
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
+  it('refuses an application number the package does not record', async () => {
+    packages = [{ ...withNumber(), regulatory: undefined }];
+    const res = await send({ applicationId: 'IND123456' });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(/records none/);
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
+  it('accepts a body that agrees with the descriptor, and sends the descriptor values', async () => {
+    packages = [withNumber()];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4303, transmissionId: 'mdn-agrees', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await send({ sequence: '0000', applicationId: ' IND123456 ' });
+    expect(res.status).toBe(201);
+    expect(transmitFn.mock.calls[0][0].metadata).toMatchObject({ sequence: '0000', applicationId: 'IND123456' });
+  });
+
+  it('a bundle that files no sequence is sent with the caller metadata unchanged', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(), regulatory: { applicationNumber: 'IND123456' } }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4304, transmissionId: 'mdn-no-sequence', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await send({ applicationId: 'K123456' });
+    expect(res.status).toBe(201);
+    expect(transmitFn.mock.calls[0][0].metadata).toEqual({ applicationId: 'K123456', environment: 'production' });
   });
 });
 

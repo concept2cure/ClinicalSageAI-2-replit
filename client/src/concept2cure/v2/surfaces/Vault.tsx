@@ -26,6 +26,8 @@ import {
   type VaultFolder,
 } from '../fixtures/vault-data';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
+import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
 import { downloadBlob, safeFileName } from '../download';
 import {
   EDITOR_TARGET_DOC_TYPES,
@@ -135,6 +137,8 @@ interface VaultDisplayShape {
    *  Counted over the whole programme by the server, NOT over `uploadsWindow` —
    *  a queue derived from the page below would shrink as the backlog grew. */
   unfiledCount?: number;
+  /** Suggested filings no person has confirmed, program-wide (VR-11b). Absent on an older server. */
+  awaitingConfirmationCount?: number;
   /** How much of the filing cabinet the tree actually carries. The server caps
    *  that read (the vault is unbounded), so rendering the page without saying
    *  so would state a partial cabinet as the whole one. */
@@ -420,11 +424,14 @@ function DocumentHistory({ projectId, documentUuid }: { projectId: string; docum
 function DataRoomLane({
   block,
   unavailableReason,
+  filing,
 }: {
   block?: DataRoomBlock;
   /** The server's `unavailable` reason for the Data room branch, when it
    *  could not be served — rendered as a failure, never as an empty room. */
   unavailableReason?: string | null;
+  /** Selection and "File into Vault" (VR-11). */
+  filing: DataRoomFiling;
 }) {
   const [open, setOpen] = useState(false);
   if (unavailableReason) {
@@ -452,6 +459,8 @@ function DataRoomLane({
   }
   // Collapsed, the stage strip is the summary; expanding lists the sources.
   const rows = open ? block.sources : [];
+  const unfiledIds = block.sources.filter((s) => s.stage !== 'filed').map((s) => s.id);
+  const titleOf = (id: number) => block.sources.find((s) => s.id === id)?.title ?? `Source ${id}`;
   return (
     <div className="vd-dr" data-testid="vault-data-room">
       <div className="vd-dr-head">
@@ -477,10 +486,14 @@ function DataRoomLane({
           the filing cabinet and are listed under Uploaded files.
         </div>
       )}
+      {(open && unfiledIds.length > 0) || filing.outcome || filing.error ? (
+        <DataRoomFileBar filing={filing} unfiledIds={unfiledIds} titleOf={titleOf} />
+      ) : null}
       {rows.length > 0 && (
         <div className="vd-dr-rows">
           {rows.map((s) => (
             <div key={s.id} className="vd-dr-row">
+              <RoomPick id={s.id} title={s.title} filed={s.stage === 'filed'} filing={filing} />
               <span className="vd-dr-kind">{s.kind}</span>
               <span className="vd-dr-name" title={s.title}>{s.title}</span>
               <span className="vd-dr-detail">
@@ -685,6 +698,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const [vaultEpoch, setVaultEpoch] = useState(0);
   const vaultState = useLiveData<VaultDisplayShape>(vaultPath, [vaultPath, vaultEpoch]);
   const vault = vaultState.data;
+  /* The data room's "File into Vault" (VR-11): held here so its answer
+     survives the re-read that follows a filing. */
+  const roomFiling = useDataRoomFiling(projectId ?? null, () => setVaultEpoch((n) => n + 1));
+  /* Confirm N suggested (VR-11b): held here for the same reason. */
+  const confirmSuggested = useConfirmSuggested(projectId ?? null, () => setVaultEpoch((n) => n + 1));
 
   /* Live document tree — real VaultFolder/VaultDoc from the read-model. Stable
      EMPTY_TREE reference while loading/absent so the memo below is loop-safe. */
@@ -1098,6 +1116,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         totalDocuments: vault?.documentCount ?? 0,
         documentCounts: vault?.documentCounts ?? null,
         unfiledUploads: vault?.unfiledCount ?? 0,
+        // Filed to a suggested folder that no person has confirmed (VR-11b); null from an older server.
+        awaitingConfirmation: vault?.awaitingConfirmationCount ?? null,
         // Required sections against confirmed filings (VR-15), as the server
         // counted them, or why there is no figure. Not a readiness figure.
         vaultCoverage: vault?.coverage ?? null,
@@ -1214,6 +1234,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               ) : null}
               {vault && (vault.unfiledCount ?? 0) > 0 ? (
                 <> {I.dot} {vault.unfiledCount} unfiled — needs review</>
+              ) : null}
+              {vault && (vault.awaitingConfirmationCount ?? 0) > 0 ? (
+                <> {I.dot} {vault.awaitingConfirmationCount} awaiting confirmation</>
               ) : null}
             </span>
           </div>
@@ -1410,6 +1433,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         <>
           <DataRoomLane
             block={vault?.dataRoom}
+            filing={roomFiling}
             unavailableReason={
               vault?.unavailable?.find((u) => u.branch === 'Data room')?.reason ?? null
             }
@@ -1542,6 +1566,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 Searching…
               </div>
             )}
+            {!searching ? <ConfirmSuggestedBar docs={folderDocs} state={confirmSuggested} /> : null}
             <div className="vd-cols">
               <span className="vd-col-name">Name</span>
               <span className="vd-col-type">Type</span>

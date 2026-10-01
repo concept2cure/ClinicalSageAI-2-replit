@@ -58,7 +58,12 @@ variable "rds_deletion_protection" {
 }
 
 variable "rds_engine_version" {
-  type = string
+  type        = string
+  description = "PostgreSQL major version for RDS. Major only: see the validation."
+  validation {
+    condition     = can(regex("^[0-9]+$", var.rds_engine_version))
+    error_message = "RDS PostgreSQL MAJOR version only, e.g. \"15\". RDS creates the instance on its current minor and applies minor patches in the maintenance window. A pinned minor is retired by AWS on a schedule (15.4 was) and a retired minor cannot be created, so the first apply and every rebuild of the database would fail."
+  }
 }
 
 variable "api_cpu" {
@@ -67,6 +72,23 @@ variable "api_cpu" {
 
 variable "api_memory" {
   type = number
+}
+
+variable "scanner_image" {
+  description = <<-EOT
+    The virus scanner beside the API (modules/ecs-fargate, the clamav container):
+    ClamAV's own image, on its long-term-support line, pinned by digest. The image
+    carries a signature database from its build and freshclam keeps it current,
+    so moving the digest is for clamd itself, not for signatures. To move it:
+    resolve the tag's index digest (Docker Hub, clamav/clamav) and replace both
+    parts here. To pull from a registry of your own instead of Docker Hub (its
+    anonymous pull limit is per NAT address), mirror the same digest and name the
+    mirror here.
+  EOT
+  type        = string
+  # clamav/clamav:1.4.6, the index digest resolved 2026-10-01 (amd64; Fargate's
+  # default platform).
+  default = "clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23"
 }
 
 variable "api_desired_count" {
@@ -203,6 +225,19 @@ variable "audit_export_signing_key" {
   }
 }
 
+# Signs the attestation a departing tenant's export carries
+# (server/services/tenant-export/attestation-report.service.ts refuses under 32
+# characters). The server boots without it, and every attestation then fails to
+# sign; until 2026-10-01 no deploy path provided it.
+variable "audit_attestation_key" {
+  type      = string
+  sensitive = true
+  validation {
+    condition     = length(var.audit_attestation_key) >= 32
+    error_message = "audit_attestation_key must be at least 32 characters (server/services/tenant-export/attestation-report.service.ts)."
+  }
+}
+
 variable "connector_encryption_key" {
   type      = string
   sensitive = true
@@ -263,9 +298,15 @@ variable "smtp_from" {
   }
 }
 
+# Vault search embeds with OpenAI by default. An empty key used to deploy, and
+# the Vault then searched nothing (D1, docs/evidence/W2/2026-10-01-inventory-gaps/).
 variable "openai_api_key" {
   type      = string
   sensitive = true
+  validation {
+    condition     = startswith(var.openai_api_key, "sk-") && !startswith(var.openai_api_key, "sk-ant-")
+    error_message = "openai_api_key must be an OpenAI API key (sk-…, not an Anthropic sk-ant- key): Vault search embeds with it."
+  }
 }
 
 # The drafting provider (D1 brief B4, decided 2026-10-01 under the CPO mandate):
@@ -344,4 +385,15 @@ variable "github_build_subjects" {
 variable "create_github_oidc_provider" {
   type        = bool
   description = "Create the account's GitHub OIDC provider. One per account: set false for an environment that shares an account with one that already created it (the account-topology decision in docs/evidence/W2/2026-09-23b/README.md)."
+}
+
+# Error reports (server/utils/sentry.ts). Optional: the server boots without it
+# and warns. Not a secret: a DSN only lets a client send events.
+variable "sentry_dsn" {
+  type    = string
+  default = ""
+  validation {
+    condition     = var.sentry_dsn == "" || startswith(var.sentry_dsn, "https://")
+    error_message = "sentry_dsn must be empty or an https:// DSN."
+  }
 }

@@ -30,7 +30,13 @@ const { fakeDb } = vi.hoisted(() => ({
   fakeDb: {
     select: () => ({
       from: () => ({
-        where: Object.assign(async () => mockRows(), { orderBy: async () => mockRows() }),
+        // Awaitable, with the .limit() of the delete's ownership read (7aaa97fd0)
+        // and the .orderBy() of the list route.
+        where: () =>
+          Object.assign(Promise.resolve().then(() => mockRows()), {
+            orderBy: async () => mockRows(),
+            limit: async () => mockRows(),
+          }),
       }),
     }),
     insert: () => ({ values: () => ({ returning: () => mockReturning() }) }),

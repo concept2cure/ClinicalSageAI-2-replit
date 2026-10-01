@@ -69,8 +69,9 @@ import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vaul
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
-import { currentVersionLateral, readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
+import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
 import { readVaultLifecycles } from '../../services/vault/vault-lifecycle.js';
+import { fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
@@ -215,6 +216,10 @@ interface VaultDisplayShape {
    *  WHOLE program, not over `uploadsWindow` — a queue derived from a capped
    *  page would shrink as the backlog grew. */
   unfiledCount?: number;
+  /** Documents in a suggested folder that no person has confirmed (VR-11b).
+   *  Counted over the whole program, like `unfiledCount`. Absent when the
+   *  uploads store could not be read. */
+  awaitingConfirmationCount?: number;
   /**
    * How much of the filing cabinet the tree above actually carries. The vault
    * is unbounded and the tree read is capped (VAULT_TREE_MAX_DOCS), so a
@@ -1231,6 +1236,7 @@ export default function createProjectVaultRoutes(): Router {
       let uploadsStoreMissing = false;
       let uploadsWindow: { shown: number; total: number; truncated: boolean } | undefined;
       let unfiledCount = 0;
+      let awaitingConfirmationCount: number | undefined;
       try {
         // cap + 1 detects the overflow without a second round trip.
         const upRes = await pool.query(
@@ -1266,13 +1272,17 @@ export default function createProjectVaultRoutes(): Router {
                   COUNT(*) FILTER (
                     WHERE d.folder_id IS NULL
                        OR COALESCE(d.placement_status, 'unfiled') = 'unfiled'
-                  )::int AS unfiled
+                  )::int AS unfiled,
+                  COUNT(*) FILTER (
+                    WHERE d.folder_id IS NOT NULL AND d.placement_status = 'suggested'
+                  )::int AS suggested
              FROM vault.documents d
             WHERE ${headsWhere}`,
           [id, orgId],
         );
-        const counts = (cntRes.rows[0] ?? {}) as { total?: number; unfiled?: number };
+        const counts = (cntRes.rows[0] ?? {}) as { total?: number; unfiled?: number; suggested?: number };
         unfiledCount = counts.unfiled ?? 0;
+        awaitingConfirmationCount = counts.suggested ?? 0;
         uploadsWindow = {
           shown: uploads.length,
           total: counts.total ?? uploads.length,
@@ -1324,33 +1334,17 @@ export default function createProjectVaultRoutes(): Router {
           );
           // …and as which version (VR-16): the version its bytes are, and the
           // family's current version when a later one replaced it.
-          const vaultHashes = new Map<string, NonNullable<DataRoomRow['filedAs']>>();
-          if (sourceChecksums.length > 0) {
-            const matchRes = await pool.query(
-              `SELECT DISTINCT ON (d.content_hash) d.content_hash, d.version,
-                      ${supersededSql('d')} AS superseded, cv.current_version
-                 FROM vault.documents d
-                 ${currentVersionLateral('d')}
-                WHERE ${uploadsWhere}
-                  AND d.content_hash = ANY($3::text[])
-                ORDER BY d.content_hash, d.created_at`,
-              [id, orgId, sourceChecksums],
-            );
-            for (const r of matchRes.rows as Array<{ content_hash: string | null; version: string | null; superseded: boolean; current_version: string | null }>) {
-              if (!r.content_hash) continue;
-              vaultHashes.set(String(r.content_hash).trim(), {
-                version: r.version ?? null,
-                supersededBy: r.superseded ? (r.current_version ?? null) : null,
-              });
-            }
-          }
+          // One join for the stage and for "File into Vault" (VR-11), so the
+          // two cannot disagree about what is filed.
+          const vaultHashes = await readFiledAs(pool, id, orgId, sourceChecksums);
           const rows: DataRoomRow[] = sources.map(s => {
             const meta = (s.metadata ?? {}) as Record<string, unknown>;
             const dossier = (meta.dossier ?? null) as
               | { evidenceKind?: string | null; suggestedFolder?: string | null;
                   confidence?: string | null; needsReview?: boolean }
               | null;
-            const filedAs = s.checksum ? vaultHashes.get(s.checksum) ?? null : null;
+            const match = s.checksum ? vaultHashes.get(s.checksum) : undefined;
+            const filedAs = match ? { version: match.version, supersededBy: match.supersededBy } : null;
             const filed = filedAs !== null;
             const proposed = Boolean(dossier?.suggestedFolder);
             const stage: DataRoomRow['stage'] =
@@ -1429,6 +1423,7 @@ export default function createProjectVaultRoutes(): Router {
         tree,
         coverage,
         unfiledCount,
+        ...(awaitingConfirmationCount !== undefined ? { awaitingConfirmationCount } : {}),
         ...(uploadsWindow ? { uploadsWindow } : {}),
         ...(dataRoom ? { dataRoom } : {}),
         ...(unavailable.length ? { unavailable } : {}),
@@ -1905,6 +1900,74 @@ export default function createProjectVaultRoutes(): Router {
         err: err instanceof Error ? err.message : String(err),
       });
       return res.status(500).json({ success: false, error: 'Failed to record the filing decision' });
+    }
+  });
+
+  /* POST /:id/data-room/file — File into Vault (VR-11, D2).
+     Captured sources, chosen in the data room, each filed through the one
+     upload-to-Vault orchestration (vault-data-room-filing.ts). Behind the same
+     governed-write gate as filing, so a viewer is refused before any byte is
+     read. 200 carries a result per source; `complete: false` when any was
+     refused. */
+  router.post('/:id/data-room/file', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const outcome = await fileDataRoomSources({
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        programId: String(req.params.id),
+        sourceIds: (req.body ?? {}).sourceIds,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, complete: outcome.complete, items: outcome.items });
+    } catch (err: unknown) {
+      logger.error('data room file error', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({
+        success: false,
+        error: 'FILING_FAILED',
+        message: 'The files could not be filed. Check the data room before trying again: some may have been filed.',
+      });
+    }
+  });
+
+  /* POST /:id/file-batch — Confirm N suggested (VR-11b, D2).
+     The suggested filings in one folder, confirmed by a person with one
+     reason (vault-placement-batch.ts): each through placeVaultDocument, each
+     with its own chained row carrying the reason. 422 without a reason;
+     otherwise 200 with an answer per document, `complete: false` when any was
+     refused. */
+  router.post('/:id/file-batch', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const { confirmSuggestedFilings } = await import('../../services/vault/vault-placement-batch.js');
+      const outcome = await confirmSuggestedFilings({
+        programId: String(req.params.id),
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        folderId: body.folderId,
+        documentIds: body.documentIds,
+        note: body.note,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, complete: outcome.complete, items: outcome.items });
+    } catch (err: unknown) {
+      logger.error('project vault file-batch error', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({
+        success: false,
+        error: 'CONFIRM_FAILED',
+        message: 'The filings could not be confirmed. Reload the Vault before trying again: some may have been confirmed.',
+      });
     }
   });
 

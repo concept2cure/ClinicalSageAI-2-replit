@@ -1,0 +1,25 @@
+$ node scripts/ci/check-compose-boot-contract.mjs   # stacks as on trunk
+docker-compose.beta.yml: service "app": AI_PROVIDER_PLACEMENT_APPROVALS is not passed to the app
+docker-compose.beta.yml: service "app": AI_SENSITIVE_DATA_POLICY_MODE is not passed to the app
+docker-compose.beta.yml: service "app": ALLOWED_ORIGINS is not passed to the app
+docker-compose.beta.yml: service "app": ANTHROPIC_API_KEY may be empty: use ${ANTHROPIC_API_KEY:?…} so a missing value stops "docker compose up"
+docker-compose.beta.yml: service "app": APP_URL is not passed to the app
+docker-compose.beta.yml: service "app": AUDIT_REQUIRE_ENFORCE is not passed to the app
+docker-compose.beta.yml: service "app": AUDIT_TRAIL_ENABLED is not passed to the app
+docker-compose.beta.yml: service "app": CONCEPT2CURE_SIGNER_MODE is not passed to the app
+docker-compose.beta.yml: service "app": SMTP_HOST is not passed to the app
+docker-compose.beta.yml: service "app": SMTP_PASS is not passed to the app
+docker-compose.beta.yml: service "app": SMTP_USER is not passed to the app
+docker-compose.yml: service "app": AI_PROVIDER_PLACEMENT_APPROVALS is not passed to the app
+docker-compose.yml: service "app": AI_SENSITIVE_DATA_POLICY_MODE is not passed to the app
+docker-compose.yml: service "app": ALLOWED_ORIGINS is not passed to the app
+docker-compose.yml: service "app": ANTHROPIC_API_KEY may be empty: use ${ANTHROPIC_API_KEY:?…} so a missing value stops "docker compose up"
+docker-compose.yml: service "app": APP_URL is not passed to the app
+docker-compose.yml: service "app": AUDIT_REQUIRE_ENFORCE is not passed to the app
+docker-compose.yml: service "app": AUDIT_TRAIL_ENABLED is not passed to the app
+docker-compose.yml: service "app": CONCEPT2CURE_SIGNER_MODE is not passed to the app
+docker-compose.yml: service "app": SMTP_HOST is not passed to the app
+docker-compose.yml: service "app": SMTP_PASS is not passed to the app
+docker-compose.yml: service "app": SMTP_USER is not passed to the app
+[ci:compose-boot-contract] 22 problem(s). The server refuses to boot, or boots and signs no one in, without these; the list is deploy-aws.yml's preflight (22 names) plus ALLOWED_ORIGINS.
+exit=1

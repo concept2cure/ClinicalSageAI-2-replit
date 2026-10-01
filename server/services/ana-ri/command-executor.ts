@@ -98,6 +98,7 @@ import {
 import { authorizeCommand, isPrivacyAdmin, isProposeOnlyCommand } from './command-rbac';
 import { statedReasonOrNull } from '../../routes/governed-reason.js';
 import { recordCommentPosted } from '../../routes/c2c/review-comment-record.js';
+import { ANA_REVIEW_COMMENT_ROLE } from '../../../shared/constants/review-comment.js';
 import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
@@ -2187,8 +2188,8 @@ export async function addReviewComment(
       const inserted = await client.query(
         `INSERT INTO concept2cure_thread_comments
            (comment_id, org_id, thread_id, artifact_id, author_id, author_name,
-            body, kind, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'comment', NOW(), NOW())
+            body, kind, author_role, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'comment', $8, NOW(), NOW())
          RETURNING id, comment_id, version_id, parent_comment_id, author_role`,
         [
           commentId,
@@ -2198,6 +2199,7 @@ export async function addReviewComment(
           ctx.userId,
           ctx.userName || 'AnA RI',
           params.body,
+          ANA_REVIEW_COMMENT_ROLE,
         ]
       );
       const row = inserted.rows[0];

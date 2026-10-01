@@ -8,7 +8,7 @@
  * filter the chat doors use. `allow` stays scoped to governed mutations, as
  * filterToolsByPolicy documents, so it does not strip these read tools.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   settings: new Map<number, unknown>(),
@@ -21,6 +21,15 @@ import { callAnaHandler, type ToolRunContext } from '../tools/runtime';
 
 const ctx = (organizationId: number) =>
   ({ principal: {} as never, config: {} as never, ana: { organizationId, userId: 3, organizationUuid: null } }) as ToolRunContext;
+
+// callAnaHandler imports AnA's handler graph lazily, on its first call. Cold,
+// that took 8.7-9.3 s here inside the first test's 10 s budget, so the test
+// passed or failed on machine load, not on the policy (seen 2026-10-01: it timed
+// out at 10 007 ms once another suite shared the fork). The hook has 60 s; each
+// test now measures the policy, and still makes the same first call.
+beforeAll(async () => {
+  await Promise.all([import('../../services/ana/AnaToolExecutor'), import('../../services/ana-ri/mdx-tool-policy')]);
+}, 60_000);
 
 beforeEach(() => {
   h.settings.clear();
